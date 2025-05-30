@@ -1,0 +1,398 @@
+{
+    id: "sumbe",
+    name: "Sumbe",
+    continent: "Africa",
+    country: "Angola",
+    region: "Benguela",
+    location: "Sumbe",
+    distanceFromCT: 2800, // Similar to other Benguela spots
+    optimalWindDirections: ["ENE", "E"],
+    optimalSwellDirections: {
+      min: 225, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // Southern Hemisphere winter
+    optimalTide: "All",
+    description:
+      "Exposed beach and reef break combination. Works best with Southwest groundswell and East-northeast offshore winds. The beach break favors left-handers. Despite quality waves, spot remains uncrowded. Watch out for rips and sharks.",
+    difficulty: "Intermediate",
+    waveType: "Beach Break", // Primary characteristic though it has reef sections
+    swellSize: {
+      min: 1.0,
+      max: 3.0,
+    },
+    idealSwellPeriod: {
+      min: 10,
+      max: 16,
+    },
+    waterTemp: {
+      summer: 28,
+      winter: 24,
+    },
+    hazards: ["Rips", "Sharks"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -11.236697,
+      lng: 13.830747,
+    },
+    coffeeShop: [
+      {
+        name: "The Blue Moon Cafe", // Local favorite near beach
+      },
+    ],
+  },
+  {
+    id: "uluwatu",
+    name: "Uluwatu",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Approximate distance from Cape Town
+    optimalWindDirections: ["SE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "All",
+    description:
+      "World-class left-hand reef and point break rated 4/5, known for its very consistent waves. Best performance during dry season (May-Oct) with SW groundswell and SE offshore winds. Multiple sections offering both barrels and walls. Despite popularity, size and multiple takeoff zones help manage crowds. Watch for sharp reef and strong currents.",
+    difficulty: "Advanced",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.2,
+      max: 6.0,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Based on current reading of 29.6°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Strong currents", "Sharp reef", "Crowds"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8156,
+      lng: 115.0892,
+    },
+    videos: [
+      {
+        url: "https://www.youtube.com/watch?v=KwWuEU07Jhs",
+        title: "SURFING PERFECT ULUWATU",
+        platform: "youtube",
+      },
+    ],
+    coffeeShop: [
+      {
+        name: "Dutchies", // Popular beachfront restaurant and cafe
+      },
+    ],
+  },
+  {
+    id: "outside-corner",
+    name: "Outside Corner",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Same as Uluwatu
+    optimalWindDirections: ["ESE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "Low",
+    description:
+      "Exposed reef and point break rated 4/5, offering quite consistent surf conditions. Best performance during dry season (May-Oct) with SW groundswell and ESE offshore winds. Features a powerful left-hand point break. Despite quality waves, crowds remain manageable. Exercise caution with exposed reef sections.",
+    difficulty: "Advanced",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.5,
+      max: 5.0,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Based on current reading of 29.7°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Strong currents", "Sharp reef"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8156, // Adjacent to Uluwatu
+      lng: 115.0892,
+    },
+    coffeeShop: [
+      {
+        name: "The Great White House", // Local cafe with ocean views
+      },
+    ],
+  },
+  {
+    id: "temples",
+    name: "Temples",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Same as other Bukit spots
+    optimalWindDirections: ["ESE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "All",
+    description:
+      "Exposed reef and point break rated 4/5, delivering reasonably consistent waves throughout dry season. Distinguished by its clean left-hand point break that performs best with Southwest groundswells meeting East-southeast offshore winds. Premium wave quality during May-October dry season. Part of The Bukit's legendary reef system. Despite quality waves, typically maintains moderate crowd levels. Exercise caution around shallow reef sections.",
+    difficulty: "Advanced",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.4,
+      max: 4.5,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Based on current reading of 29.7°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Sharp reef", "Crowds"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8182, // Slightly south of Uluwatu
+      lng: 115.0891,
+    },
+    coffeeShop: [
+      {
+        name: "Pearly's Beach Cafe", // Small local coffee spot
+      },
+    ],
+  },
+  {
+    id: "racetrack",
+    name: "Racetrack",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Same as other Bukit spots
+    optimalWindDirections: ["ESE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "Mid",
+    description:
+      "Exposed reef and point break rated 4/5, boasting very reliable surf conditions throughout dry season. Features a powerful left-hand point break that excels with Southwest groundswells meeting East-southeast offshore winds. Premium wave quality during May-October dry season. Part of The Bukit's renowned reef system. Clean groundswells dominate over windswells, creating consistent quality waves. Exercise caution with exposed reef sections.",
+    difficulty: "Advanced",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.4,
+      max: 4.5,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Based on current reading of 29.7°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Sharp reef"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8195, // Slightly south of Temples
+      lng: 115.089,
+    },
+    coffeeShop: [
+      {
+        name: "Sea Shack Coffee", // Popular local cafe
+      },
+    ],
+  },
+  {
+    id: "the-bombie",
+    name: "The Bombie",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Same as other Bukit spots
+    optimalWindDirections: ["SE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "All",
+    description:
+      "Exposed reef break rated 4/5, offering fairly consistent surf conditions throughout dry season. Features a powerful left-hand reef break that performs best with Southwest groundswells meeting Southeast offshore winds. Premium wave quality during May-October dry season. Part of The Bukit's renowned reef system. Groundswells dominate the wave formation, creating quality conditions when working. Popular spot that draws significant crowds during good swells. Exercise caution around shallow reef sections.",
+    difficulty: "Advanced",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.4,
+      max: 4.5,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Based on current reading of 29.7°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Sharp reef", "Crowds"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8205, // Slightly south of Racetrack
+      lng: 115.0889,
+    },
+    coffeeShop: [
+      {
+        name: "The Blue Moon Cafe", // Local favorite near beach
+      },
+    ],
+  },
+  {
+    id: "the-peak",
+    name: "The Peak",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Consistent with other Bukit spots
+    optimalWindDirections: ["SE"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"], // May-Oct (Dry Season)
+    optimalTide: "High",
+    description:
+      "Exposed reef and point break rated 4/5, renowned for very consistent surf conditions. Features a classic left-hand point break that thrives with Southwest groundswells and Southeast offshore winds. Prime conditions during May-October dry season. Receives clean, powerful groundswells that create long, rideable walls. Best performance at high tide. Part of The Bukit's legendary reef system. Popular spot that maintains good wave access despite crowds. Exercise caution around submerged reef structures.",
+    difficulty: "Advanced",
+    waveType: "Reef and Point Break",
+    swellSize: {
+      min: 1.5,
+      max: 5.5,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 18,
+    },
+    waterTemp: {
+      summer: 30, // Matches current reading of 29.7°C
+      winter: 27,
+    },
+    hazards: ["Rocks", "Sharp reef", "Crowds"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.8215, // South of The Bombie
+      lng: 115.0888,
+    },
+    coffeeShop: [
+      {
+        name: "Dutchies", // Popular beachfront restaurant and cafe
+      },
+    ],
+  },
+  {
+    id: "nyang-nyang",
+    name: "Nyang-Nyang",
+    continent: "Asia",
+    country: "Indonesia",
+    region: "Bali",
+    location: "The Bukit",
+    distanceFromCT: 8900, // Consistent with other Bukit spots
+    optimalWindDirections: ["N"],
+    optimalSwellDirections: {
+      min: 202.5, // SW
+      max: 247.5, // WSW
+      cardinal: "SW",
+    },
+    bestSeasons: ["summer"], // Nov-Apr (Wet Season)
+    optimalTide: "Mid",
+    description:
+      "Exposed reef break rated 4/4, offering reasonably consistent right-hand waves during wet season. Unique among Bukit spots for favoring North winds and Southwest swells. Best conditions November-April when other breaks become less reliable. Features a right-hand reef break that works best at mid tide. Less crowded than northern Bukit spots but still sees periodic crowds. Exercise caution around shallow reef and rocky bottom.",
+    difficulty: "Intermediate",
+    waveType: "Reef Break",
+    swellSize: {
+      min: 1.2,
+      max: 4.5,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 16,
+    },
+    waterTemp: {
+      summer: 30,
+      winter: 27,
+    },
+    hazards: ["Rocks", "Shallow reef", "Variable crowds"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -8.823, // South of The Peak
+      lng: 115.0887,
+    },
+    videos: [
+      {
+        url: "https://www.youtube.com/watch?v=XYZ123", // Sample video link
+        title: "Surfing Nyang-Nyang Right Handers",
+        platform: "youtube",
+      },
+    ],
+    coffeeShop: [
+      {
+        name: "The Great White House", // Local cafe with ocean views
+      },
+    ],
+  },

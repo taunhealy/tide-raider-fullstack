@@ -1,0 +1,47 @@
+{
+    id: "oyster-bay-beach",
+    name: "Oyster Bay Beach - Coco Beach",
+    continent: "Africa",
+    country: "Tanzania",
+    region: "Dar es Salaam",
+    location: "Tanzania (Mainland)",
+    distanceFromCT: 3800, // Approximate distance from Cape Town
+    optimalWindDirections: ["W"],
+    optimalSwellDirections: {
+      min: 67.5, // ENE
+      max: 112.5, // ESE
+      cardinal: "E",
+    },
+    bestSeasons: ["winter"], // Summer noted as mostly flat
+    optimalTide: "High",
+    description:
+      "Exposed beach and reef break rated 3/5 with fairly consistent surf, though summer tends to be flat. Works best with East swell and Westerly offshore winds. Receives both windswells and groundswells equally. Features a left-hand reef break that's better than the right. Best conditions during rising high tide. Despite good waves when working, crowds are unknown. Watch out for sea urchins and sharks.",
+    difficulty: "Intermediate",
+    waveType: "Beach and Reef Break",
+    swellSize: {
+      min: 1.0,
+      max: 3.0,
+    },
+    idealSwellPeriod: {
+      min: 10,
+      max: 16,
+    },
+    waterTemp: {
+      summer: 29, // Based on current reading of 28.7°C
+      winter: 25,
+    },
+    hazards: [
+      "Sharks",
+      "Sea urchins",
+      "Poor conditions in light onshore winds",
+    ],
+    crimeLevel: "Medium",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -6.7924,
+      lng: 39.2083,
+    },
+  },

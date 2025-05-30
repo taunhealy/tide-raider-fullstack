@@ -1,0 +1,39 @@
+import { ActivityType } from "@/app/types/beaches";
+import { cn } from "@/app/lib/utils";
+
+const ACTIVITIES: { type: ActivityType; label: string; icon: string }[] = [
+  { type: "Surfing", label: "Surfing", icon: "🏄‍♂️" },
+  { type: "Kitesurfing", label: "Kitesurfing", icon: "🪁" },
+  { type: "Windfoiling", label: "Windfoiling", icon: "🏄‍♂️" }, // Could use a more specific icon
+];
+
+interface ActivityFilterProps {
+  selectedActivity: ActivityType;
+  onChange: (activity: ActivityType) => void;
+}
+
+export function ActivityFilter({
+  selectedActivity,
+  onChange,
+}: ActivityFilterProps) {
+  return (
+    <div className="flex gap-2 p-4">
+      {ACTIVITIES.map(({ type, label, icon }) => (
+        <button
+          key={type}
+          onClick={() => onChange(type)}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full transition-colors font-primary",
+            "border border-[var(--color-border-light)]",
+            selectedActivity === type
+              ? "bg-[var(--color-bg-tertiary)] text-white"
+              : "hover:bg-gray-50"
+          )}
+        >
+          <span>{icon}</span>
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}

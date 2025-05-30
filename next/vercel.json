@@ -1,0 +1,20 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --force && npx playwright install chromium",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/expire-requests",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/daily-alerts",
+      "schedule": "1 0 * * *"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .filter-section {
+    @apply mb-6;
+  }
+
+  .filter-heading {
+    @apply text-[var(--color-text-primary)] font-semibold mb-[16px];
+  }
+
+  .filter-option {
+    @apply flex items-center gap-2 text-[var(--color-text-secondary)] cursor-pointer;
+  }
+
+  .filter-checkbox {
+    @apply mr-2 cursor-pointer accent-[var(--color-bg-tertiary)];
+  }
+} 

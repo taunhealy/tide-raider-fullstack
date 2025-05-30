@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('SURFER', 'SHAPER', 'SURF_CAMP_MANAGER', 'PHOTOGRAPHER', 'VIDEOGRAPHER');
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "roles" "UserRole"[] DEFAULT ARRAY['SURFER']::"UserRole"[];

@@ -1,0 +1,113 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/app/lib/prisma";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/lib/authOptions";
+import { AD_CATEGORIES, type AdCategory } from "@/app/lib/constants";
+import {
+  createGoogleAdsCampaign,
+  updateGoogleAdsCampaign,
+} from "@/app/lib/googleAds";
+
+const isProduction = process.env.NODE_ENV === "production";
+
+async function saveLocalFile(file: File, id: string) {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  await mkdir(uploadDir, { recursive: true });
+
+  const fileName = `${id}-${file.name}`;
+  await writeFile(path.join(uploadDir, fileName), buffer);
+  return `/uploads/${fileName}`;
+}
+
+export async function POST(req: Request) {
+  try {
+    // Get user session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const formData = await req.formData();
+    const id = crypto.randomUUID();
+    const category = formData.get("category") as AdCategory;
+
+    if (!category || !AD_CATEGORIES[category]) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    // Collect category-specific data
+    const categoryConfig = AD_CATEGORIES[category];
+    const categoryData = Object.fromEntries(
+      categoryConfig.fields.map((field) => [field, formData.get(field)])
+    );
+    // Create Google Ads campaign
+    let googleAdsCampaignId = null;
+    try {
+      const campaign = await updateGoogleAdsCampaign({
+        name: `${formData.get("companyName")} - ${categoryConfig.label} Campaign`,
+        budget: categoryConfig.googleAds.dailyBudget,
+        keywords: [
+          ...categoryConfig.googleAds.keywords.default,
+          ...(categoryData.location
+            ? [`${category.toLowerCase()} ${categoryData.location}`]
+            : []),
+        ],
+        location: categoryData.location,
+        languages: Array.isArray(categoryData.languages)
+          ? categoryData.languages
+          : categoryConfig.googleAds.keywords.default,
+      });
+
+      googleAdsCampaignId = campaign.id;
+    } catch (error) {
+      console.error("Google Ads campaign creation error:", error);
+      // Continue with ad creation even if campaign creation fails
+    }
+
+    // Create ad request
+    const adRequest = await prisma.adRequest.create({
+      data: {
+        id,
+        category,
+        companyName: formData.get("companyName") as string,
+        contactEmail: formData.get("email") as string,
+        linkUrl: formData.get("linkUrl") as string,
+        startDate: formData.get("startDate") as string,
+        endDate: formData.get("endDate") as string,
+        status: "draft",
+        userId: user.id,
+        categoryData,
+        googleAdsCampaignId,
+      },
+    });
+    return NextResponse.json({
+      success: true,
+      id: adRequest.id,
+      category,
+      monthlyPrice: categoryConfig.monthlyPrice,
+    });
+  } catch (error) {
+    console.error("Ad submission error:", error);
+    return NextResponse.json(
+      { error: "Failed to submit request" },
+      { status: 500 }
+    );
+  }
+}
