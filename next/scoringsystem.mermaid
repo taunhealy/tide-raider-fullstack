@@ -1,0 +1,42 @@
+# Beach Scoring System Flow
+
+## Region Filter Click Flow
+
+```mermaid
+graph TD
+    A[User Clicks Region in RegionFilter Component] --> B[handleRegionClick Called]
+    B --> C[dispatch changeRegion Thunk]
+    
+    C --> D1[Set Selected Region]
+    C --> D2[Find Region Object]
+    
+    D2 --> E1[Fetch Beaches by Region ID]
+    D2 --> E2[Fetch Forecast Data]
+    
+    E1 --> F[Wait for Both Fetches]
+    E2 --> F
+    
+    F --> G[dispatch calculateBeachScores Thunk]
+    
+    G --> H[Get Current State]
+    H --> I[Validate Data]
+    I --> J[Format Forecast Data]
+    
+    J --> K[Filter Beaches by Region]
+    K --> L[Calculate Score for Each Beach]
+    L --> M[Create Score Map]
+    
+    M --> N[Update Redux Store]
+    N --> O[Update UI Components]
+    
+    subgraph Score Calculation
+        L --> L1[Check Wind Direction]
+        L --> L2[Check Wave Size]
+        L --> L3[Check Swell Direction]
+        L --> L4[Check Swell Period]
+        L1 & L2 & L3 & L4 --> L5[Calculate Final Score]
+    end
+```
+
+The key differences are:
+1. Use triple backticks with

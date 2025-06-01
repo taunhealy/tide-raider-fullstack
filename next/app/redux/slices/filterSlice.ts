@@ -1,13 +1,9 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Region, Difficulty, CrimeLevel } from "@/app/types/beaches";
 import { fetchForecast } from "./forecastSlice";
-import { setBeachScores, setRegionCounts } from "./beachSlice";
-import {
-  calculateRegionScores,
-  calculateRegionCounts,
-} from "@/app/lib/surfUtils";
-import { RootState } from "../store";
+import { fetchBeachesByRegion } from "./beachSlice";
 
+import { RootState } from "../store";
 export interface FilterState {
   continent: string[];
   country: string[];
@@ -84,62 +80,20 @@ export const {
 
 export default filterSlice.reducer;
 
-// Selectors
-const selectBeaches = (state: RootState) => state.beaches.allBeaches;
-const selectForecastData = (state: RootState) => state.forecast.data;
-
 export const changeRegion = createAsyncThunk(
   "filters/changeRegion",
-  async (region: Region | null, { dispatch, getState }) => {
-    console.log("DEBUG changeRegion - Starting with region:", region);
+  async (regionName: string | null, { dispatch }) => {
+    // First, update the selected region immediately
+    dispatch(setSelectedRegion(regionName));
 
-    // First update the region
-    dispatch(setSelectedRegion(region));
-
-    // Update the region filter array
-    dispatch(updateFilter({ key: "region", value: region ? [region] : [] }));
-
-    // Only fetch conditions if we have a valid region
-    if (region) {
-      console.log(
-        "DEBUG changeRegion - Fetching conditions for region:",
-        region
-      );
-      await dispatch(fetchForecast(region));
-
-      // Get state in a type-safe way
-      const state = getState() as RootState;
-      console.log(
-        "DEBUG changeRegion - Forecast data after fetch:",
-        state.forecast
-      );
-    }
-
-    // Get state in a type-safe way
-    const state = getState() as RootState;
-    const allBeaches = selectBeaches(state);
-    const forecastData = selectForecastData(state);
-
-    console.log("DEBUG changeRegion - Before score calculation:", {
-      hasBeaches: !!allBeaches?.length,
-      beachCount: allBeaches?.length,
-      hasForecastData: !!forecastData,
-      forecastData,
-    });
-
-    // Only calculate scores if we have both beaches and forecast data
-    if (allBeaches?.length && forecastData) {
-      const regionScores = calculateRegionScores(
-        allBeaches,
-        region || "Global",
-        forecastData
-      );
-      console.log("DEBUG changeRegion - Calculated scores:", regionScores);
-
-      const regionCounts = calculateRegionCounts(regionScores);
-
-      dispatch(setBeachScores(regionScores));
-      dispatch(setRegionCounts(regionCounts));
+    // Also update the region filter array to match
+    if (regionName) {
+      dispatch(updateFilter({ key: "region", value: [regionName] }));
+      // Then fetch the data
+      await dispatch(fetchBeachesByRegion(regionName)).unwrap();
+      await dispatch(fetchForecast(regionName)).unwrap();
+    } else {
+      dispatch(updateFilter({ key: "region", value: [] }));
     }
   }
 );

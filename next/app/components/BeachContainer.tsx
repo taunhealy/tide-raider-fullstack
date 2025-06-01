@@ -4,24 +4,30 @@ import { useEffect, useMemo } from "react";
 import type { Beach } from "@/app/types/beaches";
 import StickyForecastWidget from "./StickyForecastWidget";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import {
-  setAllBeaches,
-  calculateBeachScores,
-} from "../redux/slices/beachSlice";
-import { loadDefaultFilters } from "../redux/slices/filterSlice";
-import { setIsMounted } from "../redux/slices/uiSlice";
 import FilterSidebar from "@/app/components/filters/FiltersSidebar";
 import BeachHeaderControls from "./raid/BeachHeaderControls";
-import BeachListView from "./raid/BeachListView";
 import MapView from "./raid/MapView";
 import RightSidebar from "./raid/RightSidebar";
 import LeftSidebar from "./raid/LeftSidebar";
 import { useForecastData } from "@/app/hooks/useForecastData";
 import BeachCard from "./BeachCard";
 import { useQuery } from "@tanstack/react-query";
-import { fetchForecast } from "@/app/redux/slices/forecastSlice";
-import { selectRegionBeaches, selectBeachScores } from "@/app/redux/selectors";
-import { addScoresToBeaches, sortBeachesByScore } from "@/app/lib/beachUtils";
+import { RootState } from "@/app/redux/store";
+import { fetchGeoData } from "../redux/slices/geoSlice";
+import { changeRegion, setFilters } from "@/app/redux/slices/filterSlice";
+import {
+  selectSortedBeaches,
+  selectBeachAttributes,
+} from "@/app/redux/selectors";
+import { fetchBeachesByRegion } from "../redux/slices/beachSlice";
+import { useSubscription } from "@/app/context/SubscriptionContext";
+import { usePagination } from "@/app/hooks/usePagination";
+import { setCurrentPage } from "@/app/redux/slices/uiSlice";
+import WaveTypeFilter from "./filters/WaveTypeFilters";
+import ForecastSummary from "./forecast/ForecastSummary";
+import RegionFilter from "./RegionFilter";
+import Pagination from "./common/Pagination";
+import FunFacts from "./FunFacts";
 
 interface BeachContainerCompProps {
   initialBeaches: Beach[];
@@ -56,193 +62,196 @@ const fetchAdsForBeaches = async (beaches: Beach[], regionId: string) => {
 };
 
 export default function BeachContainer({
-  initialBeaches,
   blogPosts,
   availableAds,
 }: BeachContainerCompProps) {
   const dispatch = useAppDispatch();
-  const { viewMode, isMounted } = useAppSelector((state) => state.ui);
-  const filters = useAppSelector((state) => state.filters);
-  const allBeaches = useAppSelector((state) => state.beaches.allBeaches);
+  const { viewMode } = useAppSelector((state) => state.ui);
   const selectedRegion = useAppSelector(
     (state) => state.filters.selectedRegion
   );
   const isCalculating = useAppSelector((state) => state.beaches.isCalculating);
-  const calculationError = useAppSelector((state) => state.beaches.error);
-  const forecastError = useAppSelector((state) => state.forecast.error);
+  const forecastError = useAppSelector(
+    (state: RootState) => state.forecast.error
+  );
+  const filters = useAppSelector((state) => state.filters);
+  const { currentPage } = useAppSelector((state) => state.ui);
+  const { waveTypes } = useAppSelector(selectBeachAttributes);
+  const { isSubscribed } = useSubscription();
 
-  // Use the hook for forecast data - single source of truth
-  const { forecastData, isLoading: forecastLoading } = useForecastData(
+  // Get and process data in one place
+  const processedBeaches = useAppSelector(selectSortedBeaches);
+  const forecastData = useAppSelector((state) => state.forecast.data);
+
+  console.log("🌊 BeachContainer state:", {
+    regionBeaches: processedBeaches.length,
+    hasBeachScores: processedBeaches.some((beach) => beach.score > 0),
+    forecastData: forecastData
+      ? {
+          windSpeed: forecastData.windSpeed,
+          windDirection: forecastData.windDirection,
+          swellHeight: forecastData.swellHeight,
+          swellPeriod: forecastData.swellPeriod,
+          swellDirection: forecastData.swellDirection,
+        }
+      : null,
+    selectedRegion,
+    sampleBeaches: processedBeaches.slice(0, 3).map((beach) => ({
+      id: beach.id,
+      name: beach.name,
+      region: beach.region,
+      score: beach.score,
+      optimalWindDirections: beach.optimalWindDirections,
+      swellSize: beach.swellSize,
+      optimalSwellDirections: beach.optimalSwellDirections,
+      idealSwellPeriod: beach.idealSwellPeriod,
+    })),
+    allBeachIds: processedBeaches.map((b) => b.id),
+  });
+
+  // Forecast data handling
+  const { isLoading: forecastLoading } = useForecastData(
     selectedRegion || null
   );
 
-  // First, memoize just the forecast data for the region
-  const forecastForRegion = useMemo(() => {
-    if (!forecastData || forecastData.region !== selectedRegion) {
-      return null;
-    }
-
-    return forecastData;
-  }, [forecastData, selectedRegion]);
-
-  // First get the data
-  const regionBeaches = useAppSelector(selectRegionBeaches);
-  const beachScores = useAppSelector(selectBeachScores);
-  const beachesWithScores = addScoresToBeaches(regionBeaches, beachScores);
-  const sortedBeaches = sortBeachesByScore(beachesWithScores);
-
-  // Then log it
-  console.log("Pre-sort state:", {
-    beachScoresExists: !!beachScores,
-    allBeachesLength: allBeaches?.length,
-    selectedRegion,
-  });
-
-  // Calculate scores when forecast data changes
-  useEffect(() => {
-    if (
-      !isCalculating && // Not already calculating
-      !forecastLoading && // Forecast data is ready
-      forecastForRegion && // We have forecast data
-      forecastForRegion.region === selectedRegion // Regions match
-    ) {
-      dispatch(calculateBeachScores());
-    }
-  }, [
-    forecastForRegion,
-    selectedRegion,
-    dispatch,
-    isCalculating,
-    forecastLoading,
-  ]);
-
-  // Count of suitable beaches
-  const suitableCount = sortedBeaches.length;
-
-  // Add debug logging
-  useEffect(() => {
-    console.log("Score calculation state:", {
-      isCalculating,
-      forecastLoading,
-      hasForcastData: !!forecastData,
-      forecastRegion: forecastData?.region,
-      selectedRegion,
-      beachScoresCount: Object.keys(beachScores || {}).length,
-      error: calculationError,
-    });
-  }, [
-    isCalculating,
-    forecastLoading,
-    forecastData,
-    selectedRegion,
-    beachScores,
-    calculationError,
-  ]);
-
-  // Initialize beaches
-  useEffect(() => {
-    const beachesWithIds = initialBeaches.map((beach) => ({
-      ...beach,
-      id: beach.id || beach.name.toLowerCase().replace(/\s+/g, "-"),
-    }));
-    dispatch(setAllBeaches(beachesWithIds));
-  }, [initialBeaches, dispatch]);
-
-  // Initialize UI state
-  useEffect(() => {
-    dispatch(setIsMounted(true));
-    dispatch(loadDefaultFilters());
-    return () => {
-      dispatch(setIsMounted(false));
-    };
-  }, [dispatch]);
-
-  // Add near the top of the component, after the selector hooks
-  useEffect(() => {
-    console.log("Debug - State Update:", {
-      hasBeachScores: !!beachScores,
-      scoreCount: Object.keys(beachScores || {}).length,
-      hasSelectedRegion: !!selectedRegion,
-      hasForecastData: !!forecastData,
-      forecastRegion: forecastData?.region,
-      beachCount: allBeaches?.length,
-    });
-  }, [beachScores, selectedRegion, forecastData, allBeaches]);
+  // Pagination
+  const { currentItems, totalPages } = usePagination(
+    processedBeaches,
+    currentPage,
+    18
+  );
 
   // Use React Query for ads to handle caching and batching
   const { data: ads } = useQuery({
     queryKey: ["beach-ads", selectedRegion],
-    queryFn: () => fetchAdsForBeaches(sortedBeaches, selectedRegion || ""),
-    enabled: !!selectedRegion && sortedBeaches.length > 0,
+    queryFn: () => fetchAdsForBeaches(processedBeaches, selectedRegion || ""),
+    enabled: !!selectedRegion && processedBeaches.length > 0,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  // Fetch forecast data when region changes
+  // Handler for region changes
+  const handleRegionChange = (region: string | null) => {
+    dispatch(changeRegion(region));
+  };
+
+  useEffect(() => {
+    // Fetch geographic data on component mount
+    dispatch(fetchGeoData());
+
+    // Remove the beaches initialization since we'll fetch beaches only when a region is selected
+  }, [dispatch]);
+
+  // Add effect to fetch beaches when region changes
   useEffect(() => {
     if (selectedRegion) {
-      dispatch(fetchForecast(selectedRegion));
+      console.log("🔄 Fetching beaches for region:", selectedRegion);
+      dispatch(fetchBeachesByRegion(selectedRegion));
     }
-  }, [dispatch, selectedRegion]);
+  }, [selectedRegion, dispatch]);
+
+  // Add logging before BeachListView render
+  console.log("🎯 About to render BeachListView with:", {
+    beachCount: processedBeaches.length,
+    isLoading: forecastLoading,
+    hasForecastData: !!forecastData,
+    selectedRegion,
+  });
+
+  const renderBeachList = () => {
+    if (processedBeaches.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
+            {selectedRegion
+              ? `No beaches found in ${selectedRegion}. Please select a different region.`
+              : "Please select a region to view beaches."}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <WaveTypeFilter
+          waveTypes={waveTypes}
+          selectedWaveTypes={filters.waveType}
+          onWaveTypeChange={(newWaveTypes) =>
+            dispatch(setFilters({ ...filters, waveType: newWaveTypes }))
+          }
+        />
+
+        <div className="mb-6">
+          <ForecastSummary
+            windData={forecastData}
+            isLoading={forecastLoading}
+            windError={null}
+          />
+        </div>
+
+        <div className="mb-6">
+          <RegionFilter
+            selectedRegion={selectedRegion}
+            onRegionChange={(region) => dispatch(changeRegion(region))}
+          />
+        </div>
+
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-[21px] heading-6 text-gray-800 font-primary">
+            Breaks
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 gap-[16px]">
+          {currentItems.map((beach, index) => (
+            <BeachCard
+              key={beach.name}
+              beach={beach}
+              isFirst={index === 0}
+              isLoading={forecastLoading}
+              index={index}
+              forecastData={forecastData}
+              beachScore={{ score: beach.score }}
+              onClick={() => {}} // Add your click handler if needed
+            />
+          ))}
+        </div>
+
+        {(isSubscribed ? totalPages > 1 : false) && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => dispatch(setCurrentPage(page))}
+          />
+        )}
+
+        <div className="lg:hidden mt-6">
+          <FunFacts />
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
-      {/* Main Layout */}
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
-        {/* Left Sidebar */}
         <LeftSidebar blogPosts={blogPosts} />
 
-        {/* Main Content and Right Sidebar */}
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
-            {/* Header Controls */}
             <BeachHeaderControls />
 
-            {viewMode === "list" ? <BeachListView /> : <MapView />}
+            {viewMode === "list" ? renderBeachList() : <MapView />}
           </main>
 
-          {/* Right Sidebar */}
-          {isMounted && <RightSidebar availableAds={availableAds} />}
+          <RightSidebar availableAds={availableAds} />
         </div>
       </div>
 
-      {/* Filter Sidebar Component */}
-      <FilterSidebar />
-
-      {/* Sticky Forecast Widget */}
+      <FilterSidebar
+        selectedRegion={selectedRegion}
+        onRegionChange={(region) => dispatch(changeRegion(region))}
+      />
       <StickyForecastWidget />
-
-      <div className="grid grid-cols-1 gap-4 md:gap-6">
-        {forecastError ? (
-          <div className="text-red-500 p-4 bg-red-50 rounded-md">
-            Error: {forecastError}
-          </div>
-        ) : isCalculating ? (
-          // Show loading state for cards
-          Array.from({ length: 3 }).map((_, index) => (
-            <BeachCard
-              key={`loading-${index}`}
-              beach={
-                {
-                  id: `loading-${index}`,
-                  name: "Loading...",
-                  region: selectedRegion || "Loading...",
-                } as Beach
-              }
-              isLoading={true}
-              index={index}
-              onClick={() => {}}
-            />
-          ))
-        ) : (
-          <>
-            <h1 className="text-2xl font-bold mb-4">
-              Found {suitableCount} suitable beaches in {selectedRegion}
-            </h1>
-
-            <BeachListView />
-          </>
-        )}
-      </div>
     </div>
   );
 }

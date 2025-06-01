@@ -1,43 +1,52 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const regionId = url.searchParams.get("regionId");
 
   try {
-    let beaches;
-
-    if (regionId) {
-      // If regionId is provided, filter beaches by region
-      beaches = await prisma.beach.findMany({
-        where: {
-          regionId: regionId,
+    const beaches = await prisma.beach.findMany({
+      where: regionId
+        ? {
+            OR: [
+              { regionId },
+              { region: { name: regionId } }, // Also search by region name
+            ],
+          }
+        : undefined,
+      select: {
+        id: true,
+        name: true,
+        optimalWindDirections: true,
+        optimalSwellDirections: true,
+        swellSize: true,
+        idealSwellPeriod: true,
+        region: {
+          include: {
+            country: true,
+          },
         },
-        include: {
-          region: true,
-        },
-      });
-    } else {
-      // If no regionId, return all beaches
-      beaches = await prisma.beach.findMany({
-        include: {
-          region: true,
-        },
-      });
-    }
+        difficulty: true,
+        waveType: true,
+        location: true,
+        distanceFromCT: true,
+        bestSeasons: true,
+        optimalTide: true,
+        description: true,
+        waterTemp: true,
+        hazards: true,
+        crimeLevel: true,
+        sharkAttack: true,
+        coordinates: true,
+        sheltered: true,
+      },
+    });
 
-    // Format the response to include region information
-    const formattedBeaches = beaches.map((beach) => ({
-      id: beach.id,
-      name: beach.name,
-      regionId: beach.regionId,
-      region: beach.region?.name || "",
-      country: beach.region?.country || beach.country || "",
-      continent: beach.region?.continent || beach.continent || "",
-    }));
-
-    return NextResponse.json(formattedBeaches);
+    console.log(`Found ${beaches.length} beaches for region: ${regionId}`);
+    return NextResponse.json(beaches);
   } catch (error) {
     console.error("Error fetching beaches:", error);
     return NextResponse.json(

@@ -1,6 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
-import { storeGoodBeachRatings } from "@/app/lib/beachRatings";
+import { storeGoodBeachRatings } from "@/app/lib/goodBeachRatings";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

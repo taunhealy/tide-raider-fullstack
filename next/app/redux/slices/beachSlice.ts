@@ -1,8 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import type { Beach } from "@/app/types/beaches";
-import type { BaseForecastData, ForecastData } from "@/app/types/forecast";
-import { calculateBeachScore } from "@/app/lib/surfUtils";
-import { RootState } from "@/app/redux/store";
 import { BeachScoreMap } from "@/app/types/scores";
 
 interface BeachState {
@@ -15,6 +12,7 @@ interface BeachState {
   lastCalculated: number | null;
   isCalculating: boolean;
   error: string | null;
+  isLoading: boolean;
 }
 
 const initialState: BeachState = {
@@ -27,49 +25,26 @@ const initialState: BeachState = {
   lastCalculated: null,
   isCalculating: false,
   error: null,
+  isLoading: false,
 };
 
-// Add a thunk to calculate scores
-export const calculateBeachScores = createAsyncThunk(
-  "beaches/calculateBeachScores",
-  async (_, { getState }) => {
-    const state = getState() as RootState;
-    const beaches = state.beaches.allBeaches;
-    const forecastData = state.forecast.data as ForecastData;
-    const selectedRegion = state.filters.selectedRegion;
-
-    // Add more detailed validation
-    if (!forecastData) throw new Error("No forecast data available");
-    if (!beaches.length) throw new Error("No beaches available");
-    if (!selectedRegion) throw new Error("No region selected");
-
-    // Format the forecast data correctly
-    const formattedForecastData: BaseForecastData = {
-      id: forecastData.id,
-      date: new Date(forecastData.date),
-      region: forecastData.region,
-      windSpeed: forecastData.windSpeed,
-      windDirection: forecastData.windDirection,
-      swellHeight: forecastData.swellHeight,
-      swellDirection: forecastData.swellDirection,
-      swellPeriod: forecastData.swellPeriod,
-      createdAt: forecastData.createdAt,
-      updatedAt: forecastData.updatedAt,
-    };
-
-    const scoreMap: BeachScoreMap = {};
-
-    beaches
-      .filter((beach) => beach.region === selectedRegion)
-      .forEach((beach) => {
-        const result = calculateBeachScore(beach, formattedForecastData);
-        scoreMap[beach.id] = {
-          score: result.score,
-          suitable: result.suitable,
-        };
-      });
-
-    return scoreMap;
+export const fetchBeachesByRegion = createAsyncThunk(
+  "beaches/fetchByRegion",
+  async (region: string) => {
+    console.log("🎣 Starting beach fetch for region:", region);
+    const response = await fetch(`/api/beaches?regionId=${region}`);
+    if (!response.ok) {
+      console.error("❌ Failed to fetch beaches:", response.statusText);
+      throw new Error("Failed to fetch beaches");
+    }
+    const beaches = await response.json();
+    console.log("✅ Successfully fetched beaches:", {
+      count: beaches.length,
+      region,
+      sampleBeach: beaches[0],
+      allBeachIds: beaches.map((b: any) => b.id).slice(0, 5), // First 5 beach IDs
+    });
+    return beaches;
   }
 );
 
@@ -78,6 +53,10 @@ export const beachSlice = createSlice({
   initialState,
   reducers: {
     setAllBeaches: (state, action: PayloadAction<Beach[]>) => {
+      console.log("📝 Setting all beaches:", {
+        count: action.payload.length,
+        sampleBeach: action.payload[0],
+      });
       state.allBeaches = action.payload;
     },
     setFilteredBeaches: (state, action: PayloadAction<Beach[]>) => {
@@ -95,19 +74,24 @@ export const beachSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(calculateBeachScores.pending, (state) => {
-        state.isCalculating = true;
+      .addCase(fetchBeachesByRegion.pending, (state) => {
+        console.log("⏳ Fetching beaches...");
+        state.isLoading = true;
         state.error = null;
       })
-      .addCase(calculateBeachScores.fulfilled, (state, action) => {
-        state.beachScores = action.payload;
-        state.lastCalculated = Date.now();
-        state.isCalculating = false;
-        state.error = null;
+      .addCase(fetchBeachesByRegion.fulfilled, (state, action) => {
+        console.log("✅ Updating Redux state with beaches:", {
+          count: action.payload.length,
+          sampleBeach: action.payload[0],
+          currentAllBeachesCount: state.allBeaches.length,
+        });
+        state.allBeaches = action.payload;
+        state.isLoading = false;
       })
-      .addCase(calculateBeachScores.rejected, (state, action) => {
-        state.isCalculating = false;
-        state.error = action.error.message || "Failed to calculate scores";
+      .addCase(fetchBeachesByRegion.rejected, (state, action) => {
+        console.log("❌ Failed to fetch beaches:", action.error);
+        state.isLoading = false;
+        state.error = action.error.message || "Failed to fetch beaches";
       });
   },
 });

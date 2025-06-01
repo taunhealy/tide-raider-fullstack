@@ -20,11 +20,10 @@ import { RootState } from "./store";
 import {
   calculateRegionCounts,
   calculateAllBeachScores,
-  calculateBeachScore,
-  isBeachSuitable,
-} from "@/app/lib/surfUtils";
+} from "@/app/lib/scoreUtils";
 import { CoreForecastData } from "../types/forecast";
 import { filterBeaches } from "@/app/lib/filterUtils";
+import { sortBeachesByScore } from "@/app/lib/beachSortUtils";
 
 // Add "export" to make these base selectors available
 export const selectAllBeaches = (state: RootState) => state.beaches.allBeaches;
@@ -34,87 +33,105 @@ export const selectBeachScoresState = (state: RootState) =>
 export const selectSelectedRegion = (state: RootState) =>
   state.filters.selectedRegion;
 
-// Memoized filter selectors
+// Add a new selector for geographic data
+export const selectGeoData = (state: RootState) => state.geo;
+export const selectContinents = (state: RootState) =>
+  state.geo.continents || [];
+export const selectCountries = (state: RootState) => state.geo.countries || [];
+export const selectRegions = (state: RootState) => state.geo.regions || [];
+
+// Update the beach attributes selector to use geo data instead of extracting from beaches
 export const selectBeachAttributes = createSelector(
-  [selectAllBeaches],
-  (allBeaches) => {
-    // Return empty arrays if allBeaches is null/undefined
-    if (!allBeaches || !allBeaches.length) {
-      return {
-        uniqueRegions: [],
-        uniqueContinents: [],
-        uniqueCountries: [],
-        waveTypes: [],
-      };
-    }
+  [selectContinents, selectCountries, selectRegions, selectAllBeaches],
+  (continents, countries, regions, allBeaches) => {
+    // Extract unique values from geo data
+    const uniqueContinents = continents.map((c) => c.name);
+    const uniqueCountries = countries.map((c) => c.name);
+    const uniqueRegions = regions.map((r) => r.name);
 
-    const uniqueRegions = Array.from(
-      new Set(allBeaches.map((beach) => beach.region || ""))
-    ).filter(Boolean);
+    // Extract wave types from beaches
+    const waveTypes = allBeaches?.length
+      ? Array.from(
+          new Set(allBeaches.map((beach) => beach.waveType || ""))
+        ).filter(Boolean)
+      : [];
 
-    const uniqueContinents = Array.from(
-      new Set(allBeaches.map((beach) => beach.continent || ""))
-    ).filter(Boolean);
-
-    const uniqueCountries = Array.from(
-      new Set(allBeaches.map((beach) => beach.country || ""))
-    ).filter(Boolean);
-
-    const waveTypes = Array.from(
-      new Set(allBeaches.map((beach) => beach.waveType || ""))
-    ).filter(Boolean);
-
-    return { uniqueRegions, uniqueContinents, uniqueCountries, waveTypes };
+    return {
+      uniqueRegions,
+      uniqueCountries,
+      uniqueContinents,
+      waveTypes,
+    };
   }
 );
 
-// Efficient filtering that doesn't recalculate scores
+// Update selectFilteredBeaches
 export const selectFilteredBeaches = createSelector(
   [selectAllBeaches, selectFilters],
-  (allBeaches, filters) => filterBeaches(allBeaches, filters)
+  (allBeaches, filters) => {
+    console.log("🔍 selectFilteredBeaches input:", {
+      allBeachesCount: allBeaches?.length || 0,
+      filters,
+      sampleBeach: allBeaches?.[0]
+        ? {
+            id: allBeaches[0].id,
+            name: allBeaches[0].name,
+            region: allBeaches[0].region,
+          }
+        : null,
+    });
+
+    const filtered = filterBeaches(allBeaches, filters);
+
+    console.log("🔍 selectFilteredBeaches output:", {
+      filteredCount: filtered.length,
+      sampleFilteredBeach: filtered[0] || null,
+    });
+
+    return filtered;
+  }
 );
 
-// SIMPLIFY this selector to just get basic data
+// Update region beaches selector to work with DB schema
 export const selectRegionBeaches = createSelector(
   [selectFilteredBeaches, selectSelectedRegion],
   (filteredBeaches, selectedRegion) => {
-    // Only filter by region - no complex transformations
     if (!filteredBeaches.length || !selectedRegion) return [];
     return filteredBeaches.filter((beach) => beach.region === selectedRegion);
   }
 );
 
-// Simplified selector that uses utility functions
+// Update selectSortedBeaches
 export const selectSortedBeaches = createSelector(
   [selectFilteredBeaches, selectBeachScoresState, selectSelectedRegion],
   (filteredBeaches, beachScores, selectedRegion) => {
-    if (!filteredBeaches.length || !selectedRegion) return [];
-
-    // Filter by selected region first - this should be in a utility function
-    const regionBeaches = filteredBeaches.filter(
-      (beach) => beach.region === selectedRegion
-    );
-
-    // Use existing score data from the state
-    const beachesWithScores = regionBeaches.map((beach) => {
-      const scoreInfo = beachScores[beach.id] || { score: 0, suitable: false };
-      return {
-        ...beach,
-        score: scoreInfo.score || 0,
-        suitable: scoreInfo.suitable || false,
-      };
+    console.log("🔍 selectSortedBeaches processing:", {
+      filteredBeachesCount: filteredBeaches?.length || 0,
+      beachScoresCount: Object.keys(beachScores || {}).length,
+      selectedRegion,
+      sampleBeach: filteredBeaches?.[0],
     });
 
-    // Sort by score - this should be in a utility function
-    return [...beachesWithScores].sort((a, b) => b.score - a.score);
-  }
-);
+    if (!filteredBeaches.length || !selectedRegion) {
+      console.log("⚠️ Early return from selectSortedBeaches:", {
+        noFilteredBeaches: !filteredBeaches.length,
+        noSelectedRegion: !selectedRegion,
+      });
+      return [];
+    }
 
-// Selector for suitable beaches
-export const selectSuitableBeaches = createSelector(
-  [selectSortedBeaches],
-  (sortedBeaches) => {
-    return sortedBeaches.filter((beach) => beach.suitable);
+    // Use filteredBeaches directly instead of regionBeaches
+    const beachesWithScores = filteredBeaches.map((beach) => ({
+      ...beach,
+      score: beachScores[beach.id]?.score || 0,
+    }));
+
+    console.log("🔍 Beaches with scores:", {
+      count: beachesWithScores.length,
+      sampleBeachWithScore: beachesWithScores[0],
+    });
+
+    return beachesWithScores;
   }
 );
 
@@ -157,35 +174,33 @@ export const selectRegionCounts = createSelector(
   (beachScores) => calculateRegionCounts(beachScores)
 );
 
-// Keep this in selectors.ts since it's Redux-specific
+// Update visible filter options to work with DB schema
 export const selectVisibleFilterOptions = createSelector(
-  [selectAllBeaches, selectFilters],
-  (
-    allBeaches,
-    filters
-  ): { visibleCountries: string[]; visibleRegions: string[] } => {
-    if (!allBeaches) return { visibleCountries: [], visibleRegions: [] };
+  [selectCountries, selectRegions, selectFilters],
+  (countries, regions, filters) => {
+    // If no filters are selected, show nothing
+    if (!countries.length || !regions.length) {
+      return { visibleCountries: [], visibleRegions: [] };
+    }
 
+    // Filter countries by selected continents
     const visibleCountries =
       filters.continent.length > 0
-        ? [
-            ...new Set(
-              allBeaches
-                .filter((beach) => filters.continent.includes(beach.continent))
-                .map((beach) => beach.country)
-            ),
-          ]
+        ? countries
+            .filter((country) =>
+              filters.continent.includes(country.continent?.name || "")
+            )
+            .map((country) => country.name)
         : [];
 
+    // Filter regions by selected countries
     const visibleRegions =
       filters.country.length > 0
-        ? [
-            ...new Set(
-              allBeaches
-                .filter((beach) => filters.country.includes(beach.country))
-                .map((beach) => beach.region)
-            ),
-          ]
+        ? regions
+            .filter((region) =>
+              filters.country.includes(region.country?.name || "")
+            )
+            .map((region) => region.name)
         : [];
 
     return { visibleCountries, visibleRegions };

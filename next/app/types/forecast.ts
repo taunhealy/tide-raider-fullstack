@@ -52,3 +52,9 @@ export interface AlertForecastData extends BaseForecastData {
   starRating?: string;
   forecastDate: Date;
 }
+
+interface SwellDirections {
+  min: number;
+  max: number;
+  cardinal?: string; // Make optional since not all records have it
+}

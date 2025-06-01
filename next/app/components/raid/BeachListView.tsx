@@ -10,54 +10,92 @@ import { usePagination } from "@/app/hooks/usePagination";
 import { ForecastData } from "@/app/types/forecast";
 import WaveTypeFilter from "../filters/WaveTypeFilters";
 import ForecastSummary from "../forecast/ForecastSummary";
-import BeachGrid from "../BeachGrid";
+import BeachCard from "../BeachCard";
 import Pagination from "../common/Pagination";
 import FunFacts from "../FunFacts";
 import RegionFilter from "../RegionFilter";
+import type { Beach } from "@/app/types/beaches";
+import type { BeachWithScore } from "@/app/types/scores";
 
 interface BeachListViewProps {
-  handleBeachClick?: (beach: any) => void;
+  isLoading: boolean;
+  forecastData: ForecastData | null;
+  selectedRegion: string | null;
+  onRegionChange: (region: string | null) => void;
+  handleBeachClick?: (beach: Beach) => void;
+  beaches: BeachWithScore[];
 }
 
 export default function BeachListView({
+  beaches,
+  isLoading,
+  forecastData,
+  selectedRegion,
+  onRegionChange,
   handleBeachClick,
 }: BeachListViewProps) {
   const dispatch = useAppDispatch();
   const { isSubscribed } = useSubscription();
-
-  // Get data from Redux using selectors
-  const { waveTypes, uniqueRegions, uniqueContinents, uniqueCountries } =
-    useAppSelector(selectBeachAttributes);
-
   const filters = useAppSelector((state) => state.filters);
   const { currentPage } = useAppSelector((state) => state.ui);
-
-  // Use the selector to get properly filtered and sorted beaches
-  const filteredBeaches = useAppSelector(selectFilteredBeaches);
-
-  // Get beach scores from Redux
-  const { allBeaches, regionCounts, beachScores } = useAppSelector(
-    (state) => state.beaches
-  );
-
-  // Use proper typing for forecast data
-  const { data, loading, error } = useAppSelector((state) => state.forecast);
-
-  // Cast to proper type
-  const forecastData = data as ForecastData | null;
-  const isLoading = loading;
-  const windError = error;
+  const { waveTypes } = useAppSelector(selectBeachAttributes);
 
   // Pagination
-  const { currentItems, totalPages } = usePagination(
-    filteredBeaches,
-    currentPage,
-    18
+  const { currentItems, totalPages } = usePagination(beaches, currentPage, 18);
+
+  // Add detailed logging
+  console.log("🔍 BeachListView Detailed Props:", {
+    beachesLength: beaches?.length || 0,
+    firstBeach: beaches?.[0]
+      ? {
+          id: beaches[0].id,
+          name: beaches[0].name,
+          region: beaches[0].region,
+          score: beaches[0].score,
+          // Log critical scoring fields
+          optimalWindDirections: beaches[0].optimalWindDirections,
+          swellSize: beaches[0].swellSize,
+          optimalSwellDirections: beaches[0].optimalSwellDirections,
+          idealSwellPeriod: beaches[0].idealSwellPeriod,
+        }
+      : null,
+    selectedRegion,
+    forecastDataPresent: !!forecastData,
+    forecastDetails: forecastData
+      ? {
+          windSpeed: forecastData.windSpeed,
+          windDirection: forecastData.windDirection,
+          swellHeight: forecastData.swellHeight,
+          swellPeriod: forecastData.swellPeriod,
+          swellDirection: forecastData.swellDirection,
+        }
+      : null,
+  });
+
+  console.log("🏖️ BeachListView rendering with:", {
+    totalBeaches: beaches.length,
+    selectedRegion,
+    forecastDataPresent: !!forecastData,
+  });
+
+  console.log("Beaches before filtering:", beaches.length);
+  console.log("Current filters:", filters);
+  console.log("Beaches after pagination:", currentItems.length);
+
+  console.log(
+    "Raw beaches data:",
+    beaches.map((b) => ({
+      id: b.id,
+      name: b.name,
+      optimalWindDirections: b.optimalWindDirections,
+      swellSize: b.swellSize,
+      optimalSwellDirections: b.optimalSwellDirections,
+      idealSwellPeriod: b.idealSwellPeriod,
+    }))
   );
 
   return (
     <>
-      {/* Wave Type Icons */}
       <WaveTypeFilter
         waveTypes={waveTypes}
         selectedWaveTypes={filters.waveType}
@@ -66,25 +104,28 @@ export default function BeachListView({
         }
       />
 
-      {/* Forecast widget */}
       <div className="mb-6">
         <ForecastSummary
           windData={forecastData}
           isLoading={isLoading}
-          windError={windError}
+          windError={null}
         />
       </div>
 
-      {/* Region filters */}
+      {/* Region filters - now pass props */}
       <div className="mb-6">
-        <RegionFilter />
+        <RegionFilter
+          selectedRegion={selectedRegion}
+          onRegionChange={onRegionChange}
+        />
       </div>
 
-      {filteredBeaches.length === 0 ? (
+      {beaches.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
-            No beaches match filters. Try adjusting the filters or your search
-            query.
+            {selectedRegion
+              ? `No beaches found in ${selectedRegion}. Please select a different region.`
+              : "Please select a region to view beaches."}
           </p>
         </div>
       ) : (
@@ -99,15 +140,21 @@ export default function BeachListView({
             </div>
           </div>
 
-          {/* Beach Grid */}
-          <BeachGrid
-            beaches={currentItems}
-            isLoading={isLoading}
-            onBeachClick={
-              handleBeachClick ||
-              ((beach) => console.log("Beach clicked:", beach))
-            }
-          />
+          {/* Beach Grid - Integrated directly */}
+          <div className="grid grid-cols-1 gap-[16px]">
+            {currentItems.map((beach, index) => (
+              <BeachCard
+                key={beach.name}
+                beach={beach}
+                isFirst={index === 0}
+                isLoading={isLoading}
+                index={index}
+                forecastData={forecastData}
+                beachScore={{ score: beach.score }}
+                onClick={() => handleBeachClick?.(beach)}
+              />
+            ))}
+          </div>
 
           {/* Pagination */}
           {(isSubscribed ? totalPages > 1 : false) && (

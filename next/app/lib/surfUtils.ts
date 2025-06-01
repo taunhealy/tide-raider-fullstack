@@ -1,8 +1,3 @@
-// Import and re-export everything from specialized utility files
-export * from "./scoreUtils";
-export * from "./directionUtils";
-export * from "./displayUtils";
-
 // Export constants
 export const FREE_BEACH_LIMIT = 7;
 
@@ -17,58 +12,6 @@ interface ScoreDisplay {
   description: string;
   emoji: string;
   stars: string;
-}
-
-export function getScoreDisplay(score: number): ScoreDisplay {
-  // Use floor instead of round to prevent 3.5 → 4
-  const flooredScore = Math.floor(score);
-
-  const getStars = (count: number) => "⭐".repeat(count);
-
-  switch (flooredScore) {
-    case 5:
-      return {
-        description: "Yeeeew!",
-        emoji: "🤩🔥",
-        stars: getStars(5),
-      };
-    case 4:
-      return {
-        description: "Surfs up?!",
-        emoji: "🏄‍♂️",
-        stars: getStars(4),
-      };
-    case 3:
-      return {
-        description: "Maybe, baby?",
-        emoji: "👻",
-        stars: getStars(3),
-      };
-    case 2:
-      return {
-        description: "Probably dog kak",
-        emoji: "🐶💩",
-        stars: getStars(2),
-      };
-    case 1:
-      return {
-        description: "Dog kak",
-        emoji: "💩",
-        stars: getStars(1),
-      };
-    case 0:
-      return {
-        description: "Horse kak",
-        emoji: "🐎💩",
-        stars: "",
-      };
-    default:
-      return {
-        description: "?",
-        emoji: "🐎💩",
-        stars: "",
-      };
-  }
 }
 
 const cardinalToDegreesMap: { [key: string]: number } = {
@@ -89,153 +32,7 @@ const cardinalToDegreesMap: { [key: string]: number } = {
   NW: 315,
   NNW: 337.5,
 };
-
-export function calculateBeachScore(
-  beach: Beach,
-  conditions: CoreForecastData
-): { score: number; suitable: boolean } {
-  if (!beach) {
-    console.log("Missing beach data");
-    return { score: 0, suitable: false };
-  }
-
-  try {
-    console.log("Beach:", beach.id, "Conditions:", JSON.stringify(conditions));
-    let score = 10;
-
-    // Convert numeric degrees to cardinal direction
-    const currentDirDegrees = Number(conditions.windDirection);
-    const windCardinal = degreesToCardinal(currentDirDegrees);
-
-    // Smarter wind direction check
-    if (!beach.optimalWindDirections.includes(windCardinal)) {
-      // Convert both directions to degrees for comparison
-      const isNeighboring = beach.optimalWindDirections.some((optimalDir) => {
-        const optimalDegrees = cardinalToDegreesMap[optimalDir];
-        if (optimalDegrees === undefined) return false;
-
-        // Calculate the smallest angle between the two directions
-        const diff = Math.abs(currentDirDegrees - optimalDegrees);
-        const angleDiff = Math.min(diff, 360 - diff);
-
-        return angleDiff <= 45;
-      });
-
-      if (isNeighboring) {
-        score = Math.max(0, score - 2);
-      } else {
-        score = Math.max(0, score - 4);
-      }
-    }
-
-    // Check wind strength separately
-    if (!beach.sheltered) {
-      if (conditions.windSpeed > 35) {
-        score = Math.max(0, score - 4);
-      } else if (conditions.windSpeed > 25) {
-        score = Math.max(0, score - 3);
-      } else if (conditions.windSpeed > 15) {
-        score = Math.max(0, score - 2);
-      }
-    }
-
-    // Check wave size with significant penalties
-    if (
-      !(
-        conditions.swellHeight >= beach.swellSize.min &&
-        conditions.swellHeight <= beach.swellSize.max
-      )
-    ) {
-      const heightDiff = Math.min(
-        Math.abs(conditions.swellHeight - beach.swellSize.min),
-        Math.abs(conditions.swellHeight - beach.swellSize.max)
-      );
-      if (heightDiff <= 0.5) {
-        score = Math.max(0, score - 4); // Just outside range
-      } else if (heightDiff <= 1) {
-        score = Math.max(0, score - 6); // Significantly off
-      } else {
-        score = Math.max(0, score - 8); // Way too big/small
-      }
-    }
-
-    // Check swell direction with graduated penalties
-    const swellDeg = conditions.swellDirection;
-    const minSwellDiff = Math.abs(swellDeg - beach.optimalSwellDirections.min);
-    const maxSwellDiff = Math.abs(swellDeg - beach.optimalSwellDirections.max);
-    const swellDirDiff = Math.min(minSwellDiff, maxSwellDiff);
-
-    if (
-      !(
-        swellDeg >= beach.optimalSwellDirections.min &&
-        swellDeg <= beach.optimalSwellDirections.max
-      )
-    ) {
-      if (swellDirDiff <= 10) {
-        score = Math.max(0, score - 2);
-      } else if (swellDirDiff <= 20) {
-        score = Math.max(0, score - 4);
-      } else if (swellDirDiff <= 30) {
-        score = Math.max(0, score - 6);
-      } else {
-        score = Math.max(0, score - 8);
-      }
-    }
-
-    // Check swell period with graduated penalties
-    const periodDiff = Math.min(
-      Math.abs(conditions.swellPeriod - beach.idealSwellPeriod.min),
-      Math.abs(conditions.swellPeriod - beach.idealSwellPeriod.max)
-    );
-
-    if (
-      !(
-        conditions.swellPeriod >= beach.idealSwellPeriod.min &&
-        conditions.swellPeriod <= beach.idealSwellPeriod.max
-      )
-    ) {
-      if (periodDiff <= 2) {
-        score = Math.max(0, score - 2);
-      } else if (periodDiff <= 4) {
-        score = Math.max(0, score - 4);
-      } else {
-        score = Math.max(0, score - 6);
-      }
-    } else {
-      // Add bonus points for exceptionally good swell periods
-      // For periods in the upper half of the ideal range
-      const midPoint =
-        (beach.idealSwellPeriod.min + beach.idealSwellPeriod.max) / 2;
-      if (conditions.swellPeriod > midPoint) {
-        // Add up to 2 bonus points for excellent swell periods
-        const bonusRatio =
-          (conditions.swellPeriod - midPoint) /
-          (beach.idealSwellPeriod.max - midPoint);
-        const bonus = Math.min(2, Math.max(0, bonusRatio * 2));
-        score = Math.min(10, score + bonus);
-      }
-    }
-
-    // Always return a valid score object
-    const finalScore = Math.max(0, Math.min(5, score / 2));
-    return {
-      score: finalScore,
-      suitable: finalScore >= 4,
-    };
-  } catch (error) {
-    console.error("Error calculating beach score:", error);
-    return { score: 0, suitable: false };
-  }
-}
-
-export function isBeachSuitable(
-  beach: Beach,
-  conditions: CoreForecastData
-): boolean {
-  const { score } = calculateBeachScore(beach, conditions);
-  return score >= 4;
-}
-
+//convert degrees to cardinal
 export function degreesToCardinal(degrees: number | null | string): string {
   if (degrees === null || degrees === undefined || degrees === "") return "N/A";
 
@@ -264,7 +61,7 @@ export function degreesToCardinal(degrees: number | null | string): string {
 
   return directions[index];
 }
-
+//get condition reasons
 export function getConditionReasons(
   beach: Beach,
   forecastData: BaseForecastData | null,
@@ -414,25 +211,7 @@ export function getGatedBeaches(
   };
 }
 
-export interface BeachCount {
-  count: number;
-  shouldDisplay: boolean;
-}
-
-export function getGoodBeachCount(
-  beaches: Beach[],
-  forecastData: BaseForecastData | null
-): BeachCount {
-  if (!forecastData) return { count: 0, shouldDisplay: false };
-
-  const count = beaches.filter((beach) => {
-    const { score } = calculateBeachScore(beach, forecastData);
-    return score >= 4;
-  }).length;
-
-  return { count, shouldDisplay: count > 0 };
-}
-
+//check if wind direction is similar to optimal directions
 export function isWindDirectionSimilar(
   windDirection: string,
   optimalDirections: string[]
@@ -446,49 +225,7 @@ export function isWindDirectionSimilar(
   return normalizedOptimal.some((optimal) => normalizedWind === optimal);
 }
 
-export function calculateRegionScores(
-  beaches: Beach[],
-  selectedRegion: string | null,
-  forecastData: BaseForecastData | null
-): Record<string, { score: number; suitable: boolean; region: string }> {
-  const scores: Record<
-    string,
-    { score: number; suitable: boolean; region: string }
-  > = {};
-
-  if (!forecastData || !beaches.length) return scores;
-
-  // For each beach, calculate the score
-  beaches.forEach((beach) => {
-    // If selectedRegion is provided and not "Global", only process beaches in that region
-    if (
-      selectedRegion &&
-      selectedRegion !== "Global" &&
-      beach.region !== selectedRegion
-    ) {
-      return;
-    }
-
-    // When processing the forecast data, strip it down to just the required fields
-    const processedConditions: CoreForecastData = {
-      windSpeed: forecastData.windSpeed,
-      windDirection: forecastData.windDirection,
-      swellHeight: forecastData.swellHeight,
-      swellDirection: forecastData.swellDirection,
-      swellPeriod: forecastData.swellPeriod,
-    };
-
-    const { score, suitable } = calculateBeachScore(beach, processedConditions);
-    scores[beach.id] = {
-      score,
-      suitable,
-      region: beach.region,
-    };
-  });
-
-  return scores;
-}
-
+//calculate region counts
 export function calculateRegionCounts(
   beachScores: Record<
     string,

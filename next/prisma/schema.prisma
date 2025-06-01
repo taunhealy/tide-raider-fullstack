@@ -263,7 +263,6 @@ model Beach {
   id                     String                  @id
   name                   String
   continent              String
-  country                String
   regionId               String
   location               String
   distanceFromCT         Float
@@ -297,9 +296,11 @@ model Beach {
   logEntries             LogEntry[]
   rentalItemRequests     RentalItemRequest[]
   stories                Story[]
+  countryId              String
+  country                Country                 @relation(fields: [countryId], references: [id])
 
   @@index([regionId])
-  @@index([country])
+  @@index([countryId])
   @@index([waveType])
   @@index([difficulty])
 }
@@ -538,8 +539,9 @@ model RentalChatMessage {
 model Region {
   id         String      @id
   name       String
-  country    String
+  countryId  String
   continent  String?
+  country    Country       @relation(fields: [countryId], references: [id])
   ads        Ad[]
   adRequests AdRequest[]
   beaches    Beach[]
@@ -646,6 +648,21 @@ model Notification {
   @@index([alertNotificationId])
   @@index([adId])
   @@index([adRequestId])
+}
+
+model Continent {
+  id       String    @id
+  name     String
+  countries Country[]
+}
+
+model Country {
+  id          String    @id
+  name        String
+  continentId String
+  continent   Continent @relation(fields: [continentId], references: [id])
+  regions     Region[]
+  beaches     Beach[]
 }
 
 enum SkillLevel {

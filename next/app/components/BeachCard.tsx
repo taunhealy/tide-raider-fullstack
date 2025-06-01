@@ -1,12 +1,7 @@
 import type { Beach } from "@/app/types/beaches";
 import { useSubscription } from "@/app/context/SubscriptionContext";
-import {
-  isBeachSuitable,
-  getScoreDisplay,
-  getConditionReasons,
-  FREE_BEACH_LIMIT,
-  calculateBeachScore,
-} from "@/app/lib/surfUtils";
+import { getScoreDisplay } from "@/app/lib/scoreUtils";
+import { getConditionReasons } from "@/app/lib/surfUtils";
 import { useHandleSubscribe } from "@/app/hooks/useHandleSubscribe";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { InfoIcon, Search, Eye } from "lucide-react";
@@ -21,20 +16,21 @@ import {
   WaveType,
 } from "@/app/lib/constants";
 import { MediaGrid } from "@/app/components/MediaGrid";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import type { LogEntry } from "@/app/types/questlogs";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import { useAppMode } from "@/app/context/AppModeContext";
-import { useAppSelector } from "@/app/redux/hooks";
-import { selectBeachScores } from "@/app/redux/selectors";
+
+import type { ForecastData } from "@/app/types/forecast";
 
 interface BeachCardProps {
   beach: Beach;
   isFirst?: boolean;
   isLoading?: boolean;
   index: number;
+  beachScore: { score: number };
+  forecastData: ForecastData | null;
   onClick: () => void;
 }
 
@@ -54,30 +50,24 @@ const ConditionsSkeleton = () => (
 
 export default function BeachCard({
   beach,
-  isFirst = false,
+
   isLoading = false,
-  index,
-  onClick,
+
+  beachScore,
+  forecastData,
 }: BeachCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isSubscribed, hasActiveTrial } = useSubscription();
-  const { isBetaMode } = useAppMode();
+  const { isSubscribed } = useSubscription();
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
-  const beachScores = useAppSelector(selectBeachScores);
 
   const [isLocalLoading, setIsLocalLoading] = useState(isLoading);
   const [showRatingHint, setShowRatingHint] = useState(false);
   const [showWaveTypeHint, setShowWaveTypeHint] = useState(false);
   const [isRegionSupported, setIsRegionSupported] = useState(true);
 
-  // Get the forecast data from Redux
-  const forecastData = useAppSelector((state) => state.forecast.data);
-
-  // Use the pre-calculated score from Redux
-  const beachScore = beachScores[beach.id] || { score: 0, suitable: false };
-
+  // Use the passed score directly instead of querying Redux
   const scoreDisplay = useMemo(() => {
     const score = typeof beachScore?.score === "number" ? beachScore.score : 0;
     return getScoreDisplay(score);
@@ -164,13 +154,12 @@ export default function BeachCard({
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
-  // After line 77 where you get the forecast data
-  console.log("DEBUG BeachCard - Redux State:", {
+  // Remove this console log or modify it to not use Redux
+  console.log("DEBUG BeachCard:", {
     beachName: beach.name,
     beachId: beach.id,
     forecastData,
-    beachScores,
-    selectedRegion: useAppSelector((state) => state.filters.selectedRegion),
+    beachScore,
   });
 
   return (

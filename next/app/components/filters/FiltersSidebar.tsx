@@ -7,13 +7,20 @@ import {
   updateFilter,
   setMinPoints,
   saveDefaultFilters,
-  setSelectedRegion,
 } from "@/app/redux/slices/filterSlice";
 import RegionFilter from "@/app/components/RegionFilter";
 import { useState } from "react";
 import { Difficulty, CrimeLevel, FilterType } from "@/app/types/beaches";
 
-export default function FilterSidebar() {
+interface FilterSidebarProps {
+  selectedRegion: string | null;
+  onRegionChange: (region: string | null) => void;
+}
+
+export default function FilterSidebar({
+  selectedRegion,
+  onRegionChange,
+}: FilterSidebarProps) {
   const dispatch = useAppDispatch();
   const { isSidebarOpen } = useAppSelector((state) => state.ui);
   const filters = useAppSelector((state) => state.filters);
@@ -69,7 +76,10 @@ export default function FilterSidebar() {
 
           <div className="space-y-6">
             {/* Region Filter */}
-            <RegionFilter />
+            <RegionFilter
+              selectedRegion={selectedRegion}
+              onRegionChange={onRegionChange}
+            />
 
             {/* Wave Type Filter */}
             <div className="space-y-2">

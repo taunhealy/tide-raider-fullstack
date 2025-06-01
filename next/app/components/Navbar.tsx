@@ -2,7 +2,7 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
-import { useSubscription } from "../context/SubscriptionContext";
+import { useSubscription } from "../providers/SubscriptionProvider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "../lib/utils";

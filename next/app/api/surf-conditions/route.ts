@@ -4,8 +4,8 @@ import { randomUUID } from "crypto";
 import {} from "@/app/lib/surfUtils";
 
 import { redis } from "@/app/lib/redis";
-import { storeGoodBeachRatings } from "@/app/lib/beachRatings";
-import { WindData } from "@/app/types/wind";
+import { storeGoodBeachRatings } from "@/app/lib/goodBeachRatings";
+import { BaseForecastData } from "@/app/types/forecast";
 import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
 
@@ -145,7 +145,10 @@ async function getLatestConditions(forceRefresh = false, region: ValidRegion) {
 
   try {
     console.log("Attempting to scrape from:", regionConfig.sourceA.url);
-    const forecast: WindData = await scraperA(regionConfig.sourceA.url, region);
+    const forecast: BaseForecastData = await scraperA(
+      regionConfig.sourceA.url,
+      region
+    );
 
     if (forecast) {
       // Strip time from date
@@ -173,7 +176,13 @@ async function getLatestConditions(forceRefresh = false, region: ValidRegion) {
       },
       create: {
         id: randomUUID(),
-        ...forecast,
+        date: forecast.date,
+        region: forecast.region,
+        windSpeed: forecast.windSpeed,
+        windDirection: forecast.windDirection,
+        swellHeight: forecast.swellHeight,
+        swellPeriod: forecast.swellPeriod,
+        swellDirection: forecast.swellDirection,
       },
     });
 
@@ -215,7 +224,7 @@ interface SourceConfig {
   regions: {
     [key: string]: {
       url: string;
-      scraper: (html: string) => Promise<WindData>;
+      scraper: (html: string) => Promise<BaseForecastData>;
     };
   };
 }
@@ -237,7 +246,7 @@ async function getExistingForecast(
   });
 }
 
-async function storeForecast(source: "A" | "B", data: WindData) {
+async function storeForecast(source: "A" | "B", data: BaseForecastData) {
   const model = (source === "A" ? prisma.forecastA : prisma.forecastB) as any;
 
   return model.create({

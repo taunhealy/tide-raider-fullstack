@@ -2,17 +2,27 @@
 import { Beach, FilterType } from "@/app/types/beaches";
 
 export function filterBeaches(beaches: Beach[], filters: FilterType): Beach[] {
+  console.log("🎯 filterBeaches called with:", {
+    beachCount: beaches?.length,
+    filters,
+    sampleBeach: beaches?.[0],
+  });
+
   if (!beaches?.length) return [];
 
-  return beaches.filter((beach) => {
+  // If selectedRegion is set, only show beaches from that region
+  if (filters.region?.length) {
+    beaches = beaches.filter((beach) => filters.region.includes(beach.region));
+  }
+
+  const filtered = beaches.filter((beach) => {
+    // Only apply other filters if they are set
     if (
       filters.continent.length > 0 &&
       !filters.continent.includes(beach.continent)
     )
       return false;
     if (filters.country.length > 0 && !filters.country.includes(beach.country))
-      return false;
-    if (filters.region.length > 0 && !filters.region.includes(beach.region))
       return false;
     if (
       filters.waveType.length > 0 &&
@@ -38,4 +48,12 @@ export function filterBeaches(beaches: Beach[], filters: FilterType): Beach[] {
 
     return true;
   });
+
+  console.log("🎯 filterBeaches result:", {
+    filteredCount: filtered.length,
+    sampleFilteredBeach: filtered[0],
+    region: filters.region,
+  });
+
+  return filtered;
 }

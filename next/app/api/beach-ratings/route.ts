@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
-import { storeGoodBeachRatings } from "@/app/lib/beachRatings";
+import { storeGoodBeachRatings } from "@/app/lib/goodBeachRatings";
 import type { WindDataProp } from "@/app/types/wind";
 
 export async function POST(request: Request) {
