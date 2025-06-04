@@ -1,4 +1,4 @@
-import { useAppSelector } from "@/app/redux/hooks";
+import { useBeach } from "@/app/context/BeachContext";
 import BlogPostsSidebar from "../BlogPostsSidebar";
 import FavouriteSurfVideosSidebar from "../FavouriteSurfVideosSidebar";
 import GoldSeeker from "../GoldSeeker";
@@ -17,9 +17,8 @@ interface LeftSidebarProps {
 }
 
 export default function LeftSidebar({ blogPosts }: LeftSidebarProps) {
-  // Get data from Redux
-  const filters = useAppSelector((state) => state.filters);
-  const { allBeaches } = useAppSelector((state) => state.beaches);
+  // Get data from Context
+  const { filters, beaches: allBeaches } = useBeach();
 
   return (
     <aside className="hidden lg:block lg:w-[250px] xl:w-[300px] flex-shrink-0">
@@ -27,19 +26,19 @@ export default function LeftSidebar({ blogPosts }: LeftSidebarProps) {
         <BlogPostsSidebar
           posts={blogPosts}
           selectedCountry={
-            filters.country.length > 0 ? filters.country[0] : undefined
+            filters.location.country.length > 0
+              ? filters.location.country[0]
+              : undefined
           }
           selectedContinent={
-            filters.continent.length > 0 ? filters.continent[0] : undefined
+            filters.location.continent.length > 0
+              ? filters.location.continent[0]
+              : undefined
           }
         />
       </div>
       <div className="space-y-6">
         <RaidLogSidebar />
-        <FavouriteSurfVideosSidebar />
-        <GoldSeeker />
-        <EventsSidebar />
-        <BeachFeedback beaches={allBeaches} />
       </div>
     </aside>
   );

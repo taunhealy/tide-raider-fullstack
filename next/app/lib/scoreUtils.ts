@@ -215,7 +215,7 @@ export function calculateAllBeachScores(
     const { score } = calculateBeachScore(beach, conditions);
     result[beach.id] = {
       score,
-      region: beach.region,
+      region: beach.region.name,
     };
   });
 
@@ -297,7 +297,7 @@ export function calculateRegionScores(
     if (
       selectedRegion &&
       selectedRegion !== "Global" &&
-      beach.region !== selectedRegion
+      beach.region.name !== selectedRegion
     ) {
       return;
     }
@@ -314,7 +314,7 @@ export function calculateRegionScores(
     const { score } = calculateBeachScore(beach, processedConditions);
     scores[beach.id] = {
       score,
-      region: beach.region,
+      region: beach.region.name,
     };
   });
 

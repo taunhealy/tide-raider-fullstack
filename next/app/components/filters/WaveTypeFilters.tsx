@@ -1,20 +1,20 @@
 import Image from "next/image";
 import { WAVE_TYPE_ICONS, WaveType } from "@/app/lib/constants";
-import { useAppDispatch } from "@/app/redux/hooks";
-import { updateFilter } from "@/app/redux/slices/filterSlice";
+import { useBeach } from "@/app/context/BeachContext";
+import { WAVE_TYPES } from "@/app/types/beaches";
 
 interface WaveTypeFilterProps {
-  waveTypes: string[];
-  selectedWaveTypes: string[];
-  onWaveTypeChange: (waveTypes: string[]) => void;
+  selectedWaveTypes: WaveType[];
+  onWaveTypeChange: (waveTypes: WaveType[]) => void;
+  waveTypes: readonly WaveType[];
 }
 
 export default function WaveTypeFilter({
-  waveTypes,
   selectedWaveTypes,
   onWaveTypeChange,
+  waveTypes,
 }: WaveTypeFilterProps) {
-  const dispatch = useAppDispatch();
+  const { filters, setFilters } = useBeach();
 
   return (
     <div className="mb-6 overflow-x-auto pb-2">
@@ -25,11 +25,11 @@ export default function WaveTypeFilter({
             onClick={() => {
               const newWaveTypes = selectedWaveTypes.includes(waveType)
                 ? selectedWaveTypes.filter((t) => t !== waveType)
-                : [...selectedWaveTypes, waveType];
+                : ([...selectedWaveTypes, waveType] as WaveType[]);
               onWaveTypeChange(newWaveTypes);
 
               // This is important - dispatch it to Redux
-              dispatch(updateFilter({ key: "waveType", value: newWaveTypes }));
+              setFilters({ ...filters, waveType: newWaveTypes });
             }}
             className={`
               relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] lg:w-[80px] lg:h-[80px] 
@@ -58,7 +58,7 @@ export default function WaveTypeFilter({
               sizes="(max-width: 640px) 60px, (max-width: 1024px) 70px, 80px"
               priority={
                 selectedWaveTypes.includes(waveType) ||
-                waveTypes.indexOf(waveType) < 3
+                WAVE_TYPES.indexOf(waveType) < 3
               }
               quality={80}
               onLoad={(e) => {

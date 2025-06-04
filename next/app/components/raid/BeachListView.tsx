@@ -1,47 +1,60 @@
-import { useAppSelector, useAppDispatch } from "@/app/redux/hooks";
-import { setCurrentPage } from "@/app/redux/slices/uiSlice";
-import { setFilters } from "@/app/redux/slices/filterSlice";
-import {
-  selectBeachAttributes,
-  selectFilteredBeaches,
-} from "@/app/redux/selectors";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { usePagination } from "@/app/hooks/usePagination";
 import { ForecastData } from "@/app/types/forecast";
-import WaveTypeFilter from "../filters/WaveTypeFilters";
-import ForecastSummary from "../forecast/ForecastSummary";
+
 import BeachCard from "../BeachCard";
-import Pagination from "../common/Pagination";
-import FunFacts from "../FunFacts";
-import RegionFilter from "../RegionFilter";
-import type { Beach } from "@/app/types/beaches";
+
+import LocationFilter from "../LocationFilter";
 import type { BeachWithScore } from "@/app/types/scores";
+import { useMemo } from "react";
+import FilterSidebar from "../filters/FiltersSidebar";
+import BeachHeaderControls from "./BeachHeaderControls";
+
+import { FilterType, Region } from "@/app/types/beaches";
 
 interface BeachListViewProps {
+  beaches: BeachWithScore[];
+  filters: FilterType;
+  setFilters: (filters: FilterType) => void;
   isLoading: boolean;
   forecastData: ForecastData | null;
-  selectedRegion: string | null;
-  onRegionChange: (region: string | null) => void;
-  handleBeachClick?: (beach: Beach) => void;
-  beaches: BeachWithScore[];
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  showFilters: boolean;
+  setShowFilters: (show: boolean) => void;
+  regions?: Region[];
 }
 
 export default function BeachListView({
   beaches,
+  filters,
+  setFilters,
   isLoading,
   forecastData,
-  selectedRegion,
-  onRegionChange,
-  handleBeachClick,
+  currentPage,
+  showFilters,
+  setShowFilters,
+  regions,
 }: BeachListViewProps) {
-  const dispatch = useAppDispatch();
   const { isSubscribed } = useSubscription();
-  const filters = useAppSelector((state) => state.filters);
-  const { currentPage } = useAppSelector((state) => state.ui);
-  const { waveTypes } = useAppSelector(selectBeachAttributes);
 
   // Pagination
-  const { currentItems, totalPages } = usePagination(beaches, currentPage, 18);
+  const { currentItems } = usePagination(beaches, currentPage, 18);
+
+  // Extract unique regions from beaches
+  const uniqueRegions = useMemo(() => {
+    if (!beaches?.length) return [];
+    const regionMap = new Map();
+
+    beaches.forEach((beach) => {
+      if (!regionMap.has(beach.region.id)) {
+        regionMap.set(beach.region.id, beach.region);
+      }
+    });
+
+    return Array.from(regionMap.values());
+  }, [beaches]);
 
   // Add detailed logging
   console.log("🔍 BeachListView Detailed Props:", {
@@ -59,7 +72,7 @@ export default function BeachListView({
           idealSwellPeriod: beaches[0].idealSwellPeriod,
         }
       : null,
-    selectedRegion,
+
     forecastDataPresent: !!forecastData,
     forecastDetails: forecastData
       ? {
@@ -74,7 +87,7 @@ export default function BeachListView({
 
   console.log("🏖️ BeachListView rendering with:", {
     totalBeaches: beaches.length,
-    selectedRegion,
+
     forecastDataPresent: !!forecastData,
   });
 
@@ -94,83 +107,67 @@ export default function BeachListView({
     }))
   );
 
-  return (
-    <>
-      <WaveTypeFilter
-        waveTypes={waveTypes}
-        selectedWaveTypes={filters.waveType}
-        onWaveTypeChange={(newWaveTypes) =>
-          dispatch(setFilters({ ...filters, waveType: newWaveTypes }))
-        }
-      />
-
-      <div className="mb-6">
-        <ForecastSummary
-          windData={forecastData}
-          isLoading={isLoading}
-          windError={null}
+  if (beaches.length === 0) {
+    return (
+      <div className="flex flex-col">
+        <BeachHeaderControls
+          filters={filters}
+          setFilters={setFilters}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          regions={Array.isArray(regions) ? regions : []}
         />
-      </div>
 
-      {/* Region filters - now pass props */}
-      <div className="mb-6">
-        <RegionFilter
-          selectedRegion={selectedRegion}
-          onRegionChange={onRegionChange}
-        />
-      </div>
-
-      {beaches.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
-            {selectedRegion
-              ? `No beaches found in ${selectedRegion}. Please select a different region.`
+            {filters.location.region
+              ? `No beaches found in ${filters.location.region}. Please select a different region.`
               : "Please select a region to view beaches."}
           </p>
         </div>
-      ) : (
-        <>
-          {/* Forecast Source Toggle */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[21px] heading-6 text-gray-800 font-primary">
-              Breaks
-            </h3>
-            <div className="flex items-center gap-2">
-              {/* Source Toggle Buttons */}
-            </div>
-          </div>
-
-          {/* Beach Grid - Integrated directly */}
-          <div className="grid grid-cols-1 gap-[16px]">
-            {currentItems.map((beach, index) => (
-              <BeachCard
-                key={beach.name}
-                beach={beach}
-                isFirst={index === 0}
-                isLoading={isLoading}
-                index={index}
-                forecastData={forecastData}
-                beachScore={{ score: beach.score }}
-                onClick={() => handleBeachClick?.(beach)}
-              />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {(isSubscribed ? totalPages > 1 : false) && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => dispatch(setCurrentPage(page))}
-            />
-          )}
-        </>
-      )}
-
-      {/* Move Fun Facts below beach cards */}
-      <div className="lg:hidden mt-6">
-        <FunFacts />
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      <BeachHeaderControls
+        filters={filters}
+        setFilters={setFilters}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        regions={Array.isArray(regions) ? regions : []}
+      />
+
+      {/* 3. Beach Cards */}
+      <div className="grid grid-cols-1 gap-[16px]">
+        {currentItems.map((beach, index) => (
+          <BeachCard
+            key={beach.name}
+            beach={beach}
+            isFirst={index === 0}
+            isLoading={isLoading}
+            forecastData={forecastData}
+          />
+        ))}
+      </div>
+
+      {/* Filter Sidebar Modal */}
+      {showFilters && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowFilters(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-[300px] transform bg-white shadow-xl">
+            <FilterSidebar
+              filters={filters}
+              setFilters={setFilters}
+              beaches={beaches}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

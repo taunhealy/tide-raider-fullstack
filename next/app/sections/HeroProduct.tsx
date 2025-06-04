@@ -2,13 +2,9 @@
 
 import Image from "next/image";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { beachData } from "../types/beaches";
-import {
-  getScoreDisplay,
-  getConditionReasons,
-  degreesToCardinal,
-  calculateBeachScore,
-} from "../lib/surfUtils";
+import { Beach } from "../types/beaches";
+import { getConditionReasons, degreesToCardinal } from "../lib/surfUtils";
+import { calculateBeachScore, getScoreDisplay } from "../lib/scoreUtils";
 import type { BaseForecastData } from "../types/forecast";
 import {
   getWindEmoji,
@@ -46,13 +42,14 @@ export default function HeroProduct({ data }: { data?: any }) {
   const [sliderIndex, setSliderIndex] = useState(0);
   const [cardsPerView, setCardsPerView] = useState(1);
 
-  const beaches = FEATURED_BEACHES.map((id) =>
-    beachData.find((beach) => beach.id === id)
-  ).filter((beach) => beach !== undefined) as typeof beachData;
-  const currentBeach = beaches.find((b) => b.id === selectedBeachId);
+  const [beaches, setBeaches] = useState<Beach[]>([]);
+  const currentBeach = useMemo(() => {
+    if (!beaches || !selectedBeachId) return null;
+    return beaches.find((beach: Beach) => beach.id === selectedBeachId) || null;
+  }, [beaches, selectedBeachId]);
 
   // Get all unique regions from featured beaches
-  const regions = [...new Set(beaches.map((b) => b.region))];
+  const regions = [...new Set(beaches.map((b) => b.region.name))];
   const initialRegion = regions[0];
 
   // Add a new state for tracking scraping process
@@ -106,7 +103,7 @@ export default function HeroProduct({ data }: { data?: any }) {
 
   // Use React Query's useQueries to fetch multiple regions efficiently
   const regionQueries = useQueries({
-    queries: [...new Set([initialRegion, currentBeach?.region])]
+    queries: [...new Set([initialRegion, currentBeach?.region.name])]
       .filter(Boolean)
       .map((region) => ({
         queryKey: ["surf-conditions", region],
@@ -122,7 +119,7 @@ export default function HeroProduct({ data }: { data?: any }) {
     const regionDataMap = regionQueries.reduce(
       (acc, query, index) => {
         const region = [
-          ...new Set([initialRegion, currentBeach?.region]),
+          ...new Set([initialRegion, currentBeach?.region.name]),
         ].filter(Boolean)[index];
         if (region) {
           acc[region as string] = query.data;
@@ -135,12 +132,12 @@ export default function HeroProduct({ data }: { data?: any }) {
     // Map beach IDs to their region data
     return beaches.reduce(
       (acc, beach) => {
-        acc[beach.id] = regionDataMap[beach.region] || null;
+        acc[beach.id] = regionDataMap[beach.region.name] || null;
         return acc;
       },
       {} as Record<string, BaseForecastData | null>
     );
-  }, [beaches, regionQueries, initialRegion, currentBeach?.region]);
+  }, [beaches, regionQueries, initialRegion, currentBeach?.region.name]);
 
   // Update loading state
   const isLoading = regionQueries.some((query) => query.isLoading);
@@ -449,7 +446,7 @@ export default function HeroProduct({ data }: { data?: any }) {
 
   const getBeachScore = (beach: typeof selectedBeachId) => {
     if (!beach || !surfData?.[beach]) return null;
-    const beachObj = beaches.find((b) => b.id === beach);
+    const beachObj = beaches.find((b: Beach) => b.id === beach);
     return calculateBeachScore(beachObj!, surfData[beach]);
   };
 
@@ -555,7 +552,7 @@ export default function HeroProduct({ data }: { data?: any }) {
                           transform: `translateX(-${sliderIndex * (100 / cardsPerView)}%)`,
                         }}
                       >
-                        {beaches.map((beach) => (
+                        {beaches.map((beach: Beach) => (
                           <div
                             key={beach.id}
                             className="flex-shrink-0"
@@ -661,7 +658,9 @@ export default function HeroProduct({ data }: { data?: any }) {
                       ) : currentBeachData && surfData?.[selectedBeachId] ? (
                         <ul className="space-y-0 divide-y divide-gray-100">
                           {getConditionReasons(
-                            beaches.find((b) => b.id === selectedBeachId)!,
+                            beaches.find(
+                              (b: Beach) => b.id === selectedBeachId
+                            )!,
                             surfData[selectedBeachId]!,
                             false
                           ).optimalConditions.map((condition, index) => (

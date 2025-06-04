@@ -1,12 +1,12 @@
-import type { Beach } from "@/app/types/beaches";
+import type { BeachScoreMap, BeachWithScore } from "@/app/types/scores";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { getScoreDisplay } from "@/app/lib/scoreUtils";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { useHandleSubscribe } from "@/app/hooks/useHandleSubscribe";
-import { useState, useEffect, useMemo, useRef } from "react";
-import { InfoIcon, Search, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
+import { InfoIcon, Eye } from "lucide-react";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import GoogleMapsButton from "@/app/components/GoogleMapsButton";
 import {} from "@/app/lib/videoUtils";
 import Image from "next/image";
@@ -25,15 +25,14 @@ import { cn } from "@/app/lib/utils";
 import type { ForecastData } from "@/app/types/forecast";
 
 interface BeachCardProps {
-  beach: Beach;
+  beach: BeachWithScore;
+  beachScores: BeachScoreMap;
   isFirst?: boolean;
   isLoading?: boolean;
   index: number;
-  beachScore: { score: number };
   forecastData: ForecastData | null;
   onClick: () => void;
 }
-
 const ConditionsSkeleton = () => (
   <div className="text-sm flex flex-col gap-2 animate-pulse">
     <div className="h-5 w-32 bg-gray-200 rounded mb-2"></div>
@@ -50,13 +49,11 @@ const ConditionsSkeleton = () => (
 
 export default function BeachCard({
   beach,
-
   isLoading = false,
-
-  beachScore,
   forecastData,
-}: BeachCardProps) {
+}: Omit<BeachCardProps, "beachScores" | "index" | "onClick">) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isSubscribed } = useSubscription();
   const handleSubscribe = useHandleSubscribe();
@@ -67,11 +64,8 @@ export default function BeachCard({
   const [showWaveTypeHint, setShowWaveTypeHint] = useState(false);
   const [isRegionSupported, setIsRegionSupported] = useState(true);
 
-  // Use the passed score directly instead of querying Redux
-  const scoreDisplay = useMemo(() => {
-    const score = typeof beachScore?.score === "number" ? beachScore.score : 0;
-    return getScoreDisplay(score);
-  }, [beachScore]);
+  const score = beach.score ?? 0;
+  const scoreDisplay = getScoreDisplay(score);
 
   useEffect(() => {
     // Only set loading if beach data is valid
@@ -95,32 +89,26 @@ export default function BeachCard({
       )
     : [];
 
-  const shouldBeLocked = false;
-
   const renderRating = () => {
     console.log("Rendering rating for", beach.name, {
-      score: beachScore.score,
+      score: beach.score,
       isRegionSupported,
     });
 
     if (!isRegionSupported) {
       return (
         <div className="text-sm text-[var(--color-text-secondary)]">
-          Surf forecasts coming soon for {beach.region}
+          Surf forecasts coming soon for {beach.region?.name || "this region"}
         </div>
       );
     }
 
+    const score = typeof beach.score === "number" ? beach.score : 0;
+
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((rating) => {
-          const filled = rating <= (beachScore.score || 0);
-          console.log(
-            `Star ${rating} filled:`,
-            filled,
-            "Score:",
-            beachScore.score
-          );
+          const filled = rating <= score;
           return (
             <Star
               key={rating}
@@ -140,26 +128,31 @@ export default function BeachCard({
   const isModalOpen = searchParams.get("beach") === beach.name;
 
   const handleOpenModal = (e?: React.MouseEvent<HTMLElement, MouseEvent>) => {
-    if (shouldBeLocked) return;
     e?.stopPropagation();
-
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams);
     params.set("beach", beach.name);
-    router.push(`?${params.toString()}`, { scroll: false });
+    router.push(`${pathname}?${params}`, { scroll: false });
   };
 
   const handleCloseModal = () => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams);
     params.delete("beach");
-    router.replace(`?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params}`, { scroll: false });
   };
 
-  // Remove this console log or modify it to not use Redux
-  console.log("DEBUG BeachCard:", {
-    beachName: beach.name,
-    beachId: beach.id,
-    forecastData,
-    beachScore,
+  console.log("🌊 Condition Check:", {
+    beach: {
+      name: beach.name,
+      optimalWindDirections: beach.optimalWindDirections,
+      optimalSwellDirections: beach.optimalSwellDirections,
+    },
+    forecast: {
+      windSpeed: forecastData?.windSpeed,
+      windDirection: forecastData?.windDirection,
+      swellHeight: forecastData?.swellHeight,
+      swellPeriod: forecastData?.swellPeriod,
+      swellDirection: forecastData?.swellDirection,
+    },
   });
 
   return (
@@ -177,7 +170,6 @@ export default function BeachCard({
           transition-all 
           duration-300 
           hover:shadow-md
-          ${shouldBeLocked ? "opacity-70" : ""}
           ${isLocalLoading ? "animate-pulse" : ""}
         `}
       >
@@ -229,89 +221,59 @@ export default function BeachCard({
                     )}
                   </div>
 
-                  {/* Locked/Unlocked Beach Information */}
-                  {shouldBeLocked ? (
-                    <div className="flex items-center gap-[8px]">
-                      <svg
-                        className="w-5 h-5 text-[var(--color-text-tertiary)]"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="text-[var(--color-text-tertiary)] heading-6">
-                        Members Only
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <h4
-                          className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 cursor-pointer transition-colors duration-300 hover:text-[var(--color-tertiary)]"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (shouldBeLocked) return;
-                            handleOpenModal(e);
-                          }}
-                        >
-                          {beach.name}
-                          {forecastData?.windSpeed &&
-                            forecastData.windSpeed > 25 && (
-                              <span title="Strong winds">🌪️</span>
-                            )}
-                          {beach.sharkAttack?.hasAttack && (
-                            <span title="At least 1 shark attack reported">
-                              {beach.sharkAttack.incidents?.some(
-                                (incident) =>
-                                  new Date(incident.date).getTime() >
-                                  new Date().getTime() -
-                                    5 * 365 * 24 * 60 * 60 * 1000
-                              )
-                                ? "⋆༺𓆩☠︎︎𓆪༻⋆"
-                                : "🦈"}
-                            </span>
-                          )}
-                        </h4>
-                        <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                          {beach.region}
-                        </h6>
-                      </div>
-                    </>
-                  )}
+                  {/* Beach Information */}
+                  <div>
+                    <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2">
+                      {beach.name}
+                      {forecastData?.windSpeed &&
+                        forecastData.windSpeed > 25 && (
+                          <span title="Strong winds">🌪️</span>
+                        )}
+                      {beach.sharkAttack?.hasAttack && (
+                        <span title="At least 1 shark attack reported">
+                          {beach.sharkAttack.incidents?.some(
+                            (incident) =>
+                              new Date(incident.date).getTime() >
+                              new Date().getTime() -
+                                5 * 365 * 24 * 60 * 60 * 1000
+                          )
+                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                            : "🦈"}
+                        </span>
+                      )}
+                    </h4>
+                    <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
+                      {beach.region.name}
+                    </h6>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
-                {!shouldBeLocked && (
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <GoogleMapsButton
-                      coordinates={beach.coordinates}
-                      name={beach.name}
-                      region={beach.region}
-                      location={beach.location}
-                      className="hidden md:flex"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenModal();
-                      }}
-                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-1 md:gap-2">
+                  <GoogleMapsButton
+                    coordinates={beach.coordinates}
+                    name={beach.name}
+                    region={beach.region.name}
+                    location={beach.location}
+                    className="hidden md:flex"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenModal();
+                    }}
+                    className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                  </button>
+                </div>
               </div>
 
               {/* Suitability Rating and Conditions */}
               <div className="mt-1 md:mt-3">
                 {isLoading ? (
                   <ConditionsSkeleton />
-                ) : beachScore?.score !== undefined ? (
+                ) : beach.score !== undefined ? (
                   // Show actual conditions when we have a score
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
@@ -323,9 +285,7 @@ export default function BeachCard({
                         onMouseLeave={() => setShowRatingHint(false)}
                       >
                         <div>{scoreDisplay.emoji}</div>
-                        <div className="text-amber-400">
-                          {scoreDisplay.stars}
-                        </div>
+
                         <div
                           className={`
                           absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 
@@ -438,36 +398,34 @@ export default function BeachCard({
               </div>
 
               {/* Media Grid - Now inside the card */}
-              {!shouldBeLocked && beach.videos && beach.videos.length > 0 && (
-                <div className="mt-3 md:mt-4">
-                  <MediaGrid beach={beach} videos={beach.videos} />
-                </div>
-              )}
+              <div className="mt-3 md:mt-4">
+                <MediaGrid beach={beach} videos={beach.videos} />
+              </div>
             </div>
           )}
         </div>
 
         {/* Quick View Button */}
-        {!shouldBeLocked && (
-          <div
-            className="
-            absolute 
-            bottom-2 
-            right-2 
-            md:bottom-3 
-            md:right-3 
-            opacity-0 
-            group-hover:opacity-100 
-            transition-opacity
-            bg-gray-50
-            p-1.5
-            md:p-2
-            rounded-full
-          "
-          >
-            <Eye className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-          </div>
-        )}
+        <Link
+          href={`/beach/${beach.name}`}
+          scroll={false}
+          className="
+          absolute 
+          bottom-2 
+          right-2 
+          md:bottom-3 
+          md:right-3 
+          opacity-0 
+          group-hover:opacity-100 
+          transition-opacity
+          bg-gray-50
+          p-1.5
+          md:p-2
+          rounded-full
+        "
+        >
+          <Eye className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+        </Link>
       </div>
 
       {/* Only render modal if it's the selected beach */}

@@ -1,9 +1,9 @@
-import { useAppSelector } from "@/app/redux/hooks";
 import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
+import { useBeach } from "@/app/context/BeachContext";
 
 interface RightSidebarProps {
   availableAds: any[];
@@ -16,8 +16,7 @@ export default function RightSidebar({
   selectedRegion = "Western Cape",
   beaches = [],
 }: RightSidebarProps) {
-  const { data: windData } = useAppSelector((state) => state.forecast);
-  const { allBeaches } = useAppSelector((state) => state.beaches);
+  const { forecastData, beaches: allBeaches, isLoading } = useBeach();
 
   const handleBeachClick = (beach: any) => {
     // Implement beach click handler logic
@@ -26,7 +25,10 @@ export default function RightSidebar({
   return (
     <aside className="space-y-6 lg:w-[250px] xl:w-[300px]">
       {/* Keep existing components */}
-      <WeatherForecastWidget windData={windData} />
+      <WeatherForecastWidget
+        forecastData={forecastData}
+        isLoading={isLoading}
+      />
 
       {/* Add new components */}
       {selectedRegion && (

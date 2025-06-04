@@ -26,8 +26,8 @@ export default function RegionalSidebar({
 
     // Filter ads based on selected region and category
     const regionAds = adsArray.filter((ad) => {
-      // Convert regionId to string for comparison
-      return ad.regionId.toString() === selectedRegion;
+      // Add null check before toString()
+      return ad.regionId != null && ad.regionId.toString() === selectedRegion;
     });
 
     // Group ads by category and select one from each

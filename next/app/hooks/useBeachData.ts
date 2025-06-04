@@ -1,7 +1,7 @@
 // hooks/useBeachData.ts
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { isBeachSuitable } from "@/app/lib/surfUtils";
+import { calculateBeachScore } from "@/app/lib/scoreUtils";
 import type { Beach } from "@/app/types/beaches";
 
 export function useBeachData(
@@ -28,16 +28,16 @@ export function useBeachData(
     if (!allWindData) return {};
 
     const scores: Record<string, number> = {};
-    
+
     initialBeaches.forEach((beach) => {
       try {
-        const { score } = isBeachSuitable(beach, allWindData);
+        const { score } = calculateBeachScore(beach, allWindData);
         scores[beach.id] = score;
       } catch (error) {
         console.error(`Error calculating score for ${beach.name}:`, error);
       }
     });
-    
+
     return scores;
   }, [allWindData, initialBeaches]);
 
@@ -74,6 +74,6 @@ export function useBeachData(
     allWindData,
     isAllDataLoading,
     beachScores,
-    beachCounts
+    beachCounts,
   };
 }

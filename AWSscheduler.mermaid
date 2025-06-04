@@ -1,0 +1,39 @@
+ ```mermaid
+graph LR
+    A[Vercel Cron] -->|Adds jobs| B[SQS Queue]
+    B -->|Triggers| C[Lambda Worker]
+    C --> D[Fetch Surf Data]
+    D --> E[Send Alerts]
+```
+
+Technical Depth:
+
+- Designed a fault-tolerant alert system using SQS dead-letter queues for failed messages
+- Implemented auto-scaling Lambda workers to handle variable surf data API response times
+
+Architecture Decisions:
+
+- Chose SQS over Redis for fully-managed, durable queueing
+- Used Lambda for cost-effective compute that scales to zero
+
+Operational:
+
+- Added CloudWatch alarms for queue depth monitoring
+- Implemented exponential backoff for surf API retries
+
+Implementation Apporach:
+
+1 Cron Job (e.g., runs every 10 minutes on Vercel)
+→ Acts like a "dispatcher" that checks the database for alerts due right now.
+
+Database as a Queue
+Alerts are stored with precomputed nextCheckUTC timestamps.
+The cron job queries:
+
+sql
+SELECT * FROM alerts WHERE nextCheckUTC <= NOW()
+→ Only processes alerts that are "ripe" at this exact cron run.
+
+Timezone Magic
+Each alert’s nextCheckUTC is precalculated to match the user’s local time (e.g., 7 AM in Sydney = 21:00 UTC the prior day).
+→ The same cron job naturally picks up alerts for all timezones.

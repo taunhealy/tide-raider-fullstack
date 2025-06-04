@@ -323,19 +323,27 @@ async function dedupedEnsureGoodRatings(
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const region = searchParams.get("region") as ValidRegion;
+  const regionId = searchParams.get("regionId");
 
-  if (!region || !isValidRegion(region)) {
+  // Get the region data first
+  const region = await prisma.region.findUnique({
+    where: { id: regionId || "" },
+  });
+
+  if (!region) {
     return NextResponse.json(
-      { error: "Invalid or missing region parameter" },
+      { error: "Invalid or missing region" },
       { status: 400 }
     );
   }
 
-  console.log(`=== Starting GET request for ${region} ===`);
+  console.log(`=== Starting GET request for ${region.name} ===`);
 
   try {
-    const conditions = await getLatestConditions(false, region);
+    const conditions = await getLatestConditions(
+      false,
+      region.name as ValidRegion
+    );
     if (!conditions) {
       return NextResponse.json(
         { error: "No conditions found" },
@@ -344,7 +352,7 @@ export async function GET(request: Request) {
     }
 
     // Use the deduped version instead
-    await dedupedEnsureGoodRatings(region, conditions.date, conditions);
+    await dedupedEnsureGoodRatings(region.name, conditions.date, conditions);
 
     return NextResponse.json(conditions);
   } catch (error) {

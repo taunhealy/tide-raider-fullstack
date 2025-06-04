@@ -11,18 +11,23 @@ export function filterBeaches(beaches: Beach[], filters: FilterType): Beach[] {
   if (!beaches?.length) return [];
 
   // If selectedRegion is set, only show beaches from that region
-  if (filters.region?.length) {
-    beaches = beaches.filter((beach) => filters.region.includes(beach.region));
+  if (filters.location.region) {
+    beaches = beaches.filter(
+      (beach) => beach.region.name === filters.location.region
+    );
   }
 
   const filtered = beaches.filter((beach) => {
     // Only apply other filters if they are set
     if (
-      filters.continent.length > 0 &&
-      !filters.continent.includes(beach.continent)
+      filters.location.continent &&
+      !filters.location.continent.includes(beach.continent)
     )
       return false;
-    if (filters.country.length > 0 && !filters.country.includes(beach.country))
+    if (
+      filters.location.country &&
+      !filters.location.country.includes(beach.country)
+    )
       return false;
     if (
       filters.waveType.length > 0 &&
@@ -52,7 +57,7 @@ export function filterBeaches(beaches: Beach[], filters: FilterType): Beach[] {
   console.log("🎯 filterBeaches result:", {
     filteredCount: filtered.length,
     sampleFilteredBeach: filtered[0],
-    region: filters.region,
+    region: filters.location.region,
   });
 
   return filtered;

@@ -1,24 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAppSelector } from "@/app/redux/hooks";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
-import { selectBeachAttributes } from "../../redux/selectors";
+import { useBeach } from "@/app/context/BeachContext";
+import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
 
 // Optional: Use react-leaflet if you have it installed
 // import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 // import "leaflet/dist/leaflet.css";
 
 export default function MapView() {
-  const { uniqueRegions } = useAppSelector(selectBeachAttributes);
+  const { beaches, beachScores, forecastData: windData } = useBeach();
+  const { uniqueRegions } = useBeachAttributes(beaches);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-
-  // Get data from Redux store
-  const { filteredBeaches, beachScores } = useAppSelector(
-    (state) => state.beaches
-  );
-
-  const { data: windData } = useAppSelector((state) => state.forecast);
 
   // Client-side only
   useEffect(() => {
@@ -46,7 +40,7 @@ export default function MapView() {
           Map View
         </h3>
         <p className="text-sm text-gray-600 font-primary">
-          Interactive map showing {filteredBeaches.length} surf spots
+          Interactive map showing {beaches.length} surf spots
         </p>
       </div>
 
@@ -65,8 +59,7 @@ export default function MapView() {
               >
                 {region}
                 <div className="text-xs text-gray-500 mt-1">
-                  {filteredBeaches.filter((b) => b.region === region).length}{" "}
-                  spots
+                  {beaches.filter((b) => b.region.name === region).length} spots
                 </div>
               </div>
             ))}
@@ -80,8 +73,8 @@ export default function MapView() {
         </div>
         <div className="text-sm text-gray-600 font-primary">
           Data updated:{" "}
-          {windData?.timestamp
-            ? new Date(windData.timestamp).toLocaleString()
+          {windData?.updatedAt
+            ? new Date(windData.updatedAt).toLocaleString()
             : "N/A"}
         </div>
       </div>

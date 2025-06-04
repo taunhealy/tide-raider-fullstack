@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 import { format } from "date-fns";
 import { Event } from "../types/events";
 import { useSession } from "next-auth/react";
 
 export default function EventsSidebar() {
+  const { beaches } = useBeach();
   const [events, setEvents] = useState<Event[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,27 +19,28 @@ export default function EventsSidebar() {
     link: "",
   });
 
-
-  // when check for ownership, compares 'event.userId' with 'session.user.id'.
   const { data: session } = useSession();
 
-  // Extract unique countries and regions from beach data
   const { countries, regionsByCountry } = useMemo(() => {
+    if (!beaches || beaches.length === 0) {
+      return { countries: [], regionsByCountry: {} };
+    }
+
     const uniqueCountries = Array.from(
-      new Set(beachData.map((beach) => beach.country))
+      new Set(beaches.map((beach) => beach.country))
     ).sort();
-    const regionMap = beachData.reduce(
+
+    const regionMap = beaches.reduce(
       (acc, beach) => {
         if (!acc[beach.country]) {
           acc[beach.country] = new Set();
         }
-        acc[beach.country].add(beach.region);
+        acc[beach.country].add(beach.region.name);
         return acc;
       },
       {} as Record<string, Set<string>>
     );
 
-    // Convert Sets to sorted arrays
     const regionsByCountry = Object.fromEntries(
       Object.entries(regionMap).map(([country, regions]) => [
         country,
@@ -47,7 +49,7 @@ export default function EventsSidebar() {
     );
 
     return { countries: uniqueCountries, regionsByCountry };
-  }, []);
+  }, [beaches]);
 
   useEffect(() => {
     fetchEvents();

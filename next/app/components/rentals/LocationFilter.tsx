@@ -3,7 +3,9 @@
 import { cn } from "@/app/lib/utils";
 import { RentalItemWithRelations } from "@/app/types/rentals";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useBeach } from "@/app/context/BeachContext";
+import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
 
 export type LocationFilterType = {
   continent: string | null;
@@ -35,7 +37,11 @@ export function LocationFilter({
   const [uniqueRegions, setUniqueRegions] = useState<string[]>([]);
   const [uniqueBeaches, setUniqueBeaches] = useState<string[]>([]);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { filters, setFilters } = useBeach();
+  const { beaches } = useBeach();
+  const { uniqueRegions: beachUniqueRegions } = useBeachAttributes(beaches);
 
   useEffect(() => {
     // Extract unique location data from filtered items only
@@ -87,9 +93,10 @@ export function LocationFilter({
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    // Create a new URLSearchParams instance
+    const params = new URLSearchParams(searchParams);
 
-    // Update location filter params
+    // Update the parameters
     Object.entries(locationFilters).forEach(([key, value]) => {
       if (value) {
         params.set(key, value);
@@ -98,12 +105,9 @@ export function LocationFilter({
       }
     });
 
-    // Create the new URL
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-
-    // Update the URL without forcing a navigation
-    window.history.pushState({}, "", newUrl);
-  }, [locationFilters, searchParams]);
+    // Use Next.js router to update URL
+    router.push(`${pathname}?${params}`, { scroll: false });
+  }, [locationFilters, router, pathname, searchParams]);
 
   const hasActiveFilters =
     Object.values(locationFilters).some((value) => value !== null) ||
@@ -112,6 +116,28 @@ export function LocationFilter({
   // Check if we should show the "No rental items" message
   const showNoItemsMessage =
     hasOtherActiveFilters && initialRentalItems.length === 0;
+
+  const selectRegion = (regionName: string) => {
+    try {
+      const currentLocation = filters?.location || {
+        region: "",
+        regionId: "",
+        country: "",
+        continent: "",
+      };
+      const newLocation = {
+        ...currentLocation,
+        region: currentLocation.region === regionName ? "" : regionName,
+      };
+      setFilters({ ...filters, location: newLocation });
+    } catch (error) {
+      console.error("Error selecting region:", error);
+      setFilters({
+        ...filters,
+        location: { region: "", regionId: "", country: "", continent: "" },
+      });
+    }
+  };
 
   return (
     <div className="mb-6 space-y-4">
@@ -233,12 +259,7 @@ export function LocationFilter({
                       .map((region) => (
                         <button
                           key={region}
-                          onClick={() =>
-                            onLocationFilterChange(
-                              "region",
-                              locationFilters.region === region ? null : region
-                            )
-                          }
+                          onClick={() => selectRegion(region)}
                           className={cn(
                             "px-4 py-2 rounded-full text-sm font-medium transition-colors font-primary",
                             locationFilters.region === region

@@ -120,7 +120,7 @@ export default function BeachDetailsModal({
         <div className="grid grid-cols-2 gap-6 py-4 border-b border-gray-200">
           {/* Details Section */}
           <div className="space-y-3">
-            <DetailItem label="Region" value={beach.region} />
+            <DetailItem label="Region" value={beach.region.name} />
             <DetailItem label="Location" value={beach.location} />
             <DetailItem
               label="Distance"

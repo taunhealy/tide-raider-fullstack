@@ -1,19 +1,10 @@
 // app/components/StickyForecastWidget.tsx
 "use client";
 
-import { useAppSelector } from "@/app/redux/hooks";
-import { WindData } from "@/app/types/wind";
-import {
-  getWindEmoji,
-  getSwellEmoji,
-  getDirectionEmoji,
-  degreesToCardinal,
-} from "@/app/lib/forecastUtils";
-import { cn } from "@/app/lib/utils";
+import { useBeach } from "@/app/context/BeachContext";
 
 export default function StickyForecastWidget() {
-  const { data: windData } = useAppSelector((state) => state.forecast);
-  const { selectedRegion } = useAppSelector((state) => state.filters);
+  const { forecastData: windData, selectedRegion } = useBeach();
 
   // Format the data for display
   const forecast = windData

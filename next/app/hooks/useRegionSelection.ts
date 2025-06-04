@@ -1,29 +1,23 @@
-// hooks/useRegionSelection.ts
-import { useState } from 'react';
-import type { FilterType, Region } from '@/app/types/beaches';
+import { useState } from "react";
 
-export function useRegionSelection(filters: FilterType, setFilters: (filters: FilterType) => void) {
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
-  const [isLoadingRegion, setIsLoadingRegion] = useState(false);
+// hooks/useRegion.ts
+export function useRegion(options?: {
+  onRegionChange?: (region: string | null) => void;
+  initialRegions?: string[];
+}) {
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [regions, setRegions] = useState<string[]>(options?.initialRegions || []);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegionChange = (newRegion: string) => {
-    setSelectedRegion(newRegion);
-    const newFilters = { ...filters };
-    newFilters.region = [newRegion as Region];
-    setFilters(newFilters);
-
-    // Set loading state
-    setIsLoadingRegion(true);
-
-    // Reset loading state after data is loaded or after timeout
-    setTimeout(() => {
-      setIsLoadingRegion(false);
-    }, 3500);
+  const handleRegionChange = (region: string | null) => {
+    setSelectedRegion(region);
+    options?.onRegionChange?.(region);
   };
 
   return {
     selectedRegion,
-    isLoadingRegion,
+    regions,
+    isLoading,
     handleRegionChange
   };
 }
