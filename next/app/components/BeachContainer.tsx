@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { BaseForecastData } from "@/app/types/forecast";
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -13,6 +14,24 @@ import { blogListingQuery } from "@/app/lib/queries";
 import BeachListView from "./raid/BeachListView";
 import { useEffect, useState } from "react";
 import { useBeach } from "@/app/context/BeachContext";
+
+// Loading components
+function BeachListViewSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="h-12 bg-gray-200 rounded animate-pulse" />
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-48 bg-gray-200 rounded animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SidebarSkeleton() {
+  return <div className="w-full h-96 bg-gray-200 rounded animate-pulse" />;
+}
 
 // Move the fetch function outside component for reusability
 const fetchRegionData = async (regionId: string) => {
@@ -162,33 +181,40 @@ export default function BeachContainer() {
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
-        <LeftSidebar blogPosts={blogPosts} />
+        <Suspense fallback={<SidebarSkeleton />}>
+          <LeftSidebar blogPosts={blogPosts} />
+        </Suspense>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
-            <BeachListView
-              beaches={filteredBeaches}
-              regions={allRegions}
-              filters={filters}
-              setFilters={setFilters}
-              isLoading={isLoading}
-              forecastData={forecastData}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              showFilters={showFilters}
-              setShowFilters={setShowFilters}
-            />
+            <Suspense fallback={<BeachListViewSkeleton />}>
+              <BeachListView
+                beaches={filteredBeaches}
+                regions={allRegions}
+                filters={filters}
+                setFilters={setFilters}
+                forecastData={forecastData}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                showFilters={showFilters}
+                setShowFilters={setShowFilters}
+              />
+            </Suspense>
           </main>
 
-          <RightSidebar
-            availableAds={ads}
-            selectedRegion={filters.location.region}
-          />
+          <Suspense fallback={<SidebarSkeleton />}>
+            <RightSidebar
+              availableAds={ads}
+              selectedRegion={filters.location.region}
+            />
+          </Suspense>
         </div>
       </div>
 
-      <StickyForecastWidget />
+      <Suspense fallback={null}>
+        <StickyForecastWidget />
+      </Suspense>
     </div>
   );
 }

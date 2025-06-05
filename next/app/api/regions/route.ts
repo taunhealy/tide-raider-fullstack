@@ -8,12 +8,18 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        country: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         name: "asc",
       },
     });
-    
+
     return NextResponse.json(regions);
   } catch (error) {
     console.error("Error fetching regions:", error);

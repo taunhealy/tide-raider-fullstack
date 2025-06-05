@@ -10,9 +10,11 @@ export interface ButtonProps
     | "outline"
     | "ghost"
     | "link"
-    | "secondary";
+    | "secondary"
+    | "regions";
   size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
+  isActive?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -22,6 +24,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "default",
       size = "default",
       isLoading,
+      isActive = false,
       children,
       disabled,
       ...props
@@ -49,6 +52,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               variant === "link",
             "bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-400":
               variant === "secondary",
+            "rounded-full text-sm font-primary px-3 py-1.5":
+              variant === "regions",
+            "bg-[var(--color-badge-active)] text-white focus-visible:ring-[var(--color-badge-active)]":
+              variant === "regions" && isActive,
+            "bg-white text-black border border-gray-200 hover:bg-gray-50 focus-visible:ring-gray-300":
+              variant === "regions" && !isActive,
           },
           // Size styles
           {
@@ -108,6 +117,7 @@ export const buttonVariants = cva(
         outline:
           "border border-input hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
+        regions: "rounded-full px-3 py-1.5 text-sm font-primary",
       },
       size: {
         default: "h-10 py-2 px-4",

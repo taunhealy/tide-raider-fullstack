@@ -11,15 +11,22 @@ export interface Region {
   id: string;
   name: string;
   countryId: string;
+  country?: Country;
   continent?: string;
-  country?: Country; // Add this if you need to access country info
 }
 
 export interface Country {
   id: string;
   name: string;
   continentId: string;
+  continent?: Continent;
 }
+
+export interface Continent {
+  id: string;
+  name: string;
+}
+
 export type Difficulty =
   | "Beginner"
   | "Intermediate"
@@ -60,8 +67,8 @@ export type WaveType = (typeof WAVE_TYPES)[number];
 export interface Beach {
   id: string;
   name: string;
-  continent: string;
-  country: string;
+  continent: Continent;
+  country: Country;
   region: Region;
   regionId: string;
   isHiddenGem?: boolean | undefined;

@@ -304,9 +304,7 @@ export default function BeachCard({
                       <ul className="space-y-1.5">
                         {getConditionReasons(
                           beach,
-                          forecastData?.forecasts?.[
-                            Object.keys(forecastData?.forecasts || {})[0]
-                          ] || null,
+                          forecastData,
                           false
                         ).optimalConditions.map((condition, index, array) => (
                           <li
@@ -368,7 +366,7 @@ export default function BeachCard({
                     </div>
                   </div>
                 ) : (
-                  // Show optimal conditions when no windData is available
+                  // Show optimal conditions when no surf data is available
                   <div className="text-sm flex flex-col gap-1">
                     <p className="text-base font-semibold font-primary md:text-lg">
                       Optimal Conditions:

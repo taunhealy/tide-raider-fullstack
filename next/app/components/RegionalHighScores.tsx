@@ -1,7 +1,5 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { DEFAULT_PROFILE_IMAGE } from "@/app/lib/constants";
@@ -119,7 +117,7 @@ export default function RegionalHighScores({
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
       <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
-        {selectedRegion ? `Top Breaks in ${selectedRegion}` : "Top Breaks"}
+        {selectedRegion ? `High Scores in ${selectedRegion}` : "High Scores"}
       </h3>
 
       {!selectedRegion ? (

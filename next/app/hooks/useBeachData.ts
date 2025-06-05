@@ -55,13 +55,13 @@ export function useBeachData(
 
       if (data.count > 0) {
         const regionBeach = initialBeaches.find(
-          (b) => b.region === selectedRegion
+          (b) => b.region.name === selectedRegion
         );
         if (regionBeach) {
           return {
-            [regionBeach.region]: data.count,
-            [regionBeach.country]: data.count,
-            [regionBeach.continent]: data.count,
+            [regionBeach.region.name]: data.count,
+            [regionBeach.country.name]: data.count,
+            [regionBeach.continent.name]: data.count,
           };
         }
       }

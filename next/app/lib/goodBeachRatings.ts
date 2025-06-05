@@ -1,6 +1,5 @@
+import { Beach } from "@/app/types/beaches";
 import { prisma } from "@/app/lib/prisma";
-import { beachData } from "@/app/types/beaches";
-import { randomUUID } from "crypto";
 import type { CoreForecastData } from "@/app/types/forecast";
 import { NextResponse } from "next/server";
 import { calculateBeachScore } from "@/app/lib/scoreUtils";
@@ -16,7 +15,13 @@ export async function storeGoodBeachRatings(
     );
     console.log("Forecast data:", forecast);
 
-    const regionBeaches = beachData.filter((b) => b.region === region);
+    const regionBeaches = await prisma.beach.findMany({
+      where: {
+        region: {
+          name: region,
+        },
+      },
+    });
     console.log(`📍 Found ${regionBeaches.length} beaches in ${region}`);
 
     if (regionBeaches.length === 0) {

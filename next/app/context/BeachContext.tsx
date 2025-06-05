@@ -14,8 +14,12 @@ import type { BeachWithScore, BeachScoreMap } from "@/app/types/scores";
 import { usePagination } from "@/app/hooks/usePagination";
 import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
 import type { FilterType } from "@/app/types/beaches";
-import { calculateBeachScore } from "@/app/lib/scoreUtils";
+import {
+  calculateBeachScore,
+  calculateRegionCounts,
+} from "@/app/lib/scoreUtils";
 import { filterBeaches } from "@/app/lib/filterUtils";
+import { sortBeachesByScore } from "@/app/lib/beachSortUtils";
 
 interface BeachFilters {
   waveType: string[];
@@ -35,6 +39,7 @@ interface BeachContextType {
   isLoading: boolean;
   isCalculating: boolean;
   beachScores: BeachScoreMap;
+  regionCounts: Record<string, number>;
   selectedRegion: string | null;
   currentPage: number;
   setCurrentPage: (page: number) => void;
@@ -98,16 +103,39 @@ export function BeachProvider({
     }));
   }, [beaches, forecastData, beachScores]);
 
-  // More defensive code for filtering
-  const filteredBeaches = useMemo(() => {
-    if (!beachesWithScores || !beachesWithScores.length) return [];
+  // Add regionCounts calculation to the useMemo where we handle beachScores
+  const { filteredBeaches, regionCounts } = useMemo(() => {
+    if (!beachesWithScores || !beachesWithScores.length)
+      return {
+        filteredBeaches: [],
+        regionCounts: {},
+      };
+
     try {
-      return filterBeaches(beachesWithScores, filters) as BeachWithScore[];
+      // First filter the beaches
+      const filtered = filterBeaches(
+        beachesWithScores,
+        filters
+      ) as BeachWithScore[];
+
+      // Then sort them based on score
+      const sortedBeaches = sortBeachesByScore(filtered);
+
+      // Calculate region counts from beach scores
+      const counts = calculateRegionCounts(beachScores);
+
+      return {
+        filteredBeaches: sortedBeaches,
+        regionCounts: counts,
+      };
     } catch (error) {
-      console.error("Error filtering beaches:", error);
-      return [];
+      console.error("Error filtering/sorting beaches:", error);
+      return {
+        filteredBeaches: [],
+        regionCounts: {},
+      };
     }
-  }, [beachesWithScores, filters]);
+  }, [beachesWithScores, filters, beachScores]);
 
   // Pagination on filtered results
   const { currentItems, totalPages } = usePagination(
@@ -143,7 +171,10 @@ export function BeachProvider({
       // Calculate scores for each beach
       const scores = beaches.reduce((acc, beach) => {
         const { score } = calculateBeachScore(beach, conditions);
-        acc[beach.id] = { score };
+        acc[beach.id] = {
+          score,
+          region: beach.region.name,
+        };
         return acc;
       }, {} as BeachScoreMap);
 
@@ -226,6 +257,7 @@ export function BeachProvider({
     isLoading,
     isCalculating,
     beachScores,
+    regionCounts,
     selectedRegion,
     currentPage,
     setCurrentPage,

@@ -321,6 +321,7 @@ export function calculateRegionScores(
   return scores;
 }
 
+//calculate region counts of good beaches
 export function calculateRegionCounts(
   beachScores: Record<string, { score: number; region: string }>
 ): Record<string, number> {

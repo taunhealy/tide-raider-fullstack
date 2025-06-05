@@ -3,6 +3,7 @@ import { Beach } from "./beaches";
 
 export interface BeachScore {
   score: number;
+  region: string;
 }
 
 export type BeachScoreMap = Record<string, BeachScore>;

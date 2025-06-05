@@ -10,25 +10,16 @@ export function filterBeaches(beaches: Beach[], filters: FilterType): Beach[] {
 
   if (!beaches?.length) return [];
 
-  // If selectedRegion is set, only show beaches from that region
-  if (filters.location.region) {
-    beaches = beaches.filter(
-      (beach) => beach.region.name === filters.location.region
-    );
-  }
-
   const filtered = beaches.filter((beach) => {
-    // Only apply other filters if they are set
+    // Only filter by region for beach cards display
     if (
-      filters.location.continent &&
-      !filters.location.continent.includes(beach.continent)
-    )
+      filters.location.region &&
+      beach.region.name !== filters.location.region
+    ) {
       return false;
-    if (
-      filters.location.country &&
-      !filters.location.country.includes(beach.country)
-    )
-      return false;
+    }
+
+    // Apply other non-location filters
     if (
       filters.waveType.length > 0 &&
       !filters.waveType.includes(beach.waveType)

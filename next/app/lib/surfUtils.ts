@@ -224,23 +224,3 @@ export function isWindDirectionSimilar(
 
   return normalizedOptimal.some((optimal) => normalizedWind === optimal);
 }
-
-//calculate region counts
-export function calculateRegionCounts(
-  beachScores: Record<
-    string,
-    { score: number; suitable: boolean; region: string }
-  >
-): Record<string, number> {
-  const counts: Record<string, number> = {};
-
-  // Count beaches with suitable conditions by region
-  Object.values(beachScores).forEach((beachData) => {
-    if (beachData.suitable && beachData.score >= 4) {
-      const region = beachData.region;
-      counts[region] = (counts[region] || 0) + 1;
-    }
-  });
-
-  return counts;
-}

@@ -16,7 +16,6 @@ interface BeachListViewProps {
   beaches: BeachWithScore[];
   filters: FilterType;
   setFilters: (filters: FilterType) => void;
-  isLoading: boolean;
   forecastData: ForecastData | null;
   currentPage: number;
   totalPages: number;
@@ -30,7 +29,6 @@ export default function BeachListView({
   beaches,
   filters,
   setFilters,
-  isLoading,
   forecastData,
   currentPage,
   showFilters,
@@ -130,7 +128,7 @@ export default function BeachListView({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-5">
       <BeachHeaderControls
         filters={filters}
         setFilters={setFilters}
@@ -146,7 +144,6 @@ export default function BeachListView({
             key={beach.name}
             beach={beach}
             isFirst={index === 0}
-            isLoading={isLoading}
             forecastData={forecastData}
           />
         ))}
