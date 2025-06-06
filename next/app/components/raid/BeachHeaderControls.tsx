@@ -2,23 +2,22 @@ import { cn } from "@/app/lib/utils";
 import SearchBar from "../SearchBar";
 
 import LocationFilter from "../LocationFilter";
-import { FilterType, Region } from "@/app/types/beaches";
+import { Region } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 
 interface BeachHeaderControlsProps {
-  filters: FilterType;
-  setFilters: (filters: FilterType) => void;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
   regions: Region[];
 }
 
 export default function BeachHeaderControls({
-  filters,
-  setFilters,
   showFilters,
   setShowFilters,
   regions,
 }: BeachHeaderControlsProps) {
+  const { filters, setFilters } = useBeach();
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:gap-6">

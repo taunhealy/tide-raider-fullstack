@@ -5,10 +5,8 @@ import Link from "next/link";
 import type { Post } from "@/app/types/blog";
 import type { Trip } from "@/app/types/blog";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { PortableText } from "@portabletext/react";
-import { formatCountryList } from "@/app/lib/formatters";
 
 interface BlogPostsSidebarProps {
   posts: {
@@ -34,6 +32,17 @@ export default function BlogPostsSidebar({
     selectedContinent,
   });
 
+  // Add this new query to fetch countries from database
+  const { data: dbCountries } = useQuery({
+    queryKey: ["countries"],
+    queryFn: async () => {
+      const res = await fetch("/api/location");
+      if (!res.ok) throw new Error("Failed to fetch countries");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 60, // Cache for an hour
+  });
+
   // Fetch all recent blog posts (original functionality)
   const { data: freshPosts, isLoading: isLoadingAll } = useQuery({
     queryKey: ["blogPosts"],
@@ -56,34 +65,77 @@ export default function BlogPostsSidebar({
     enabled: true,
   });
 
-  // Fetch filtered blog posts based on selected country
+  // Replace the existing filteredPosts query with this one
   const { data: filteredPosts, isLoading } = useQuery({
-    queryKey: ["filteredBlogPosts", selectedCountry, selectedContinent],
+    queryKey: [
+      "filteredBlogPosts",
+      selectedCountry,
+      selectedContinent,
+      dbCountries,
+    ],
     queryFn: async () => {
-      // Build query params based on what's selected
-      const params = new URLSearchParams();
-      if (selectedCountry) params.append("country", selectedCountry);
-      if (selectedContinent) params.append("continent", selectedContinent);
+      console.log("Selected country in filteredPosts query:", selectedCountry);
 
-      console.log(`Fetching blog posts with params: ${params.toString()}`);
-      const response = await fetch(`/api/blog-posts?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch filtered posts");
-      const data = await response.json();
-      console.log("Filtered blog posts API response:", data);
+      if (selectedCountry) {
+        // Get travel posts
+        const travelResponse = await fetch("/api/posts?category=travel");
+        const travelData = await travelResponse.json();
 
-      // Return the data in the expected format
+        console.log("All travel posts:", travelData);
+
+        // Find the country name from the database countries
+        const countryName =
+          dbCountries?.find(
+            (c: { id: string; name: string }) => c.id === selectedCountry
+          )?.name || selectedCountry;
+
+        console.log("Looking for posts with country:", countryName);
+
+        // Filter posts by country using available data sources
+        const filteredPosts = travelData.filter((post: Post) => {
+          // Check if the post has the country in its countries array
+          if (post.countries && post.countries.includes(selectedCountry)) {
+            return true;
+          }
+
+          // Check if trip.country is using country ID format (e.g., "australia")
+          if (post.trip && post.trip.country === selectedCountry) {
+            return true;
+          }
+
+          // Check if trip.country is using country name format (e.g., "Australia")
+          if (post.trip && post.trip.country === countryName) {
+            return true;
+          }
+
+          // Check if the post title contains the country name (fallback)
+          if (post.title && post.title.includes(countryName)) {
+            return true;
+          }
+
+          return false;
+        });
+
+        console.log(
+          `Found ${filteredPosts.length} posts for country "${countryName}":`,
+          filteredPosts
+        );
+
+        return {
+          posts: filteredPosts,
+          trip: posts.trip,
+          categories: posts.categories,
+        };
+      }
+
       return {
-        posts: Array.isArray(data) ? data : [],
+        posts: [],
         trip: posts.trip,
         categories: posts.categories,
       };
     },
-    // Only run this query if a location filter is selected
-    enabled: !!(selectedCountry || selectedContinent),
-    // Don't use initialData as it might have the wrong structure
-    initialData: undefined,
-    // Add these options for performance
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!selectedCountry && !!dbCountries,
+    staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -115,9 +167,23 @@ export default function BlogPostsSidebar({
     enabled: true,
   });
 
-  // Determine which posts to display
-  const displayData =
-    selectedCountry || selectedContinent ? filteredPosts : freshPosts;
+  // Update the display logic to be more explicit
+  const displayData = (() => {
+    if (selectedCountry || selectedContinent) {
+      // If we have filtered posts, use them
+      if (
+        filteredPosts &&
+        Array.isArray(filteredPosts.posts) &&
+        filteredPosts.posts.length > 0
+      ) {
+        return filteredPosts;
+      }
+      // If no filtered posts found, fall back to travel posts
+      return travelPosts;
+    }
+    // If no filters selected, show travel posts
+    return travelPosts || freshPosts;
+  })();
 
   console.log("Display data:", displayData);
 
@@ -133,11 +199,17 @@ export default function BlogPostsSidebar({
         <div className="flex items-center justify-between mb-6">
           <h3 className="heading-6 mr-4">
             {selectedCountry
-              ? `Posts from ${HARDCODED_COUNTRIES.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
-              : "Recent Posts"}
+              ? `Posts from ${dbCountries?.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
+              : selectedContinent
+                ? `Posts from ${selectedContinent}`
+                : "Travel Posts"}
           </h3>
           <Link
-            href="/blog"
+            href={
+              selectedCountry || selectedContinent
+                ? "/blog"
+                : "/blog?category=travel"
+            }
             className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
           >
             View All
@@ -216,11 +288,21 @@ export default function BlogPostsSidebar({
                       <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors">
                         {post.title}
                       </h4>
-                      {post.countries && post.countries.length > 0 && (
-                        <div className="text-[12px] text-[var(--color-text-tertiary)] mb-1 font-primary">
-                          {formatCountryList(post.countries)}
+                      {/* Location subtitle - try different sources in order of preference */}
+                      {post.countries && post.countries.length > 0 ? (
+                        <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
+                          {dbCountries
+                            ?.filter((c) => post.countries.includes(c.id))
+                            .map((c) => c.name)
+                            .join(" • ") || "Travel Post"}
                         </div>
-                      )}
+                      ) : post.trip ? (
+                        <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
+                          {[post.trip.region, post.trip.country]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </div>
+                      ) : null}
                       {post.description && (
                         <p className="text-main text-[12px] line-clamp-2 font-primary">
                           {typeof post.description === "string" ? (
@@ -229,13 +311,6 @@ export default function BlogPostsSidebar({
                             <PortableText value={post.description} />
                           )}
                         </p>
-                      )}
-                      {post.trip && (
-                        <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
-                          {[post.trip.region, post.trip.country]
-                            .filter(Boolean)
-                            .join(" • ")}
-                        </div>
                       )}
                     </div>
                   </article>
@@ -275,11 +350,17 @@ export default function BlogPostsSidebar({
       <div className="flex items-center justify-between mb-6">
         <h3 className="heading-6 mr-4">
           {selectedCountry
-            ? `Posts from ${HARDCODED_COUNTRIES.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
-            : "Recent Posts"}
+            ? `Posts from ${dbCountries?.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
+            : selectedContinent
+              ? `Posts from ${selectedContinent}`
+              : "Travel Posts"}
         </h3>
         <Link
-          href="/blog"
+          href={
+            selectedCountry || selectedContinent
+              ? "/blog"
+              : "/blog?category=travel"
+          }
           className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
         >
           View All
@@ -310,11 +391,21 @@ export default function BlogPostsSidebar({
                 <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors">
                   {post.title}
                 </h4>
-                {post.countries && post.countries.length > 0 && (
-                  <div className="text-[12px] text-[var(--color-text-tertiary)] mb-1 font-primary">
-                    {formatCountryList(post.countries)}
+                {/* Location subtitle - try different sources in order of preference */}
+                {post.countries && post.countries.length > 0 ? (
+                  <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
+                    {dbCountries
+                      ?.filter((c) => post.countries.includes(c.id))
+                      .map((c) => c.name)
+                      .join(" • ") || "Travel Post"}
                   </div>
-                )}
+                ) : post.trip ? (
+                  <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
+                    {[post.trip.region, post.trip.country]
+                      .filter(Boolean)
+                      .join(" • ")}
+                  </div>
+                ) : null}
                 {post.description && (
                   <p className="text-main text-[12px] line-clamp-2 font-primary">
                     {typeof post.description === "string" ? (
@@ -323,13 +414,6 @@ export default function BlogPostsSidebar({
                       <PortableText value={post.description} />
                     )}
                   </p>
-                )}
-                {post.trip && (
-                  <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
-                    {[post.trip.region, post.trip.country]
-                      .filter(Boolean)
-                      .join(" • ")}
-                  </div>
                 )}
               </div>
             </article>

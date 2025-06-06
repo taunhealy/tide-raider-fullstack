@@ -45,7 +45,6 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`Found ${beaches.length} beaches for region: ${regionId}`);
     return NextResponse.json(beaches);
   } catch (error) {
     console.error("Error fetching beaches:", error);

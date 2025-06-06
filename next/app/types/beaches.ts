@@ -50,6 +50,12 @@ export interface FilterType {
   sharkAttack: string[];
   minDistance?: number;
   searchQuery: string;
+  hasAttack: boolean;
+  incidents?: {
+    date: string;
+    outcome: "Fatal" | "Non-fatal" | "Unknown";
+    details: string;
+  }[];
 }
 
 export const WAVE_TYPES = [

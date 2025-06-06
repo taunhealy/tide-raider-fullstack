@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { BaseForecastData } from "@/app/types/forecast";
 import StickyForecastWidget from "./StickyForecastWidget";
+import { calculateRegionScores } from "@/app/lib/scoreUtils";
 
 import RightSidebar from "./raid/RightSidebar";
 import LeftSidebar from "./raid/LeftSidebar";
@@ -12,8 +13,9 @@ import { useSubscription } from "@/app/context/SubscriptionContext";
 import { client } from "@/app/lib/sanity";
 import { blogListingQuery } from "@/app/lib/queries";
 import BeachListView from "./raid/BeachListView";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useBeach } from "@/app/context/BeachContext";
+import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 
 // Loading components
 function BeachListViewSkeleton() {
@@ -106,16 +108,17 @@ const fetchBlogPosts = async () => {
 
 export default function BeachContainer() {
   const {
-    filteredBeaches,
     filters,
     setFilters,
+    beaches,
     setBeaches,
-    setForecastData,
-    currentPage,
-    setCurrentPage,
     forecastData,
-    totalPages,
+    setForecastData,
+    setBeachScores,
   } = useBeach();
+
+  // Use the hook to get filtered beaches
+  const filteredBeaches = useFilteredBeaches();
 
   const { isSubscribed } = useSubscription();
 
@@ -178,6 +181,22 @@ export default function BeachContainer() {
     }
   }, [beachesData, setBeaches]);
 
+  // Calculate scores when beaches or forecast data changes
+  useEffect(() => {
+    if (beaches?.length && forecastData) {
+      const scores = calculateRegionScores(
+        beaches,
+        filters.location.region || null,
+        forecastData
+      );
+      setBeachScores(scores);
+      console.log("✅ Beach scores calculated:", {
+        count: Object.keys(scores).length,
+        sample: Object.entries(scores)[0],
+      });
+    }
+  }, [beaches, forecastData, filters.location.region, setBeachScores]);
+
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
@@ -189,14 +208,7 @@ export default function BeachContainer() {
           <main className="min-w-0 overflow-y-auto">
             <Suspense fallback={<BeachListViewSkeleton />}>
               <BeachListView
-                beaches={filteredBeaches}
                 regions={allRegions}
-                filters={filters}
-                setFilters={setFilters}
-                forecastData={forecastData}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
                 showFilters={showFilters}
                 setShowFilters={setShowFilters}
               />

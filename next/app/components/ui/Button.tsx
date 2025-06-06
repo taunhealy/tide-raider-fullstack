@@ -54,7 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               variant === "secondary",
             "rounded-full text-sm font-primary px-3 py-1.5":
               variant === "regions",
-            "bg-[var(--color-badge-active)] text-white focus-visible:ring-[var(--color-badge-active)]":
+            "bg-[var(--color-bg-tertiary)] text-white focus-visible:ring-[var(--color-badge-active)]":
               variant === "regions" && isActive,
             "bg-white text-black border border-gray-200 hover:bg-gray-50 focus-visible:ring-gray-300":
               variant === "regions" && !isActive,

@@ -333,19 +333,68 @@ export default defineType({
     // Region reference
     defineField({
       name: 'countries',
-      title: 'Related Countries',
-      description: 'Associate this post with specific countries',
+      title: 'Countries',
+      description: 'Select one or more countries associated with this post',
       type: 'array',
-      of: [{type: 'string'}],
-      components: {
-        input: RegionReferenceInput as any,
-      },
+      of: [
+        {
+          type: 'string',
+          options: {
+            list: [
+              {title: 'Angola', value: 'angola'},
+              {title: 'Australia', value: 'australia'},
+              {title: 'Brazil', value: 'brazil'},
+              {title: 'Canary Islands', value: 'canary-islands'},
+              {title: 'Chile', value: 'chile'},
+              {title: 'Costa Rica', value: 'costa-rica'},
+              {title: 'Ecuador', value: 'ecuador'},
+              {title: 'El Salvador', value: 'el-salvador'},
+              {title: 'Fiji', value: 'fiji'},
+              {title: 'France', value: 'france'},
+              {title: 'Hawaii', value: 'hawaii'},
+              {title: 'Indonesia', value: 'indonesia'},
+              {title: 'Ireland', value: 'ireland'},
+              {title: 'Japan', value: 'japan'},
+              {title: 'Madagascar', value: 'madagascar'},
+              {title: 'Maldives', value: 'maldives'},
+              {title: 'Mexico', value: 'mexico'},
+              {title: 'Morocco', value: 'morocco'},
+              {title: 'Mozambique', value: 'mozambique'},
+              {title: 'New Zealand', value: 'new-zealand'},
+              {title: 'Nicaragua', value: 'nicaragua'},
+              {title: 'Panama', value: 'panama'},
+              {title: 'Peru', value: 'peru'},
+              {title: 'Philippines', value: 'philippines'},
+              {title: 'Portugal', value: 'portugal'},
+              {title: 'Samoa', value: 'samoa'},
+              {title: 'South Africa', value: 'south-africa'},
+              {title: 'Spain', value: 'spain'},
+              {title: 'Sri Lanka', value: 'sri-lanka'},
+              {title: 'Tahiti', value: 'tahiti'},
+              {title: 'Taiwan', value: 'taiwan'},
+              {title: 'Thailand', value: 'thailand'},
+              {title: 'United Kingdom', value: 'united-kingdom'},
+              {title: 'United States', value: 'united-states'},
+            ],
+          },
+        },
+      ],
+      validation: (Rule) => Rule.required().min(1).error('At least one country must be selected'),
     }),
   ],
   preview: {
     select: {
       title: 'title',
       media: 'mainImage',
+      countries: 'countries',
+    },
+    prepare({title, media, countries}) {
+      // Show countries in the preview
+      return {
+        title,
+        subtitle: countries && countries.length > 0 ? `Countries: ${countries.join(', ')}` : '',
+        media,
+      }
     },
   },
 })

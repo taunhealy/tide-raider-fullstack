@@ -1,10 +1,5 @@
 import { useBeach } from "@/app/context/BeachContext";
 import BlogPostsSidebar from "../BlogPostsSidebar";
-import FavouriteSurfVideosSidebar from "../FavouriteSurfVideosSidebar";
-import GoldSeeker from "../GoldSeeker";
-import EventsSidebar from "../EventsSidebar";
-import BeachFeedback from "../BeachFeedback";
-import type { Beach } from "@/app/types/beaches";
 import type { Post, Trip } from "@/app/types/blog";
 import RaidLogSidebar from "../RaidLogSidebar";
 
@@ -27,12 +22,12 @@ export default function LeftSidebar({ blogPosts }: LeftSidebarProps) {
           posts={blogPosts}
           selectedCountry={
             filters.location.country.length > 0
-              ? filters.location.country[0]
+              ? filters.location.country
               : undefined
           }
           selectedContinent={
             filters.location.continent.length > 0
-              ? filters.location.continent[0]
+              ? filters.location.continent
               : undefined
           }
         />

@@ -1,8 +1,4 @@
 import {defineType, defineField} from 'sanity'
-import {beachData} from '../../../next/app/types/beaches'
-
-// Get unique regions from beachData
-const uniqueRegions = Array.from(new Set(beachData.map((beach) => beach.region))).sort()
 
 // Reusable region field definition
 const regionField = defineField({
@@ -10,10 +6,36 @@ const regionField = defineField({
   title: 'Region',
   type: 'string',
   options: {
-    list: uniqueRegions.map((region) => ({
-      title: region,
-      value: region,
-    })),
+    list: [
+      {title: 'Eastern Cape', value: 'Eastern Cape'},
+      {title: 'Western Cape', value: 'Western Cape'},
+      {title: 'Northern Cape', value: 'Northern Cape'},
+      {title: 'KwaZulu-Natal', value: 'KwaZulu-Natal'},
+      {title: 'Bali', value: 'Bali'},
+      {title: 'New South Wales', value: 'New South Wales'},
+      {title: 'Queensland', value: 'Queensland'},
+      {title: 'Victoria', value: 'Victoria'},
+      {title: 'South Australia', value: 'South Australia'},
+      {title: 'Western Australia', value: 'Western Australia'},
+      {title: 'Tasmania', value: 'Tasmania'},
+      {title: 'Luanda', value: 'Luanda'},
+      {title: 'Namibe', value: 'Namibe'},
+      {title: 'Benguela', value: 'Benguela'},
+      {title: 'Jakarta', value: 'Jakarta'},
+      {title: 'Lombok', value: 'Lombok'},
+      {title: 'Mentawais', value: 'Mentawais'},
+      {title: 'Java', value: 'Java'},
+      {title: 'Sumatra', value: 'Sumatra'},
+      {title: 'Madagascar', value: 'Madagascar'},
+      {title: 'Mozambique', value: 'Mozambique'},
+      {title: 'Liberia', value: 'Liberia'},
+      {title: 'Senegal', value: 'Senegal'},
+      {title: 'Morocco', value: 'Morocco'},
+      {title: 'Oahu', value: 'Oahu'},
+      {title: 'California', value: 'California'},
+      {title: 'Florida', value: 'Florida'},
+      {title: 'Maine', value: 'Maine'},
+    ],
   },
   validation: (Rule) => Rule.required(),
 })

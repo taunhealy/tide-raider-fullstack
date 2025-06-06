@@ -24,8 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ad not found" }, { status: 404 });
     }
 
-    console.log("Found ad:", ad);
-
     // Verify PayPal configuration
     if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
       console.error("Missing PayPal configuration");
@@ -85,10 +83,13 @@ export async function POST(request: Request) {
 
     if (categoryType === "adventure") {
       monthlyPrice =
-        ADVENTURE_AD_CATEGORIES[ad.category as keyof typeof ADVENTURE_AD_CATEGORIES]?.monthlyPrice || 0;
+        ADVENTURE_AD_CATEGORIES[
+          ad.category as keyof typeof ADVENTURE_AD_CATEGORIES
+        ]?.monthlyPrice || 0;
     } else {
       monthlyPrice =
-        AD_CATEGORIES[ad.category as keyof typeof AD_CATEGORIES]?.monthlyPrice || 0;
+        AD_CATEGORIES[ad.category as keyof typeof AD_CATEGORIES]
+          ?.monthlyPrice || 0;
     }
 
     console.log("Monthly price:", monthlyPrice);

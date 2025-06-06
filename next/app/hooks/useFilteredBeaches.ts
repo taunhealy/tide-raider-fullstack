@@ -1,95 +1,68 @@
 // hooks/useFilteredBeaches.ts
 import { useMemo } from "react";
-import type { Beach, Region, FilterType } from "@/app/types/beaches";
-import type { ForecastData } from "@/app/types/forecast";
+import { useBeach } from "@/app/context/BeachContext";
+import type { BeachWithScore } from "@/app/types/scores";
 
-export function useFilteredBeaches(
-  initialBeaches: Beach[],
-  filters: FilterType,
-  selectedRegion: string,
-  searchQuery: string,
-  forecastData: ForecastData | null,
-  beachScores: Record<string, any>,
-  minPoints: number = 0
-) {
+export function useFilteredBeaches() {
+  const { beaches, filters, beachScores, forecastData } = useBeach();
+
   return useMemo(() => {
-    // Add null checks
-    if (!initialBeaches || !filters) {
-      return [];
-    }
+    if (!beaches?.length) return [];
 
-    let filtered = initialBeaches;
+    // Add scores to beaches
+    const beachesWithScores = beaches.map((beach) => ({
+      ...beach,
+      score: beachScores[beach.id]?.score || 0,
+    })) as BeachWithScore[];
 
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((beach) => {
-        // Check main beach properties
-        const mainPropertiesMatch =
-          beach.name.toLowerCase().includes(query) ||
-          beach.region.toLowerCase().includes(query) ||
-          beach.description.toLowerCase().includes(query) ||
-          (beach.location && beach.location.toLowerCase().includes(query));
+    // Filter beaches based on filters
+    const filtered = beachesWithScores.filter((beach) => {
+      // Location filters
+      if (
+        filters.location.region &&
+        beach.region.name !== filters.location.region
+      ) {
+        return false;
+      }
 
-        // Check videos if they exist
-        const videoTitlesMatch =
-          beach.videos?.some((video) =>
-            video.title.toLowerCase().includes(query)
-          ) || false;
+      // Type filters
+      if (
+        filters.waveType.length > 0 &&
+        !filters.waveType.includes(beach.waveType)
+      )
+        return false;
 
-        return mainPropertiesMatch || videoTitlesMatch;
-      });
-    }
+      // Difficulty filters
+      if (
+        filters.difficulty.length > 0 &&
+        !filters.difficulty.includes(beach.difficulty)
+      )
+        return false;
 
-    // Apply continent filter
-    if (filters.continent.length > 0) {
-      filtered = filtered.filter(
-        (beach) => beach.continent === filters.continent[0]
-      );
-    }
+      // Crime level filters
+      if (
+        filters.crimeLevel.length > 0 &&
+        !filters.crimeLevel.includes(beach.crimeLevel)
+      )
+        return false;
 
-    // Apply country filter
-    if (filters.country.length > 0) {
-      filtered = filtered.filter(
-        (beach) => beach.country === filters.country[0]
-      );
-    }
+      // Shark attack filters
+      if (
+        filters.sharkAttack.length > 0 &&
+        !filters.sharkAttack.includes(
+          beach.sharkAttack?.hasAttack ? "true" : "false"
+        )
+      )
+        return false;
 
-    // Apply region filter
-    if (filters.region.length > 0) {
-      filtered = filtered.filter((beach) =>
-        filters.region.includes(beach.region as Region)
-      );
-    } else if (selectedRegion) {
-      filtered = filtered.filter((beach) => beach.region === selectedRegion);
-    }
+      // Minimum points filter
+      if (filters.minPoints > 0 && beach.score < filters.minPoints) {
+        return false;
+      }
 
-    // Apply difficulty filter
-    if (filters.difficulty.length > 0) {
-      filtered = filtered.filter((beach) =>
-        filters.difficulty.includes(beach.difficulty)
-      );
-    }
-
-    // Apply crime level filter
-    if (filters.crimeLevel.length > 0) {
-      filtered = filtered.filter((beach) =>
-        filters.crimeLevel.includes(beach.crimeLevel)
-      );
-    }
-
-    // Apply wave type filter
-    if (filters.waveType.length > 0) {
-      filtered = filtered.filter((beach) =>
-        filters.waveType.includes(beach.waveType)
-      );
-    }
-
-    // Apply shark attack filter
-    if (filters.sharkAttack?.includes("true")) {
-      filtered = filtered.filter((beach) => beach.sharkAttack?.hasAttack);
-    }
+      return true;
+    });
 
     return filtered;
-  }, [initialBeaches, filters, selectedRegion, searchQuery]);
+  }, [beaches, filters, beachScores, forecastData]);
 }
