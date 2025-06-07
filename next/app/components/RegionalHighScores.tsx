@@ -4,7 +4,7 @@ import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { DEFAULT_PROFILE_IMAGE } from "@/app/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays, subYears } from "date-fns";
+import { format, subDays, subYears, startOfDay, endOfDay } from "date-fns";
 
 type TimePeriod = "today" | "week" | "year" | "3years";
 
@@ -56,6 +56,37 @@ export default function RegionalHighScores({
     queryFn: async () => {
       if (!selectedRegion) return { scores: [] };
 
+    // For today, use beach-ratings endpoint instead
+      if (timePeriod === "today") {
+        const today = new Date().toISOString().split("T")[0];
+        const response = await fetch(
+          `/api/beach-ratings?region=${encodeURIComponent(selectedRegion)}&date=${today}`
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch today's ratings");
+
+        const { ratings } = await response.json();
+
+        // Map ratings to include beach details
+        const beachesWithScores = ratings
+          .map((rating: any) => {
+            const beach = beaches.find((b) => b.id === rating.beachId);
+            if (!beach) return null;
+
+            return {
+              ...beach,
+              appearances: 1,
+              averageScore: rating.score,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => b.averageScore - a.averageScore)
+          .slice(0, 5); // Get top 5 highest scoring beaches
+
+        return { beaches: beachesWithScores };
+      }
+
+      // Existing code for other time periods
       const response = await fetch(
         `/api/regional-high-scores?region=${encodeURIComponent(selectedRegion)}&period=${timePeriod}`
       );
@@ -70,17 +101,19 @@ export default function RegionalHighScores({
       const beachesWithScores = data.scores
         .map((score: BeachScore) => {
           const beach = beaches.find((b) => b.id === score.beachId);
+          if (!beach) return null;
           return {
             ...beach,
             appearances: score.appearances,
             averageScore: score.averageScore,
           };
         })
-        .filter(Boolean);
+        .filter(Boolean)
+        .sort((a, b) => b.averageScore - a.averageScore)
+        .slice(0, 5);
 
       return { beaches: beachesWithScores };
     },
-    enabled: !!selectedRegion && isClient, // Only enable the query on the client side
   });
 
   // Time period tab labels

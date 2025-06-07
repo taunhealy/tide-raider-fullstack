@@ -91,7 +91,7 @@ export default function BlogPostsSidebar({
 
         console.log("Looking for posts with country:", countryName);
 
-        // Filter posts by country using available data sources
+      // Filter posts by country using available data sources
         const filteredPosts = travelData.filter((post: Post) => {
           // Check if the post has the country in its countries array
           if (post.countries && post.countries.includes(selectedCountry)) {

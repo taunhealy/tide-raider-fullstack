@@ -5,8 +5,6 @@ import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 
 import BeachCard from "../BeachCard";
 
-import type { BeachWithScore } from "@/app/types/scores";
-import { useMemo, useState } from "react";
 import FilterSidebar from "../filters/FiltersSidebar";
 import BeachHeaderControls from "./BeachHeaderControls";
 
@@ -32,60 +30,13 @@ export default function BeachListView({
   // Update pagination to use filtered beaches
   const { currentItems } = usePagination(filteredBeaches, currentPage, 18);
 
-  // Add detailed logging
-  console.log("🔍 BeachListView Detailed Props:", {
-    beachesLength: filteredBeaches?.length || 0,
-    firstBeach: filteredBeaches?.[0]
-      ? {
-          id: filteredBeaches[0].id,
-          name: filteredBeaches[0].name,
-          region: filteredBeaches[0].region,
-          score: filteredBeaches[0].score,
-          // Log critical scoring fields
-          optimalWindDirections: filteredBeaches[0].optimalWindDirections,
-          swellSize: filteredBeaches[0].swellSize,
-          optimalSwellDirections: filteredBeaches[0].optimalSwellDirections,
-          idealSwellPeriod: filteredBeaches[0].idealSwellPeriod,
-        }
-      : null,
-
-    forecastDataPresent: !!forecastData,
-    forecastDetails: forecastData
-      ? {
-          windSpeed: forecastData.windSpeed,
-          windDirection: forecastData.windDirection,
-          swellHeight: forecastData.swellHeight,
-          swellPeriod: forecastData.swellPeriod,
-          swellDirection: forecastData.swellDirection,
-        }
-      : null,
-  });
-
-  console.log("🏖️ BeachListView rendering with:", {
-    totalBeaches: filteredBeaches.length,
-
-    forecastDataPresent: !!forecastData,
-  });
-
-  console.log(
-    "Raw beaches data:",
-    filteredBeaches.map((b) => ({
-      id: b.id,
-      name: b.name,
-      optimalWindDirections: b.optimalWindDirections,
-      swellSize: b.swellSize,
-      optimalSwellDirections: b.optimalSwellDirections,
-      idealSwellPeriod: b.idealSwellPeriod,
-    }))
-  );
-
   if (filteredBeaches.length === 0) {
     return (
       <div className="flex flex-col">
         <BeachHeaderControls
           showFilters={showFilters}
           setShowFilters={setShowFilters}
-          regions={regions}
+          regions={regions || []}
         />
 
         <div className="text-center py-8">
@@ -104,7 +55,7 @@ export default function BeachListView({
       <BeachHeaderControls
         showFilters={showFilters}
         setShowFilters={setShowFilters}
-        regions={regions}
+        regions={regions || []}
       />
 
       {/* 3. Beach Cards */}

@@ -1,10 +1,13 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { BaseForecastData } from "@/app/types/forecast";
 import StickyForecastWidget from "./StickyForecastWidget";
-import { calculateRegionScores } from "@/app/lib/scoreUtils";
+import {
+  calculateRegionScores,
+  getSortedBeachesByScore,
+} from "@/app/lib/scoreUtils";
 
 import RightSidebar from "./raid/RightSidebar";
 import LeftSidebar from "./raid/LeftSidebar";
@@ -12,10 +15,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { client } from "@/app/lib/sanity";
 import { blogListingQuery } from "@/app/lib/queries";
-import BeachListView from "./raid/BeachListView";
 import { useState } from "react";
 import { useBeach } from "@/app/context/BeachContext";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
+import { usePagination } from "@/app/hooks/usePagination";
+
+import BeachCard from "@/app/components/BeachCard";
+import FilterSidebar from "@/app/components/filters/FiltersSidebar";
+import BeachHeaderControls from "@/app/components/raid/BeachHeaderControls";
 
 // Loading components
 function BeachListViewSkeleton() {
@@ -33,6 +40,20 @@ function BeachListViewSkeleton() {
 
 function SidebarSkeleton() {
   return <div className="w-full h-96 bg-gray-200 rounded animate-pulse" />;
+}
+
+// Add a loading skeleton for beach cards
+function BeachCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-[16px]">
+      {[...Array(6)].map((_, index) => (
+        <div
+          key={index}
+          className="bg-gray-100 rounded-lg h-[200px] animate-pulse"
+        />
+      ))}
+    </div>
+  );
 }
 
 // Move the fetch function outside component for reusability
@@ -109,16 +130,69 @@ const fetchBlogPosts = async () => {
 export default function BeachContainer() {
   const {
     filters,
-    setFilters,
     beaches,
     setBeaches,
     forecastData,
     setForecastData,
     setBeachScores,
+    currentPage,
+    beachScores,
+    setTodayGoodBeaches,
   } = useBeach();
 
-  // Use the hook to get filtered beaches
+  // Use the filtered beaches hook for the beach list
   const filteredBeaches = useFilteredBeaches();
+
+  // Calculate scores when beaches or forecast data changes
+  useEffect(() => {
+    if (beaches?.length && forecastData) {
+      const scores = calculateRegionScores(
+        beaches,
+        filters.location.region || null,
+        forecastData
+      );
+      setBeachScores(scores);
+      console.log("✅ Beach scores calculated:", {
+        count: Object.keys(scores).length,
+        sample: Object.entries(scores)[0],
+      });
+    }
+  }, [beaches, forecastData, filters.location.region, setBeachScores]);
+
+  // Add after the score calculation effect
+  useEffect(() => {
+    if (Object.keys(beachScores).length > 0) {
+      // Filter only good beaches (score >= 4) before saving
+      const goodBeaches = Object.entries(beachScores)
+        .filter(([_, { score }]) => score >= 4)
+        .reduce<Record<string, { score: number; region: string }>>(
+          (acc, [beachId, data]) => {
+            acc[beachId] = data;
+            return acc;
+          },
+          {}
+        );
+
+      // Only save if there are good beaches
+      if (Object.keys(goodBeaches).length > 0) {
+        // Save good beach ratings to database
+        fetch("/api/beach-ratings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ beachScores: goodBeaches }),
+        });
+      }
+    }
+  }, [beachScores]);
+
+  // Replace filteredBeaches usage with:
+  const sortedBeaches = useMemo(
+    () => getSortedBeachesByScore(filteredBeaches, beachScores),
+    [filteredBeaches, beachScores]
+  );
+
+  // Use sortedBeaches for pagination
+  const { currentItems } = usePagination(sortedBeaches, currentPage, 18);
 
   const { isSubscribed } = useSubscription();
 
@@ -164,6 +238,27 @@ export default function BeachContainer() {
     staleTime: 1000 * 60 * 30, // Cache for 30 minutes
   });
 
+  // Add this query
+  const { data: todayRatings } = useQuery({
+    queryKey: ["today-ratings", filters.location.region],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const regionParam = filters.location.region
+        ? `&region=${encodeURIComponent(filters.location.region)}`
+        : "";
+      const response = await fetch(
+        `/api/beach-ratings?date=${today}${regionParam}`
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      console.log(
+        `Received ${data.ratings?.length || 0} ratings for ${filters.location.region || "all regions"}`
+      );
+      return data.ratings || [];
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
   // Combine loading states
   const isLoading = isForecastLoading || isBeachesLoading;
 
@@ -181,37 +276,53 @@ export default function BeachContainer() {
     }
   }, [beachesData, setBeaches]);
 
-  // Calculate scores when beaches or forecast data changes
+  // Update context when data changes
   useEffect(() => {
-    if (beaches?.length && forecastData) {
-      const scores = calculateRegionScores(
-        beaches,
-        filters.location.region || null,
-        forecastData
-      );
-      setBeachScores(scores);
-      console.log("✅ Beach scores calculated:", {
-        count: Object.keys(scores).length,
-        sample: Object.entries(scores)[0],
-      });
+    if (todayRatings) {
+      setTodayGoodBeaches(todayRatings);
     }
-  }, [beaches, forecastData, filters.location.region, setBeachScores]);
+  }, [todayRatings, setTodayGoodBeaches]);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
         <Suspense fallback={<SidebarSkeleton />}>
-          <LeftSidebar blogPosts={blogPosts} />
+          <LeftSidebar blogPosts={blogPosts} regions={allRegions || []} />
         </Suspense>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
             <Suspense fallback={<BeachListViewSkeleton />}>
-              <BeachListView
-                regions={allRegions}
-                showFilters={showFilters}
-                setShowFilters={setShowFilters}
-              />
+              <div className="flex flex-col gap-5">
+                <BeachHeaderControls
+                  showFilters={showFilters}
+                  setShowFilters={setShowFilters}
+                  regions={allRegions || []}
+                />
+
+                {filteredBeaches.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
+                      {allRegions?.length && allRegions[0]?.name
+                        ? `No beaches found in ${allRegions[0].name}. Please select a different region.`
+                        : "Please select a region to view beaches."}
+                    </p>
+                  </div>
+                ) : (
+                  <Suspense fallback={<BeachCardsSkeleton />}>
+                    <div className="grid grid-cols-1 gap-[16px]">
+                      {currentItems.map((beach, index) => (
+                        <BeachCard
+                          key={beach.name}
+                          beach={beach}
+                          isFirst={index === 0}
+                          forecastData={forecastData}
+                        />
+                      ))}
+                    </div>
+                  </Suspense>
+                )}
+              </div>
             </Suspense>
           </main>
 
@@ -223,6 +334,11 @@ export default function BeachContainer() {
           </Suspense>
         </div>
       </div>
+
+      <FilterSidebar
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
 
       <Suspense fallback={null}>
         <StickyForecastWidget />

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { ForecastData } from "@/app/types/forecast";
 import type { BeachScoreMap } from "@/app/types/scores";
@@ -43,6 +37,12 @@ interface BeachContextType {
   // Status flags
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+
+  // Today's good beaches
+  todayGoodBeaches: { beachId: string; region: string; score: number }[];
+  setTodayGoodBeaches: (
+    beaches: { beachId: string; region: string; score: number }[]
+  ) => void;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);
@@ -58,6 +58,9 @@ export function BeachProvider({
   const [beaches, setBeaches] = useState<Beach[]>(initialBeaches);
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
   const [beachScores, setBeachScores] = useState<BeachScoreMap>({});
+  const [todayGoodBeaches, setTodayGoodBeaches] = useState<
+    { beachId: string; region: string; score: number }[]
+  >([]);
 
   // Filters and sorting
   const [filters, setFilters] = useState<FilterType>({
@@ -93,6 +96,8 @@ export function BeachProvider({
     setForecastData,
     beachScores,
     setBeachScores,
+    todayGoodBeaches,
+    setTodayGoodBeaches,
 
     // Filters and UI
     filters,

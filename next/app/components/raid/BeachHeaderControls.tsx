@@ -48,21 +48,8 @@ export default function BeachHeaderControls({
               <span className="w-2 h-2 rounded-full bg-[var(--color-bg-tertiary)]" />
             )}
           </button>
-
-          <SearchBar
-            value={filters.searchQuery || ""}
-            onChange={(value) => setFilters({ ...filters, searchQuery: value })}
-            placeholder="Search by name, region or description..."
-            className="font-primary w-full sm:w-auto"
-          />
         </div>
       </div>
-
-      <LocationFilter
-        filters={filters}
-        setFilters={setFilters}
-        regions={regions}
-      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import type { Beach } from "@/app/types/beaches";
 import type { BaseForecastData, CoreForecastData } from "@/app/types/forecast";
 import { degreesToCardinal, cardinalToDegreesMap } from "./directionUtils";
+import { BeachWithScore } from "../types/scores";
+import { prisma } from "@/app/lib/prisma";
 
 interface ScoreDisplay {
   description: string;
@@ -291,9 +293,7 @@ export function calculateRegionScores(
 
   if (!forecastData || !beaches.length) return scores;
 
-  // For each beach, calculate the score
   beaches.forEach((beach) => {
-    // If selectedRegion is provided and not "Global", only process beaches in that region
     if (
       selectedRegion &&
       selectedRegion !== "Global" &&
@@ -302,7 +302,6 @@ export function calculateRegionScores(
       return;
     }
 
-    // When processing the forecast data, strip it down to just the required fields
     const processedConditions: CoreForecastData = {
       windSpeed: forecastData.windSpeed,
       windDirection: forecastData.windDirection,
@@ -322,17 +321,29 @@ export function calculateRegionScores(
 }
 
 //calculate region counts of good beaches
-export function calculateRegionCounts(
+export async function calculateRegionCounts(
   beachScores: Record<string, { score: number; region: string }>
-): Record<string, number> {
+): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
 
-  Object.values(beachScores).forEach((beachData) => {
-    if (beachData.score >= 4) {
-      const region = beachData.region;
+  Object.entries(beachScores).forEach(([beachId, { score, region }]) => {
+    if (score >= 4) {
       counts[region] = (counts[region] || 0) + 1;
     }
   });
 
   return counts;
+}
+
+// Add this new utility function
+export function getSortedBeachesByScore(
+  beaches: Beach[],
+  beachScores: Record<string, { score: number; region: string }>
+): BeachWithScore[] {
+  return [...beaches]
+    .map((beach) => ({
+      ...beach,
+      score: beachScores[beach.id]?.score || 0,
+    }))
+    .sort((a, b) => b.score - a.score);
 }

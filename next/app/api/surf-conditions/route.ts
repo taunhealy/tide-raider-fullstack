@@ -246,23 +246,6 @@ async function getExistingForecast(
   });
 }
 
-async function storeForecast(source: "A" | "B", data: BaseForecastData) {
-  const model = (source === "A" ? prisma.forecastA : prisma.forecastB) as any;
-
-  return model.create({
-    data: {
-      id: randomUUID(),
-      date: new Date(data.date.toISOString().split("T")[0]), // Date-only
-      region: data.region,
-      windSpeed: data.windSpeed,
-      windDirection: data.windDirection,
-      swellHeight: data.swellHeight,
-      swellPeriod: data.swellPeriod,
-      swellDirection: data.swellDirection,
-    },
-  });
-}
-
 async function getForecastsForRegion(region: ValidRegion) {
   const regionConfig = REGION_CONFIGS.find(
     (config) => config.region === region
