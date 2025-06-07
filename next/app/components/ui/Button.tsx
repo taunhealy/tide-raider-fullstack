@@ -15,7 +15,6 @@ export interface ButtonProps
   size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
   isActive?: boolean;
-  
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -36,7 +35,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={cn(
           // Base styles
-          "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          "inline-flex items-center justify-center rounded-md font-medium",
+          // Add transition for width and other properties
+          "transition-all duration-300 ease-in-out",
           // Disabled state
           "disabled:opacity-50 disabled:pointer-events-none",
           // Variant styles
@@ -53,7 +54,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               variant === "link",
             "bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-400":
               variant === "secondary",
-            "rounded-full text-sm font-primary px-3 py-1.5":
+            "rounded-full text-sm font-primary px-3 py-1.5 transition-all duration-300":
               variant === "regions",
             "bg-[var(--color-bg-tertiary)] text-white focus-visible:ring-[var(--color-badge-active)]":
               variant === "regions" && isActive,

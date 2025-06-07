@@ -32,6 +32,38 @@ const defaultFilters: FilterType = {
   hasAttack: false,
 };
 
+const RegionButton = ({
+  region,
+  isActive,
+  onClick,
+  count,
+}: {
+  region: Region;
+  isActive: boolean;
+  onClick: () => void;
+  count?: number;
+}) => (
+  <Button
+    key={region.id}
+    variant="regions"
+    isActive={isActive}
+    onClick={onClick}
+    className="overflow-hidden"
+  >
+    <span>{region.name}</span>
+    <div
+      className="overflow-hidden transition-all duration-300 ease-in-out"
+      style={{ width: count ? "20px" : "0", marginLeft: count ? "8px" : "0" }}
+    >
+      {count > 0 && (
+        <span className="bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">
+          {count}
+        </span>
+      )}
+    </div>
+  </Button>
+);
+
 export default function LocationFilter({
   filters = defaultFilters,
   setFilters,
@@ -124,12 +156,10 @@ export default function LocationFilter({
                 </h6>
                 <div className="flex flex-wrap gap-2">
                   {countryRegions.map((region) => (
-                    <Button
+                    <RegionButton
                       key={region.id}
-                      variant="regions"
-                      isActive={Boolean(
-                        filters.location.region === region.name
-                      )}
+                      region={region}
+                      isActive={filters.location.region === region.name}
                       onClick={() => {
                         setFilters({
                           ...filters,
@@ -146,14 +176,8 @@ export default function LocationFilter({
                           },
                         });
                       }}
-                    >
-                      <span>{region.name}</span>
-                      {regionCounts[region.name] > 0 && (
-                        <span className="ml-2 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                          {regionCounts[region.name]}
-                        </span>
-                      )}
-                    </Button>
+                      count={regionCounts[region.name]}
+                    />
                   ))}
                 </div>
               </div>
@@ -163,10 +187,10 @@ export default function LocationFilter({
           // Show flat list when not searching by country
           <div className="flex flex-wrap gap-2">
             {filteredRegions.map((region) => (
-              <Button
+              <RegionButton
                 key={region.id}
-                variant="regions"
-                isActive={Boolean(filters.location.region === region.name)}
+                region={region}
+                isActive={filters.location.region === region.name}
                 onClick={() => {
                   setFilters({
                     ...filters,
@@ -183,14 +207,8 @@ export default function LocationFilter({
                     },
                   });
                 }}
-              >
-                <span>{region.name}</span>
-                {regionCounts[region.name] > 0 && (
-                  <span className="ml-2 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                    {regionCounts[region.name]}
-                  </span>
-                )}
-              </Button>
+                count={regionCounts[region.name]}
+              />
             ))}
           </div>
         )}

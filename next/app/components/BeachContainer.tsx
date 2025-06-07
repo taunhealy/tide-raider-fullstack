@@ -138,12 +138,25 @@ export default function BeachContainer() {
     currentPage,
     beachScores,
     setTodayGoodBeaches,
+    setIsLoading,
   } = useBeach();
 
   // Use the filtered beaches hook for the beach list
   const filteredBeaches = useFilteredBeaches();
 
-  // Calculate scores when beaches or forecast data changes
+  // Add a new state to track when both data fetching and score calculation are complete
+  const [dataProcessingComplete, setDataProcessingComplete] = useState(false);
+
+  // Add a state to track whether the sorted beach data is stable
+  const [stableSortComplete, setStableSortComplete] = useState(false);
+
+  // Add this state to track the current stable region
+  const [stableRegionId, setStableRegionId] = useState(
+    filters.location.regionId
+  );
+
+  // Modify our existing effect to only set dataProcessingComplete when we have both
+  // beach data and forecast data
   useEffect(() => {
     if (beaches?.length && forecastData) {
       const scores = calculateRegionScores(
@@ -156,40 +169,63 @@ export default function BeachContainer() {
         count: Object.keys(scores).length,
         sample: Object.entries(scores)[0],
       });
+
+      // Mark data processing as complete when we have scores
+      setDataProcessingComplete(true);
+    } else {
+      // If we don't have both beaches and forecast data, we're not ready
+      setDataProcessingComplete(false);
     }
   }, [beaches, forecastData, filters.location.region, setBeachScores]);
 
-  // Add after the score calculation effect
+  // Let's increase the timeout substantially and add a more direct approach
   useEffect(() => {
-    if (Object.keys(beachScores).length > 0) {
-      // Filter only good beaches (score >= 4) before saving
-      const goodBeaches = Object.entries(beachScores)
-        .filter(([_, { score }]) => score >= 4)
-        .reduce<Record<string, { score: number; region: string }>>(
-          (acc, [beachId, data]) => {
-            acc[beachId] = data;
-            return acc;
-          },
-          {}
-        );
-
-      // Only save if there are good beaches
-      if (Object.keys(goodBeaches).length > 0) {
-        // Save good beach ratings to database
-        fetch("/api/beach-ratings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ beachScores: goodBeaches }),
-        });
-      }
+    if (dataProcessingComplete) {
+      // Longer delay to ensure ALL processing is complete
+      const timer = setTimeout(() => {
+        setStableSortComplete(true);
+      }, 300); // Increased delay
+      return () => clearTimeout(timer);
+    } else {
+      setStableSortComplete(false);
     }
-  }, [beachScores]);
+  }, [dataProcessingComplete]);
 
-  // Replace filteredBeaches usage with:
-  const sortedBeaches = useMemo(
-    () => getSortedBeachesByScore(filteredBeaches, beachScores),
-    [filteredBeaches, beachScores]
-  );
+  // Reset all states when region changes
+  useEffect(() => {
+    setDataProcessingComplete(false);
+    setStableSortComplete(false);
+  }, [filters.location.regionId]);
+
+  // Update it when the sort is complete
+  useEffect(() => {
+    if (stableSortComplete) {
+      setStableRegionId(filters.location.regionId);
+    }
+  }, [stableSortComplete, filters.location.regionId]);
+
+  // First, combine all our loading/processing states into one
+  const isProcessing = useMemo(() => {
+    return (
+      stableRegionId !== filters.location.regionId ||
+      !beachScores ||
+      Object.keys(beachScores).length === 0 ||
+      !stableSortComplete
+    );
+  }, [
+    stableRegionId,
+    filters.location.regionId,
+    beachScores,
+    stableSortComplete,
+  ]);
+
+  // Modify the sortedBeaches memo to only run when we're ready
+  const sortedBeaches = useMemo(() => {
+    if (isProcessing) {
+      return [];
+    }
+    return getSortedBeachesByScore(filteredBeaches, beachScores);
+  }, [isProcessing, filteredBeaches, beachScores]);
 
   // Use sortedBeaches for pagination
   const { currentItems } = usePagination(sortedBeaches, currentPage, 18);
@@ -197,6 +233,9 @@ export default function BeachContainer() {
   const { isSubscribed } = useSubscription();
 
   const [showFilters, setShowFilters] = useState(false);
+
+  // Prevent premature rendering during loading
+  const [regionSelected, setRegionSelected] = useState(false);
 
   // Use React Query for forecast data
   const { isLoading: isForecastLoading, data: forecastDataFromQuery } =
@@ -259,8 +298,12 @@ export default function BeachContainer() {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  // Combine loading states
-  const isLoading = isForecastLoading || isBeachesLoading;
+  // Set regionSelected when a region is selected
+  useEffect(() => {
+    if (filters.location.regionId) {
+      setRegionSelected(true);
+    }
+  }, [filters.location.regionId]);
 
   // Update forecast data when it changes
   useEffect(() => {
@@ -300,27 +343,30 @@ export default function BeachContainer() {
                   regions={allRegions || []}
                 />
 
-                {filteredBeaches.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
-                      {allRegions?.length && allRegions[0]?.name
-                        ? `No beaches found in ${allRegions[0].name}. Please select a different region.`
-                        : "Please select a region to view beaches."}
-                    </p>
-                  </div>
+                {!stableSortComplete ||
+                stableRegionId !== filters.location.regionId ? (
+                  <BeachCardsSkeleton />
                 ) : (
-                  <Suspense fallback={<BeachCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-[16px]">
-                      {currentItems.map((beach, index) => (
+                  <div className="grid grid-cols-1 gap-[16px]">
+                    {filteredBeaches.length > 0 ? (
+                      currentItems.map((beach, index) => (
                         <BeachCard
-                          key={beach.name}
+                          key={beach.id || beach.name}
                           beach={beach}
                           isFirst={index === 0}
                           forecastData={forecastData}
                         />
-                      ))}
-                    </div>
-                  </Suspense>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-[var(--color-text-primary)] text-left max-w-[34ch] font-primary">
+                          {regionSelected
+                            ? `No beaches found in ${filters.location.region}. Please select a different region.`
+                            : "Please select a region to view beaches."}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </Suspense>
