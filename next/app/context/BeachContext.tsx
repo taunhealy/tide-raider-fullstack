@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { ForecastData } from "@/app/types/forecast";
 import type { BeachScoreMap } from "@/app/types/scores";
@@ -42,6 +48,17 @@ interface BeachContextType {
   todayGoodBeaches: { beachId: string; region: string; score: number }[];
   setTodayGoodBeaches: (
     beaches: { beachId: string; region: string; score: number }[]
+  ) => void;
+
+  // Separate loading states for different data types
+  loadingStates: {
+    forecast: boolean;
+    beaches: boolean;
+    scores: boolean;
+  };
+  setLoadingState: (
+    type: "forecast" | "beaches" | "scores",
+    isLoading: boolean
   ) => void;
 }
 
@@ -87,6 +104,23 @@ export function BeachProvider({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Add loading states
+  const [loadingStates, setLoadingStates] = useState({
+    forecast: false,
+    beaches: false,
+    scores: false,
+  });
+
+  const setLoadingState = useCallback(
+    (type: "forecast" | "beaches" | "scores", isLoading: boolean) => {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [type]: isLoading,
+      }));
+    },
+    []
+  );
+
   // Context value (just state and setters)
   const value: BeachContextType = {
     // Data
@@ -110,6 +144,10 @@ export function BeachProvider({
     // Status
     isLoading,
     setIsLoading,
+
+    // Loading states
+    loadingStates,
+    setLoadingState,
   };
 
   return (

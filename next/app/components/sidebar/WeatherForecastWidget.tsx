@@ -1,10 +1,12 @@
+"use client";
+
 // components/sidebar/WeatherForecastWidget.tsx
+import { useBeach } from "@/app/context/BeachContext";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { ForecastData } from "@/app/types/forecast";
 
 interface WeatherForecastWidgetProps {
   forecastData: ForecastData | null;
-  isLoading: boolean;
 }
 
 const LoadingState = () => (
@@ -25,14 +27,46 @@ const NoDataState = () => (
 
 export default function WeatherForecastWidget({
   forecastData,
-  isLoading,
 }: WeatherForecastWidgetProps) {
-  if (isLoading) {
-    return <LoadingState />;
-  }
+  const { loadingStates } = useBeach();
 
-  if (!forecastData) {
-    return <NoDataState />;
+  if (loadingStates.forecast || !forecastData) {
+    return (
+      <div
+        className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
+        style={{
+          borderColor: "rgba(28, 217, 255, 0.4)",
+          boxShadow:
+            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-5 py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)]">
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+            <h3 className="font-primary font-bold text-lg md:text-xl text-white tracking-wider animate-pulse">
+              LOADING FORECAST
+            </h3>
+          </div>
+        </div>
+
+        {/* Grid Layout with skeleton loading */}
+        <div className="grid grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md aspect-square flex flex-col relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <div className="h-4 w-20 bg-gray-700 rounded animate-pulse mb-2"></div>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="h-8 w-16 bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   // Extra safety check for required forecast properties

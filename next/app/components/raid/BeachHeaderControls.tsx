@@ -1,7 +1,6 @@
 import { cn } from "@/app/lib/utils";
 import SearchBar from "../SearchBar";
 
-import LocationFilter from "../LocationFilter";
 import { Region } from "@/app/types/beaches";
 import { useBeach } from "@/app/context/BeachContext";
 
@@ -18,6 +17,8 @@ export default function BeachHeaderControls({
 }: BeachHeaderControlsProps) {
   const { filters, setFilters } = useBeach();
 
+  console.log("Current filters in HeaderControls:", filters);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:gap-6">
@@ -28,6 +29,15 @@ export default function BeachHeaderControls({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
+          <SearchBar
+            value={filters.searchQuery}
+            onChange={(value) => {
+              console.log("Search value changing to:", value);
+              setFilters({ ...filters, searchQuery: value });
+            }}
+            placeholder="Search breaks..."
+            className="w-full sm:w-auto flex-1"
+          />
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(

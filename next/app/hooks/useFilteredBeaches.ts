@@ -1,4 +1,3 @@
-// hooks/useFilteredBeaches.ts
 import { useMemo } from "react";
 import { useBeach } from "@/app/context/BeachContext";
 import type { BeachWithScore } from "@/app/types/scores";
@@ -17,6 +16,22 @@ export function useFilteredBeaches() {
 
     // Filter beaches based on filters
     const filtered = beachesWithScores.filter((beach) => {
+      // Search filter
+      if (filters.searchQuery) {
+        const searchLower = filters.searchQuery.toLowerCase();
+        const nameMatch = beach.name.toLowerCase().includes(searchLower);
+        const regionMatch = beach.region.name
+          .toLowerCase()
+          .includes(searchLower);
+        const countryMatch = beach.region.country?.name
+          .toLowerCase()
+          .includes(searchLower);
+
+        if (!nameMatch && !regionMatch && !countryMatch) {
+          return false;
+        }
+      }
+
       // Location filters
       if (
         filters.location.region &&

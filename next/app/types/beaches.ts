@@ -73,10 +73,11 @@ export type WaveType = (typeof WAVE_TYPES)[number];
 export interface Beach {
   id: string;
   name: string;
-  continent: Continent;
-  country: Country;
-  region: Region;
+  continent: string;
+  countryId: string;
   regionId: string;
+  country?: Country;
+  region?: Region;
   isHiddenGem?: boolean | undefined;
   location: string;
   distanceFromCT: number;
@@ -162,3 +163,7 @@ export interface AdSlot {
   status: "active" | "pending" | "rejected";
   rejectionReason?: string;
 }
+
+export const beachData: Beach[] = [
+  // Import beach data from beachData.txt and paste it here
+];

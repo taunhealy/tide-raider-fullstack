@@ -408,7 +408,7 @@ const BeachCard = memo(
 
                 {/* Media Grid - Now inside the card */}
                 <div className="mt-3 md:mt-4">
-                  <MediaGrid beach={beach} videos={beach.videos} />
+                  <MediaGrid videos={beach.videos || []} beach={beach} />
                 </div>
               </div>
             )}

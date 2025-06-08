@@ -11,10 +11,7 @@ export async function GET(request: Request) {
     const beaches = await prisma.beach.findMany({
       where: regionId
         ? {
-            OR: [
-              { regionId },
-              { region: { name: regionId } }, // Also search by region name
-            ],
+            OR: [{ regionId }, { region: { name: regionId } }],
           }
         : undefined,
       select: {
@@ -24,6 +21,7 @@ export async function GET(request: Request) {
         optimalSwellDirections: true,
         swellSize: true,
         idealSwellPeriod: true,
+        videos: true,
         region: {
           include: {
             country: true,

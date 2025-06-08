@@ -138,7 +138,7 @@ export default function BeachContainer() {
     currentPage,
     beachScores,
     setTodayGoodBeaches,
-    setIsLoading,
+    setLoadingState,
   } = useBeach();
 
   // Use the filtered beaches hook for the beach list
@@ -237,7 +237,6 @@ export default function BeachContainer() {
   // Prevent premature rendering during loading
   const [regionSelected, setRegionSelected] = useState(false);
 
-  // Use React Query for forecast data
   const { isLoading: isForecastLoading, data: forecastDataFromQuery } =
     useQuery({
       queryKey: ["forecast", filters.location.regionId],
@@ -325,6 +324,11 @@ export default function BeachContainer() {
       setTodayGoodBeaches(todayRatings);
     }
   }, [todayRatings, setTodayGoodBeaches]);
+
+  // Update loading state when region changes
+  useEffect(() => {
+    setLoadingState("forecast", isForecastLoading);
+  }, [isForecastLoading, setLoadingState]);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">

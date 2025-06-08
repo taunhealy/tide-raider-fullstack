@@ -1,8 +1,6 @@
 "use client";
 
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
-import { Beach } from "@/app/types/beaches";
-import { useSession } from "next-auth/react";
 import { Ad, Service } from "@/app/types/ads";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,11 +8,28 @@ import {
   ADVENTURE_AD_CATEGORIES,
 } from "@/app/lib/advertising/constants";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
 
 interface MediaGridProps {
-  videos?: { url: string; title: string; platform: "youtube" | "vimeo" }[];
-  beach: Beach;
+  videos?:
+    | {
+        url: string;
+        title: string;
+        platform: "youtube" | "vimeo";
+      }[]
+    | null;
+  beach: {
+    id: string;
+    name: string;
+    region: {
+      id: string;
+      name: string;
+      country?: { name: string };
+    };
+    // Simplified service relationships
+    coffeeShops?: { name: string }[];
+    shapers?: { name: string; url?: string }[];
+    beerSpots?: { name: string; url?: string }[];
+  };
 }
 
 function MediaGridBase({ videos = [], beach }: MediaGridProps) {
@@ -24,23 +39,20 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
     region: beach.region,
   });
 
+  // Add detailed logging
+  console.log("Videos received:", {
+    value: videos,
+    type: typeof videos,
+    isArray: Array.isArray(videos),
+    isNull: videos === null,
+    isUndefined: videos === undefined,
+  });
+
   const { data: ads = [] } = useQuery<Ad[]>({
     queryKey: ["ads", beach.id, beach.region],
     queryFn: async () => {
-      // Normalize the region ID to match the format in the database
-      const normalizedRegion = beach.region
-        ? beach.region.toLowerCase().replace(/ /g, "-")
-        : "";
-
-      console.log(
-        "Fetching ads for beach:",
-        beach.id,
-        "normalized region:",
-        normalizedRegion
-      );
-
       const response = await fetch(
-        `/api/advertising/ads?beachId=${beach.id}&regionId=${normalizedRegion}`
+        `/api/advertising/ads?beachId=${beach.id}&regionId=${beach.region.id}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch ads");
@@ -49,14 +61,6 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
       return Array.isArray(data.ads) ? data.ads : [];
     },
   });
-
-  // Log the ads that were received
-  useEffect(() => {
-    console.log("Ads loaded in MediaGrid:", ads);
-    console.log("Beach ID:", beach.id);
-    console.log("Beach region:", beach.region);
-    console.log("Is this Muizenberg?", beach.id === "muizenberg-beach");
-  }, [ads, beach.id, beach.region]);
 
   // Separate local and adventure ads
   const localAds = ads.filter(
@@ -69,25 +73,25 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
 
   // Prepare local services (coffee shops, shapers, etc.)
   const regularServices = [
-    ...(beach.coffeeShop || []).map((shop) => ({
+    ...(beach.coffeeShops || []).map((shop) => ({
       type: "coffee_shop",
       name: shop.name,
       category: "Coffee Shop",
       url: undefined,
       isAd: false,
     })),
-    ...(beach.shaper || []).map((shaper) => ({
+    ...(beach.shapers || []).map((shaper) => ({
       type: "shaper",
       name: shaper.name,
       category: "Shaper",
       url: shaper.url,
       isAd: false,
     })),
-    ...(beach.beer || []).map((beer) => ({
+    ...(beach.beerSpots || []).map((spot) => ({
       type: "beer",
-      name: beer.name,
+      name: spot.name,
       category: "Beer",
-      url: beer.url,
+      url: spot.url,
       isAd: false,
     })),
   ];
@@ -129,19 +133,27 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
   // For adventure experiences
   const adventureServices = [...adventureAdServices];
 
-  if (!videos.length && !services.length && !adventureServices.length)
+  // Ensure videos is always an array, even if we get null/undefined/non-array
+  const safeVideos = Array.isArray(videos) ? videos : [];
+
+  if (
+    (!safeVideos || !safeVideos.length) &&
+    !services.length &&
+    !adventureServices.length
+  ) {
     return null;
+  }
 
   return (
     <div className="space-y-6">
       {/* Videos Grid */}
-      {videos.length > 0 && (
+      {safeVideos && safeVideos.length > 0 && (
         <div className="border border-[var(--color-border-light)] rounded-lg p-5">
           <h2 className="text-base font-medium font-primary text-[var(--color-text-primary)] mb-4">
             Videos
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {videos.map((video, index) => (
+            {safeVideos.map((video, index) => (
               <a
                 key={`video-${index}`}
                 href={video.url}
@@ -200,7 +212,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                       ? service.url
                       : service.isAd
                         ? "/advertising"
-                        : `https://www.google.com/maps/search/${encodeURIComponent(service.name + " " + beach.region)}`
+                        : `https://www.google.com/maps/search/${encodeURIComponent(service.name + " " + beach.region.name)}`
                   }
                   target="_blank"
                   rel="noopener noreferrer"
@@ -248,7 +260,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                   </h3>
 
                   <p className="text-sm font-primary text-gray-500 mb-3">
-                    {beach.region}
+                    {beach.region.name}
                   </p>
 
                   <div className="h-px bg-gray-100 my-3"></div>
@@ -342,7 +354,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                   </h3>
 
                   <p className="text-sm font-primary text-gray-500 mb-3">
-                    {beach.region}
+                    {beach.region.name}
                   </p>
 
                   <div className="h-px bg-gray-100 my-3"></div>
