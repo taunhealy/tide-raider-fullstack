@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 
 interface LogEntrySelectorProps {
   onSelect: (entry: LogEntry | null) => void;

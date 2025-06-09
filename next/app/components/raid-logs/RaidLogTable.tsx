@@ -1,6 +1,6 @@
 "use client";
 
-import { QuestLogTableColumn, LogEntry } from "@/app/types/questlogs";
+import { QuestLogTableColumn, LogEntry } from "@/app/types/raidlogs";
 
 import { format } from "date-fns";
 import {

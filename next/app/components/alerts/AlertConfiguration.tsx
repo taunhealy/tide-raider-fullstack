@@ -22,7 +22,7 @@ import { BasicSelect, BasicOption } from "@/app/components/ui/basicselect";
 import { NotificationMethod } from "@/app/types/alerts";
 import { cn } from "@/app/lib/utils";
 import { X } from "lucide-react";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 
 interface AlertConfigurationProps {
   onSave: (config: AlertConfigTypes) => void;

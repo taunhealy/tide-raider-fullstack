@@ -17,7 +17,7 @@ import {
 } from "@/app/lib/constants";
 import { MediaGrid } from "@/app/components/MediaGrid";
 import { useQueryClient } from "@tanstack/react-query";
-import type { LogEntry } from "@/app/types/questlogs";
+import type { LogEntry } from "@/app/types/raidlogs";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
@@ -80,6 +80,15 @@ const BeachCard = memo(
         delay: 0.2,
         ease: "power2.out",
         onComplete: () => setHasAnimated(true),
+      });
+
+      // Modify this part to exclude tooltips
+      gsap.to(card.querySelectorAll(".animate-in"), {
+        // Add a specific class for elements to animate
+        opacity: 1,
+        duration: 0.4,
+        delay: 0.2,
+        ease: "power2.out",
       });
 
       return () => {
@@ -180,7 +189,7 @@ const BeachCard = memo(
           transition-all 
           duration-300 
           hover:shadow-md
-          opacity-0
+          [&_.animate-in]:opacity-0
           ${isLocalLoading ? "animate-pulse" : ""}
         `}
         >
@@ -226,6 +235,7 @@ const BeachCard = memo(
                               : "opacity-0 translate-y-2"
                           }
                         `}
+                          data-no-animation
                         >
                           {beach.waveType}
                         </div>
@@ -234,7 +244,7 @@ const BeachCard = memo(
 
                     {/* Beach Information */}
                     <div>
-                      <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2">
+                      <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
                         {beach.name}
                         {forecastData?.windSpeed &&
                           forecastData.windSpeed > 25 && (
@@ -254,7 +264,7 @@ const BeachCard = memo(
                         )}
                       </h4>
                       <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                        {beach.region.name}
+                        {beach.region?.name}
                       </h6>
                     </div>
                   </div>
@@ -264,7 +274,7 @@ const BeachCard = memo(
                     <GoogleMapsButton
                       coordinates={beach.coordinates}
                       name={beach.name}
-                      region={beach.region.name}
+                      region={beach.region?.name}
                       location={beach.location}
                       className="hidden md:flex"
                     />
@@ -408,7 +418,7 @@ const BeachCard = memo(
 
                 {/* Media Grid - Now inside the card */}
                 <div className="mt-3 md:mt-4">
-                  <MediaGrid videos={beach.videos || []} beach={beach} />
+                  <MediaGrid beach={beach} videos={beach.videos} />
                 </div>
               </div>
             )}

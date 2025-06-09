@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 import Image from "next/image";
 import { Star } from "lucide-react";
 

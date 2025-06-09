@@ -64,15 +64,19 @@ const fetchRegionData = async (regionId: string) => {
     throw new Error(`Failed to fetch forecast data: ${response.status}`);
   }
   const data = await response.json();
-  console.log("📊 Received forecast data:", data);
   return data as BaseForecastData;
 };
 
 const fetchBeaches = async (regionId?: string) => {
   try {
-    const response = await fetch(
-      regionId ? `/api/beaches?regionId=${regionId}` : `/api/beaches` // This will fetch all beaches for Global view
-    );
+    const params = new URLSearchParams();
+    if (regionId) {
+      params.append("regionId", regionId);
+    }
+    params.append("sortField", "score");
+    params.append("sortDirection", "desc");
+
+    const response = await fetch(`/api/beaches?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch beaches");
@@ -219,16 +223,8 @@ export default function BeachContainer() {
     stableSortComplete,
   ]);
 
-  // Modify the sortedBeaches memo to only run when we're ready
-  const sortedBeaches = useMemo(() => {
-    if (isProcessing) {
-      return [];
-    }
-    return getSortedBeachesByScore(filteredBeaches, beachScores);
-  }, [isProcessing, filteredBeaches, beachScores]);
-
   // Use sortedBeaches for pagination
-  const { currentItems } = usePagination(sortedBeaches, currentPage, 18);
+  const { currentItems } = usePagination(filteredBeaches, currentPage, 18);
 
   const { isSubscribed } = useSubscription();
 
@@ -249,8 +245,8 @@ export default function BeachContainer() {
   const { isLoading: isBeachesLoading, data: beachesData } = useQuery({
     queryKey: ["beaches", filters.location.regionId],
     queryFn: () => fetchBeaches(filters.location.regionId),
-    enabled: true, // This ensures it runs on initial load
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    enabled: true,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Use React Query for blog posts

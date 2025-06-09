@@ -67,9 +67,11 @@ const BeachContext = createContext<BeachContextType | undefined>(undefined);
 export function BeachProvider({
   children,
   initialBeaches,
+  initialFilters,
 }: {
   children: ReactNode;
   initialBeaches: Beach[];
+  initialFilters?: FilterType;
 }) {
   // Core data
   const [beaches, setBeaches] = useState<Beach[]>(initialBeaches);
@@ -80,21 +82,23 @@ export function BeachProvider({
   >([]);
 
   // Filters and sorting
-  const [filters, setFilters] = useState<FilterType>({
-    location: {
-      region: "",
-      regionId: "",
-      country: "",
-      continent: "",
-    },
-    waveType: [],
-    difficulty: [],
-    minPoints: 0,
-    crimeLevel: [],
-    sharkAttack: [],
-    searchQuery: "",
-    hasAttack: false,
-  });
+  const [filters, setFilters] = useState<FilterType>(
+    initialFilters || {
+      location: {
+        region: "",
+        regionId: "",
+        country: "",
+        continent: "",
+      },
+      waveType: [],
+      difficulty: [],
+      minPoints: 0,
+      crimeLevel: [],
+      sharkAttack: [],
+      searchQuery: "",
+      hasAttack: false,
+    }
+  );
   const [sort, setSort] = useState<BeachSort>({
     field: "score",
     direction: "desc",

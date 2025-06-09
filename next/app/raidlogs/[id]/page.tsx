@@ -5,8 +5,6 @@ import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import CommentThread from "@/app/components/comments/CommentThread";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
-import { redirect } from "next/navigation";
-import { auth } from "@/app/lib/auth";
 
 // Add server-side data fetching
 async function getRaidLogData(id: string) {
@@ -51,18 +49,6 @@ export default async function RaidLogPage({
 }: {
   params: { id: string };
 }) {
-  // Add authentication and subscription check
-  const session = await auth();
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  const hasAccess = session.user.isSubscribed || session.user.hasActiveTrial;
-  if (!hasAccess) {
-    redirect("/pricing");
-  }
-
   const entry = await getRaidLogData(params.id);
 
   if (!entry)
@@ -105,7 +91,7 @@ export default async function RaidLogPage({
 
             {entry.isAnonymous && (
               <div className="mb-4 flex items-center gap-3">
-                <div className="bg-gray-100 rounded-full w-10 h-10 flex items-center justify-center text-gray-700 font-medium text-lg">
+                <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 flex items-center justify-center text-white font-medium text-lg">
                   A
                 </div>
                 <p className="text-gray-800 font-primary font-medium">

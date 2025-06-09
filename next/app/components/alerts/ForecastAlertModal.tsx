@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 import {
   AlertConfigTypes,
   ForecastProperty,

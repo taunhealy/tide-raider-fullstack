@@ -6,7 +6,7 @@ interface GoogleMapsButtonProps {
     lng: number;
   };
   name: string;
-  region: string;
+  region: string | undefined;
   location: string;
   className?: string;
 }

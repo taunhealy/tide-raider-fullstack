@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import type { LogEntry } from "@/app/types/questlogs";
+import type { LogEntry } from "@/app/types/raidlogs";
 import Image from "next/image";
 
 export default function RaidLogSidebar() {

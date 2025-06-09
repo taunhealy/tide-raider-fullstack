@@ -52,8 +52,6 @@ export default function BeachDetailsModal({
   isSubscribed,
   onSubscribe,
 }: BeachDetailsModalProps) {
-  console.log("BeachDetailsModal render with isOpen:", isOpen);
-
   // Add this useEffect to debug
   React.useEffect(() => {
     console.log("BeachDetailsModal isOpen changed to:", isOpen);
@@ -120,7 +118,10 @@ export default function BeachDetailsModal({
         <div className="grid grid-cols-2 gap-6 py-4 border-b border-gray-200">
           {/* Details Section */}
           <div className="space-y-3">
-            <DetailItem label="Region" value={beach.region.name} />
+            <DetailItem
+              label="Region"
+              value={beach.region?.name || "Unknown"}
+            />
             <DetailItem label="Location" value={beach.location} />
             <DetailItem
               label="Distance"

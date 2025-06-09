@@ -7,7 +7,7 @@ import { getWindEmoji } from "@/app/lib/forecastUtils";
 import { getSwellEmoji } from "@/app/lib/forecastUtils";
 import { getDirectionEmoji } from "@/app/lib/forecastUtils";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 
 const SponsorContainer = () => {
   const [isVisible, setIsVisible] = useState(false);

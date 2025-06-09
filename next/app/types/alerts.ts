@@ -1,4 +1,4 @@
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 import type { ForecastA } from "@prisma/client";
 
 export type ForecastProperty =

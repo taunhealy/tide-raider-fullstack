@@ -1,7 +1,7 @@
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { WindData, WeeklyForecast } from "@/app/types/wind";
 import { useState, useEffect } from "react";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 
 interface SurfForecastWidgetProps {
   beachId: string;

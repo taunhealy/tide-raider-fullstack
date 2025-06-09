@@ -22,6 +22,8 @@ export interface LogEntry {
   isMyAlert?: boolean;
   alertId?: string;
   imageUrl?: string | null;
+  videoUrl?: string | null;
+  videoPlatform?: "youtube" | "vimeo" | null;
   forecast?: {
     id: string;
     date: Date;

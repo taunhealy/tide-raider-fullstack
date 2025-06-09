@@ -20,10 +20,10 @@ export function useFilteredBeaches() {
       if (filters.searchQuery) {
         const searchLower = filters.searchQuery.toLowerCase();
         const nameMatch = beach.name.toLowerCase().includes(searchLower);
-        const regionMatch = beach.region.name
+        const regionMatch = beach.region?.name
           .toLowerCase()
           .includes(searchLower);
-        const countryMatch = beach.region.country?.name
+        const countryMatch = beach.region?.country?.name
           .toLowerCase()
           .includes(searchLower);
 
@@ -35,7 +35,7 @@ export function useFilteredBeaches() {
       // Location filters
       if (
         filters.location.region &&
-        beach.region.name !== filters.location.region
+        beach.region?.name !== filters.location.region
       ) {
         return false;
       }

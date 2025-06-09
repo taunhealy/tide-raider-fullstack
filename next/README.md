@@ -44,3 +44,22 @@ API Integration: Seamless integration with weather and surf forecast APIs
 Performance Optimization: Image optimization, code splitting, and lazy loading
 Responsive Design System: Mobile-first approach with adaptive layouts
 Authentication Flow: Secure user authentication and authorization
+
+## Architecture
+
+Next.js/Prisma handles:
+User interactions
+Real-time updates
+Simple CRUD operations
+Client-side caching
+
+Azure .NET handles:
+Alert processing engine
+Forecast comparison logic
+Notification dispatch
+Background jobs
+Reliable CRON scheduling
+Complex data processing
+Better error handling
+Monitoring and logging
+Retries and fault tolerance

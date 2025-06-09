@@ -8,6 +8,7 @@ import { Button } from "@/app/components/ui/Button";
 import { useBeach } from "@/app/context/BeachContext";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { FilterHeader } from "@/app/components/ui/FilterHeader";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface LocationFilterProps {
   filters: FilterType;
@@ -71,6 +72,8 @@ export default function LocationFilter({
 }: LocationFilterProps) {
   const { todayGoodBeaches } = useBeach();
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Calculate region counts from today's good beaches
   const regionCounts = useMemo(() => {
@@ -135,6 +138,33 @@ export default function LocationFilter({
     });
   };
 
+  const updateUrlAndFilters = (region: Region | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (region) {
+      params.set("regionId", region.id); // Use only regionId
+      params.delete("region"); // Remove redundant params
+      params.delete("id");
+    } else {
+      params.delete("regionId");
+      params.delete("region");
+      params.delete("id");
+    }
+
+    // Update URL without refresh
+    router.push(`/raid${params.toString() ? `?${params.toString()}` : ""}`);
+
+    // Update filters
+    setFilters({
+      ...filters,
+      location: {
+        ...filters.location,
+        region: region ? region.name : "",
+        regionId: region ? region.id : "",
+      },
+    });
+  };
+
   return (
     <div className="space-y-3 border border-md px-7 py-7 bg-white gap-9">
       <FilterHeader
@@ -161,20 +191,11 @@ export default function LocationFilter({
                       region={region}
                       isActive={filters.location.region === region.name}
                       onClick={() => {
-                        setFilters({
-                          ...filters,
-                          location: {
-                            ...filters.location,
-                            region:
-                              filters.location.region === region.name
-                                ? ""
-                                : region.name,
-                            regionId:
-                              filters.location.region === region.name
-                                ? ""
-                                : region.id,
-                          },
-                        });
+                        const newRegion =
+                          filters.location.region === region.name
+                            ? null
+                            : region;
+                        updateUrlAndFilters(newRegion);
                       }}
                       count={regionCounts[region.name]}
                     />
@@ -192,20 +213,9 @@ export default function LocationFilter({
                 region={region}
                 isActive={filters.location.region === region.name}
                 onClick={() => {
-                  setFilters({
-                    ...filters,
-                    location: {
-                      ...filters.location,
-                      region:
-                        filters.location.region === region.name
-                          ? ""
-                          : region.name,
-                      regionId:
-                        filters.location.region === region.name
-                          ? ""
-                          : region.id,
-                    },
-                  });
+                  const newRegion =
+                    filters.location.region === region.name ? null : region;
+                  updateUrlAndFilters(newRegion);
                 }}
                 count={regionCounts[region.name]}
               />

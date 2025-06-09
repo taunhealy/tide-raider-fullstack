@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/app/lib/utils";
-import type { LogEntry } from "@/app/types/questlogs";
+import type { LogEntry } from "@/app/types/raidlogs";
 
 export default function Quests() {
   const { data: logEntries, isLoading } = useQuery({

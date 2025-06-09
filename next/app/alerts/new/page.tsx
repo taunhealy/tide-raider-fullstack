@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertModal";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useSession } from "next-auth/react";
-import { LogEntry } from "@/app/types/questlogs";
+import { LogEntry } from "@/app/types/raidlogs";
 
 export default function NewAlertPage() {
   const [isLoading, setIsLoading] = useState(true);

@@ -212,8 +212,6 @@ export default function AdventureExperiences({
           return;
         }
 
-        console.log("Fetching adventure ads for region:", selectedRegion);
-
         // First get the region ID if we have a region name
         let regionId = selectedRegion;
 
@@ -270,11 +268,6 @@ export default function AdventureExperiences({
 
     fetchAdventureAds();
   }, [selectedRegion]);
-
-  // Add a useEffect to log when ads change
-  useEffect(() => {
-    console.log("Adventure ads state updated:", adventureAds);
-  }, [adventureAds]);
 
   // Return null or a loading state during server-side rendering
   if (!isMounted) {

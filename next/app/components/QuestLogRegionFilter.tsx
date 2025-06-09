@@ -2,7 +2,7 @@
 
 import { Inter } from "next/font/google";
 import { FilterButton } from "./ui/filterbuttons";
-import { LogEntry } from "../types/questlogs";
+import { LogEntry } from "../types/raidlogs";
 
 const inter = Inter({ subsets: ["latin"] });
 

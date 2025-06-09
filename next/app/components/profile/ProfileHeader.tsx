@@ -1,9 +1,10 @@
 "use client";
+"use client";
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { countries } from "countries-list";
 
 type CountryWithEmoji = {
@@ -15,6 +16,7 @@ interface ProfileHeaderProps {
   userId: string;
   isOwnProfile: boolean;
   nationalitySelector: React.ReactNode;
+  fallbackStyles?: string;
 }
 
 function getFlagEmoji(countryCode: string) {
@@ -39,6 +41,8 @@ function ProfileHeaderContent({
     },
   });
 
+  const [imageError, setImageError] = useState(false);
+
   if (isLoading) {
     return (
       <div className="flex items-start gap-4 mb-6">
@@ -54,15 +58,26 @@ function ProfileHeaderContent({
 
   const displayName = userData?.name || "Anonymous";
 
+  const avatarFallback = (
+    <div className="w-20 h-20 rounded-full bg-[var(--color-tertiary)] text-white flex items-center justify-center font-medium text-xl">
+      {displayName.charAt(0).toUpperCase()}
+    </div>
+  );
+
   return (
     <div className="flex items-start gap-4 mb-6">
       <div className="w-20 h-20 relative rounded-full overflow-hidden">
-        <Image
-          src={userData?.image || "/default-avatar.png"}
-          alt={`${displayName}'s avatar`}
-          fill
-          className="object-cover"
-        />
+        {userData?.image && !imageError ? (
+          <Image
+            src={userData.image}
+            alt={`${displayName}'s avatar`}
+            fill
+            className="object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          avatarFallback
+        )}
       </div>
       <div>
         <div className="flex items-center gap-2">
