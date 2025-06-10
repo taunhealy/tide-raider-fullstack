@@ -4,12 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RentalItemCard } from "@/app/components/rentals/RentalItemCard";
-import { RegionFilter } from "@/app/components/shared/RegionFilter";
 import { SearchFilterSidebar } from "@/app/components/shared/SearchFilterSidebar";
 import RippleLoader from "@/app/components/ui/RippleLoader";
 import { Button } from "@/app/components/ui/Button";
 import { RentalItemWithRelations } from "@/app/types/rentals";
-import { cn } from "@/app/lib/utils";
 import {
   LocationFilter,
   LocationFilterType,

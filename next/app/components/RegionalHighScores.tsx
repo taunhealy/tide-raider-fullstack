@@ -20,6 +20,11 @@ interface BeachScore {
   averageScore: number | null;
 }
 
+interface BeachWithScore extends Beach {
+  appearances: number;
+  averageScore: number;
+}
+
 export default function RegionalHighScores({
   beaches,
   selectedRegion,
@@ -56,7 +61,7 @@ export default function RegionalHighScores({
     queryFn: async () => {
       if (!selectedRegion) return { scores: [] };
 
-    // For today, use beach-ratings endpoint instead
+      // For today, use beach-ratings endpoint instead
       if (timePeriod === "today") {
         const today = new Date().toISOString().split("T")[0];
         const response = await fetch(
@@ -69,18 +74,18 @@ export default function RegionalHighScores({
 
         // Map ratings to include beach details
         const beachesWithScores = ratings
-          .map((rating: any) => {
+          .map((rating: BeachScore) => {
             const beach = beaches.find((b) => b.id === rating.beachId);
             if (!beach) return null;
 
             return {
               ...beach,
               appearances: 1,
-              averageScore: rating.score,
-            };
+              averageScore: rating.averageScore ?? 0,
+            } as BeachWithScore;
           })
           .filter(Boolean)
-          .sort((a, b) => b.averageScore - a.averageScore)
+          .sort((a, b) => (b?.averageScore ?? 0) - (a?.averageScore ?? 0))
           .slice(0, 5); // Get top 5 highest scoring beaches
 
         return { beaches: beachesWithScores };
@@ -105,11 +110,11 @@ export default function RegionalHighScores({
           return {
             ...beach,
             appearances: score.appearances,
-            averageScore: score.averageScore,
-          };
+            averageScore: score.averageScore ?? 0,
+          } as BeachWithScore;
         })
         .filter(Boolean)
-        .sort((a, b) => b.averageScore - a.averageScore)
+        .sort((a, b) => (b?.averageScore ?? 0) - (a?.averageScore ?? 0))
         .slice(0, 5);
 
       return { beaches: beachesWithScores };
@@ -195,7 +200,7 @@ export default function RegionalHighScores({
               </div>
 
               <div className="space-y-0">
-                {data.beaches.map((beach: any, index: number) => {
+                {data.beaches.map((beach: BeachWithScore, index: number) => {
                   // Ensure we have valid numbers before any calculations
                   const score =
                     typeof beach.averageScore === "number"

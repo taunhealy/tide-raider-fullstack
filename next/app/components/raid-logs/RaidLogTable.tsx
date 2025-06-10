@@ -805,7 +805,7 @@ export default function RaidLogTable({
 
                     {/* Forecast info with badges */}
                     {entry.forecast && (
-                      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                      <div className="bg-gray-50 p-3 rounded-lg space-y-2 min-h-[120px] min-w-[200px]">
                         <div className="flex flex-wrap gap-2">
                           {entry.forecast.windSpeed != null && (
                             <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-primary">

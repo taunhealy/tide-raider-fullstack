@@ -6,6 +6,7 @@ import FunFacts from "../FunFacts";
 import { useBeach } from "@/app/context/BeachContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useMemo } from "react";
+import RaidLogSidebar from "@/app/components/RaidLogSidebar";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -111,6 +112,29 @@ const RegionalServicesSidebarSkeleton = () => (
   </div>
 );
 
+// Add only the RaidLogSkeleton component
+const RaidLogSkeleton = () => (
+  <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm border border-gray-200">
+    <div className="flex items-center justify-between mb-4">
+      <Skeleton className="h-7 w-40" />
+      <Skeleton className="h-5 w-16" />
+    </div>
+    <div className="space-y-3">
+      <Skeleton className="aspect-video w-full rounded-lg" />
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-3/4" />
+        <div className="flex gap-1">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-4 w-4" />
+          ))}
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-1/3" />
+      </div>
+    </div>
+  </div>
+);
+
 interface RightSidebarProps {
   availableAds: any[];
   selectedRegion?: string;
@@ -134,17 +158,13 @@ export default function RightSidebar({
       return {
         forecast: <ForecastWidgetSkeleton />,
         highScores: <RegionalHighScoresSkeleton />,
+        raidLog: <RaidLogSkeleton />,
         adventures: <AdventureExperiencesSkeleton />,
         services: <RegionalServicesSidebarSkeleton />,
       };
     } else {
       return {
-        forecast: (
-          <WeatherForecastWidget
-            forecastData={forecastData}
-            isLoading={false}
-          />
-        ),
+        forecast: <WeatherForecastWidget forecastData={forecastData} />,
         highScores: selectedRegion ? (
           <RegionalHighScores
             beaches={allBeaches}
@@ -152,6 +172,7 @@ export default function RightSidebar({
             onBeachClick={handleBeachClick}
           />
         ) : null,
+        raidLog: <RaidLogSidebar />,
         adventures: <AdventureExperiences selectedRegion={selectedRegion} />,
         services: (
           <RegionalSidebar selectedRegion={selectedRegion} ads={availableAds} />
@@ -170,13 +191,10 @@ export default function RightSidebar({
   return (
     <aside className="space-y-6 lg:w-[250px] xl:w-[300px]">
       {sidebarContent.forecast}
-
       {sidebarContent.highScores}
-
+      {sidebarContent.raidLog}
       {sidebarContent.adventures}
-
       {sidebarContent.services}
-
       <FunFacts />
     </aside>
   );

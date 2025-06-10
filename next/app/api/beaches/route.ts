@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { calculateBeachScore } from "@/app/lib/scoreUtils";
 import type { Beach } from "@/app/types/beaches";
+import type { CoreForecastData } from "@/app/types/forecast";
 
 const prisma = new PrismaClient();
 
@@ -10,8 +11,20 @@ export async function GET(request: Request) {
   const regionId = url.searchParams.get("regionId");
   const sortField = url.searchParams.get("sortField") || "score";
   const sortDirection = url.searchParams.get("sortDirection") || "desc";
+  const minScore = Number(url.searchParams.get("minScore")) || 0;
 
   try {
+    // Get the latest forecast data first
+    const forecastData = await prisma.forecastA.findFirst({
+      where: {
+        region: regionId || undefined,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Fetch beaches with all necessary data
     const beaches = await prisma.beach.findMany({
       where: regionId
         ? {
@@ -49,49 +62,48 @@ export async function GET(request: Request) {
         coordinates: true,
         sheltered: true,
       },
-      orderBy:
-        sortField === "score"
-          ? {
-              // If sorting by score, we'll sort after calculating scores
-              name: "asc",
-            }
-          : {
-              [sortField]: sortDirection,
-            },
     });
 
-    // If sorting by score, we need to calculate scores and sort
-    if (sortField === "score") {
-      // Get forecast data for score calculation
-      const forecastData = await prisma.forecastA.findFirst({
-        where: {
-          region: regionId || undefined,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+    // Calculate scores and filter/sort beaches
+    if (forecastData) {
+      const conditions: CoreForecastData = {
+        windSpeed: forecastData.windSpeed,
+        windDirection: forecastData.windDirection,
+        swellHeight: forecastData.swellHeight,
+        swellDirection: forecastData.swellDirection,
+        swellPeriod: forecastData.swellPeriod,
+      };
 
-      if (forecastData) {
-        const beachesWithScores = beaches.map((beach) => ({
-          ...beach,
-          region: {
-            ...beach.region,
-            continent: beach.region.continent || undefined, // Convert null to undefined
-          },
-          score: calculateBeachScore(beach as unknown as Beach, forecastData)
-            .score,
-        }));
+      const beachesWithScores = beaches
+        .map((beach) => {
+          const { score } = calculateBeachScore(
+            beach as unknown as Beach,
+            conditions
+          );
+          return {
+            ...beach,
+            region: {
+              ...beach.region,
+              continent: beach.region?.continent || undefined,
+            },
+            score,
+          };
+        })
+        .filter((beach) => beach.score >= minScore) // Filter by minimum score
+        .sort((a, b) => {
+          if (sortField === "score") {
+            return sortDirection === "desc"
+              ? b.score - a.score
+              : a.score - b.score;
+          }
+          // Handle other sort fields if needed
+          return 0;
+        });
 
-        // Sort by score
-        beachesWithScores.sort((a, b) =>
-          sortDirection === "desc" ? b.score - a.score : a.score - b.score
-        );
-
-        return NextResponse.json(beachesWithScores);
-      }
+      return NextResponse.json(beachesWithScores);
     }
 
+    // If no forecast data available, return beaches without scores
     return NextResponse.json(beaches);
   } catch (error) {
     console.error("Error fetching beaches:", error);

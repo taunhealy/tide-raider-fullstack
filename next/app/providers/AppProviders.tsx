@@ -7,6 +7,8 @@ import { Toaster } from "sonner";
 import { Provider as ReduxProvider } from "react-redux";
 import { store } from "@/app/redux/store";
 import { SubscriptionProvider } from "./SubscriptionProvider";
+import { BeachProvider } from "@/app/context/BeachContext";
+import { beachData } from "@/app/types/beaches";
 
 const queryClient = new QueryClient();
 
@@ -20,9 +22,11 @@ export default function AppProviders({
       <QueryClientProvider client={queryClient}>
         <SessionProvider>
           <SubscriptionProvider>
-            {children}
-            <Toaster position="top-right" />
-            <ReactQueryDevtools initialIsOpen={false} />
+            <BeachProvider initialBeaches={beachData}>
+              {children}
+              <Toaster position="top-right" />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </BeachProvider>
           </SubscriptionProvider>
         </SessionProvider>
       </QueryClientProvider>

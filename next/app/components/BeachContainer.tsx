@@ -148,6 +148,20 @@ export default function BeachContainer() {
   // Use the filtered beaches hook for the beach list
   const filteredBeaches = useFilteredBeaches();
 
+  // Sort beaches by score
+  const sortedBeaches = useMemo(() => {
+    if (!filteredBeaches || !beachScores) return [];
+
+    return [...filteredBeaches].sort((a, b) => {
+      const scoreA = beachScores[a.id]?.score ?? 0;
+      const scoreB = beachScores[b.id]?.score ?? 0;
+      return scoreB - scoreA; // Sort in descending order
+    });
+  }, [filteredBeaches, beachScores]);
+
+  // Use sortedBeaches for pagination
+  const { currentItems } = usePagination(sortedBeaches, currentPage, 18);
+
   // Add a new state to track when both data fetching and score calculation are complete
   const [dataProcessingComplete, setDataProcessingComplete] = useState(false);
 
@@ -222,9 +236,6 @@ export default function BeachContainer() {
     beachScores,
     stableSortComplete,
   ]);
-
-  // Use sortedBeaches for pagination
-  const { currentItems } = usePagination(filteredBeaches, currentPage, 18);
 
   const { isSubscribed } = useSubscription();
 
@@ -352,7 +363,10 @@ export default function BeachContainer() {
                       currentItems.map((beach, index) => (
                         <BeachCard
                           key={beach.id || beach.name}
-                          beach={beach}
+                          beach={{
+                            ...beach,
+                            score: beachScores[beach.id]?.score ?? 0,
+                          }}
                           isFirst={index === 0}
                           forecastData={forecastData}
                         />

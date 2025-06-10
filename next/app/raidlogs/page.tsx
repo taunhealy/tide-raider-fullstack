@@ -17,7 +17,7 @@ export default function RaidLogsPage() {
   // Allow access even without session
   return (
     <div className="p-2 sm:p-4 md:p-4 mx-2">
-      <RaidLogsComponent beaches={beachData} />
+      <RaidLogsComponent />
     </div>
   );
 }

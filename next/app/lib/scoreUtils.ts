@@ -69,7 +69,7 @@ export function calculateBeachScore(
     }
 
     // Starting score
-    let score = 10;
+    let score = 5;
 
     // Convert numeric degrees to cardinal direction
     const currentDirDegrees = Number(conditions.windDirection);
@@ -86,24 +86,24 @@ export function calculateBeachScore(
         const diff = Math.abs(currentDirDegrees - optimalDegrees);
         const angleDiff = Math.min(diff, 360 - diff);
 
-        return angleDiff <= 45;
+        // More strict neighboring check - only 22.5° deviation allowed
+        return angleDiff <= 22.5;
       });
 
       if (isNeighboring) {
-        score = Math.max(0, score - 2);
+        score = Math.max(0, score - 1);
       } else {
-        score = Math.max(0, score - 4);
+        // Increased penalty for non-neighboring wind directions
+        score = Math.max(0, score - 3);
       }
     }
 
     // Wind strength scoring
     if (!beach.sheltered) {
       if (conditions.windSpeed > 35) {
-        score = Math.max(0, score - 4);
-      } else if (conditions.windSpeed > 25) {
-        score = Math.max(0, score - 3);
-      } else if (conditions.windSpeed > 15) {
         score = Math.max(0, score - 2);
+      } else if (conditions.windSpeed > 25) {
+        score = Math.max(0, score - 1.5);
       }
     }
 
@@ -119,11 +119,11 @@ export function calculateBeachScore(
         Math.abs(conditions.swellHeight - beach.swellSize.max)
       );
       if (heightDiff <= 0.5) {
-        score = Math.max(0, score - 4); // Just outside range
+        score = Math.max(0, score - 1); // Just outside range
       } else if (heightDiff <= 1) {
-        score = Math.max(0, score - 6); // Significantly off
+        score = Math.max(0, score - 2); // Significantly off
       } else {
-        score = Math.max(0, score - 8); // Way too big/small
+        score = Math.max(0, score - 3); // Way too big/small
       }
     }
 
@@ -140,13 +140,13 @@ export function calculateBeachScore(
       )
     ) {
       if (swellDirDiff <= 10) {
-        score = Math.max(0, score - 2);
+        score = Math.max(0, score - 1);
       } else if (swellDirDiff <= 20) {
-        score = Math.max(0, score - 4);
+        score = Math.max(0, score - 2);
       } else if (swellDirDiff <= 30) {
-        score = Math.max(0, score - 6);
+        score = Math.max(0, score - 3);
       } else {
-        score = Math.max(0, score - 8);
+        score = Math.max(0, score - 4);
       }
     }
 
@@ -163,34 +163,31 @@ export function calculateBeachScore(
       )
     ) {
       if (periodDiff <= 2) {
-        score = Math.max(0, score - 2);
+        score = Math.max(0, score - 1);
       } else if (periodDiff <= 4) {
-        score = Math.max(0, score - 4);
+        score = Math.max(0, score - 2);
       } else {
-        score = Math.max(0, score - 6);
+        score = Math.max(0, score - 3);
       }
     } else {
       // Add bonus points for exceptionally good swell periods
       const midPoint =
         (beach.idealSwellPeriod.min + beach.idealSwellPeriod.max) / 2;
       if (conditions.swellPeriod > midPoint) {
-        // Add up to 2 bonus points for excellent swell periods
+        // Add up to 1 bonus point for excellent swell periods
         const bonusRatio =
           (conditions.swellPeriod - midPoint) /
           (beach.idealSwellPeriod.max - midPoint);
-        const bonus = Math.min(2, Math.max(0, bonusRatio * 2));
-        score = Math.min(10, score + bonus);
+        const bonus = Math.min(1, Math.max(0, bonusRatio));
+        score = Math.min(5, score + bonus);
       }
     }
 
-    // Calculate final score (scaled to 0-5 range)
-    const finalScore = Math.max(0, Math.min(5, score / 2));
-
     // Add logging before final return
     console.log(
-      `✅ Final score for ${beach.name}: ${finalScore}/5 (${finalScore >= 4 ? "Suitable" : "Not Suitable"})`
+      `✅ Final score for ${beach.name}: ${score}/5 (${score >= 4 ? "Suitable" : "Not Suitable"})`
     );
-    return { score: finalScore };
+    return { score };
   } catch (error) {
     console.error("Error calculating beach score for beach:", beach.id);
     console.error("Error details:", error);
@@ -217,7 +214,7 @@ export function calculateAllBeachScores(
     const { score } = calculateBeachScore(beach, conditions);
     result[beach.id] = {
       score,
-      region: beach.region.name,
+      region: beach.region?.name || "Unknown",
     };
   });
 
@@ -297,7 +294,7 @@ export function calculateRegionScores(
     if (
       selectedRegion &&
       selectedRegion !== "Global" &&
-      beach.region.name !== selectedRegion
+      beach.region?.name !== selectedRegion
     ) {
       return;
     }
@@ -313,7 +310,7 @@ export function calculateRegionScores(
     const { score } = calculateBeachScore(beach, processedConditions);
     scores[beach.id] = {
       score,
-      region: beach.region.name,
+      region: beach.region?.name || "Unknown",
     };
   });
 

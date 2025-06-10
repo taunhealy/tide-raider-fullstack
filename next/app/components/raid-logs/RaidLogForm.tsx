@@ -11,7 +11,6 @@ import { Button } from "@/app/components/ui/Button";
 import { validateFile, compressImageIfNeeded } from "@/app/lib/file";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { useSession } from "next-auth/react";
-import { BasicSelect, BasicOption } from "@/app/components/ui/basicselect";
 import { useHandleTrial } from "@/app/hooks/useHandleTrial";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -25,7 +24,7 @@ interface RaidLogFormProps {
   userEmail?: string;
   isOpen?: boolean;
   onClose?: () => void;
-  beaches?: Beach[];
+  beaches: Beach[];
   entry?: LogEntry;
   isEditing?: boolean;
 }
@@ -41,7 +40,6 @@ export function RaidLogForm({
   onClose = () => {},
   beaches,
   entry,
-  isEditing,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
   const { isBetaMode } = useAppMode();
@@ -52,15 +50,17 @@ export function RaidLogForm({
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
-  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(
-    entry?.beachId ? beaches?.find((b) => b.id === entry.beachId) || null : null
-  );
+  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [surferRating, setSurferRating] = useState(entry?.surferRating || 0);
   const [comments, setComments] = useState(entry?.comments || "");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(
+    entry?.isAnonymous || false
+  );
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    entry?.imageUrl || null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
@@ -71,7 +71,7 @@ export function RaidLogForm({
   );
 
   const { data: forecastData } = useForecast(
-    selectedBeach?.region || "",
+    selectedBeach?.region?.name || "",
     new Date(selectedDate)
   );
 
@@ -171,13 +171,13 @@ export function RaidLogForm({
         surferRating,
         comments,
         continent: selectedBeach.continent,
-        country: selectedBeach.country,
-        region: selectedBeach.region,
+        country: selectedBeach.country?.name || null,
+        region: selectedBeach.region?.name || null,
         waveType: selectedBeach.waveType,
         isAnonymous,
         isPrivate,
         forecast: forecastData,
-        imageUrl: imageUrl || undefined, // Add the image URL to the entry
+        imageUrl: imageUrl || undefined,
       };
 
       await createLogEntry.mutateAsync(newEntry);
@@ -196,13 +196,13 @@ export function RaidLogForm({
       beach.name.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-  const handleBeachSelect = async (beach: Beach) => {
+  console.log("Search term:", searchTerm);
+  console.log("Available beaches:", beaches?.length);
+  console.log("Filtered beaches:", filteredBeaches.length);
+
+  const handleBeachSelect = (beach: Beach) => {
     setSelectedBeach(beach);
-    if (!selectedDate) {
-      alert("Please select a date first");
-      return;
-    }
-    await fetchForecastData(beach);
+    setSearchTerm("");
   };
 
   const fetchForecastData = async (beach: Beach) => {
@@ -216,7 +216,7 @@ export function RaidLogForm({
           `/api/surf-conditions?` +
             new URLSearchParams({
               date: selectedDate,
-              region: beach.region,
+              regionId: beach.regionId,
               retry: retryAttempt.toString(),
             })
         );
@@ -289,7 +289,9 @@ export function RaidLogForm({
     if (!beaches || !entry?.beachName) return;
 
     const initialBeach = beaches.find((b) => b.name === entry.beachName);
-    setSelectedBeach(initialBeach || null);
+    if (initialBeach) {
+      setSelectedBeach(initialBeach);
+    }
   }, [entry, beaches]);
 
   useEffect(() => {
@@ -384,7 +386,7 @@ export function RaidLogForm({
           </button>
 
           <h2 className="text-2xl font-bold mb-6 font-primary text-[var(--color-primary)]">
-            Log Session
+            {entry?.id ? "Edit Session" : "Log Session"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -609,7 +611,11 @@ export function RaidLogForm({
                 }
                 className="w-full font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 py-2 mt-4"
               >
-                {isSubmitting ? "Submitting..." : "Log Session"}
+                {isSubmitting
+                  ? "Submitting..."
+                  : entry?.id
+                    ? "Update Session"
+                    : "Log Session"}
               </Button>
             </div>
           </form>

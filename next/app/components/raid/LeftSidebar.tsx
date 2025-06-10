@@ -3,6 +3,7 @@ import BlogPostsSidebar from "../BlogPostsSidebar";
 import LocationFilter from "../LocationFilter";
 import type { Post, Trip } from "@/app/types/blog";
 import RaidLogSidebar from "../RaidLogSidebar";
+import { Region } from "@/app/types/beaches";
 
 interface LeftSidebarProps {
   blogPosts: {
@@ -39,7 +40,6 @@ export default function LeftSidebar({ blogPosts, regions }: LeftSidebarProps) {
               : undefined
           }
         />
-        <RaidLogSidebar />
       </div>
     </aside>
   );

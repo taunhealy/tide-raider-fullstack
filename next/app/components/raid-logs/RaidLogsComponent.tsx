@@ -9,11 +9,11 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useState, useCallback, useMemo } from "react";
 import { LogVisibilityToggle } from "@/app/components/LogVisibilityToggle";
 import { Button } from "@/app/components/ui/Button";
-import Link from "next/link";
 import type { Beach } from "@/app/types/beaches";
 import { toast } from "sonner";
 import { handleSignIn } from "@/app/lib/auth-utils";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
+import { useBeaches } from "@/app/hooks/useBeaches";
 
 // Add filter config types similar to QuestLogs
 type FilterConfig = {
@@ -35,13 +35,11 @@ const defaultFilters: FilterConfig = {
 };
 
 interface RaidLogsComponentProps {
-  beaches: Beach[];
   userId?: string;
   initialFilters?: { isPrivate: boolean; userId?: string };
 }
 
 export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
-  beaches,
   userId,
   initialFilters,
 }) => {
@@ -56,6 +54,7 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
+  const { data: beaches = [], isLoading: isLoadingBeaches } = useBeaches();
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterConfig>) => {
