@@ -16,7 +16,6 @@ export async function GET() {
 
     return NextResponse.json(events);
   } catch (error) {
-    console.error("Error fetching events:", error);
     return NextResponse.json(
       { error: "Failed to fetch events" },
       { status: 500 }
@@ -38,7 +37,6 @@ export async function POST(request: Request) {
     ];
     for (const field of requiredFields) {
       if (!body[field]) {
-        console.error(`Missing required field: ${field}`);
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }
@@ -50,7 +48,6 @@ export async function POST(request: Request) {
     const startTime = new Date(body.startTime);
 
     if (isNaN(startTime.getTime())) {
-      console.error("Invalid startTime format");
       return NextResponse.json(
         { error: "Invalid startTime format" },
         { status: 400 }
@@ -76,7 +73,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(event);
   } catch (error) {
-    console.error("Event creation error:", error);
     return NextResponse.json(
       { error: "Failed to create event" },
       { status: 500 }

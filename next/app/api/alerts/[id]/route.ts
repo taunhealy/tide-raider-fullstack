@@ -34,7 +34,6 @@ export async function GET(
     console.log("Found alert:", alert); // Debug log
     return NextResponse.json(alert);
   } catch (error) {
-    console.error("Error fetching alert:", error);
     return NextResponse.json(
       { error: "Failed to fetch alert" },
       { status: 500 }

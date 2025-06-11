@@ -25,13 +25,6 @@ export default function BlogPostsSidebar({
   selectedCountry,
   selectedContinent,
 }: BlogPostsSidebarProps) {
-  console.log("Initial posts prop:", posts);
-  console.log("Selected filters:", {
-    selectedRegion,
-    selectedCountry,
-    selectedContinent,
-  });
-
   // Add this new query to fetch countries from database
   const { data: dbCountries } = useQuery({
     queryKey: ["countries"],
@@ -51,7 +44,6 @@ export default function BlogPostsSidebar({
       const res = await fetch("/api/posts");
       if (!res.ok) throw new Error("Failed to fetch posts");
       const data = await res.json();
-      console.log("All posts API response:", data);
       return data;
     },
     initialData: posts,
@@ -74,14 +66,10 @@ export default function BlogPostsSidebar({
       dbCountries,
     ],
     queryFn: async () => {
-      console.log("Selected country in filteredPosts query:", selectedCountry);
-
       if (selectedCountry) {
         // Get travel posts
         const travelResponse = await fetch("/api/posts?category=travel");
         const travelData = await travelResponse.json();
-
-        console.log("All travel posts:", travelData);
 
         // Find the country name from the database countries
         const countryName =
@@ -89,9 +77,7 @@ export default function BlogPostsSidebar({
             (c: { id: string; name: string }) => c.id === selectedCountry
           )?.name || selectedCountry;
 
-        console.log("Looking for posts with country:", countryName);
-
-      // Filter posts by country using available data sources
+        // Filter posts by country using available data sources
         const filteredPosts = travelData.filter((post: Post) => {
           // Check if the post has the country in its countries array
           if (post.countries && post.countries.includes(selectedCountry)) {
@@ -115,11 +101,6 @@ export default function BlogPostsSidebar({
 
           return false;
         });
-
-        console.log(
-          `Found ${filteredPosts.length} posts for country "${countryName}":`,
-          filteredPosts
-        );
 
         return {
           posts: filteredPosts,
@@ -147,7 +128,6 @@ export default function BlogPostsSidebar({
       const res = await fetch("/api/posts?category=travel");
       if (!res.ok) throw new Error("Failed to fetch travel posts");
       const data = await res.json();
-      console.log("Travel category posts response:", data);
       return {
         posts: Array.isArray(data.posts)
           ? data.posts
@@ -185,11 +165,8 @@ export default function BlogPostsSidebar({
     return travelPosts || freshPosts;
   })();
 
-  console.log("Display data:", displayData);
-
   // Make sure we handle both array and object formats
   const postsArray = displayData?.posts || [];
-  console.log("Posts array:", postsArray);
   const recentPosts = postsArray.slice(0, 3); // Get 3 most recent posts
 
   // Show loading state
@@ -234,11 +211,8 @@ export default function BlogPostsSidebar({
   if (!postsArray.length) {
     // If we have a country filter but no posts, fetch and show travel posts instead
     if (selectedCountry || selectedContinent) {
-      console.log("Travel posts data:", travelPosts);
-
       // Use travel posts as fallback instead of freshPosts
       const fallbackPosts = travelPosts?.posts || [];
-      console.log("Fallback posts:", fallbackPosts);
 
       return (
         <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm mb-6">

@@ -83,11 +83,6 @@ const fetchBeaches = async (regionId?: string) => {
     }
 
     const data = await response.json();
-    console.log("Fetched beaches:", {
-      count: data.length,
-      firstBeach: data[0],
-      hasRegions: data[0]?.region !== undefined,
-    });
 
     return data;
   } catch (error) {
@@ -152,11 +147,12 @@ export default function BeachContainer() {
   const sortedBeaches = useMemo(() => {
     if (!filteredBeaches || !beachScores) return [];
 
-    return [...filteredBeaches].sort((a, b) => {
-      const scoreA = beachScores[a.id]?.score ?? 0;
-      const scoreB = beachScores[b.id]?.score ?? 0;
-      return scoreB - scoreA; // Sort in descending order
-    });
+    return [...filteredBeaches]
+      .map((beach) => ({
+        ...beach,
+        score: beachScores[beach.id]?.score ?? 0,
+      }))
+      .sort((a, b) => b.score - a.score);
   }, [filteredBeaches, beachScores]);
 
   // Use sortedBeaches for pagination
@@ -359,14 +355,11 @@ export default function BeachContainer() {
                   <BeachCardsSkeleton />
                 ) : (
                   <div className="grid grid-cols-1 gap-[16px]">
-                    {filteredBeaches.length > 0 ? (
+                    {sortedBeaches.length > 0 ? (
                       currentItems.map((beach, index) => (
                         <BeachCard
                           key={beach.id || beach.name}
-                          beach={{
-                            ...beach,
-                            score: beachScores[beach.id]?.score ?? 0,
-                          }}
+                          beach={beach}
                           isFirst={index === 0}
                           forecastData={forecastData}
                         />

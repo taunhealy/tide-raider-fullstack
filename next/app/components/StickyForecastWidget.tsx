@@ -7,9 +7,14 @@ import {
   getSwellEmoji,
   degreesToCardinal,
 } from "@/app/lib/forecastUtils";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { cn } from "@/app/lib/utils";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+// Register ScrollTrigger plugin
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function StickyForecastWidget() {
   // Add try-catch for context usage
@@ -21,83 +26,46 @@ export default function StickyForecastWidget() {
     return null;
   }
 
-  const { forecastData: windData, selectedRegion } = contextData;
+  const { forecastData: windData, filters } = contextData;
   const widgetRef = useRef<HTMLDivElement>(null);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isAtEdge, setIsAtEdge] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!widgetRef.current) return;
 
-    const handleScroll = () => {
-      if (!widgetRef.current) return;
+    // Create the animation
+    const anim = gsap.to(widgetRef.current, {
+      yPercent: 100,
+      opacity: 0,
+      duration: 0.3,
+      ease: "power2.inOut",
+      paused: true, // Start paused
+    });
 
-      const currentScrollY = window.scrollY;
-      const scrollingDown = currentScrollY > lastScrollY;
-      const isAtTop = currentScrollY < 100;
-      const isAtBottom =
-        window.innerHeight + currentScrollY >=
-        document.documentElement.scrollHeight - 100;
-
-      // Handle edge cases (top/bottom of page)
-      if (isAtTop || isAtBottom) {
-        if (!isAtEdge) {
-          gsap.to(widgetRef.current, {
-            y: 100,
-            opacity: 0,
-            duration: 0.3,
-            ease: "power2.out",
-          });
-          setIsAtEdge(true);
-        }
-      } else {
-        // Normal scroll behavior
-        if (isAtEdge) {
-          // Coming back from edge
-          gsap.to(widgetRef.current, {
-            y: 0,
-            opacity: 1,
-            duration: 0.3,
-            ease: "power2.out",
-          });
-          setIsAtEdge(false);
+    // Create ScrollTrigger
+    ScrollTrigger.create({
+      start: "top top",
+      end: "max",
+      onUpdate: (self) => {
+        // Show when scrolling down, hide when scrolling up
+        if (self.direction === 1) {
+          anim.reverse(); // Show
         } else {
-          // Regular scroll animation
-          gsap.to(widgetRef.current, {
-            y: scrollingDown ? 0 : 100,
-            opacity: scrollingDown ? 1 : 0,
-            duration: 0.3,
-            ease: "power2.out",
-          });
+          anim.play(); // Hide
         }
-      }
+      },
+    });
 
-      setLastScrollY(currentScrollY);
+    return () => {
+      // Cleanup
+      anim.kill();
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
-
-    // Add scroll event listener with throttling
-    let timeoutId: NodeJS.Timeout;
-    const throttledScroll = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleScroll, 100);
-    };
-
-    // Initial state
-    if (widgetRef.current) {
-      gsap.set(widgetRef.current, {
-        y: 0,
-        opacity: 1,
-      });
-    }
-
-    window.addEventListener("scroll", throttledScroll);
-    return () => window.removeEventListener("scroll", throttledScroll);
-  }, [lastScrollY, isAtEdge]);
+  }, []);
 
   // Format the data for display with fallback values
   const forecast = {
     date: new Date(),
-    region: selectedRegion || "Global",
+    region: filters.location.region || "Global",
     windSpeed: windData?.windSpeed || 0,
     windDirection: windData?.windDirection || 0,
     swellHeight: windData?.swellHeight || 0,
@@ -147,7 +115,8 @@ export default function StickyForecastWidget() {
           <div>
             <span className="text-gray-600 font-primary">Swell</span>
             <p className="font-medium text-cyan-800 font-primary">
-              {forecast.swellHeight}m
+              {forecast.swellHeight}m,{" "}
+              {degreesToCardinal(forecast.swellDirection)}
             </p>
           </div>
         </div>

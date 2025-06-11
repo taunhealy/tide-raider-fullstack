@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     } else {
       // Otherwise, use the default blog sidebar query
       data = await client.fetch(blogSidebarQuery);
-      console.log("API Response:", data);
 
       // Filter out posts without slugs
       if (data?.posts) {

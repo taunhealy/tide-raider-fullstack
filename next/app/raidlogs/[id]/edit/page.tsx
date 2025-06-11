@@ -4,23 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Beach } from "@/app/types/beaches";
-import { getBeaches } from "@/app/lib/data";
+import { useBeaches } from "@/app/hooks/useBeaches";
 
 export default function RaidLogPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
-  const [beaches, setBeaches] = useState<Beach[]>([]);
   const router = useRouter();
-
-  useEffect(() => {
-    const loadBeaches = async () => {
-      const beachData = await getBeaches();
-      setBeaches(beachData);
-    };
-    loadBeaches();
-  }, []);
+  const { data: beaches = [], isLoading: isLoadingBeaches } = useBeaches();
 
   const { data: entry, isLoading } = useQuery({
     queryKey: ["raidLog", params.id],
@@ -40,7 +32,7 @@ export default function RaidLogPage({ params }: { params: { id: string } }) {
     },
   });
 
-  if (isLoading) return <RandomLoader isLoading={true} />;
+  if (isLoading || isLoadingBeaches) return <RandomLoader isLoading={true} />;
 
   const isAuthor = entry?.surferEmail === session?.user?.email;
 

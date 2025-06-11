@@ -115,7 +115,6 @@ export async function POST(request: Request) {
       },
     };
 
-    console.log("Order payload:", JSON.stringify(orderPayload, null, 2));
 
     const response = await fetch(
       "https://api-m.sandbox.paypal.com/v2/checkout/orders",

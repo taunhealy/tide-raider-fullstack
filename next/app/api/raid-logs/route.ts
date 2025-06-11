@@ -109,7 +109,6 @@ export async function GET(req: NextRequest) {
   const filterUserId = searchParams.get("userId");
 
   const session = await getServerSession(authOptions);
-  console.log("👤 Session state:", session ? "Authenticated" : "Public");
 
   try {
     // Build dynamic where clause
@@ -216,12 +215,6 @@ export async function GET(req: NextRequest) {
       ),
     }));
 
-    console.log("📊 Found", enhancedEntries.length, "entries");
-    console.log(
-      "Entries with alerts:",
-      enhancedEntries.filter((e) => e.hasAlert).length
-    );
-
     return NextResponse.json(enhancedEntries);
   } catch (error) {
     console.error("❌ Error fetching raid logs:", error);
@@ -240,7 +233,6 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await req.json();
-    console.log("Received data:", JSON.stringify(data, null, 2));
 
     // Extract forecast data from the request
     const forecastData = data.forecast || data.forecastData;

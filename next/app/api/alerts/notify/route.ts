@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, processed: result });
   } catch (error) {
-    console.error("Error processing alerts:", error);
     return NextResponse.json(
       { error: "Failed to process alerts" },
       { status: 500 }

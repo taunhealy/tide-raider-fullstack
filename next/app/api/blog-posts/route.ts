@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
     const country = searchParams.get("country");
     const continent = searchParams.get("continent");
 
-
     // Build Sanity query based on parameters
     let query = `*[_type == "post"]`;
     const params: Record<string, any> = {};
@@ -34,8 +33,6 @@ export async function GET(request: NextRequest) {
         countryId = countryData.id;
       }
 
-      console.log(`Using country ID: ${countryId}`);
-
       // Query posts that have this country ID in their countries array
       query = `*[_type == "post" && $country in countries[]]`;
       params.country = countryId;
@@ -44,8 +41,6 @@ export async function GET(request: NextRequest) {
       const countriesInContinent = HARDCODED_COUNTRIES.filter(
         (c) => c.continent === continent
       ).map((c) => c.id);
-
-      console.log(`Countries in ${continent}:`, countriesInContinent);
 
       if (countriesInContinent.length > 0) {
         // Check if any of these country IDs are in the post's countries array
@@ -68,18 +63,10 @@ export async function GET(request: NextRequest) {
       countries
     } | order(publishedAt desc)`;
 
-    console.log("Executing Sanity query:", query);
-    console.log("With params:", JSON.stringify(params));
-
     const posts = await client.fetch(query, params);
-    console.log(
-      `Found ${posts.length} posts:`,
-      posts.map((p: any) => ({ title: p.title, countries: p.countries }))
-    );
 
     return NextResponse.json(posts);
   } catch (error: any) {
-    console.error("Error fetching blog posts:", error);
     return NextResponse.json(
       { error: "Failed to fetch blog posts", details: error.message },
       { status: 500 }

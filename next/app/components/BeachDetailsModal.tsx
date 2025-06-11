@@ -71,7 +71,6 @@ export default function BeachDetailsModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        console.log("Dialog onOpenChange called with:", open);
         if (!open) {
           onClose();
         }

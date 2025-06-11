@@ -199,10 +199,7 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
                     <div className="flex">
                       {[...Array(latestLogEntry[0].surferRating)].map(
                         (_, i) => (
-                          <span
-                            key={i}
-                            className="text-[var(--color-tertiary)]"
-                          >
+                          <span key={i} className="text-yellow-400">
                             ★
                           </span>
                         )

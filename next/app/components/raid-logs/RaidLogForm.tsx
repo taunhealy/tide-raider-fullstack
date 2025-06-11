@@ -50,7 +50,11 @@ export function RaidLogForm({
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
-  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
+  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(
+    entry
+      ? beaches.find((beach) => beach.name === entry.beachName) || null
+      : null
+  );
   const [surferRating, setSurferRating] = useState(entry?.surferRating || 0);
   const [comments, setComments] = useState(entry?.comments || "");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -69,11 +73,100 @@ export function RaidLogForm({
   const [isPrivate, setIsPrivate] = useState<boolean>(
     entry?.isPrivate || false
   );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { data: forecastData } = useForecast(
     selectedBeach?.region?.name || "",
     new Date(selectedDate)
   );
+
+  // Track changes to form fields
+  useEffect(() => {
+    if (!entry) return;
+
+    const hasChanges =
+      selectedDate !== format(new Date(entry.date), "yyyy-MM-dd") ||
+      selectedBeach?.name !== entry.beachName ||
+      surferRating !== entry.surferRating ||
+      comments !== entry.comments ||
+      isAnonymous !== entry.isAnonymous ||
+      isPrivate !== entry.isPrivate ||
+      selectedImage !== null;
+
+    setHasUnsavedChanges(hasChanges);
+  }, [
+    entry,
+    selectedDate,
+    selectedBeach,
+    surferRating,
+    comments,
+    isAnonymous,
+    isPrivate,
+    selectedImage,
+  ]);
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Are you sure you want to close?"
+      );
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
+  useEffect(() => {
+    if (entry && beaches.length > 0) {
+      console.log("Initializing beach selection:", {
+        entryBeachName: entry.beachName,
+        availableBeaches: beaches.map((b) => b.name),
+        entry,
+        beaches: beaches.slice(0, 3), // Log first 3 beaches for brevity
+      });
+      const matchingBeach = beaches.find(
+        (beach) => beach.name === entry.beachName
+      );
+      if (matchingBeach) {
+        console.log("Found matching beach:", matchingBeach);
+        setSelectedBeach(matchingBeach);
+        setSearchTerm(matchingBeach.name);
+      } else {
+        console.log("No matching beach found for:", entry.beachName);
+      }
+    } else {
+      console.log("Missing data for beach initialization:", {
+        hasEntry: !!entry,
+        beachesLength: beaches.length,
+        entryBeachName: entry?.beachName,
+      });
+    }
+  }, [entry, beaches]);
+
+  // Add debug logging for initial state
+  useEffect(() => {
+    if (entry) {
+      console.log("Entry data:", {
+        id: entry.id,
+        beachName: entry.beachName,
+        date: entry.date,
+        forecast: entry.forecast,
+        region: entry.region,
+        country: entry.country,
+      });
+    }
+  }, [entry]);
+
+  // Add debug logging for beaches
+  useEffect(() => {
+    console.log("Available beaches:", {
+      count: beaches.length,
+      firstThree: beaches.slice(0, 3).map((b) => ({
+        name: b.name,
+        region: b.region?.name,
+        country: b.region?.country?.name,
+      })),
+    });
+  }, [beaches]);
 
   const createLogEntry = useMutation({
     mutationFn: async (newEntry: LogEntryInput) => {
@@ -196,10 +289,6 @@ export function RaidLogForm({
       beach.name.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-  console.log("Search term:", searchTerm);
-  console.log("Available beaches:", beaches?.length);
-  console.log("Filtered beaches:", filteredBeaches.length);
-
   const handleBeachSelect = (beach: Beach) => {
     setSelectedBeach(beach);
     setSearchTerm("");
@@ -286,15 +375,6 @@ export function RaidLogForm({
   };
 
   useEffect(() => {
-    if (!beaches || !entry?.beachName) return;
-
-    const initialBeach = beaches.find((b) => b.name === entry.beachName);
-    if (initialBeach) {
-      setSelectedBeach(initialBeach);
-    }
-  }, [entry, beaches]);
-
-  useEffect(() => {
     if (selectedBeach && selectedDate) {
       fetchForecastData(selectedBeach);
     }
@@ -377,7 +457,7 @@ export function RaidLogForm({
           <button
             onClick={() => {
               console.log("Close button clicked");
-              onClose();
+              handleClose();
             }}
             className="absolute top-0 right-0 text-gray-400 hover:text-gray-500 z-[102]"
             type="button"
@@ -491,7 +571,7 @@ export function RaidLogForm({
                 </div>
               )}
 
-              {forecastData && (
+              {(forecastData || entry?.forecast) && (
                 <div className="step">
                   <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
                     4. Rate Your Session
@@ -516,7 +596,7 @@ export function RaidLogForm({
                 </div>
               )}
 
-              {surferRating > 0 && (
+              {(surferRating > 0 || entry?.id) && (
                 <div className="step">
                   <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
                     5. Add Comments
@@ -535,7 +615,7 @@ export function RaidLogForm({
                 </div>
               )}
 
-              {surferRating > 0 && (
+              {(surferRating > 0 || entry?.id) && (
                 <div className="step">
                   <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
                     6. Add Photo
@@ -604,7 +684,7 @@ export function RaidLogForm({
               <Button
                 type="submit"
                 disabled={
-                  !forecastData ||
+                  (!forecastData && !entry?.forecast) ||
                   !selectedBeach ||
                   !selectedDate ||
                   isSubmitting

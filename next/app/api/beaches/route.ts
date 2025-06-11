@@ -106,7 +106,6 @@ export async function GET(request: Request) {
     // If no forecast data available, return beaches without scores
     return NextResponse.json(beaches);
   } catch (error) {
-    console.error("Error fetching beaches:", error);
     return NextResponse.json(
       { error: "Failed to fetch beaches" },
       { status: 500 }

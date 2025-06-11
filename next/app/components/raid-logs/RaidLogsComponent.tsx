@@ -14,22 +14,16 @@ import { toast } from "sonner";
 import { handleSignIn } from "@/app/lib/auth-utils";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useBeaches } from "@/app/hooks/useBeaches";
-
-// Add filter config types similar to QuestLogs
-type FilterConfig = {
-  beaches: string[];
-  regions: string[];
-  countries: string[];
-  minRating: number;
-  dateRange: { start: string; end: string };
-  isPrivate: boolean;
-};
+import { X } from "lucide-react";
+import { useActiveFilters } from "@/app/hooks/useActiveFilters";
+import { ActiveFilterBadges } from "@/app/components/ActiveFiltersBadges";
+import type { FilterConfig } from "@/app/types/raidlogs";
 
 const defaultFilters: FilterConfig = {
   beaches: [],
   regions: [],
   countries: [],
-  minRating: 0,
+  minRating: null,
   dateRange: { start: "", end: "" },
   isPrivate: false,
 };
@@ -112,16 +106,16 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
       }
 
       // Add all filter parameters
-      if (filters.beaches.length) {
+      if (filters.beaches?.length) {
         params.set("beaches", filters.beaches.join(","));
       }
-      if (filters.regions.length) {
+      if (filters.regions?.length) {
         params.set("regions", filters.regions.join(","));
       }
-      if (filters.countries.length) {
+      if (filters.countries?.length) {
         params.set("countries", filters.countries.join(","));
       }
-      if (filters.minRating > 0) {
+      if (filters.minRating && filters.minRating > 0) {
         params.set("minRating", filters.minRating.toString());
       }
       if (isPrivate) {
@@ -162,9 +156,7 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
       console.error("Raid logs fetch error:", error);
       return [];
     }
-    console.log("logEntriesData:", logEntriesData);
-    console.log("logEntriesData?.entries:", logEntriesData?.entries);
-    console.log("Number of entries:", logEntriesData?.entries?.length || 0);
+
     return logEntriesData?.entries || [];
   }, [logEntriesData?.entries, error]);
 
@@ -188,6 +180,9 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
     showPrivateOnly: isPrivate,
   });
 
+  const { hasActiveFilters, removeBeachFilter, removeRegionFilter } =
+    useActiveFilters(filters, handleFilterChange);
+
   return (
     <div className="bg-[var(--color-bg-secondary)] p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative">
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
@@ -198,7 +193,10 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
                 Raid Sessions
               </h2>
             </div>
-            <div className="flex flex-wrap gap-3 md:gap-4 items-center w-full md:w-full">
+            <div
+              className="flex flex-row
+            gap-3 md:gap-4 items-center w-full md:w-auto"
+            >
               <LogVisibilityToggle
                 isPrivate={isPrivate}
                 onChange={handlePrivateToggle}
@@ -206,7 +204,7 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
 
               <Button
                 size="sm"
-                className="whitespace-nowrap"
+                className="whitespace-nowrap hover:bg-gray-50 transition-colors"
                 onClick={() => {
                   if (!session?.user) {
                     handleSignIn("/raidlogs/new");
@@ -222,12 +220,18 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
                 onClick={() => setIsFilterOpen(true)}
                 variant="outline"
                 size="sm"
-                className="hidden sm:inline-flex"
+                className="inline-flex hover:bg-gray-50 transition-colors"
               >
                 Filter
               </Button>
             </div>
           </div>
+
+          {/* Active Filters Display */}
+          <ActiveFilterBadges
+            filters={filters}
+            onFilterChange={handleFilterChange}
+          />
 
           {filteredEntries.length === 0 ? (
             <div className="text-center py-8 md:py-12">

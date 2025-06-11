@@ -66,7 +66,12 @@ function SignInContent() {
             Object.values(providers).map((provider: any) => (
               <button
                 key={provider.id}
-                onClick={() => signIn(provider.id, { callbackUrl })}
+                onClick={() =>
+                  signIn(provider.id, {
+                    callbackUrl,
+                    prompt: "select_account",
+                  })
+                }
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 
                          bg-white border border-gray-300 rounded-lg shadow-sm 
                          hover:bg-gray-50 transition-colors duration-200 font-primary"

@@ -15,7 +15,7 @@ type FilterConfig = {
 
 interface RaidLogFilterProps {
   beaches: Beach[];
-  selectedBeaches: string[];
+  selectedBeaches?: string[];
   onFilterChange: (filters: Partial<FilterConfig>) => void;
   isOpen: boolean;
   onClose: () => void;
@@ -23,11 +23,12 @@ interface RaidLogFilterProps {
 
 export function RaidLogFilter({
   beaches,
-  selectedBeaches = [],
+  selectedBeaches: initialSelectedBeaches,
   onFilterChange,
   isOpen,
   onClose,
 }: RaidLogFilterProps) {
+  const selectedBeaches = initialSelectedBeaches ?? [];
   const [beachSearch, setBeachSearch] = useState("");
   const [isBeachOpen, setIsBeachOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);

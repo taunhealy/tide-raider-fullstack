@@ -66,7 +66,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json(combinedResults);
   } catch (error) {
-    console.error("Error searching beaches:", error);
     return NextResponse.json(
       { error: "Failed to search beaches" },
       { status: 500 }
