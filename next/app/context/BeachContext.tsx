@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 import type { Beach } from "@/app/types/beaches";
 import type { ForecastData } from "@/app/types/forecast";
@@ -77,6 +78,8 @@ export function BeachProvider({
   const [beaches, setBeaches] = useState<Beach[]>(initialBeaches);
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
   const [beachScores, setBeachScores] = useState<BeachScoreMap>({});
+
+  // Memoize todayGoodBeaches to prevent unnecessary rerenders
   const [todayGoodBeaches, setTodayGoodBeaches] = useState<
     { beachId: string; region: string; score: number }[]
   >([]);
@@ -99,6 +102,12 @@ export function BeachProvider({
       hasAttack: false,
     }
   );
+
+  // Memoize the setFilters callback to prevent unnecessary rerenders
+  const memoizedSetFilters = useCallback((newFilters: FilterType) => {
+    setFilters(newFilters);
+  }, []);
+
   const [sort, setSort] = useState<BeachSort>({
     field: "score",
     direction: "desc",
@@ -125,34 +134,56 @@ export function BeachProvider({
     []
   );
 
+  // Memoize the setBeachScores callback to prevent unnecessary rerenders
+  const memoizedSetBeachScores = useCallback((scores: BeachScoreMap) => {
+    console.log("Setting beach scores:", scores); // Debug log
+    setBeachScores(scores);
+  }, []);
+
   // Context value (just state and setters)
-  const value: BeachContextType = {
-    // Data
-    beaches,
-    setBeaches,
-    forecastData,
-    setForecastData,
-    beachScores,
-    setBeachScores,
-    todayGoodBeaches,
-    setTodayGoodBeaches,
+  const value = useMemo<BeachContextType>(
+    () => ({
+      // Data
+      beaches,
+      setBeaches,
+      forecastData,
+      setForecastData,
+      beachScores,
+      setBeachScores: memoizedSetBeachScores,
+      todayGoodBeaches,
+      setTodayGoodBeaches,
 
-    // Filters and UI
-    filters,
-    setFilters,
-    sort,
-    setSort,
-    currentPage,
-    setCurrentPage,
+      // Filters and UI
+      filters,
+      setFilters: memoizedSetFilters,
+      sort,
+      setSort,
+      currentPage,
+      setCurrentPage,
 
-    // Status
-    isLoading,
-    setIsLoading,
+      // Status
+      isLoading,
+      setIsLoading,
 
-    // Loading states
-    loadingStates,
-    setLoadingState,
-  };
+      // Loading states
+      loadingStates,
+      setLoadingState,
+    }),
+    [
+      beaches,
+      forecastData,
+      beachScores,
+      todayGoodBeaches,
+      filters,
+      sort,
+      currentPage,
+      isLoading,
+      loadingStates,
+      memoizedSetFilters,
+      setLoadingState,
+      memoizedSetBeachScores,
+    ]
+  );
 
   return (
     <BeachContext.Provider value={value}>{children}</BeachContext.Provider>

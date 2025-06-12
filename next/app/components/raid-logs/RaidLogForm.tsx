@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useForecast } from "@/app/hooks/useForecast";
 import Image from "next/image";
 import { useAppMode } from "@/app/context/AppModeContext";
+import { getVideoId } from "@/app/lib/videoUtils";
 
 interface RaidLogFormProps {
   userEmail?: string;
@@ -74,6 +75,10 @@ export function RaidLogForm({
     entry?.isPrivate || false
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(entry?.videoUrl || "");
+  const [videoPlatform, setVideoPlatform] = useState<
+    "youtube" | "vimeo" | null
+  >(entry?.videoPlatform || null);
 
   const { data: forecastData } = useForecast(
     selectedBeach?.region?.name || "",
@@ -91,7 +96,9 @@ export function RaidLogForm({
       comments !== entry.comments ||
       isAnonymous !== entry.isAnonymous ||
       isPrivate !== entry.isPrivate ||
-      selectedImage !== null;
+      selectedImage !== null ||
+      videoUrl !== entry.videoUrl ||
+      videoPlatform !== entry.videoPlatform;
 
     setHasUnsavedChanges(hasChanges);
   }, [
@@ -103,6 +110,8 @@ export function RaidLogForm({
     isAnonymous,
     isPrivate,
     selectedImage,
+    videoUrl,
+    videoPlatform,
   ]);
 
   const handleClose = () => {
@@ -271,6 +280,8 @@ export function RaidLogForm({
         isPrivate,
         forecast: forecastData,
         imageUrl: imageUrl || undefined,
+        videoUrl: videoUrl || undefined,
+        videoPlatform: videoPlatform || undefined,
       };
 
       await createLogEntry.mutateAsync(newEntry);
@@ -417,6 +428,15 @@ export function RaidLogForm({
     } else {
       router.push("/pricing");
     }
+  };
+
+  const validateVideoUrl = (
+    url: string,
+    platform: "youtube" | "vimeo" | null
+  ): boolean => {
+    if (!url || !platform) return true; // Empty values are valid
+    const videoId = getVideoId(url, platform);
+    return !!videoId;
   };
 
   if (!isOpen) return null;
@@ -618,7 +638,7 @@ export function RaidLogForm({
               {(surferRating > 0 || entry?.id) && (
                 <div className="step">
                   <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    6. Add Photo
+                    6. Add Photo (Optional)
                   </h3>
                   <div className="space-y-2">
                     <input
@@ -646,6 +666,59 @@ export function RaidLogForm({
                         </button>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {(surferRating > 0 || entry?.id) && (
+                <div className="step">
+                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
+                    7. Add Video (Optional)
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-primary mb-1">
+                        Video Platform
+                      </label>
+                      <select
+                        value={videoPlatform || ""}
+                        onChange={(e) =>
+                          setVideoPlatform(
+                            e.target.value
+                              ? (e.target.value as "youtube" | "vimeo")
+                              : null
+                          )
+                        }
+                        className="w-full p-2 border rounded-lg"
+                      >
+                        <option value="">Select Platform</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="vimeo">Vimeo</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-primary mb-1">
+                        Video URL
+                      </label>
+                      <input
+                        type="url"
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        placeholder={`Enter ${videoPlatform === "youtube" ? "YouTube" : videoPlatform === "vimeo" ? "Vimeo" : "video"} URL`}
+                        className="w-full p-2 border rounded-lg"
+                      />
+                    </div>
+
+                    {videoUrl &&
+                      videoPlatform &&
+                      !validateVideoUrl(videoUrl, videoPlatform) && (
+                        <p className="text-red-500 text-sm">
+                          Please enter a valid{" "}
+                          {videoPlatform === "youtube" ? "YouTube" : "Vimeo"}{" "}
+                          URL
+                        </p>
+                      )}
                   </div>
                 </div>
               )}

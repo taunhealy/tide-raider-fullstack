@@ -1,4 +1,3 @@
-import type { BeachScoreMap, BeachWithScore } from "@/app/types/scores";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { getScoreDisplay } from "@/app/lib/scoreUtils";
 import { getConditionReasons } from "@/app/lib/surfUtils";
@@ -22,18 +21,15 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import gsap from "gsap";
+import { useBeach } from "@/app/context/BeachContext";
+import type { Beach } from "@/app/types/beaches";
 
 import type { ForecastData } from "@/app/types/forecast";
 
 interface BeachCardProps {
-  beach: BeachWithScore;
-  beachScores: BeachScoreMap;
-  isFirst?: boolean;
-  isLoading?: boolean;
-  index: number;
-  forecastData: ForecastData | null;
-  onClick: () => void;
+  beachId: string; // We only need the ID
 }
+
 const ConditionsSkeleton = () => (
   <div className="text-sm flex flex-col gap-2 animate-pulse">
     <div className="h-5 w-32 bg-gray-200 rounded mb-2"></div>
@@ -49,10 +45,8 @@ const ConditionsSkeleton = () => (
 );
 
 const BeachCard = memo(
-  function BeachCard({
-    beach,
-    forecastData,
-  }: Omit<BeachCardProps, "beachScores" | "index" | "onClick">) {
+  function BeachCard({ beachId }: BeachCardProps) {
+    const { beaches, beachScores, forecastData } = useBeach();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -67,7 +61,9 @@ const BeachCard = memo(
     const [isRegionSupported, setIsRegionSupported] = useState(true);
     const [hasAnimated, setHasAnimated] = useState(false);
 
-    const score = beach.score ?? 0;
+    // Find the beach from context
+    const beach = beaches.find((b) => b.id === beachId) as Beach;
+    const score = beachScores[beachId]?.score ?? 0;
     const scoreDisplay = getScoreDisplay(score);
 
     useEffect(() => {
@@ -109,7 +105,7 @@ const BeachCard = memo(
 
     const renderRating = () => {
       console.log("Rendering rating for", beach.name, {
-        score: beach.score,
+        score: beachScores[beachId]?.score,
         isRegionSupported,
       });
 
@@ -121,8 +117,6 @@ const BeachCard = memo(
         );
       }
 
-      const score = typeof beach.score === "number" ? beach.score : 0;
-
       return (
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((rating) => {
@@ -131,7 +125,7 @@ const BeachCard = memo(
               <Star
                 key={rating}
                 className={cn(
-                  "w-4 h-4",
+                  "w-4 h-4 ",
                   filled
                     ? "text-[var(--color-tertiary)] fill-current"
                     : "text-gray-300"
@@ -182,6 +176,7 @@ const BeachCard = memo(
           relative 
           group 
           bg-[var(--color-bg-primary)] 
+          mt-3
           rounded-lg 
           shadow-sm 
           border border-gray-200 
@@ -294,14 +289,14 @@ const BeachCard = memo(
                 <div className="mt-1 md:mt-3">
                   {isLocalLoading ? (
                     <ConditionsSkeleton />
-                  ) : beach.score !== undefined ? (
+                  ) : beachScores[beachId]?.score !== undefined ? (
                     // Show actual conditions when we have a score
                     <div className="flex flex-col gap-1 md:gap-2">
                       <div className="flex items-center gap-2">
                         {renderRating()}
 
                         <div
-                          className="flex items-center gap-2 relative px-2 py-1"
+                          className="flex items-center gap-2 relative px-2 py-1 border border-gray-200 rounded-md bg-gray-50"
                           onMouseEnter={() => setShowRatingHint(true)}
                           onMouseLeave={() => setShowRatingHint(false)}
                         >
@@ -321,7 +316,7 @@ const BeachCard = memo(
                       </div>
 
                       {/* Current Conditions */}
-                      <div className="text-sm flex flex-col gap-1">
+                      <div className="text-sm flex flex-col gap-1 border-t border-gray-200 pt-3 mt-3">
                         <ul className="space-y-1.5">
                           {getConditionReasons(
                             beach,
@@ -330,7 +325,7 @@ const BeachCard = memo(
                           ).optimalConditions.map((condition, index, array) => (
                             <li
                               key={index}
-                              className={`flex items-center gap-1 md:gap-2 pb-1 ${
+                              className={`flex items-center gap-2 md:gap-2 pb-2 ${
                                 index !== array.length - 1
                                   ? "border-b border-gray-200"
                                   : ""
@@ -460,12 +455,7 @@ const BeachCard = memo(
       </>
     );
   },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.beach.id === nextProps.beach.id &&
-      prevProps.forecastData?.windSpeed === nextProps.forecastData?.windSpeed
-    );
-  }
+  (prev, next) => prev.beachId === next.beachId
 );
 
 export default BeachCard;

@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
+import { useQuery } from "@tanstack/react-query";
 
 interface ActiveFilterBadgesProps {
   filters: FilterConfig;
@@ -25,6 +26,22 @@ export function ActiveFilterBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
+  // Fetch region counts
+  const { data: regionCountsData } = useQuery({
+    queryKey: ["region-counts"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const response = await fetch(
+        `/api/beach-ratings/region-counts?date=${today}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch region counts");
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  const regionCounts = regionCountsData?.counts || {};
+
   if (!hasActiveFilters) return null;
 
   return (
@@ -45,6 +62,11 @@ export function ActiveFilterBadges({
         <div key={region} className={badgeClassName}>
           <span className="mr-1">Region:</span>
           {region}
+          {regionCounts[region] > 0 && (
+            <span className="ml-2 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">
+              {regionCounts[region]}
+            </span>
+          )}
           <button
             onClick={() => removeRegionFilter(region)}
             className={buttonClassName}

@@ -13,6 +13,11 @@ import SurfForecastWidget from "./SurfForecastWidget";
 import Link from "next/link";
 import { LogEntrySkeleton } from "@/app/components/LogEntrySkeleton";
 import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import {
+  getWindEmoji,
+  getSwellEmoji,
+  degreesToCardinal,
+} from "@/app/lib/forecastUtils";
 
 interface MediaGridProps {
   videos?:
@@ -192,29 +197,13 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
               href={`/raidlogs/${latestLogEntry[0].id}`}
               className="block group"
             >
-              <div className="bg-[var(--color-bg-primary)] rounded-lg p-4 border border-[var(--color-border-light)] space-y-4 transition-all duration-200 hover:border-[var(--color-border-medium)] hover:shadow-sm">
+              <div className="bg-[var(--color-bg-primary)] rounded-lg p-2 border border-[var(--color-border-light)] space-y-2 transition-all duration-200 hover:border-[var(--color-border-medium)] hover:shadow-sm">
                 {/* Rating and Surfer Info with Media Icons */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[...Array(latestLogEntry[0].surferRating)].map(
-                        (_, i) => (
-                          <span key={i} className="text-yellow-400">
-                            ★
-                          </span>
-                        )
-                      )}
-                      {[...Array(5 - latestLogEntry[0].surferRating)].map(
-                        (_, i) => (
-                          <span key={i} className="text-gray-200">
-                            ★
-                          </span>
-                        )
-                      )}
-                    </div>
                     {latestLogEntry[0].surferName &&
                       !latestLogEntry[0].isAnonymous && (
-                        <div className="flex items-center gap-2 border-l border-[var(--color-border-light)] pl-2">
+                        <div className="flex items-center gap-2">
                           <span className="text-sm font-primary text-[var(--color-text-secondary)]">
                             {latestLogEntry[0].surferName}
                           </span>
@@ -229,12 +218,60 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
                           </div>
                         </div>
                       )}
+                    <div className="flex flex-col justify-between border-l border-[var(--color-border-light)] pl-2">
+                      <div className="flex">
+                        {[...Array(latestLogEntry[0].surferRating)].map(
+                          (_, i) => (
+                            <span key={i} className="text-yellow-400">
+                              ★
+                            </span>
+                          )
+                        )}
+                        {[...Array(5 - latestLogEntry[0].surferRating)].map(
+                          (_, i) => (
+                            <span key={i} className="text-gray-200">
+                              ★
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
                   </div>
+                  {/* Forecast conditions */}
+                  {latestLogEntry[0].forecast && (
+                    <div className="flex items-center gap-1.5 w-full sm:w-auto border-t sm:border-t-0 border-[var(--color-border-light)] py-1.5">
+                      <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 rounded-full text-xs font-primary">
+                        <span className="hidden sm:inline mr-1">
+                          {getWindEmoji(latestLogEntry[0].forecast.windSpeed)}
+                        </span>
+                        <span>
+                          {latestLogEntry[0].forecast.windSpeed}kts{" "}
+                          {degreesToCardinal(
+                            latestLogEntry[0].forecast.windDirection
+                          )}
+                        </span>
+                      </div>
+                      <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 rounded-full text-xs font-primary">
+                        <span className="hidden sm:inline mr-1">
+                          {getSwellEmoji(
+                            latestLogEntry[0].forecast.swellHeight
+                          )}
+                        </span>
+                        <span>
+                          {latestLogEntry[0].forecast.swellHeight}m @{" "}
+                          {latestLogEntry[0].forecast.swellPeriod}s{" "}
+                          {degreesToCardinal(
+                            latestLogEntry[0].forecast.swellDirection
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Comments */}
                 {latestLogEntry[0].comments && (
-                  <div className="border-t border-[var(--color-border-light)] pt-4">
+                  <div className="border-t border-[var(--color-border-light)] pt-2 mt-2">
                     <p className="text-sm font-primary text-[var(--color-text-primary)] leading-relaxed">
                       {latestLogEntry[0].comments}
                     </p>

@@ -29,17 +29,9 @@ export function ImageUploader({
 
     try {
       const uploadPromises = files.map(async (file) => {
-        // Create a unique filename
-        const timestamp = new Date().getTime();
-        const randomString = Math.random().toString(36).substring(2, 8);
-        const filename = `rental-items/${timestamp}-${randomString}-${file.name.replace(/\s+/g, "-")}`;
-
-        // Create form data for the upload
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("path", filename);
 
-        // Upload to R2 via our API
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
@@ -54,8 +46,7 @@ export function ImageUploader({
         }
 
         const data = await response.json();
-        // Construct the full URL using the R2 public URL
-        return `${process.env.NEXT_PUBLIC_R2_URL}/${data.path}`;
+        return data.imageUrl; // Use the imageUrl directly from the response
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
@@ -122,7 +113,7 @@ export function ImageUploader({
                   className="object-cover w-full h-full"
                   onError={(e) => {
                     console.error(`Error loading image: ${url}`);
-                    e.currentTarget.src = "/images/image-placeholder.png";
+                    e.currentTarget.className = "w-full h-full bg-gray-200";
                   }}
                 />
               </div>

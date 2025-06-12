@@ -9,6 +9,7 @@ import { useBeach } from "@/app/context/BeachContext";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { FilterHeader } from "@/app/components/ui/FilterHeader";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 interface LocationFilterProps {
   filters: FilterType;
@@ -37,7 +38,7 @@ const RegionButton = ({
   region,
   isActive,
   onClick,
-  count,
+  count = 0,
 }: {
   region: Region;
   isActive: boolean;
@@ -54,7 +55,10 @@ const RegionButton = ({
     <span>{region.name}</span>
     <div
       className="overflow-hidden transition-all duration-300 ease-in-out"
-      style={{ width: count ? "20px" : "0", marginLeft: count ? "8px" : "0" }}
+      style={{
+        width: count > 0 ? "20px" : "0",
+        marginLeft: count > 0 ? "8px" : "0",
+      }}
     >
       {count > 0 && (
         <span className="bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">
@@ -75,19 +79,23 @@ export default function LocationFilter({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Calculate region counts from today's good beaches
-  const regionCounts = useMemo(() => {
-    if (!todayGoodBeaches || !Array.isArray(todayGoodBeaches)) {
-      return {};
-    }
+  // Fetch region counts from API
+  const { data: regionCountsData } = useQuery({
+    queryKey: ["region-counts"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const response = await fetch(
+        `/api/beach-ratings/region-counts?date=${today}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch region counts");
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
 
-    return todayGoodBeaches.reduce((counts: Record<string, number>, beach) => {
-      if (beach && beach.region && beach.score >= 4) {
-        counts[beach.region] = (counts[beach.region] || 0) + 1;
-      }
-      return counts;
-    }, {});
-  }, [todayGoodBeaches]);
+  const regionCounts = useMemo(() => {
+    return regionCountsData?.counts || {};
+  }, [regionCountsData]);
 
   // Enhanced search for both regions and their countries
   const filteredRegions = useMemo(() => {

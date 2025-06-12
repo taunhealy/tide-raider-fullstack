@@ -85,7 +85,10 @@ export default function RegionalHighScores({
             } as BeachWithScore;
           })
           .filter(Boolean)
-          .sort((a, b) => (b?.averageScore ?? 0) - (a?.averageScore ?? 0))
+          .sort(
+            (a: BeachWithScore, b: BeachWithScore) =>
+              (b.averageScore ?? 0) - (a.averageScore ?? 0)
+          )
           .slice(0, 5); // Get top 5 highest scoring beaches
 
         return { beaches: beachesWithScores };
@@ -114,7 +117,10 @@ export default function RegionalHighScores({
           } as BeachWithScore;
         })
         .filter(Boolean)
-        .sort((a, b) => (b?.averageScore ?? 0) - (a?.averageScore ?? 0))
+        .sort(
+          (a: BeachWithScore, b: BeachWithScore) =>
+            (b.averageScore ?? 0) - (a.averageScore ?? 0)
+        )
         .slice(0, 5);
 
       return { beaches: beachesWithScores };
@@ -191,12 +197,14 @@ export default function RegionalHighScores({
             <>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-gray-600 font-primary">
-                  {data.beaches.length} highest scoring{" "}
-                  {data.beaches.length === 1 ? "break" : "breaks"}
+                  {timePeriod === "today"
+                    ? "Today's total scores"
+                    : timePeriod === "week"
+                      ? "This week's total scores"
+                      : timePeriod === "year"
+                        ? "This year's total scores"
+                        : "Last 3 years' total scores"}
                 </span>
-                <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full font-primary">
-                  Score 4+
-                </div>
               </div>
 
               <div className="space-y-0">
@@ -222,16 +230,12 @@ export default function RegionalHighScores({
                           {beach.name}
                         </h4>
                         <p className="text-sm text-[var(--color-text-secondary)] font-primary">
-                          {timePeriod === "today"
-                            ? `${score.toFixed(1)} avg`
-                            : `${beach.appearances || 0} days • ${score.toFixed(1)} avg`}
+                          {`${score.toFixed(1)} points${beach.appearances > 1 ? ` over ${beach.appearances} days` : ""}`}
                         </p>
                       </div>
 
                       <div className="w-8 h-8 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium font-primary">
-                        {timePeriod === "today"
-                          ? score.toFixed(1)
-                          : beach.appearances || 0}
+                        {score.toFixed(1)}
                       </div>
                     </div>
                   );

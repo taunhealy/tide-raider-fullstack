@@ -99,7 +99,7 @@ export function RentalRequestsList({
                   <div className="relative h-12 w-12 bg-gray-100 rounded overflow-hidden">
                     {request.rentalItem.thumbnail ? (
                       <Image
-                        src={`https://imagedelivery.net/your-account-hash/${request.rentalItem.thumbnail}/public`}
+                        src={request.rentalItem.thumbnail}
                         alt={request.rentalItem.name}
                         fill
                         sizes="48px"

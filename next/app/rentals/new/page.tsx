@@ -19,6 +19,16 @@ export default async function NewRentalItemPage() {
 
   // Fetch beaches for the form
   const beaches = await prisma.beach.findMany({
+    select: {
+      id: true,
+      name: true,
+      location: true,
+      region: {
+        select: {
+          name: true,
+        },
+      },
+    },
     orderBy: {
       name: "asc",
     },

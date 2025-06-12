@@ -132,13 +132,6 @@ export default function PricingPage() {
     if (loadingStates.subscribe) return "Processing...";
     if (loadingStates.unsubscribe) return "Cancelling...";
 
-    // Debug log to see what we're getting
-    console.log("Button text check:", {
-      subscriptionStatus: subscriptionDetails?.status,
-      hasTrialEnded: subscriptionDetails?.hasTrialEnded,
-      hasActiveTrial: subscriptionDetails?.hasActiveTrial,
-    });
-
     // If subscription is active, show unsubscribe
     if (subscriptionDetails?.status === SubscriptionStatus.ACTIVE) {
       return "Unsubscribe";
@@ -162,13 +155,12 @@ export default function PricingPage() {
     <div className="bg-[var(--color-bg-primary)]">
       <div className="container px-4 md:pl-[81px] py-8 md:py-[54px]">
         <div className="md:pl-[54px]">
-          <div className="mb-8 md:mb-[54px] border-b border-[var(--color-border-light)] pb-8 md:pb-[54px]">
+          <div className="mb-8 md:mb-[54px] border-b border-[var(--color-border-light)] pb-5 md:pb-[54px]">
             <h3 className="heading-3 text-[var(--color-text-primary)] mb-4 md:mb-[16px]">
-              {data?.title || "Simple, transparent pricing"}
+              Simple, transparent pricing
             </h3>
             <p className="text-large text-[var(--color-text-secondary)] text-left">
-              {data?.subtitle ||
-                "Get unlimited access to all surf spots and advanced features"}
+              Get unlimited access to Alerts features.
             </p>
           </div>
 
@@ -199,8 +191,7 @@ export default function PricingPage() {
               <div className="px-[32px] py-[32px] bg-white">
                 <ul className="space-y-[16px] mb-[32px]">
                   {[
-                    "Set alerts (SMS/Email reminders)",
-                    "Access multiple data sources",
+                    "Set alerts to get notifications for your ideal surf conditions (SMS/App/Email)",
                     "Cancel anytime",
                     "14-day free trial",
                   ].map((feature) => (

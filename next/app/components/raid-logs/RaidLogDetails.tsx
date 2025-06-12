@@ -5,12 +5,25 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Star, Pencil } from "lucide-react";
+import {
+  Star,
+  Pencil,
+  Video as VideoIcon,
+  ChevronLeft,
+  MapPin,
+  Calendar,
+  Wind,
+  Waves,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import CommentThread from "@/app/components/comments/CommentThread";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
 import { Button } from "@/app/components/ui/Button";
 import type { LogEntry } from "@/app/types/raidlogs";
+import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { useState } from "react";
+import { MediaModal } from "./MediaModal";
 
 interface RaidLogDetailsProps {
   entry: LogEntry & {
@@ -22,6 +35,7 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const isOwner = session?.user?.id === entry.userId;
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
 
   // Handle forecast data properly - it might be an array or a single object
   const forecastData =
@@ -30,19 +44,20 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
       : entry.forecast;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-6xl mx-auto">
+      {/* Navigation and Actions Bar */}
+      <div className="flex justify-between items-center mb-6 px-4 md:px-0">
         <Link
           href="/raidlogs"
-          className="text-brand-2 hover:underline inline-flex items-center gap-1 font-primary"
+          className="text-[var(--color-primary)] hover:text-[var(--color-tertiary-dark)] transition-colors inline-flex items-center gap-2 font-primary"
         >
-          <span className="text-lg">←</span> Back to logs
+          <ChevronLeft className="w-5 h-5" /> Back to log book
         </Link>
 
         {isOwner && (
           <Button
             onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-dark)] transition-colors"
           >
             <Pencil className="w-4 h-4" />
             Edit Log
@@ -50,33 +65,56 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="grid md:grid-cols-2">
-          {/* Details Section - Now on the left */}
-          <div className="p-6 space-y-6">
-            {/* Logger Section - Using ProfileHeader */}
-            {!entry.isAnonymous && entry.userId && (
-              <ProfileHeader
-                userId={entry.userId}
-                isOwnProfile={false}
-                nationalitySelector={null}
+      {/* Main Content Card */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+        {/* Hero Section with Image/Video */}
+        <div className="relative w-full h-64 md:h-80 lg:h-96 bg-gray-100">
+          {entry.imageUrl ? (
+            <Image
+              src={entry.imageUrl}
+              alt="Session photo"
+              fill
+              className="object-cover cursor-pointer hover:opacity-95 transition-opacity"
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              priority
+              onClick={() => setIsMediaModalOpen(true)}
+            />
+          ) : entry.videoUrl && entry.videoPlatform ? (
+            <div
+              className="relative w-full h-full cursor-pointer"
+              onClick={() => setIsMediaModalOpen(true)}
+            >
+              <Image
+                src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
+                alt="Video thumbnail"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 1024px"
+                priority
               />
-            )}
-
-            {entry.isAnonymous && (
-              <div className="mb-4 flex items-center gap-3">
-                <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 flex items-center justify-center text-white font-medium text-lg">
-                  A
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
+                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                  <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
                 </div>
-                <p className="text-gray-800 font-primary font-medium">
-                  Anonymous
-                </p>
               </div>
-            )}
+            </div>
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400 font-primary text-lg">
+                No media available
+              </span>
+            </div>
+          )}
+        </div>
 
+        {/* Content Grid */}
+        <div className="grid lg:grid-cols-3 gap-6 p-6 md:p-8">
+          {/* Main Content - 2/3 width on desktop */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Header with Beach and Rating */}
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-primary font-semibold">
+              <div className="flex flex-wrap items-start gap-2 mb-3">
+                <h1 className="text-2xl md:text-3xl font-primary font-semibold text-[var(--color-text-primary)]">
                   {entry.beachName || "Unnamed Beach"}
                 </h1>
                 {Number(entry.surferRating) > 3 && (
@@ -85,79 +123,110 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
                   </span>
                 )}
               </div>
-              <p className="text-gray-600 font-primary">
-                {entry.region
-                  ? `${entry.region}${entry.country ? `, ${entry.country}` : ""}`
-                  : "No location specified"}
-              </p>
-            </div>
 
-            {/* Rating Section */}
-            <div className="flex items-center gap-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <Star
-                    key={rating}
-                    className={cn(
-                      "w-5 h-5",
-                      rating <= (entry.surferRating || 0)
-                        ? "text-yellow-400 fill-current"
-                        : "text-gray-300"
-                    )}
-                  />
-                ))}
+              <div className="flex items-center gap-2 text-gray-600 font-primary mb-4">
+                <MapPin className="w-4 h-4" />
+                <p>
+                  {entry.region
+                    ? `${entry.region}${entry.country ? `, ${entry.country}` : ""}`
+                    : "No location specified"}
+                </p>
               </div>
-              <span className="text-sm text-gray-600 font-primary">
-                {entry.surferRating}/5
-              </span>
+
+              <div className="flex items-center gap-3">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <Star
+                      key={rating}
+                      className={cn(
+                        "w-5 h-5",
+                        rating <= (entry.surferRating || 0)
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-200"
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm text-gray-600 font-primary">
+                  {entry.surferRating}/5
+                </span>
+              </div>
             </div>
 
-            {/* Date and Conditions */}
-            <div className="space-y-4">
+            {/* Session Date */}
+            <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-[var(--color-tertiary)]" />
               <div>
-                <h2 className="font-primary text-[18px] font-medium mb-2 text-gray-800">
+                <h2 className="font-primary text-sm font-medium text-gray-500 mb-1">
                   Session Date
                 </h2>
-                <p className="text-gray-700 font-primary">
+                <p className="text-gray-800 font-primary font-medium">
                   {format(new Date(entry.date), "MMMM d, yyyy")}
                 </p>
               </div>
-
-              {forecastData && (
-                <div>
-                  <h2 className="font-primary text-[18px] font-medium mb-2 text-gray-800">
-                    Conditions
-                  </h2>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                    <p className="text-gray-700 font-primary">
-                      Wind: {forecastData.windSpeed}kts{" "}
-                      {forecastData.windDirection}°
-                    </p>
-                    <p className="text-gray-700 font-primary">
-                      Swell: {forecastData.swellHeight}m{" "}
-                      {forecastData.swellDirection}°
-                    </p>
-                    <p className="text-gray-700 font-primary">
-                      Period: {forecastData.swellPeriod}s
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {entry.comments && (
-              <div>
-                <h2 className="font-primary text-[18px] font-medium mb-4 text-gray-800">
-                  Logger Comments
+            {/* Conditions Section */}
+            {forecastData && (
+              <div className="space-y-4">
+                <h2 className="font-primary text-xl font-medium text-gray-800">
+                  Surf Conditions
                 </h2>
-                <p className="text-gray-700 font-primary whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
-                  {entry.comments}
-                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
+                    <Wind className="w-5 h-5 text-[var(--color-tertiary)]" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-primary">Wind</p>
+                      <p className="text-gray-800 font-primary font-medium">
+                        {forecastData.windSpeed}kts {forecastData.windDirection}
+                        °
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
+                    <Waves className="w-5 h-5 text-[var(--color-tertiary)]" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-primary">
+                        Swell
+                      </p>
+                      <p className="text-gray-800 font-primary font-medium">
+                        {forecastData.swellHeight}m{" "}
+                        {forecastData.swellDirection}°
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
+                    <Clock className="w-5 h-5 text-[var(--color-tertiary)]" />
+                    <div>
+                      <p className="text-sm text-gray-500 font-primary">
+                        Period
+                      </p>
+                      <p className="text-gray-800 font-primary font-medium">
+                        {forecastData.swellPeriod}s
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
+            {/* Comments Section */}
+            {entry.comments && (
+              <div className="space-y-4">
+                <h2 className="font-primary text-xl font-medium text-gray-800">
+                  Logger Comments
+                </h2>
+                <div className="bg-gray-50 p-5 rounded-lg border-l-4 border-[var(--color-tertiary)]">
+                  <p className="text-gray-700 font-primary whitespace-pre-wrap">
+                    {entry.comments}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Alert Section */}
             {entry.existingAlert && entry.existingAlert.message && (
-              <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+              <div className="bg-amber-50 p-5 rounded-lg border-l-4 border-amber-400">
                 <h2 className="font-primary text-lg font-medium mb-2 text-amber-800">
                   Alert
                 </h2>
@@ -168,37 +237,51 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
             )}
           </div>
 
-          {/* Image Section - Now on the right */}
-          <div className="p-8">
-            <div className="relative aspect-video w-full rounded-lg">
-              {entry.imageUrl ? (
-                <Image
-                  src={entry.imageUrl}
-                  alt="Session photo"
-                  fill
-                  className="object-cover rounded-lg"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
+          {/* Sidebar - 1/3 width on desktop */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Logger Info */}
+            <div className="bg-gray-50 p-5 rounded-lg">
+              <h2 className="font-primary text-lg font-medium mb-4 text-gray-800">
+                Logger
+              </h2>
+
+              {!entry.isAnonymous && entry.userId ? (
+                <ProfileHeader
+                  userId={entry.userId}
+                  isOwnProfile={false}
+                  nationalitySelector={null}
                 />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
-                  <span className="text-gray-400 font-primary">
-                    No image available
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 flex items-center justify-center text-white font-medium text-lg">
+                    A
+                  </div>
+                  <p className="text-gray-800 font-primary font-medium">
+                    Anonymous
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* User Comments Section - Moved outside the grid */}
-        <div className="border-t border-gray-200 p-6">
-          <h2 className="font-primary text-[18px] font-medium mb-4 text-gray-800">
-            Comments
+        {/* User Comments Section */}
+        <div className="border-t border-gray-200 p-6 md:p-8">
+          <h2 className="font-primary text-xl font-medium mb-6 text-gray-800">
+            Discussion
           </h2>
           <CommentThread logEntryId={entry.id} />
         </div>
       </div>
+
+      {/* Media Modal */}
+      <MediaModal
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
+        imageUrl={entry.imageUrl}
+        videoUrl={entry.videoUrl}
+        videoPlatform={entry.videoPlatform}
+      />
     </div>
   );
 }

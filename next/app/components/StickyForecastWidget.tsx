@@ -78,7 +78,7 @@ export default function StickyForecastWidget() {
       ref={widgetRef}
       className="fixed bottom-9 right-4 z-40 bg-white rounded-lg shadow-lg p-4 border border-gray-200 max-w-xs"
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 min-w-5 gap-5">
         <h4 className="text-sm font-semibold font-primary text-[var(--color-primary)]">
           Today's Forecast
         </h4>

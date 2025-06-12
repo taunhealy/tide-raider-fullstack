@@ -184,7 +184,24 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
       skip: (page - 1) * limit,
       take: limit,
-      include: {
+      select: {
+        id: true,
+        date: true,
+        surferName: true,
+        surferEmail: true,
+        beachName: true,
+        surferRating: true,
+        comments: true,
+        isPrivate: true,
+        isAnonymous: true,
+        continent: true,
+        country: true,
+        region: true,
+        waveType: true,
+        imageUrl: true,
+        videoUrl: true,
+        videoPlatform: true,
+        userId: true,
         forecast: true,
         user: {
           select: {
@@ -196,7 +213,7 @@ export async function GET(req: NextRequest) {
         alerts: {
           select: {
             id: true,
-            userId: true, // Add userId to the selection
+            userId: true,
           },
         },
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Beach } from "@prisma/client";
 import { ImageUploader } from "@/app/components/ImageUploader";
@@ -14,7 +14,14 @@ import {
 import { RentalItemType } from "@/app/types/rentals";
 
 interface RentalItemFormProps {
-  beaches?: Beach[];
+  beaches?: {
+    id: string;
+    name: string;
+    location: string;
+    region: {
+      name: string;
+    };
+  }[];
   initialData?: RentalItemWithRelations;
 }
 
@@ -44,11 +51,11 @@ export function RentalItemForm({ beaches, initialData }: RentalItemFormProps) {
   );
 
   // Filter beaches based on search term
-  const filteredBeaches = beachData.filter(
+  const filteredBeaches = (beaches || []).filter(
     (beach) =>
       beach.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       beach.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      beach.country?.toLowerCase().includes(searchTerm.toLowerCase())
+      beach.region?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle form submission
@@ -63,11 +70,9 @@ export function RentalItemForm({ beaches, initialData }: RentalItemFormProps) {
         throw new Error("Please select at least one pickup/dropoff location");
       }
 
-      // Get the full beach objects from beachData based on selected names
-      // Use a Set to ensure unique beach IDs
-      const uniqueBeachNames = [...new Set(selectedBeaches)];
-      const selectedBeachData = beachData.filter((beach) =>
-        uniqueBeachNames.includes(beach.name)
+      // Get the full beach objects from the beaches prop
+      const selectedBeachData = (beaches || []).filter((beach) =>
+        selectedBeaches.includes(beach.name)
       );
 
       const formData = {
@@ -101,12 +106,11 @@ export function RentalItemForm({ beaches, initialData }: RentalItemFormProps) {
       }
 
       const data = await response.json();
-      setSuccess("Rental item saved successfully!");
-
-      // Redirect after a short delay
-      setTimeout(() => {
+      if (data.id) {
         router.push(`/rentals/${data.id}`);
-      }, 1500);
+      } else {
+        setError("Failed to get rental item ID");
+      }
     } catch (err: any) {
       setError(err.message || "An error occurred");
     } finally {
@@ -315,7 +319,7 @@ export function RentalItemForm({ beaches, initialData }: RentalItemFormProps) {
                 >
                   <span className="font-medium">{beach.name}</span>
                   <span className="text-gray-500 ml-1">
-                    ({beach.location || ""}, {beach.country || ""})
+                    ({beach.location || ""}, {beach.region.name || ""})
                   </span>
                 </label>
               </div>
@@ -334,7 +338,7 @@ export function RentalItemForm({ beaches, initialData }: RentalItemFormProps) {
             </p>
             <div className="flex flex-wrap gap-2">
               {selectedBeaches.map((beachName) => {
-                const beach = beachData.find((b) => b.name === beachName);
+                const beach = beaches?.find((b) => b.name === beachName);
                 return beach ? (
                   <div
                     key={beach.id}

@@ -63,3 +63,15 @@ Complex data processing
 Better error handling
 Monitoring and logging
 Retries and fault tolerance
+
+## Surf Break Scoring Flow
+
+Forecast Data + Beaches
+       ↓
+calculateRegionScores (gets scores for all beaches)
+       ↓
+setBeachScores (stores in context)
+       ↓
+getSortedBeachesByScore (prepares for display)
+       ↓
+BeachCard (displays individual beach with score)

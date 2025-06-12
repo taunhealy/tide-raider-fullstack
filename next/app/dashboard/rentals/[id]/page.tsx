@@ -38,7 +38,7 @@ export default async function EditRentalItemPage({
     redirect(`/login?callbackUrl=/dashboard/rentals/${params.id}`);
   }
 
-  // Fetch the rental item
+  // Fetch the rental item with complete relations
   const rentalItem = await prisma.rentalItem.findUnique({
     where: { id: params.id },
     include: {
@@ -71,12 +71,19 @@ export default async function EditRentalItemPage({
 
   // Fetch beaches for the form
   const beaches = await prisma.beach.findMany({
+    include: {
+      region: {
+        select: {
+          name: true,
+        },
+      },
+    },
     orderBy: {
       name: "asc",
     },
   });
 
-  // Fetch rental requests for this item
+  // Fetch rental requests with complete renter information
   const rentalRequests = await prisma.rentalItemRequest.findMany({
     where: {
       rentalItemId: params.id,
@@ -84,13 +91,17 @@ export default async function EditRentalItemPage({
     include: {
       renter: {
         select: {
+          id: true,
           name: true,
           image: true,
+          email: true,
         },
       },
       beach: {
         select: {
+          id: true,
           name: true,
+          region: true,
         },
       },
     },

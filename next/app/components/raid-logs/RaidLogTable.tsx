@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   MessageCircle,
   Eye,
+  Video as VideoIcon,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import {
@@ -49,6 +50,8 @@ import {
 } from "@/app/components/ui/pagination";
 import { useAppMode } from "@/app/context/AppModeContext";
 import { useContentGating } from "@/app/lib/gateUtils";
+import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { MediaModal } from "@/app/components/raid-logs/MediaModal";
 
 interface QuestTableProps {
   entries: LogEntry[];
@@ -78,7 +81,7 @@ function LogEntryDisplay({ entry, isAnonymous }: LogEntryDisplayProps) {
   // Prioritize the user's current name from the User relation
   const displayName = isAnonymous
     ? "Anonymous"
-    : (entry.user?.name ?? entry.surferName); // Use nullish coalescing
+    : (entry.user?.name ?? entry.surferName); // Use user's profile name first, fall back to surferName
 
   return (
     <div className="flex items-center gap-2">
@@ -260,12 +263,6 @@ const normalizeLogEntry = (entry: LogEntry): LogEntry => {
     hasAlert: entry.hasAlert ?? false,
     isMyAlert: entry.isMyAlert ?? false,
     alertId: entry.alertId ?? "",
-    user: entry.user
-      ? {
-          id: entry.user.id,
-          nationality: entry.user.nationality,
-        }
-      : undefined,
   };
 };
 
@@ -604,7 +601,7 @@ export default function RaidLogTable({
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
-            href={hasAccess ? `/raidlogs/${entry.id}` : "/pricing"}
+            href={`/raidlogs/${entry.id}`}
             className={`relative w-${size.width} h-${size.height} cursor-pointer hover:opacity-80 transition-opacity`}
           >
             <div className="relative w-full h-full">
@@ -660,6 +657,28 @@ export default function RaidLogTable({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, [viewMode, setViewMode]);
 
+  // Add to the existing state declarations (around line 390)
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<{
+    imageUrl?: string | null;
+    videoUrl?: string | null;
+    videoPlatform?: "youtube" | "vimeo" | null;
+  } | null>(null);
+
+  // Modify handleMediaClick to remove sourceRect
+  const handleMediaClick = (
+    e: React.MouseEvent<HTMLElement>,
+    entry: LogEntry
+  ) => {
+    e.stopPropagation();
+    setIsMediaModalOpen(true);
+    setSelectedMedia({
+      imageUrl: entry.imageUrl,
+      videoUrl: entry.videoUrl,
+      videoPlatform: entry.videoPlatform,
+    });
+  };
+
   if (isLoading) {
     return <TableSkeleton />;
   }
@@ -708,214 +727,221 @@ export default function RaidLogTable({
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
               {currentItems.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col"
+                <Link
+                  href={`/raidlogs/${entry.id}`}
+                  className="block"
+                  onClick={(e) => {
+                    // Stop propagation for buttons inside
+                    if ((e.target as HTMLElement).closest("button")) {
+                      e.stopPropagation();
+                    }
+                  }}
                 >
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-grow">
-                      <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
-                        {renderGatedContent(entry.beachName, "Sign in to view")}
-                      </h3>
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-500 font-primary">
-                          📖 {format(new Date(entry.date), "MMM d, yyyy")}
-                        </p>
-                        <p className="text-sm text-gray-500 font-primary">
-                          📍 {entry.region}
-                        </p>
+                  <div
+                    key={entry.id}
+                    className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col cursor-pointer"
+                  >
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-grow">
+                        <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
+                          {renderGatedContent(
+                            entry.beachName,
+                            "Sign in to view"
+                          )}
+                        </h3>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-500 font-primary">
+                            📖 {format(new Date(entry.date), "MMM d, yyyy")}
+                          </p>
+                          <p className="text-sm text-gray-500 font-primary">
+                            📍 {entry.region}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                      <div className="flex gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAlertClick(entry);
+                                }}
+                                className={cn(
+                                  "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
+                                )}
+                              >
+                                <Bell
+                                  className={cn(
+                                    "w-4 h-4 cursor-pointer",
+                                    entry.hasAlert
+                                      ? entry.isMyAlert
+                                        ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
+                                        : "text-[var(--color-alert-icon-rating)] fill-none hover:text-[var(--color-alert-icon-rating)]"
+                                      : "text-gray-500 fill-none hover:text-[var(--color-alert-icon-rating)]"
+                                  )}
+                                />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">
+                                {getGatedTooltip(
+                                  getBellTooltipText(entry, hasAccess)
+                                )}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        {session?.user?.email === entry.surferEmail && (
+                          <>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleAlertClick(entry);
+                                handleEdit(entry);
                               }}
-                              className={cn(
-                                "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
-                              )}
+                              className="text-gray-500 hover:text-[var(--color-text-primary)]"
                             >
-                              <Bell
-                                className={cn(
-                                  "w-4 h-4 cursor-pointer",
-                                  entry.hasAlert
-                                    ? entry.isMyAlert
-                                      ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
-                                      : "text-[var(--color-alert-icon-rating)] fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                    : "text-gray-500 fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                )}
-                              />
+                              <Pencil className="w-4 h-4" />
                             </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-sm">
-                              {getGatedTooltip(
-                                getBellTooltipText(entry, hasAccess)
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(entry.id);
+                              }}
+                              className="text-gray-500 hover:text-red-600"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? (
+                                <span className="loading-spinner" />
+                              ) : (
+                                <X className="w-4 h-4" />
                               )}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      {session?.user?.email === entry.surferEmail && (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(entry);
-                            }}
-                            className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(entry.id);
-                            }}
-                            className="text-gray-500 hover:text-red-600"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <span className="loading-spinner" />
-                            ) : (
-                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <StarRating rating={entry.surferRating ?? 0} />
+                    </div>
+
+                    <div className="text-sm font-primary">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-600">Logger:</span>
+                        <LogEntryDisplay
+                          entry={entry}
+                          isAnonymous={entry.isAnonymous ?? false}
+                        />
+                      </div>
+
+                      {/* Forecast info with badges */}
+                      {entry.forecast && (
+                        <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5 inline-block">
+                          <div className="flex flex-wrap gap-1.5">
+                            {entry.forecast.windSpeed != null && (
+                              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                                <span className="mr-1">
+                                  {getGatedEmoji(
+                                    getWindEmoji(entry.forecast.windSpeed)
+                                  )}
+                                </span>
+                                <span>{entry.forecast.windSpeed}kts</span>
+                              </div>
                             )}
-                          </button>
-                        </>
+
+                            {entry.forecast.windDirection != null && (
+                              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                                <span>
+                                  {degreesToCardinal(
+                                    entry.forecast.windDirection
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            {entry.forecast.swellHeight != null && (
+                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                                <span className="mr-1">
+                                  {getGatedEmoji(
+                                    getSwellEmoji(entry.forecast.swellHeight)
+                                  )}
+                                </span>
+                                <span>{entry.forecast.swellHeight}m</span>
+                              </div>
+                            )}
+
+                            {entry.forecast.swellPeriod != null && (
+                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                                <span>{entry.forecast.swellPeriod}s</span>
+                              </div>
+                            )}
+
+                            {entry.forecast.swellDirection != null && (
+                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                                <span>
+                                  {degreesToCardinal(
+                                    entry.forecast.swellDirection
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <StarRating rating={entry.surferRating ?? 0} />
-                  </div>
+                    {entry.comments && (
+                      <p className="text-sm text-gray-700 break-words font-primary line-clamp-2 mt-2">
+                        <span className="font-medium">Comments:</span>{" "}
+                        {entry.comments}
+                      </p>
+                    )}
 
-                  <div className="text-sm font-primary">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-gray-600">Logger:</span>
-                      <LogEntryDisplay
-                        entry={entry}
-                        isAnonymous={entry.isAnonymous ?? false}
-                      />
-                    </div>
-
-                    {/* Forecast info with badges */}
-                    {entry.forecast && (
-                      <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5 inline-block">
-                        <div className="flex flex-wrap gap-1.5">
-                          {entry.forecast.windSpeed != null && (
-                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span className="mr-1">
-                                {getGatedEmoji(
-                                  getWindEmoji(entry.forecast.windSpeed)
-                                )}
-                              </span>
-                              <span>{entry.forecast.windSpeed}kts</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.windDirection != null && (
-                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>
-                                {degreesToCardinal(
-                                  entry.forecast.windDirection
-                                )}
-                              </span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellHeight != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span className="mr-1">
-                                {getGatedEmoji(
-                                  getSwellEmoji(entry.forecast.swellHeight)
-                                )}
-                              </span>
-                              <span>{entry.forecast.swellHeight}m</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellPeriod != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>{entry.forecast.swellPeriod}s</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellDirection != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>
-                                {degreesToCardinal(
-                                  entry.forecast.swellDirection
-                                )}
-                              </span>
-                            </div>
-                          )}
+                    {/* Image section */}
+                    {entry.imageUrl ||
+                    (entry.videoUrl && entry.videoPlatform) ? (
+                      <div className="mt-auto pt-2 w-full">
+                        <div className="relative w-full aspect-video rounded-md overflow-hidden">
+                          <button
+                            onClick={(e) => handleMediaClick(e, entry)}
+                            className="relative w-full h-full block"
+                          >
+                            {entry.imageUrl ? (
+                              <Image
+                                src={entry.imageUrl}
+                                alt="Session photo"
+                                fill={true}
+                                className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                              />
+                            ) : entry.videoUrl && entry.videoPlatform ? (
+                              <>
+                                <Image
+                                  src={getVideoThumbnail(
+                                    entry.videoUrl,
+                                    entry.videoPlatform
+                                  )}
+                                  alt="Video thumbnail"
+                                  fill={true}
+                                  className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <VideoIcon className="w-8 h-8 text-white" />
+                                </div>
+                              </>
+                            ) : null}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-auto pt-2 w-full">
+                        <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
+                          <ImageIcon className="w-8 h-8 text-gray-300" />
                         </div>
                       </div>
                     )}
                   </div>
-
-                  {entry.comments && (
-                    <p className="text-sm text-gray-700 break-words font-primary line-clamp-2 mt-2">
-                      <span className="font-medium">Comments:</span>{" "}
-                      {entry.comments}
-                    </p>
-                  )}
-
-                  {/* Image section */}
-                  {entry.imageUrl ? (
-                    <div className="mt-auto pt-2 w-full">
-                      <div className="relative w-full aspect-video rounded-md overflow-hidden">
-                        <Link
-                          href={
-                            hasAccess ? `/raidlogs/${entry.id}` : "/pricing"
-                          }
-                        >
-                          <Image
-                            src={entry.imageUrl}
-                            alt="Session photo"
-                            fill={true}
-                            className={cn(
-                              "object-cover rounded-md hover:opacity-90 transition-opacity",
-                              !hasAccess && "blur-xl"
-                            )}
-                          />
-                          {!hasAccess && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                              <span className="text-2xl z-10">💩</span>
-                            </div>
-                          )}
-                        </Link>
-                      </div>
-                      <div className="mt-3 text-right">
-                        <Link
-                          href={
-                            hasAccess ? `/raidlogs/${entry.id}` : "/pricing"
-                          }
-                          className="text-sm text-gray-500 hover:text-gray-700 font-primary flex items-center gap-1"
-                        ></Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-auto pt-2 w-full">
-                      <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-gray-300" />
-                      </div>
-                      <div className="mt-3 text-right">
-                        <Link
-                          href={
-                            hasAccess ? `/raidlogs/${entry.id}` : "/pricing"
-                          }
-                          className="text-sm text-gray-500 hover:text-gray-700 font-primary flex items-center gap-1"
-                        ></Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </Link>
               ))}
             </div>
 
@@ -1008,14 +1034,23 @@ export default function RaidLogTable({
                       });
 
                       return (
-                        <tr key={entry.id} className="hover:bg-gray-50">
+                        <tr
+                          key={entry.id}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={(e) => {
+                            // Don't navigate if clicking on a button
+                            if (!(e.target as HTMLElement).closest("button")) {
+                              router.push(`/raidlogs/${entry.id}`);
+                            }
+                          }}
+                        >
                           <td className="px-2 py-3 whitespace-nowrap text-sm min-w-[100px] font-primary">
                             {format(new Date(entry.date), "MMM d, yyyy")}
                           </td>
                           <td className="px-2 py-3 whitespace-nowrap min-w-[120px]">
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
                                   const foundBeach = beachData.find(
                                     (b) => b.name === entry.beachName
                                   );
@@ -1055,11 +1090,31 @@ export default function RaidLogTable({
                           </td>
                           <td className="px-2 py-3 w-[60px]">
                             <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                              {entry.imageUrl ? (
-                                renderImage(entry, { width: 48, height: 48 })
-                              ) : (
-                                <ImageIcon className="w-4 h-4 text-gray-200" />
-                              )}
+                              <button
+                                onClick={(e) => handleMediaClick(e, entry)}
+                                className="relative w-full h-full block"
+                              >
+                                {entry.imageUrl ? (
+                                  <Image
+                                    src={entry.imageUrl}
+                                    alt="Session photo"
+                                    fill
+                                    className="object-cover transition-transform hover:scale-105 duration-300"
+                                  />
+                                ) : entry.videoUrl && entry.videoPlatform ? (
+                                  <Image
+                                    src={getVideoThumbnail(
+                                      entry.videoUrl,
+                                      entry.videoPlatform
+                                    )}
+                                    alt="Video thumbnail"
+                                    fill
+                                    className="object-cover transition-transform hover:scale-105 duration-300"
+                                  />
+                                ) : (
+                                  <ImageIcon className="w-4 h-4 text-gray-200" />
+                                )}
+                              </button>
                             </div>
                           </td>
                           <td className="px-2 py-3">
@@ -1147,6 +1202,17 @@ export default function RaidLogTable({
           onSubscribe={() => {}}
         />
       )}
+
+      <MediaModal
+        isOpen={isMediaModalOpen}
+        onClose={() => {
+          setIsMediaModalOpen(false);
+          setSelectedMedia(null);
+        }}
+        imageUrl={selectedMedia?.imageUrl}
+        videoUrl={selectedMedia?.videoUrl}
+        videoPlatform={selectedMedia?.videoPlatform}
+      />
     </>
   );
 }

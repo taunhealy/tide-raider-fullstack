@@ -188,18 +188,14 @@ export default async function RentalRequestPage({
 
             <div className="flex items-center space-x-4 mb-6">
               <div className="relative h-16 w-16 bg-gray-100 rounded overflow-hidden">
-                {request.rentalItem.thumbnail ? (
+                {request.rentalItem.thumbnail && (
                   <Image
-                    src={`https://imagedelivery.net/your-account-hash/${request.rentalItem.thumbnail}/public`}
+                    src={request.rentalItem.thumbnail}
                     alt={request.rentalItem.name}
                     fill
                     sizes="64px"
                     className="object-cover"
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-full bg-gray-200">
-                    <span className="text-xs text-gray-400">No image</span>
-                  </div>
                 )}
               </div>
 

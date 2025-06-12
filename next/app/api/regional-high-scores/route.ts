@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       endDate = now;
     }
 
-    // Get high scoring beaches for the period
+    // Get beach ratings for the period
     const highScores = await prisma.beachGoodRating.groupBy({
       by: ["beachId"],
       where: {
@@ -38,24 +38,22 @@ export async function GET(request: Request) {
           gte: startDate,
           ...(period === "today" && { lte: endDate }),
         },
-        score: { gte: 4 },
       },
       _count: { beachId: true },
-      _avg: { score: true },
+      _sum: { score: true },
     });
 
-    // Sort by count and average score
+    // Sort by total score for all periods
     const sortedScores = highScores
-      .sort(
-        (a, b) =>
-          b._count.beachId - a._count.beachId ||
-          (b._avg.score || 0) - (a._avg.score || 0)
-      )
+      .sort((a, b) => {
+        // Sort by total score
+        return (b._sum.score || 0) - (a._sum.score || 0);
+      })
       .slice(0, 5)
       .map((score) => ({
         beachId: score.beachId,
         appearances: score._count.beachId,
-        averageScore: score._avg.score,
+        averageScore: score._sum.score || 0, // Use total score instead of average
       }));
 
     return NextResponse.json({ scores: sortedScores });

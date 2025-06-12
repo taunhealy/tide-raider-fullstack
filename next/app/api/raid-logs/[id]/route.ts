@@ -28,6 +28,8 @@ export async function GET(
         createdAt: true, // DateTime @default(now())
         updatedAt: true, // DateTime @updatedAt
         imageUrl: true, // String?
+        videoUrl: true,
+        videoPlatform: true,
         isPrivate: true, // Boolean @default(false)
         isAnonymous: true, // Boolean @default(false)
         continent: true,

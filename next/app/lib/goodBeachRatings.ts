@@ -39,6 +39,47 @@ export async function storeGoodBeachRatings(
     };
 
     console.log("Processed conditions:", conditions);
+
+    // Calculate scores and prepare data for batch insert
+    const ratingsData = regionBeaches.map((beach) => {
+      const beachWithTypes = {
+        ...beach,
+        optimalSwellDirections: beach.optimalSwellDirections as {
+          min: number;
+          max: number;
+          cardinal?: string;
+        },
+        swellSize: beach.swellSize as { min: number; max: number },
+        idealSwellPeriod: beach.idealSwellPeriod as {
+          min: number;
+          max: number;
+        },
+        waterTemp: beach.waterTemp as { summer: number; winter: number },
+        sharkAttack: beach.sharkAttack as { hasAttack: boolean },
+      };
+      const { score } = calculateBeachScore(
+        beachWithTypes as Beach,
+        conditions
+      );
+      return {
+        beachId: beach.id,
+        region: region,
+        score,
+        conditions: JSON.stringify(conditions),
+        date: date,
+      };
+    });
+
+    // Batch insert all ratings
+    await prisma.beachGoodRating.createMany({
+      data: ratingsData,
+      skipDuplicates: true,
+    });
+
+    console.log(
+      `✅ Successfully stored ${ratingsData.length} ratings for ${region}`
+    );
+    return ratingsData.length;
   } catch (error) {
     console.error("💥 Critical rating storage error:", error);
     throw error;

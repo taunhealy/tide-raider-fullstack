@@ -8,6 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { PortableText } from "@portabletext/react";
 
+interface Country {
+  id: string;
+  name: string;
+}
+
 interface BlogPostsSidebarProps {
   posts: {
     posts: Post[];
@@ -26,7 +31,7 @@ export default function BlogPostsSidebar({
   selectedContinent,
 }: BlogPostsSidebarProps) {
   // Add this new query to fetch countries from database
-  const { data: dbCountries } = useQuery({
+  const { data: dbCountries } = useQuery<Country[]>({
     queryKey: ["countries"],
     queryFn: async () => {
       const res = await fetch("/api/location");
@@ -176,7 +181,7 @@ export default function BlogPostsSidebar({
         <div className="flex items-center justify-between mb-6">
           <h3 className="heading-6 mr-4">
             {selectedCountry
-              ? `Posts from ${dbCountries?.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
+              ? `Posts from ${dbCountries?.find((c: Country) => c.id === selectedCountry)?.name || selectedCountry}`
               : selectedContinent
                 ? `Posts from ${selectedContinent}`
                 : "Travel Posts"}
@@ -266,8 +271,10 @@ export default function BlogPostsSidebar({
                       {post.countries && post.countries.length > 0 ? (
                         <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
                           {dbCountries
-                            ?.filter((c) => post.countries.includes(c.id))
-                            .map((c) => c.name)
+                            ?.filter((c: Country) =>
+                              post.countries.includes(c.id)
+                            )
+                            .map((c: Country) => c.name)
                             .join(" • ") || "Travel Post"}
                         </div>
                       ) : post.trip ? (
@@ -324,7 +331,7 @@ export default function BlogPostsSidebar({
       <div className="flex items-center justify-between mb-6">
         <h3 className="heading-6 mr-4">
           {selectedCountry
-            ? `Posts from ${dbCountries?.find((c) => c.id === selectedCountry)?.name || selectedCountry}`
+            ? `Posts from ${dbCountries?.find((c: Country) => c.id === selectedCountry)?.name || selectedCountry}`
             : selectedContinent
               ? `Posts from ${selectedContinent}`
               : "Travel Posts"}
@@ -369,8 +376,8 @@ export default function BlogPostsSidebar({
                 {post.countries && post.countries.length > 0 ? (
                   <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
                     {dbCountries
-                      ?.filter((c) => post.countries.includes(c.id))
-                      .map((c) => c.name)
+                      ?.filter((c: Country) => post.countries.includes(c.id))
+                      .map((c: Country) => c.name)
                       .join(" • ") || "Travel Post"}
                   </div>
                 ) : post.trip ? (

@@ -14,7 +14,6 @@ import NotificationBadge from "./notifications/NotificationBadge";
 
 const NAVIGATION_ITEMS = [
   { href: "/raid", label: "Raid" },
-  { href: "/rentals", label: "Rentals" },
   { href: "/raidlogs", label: "Log Book" },
   { href: "/chronicles", label: "Chronicles" },
   { href: "/alerts", label: "Alerts" },
