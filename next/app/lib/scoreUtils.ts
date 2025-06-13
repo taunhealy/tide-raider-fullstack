@@ -1,4 +1,4 @@
-import type { Beach } from "@prisma/client";
+import type { Beach } from "@/app/types/beaches";
 import type { BaseForecastData, CoreForecastData } from "@/app/types/forecast";
 import { degreesToCardinal, cardinalToDegreesMap } from "./directionUtils";
 import { BeachWithScore } from "../types/scores";
@@ -306,7 +306,8 @@ export function calculateRegionScores(
     if (
       selectedRegion &&
       selectedRegion !== "Global" &&
-      beach.regionId !== selectedRegion
+      beach.regionId !== selectedRegion &&
+      beach.region?.name !== selectedRegion
     ) {
       return;
     }

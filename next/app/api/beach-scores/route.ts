@@ -6,24 +6,26 @@ import { storeBeachDailyScores } from "@/app/lib/beachDailyScores";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const region = searchParams.get("region");
+  const date = searchParams.get("date");
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
 
-  if (!region || !startDate || !endDate) {
-    return NextResponse.json(
-      { error: "Region, startDate, and endDate are required" },
-      { status: 400 }
-    );
+  if (!region) {
+    return NextResponse.json({ error: "Region is required" }, { status: 400 });
   }
 
   try {
+    // If date is provided, use it for both start and end
+    const queryDate = date ? new Date(date) : new Date(startDate!);
+    const queryEndDate = date ? new Date(date) : new Date(endDate!);
+
     // Get scores within the date range
     const scores = await prisma.beachDailyScore.findMany({
       where: {
         region,
         date: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
+          gte: queryDate,
+          lte: queryEndDate,
         },
       },
     });

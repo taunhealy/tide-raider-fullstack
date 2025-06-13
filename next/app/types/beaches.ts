@@ -5,6 +5,7 @@ export interface SharkIncident {
     outcome: "Fatal" | "Non-fatal" | "Unknown";
     details: string;
   }[];
+  [key: string]: any;
 }
 
 export interface Region {
@@ -129,6 +130,7 @@ export interface Beach {
     url: string;
     title: string;
     platform: "youtube" | "vimeo";
+    [key: string]: any;
   }[];
   profileImage?: string;
   advertisingPrice?: number;

@@ -674,6 +674,17 @@ model Country {
   beaches     Beach[]
 }
 
+model SponsorGlobal {
+  id          String   @id @default(cuid())
+  name        String
+  logo        String   // URL to logo image
+  link        String   // URL to sponsor's website
+  isActive    Boolean  @default(true)
+  order       Int      // For controlling display order
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum SkillLevel {
   BEGINNER
   INTERMEDIATE
