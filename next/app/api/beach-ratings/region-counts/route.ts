@@ -8,7 +8,7 @@ export async function GET(request: Request) {
       searchParams.get("date") || new Date().toISOString().split("T")[0];
 
     // Get counts of beaches with score >= 4 grouped by region for today
-    const regionCounts = await prisma.beachGoodRating.groupBy({
+    const regionCounts = await prisma.beachDailyScore.groupBy({
       by: ["region"],
       where: {
         date: {

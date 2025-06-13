@@ -1,4 +1,4 @@
-import type { Beach } from "@/app/types/beaches";
+import type { Beach } from "@prisma/client";
 import type { BaseForecastData, CoreForecastData } from "@/app/types/forecast";
 import { degreesToCardinal, cardinalToDegreesMap } from "./directionUtils";
 import { BeachWithScore } from "../types/scores";
@@ -27,7 +27,24 @@ const isValidSwellRange = (obj: any): obj is { min: number; max: number } => {
 export function calculateBeachScore(
   beach: Beach,
   conditions: CoreForecastData
-): { score: number } {
+) {
+  // Convert JSON fields from Prisma to the expected types
+  const optimalSwellDirections = beach.optimalSwellDirections as {
+    min: number;
+    max: number;
+  };
+  const swellSize = beach.swellSize as { min: number; max: number };
+  const idealSwellPeriod = beach.idealSwellPeriod as {
+    min: number;
+    max: number;
+  };
+  const waterTemp = beach.waterTemp as { summer: number; winter: number };
+  const coordinates = beach.coordinates as { lat: number; lng: number };
+  const sharkAttack = beach.sharkAttack as {
+    hasAttack: boolean;
+    incidents?: any[];
+  };
+
   // Add initial debug log
   console.log(`Scoring ${beach.name}:`, {
     input: {
@@ -58,14 +75,14 @@ export function calculateBeachScore(
       speed: conditions.windSpeed,
     },
     swell: {
-      height: { current: conditions.swellHeight, optimal: beach.swellSize },
+      height: { current: conditions.swellHeight, optimal: swellSize },
       direction: {
         current: conditions.swellDirection,
-        optimal: beach.optimalSwellDirections,
+        optimal: optimalSwellDirections,
       },
       period: {
         current: conditions.swellPeriod,
-        optimal: beach.idealSwellPeriod,
+        optimal: idealSwellPeriod,
       },
     },
   });
@@ -83,13 +100,13 @@ export function calculateBeachScore(
     if (!Array.isArray(beach.optimalWindDirections)) {
       validationErrors.push("optimalWindDirections is not an array");
     }
-    if (!isValidSwellRange(beach.swellSize)) {
+    if (!isValidSwellRange(swellSize)) {
       validationErrors.push("invalid swellSize range");
     }
-    if (!isValidSwellRange(beach.optimalSwellDirections)) {
+    if (!isValidSwellRange(optimalSwellDirections)) {
       validationErrors.push("invalid optimalSwellDirections range");
     }
-    if (!isValidSwellRange(beach.idealSwellPeriod)) {
+    if (!isValidSwellRange(idealSwellPeriod)) {
       validationErrors.push("invalid idealSwellPeriod range");
     }
 
@@ -100,9 +117,9 @@ export function calculateBeachScore(
         errors: validationErrors,
         data: {
           optimalWindDirections: beach.optimalWindDirections,
-          swellSize: beach.swellSize,
-          optimalSwellDirections: beach.optimalSwellDirections,
-          idealSwellPeriod: beach.idealSwellPeriod,
+          swellSize: swellSize,
+          optimalSwellDirections: optimalSwellDirections,
+          idealSwellPeriod: idealSwellPeriod,
         },
       });
       return { score: 0 };
@@ -188,13 +205,13 @@ export function calculateBeachScore(
     // Wave size scoring
     if (
       !(
-        conditions.swellHeight >= beach.swellSize.min &&
-        conditions.swellHeight <= beach.swellSize.max
+        conditions.swellHeight >= swellSize.min &&
+        conditions.swellHeight <= swellSize.max
       )
     ) {
       const heightDiff = Math.min(
-        Math.abs(conditions.swellHeight - beach.swellSize.min),
-        Math.abs(conditions.swellHeight - beach.swellSize.max)
+        Math.abs(conditions.swellHeight - swellSize.min),
+        Math.abs(conditions.swellHeight - swellSize.max)
       );
       if (heightDiff <= 0.5) {
         score = Math.max(0, score - 1);
@@ -214,16 +231,12 @@ export function calculateBeachScore(
     const swellDeg = Number(conditions.swellDirection);
     if (
       !(
-        swellDeg >= beach.optimalSwellDirections.min &&
-        swellDeg <= beach.optimalSwellDirections.max
+        swellDeg >= optimalSwellDirections.min &&
+        swellDeg <= optimalSwellDirections.max
       )
     ) {
-      const minSwellDiff = Math.abs(
-        swellDeg - beach.optimalSwellDirections.min
-      );
-      const maxSwellDiff = Math.abs(
-        swellDeg - beach.optimalSwellDirections.max
-      );
+      const minSwellDiff = Math.abs(swellDeg - optimalSwellDirections.min);
+      const maxSwellDiff = Math.abs(swellDeg - optimalSwellDirections.max);
       const swellDirDiff = Math.min(minSwellDiff, maxSwellDiff);
 
       if (swellDirDiff <= 10) {
@@ -246,13 +259,13 @@ export function calculateBeachScore(
     // Swell period scoring
     if (
       !(
-        conditions.swellPeriod >= beach.idealSwellPeriod.min &&
-        conditions.swellPeriod <= beach.idealSwellPeriod.max
+        conditions.swellPeriod >= idealSwellPeriod.min &&
+        conditions.swellPeriod <= idealSwellPeriod.max
       )
     ) {
       const periodDiff = Math.min(
-        Math.abs(conditions.swellPeriod - beach.idealSwellPeriod.min),
-        Math.abs(conditions.swellPeriod - beach.idealSwellPeriod.max)
+        Math.abs(conditions.swellPeriod - idealSwellPeriod.min),
+        Math.abs(conditions.swellPeriod - idealSwellPeriod.max)
       );
       if (periodDiff <= 2) {
         score = Math.max(0, score - 1);
@@ -267,7 +280,7 @@ export function calculateBeachScore(
       deductions: scoreLog,
     });
 
-    return { score };
+    return { score: Math.round(score) };
   } catch (error) {
     console.error("Error calculating beach score:", error);
     return { score: 0 };
@@ -293,7 +306,7 @@ export function calculateRegionScores(
     if (
       selectedRegion &&
       selectedRegion !== "Global" &&
-      beach.region?.name !== selectedRegion
+      beach.regionId !== selectedRegion
     ) {
       return;
     }
@@ -309,7 +322,7 @@ export function calculateRegionScores(
     const { score } = calculateBeachScore(beach, processedConditions);
     scores[beach.id] = {
       score,
-      region: beach.region?.name || "Unknown",
+      region: beach.regionId,
       conditions: processedConditions,
     };
   });
@@ -322,10 +335,13 @@ export function getSortedBeachesByScore(
   beachScores: Record<string, { score: number; region: string }>
 ): BeachWithScore[] {
   return [...beaches]
-    .map((beach) => ({
-      ...beach,
-      score: beachScores[beach.id]?.score || 0,
-    }))
+    .map(
+      (beach) =>
+        ({
+          ...beach,
+          score: beachScores[beach.id]?.score || 0,
+        }) as unknown as BeachWithScore
+    )
     .sort((a, b) => b.score - a.score);
 }
 

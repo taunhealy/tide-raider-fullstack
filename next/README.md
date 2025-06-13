@@ -75,3 +75,19 @@ setBeachScores (stores in context)
 getSortedBeachesByScore (prepares for display)
        ↓
 BeachCard (displays individual beach with score)
+
+## Beach Scoring
+
+surf-conditions/route.ts:
+Fetches forecast data
+Calls dedupedEnsureBeachScores to check if scores exist
+If no scores exist, calls storeBeachDailyScores
+
+beachDailyScores.ts (utility):
+Gets beaches for a region
+Calculates scores using calculateBeachScore
+Stores scores in BeachDailyScore table
+
+beach-scores/route.ts (optional endpoint):
+Can be used to manually trigger score generation such as high scores
+Uses the same storeBeachDailyScores utility

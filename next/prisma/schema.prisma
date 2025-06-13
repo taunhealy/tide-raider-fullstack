@@ -7,20 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model BeachGoodRating {
-  id         String   @id @default(uuid())
-  beachId    String
-  region     String
-  score      Int
-  conditions Json
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  date       DateTime
-
-  @@unique([beachId, date])
-  @@index([date, region])
-  @@index([beachId, date])
-}
 
 model AdRequest {
   id                    String         @id
@@ -261,6 +247,26 @@ model BeachSafariConnection {
   @@index([beachId])
 }
 
+model BeachDailyScore {
+  id         String   @id @default(cuid())
+  beachId    String
+  region     String
+  score      Int      // Stored as integer (0-5 scale)
+  conditions Json     // Store the conditions that led to this score
+  date       DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  beach      Beach    @relation(fields: [beachId], references: [id])
+
+  // Indexes for efficient querying
+  @@unique([beachId, date])  // One score per beach per day
+  @@index([date, region])    // For querying scores by date and region
+  @@index([beachId, date])   // For querying scores for a specific beach
+  @@index([score])          // For sorting by score
+}
+
 model Beach {
   id                     String                  @id
   name                   String
@@ -300,6 +306,7 @@ model Beach {
   stories                Story[]
   countryId              String
   country                Country                 @relation(fields: [countryId], references: [id])
+  beachDailyScores       BeachDailyScore[]
 
   @@index([regionId])
   @@index([countryId])

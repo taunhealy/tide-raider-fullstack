@@ -102,10 +102,10 @@ export default function BeachContainer() {
         ? `&region=${encodeURIComponent(filters.location.region)}`
         : "";
       const response = await fetch(
-        `/api/beach-ratings?date=${today}${regionParam}`
+        `/api/beach-scores?date=${today}${regionParam}`
       );
       if (!response.ok) return [];
-      return response.json().then((data) => data.ratings || []);
+      return response.json().then((data) => data.scores || []);
     },
     staleTime: 1000 * 60 * 5,
   });

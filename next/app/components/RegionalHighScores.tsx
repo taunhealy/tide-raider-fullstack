@@ -1,10 +1,9 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
-import { DEFAULT_PROFILE_IMAGE } from "@/app/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import { format, subDays, subYears, startOfDay, endOfDay } from "date-fns";
+import { subDays, subYears, startOfDay, endOfDay } from "date-fns";
 
 type TimePeriod = "today" | "week" | "year" | "3years";
 
@@ -31,82 +30,52 @@ export default function RegionalHighScores({
   onBeachClick,
 }: RegionalHighScoresProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("week");
-  const [isClient, setIsClient] = useState(false);
-
-  // Add this useEffect to handle client-side initialization
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Calculate dates based on selected time period
-  const getDateForPeriod = () => {
-    const today = new Date();
+  const getDateRange = () => {
+    const now = new Date();
+    let startDate;
 
     switch (timePeriod) {
       case "week":
-        return format(subDays(today, 7), "yyyy-MM-dd");
+        startDate = subDays(now, 7);
+        break;
       case "year":
-        return format(subYears(today, 1), "yyyy-MM-dd");
+        startDate = subYears(now, 1);
+        break;
       case "3years":
-        return format(subYears(today, 3), "yyyy-MM-dd");
+        startDate = subYears(now, 3);
+        break;
       case "today":
       default:
-        return format(today, "yyyy-MM-dd");
+        startDate = startOfDay(now);
+        break;
     }
+
+    return {
+      startDate,
+      endDate: timePeriod === "today" ? endOfDay(now) : now,
+    };
   };
 
-  // Fetch good beaches for the selected region and time period
+  // Fetch scores for the selected region and time period
   const { data, isLoading, error } = useQuery({
     queryKey: ["regionalHighScores", selectedRegion, timePeriod],
     queryFn: async () => {
-      if (!selectedRegion) return { scores: [] };
+      if (!selectedRegion) return { beaches: [] };
 
-      // For today, use beach-ratings endpoint instead
-      if (timePeriod === "today") {
-        const today = new Date().toISOString().split("T")[0];
-        const response = await fetch(
-          `/api/beach-ratings?region=${encodeURIComponent(selectedRegion)}&date=${today}`
-        );
+      const { startDate, endDate } = getDateRange();
 
-        if (!response.ok) throw new Error("Failed to fetch today's ratings");
-
-        const { ratings } = await response.json();
-
-        // Map ratings to include beach details
-        const beachesWithScores = ratings
-          .map((rating: BeachScore) => {
-            const beach = beaches.find((b) => b.id === rating.beachId);
-            if (!beach) return null;
-
-            return {
-              ...beach,
-              appearances: 1,
-              averageScore: rating.averageScore ?? 0,
-            } as BeachWithScore;
-          })
-          .filter(Boolean)
-          .sort(
-            (a: BeachWithScore, b: BeachWithScore) =>
-              (b.averageScore ?? 0) - (a.averageScore ?? 0)
-          )
-          .slice(0, 5); // Get top 5 highest scoring beaches
-
-        return { beaches: beachesWithScores };
-      }
-
-      // Existing code for other time periods
       const response = await fetch(
-        `/api/regional-high-scores?region=${encodeURIComponent(selectedRegion)}&period=${timePeriod}`
+        `/api/beach-scores?region=${encodeURIComponent(selectedRegion)}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch high scores");
-      }
+      if (!response.ok) throw new Error("Failed to fetch scores");
 
-      const data = await response.json();
+      const { scores } = await response.json();
 
       // Map scores to beach details
-      const beachesWithScores = data.scores
+      const beachesWithScores = scores
         .map((score: BeachScore) => {
           const beach = beaches.find((b) => b.id === score.beachId);
           if (!beach) return null;
@@ -135,8 +104,8 @@ export default function RegionalHighScores({
     "3years": "3 Years",
   };
 
-  // Show loading skeleton during SSR or when loading on client
-  if (!isClient || isLoading) {
+  // Show loading skeleton when loading
+  if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
@@ -206,13 +175,12 @@ export default function RegionalHighScores({
                         : "Last 3 years' total scores"}
                 </span>
               </div>
-
               <div className="space-y-0">
                 {data.beaches.map((beach: BeachWithScore, index: number) => {
                   // Ensure we have valid numbers before any calculations
                   const score =
                     typeof beach.averageScore === "number"
-                      ? Math.floor(beach.averageScore * 10) / 10
+                      ? beach.averageScore // Just use the raw score, no multiplication
                       : 0;
 
                   return (

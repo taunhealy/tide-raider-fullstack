@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { calculateBeachScore } from "@/app/lib/scoreUtils";
-import type { Beach } from "@/app/types/beaches";
-import type { CoreForecastData } from "@/app/types/forecast";
+import { storeBeachDailyScores } from "@/app/lib/beachDailyScores";
 
 const prisma = new PrismaClient();
 
@@ -64,22 +62,28 @@ export async function GET(request: Request) {
       },
     });
 
-    // Calculate scores and filter/sort beaches
+    // If we have forecast data, get or calculate scores
     if (forecastData) {
-      const conditions: CoreForecastData = {
-        windSpeed: forecastData.windSpeed,
-        windDirection: forecastData.windDirection,
-        swellHeight: forecastData.swellHeight,
-        swellDirection: forecastData.swellDirection,
-        swellPeriod: forecastData.swellPeriod,
-      };
+      // Store scores using the dedicated service
+      await storeBeachDailyScores(
+        forecastData,
+        regionId || "Global",
+        new Date()
+      );
 
+      // Get the stored scores
+      const beachScores = await prisma.beachDailyScore.findMany({
+        where: {
+          region: regionId || "Global",
+          date: new Date(),
+        },
+      });
+
+      // Map scores to beaches
       const beachesWithScores = beaches
         .map((beach) => {
-          const { score } = calculateBeachScore(
-            beach as unknown as Beach,
-            conditions
-          );
+          const score =
+            beachScores.find((s) => s.beachId === beach.id)?.score || 0;
           return {
             ...beach,
             region: {
@@ -89,14 +93,13 @@ export async function GET(request: Request) {
             score,
           };
         })
-        .filter((beach) => beach.score >= minScore) // Filter by minimum score
+        .filter((beach) => beach.score >= minScore)
         .sort((a, b) => {
           if (sortField === "score") {
             return sortDirection === "desc"
               ? b.score - a.score
               : a.score - b.score;
           }
-          // Handle other sort fields if needed
           return 0;
         });
 

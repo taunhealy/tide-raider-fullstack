@@ -4,10 +4,10 @@ import { randomUUID } from "crypto";
 import {} from "@/app/lib/surfUtils";
 
 import { redis } from "@/app/lib/redis";
-import { storeGoodBeachRatings } from "@/app/lib/goodBeachRatings";
 import { BaseForecastData } from "@/app/types/forecast";
 import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
+import { storeBeachDailyScores } from "@/app/lib/beachDailyScores";
 
 interface RegionScrapeConfig {
   url: string;
@@ -258,48 +258,42 @@ async function getForecastsForRegion(region: ValidRegion) {
 }
 
 // Add this function to implement request deduplication
-async function dedupedEnsureGoodRatings(
+async function dedupedEnsureBeachScores(
   region: string,
   date: Date,
   conditions: any
 ) {
-  const lockKey = `rating-lock:${region}:${date.toISOString().split("T")[0]}`;
+  const lockKey = `score-lock:${region}:${date.toISOString().split("T")[0]}`;
 
-  // Try to acquire lock
   const acquired = await redis.set(lockKey, "1", {
-    nx: true, // Only set if key doesn't exist (lowercase)
-    ex: 60, // Expire after 60 seconds (lowercase)
+    nx: true,
+    ex: 60,
   });
 
-  // If we didn't get the lock, another process is already handling it
   if (!acquired) {
     console.log(
-      `🔒 Rating generation for ${region} on ${date.toISOString().split("T")[0]} already in progress`
+      `🔒 Score generation for ${region} on ${date.toISOString().split("T")[0]} already in progress`
     );
     return;
   }
 
   try {
-    // Check if ratings exist for this date/region
-    const existingRatings = await prisma.beachGoodRating.count({
+    const existingScores = await prisma.beachDailyScore.count({
       where: {
         date: date,
         region: region,
       },
     });
 
-    if (existingRatings === 0) {
-      console.log(
-        `🔄 No ratings found for ${region} on ${date}, regenerating...`
-      );
-      await storeGoodBeachRatings(conditions, region, date);
+    if (existingScores === 0) {
+      console.log(`🔄 No scores found for ${region} on ${date}, generating...`);
+      await storeBeachDailyScores(conditions, region, date);
     } else {
-      console.log(`✅ Ratings already exist for ${region} on ${date}`);
+      console.log(`✅ Scores already exist for ${region} on ${date}`);
     }
   } catch (error) {
-    console.error("Rating ensure check failed:", error);
+    console.error("Score generation failed:", error);
   } finally {
-    // Release the lock when done
     await redis.del(lockKey);
   }
 }
@@ -335,7 +329,7 @@ export async function GET(request: Request) {
     }
 
     // Use the deduped version instead
-    await dedupedEnsureGoodRatings(region.name, conditions.date, conditions);
+    await dedupedEnsureBeachScores(region.name, conditions.date, conditions);
 
     return NextResponse.json(conditions);
   } catch (error) {
