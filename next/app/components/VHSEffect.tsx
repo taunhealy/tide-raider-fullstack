@@ -12,7 +12,6 @@ export default function VHSEffect({ className }: VHSEffectProps) {
 
   useEffect(() => {
     if (!mountRef.current) {
-      console.error("Mount ref not available");
       return;
     }
 

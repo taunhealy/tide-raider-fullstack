@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
+import { useBeach } from "@/app/context/BeachContext";
 
 interface ActiveFilterBadgesProps {
   filters: FilterConfig;
@@ -18,6 +19,8 @@ export function ActiveFilterBadges({
   filters,
   onFilterChange,
 }: ActiveFilterBadgesProps) {
+  console.log("ActiveFilterBadges rendering");
+
   const {
     hasActiveFilters,
     removeBeachFilter,
@@ -26,7 +29,10 @@ export function ActiveFilterBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
-  // Fetch region counts
+  const { loadingStates, beachScores } = useBeach();
+  console.log("After useBeach:", { loadingStates, beachScores });
+
+  // First declare the query
   const { data: regionCountsData } = useQuery({
     queryKey: ["region-counts"],
     queryFn: async () => {
@@ -37,10 +43,38 @@ export function ActiveFilterBadges({
       if (!response.ok) throw new Error("Failed to fetch region counts");
       return response.json();
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
+    enabled: !loadingStates.scores && Object.keys(beachScores).length > 0,
+  });
+
+  // Then use it in the debug log
+  console.log("ActiveFiltersBadges:", {
+    loadingStates,
+    beachScoresCount: Object.keys(beachScores).length,
+    filters,
+    regionCounts: regionCountsData?.counts,
   });
 
   const regionCounts = regionCountsData?.counts || {};
+
+  // Add more debug logs
+  console.log("Region counts in badges:", {
+    regionCounts,
+    sampleRegion: filters.regions?.[0],
+    sampleCount: filters.regions?.[0] ? regionCounts[filters.regions[0]] : null,
+  });
+
+  // Add this before the return statement
+  console.log("DEBUG Region counts:", {
+    regionCounts,
+    filters,
+    hasRegions: !!filters.regions?.length,
+    firstRegion: filters.regions?.[0],
+    firstRegionCount: filters.regions?.[0]
+      ? regionCounts[filters.regions[0]]
+      : null,
+    allCounts: regionCounts,
+  });
 
   if (!hasActiveFilters) return null;
 

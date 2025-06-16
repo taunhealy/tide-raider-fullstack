@@ -56,12 +56,6 @@ export default async function AlertDetailPage({
       ? JSON.parse(alert.properties)
       : alert.properties;
 
-  // Server-side logging
-  console.log("Alert:", JSON.stringify(alert, null, 2));
-  console.log("LogEntry:", JSON.stringify(alert.logEntry, null, 2));
-  console.log("Forecast:", JSON.stringify(alert.logEntry?.forecast, null, 2));
-  console.log("Alert Properties:", JSON.stringify(alertProperties, null, 2));
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="mb-6">

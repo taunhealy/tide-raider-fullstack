@@ -514,7 +514,7 @@ export default function RaidLogTable({
     const visibleEntries = normalizedEntries.filter(
       (entry) => !entry.isPrivate || entry.userId === session.user?.id
     );
-    console.log("Visible entries:", visibleEntries.length);
+
     return visibleEntries;
   }, [normalizedEntries, session, showPrivateOnly]);
 

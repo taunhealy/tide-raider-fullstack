@@ -1,7 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 import { sendEmail } from "@/app/lib/email";
 import { sendWhatsAppMessage } from "@/app/lib/whatsapp";
-import { fetchForecastData, calculateStarRating } from "@/app/lib/forecast";
+import { fetchForecastData } from "@/app/services/forecastService";
 import { ForecastA } from "@prisma/client";
 
 // Track which regions we've already fetched today to avoid duplicate API calls
@@ -39,10 +39,6 @@ export async function processUserAlerts(userId: string, today: Date) {
     if (userAlerts.length === 0) {
       return result;
     }
-
-    console.log(
-      `📊 Found ${userAlerts.length} active alerts for user ${userId}`
-    );
 
     // 2. Check if any alerts have already been processed today
     const processedAlertIds = await prisma.alertCheck.findMany({
@@ -115,11 +111,11 @@ export async function processUserAlerts(userId: string, today: Date) {
                 data: {
                   date: today,
                   region: currentRegion,
-                  windSpeed: apiForecaseData.windSpeed,
-                  windDirection: apiForecaseData.windDirection,
-                  swellHeight: apiForecaseData.swellHeight,
-                  swellPeriod: apiForecaseData.swellPeriod,
-                  swellDirection: apiForecaseData.swellDirection,
+                  windSpeed: apiForecaseData.data.windSpeed,
+                  windDirection: apiForecaseData.data.windDirection,
+                  swellHeight: apiForecaseData.data.swellHeight,
+                  swellPeriod: apiForecaseData.data.swellPeriod,
+                  swellDirection: apiForecaseData.data.swellDirection,
                 },
               });
             }
@@ -207,15 +203,22 @@ export async function processUserAlerts(userId: string, today: Date) {
             matchDetails = matchingProps.join(", ");
           }
         } else if (alert.alertType === "rating") {
-          // Calculate star rating based on today's conditions
-          const calculatedRating = calculateStarRating(currentForecast);
+          // We should query the stored score
+          const dailyScore = await prisma.beachDailyScore.findFirst({
+            where: {
+              region: alert.region,
+              date: today,
+            },
+          });
+
+          const score = dailyScore?.score || 0;
 
           conditionsMatch =
-            (alert.starRating === "4+" && calculatedRating >= 4) ||
-            (alert.starRating === "5" && calculatedRating === 5);
+            (alert.starRating === "4+" && score >= 4) ||
+            (alert.starRating === "5" && score === 5);
 
           if (conditionsMatch) {
-            matchDetails = `Star rating: ${calculatedRating}`;
+            matchDetails = `Star rating: ${score}`;
           }
         }
 

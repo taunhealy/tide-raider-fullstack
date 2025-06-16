@@ -66,7 +66,7 @@ export async function processUserAlerts(userId: string, today: Date) {
     let beachRatings: Array<{ beachId: string; score: number }> = [];
     if (beachIds.length > 0) {
       try {
-        beachRatings = await prisma.beachGoodRating.findMany({
+        beachRatings = await prisma.beachDailyScore.findMany({
           where: {
             beachId: { in: beachIds },
             date: {
@@ -176,15 +176,7 @@ export async function processUserAlerts(userId: string, today: Date) {
 
           if (beachRating) {
             const rating = beachRating.score;
-            let ratingThreshold = 0;
-
-            if (alert.starRating === "4+") {
-              ratingThreshold = 4;
-            } else if (alert.starRating === "5") {
-              ratingThreshold = 5;
-            }
-
-            shouldSendAlert = rating >= ratingThreshold;
+            shouldSendAlert = rating >= alert.starRating;
 
             // Add to matched properties
             match.matchedProperties.push({

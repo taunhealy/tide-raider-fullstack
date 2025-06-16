@@ -2,13 +2,7 @@
 
 //handling data fetching and initial processing, before the data enters Redux or the UI layer.
 
-import {
-  ForecastResponse,
-  ForecastData,
-  BaseForecastData,
-} from "@/app/types/forecast";
-import { Beach } from "@/app/types/beaches";
-import { BeachScoreMap } from "@/app/types/scores";
+import { ForecastResponse, ForecastData } from "@/app/types/forecast";
 
 // Fetch forecast data from API
 export async function fetchForecastData(

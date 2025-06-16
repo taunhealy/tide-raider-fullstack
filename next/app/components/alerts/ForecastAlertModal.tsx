@@ -13,7 +13,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
@@ -44,6 +43,8 @@ import { BasicSelect, BasicOption } from "@/app/components/ui/basicselect";
 import { useRouter } from "next/navigation";
 import { AlertConfiguration } from "@/app/components/alerts/AlertConfiguration";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
+import { Slider } from "@/app/components/ui/slider";
+import { StarRatingSelector } from "@/app/components/alerts/starRatingSelector";
 
 interface ForecastAlertModalProps {
   isOpen?: boolean;
@@ -167,10 +168,11 @@ export default function ForecastAlertModal({
   const router = useRouter();
 
   const [alertType, setAlertType] = useState<"variables" | "rating">(
-    existingAlert?.alertType || "variables"
+    existingAlert?.alertType ||
+      (logEntry?.surferRating ? "rating" : "variables")
   );
-  const [starRating, setStarRating] = useState<"4+" | "5">(
-    existingAlert?.starRating === "5" ? "5" : "4+"
+  const [starRating, setStarRating] = useState<number>(
+    existingAlert?.starRating || logEntry?.surferRating || 3
   );
 
   const [alertConfig, setAlertConfig] = useState<AlertConfigTypes>({
@@ -193,13 +195,11 @@ export default function ForecastAlertModal({
     alertType:
       existingAlert?.alertType ||
       (logEntry?.surferRating ? "rating" : "variables"),
-    starRating:
-      existingAlert?.starRating ||
-      (logEntry?.surferRating && logEntry.surferRating >= 5 ? "5" : "4+"),
+    starRating: existingAlert?.starRating || logEntry?.surferRating || 3,
     userId: session?.user?.id || "",
     logEntryId: existingAlert?.logEntryId || logEntry?.id || null,
-    forecast: null,
-    forecastId: null,
+    forecast: existingAlert?.forecast || null,
+    forecastId: existingAlert?.forecastId || null,
   });
 
   const queryClient = useQueryClient();
@@ -331,7 +331,7 @@ export default function ForecastAlertModal({
       });
 
       setAlertType(data.alertType || "variables");
-      setStarRating((data.starRating as "4+" | "5") || "4+");
+      setStarRating((data.starRating as number) || 4);
 
       if (data.properties && Array.isArray(data.properties)) {
         setProperties(data.properties);
@@ -375,7 +375,7 @@ export default function ForecastAlertModal({
         forecastDate: new Date(logEntry.date),
         logEntryId: logEntry.id,
         alertType: "variables",
-        starRating: "4+",
+        starRating: 4,
         forecast: null,
         forecastId: null,
         userId: session?.user?.id || "",
@@ -448,7 +448,7 @@ export default function ForecastAlertModal({
         forecastDate: new Date(logEntry.date),
         logEntryId: logEntry.id,
         alertType: "variables",
-        starRating: "4+",
+        starRating: 4,
         forecast: null,
         forecastId: null,
         userId: session?.user?.id || "",
@@ -783,11 +783,14 @@ export default function ForecastAlertModal({
         alertType: selectedLogEntry.surferRating ? "rating" : prev.alertType,
         starRating:
           selectedLogEntry.surferRating && selectedLogEntry.surferRating >= 5
-            ? "5"
+            ? 5
             : selectedLogEntry.surferRating &&
                 selectedLogEntry.surferRating >= 4
-              ? "4+"
-              : prev.starRating,
+              ? 4
+              : selectedLogEntry.surferRating &&
+                  selectedLogEntry.surferRating >= 3
+                ? 3
+                : prev.starRating,
       }));
     }
   }, [selectedLogEntry]);
@@ -800,6 +803,14 @@ export default function ForecastAlertModal({
           : ["app"]
         : ["app"]
     );
+
+  const handleStarRatingChange = (rating: number) => {
+    setStarRating(rating);
+    setAlertConfig((prev) => ({
+      ...prev,
+      starRating: rating,
+    }));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -879,14 +890,12 @@ export default function ForecastAlertModal({
                               </span>
                               {entry.surferRating && (
                                 <div className="flex items-center gap-0.5">
-                                  {Array.from({
-                                    length: entry.surferRating,
-                                  }).map((_, i) => (
-                                    <StarIcon
-                                      key={i}
-                                      className="h-4 w-4 text-yellow-400 fill-current"
-                                    />
-                                  ))}
+                                  <StarRatingSelector
+                                    value={entry.surferRating}
+                                    onChange={() => {
+                                      // Handle rating change
+                                    }}
+                                  />
                                 </div>
                               )}
                             </div>
@@ -995,17 +1004,12 @@ export default function ForecastAlertModal({
                         <div>
                           <p className="text-sm text-gray-600">Rating</p>
                           <div className="flex items-center gap-0.5">
-                            {Array.from({
-                              length:
-                                selectedLogEntry?.surferRating ||
-                                logEntry?.surferRating ||
-                                0,
-                            }).map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className="h-4 w-4 text-yellow-400 fill-current"
-                              />
-                            ))}
+                            <StarRatingSelector
+                              value={selectedLogEntry?.surferRating || 0}
+                              onChange={() => {
+                                // Handle rating change
+                              }}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1088,69 +1092,12 @@ export default function ForecastAlertModal({
                 {alertType === "rating" && (
                   <div className="space-y-4">
                     <h4 className="font-medium font-primary text-gray-700">
-                      Select Rating Threshold
+                      Minimum Star Rating
                     </h4>
-                    <RadioGroup
+                    <StarRatingSelector
                       value={starRating}
-                      onValueChange={(value: "4+" | "5") => {
-                        setStarRating(value);
-                        setAlertConfig((prev) => ({
-                          ...prev,
-                          starRating: value,
-                        }));
-                      }}
-                      className="grid gap-3"
-                    >
-                      <div
-                        className={cn(
-                          "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
-                          "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
-                          starRating === "5" &&
-                            "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
-                        )}
-                      >
-                        <RadioGroupItem value="5" id="five-stars" />
-                        <Label
-                          htmlFor="five-stars"
-                          className="font-primary cursor-pointer flex items-center gap-2"
-                        >
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((i) => (
-                              <StarIcon
-                                key={i}
-                                className="h-4 w-4 text-yellow-400 fill-current"
-                              />
-                            ))}
-                          </div>
-                          <span>Perfect conditions (5 stars)</span>
-                        </Label>
-                      </div>
-                      <div
-                        className={cn(
-                          "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
-                          "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
-                          starRating === "4+" &&
-                            "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
-                        )}
-                      >
-                        <RadioGroupItem value="4+" id="four-plus-stars" />
-                        <Label
-                          htmlFor="four-plus-stars"
-                          className="font-primary cursor-pointer flex items-center gap-2"
-                        >
-                          <div className="flex">
-                            {[1, 2, 3, 4].map((i) => (
-                              <StarIcon
-                                key={i}
-                                className="h-4 w-4 text-yellow-400 fill-current"
-                              />
-                            ))}
-                            <StarIcon className="h-4 w-4 text-gray-300" />
-                          </div>
-                          <span>Good conditions (4+ stars)</span>
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                      onChange={handleStarRatingChange}
+                    />
                   </div>
                 )}
               </div>

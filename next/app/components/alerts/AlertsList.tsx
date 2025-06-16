@@ -388,13 +388,17 @@ export function AlertsList() {
                                 {[1, 2, 3, 4].map((i) => (
                                   <StarIcon
                                     key={i}
-                                    className="h-5 w-5 fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
+                                    className={`h-5 w-5 ${
+                                      i <= Number(alert.starRating || 0)
+                                        ? "fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
+                                        : "text-gray-300"
+                                    }`}
                                   />
                                 ))}
                                 <StarIcon className="h-5 w-5 text-gray-300" />
                               </div>
                               <span className="ml-3 font-primary">
-                                4+ Stars (Good conditions)
+                                {alert.starRating}+ Stars
                               </span>
                             </>
                           )}

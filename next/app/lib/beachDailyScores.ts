@@ -15,7 +15,7 @@ export async function storeBeachDailyScores(
     const { score } = calculateBeachScore(beach, forecast);
     return {
       beachId: beach.id,
-      region: region,
+      region: beach.region.name,
       score: Math.round(score),
       conditions: forecast,
       date: date,

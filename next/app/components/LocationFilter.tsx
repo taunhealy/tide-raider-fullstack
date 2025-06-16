@@ -5,11 +5,11 @@
 import React, { useMemo, useState } from "react";
 import type { FilterType, Region } from "@/app/types/beaches";
 import { Button } from "@/app/components/ui/Button";
-import { useBeach } from "@/app/context/BeachContext";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { FilterHeader } from "@/app/components/ui/FilterHeader";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useBeach } from "@/app/context/BeachContext";
 
 interface LocationFilterProps {
   filters: FilterType;
@@ -74,12 +74,14 @@ export default function LocationFilter({
   setFilters,
   regions,
 }: LocationFilterProps) {
-  const { todayGoodBeaches } = useBeach();
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Fetch region counts from API
+  // Get loading states from context
+  const { loadingStates, beachScores } = useBeach();
+
+  // Only fetch counts when scores are ready
   const { data: regionCountsData } = useQuery({
     queryKey: ["region-counts"],
     queryFn: async () => {
@@ -90,12 +92,11 @@ export default function LocationFilter({
       if (!response.ok) throw new Error("Failed to fetch region counts");
       return response.json();
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
+    enabled: !loadingStates.scores && Object.keys(beachScores).length > 0,
   });
 
-  const regionCounts = useMemo(() => {
-    return regionCountsData?.counts || {};
-  }, [regionCountsData]);
+  const regionCounts = regionCountsData?.counts || {};
 
   // Enhanced search for both regions and their countries
   const filteredRegions = useMemo(() => {
@@ -173,6 +174,19 @@ export default function LocationFilter({
     });
   };
 
+  console.log("Region counts before mapping:", {
+    regionCounts,
+    sampleRegion: filteredRegions[0]?.name,
+    sampleCount: regionCounts[filteredRegions[0]?.name],
+  });
+
+  // Move the logic outside of any handlers
+  const getNewRegion = (currentRegion: Region) => {
+    return filters.location.region === currentRegion.name
+      ? null
+      : currentRegion;
+  };
+
   return (
     <div className="space-y-3 border border-md px-7 py-7 bg-white gap-9">
       <FilterHeader
@@ -198,13 +212,7 @@ export default function LocationFilter({
                       key={region.id}
                       region={region}
                       isActive={filters.location.region === region.name}
-                      onClick={() => {
-                        const newRegion =
-                          filters.location.region === region.name
-                            ? null
-                            : region;
-                        updateUrlAndFilters(newRegion);
-                      }}
+                      onClick={() => updateUrlAndFilters(getNewRegion(region))}
                       count={regionCounts[region.name]}
                     />
                   ))}
@@ -220,11 +228,7 @@ export default function LocationFilter({
                 key={region.id}
                 region={region}
                 isActive={filters.location.region === region.name}
-                onClick={() => {
-                  const newRegion =
-                    filters.location.region === region.name ? null : region;
-                  updateUrlAndFilters(newRegion);
-                }}
+                onClick={() => updateUrlAndFilters(getNewRegion(region))}
                 count={regionCounts[region.name]}
               />
             ))}

@@ -79,7 +79,7 @@ export interface Beach {
   regionId: string;
   country?: Country;
   region?: Region;
-  isHiddenGem?: boolean | undefined;
+  isHiddenGem?: boolean | null | undefined;
   location: string;
   distanceFromCT: number;
   optimalWindDirections: string[];

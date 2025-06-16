@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +24,8 @@ interface BeachWithScore extends Beach {
   averageScore: number;
 }
 
-export default function RegionalHighScores({
+// Create a new component for the data fetching part
+function RegionalHighScoresContent({
   beaches,
   selectedRegion,
   onBeachClick,
@@ -59,7 +60,7 @@ export default function RegionalHighScores({
   };
 
   // Fetch scores for the selected region and time period
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["regionalHighScores", selectedRegion, timePeriod],
     queryFn: async () => {
       if (!selectedRegion) return { beaches: [] };
@@ -104,114 +105,132 @@ export default function RegionalHighScores({
     "3years": "3 Years",
   };
 
-  // Show loading skeleton when loading
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
-          High Scores
-        </h3>
-        <div className="animate-pulse space-y-3">
+  return (
+    <>
+      {/* Time period tabs */}
+      <div className="flex space-x-1 mb-4 bg-gray-100 p-1 rounded-md">
+        {(Object.keys(timePeriodLabels) as TimePeriod[]).map((period) => (
+          <button
+            key={period}
+            onClick={() => setTimePeriod(period)}
+            className={cn(
+              "flex-1 py-1.5 px-2 text-xs font-medium rounded font-primary transition-colors",
+              timePeriod === period
+                ? "bg-white text-gray-800 shadow-sm"
+                : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            {timePeriodLabels[period]}
+          </button>
+        ))}
+      </div>
+
+      {isLoading || isFetching ? (
+        <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-2">
-              <div className="bg-gray-200 w-12 h-12 rounded-md"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
               </div>
-              <div className="bg-gray-200 w-8 h-8 rounded-full"></div>
+              <div className="bg-gray-200 w-8 h-8 rounded-full animate-pulse"></div>
             </div>
           ))}
         </div>
-      </div>
-    );
-  }
+      ) : error ? (
+        <p className="text-gray-600 text-sm font-primary">
+          Error loading surf breaks. Please try again.
+        </p>
+      ) : !data || data.beaches.length === 0 ? (
+        <p className="text-gray-600 text-sm font-primary">
+          No good surf breaks found for this time period in {selectedRegion}.
+        </p>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-600 font-primary">
+              {timePeriod === "today"
+                ? "Today's total scores"
+                : timePeriod === "week"
+                  ? "This week's total scores"
+                  : timePeriod === "year"
+                    ? "This year's total scores"
+                    : "Last 3 years' total scores"}
+            </span>
+          </div>
+          <div className="space-y-0">
+            {data?.beaches.map((beach: BeachWithScore, index: number) => {
+              // Ensure we have valid numbers before any calculations
+              const score =
+                typeof beach.averageScore === "number"
+                  ? beach.averageScore // Just use the raw score, no multiplication
+                  : 0;
 
+              return (
+                <div
+                  key={beach.id}
+                  className={`flex items-center gap-3 p-2 hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors ${
+                    index !== data.beaches.length - 1
+                      ? "border-b border-[var(--color-border-light)]"
+                      : ""
+                  }`}
+                  onClick={() => onBeachClick?.(beach)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary">
+                      {beach.name}
+                    </h4>
+                    <p className="text-sm text-[var(--color-text-secondary)] font-primary">
+                      {`${score.toFixed(1)} points${beach.appearances > 1 ? ` over ${beach.appearances} days` : ""}`}
+                    </p>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium font-primary">
+                    {score.toFixed(1)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// Main component with Suspense
+export default function RegionalHighScores(props: RegionalHighScoresProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
       <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
-        {selectedRegion ? `High Scores in ${selectedRegion}` : "High Scores"}
+        {props.selectedRegion
+          ? `High Scores in ${props.selectedRegion}`
+          : "High Scores"}
       </h3>
 
-      {!selectedRegion ? (
+      {!props.selectedRegion ? (
         <p className="text-gray-600 text-sm font-primary">
           Choose a region to view its high scores.
         </p>
       ) : (
-        <>
-          {/* Time period tabs */}
-          <div className="flex space-x-1 mb-4 bg-gray-100 p-1 rounded-md">
-            {(Object.keys(timePeriodLabels) as TimePeriod[]).map((period) => (
-              <button
-                key={period}
-                onClick={() => setTimePeriod(period)}
-                className={cn(
-                  "flex-1 py-1.5 px-2 text-xs font-medium rounded font-primary transition-colors",
-                  timePeriod === period
-                    ? "bg-white text-gray-800 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
-                )}
-              >
-                {timePeriodLabels[period]}
-              </button>
-            ))}
-          </div>
-
-          {error || !data || data.beaches.length === 0 ? (
-            <p className="text-gray-600 text-sm font-primary">
-              No good surf breaks found for this time period in {selectedRegion}
-              .
-            </p>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-600 font-primary">
-                  {timePeriod === "today"
-                    ? "Today's total scores"
-                    : timePeriod === "week"
-                      ? "This week's total scores"
-                      : timePeriod === "year"
-                        ? "This year's total scores"
-                        : "Last 3 years' total scores"}
-                </span>
-              </div>
-              <div className="space-y-0">
-                {data.beaches.map((beach: BeachWithScore, index: number) => {
-                  // Ensure we have valid numbers before any calculations
-                  const score =
-                    typeof beach.averageScore === "number"
-                      ? beach.averageScore // Just use the raw score, no multiplication
-                      : 0;
-
-                  return (
-                    <div
-                      key={beach.id}
-                      className={`flex items-center gap-3 p-2 hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors ${
-                        index !== data.beaches.length - 1
-                          ? "border-b border-[var(--color-border-light)]"
-                          : ""
-                      }`}
-                      onClick={() => onBeachClick?.(beach)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary">
-                          {beach.name}
-                        </h4>
-                        <p className="text-sm text-[var(--color-text-secondary)] font-primary">
-                          {`${score.toFixed(1)} points${beach.appearances > 1 ? ` over ${beach.appearances} days` : ""}`}
-                        </p>
-                      </div>
-
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium font-primary">
-                        {score.toFixed(1)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </>
+        <Suspense
+          fallback={
+            <div className="animate-pulse space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-2">
+                  <div className="bg-gray-200 w-12 h-12 rounded-md"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                  <div className="bg-gray-200 w-8 h-8 rounded-full"></div>
+                </div>
+              ))}
+            </div>
+          }
+        >
+          <RegionalHighScoresContent {...props} />
+        </Suspense>
       )}
     </div>
   );

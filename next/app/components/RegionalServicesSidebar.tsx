@@ -63,11 +63,6 @@ export default function RegionalSidebar({
         const categoryKey = ad.category as keyof typeof AD_CATEGORIES;
         const categoryInfo = AD_CATEGORIES[categoryKey];
 
-        // Debug logging
-        console.log("Ad category:", ad.category);
-        console.log("Is clown?", ad.category === "clown");
-        console.log("Category info:", categoryInfo);
-
         if ("isPlaceholder" in ad) {
           return (
             <a

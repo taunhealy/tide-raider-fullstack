@@ -592,7 +592,7 @@ model Alert {
   updatedAt          DateTime            @updatedAt
   logEntryId         String?
   alertType          String              @default("variables")
-  starRating         String?
+  starRating         Int?
   forecastDate       DateTime            @db.Date
   forecastId         String?
   forecast           ForecastA?          @relation(fields: [forecastId], references: [id])

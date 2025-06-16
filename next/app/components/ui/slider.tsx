@@ -15,6 +15,7 @@ export interface SliderProps
   step?: number;
   onValueChange?: (value: number[]) => void;
   disabled?: boolean;
+  starRating?: number[];
 }
 
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
@@ -100,10 +101,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
       >
         <div
           ref={trackRef}
-          className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary"
+          className="relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200"
         >
           <div
-            className="absolute h-full bg-primary"
+            className="absolute h-full bg-[var(--color-tertiary)]"
             style={{
               width: `${getThumbPercent(0)}%`,
             }}
@@ -117,10 +118,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
               thumbRefs.current[index] = el;
             }}
             className={cn(
-              "absolute block h-5 w-5 rounded-full border-2 border-primary bg-background",
+              "absolute block h-5 w-5 rounded-full border-2 border-[var(--color-tertiary)] bg-white",
               "transition-colors focus-visible:outline-none focus-visible:ring-2",
-              "focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none",
-              dragging === index && "ring-2 ring-primary",
+              "focus-visible:ring-[var(--color-tertiary)] focus-visible:ring-offset-2 disabled:pointer-events-none",
+              dragging === index && "ring-2 ring-[var(--color-tertiary)]",
               disabled && "opacity-50"
             )}
             style={{

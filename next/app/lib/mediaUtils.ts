@@ -40,15 +40,6 @@ export function getMediaGridItems(
       ad.targetedBeaches?.includes(beach.id) ||
       ad.beachConnections?.some((conn) => conn.beachId === beach.id);
 
-    console.log("Ad check:", {
-      id: ad.id,
-      category: ad.category,
-      isActive,
-      isTargeted,
-      title: ad.title,
-      companyName: ad.companyName,
-    });
-
     return isActive && isTargeted;
   });
 
@@ -122,8 +113,6 @@ export function getMediaGridItems(
       }
     }
   });
-
-  console.log("Final items:", items);
 
   return { items };
 }

@@ -230,7 +230,6 @@ export default function AdvertisingForm({ adId }: Props) {
         }
 
         const data = await res.json();
-        console.log("Availability check response:", data);
 
         // For development purposes, always return available
         if (process.env.NODE_ENV === "development") {
@@ -274,7 +273,6 @@ export default function AdvertisingForm({ adId }: Props) {
   // Add this console log to see what's being received
   useEffect(() => {
     if (categoryAvailability) {
-      console.log("Current availability state:", categoryAvailability);
     }
   }, [categoryAvailability]);
 
@@ -335,7 +333,6 @@ export default function AdvertisingForm({ adId }: Props) {
       }
 
       const data = await response.json();
-      console.log("Upload successful, received data:", data);
 
       if (!data.imageUrl) {
         console.error("Upload response missing imageUrl:", data);

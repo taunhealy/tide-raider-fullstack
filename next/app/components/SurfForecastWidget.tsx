@@ -1,5 +1,5 @@
 import { degreesToCardinal } from "@/app/lib/surfUtils";
-import { WindData, WeeklyForecast } from "@/app/types/wind";
+
 import { useState, useEffect } from "react";
 import { LogEntry } from "@/app/types/raidlogs";
 
@@ -53,7 +53,6 @@ export default function SurfForecastWidget({
     const date = new Date(datePart);
 
     if (isNaN(date.getTime())) {
-      console.error("Invalid date value:", dateStr);
       return "Invalid date";
     }
 

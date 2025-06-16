@@ -11,7 +11,7 @@ export type ForecastProperty =
   | "wavePeriod"
   | "temperature";
 
-export type AlertStarRating = "4+" | "5";
+export type AlertStarRating = "3+" | "4+" | "5";
 
 export type NotificationMethod = "email" | "whatsapp" | "app";
 
@@ -52,7 +52,7 @@ export interface AlertConfig {
   logEntry?: LogEntry | null;
   logEntryId: string | null;
   alertType: "variables" | "rating";
-  starRating: "4+" | "5" | null;
+  starRating: number | null;
   forecast: ForecastA | null;
   forecastId: string | null;
   userId: string;

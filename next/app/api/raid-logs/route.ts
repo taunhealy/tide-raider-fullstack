@@ -92,7 +92,6 @@ async function getForecast(date: Date, region: string) {
 // Update the GET endpoint to handle forecast requests
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  console.log("🔍 Fetching raid logs with params:", searchParams.toString());
 
   // Extract all filter parameters
   const beaches = searchParams.get("beaches")?.split(",").filter(Boolean) || [];

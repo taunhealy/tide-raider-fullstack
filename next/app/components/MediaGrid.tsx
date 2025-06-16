@@ -59,7 +59,6 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
       );
       if (!response.ok) throw new Error("Failed to fetch log entry");
       const data = await response.json();
-      console.log("Fetched log entry:", data);
       return data;
     },
   });
@@ -93,7 +92,6 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
 
       if (!response.ok) throw new Error("Failed to fetch ads");
       const data = await response.json();
-      console.log("Received ads data:", data);
       return Array.isArray(data.ads) ? data.ads : [];
     },
   });

@@ -214,13 +214,6 @@ export default function DashboardPage() {
   };
 
   const renderSubscriptionState = () => {
-    console.log("Rendering subscription state:", {
-      subscriptionData,
-      trialStatus,
-      hasTrialEnded: subscriptionData?.hasTrialEnded,
-      hasActiveTrial: subscriptionData?.hasActiveTrial,
-    });
-
     if (subscriptionData?.status === SubscriptionStatus.ACTIVE) {
       return <ActiveSubscriptionView />;
     }

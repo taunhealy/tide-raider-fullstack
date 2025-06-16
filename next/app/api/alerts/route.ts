@@ -24,12 +24,21 @@ const AlertSchema = z.object({
   active: z.boolean().default(true),
   logEntryId: z.string().nullable().optional(),
   alertType: z.enum(["variables", "rating"]).default("variables"),
-  starRating: z.enum(["4+", "5"]).nullable().optional(),
+  starRating: z.number().min(1).max(5).nullable().optional(),
 });
+
+// Add this near the top with other constants
+const AVAILABLE_STAR_RATINGS = ["3+", "4+", "5"] as const;
 
 // GET - Fetch alerts, regions, or dates based on query parameters
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+
+  // Add this check at the beginning of the function
+  if (searchParams.has("starRatings")) {
+    return NextResponse.json(AVAILABLE_STAR_RATINGS);
+  }
+
   const region = searchParams.get("region");
   const logEntryId = searchParams.get("logEntryId");
   const isBetaMode = process.env.NEXT_PUBLIC_APP_MODE === "beta";
