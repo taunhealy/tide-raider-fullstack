@@ -1,167 +1,214 @@
-import { PrismaClient, Prisma } from "@prisma/client";
 import { beachData } from "../app/data/beachData";
+import { HARDCODED_COUNTRIES } from "../app/lib/location/countries/constants";
+import { prisma } from "@/app/lib/prisma";
 
-const prisma = new PrismaClient();
-
-function getContinent(country: string): string {
-  // Get all unique continents from beach data
-  const continentMap: Record<string, string> = {};
-
-  // Build the map from actual beach data
-  beachData.forEach((beach) => {
-    if (beach.country && beach.region && beach.continent) {
-      continentMap[beach.country.name] = beach.continent;
-    }
+// Add this utility function to your seed.ts file
+async function getCountryAndRegionIds(countryName: string, regionName: string) {
+  // Find country by name
+  const country = await prisma.country.findFirst({
+    where: { name: countryName },
   });
 
-  const continent = continentMap[country];
-  if (!continent) {
-    console.error(
-      `No continent mapping found for country: ${country}, defaulting to Africa`
-    );
-    return "Africa"; // Default to a valid continent
+  if (!country) {
+    throw new Error(`Country not found: ${countryName}`);
   }
-  return continent;
-}
 
-// Helper function to generate random dates within a range
-function randomDate(start: Date, end: Date) {
-  return new Date(
-    start.getTime() + Math.random() * (end.getTime() - start.getTime())
-  );
-}
-
-// Helper function to generate random rating (1-5)
-function randomRating() {
-  return Math.floor(Math.random() * 5) + 1;
-}
-
-// Helper function to generate random wind and swell conditions
-function generateRandomForecast() {
-  return {
-    windSpeed: Math.floor(Math.random() * 30),
-    windDirection: Math.floor(Math.random() * 360),
-    swellHeight: Number((Math.random() * 4 + 0.5).toFixed(1)),
-    swellPeriod: Math.floor(Math.random() * 16) + 4,
-    swellDirection: Math.floor(Math.random() * 360),
-  };
-}
-
-// Sample comments for more realistic data
-const sampleComments = [
-  "Perfect morning session with clean waves",
-  "Bit crowded but still managed to catch some good ones",
-  "Wind picked up in the afternoon but early session was epic",
-  "Small but fun waves, great for practicing turns",
-  "Biggest swell I've seen here, definitely challenging",
-  "Clean conditions with light offshore winds",
-  "Glassy morning session with perfect peelers",
-  "Choppy conditions but still some good sets coming through",
-  "Dawn patrol was worth it, caught some amazing waves",
-  "Great session with consistent sets",
-];
-
-// Sample surfer names for more realistic data
-const sampleSurfers = [
-  "Alex Thompson",
-  "Sarah Chen",
-  "Mike O'Connor",
-  "Kai Waterman",
-  "Luna Rodriguez",
-  "Tom Kelly",
-  "Emma Wilson",
-  "James Smith",
-  "Olivia Brown",
-  "Noah Garcia",
-];
-
-async function main() {
-  console.log("Starting to seed log entries...");
-
-  // First, get all beaches from the database
-  const beaches = await prisma.beach.findMany({
-    include: {
-      region: true,
-      country: {
-        include: {
-          continent: true,
-        },
-      },
+  // Find region by name and country
+  const region = await prisma.region.findFirst({
+    where: {
+      name: regionName,
+      countryId: country.id,
     },
   });
 
-  // Create multiple log entries for each beach
-  for (const beach of beaches) {
-    // Create 3-7 log entries per beach
-    const numEntries = Math.floor(Math.random() * 5) + 3;
+  if (!region) {
+    throw new Error(
+      `Region not found: ${regionName} in country ${countryName}`
+    );
+  }
 
-    for (let i = 0; i < numEntries; i++) {
-      const date = randomDate(
-        new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
-        new Date()
+  return {
+    countryId: country.id,
+    regionId: region.id,
+  };
+}
+
+// Helper to extract unique countries and regions
+const uniqueCountries = new Set();
+const uniqueRegions = new Map();
+
+beachData.forEach((beach) => {
+  uniqueCountries.add(beach.country);
+  if (!uniqueRegions.has(beach.country)) {
+    uniqueRegions.set(beach.country, new Set());
+  }
+  uniqueRegions.get(beach.country).add(beach.region);
+});
+
+console.log("Countries:", Array.from(uniqueCountries));
+uniqueRegions.forEach((regions, country) => {
+  console.log(`Regions in ${country}:`, Array.from(regions));
+});
+
+// Add this utility function at the top of seed.ts
+function transformRegionToId(regionName: string): string {
+  return regionName.toLowerCase().replace(/\s+/g, "-");
+}
+
+async function main() {
+  // 1. Create continents first
+  console.log("Creating continents...");
+  const continents = [
+    { id: "AF", name: "Africa" },
+    { id: "EU", name: "Europe" },
+    { id: "AS", name: "Asia" },
+    { id: "NA", name: "North America" },
+    { id: "SA", name: "South America" },
+    { id: "OC", name: "Oceania" },
+    { id: "AN", name: "Antarctica" },
+  ];
+
+  for (const continent of continents) {
+    await prisma.continent.upsert({
+      where: { id: continent.id },
+      update: {},
+      create: continent,
+    });
+  }
+
+  // 2. Create countries from constants file
+  console.log("Creating countries...");
+
+  // Map continent names to IDs
+  const continentMap = {
+    Africa: "AF",
+    Europe: "EU",
+    Asia: "AS",
+    "North America": "NA",
+    "South America": "SA",
+    Oceania: "OC",
+    Antarctica: "AN",
+  };
+
+  for (const country of HARDCODED_COUNTRIES) {
+    const continentId =
+      continentMap[country.continent as keyof typeof continentMap];
+    if (!continentId) {
+      console.warn(
+        `Unknown continent for country ${country.name}: ${country.continent}`
       );
+      continue;
+    }
 
-      // Create forecast first
-      const forecastData = generateRandomForecast();
-      const forecast = await prisma.forecastA.upsert({
-        where: {
-          date_region: {
-            // This is the unique constraint name
-            date: date,
-            region: beach.region.name,
-          },
-        },
-        update: forecastData, // If it exists, update with new data
-        create: {
-          date: date,
-          region: beach.region.name,
-          ...forecastData,
-        },
+    await prisma.country.upsert({
+      where: { id: country.id },
+      update: {},
+      create: {
+        id: country.id,
+        name: country.name,
+        continentId: continentId,
+      },
+    });
+  }
+
+  // 3. Create regions based on beach data
+  console.log("Creating regions...");
+
+  // Extract unique regions from beach data
+  const regionEntries: { id: string; name: string; countryId: string }[] = [];
+  uniqueRegions.forEach((regions, countryName) => {
+    // Find the country ID
+    const country = HARDCODED_COUNTRIES.find(
+      (c) => c.name === String(countryName)
+    );
+    if (!country) {
+      console.warn(`Country not found: ${countryName}`);
+      return;
+    }
+
+    // Add all regions for this country
+    regions.forEach((regionName: string) => {
+      const regionId = transformRegionToId(regionName);
+      regionEntries.push({
+        id: regionId,
+        name: regionName,
+        countryId: country.id,
       });
+    });
+  });
 
-      // Create user if doesn't exist
-      const surferName =
-        sampleSurfers[Math.floor(Math.random() * sampleSurfers.length)];
-      const surferEmail = `${surferName.toLowerCase().replace(/\s+/g, ".")}@example.com`;
+  // Create all regions
+  for (const region of regionEntries) {
+    await prisma.region.upsert({
+      where: { id: region.id },
+      update: {},
+      create: region,
+    });
+  }
 
-      let user = await prisma.user.findFirst({
-        where: { email: surferEmail },
-      });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: surferName,
-            email: surferEmail,
-          },
-        });
+  // 4. Now create beaches
+  console.log("Creating beaches...");
+  for (const beach of beachData) {
+    try {
+      // Find country
+      const country = HARDCODED_COUNTRIES.find(
+        (c) => c.name === String(beach.country)
+      );
+      if (!country) {
+        console.warn(
+          `Country not found for beach ${beach.name}: ${beach.country}`
+        );
+        continue;
       }
 
-      // Create log entry
-      await prisma.logEntry.create({
-        data: {
-          date: date,
-          beachName: beach.name,
-          surferName: surferName,
-          surferEmail: surferEmail,
-          surferRating: randomRating(),
-          comments:
-            sampleComments[Math.floor(Math.random() * sampleComments.length)],
-          isPrivate: Math.random() > 0.8, // 20% chance of being private
-          isAnonymous: Math.random() > 0.9, // 10% chance of being anonymous
-          continent: beach.country.continent.name,
-          country: beach.country.name,
-          region: beach.region.name,
-          waveType: beach.waveType,
-          beachId: beach.id,
-          userId: user.id,
-          forecastId: forecast.id,
+      // Find region
+      const region = await prisma.region.findFirst({
+        where: {
+          id: transformRegionToId(beach.region as unknown as string),
+          countryId: country.id,
         },
       });
+
+      if (!region) {
+        console.warn(
+          `Region not found for beach ${beach.name}: ${beach.region}`
+        );
+        continue;
+      }
+
+      await prisma.beach.create({
+        data: {
+          id: beach.id,
+          name: beach.name,
+          continent: beach.continent,
+          countryId: country.id,
+          regionId: region.id,
+          location: beach.location,
+          distanceFromCT: beach.distanceFromCT,
+          optimalWindDirections: beach.optimalWindDirections,
+          optimalSwellDirections: beach.optimalSwellDirections,
+          bestSeasons: beach.bestSeasons,
+          optimalTide: beach.optimalTide,
+          description: beach.description,
+          difficulty: beach.difficulty,
+          waveType: beach.waveType,
+          swellSize: beach.swellSize,
+          idealSwellPeriod: beach.idealSwellPeriod,
+          waterTemp: beach.waterTemp,
+          hazards: beach.hazards,
+          crimeLevel: beach.crimeLevel,
+          sharkAttack: beach.sharkAttack,
+          coordinates: beach.coordinates,
+          // Add any other required fields
+        },
+      });
+      console.log(`Created beach: ${beach.name}`);
+    } catch (error) {
+      console.error(`Error creating beach ${beach.name}:`, error);
     }
   }
 
-  console.log("Seeding completed!");
+  console.log("Seeding complete!");
 }
 
 main()

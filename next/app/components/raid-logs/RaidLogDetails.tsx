@@ -43,6 +43,9 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
       ? entry.forecast[0]
       : entry.forecast;
 
+  // Check if media is available
+  const hasMedia = entry.imageUrl || (entry.videoUrl && entry.videoPlatform);
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Navigation and Actions Bar */}
@@ -68,44 +71,40 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
       {/* Main Content Card */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
         {/* Hero Section with Image/Video */}
-        <div className="relative w-full h-64 md:h-80 lg:h-96 bg-gray-100">
-          {entry.imageUrl ? (
-            <Image
-              src={entry.imageUrl}
-              alt="Session photo"
-              fill
-              className="object-cover cursor-pointer hover:opacity-95 transition-opacity"
-              sizes="(max-width: 1024px) 100vw, 1024px"
-              priority
-              onClick={() => setIsMediaModalOpen(true)}
-            />
-          ) : entry.videoUrl && entry.videoPlatform ? (
-            <div
-              className="relative w-full h-full cursor-pointer"
-              onClick={() => setIsMediaModalOpen(true)}
-            >
+        {hasMedia ? (
+          <div className="relative w-full h-64 md:h-80 lg:h-96 bg-gray-100">
+            {entry.imageUrl ? (
               <Image
-                src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
-                alt="Video thumbnail"
+                src={entry.imageUrl}
+                alt="Session photo"
                 fill
-                className="object-cover"
+                className="object-cover cursor-pointer hover:opacity-95 transition-opacity"
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 priority
+                onClick={() => setIsMediaModalOpen(true)}
               />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
-                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                  <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
+            ) : entry.videoUrl && entry.videoPlatform ? (
+              <div
+                className="relative w-full h-full cursor-pointer"
+                onClick={() => setIsMediaModalOpen(true)}
+              >
+                <Image
+                  src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
+                  alt="Video thumbnail"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  priority
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
+                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                    <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400 font-primary text-lg">
-                No media available
-              </span>
-            </div>
-          )}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6 p-6 md:p-8">

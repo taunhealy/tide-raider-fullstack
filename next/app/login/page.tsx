@@ -3,8 +3,8 @@ import LoginButton from "@/app/login/LoginButton";
 
 export const dynamic = "force-dynamic";
 
-export default function LoginPage() {
-  const headersList = headers();
+export default async function LoginPage() {
+  const headersList = await headers();
   const callbackUrl = headersList.get("referer") || "/";
 
   return (

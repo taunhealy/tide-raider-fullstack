@@ -4,7 +4,6 @@ import Navbar from "./components/Navbar";
 import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";
-import { Toaster } from "sonner";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -39,7 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${montserrat.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${montserrat.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Force preload critical fonts */}
         <link
@@ -91,13 +94,15 @@ export default function RootLayout({
           href="/android-chrome-192x192.png"
         />
       </head>
-      <body className="min-h-screen flex flex-col font-primary">
+      <body
+        className="min-h-screen flex flex-col font-primary"
+        suppressHydrationWarning
+      >
         <AppProviders>
           <NewsBannerWrapper />
           <Navbar />
           <main className="flex-grow">{children}</main>
           <Footer />
-          <Toaster position="top-right" />
         </AppProviders>
       </body>
     </html>

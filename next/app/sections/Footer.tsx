@@ -69,10 +69,12 @@ export default function Footer() {
                 type="email"
                 placeholder="Enter your email"
                 className="flex-1 px-[16px] py-[8px] border border-[var(--color-border-light)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-bg-tertiary)] focus:border-transparent max-w-[360.375px]"
+                suppressHydrationWarning
               />
               <button
                 type="submit"
                 className="bg-[var(--color-bg-tertiary)] text-white px-[16px] py-[8px] rounded-md hover:bg-[var(--color-bg-tertiary)]/90 transition-colors duration-300 whitespace-nowrap max-w-[273.375px]"
+                suppressHydrationWarning
               >
                 Subscribe
               </button>

@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { cn } from "@/app/lib/utils";
-import { SpiralAnimation } from "@/app/components/alerts/SpiralAnimation";
 import {
   Tooltip,
   TooltipContent,
@@ -23,32 +22,12 @@ import {
 } from "@/app/components/ui/tooltip";
 
 import { Alert } from "@/app/types/alerts";
-import { getSwellEmoji, getWindEmoji } from "@/app/lib/forecastUtils";
+import {
+  degreesToCardinal,
+  getSwellEmoji,
+  getWindEmoji,
+} from "@/app/lib/forecastUtils";
 import { formatItemType } from "@/app/lib/formatters";
-
-type ForecastProperty =
-  | "windSpeed"
-  | "windDirection"
-  | "swellHeight"
-  | "swellPeriod"
-  | "swellDirection";
-
-const getForecastProperty = (prop: string): ForecastProperty => {
-  switch (prop.toLowerCase()) {
-    case "windspeed":
-      return "windSpeed";
-    case "winddirection":
-      return "windDirection";
-    case "swellheight":
-      return "swellHeight";
-    case "swellperiod":
-      return "swellPeriod";
-    case "swelldirection":
-      return "swellDirection";
-    default:
-      return "windSpeed"; // fallback
-  }
-};
 
 // Add this skeleton loader component at the top level
 function AlertCardSkeleton() {
@@ -196,7 +175,6 @@ export function AlertsList() {
   if (!alerts || alerts.length === 0) {
     return (
       <div className="text-center py-8 border rounded-lg bg-[var(--color-bg-primary)]">
-        <SpiralAnimation size={120} className="mx-auto" />
         <h3 className="mt-4 text-lg font-medium font-primary text-[var(--color-text-primary)]">
           No alerts yet
         </h3>
@@ -267,7 +245,6 @@ export function AlertsList() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
         {filteredAlerts.length === 0 ? (
           <div className="text-center py-8 border rounded-lg bg-[var(--color-bg-primary)] border-[var(--color-border-light)] col-span-full">
-            <SpiralAnimation size={120} className="mx-auto" />
             <h3 className="mt-4 text-lg font-medium font-primary text-[var(--color-text-primary)]">
               No {activeTab !== "all" ? activeTab : ""} alerts found
             </h3>
@@ -284,7 +261,7 @@ export function AlertsList() {
               key={alert.id}
               className={cn(
                 "bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col",
-                !alert.logEntry && "border-red-400 hover:border-red-500"
+                !alert.logEntry && "border-black-400 hover:border-black-500"
               )}
             >
               <CardHeader className="pb-2 relative">
@@ -338,19 +315,7 @@ export function AlertsList() {
                   </Button>
                 </div>
                 <CardTitle className="text-base font-primary text-gray-900 flex items-center pr-24">
-                  {alert.alertType === "rating" ? (
-                    <span className="mr-2 text-[var(--color-alert-icon-rating)]">
-                      ⭐
-                    </span>
-                  ) : (
-                    <span className="mr-2">🧙</span>
-                  )}
                   {alert.name}
-                  {!alert.logEntry && (
-                    <span className="ml-2 text-xs text-red-500 font-normal">
-                      (Reference session deleted)
-                    </span>
-                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-grow flex-1">
@@ -360,183 +325,125 @@ export function AlertsList() {
                     <span className="font-medium text-gray-900">🔔</span>{" "}
                     {formatItemType(alert.notificationMethod)}
                   </p>
-                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 flex-grow">
-                    {alert.alertType === "rating" ? (
-                      <div>
-                        <p className="text-main font-medium mb-2">Alert for:</p>
-                        <div className="flex items-center mt-1 bg-gray-50 p-3 rounded-md">
-                          {alert.starRating === "5" ? (
-                            <>
-                              <div className="flex">
-                                {[1, 2, 3, 4, 5].map((i) => (
-                                  <StarIcon
-                                    key={i}
-                                    className="h-5 w-5 fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
-                                  />
-                                ))}
-                              </div>
-                              <span className="ml-3 font-primary font-medium">
-                                5 Stars
-                              </span>
-                              <span className="ml-1 font-primary">
-                                (Firey conditions)
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex">
-                                {[1, 2, 3, 4].map((i) => (
-                                  <StarIcon
-                                    key={i}
-                                    className={`h-5 w-5 ${
-                                      i <= Number(alert.starRating || 0)
-                                        ? "fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
-                                        : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                                <StarIcon className="h-5 w-5 text-gray-300" />
-                              </div>
-                              <span className="ml-3 font-primary">
-                                {alert.starRating}+ Stars
-                              </span>
-                            </>
+
+                  {alert.alertType !== "rating" && (
+                    <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 flex-grow">
+                      <div className="forecast-container">
+                        <p className="text-main font-medium mb-2">
+                          Alert Triggers When:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {alert.properties?.map(
+                            (
+                              prop: {
+                                property: string;
+                                optimalValue: number;
+                                range: number;
+                              },
+                              index: number
+                            ) => {
+                              const propName = prop.property.toLowerCase();
+                              const isWind = propName.includes("wind");
+                              const isSwell = propName.includes("swell");
+                              const bgColor = isWind
+                                ? "bg-blue-50"
+                                : "bg-cyan-50";
+                              const textColor = isWind
+                                ? "text-blue-800"
+                                : "text-cyan-800";
+
+                              return (
+                                <div
+                                  key={index}
+                                  className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md`}
+                                >
+                                  {propName === "windspeed" && (
+                                    <span className={textColor}>
+                                      {getWindEmoji(prop.optimalValue)}
+                                    </span>
+                                  )}
+                                  {propName === "swellheight" && (
+                                    <span className={textColor}>
+                                      {getSwellEmoji(prop.optimalValue)}
+                                    </span>
+                                  )}
+                                  {propName === "winddirection" && (
+                                    <span className={textColor}>🧭</span>
+                                  )}
+                                  {propName === "swellperiod" && (
+                                    <span className={textColor}>⏱️</span>
+                                  )}
+                                  {propName === "swelldirection" && (
+                                    <span className={textColor}>🧭</span>
+                                  )}
+                                  <div>
+                                    <span className="text-gray-600 font-primary text-xs">
+                                      {formatPropertyName(prop.property)}
+                                    </span>
+                                    <p
+                                      className={`font-medium ${textColor} font-primary text-sm`}
+                                    >
+                                      {propName.includes("direction")
+                                        ? `${degreesToCardinal(prop.optimalValue)} (${prop.optimalValue}°)`
+                                        : `${prop.optimalValue} ${getUnit(prop.property)}`}
+                                    </p>
+                                    <span className="text-xs text-gray-500">
+                                      ±{prop.range} {getUnit(prop.property)}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            }
                           )}
                         </div>
                       </div>
-                    ) : (
-                      <div>
-                        <div className="forecast-container">
-                          <p className="text-main font-medium mb-2">
-                            Reference Conditions:
-                          </p>
-                          <div className="bg-gray-50 p-3 rounded-lg space-y-3">
-                            {alert.properties?.map(
-                              (
-                                prop: { property: string; range: number },
-                                index: any
-                              ) => {
-                                const forecastValue =
-                                  alert.logEntry?.forecast?.[
-                                    getForecastProperty(prop.property)
-                                  ];
-                                const propName = prop.property.toLowerCase();
-                                const isWind = propName.includes("wind");
-                                const isSwell = propName.includes("swell");
+                    </div>
+                  )}
 
-                                return (
-                                  <div key={index} className="space-y-2">
-                                    <div className="flex flex-wrap gap-2">
-                                      <div
-                                        className={cn(
-                                          "inline-flex items-center px-2 py-1 rounded-full text-xs font-primary",
-                                          isWind
-                                            ? "bg-blue-100 text-blue-800"
-                                            : "bg-cyan-100 text-cyan-800"
-                                        )}
-                                      >
-                                        {propName === "windspeed" && (
-                                          <span className="mr-1">
-                                            {getWindEmoji(forecastValue ?? 0)}
-                                          </span>
-                                        )}
-                                        {propName === "swellheight" && (
-                                          <span className="mr-1">
-                                            {getSwellEmoji(forecastValue ?? 0)}
-                                          </span>
-                                        )}
-                                        <span className="font-medium">
-                                          {prop.property === "windSpeed"
-                                            ? "Wind Speed"
-                                            : prop.property === "windDirection"
-                                              ? "Wind Direction"
-                                              : prop.property === "swellHeight"
-                                                ? "Swell Height"
-                                                : prop.property ===
-                                                    "swellPeriod"
-                                                  ? "Swell Period"
-                                                  : prop.property ===
-                                                      "swellDirection"
-                                                    ? "Swell Direction"
-                                                    : prop.property}
-                                        </span>
-                                      </div>
-
-                                      {forecastValue !== undefined && (
-                                        <div
-                                          className={cn(
-                                            "inline-flex items-center px-2 py-1 rounded-full text-xs font-primary",
-                                            isWind
-                                              ? "bg-blue-100 text-blue-800"
-                                              : "bg-cyan-100 text-cyan-800"
-                                          )}
-                                        >
-                                          <span>
-                                            {forecastValue.toFixed(1)}
-                                            {getUnit(prop.property)}
-                                          </span>
-                                        </div>
-                                      )}
-
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <div
-                                              className={cn(
-                                                "inline-flex items-center px-2 py-1 rounded-full text-xs font-primary bg-gray-200 text-gray-700 cursor-help z-10"
-                                              )}
-                                            >
-                                              <span className="font-medium">
-                                                ±{prop.range}
-                                              </span>
-                                              <span>
-                                                {getUnit(prop.property)}
-                                              </span>
-                                            </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent
-                                            side="top"
-                                            className="z-50"
-                                          >
-                                            <p className="text-sm">
-                                              Alert range: You'll be notified
-                                              when conditions are within this
-                                              range of the reference value
-                                            </p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    </div>
-
-                                    {forecastValue !== undefined && (
-                                      <div className="text-[12px] text-gray-500 font-primary">
-                                        <span className="font-medium">
-                                          Range:
-                                        </span>{" "}
-                                        {Math.max(
-                                          0,
-                                          forecastValue - prop.range
-                                        ).toFixed(1)}{" "}
-                                        -{" "}
-                                        {(forecastValue + prop.range).toFixed(
-                                          1
-                                        )}
-                                        {getUnit(prop.property)}
-                                      </div>
-                                    )}
-
-                                    {index < alert.properties.length - 1 && (
-                                      <div className="border-b border-gray-200 my-3"></div>
-                                    )}
-                                  </div>
-                                );
-                              }
-                            )}
-                          </div>
-                        </div>
+                  {alert.alertType === "rating" && (
+                    <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 flex-grow">
+                      <p className="text-main font-medium mb-2">Alert for:</p>
+                      <div className="flex items-center mt-1 bg-gray-50 p-3 rounded-md">
+                        {alert.starRating === "5" ? (
+                          <>
+                            <div className="flex">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <StarIcon
+                                  key={i}
+                                  className="h-5 w-5 fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
+                                />
+                              ))}
+                            </div>
+                            <span className="ml-3 font-primary font-medium">
+                              5 Stars
+                            </span>
+                            <span className="ml-1 font-primary">
+                              (Firey conditions)
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex">
+                              {[1, 2, 3, 4].map((i) => (
+                                <StarIcon
+                                  key={i}
+                                  className={`h-5 w-5 ${
+                                    i <= Number(alert.starRating || 0)
+                                      ? "fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                              <StarIcon className="h-5 w-5 text-gray-300" />
+                            </div>
+                            <span className="ml-3 font-primary">
+                              {alert.starRating}+ Stars
+                            </span>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -545,4 +452,21 @@ export function AlertsList() {
       </div>
     </>
   );
+}
+
+function formatPropertyName(property: string): string {
+  switch (property) {
+    case "windSpeed":
+      return "Wind Speed";
+    case "windDirection":
+      return "Wind Direction";
+    case "swellHeight":
+      return "Swell Height";
+    case "swellPeriod":
+      return "Swell Period";
+    case "swellDirection":
+      return "Swell Direction";
+    default:
+      return property;
+  }
 }

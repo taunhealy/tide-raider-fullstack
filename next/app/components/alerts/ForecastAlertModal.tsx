@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { LogEntry } from "@/app/types/raidlogs";
 import {
   AlertConfigTypes,
+  ForecastData,
   ForecastProperty,
   NotificationMethod,
 } from "@/app/types/alerts";
@@ -46,14 +47,21 @@ import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import { Slider } from "@/app/components/ui/slider";
 import { StarRatingSelector } from "@/app/components/alerts/starRatingSelector";
 
+import { useDebounce } from "@/app/hooks/useDebounce";
+
+import * as React from "react";
+import { AlertProvider, useAlert } from "@/app/context/AlertContext";
+import { cardinalToDegreesMap } from "@/app/lib/directionUtils";
+
 interface ForecastAlertModalProps {
-  isOpen?: boolean;
+  isOpen: boolean;
   onClose: () => void;
   logEntry: LogEntry | null;
   existingAlert?: AlertConfig;
   onSaved?: () => void;
   isNew?: boolean;
   logEntries?: LogEntry[];
+  initialMode?: AlertCreationMode;
 }
 
 const forecastProperties = [
@@ -74,7 +82,7 @@ const forecastProperties = [
 
 type PropertyUpdateAction = {
   index: number;
-  key: "property" | "range";
+  key: "property" | "range" | "optimalValue";
   value: ForecastProperty | number;
 };
 
@@ -104,7 +112,15 @@ function usePropertyManager(initialProperties: AlertConfigTypes["properties"]) {
     useState<AlertConfigTypes["properties"]>(initialProperties);
 
   const updateProperty = useCallback(
-    ({ index, key, value }: PropertyUpdateAction) => {
+    ({
+      index,
+      key,
+      value,
+    }: {
+      index: number;
+      key: "property" | "range" | "optimalValue";
+      value: ForecastProperty | number;
+    }) => {
       setProperties((prev) => {
         const updated = [...prev];
         updated[index] = {
@@ -136,6 +152,7 @@ function usePropertyManager(initialProperties: AlertConfigTypes["properties"]) {
       {
         property: availableProperty,
         range: getPropertyConfig(availableProperty).step * 10,
+        optimalValue: 0,
       },
     ]);
   }, [properties]);
@@ -150,6 +167,7 @@ function usePropertyManager(initialProperties: AlertConfigTypes["properties"]) {
 }
 
 type AlertType = "variables" | "rating";
+type AlertCreationMode = "logEntry" | "beachVariables";
 
 export default function ForecastAlertModal({
   isOpen = false,
@@ -159,63 +177,85 @@ export default function ForecastAlertModal({
   onSaved,
   isNew,
   logEntries = [],
+  initialMode,
 }: ForecastAlertModalProps) {
-  const isEditing = !!existingAlert;
-  const isLinkedToLogEntry =
-    isEditing && logEntry && existingAlert?.logEntryId === logEntry.id;
-
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  const [alertType, setAlertType] = useState<"variables" | "rating">(
-    existingAlert?.alertType ||
-      (logEntry?.surferRating ? "rating" : "variables")
+  return (
+    <AlertProvider
+      existingAlert={existingAlert}
+      logEntry={logEntry}
+      onSaved={onSaved}
+      onClose={onClose}
+    >
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[600px] bg-white max-h-[90vh] overflow-y-auto">
+          <AlertModalHeader />
+          <AlertModalBody
+            logEntries={logEntries}
+            logEntry={logEntry}
+            isOpen={isOpen}
+          />
+          <AlertModalFooter />
+        </DialogContent>
+      </Dialog>
+    </AlertProvider>
   );
-  const [starRating, setStarRating] = useState<number>(
-    existingAlert?.starRating || logEntry?.surferRating || 3
-  );
+}
 
-  const [alertConfig, setAlertConfig] = useState<AlertConfigTypes>({
-    id: existingAlert?.id || uuidv4(),
-    name: existingAlert?.name || "",
-    region: existingAlert?.region || "",
-    properties: existingAlert?.properties || [
-      { property: "windSpeed", range: 2 },
-      { property: "windDirection", range: 10 },
-      { property: "swellHeight", range: 0.2 },
-      { property: "swellPeriod", range: 1 },
-      { property: "swellDirection", range: 10 },
-    ],
-    notificationMethod: existingAlert?.notificationMethod || "app",
-    contactInfo: existingAlert?.contactInfo || "",
-    active: existingAlert?.active ?? true,
-    forecastDate: existingAlert?.forecastDate
-      ? new Date(existingAlert.forecastDate)
-      : new Date(),
-    alertType:
-      existingAlert?.alertType ||
-      (logEntry?.surferRating ? "rating" : "variables"),
-    starRating: existingAlert?.starRating || logEntry?.surferRating || 3,
-    userId: session?.user?.id || "",
-    logEntryId: existingAlert?.logEntryId || logEntry?.id || null,
-    forecast: existingAlert?.forecast || null,
-    forecastId: existingAlert?.forecastId || null,
-  });
+function AlertModalHeader() {
+  const { alertConfig, selectedLogEntry, existingAlert } = useAlert();
 
-  const queryClient = useQueryClient();
-  const [isFetchingForecast, setIsFetchingForecast] = useState(false);
-  const [regions, setRegions] = useState<string[]>([]);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
-  const [isLoadingDates, setIsLoadingDates] = useState(false);
-  const [fetchedCombinations, setFetchedCombinations] = useState<Set<string>>(
-    new Set()
+  return (
+    <div className="sticky top-0 z-10 bg-white border-b pb-6">
+      <DialogHeader className="px-6 pt-6">
+        <DialogTitle className="text-2xl font-bold font-primary text-[var(--color-primary)]">
+          {existingAlert ? "Edit Alert" : "Create New Alert"}
+        </DialogTitle>
+        <DialogDescription className="font-primary text-gray-600 mt-2">
+          {existingAlert
+            ? "Modify your alert settings below"
+            : selectedLogEntry
+              ? `Creating alert for ${selectedLogEntry.beachName}`
+              : "Select a logged session to create an alert for similar conditions"}
+        </DialogDescription>
+      </DialogHeader>
+    </div>
   );
-  const [forecastData, setForecastData] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLogEntry, setSelectedLogEntry] = useState<LogEntry | null>(
-    logEntry
-  );
+}
+
+function AlertModalBody({
+  logEntries,
+  logEntry,
+  isOpen,
+}: {
+  logEntries: LogEntry[];
+  logEntry?: LogEntry | null;
+  isOpen?: boolean;
+}) {
+  const {
+    creationMode,
+    setCreationMode,
+    searchTerm,
+    setSearchTerm,
+    selectedLogEntry,
+    setSelectedLogEntry,
+    alertConfig,
+    setAlertConfig,
+    alertType,
+    setAlertType,
+    starRating,
+    setStarRating,
+    isFetchingForecast,
+    forecastData,
+    fetchForecast,
+    properties,
+    updateProperty,
+    removeProperty,
+    addProperty,
+    getPropertyUnit,
+    handleStarRatingChange,
+    handleSave,
+    beachDetails,
+  } = useAlert();
 
   const { data: userLogEntries, isLoading: isLoadingLogEntries } = useQuery({
     queryKey: ["userLogEntries"],
@@ -227,6 +267,15 @@ export default function ForecastAlertModal({
     enabled: isOpen && !logEntry,
   });
 
+  const { data: beaches, isLoading: isLoadingBeaches } = useQuery({
+    queryKey: ["beaches"],
+    queryFn: async () => {
+      const response = await fetch("/api/beaches");
+      if (!response.ok) throw new Error("Failed to fetch beaches");
+      return response.json();
+    },
+  });
+
   const filteredLogEntries = useMemo(() => {
     if (!userLogEntries) return [];
     return userLogEntries.filter(
@@ -235,472 +284,6 @@ export default function ForecastAlertModal({
         entry.region?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [userLogEntries, searchTerm]);
-
-  useEffect(() => {
-    const fetchRegions = async () => {
-      setIsLoadingRegions(true);
-      try {
-        const response = await fetch("/api/alerts?region");
-        if (response.ok) {
-          const data = await response.json();
-          setRegions(data);
-        } else {
-          toast.error("Failed to load regions");
-        }
-      } catch (error) {
-        console.error("Error fetching regions:", error);
-        toast.error("Failed to load regions");
-      } finally {
-        setIsLoadingRegions(false);
-      }
-    };
-
-    fetchRegions();
-  }, []);
-
-  useEffect(() => {
-    if (!alertConfig.region) return;
-
-    const fetchDates = async () => {
-      setIsLoadingDates(true);
-      try {
-        const response = await fetch(
-          `/api/alerts?region=${encodeURIComponent(alertConfig.region || "")}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setAvailableDates(data);
-          if (data.length === 0) {
-            toast.warning("No forecast dates available for this region");
-          }
-        } else {
-          toast.error("Failed to load dates");
-        }
-      } catch (error) {
-        console.error("Error fetching dates:", error);
-        toast.error("Failed to load dates");
-      } finally {
-        setIsLoadingDates(false);
-      }
-    };
-
-    fetchDates();
-  }, [alertConfig.region]);
-
-  const {
-    properties,
-    updateProperty,
-    removeProperty,
-    addProperty,
-    setProperties,
-  } = usePropertyManager(
-    existingAlert?.properties || [
-      { property: "windSpeed", range: 2 },
-      { property: "windDirection", range: 10 },
-      { property: "swellHeight", range: 0.2 },
-      { property: "swellPeriod", range: 1 },
-      { property: "swellDirection", range: 10 },
-    ]
-  );
-
-  const fetchAlert = useCallback(async () => {
-    if (!existingAlert?.id) return;
-
-    try {
-      console.log("Fetching alert with ID:", existingAlert.id);
-      const response = await fetch(`/api/alerts/${existingAlert.id}`);
-
-      if (!response.ok) {
-        console.error("Error response:", response.status, response.statusText);
-        throw new Error(`Failed to fetch alert: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Received alert data:", data);
-
-      if (!data) {
-        console.error("No alert data received");
-        return;
-      }
-
-      setAlertConfig({
-        ...data,
-        forecastDate: data.forecastDate
-          ? new Date(data.forecastDate)
-          : new Date(),
-      });
-
-      setAlertType(data.alertType || "variables");
-      setStarRating((data.starRating as number) || 4);
-
-      if (data.properties && Array.isArray(data.properties)) {
-        setProperties(data.properties);
-      } else {
-        console.error("Invalid properties data:", data.properties);
-      }
-
-      if (data.logEntry) {
-        setSelectedLogEntry(data.logEntry);
-      }
-
-      if (data.notificationMethod) {
-        setSelectedNotificationMethods(
-          data.notificationMethod === "email" ? ["email"] : ["app"]
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching alert:", error);
-      toast.error("Failed to load alert details");
-    }
-  }, [existingAlert?.id, setProperties]);
-
-  useEffect(() => {
-    if (existingAlert?.id && isEditing) {
-      fetchAlert();
-    } else if (logEntry && !existingAlert) {
-      setAlertConfig({
-        id: uuidv4(),
-        name: `Alert for ${logEntry.beachName}`,
-        properties: [
-          { property: "windSpeed", range: 2 },
-          { property: "windDirection", range: 10 },
-          { property: "swellHeight", range: 0.2 },
-          { property: "swellPeriod", range: 1 },
-          { property: "swellDirection", range: 10 },
-        ],
-        notificationMethod: "app",
-        contactInfo: session?.user?.email || "",
-        active: true,
-        region: logEntry.region || "",
-        forecastDate: new Date(logEntry.date),
-        logEntryId: logEntry.id,
-        alertType: "variables",
-        starRating: 4,
-        forecast: null,
-        forecastId: null,
-        userId: session?.user?.id || "",
-      });
-    }
-  }, [
-    existingAlert,
-    isEditing,
-    logEntry,
-    session?.user?.email,
-    session?.user?.id,
-    fetchAlert,
-  ]);
-
-  useEffect(() => {
-    if (session?.user?.email) {
-      setAlertConfig(
-        (prev: AlertConfig) =>
-          ({
-            ...prev,
-            contactInfo: existingAlert?.contactInfo || session.user.email || "",
-            notificationMethod: (existingAlert?.notificationMethod ||
-              "app") as NotificationMethod,
-          }) as AlertConfig
-      );
-    }
-  }, [session, existingAlert]);
-
-  useEffect(() => {
-    if (selectedLogEntry && !isEditing) {
-      setAlertConfig((prev) => ({
-        ...prev,
-        name: `Alert for ${
-          selectedLogEntry.beachName || selectedLogEntry.region
-        }`,
-        region: selectedLogEntry.region || "",
-        logEntryId: selectedLogEntry.id,
-        forecastDate: new Date(selectedLogEntry.date),
-      }));
-
-      if (selectedLogEntry.forecast) {
-        setForecastData(selectedLogEntry.forecast);
-        const dateStr = getDateString(new Date(selectedLogEntry.date));
-        const combinationKey = `${selectedLogEntry.region}-${dateStr}`;
-        setFetchedCombinations((prev) => new Set(prev).add(combinationKey));
-      } else if (selectedLogEntry.region) {
-        queryClient.invalidateQueries({
-          queryKey: ["forecastDates", selectedLogEntry.region],
-        });
-      }
-    }
-  }, [selectedLogEntry, isEditing, queryClient]);
-
-  useEffect(() => {
-    if (logEntry && !existingAlert) {
-      setAlertConfig({
-        id: uuidv4(),
-        name: `Alert for ${logEntry.beachName}`,
-        properties: [
-          { property: "windSpeed", range: 2 },
-          { property: "windDirection", range: 10 },
-          { property: "swellHeight", range: 0.2 },
-          { property: "swellPeriod", range: 1 },
-          { property: "swellDirection", range: 10 },
-        ],
-        notificationMethod: "app",
-        contactInfo: session?.user?.email || "",
-        active: true,
-        region: logEntry.region || "",
-        forecastDate: new Date(logEntry.date),
-        logEntryId: logEntry.id,
-        alertType: "variables",
-        starRating: 4,
-        forecast: null,
-        forecastId: null,
-        userId: session?.user?.id || "",
-      });
-
-      if (logEntry.forecast) {
-        const mappedForecast = {
-          windSpeed: logEntry.forecast.windSpeed || 0,
-          windDirection: logEntry.forecast.windDirection || 0,
-          swellHeight: logEntry.forecast.swellHeight || 0,
-          swellPeriod: logEntry.forecast.swellPeriod || 0,
-          swellDirection: logEntry.forecast.swellDirection || 0,
-        };
-        setForecastData(mappedForecast);
-      }
-    }
-  }, [logEntry, existingAlert, session?.user?.email]);
-
-  useEffect(() => {
-    if (existingAlert?.logEntry) {
-      setSelectedLogEntry(existingAlert.logEntry);
-      setSearchTerm(existingAlert.logEntry.beachName || "");
-    }
-  }, [existingAlert?.logEntry]);
-
-  const createAlertMutation = useMutation({
-    mutationFn: async (data: AlertConfigTypes) => {
-      const response = await fetch("/api/alerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          forecastDate: data.forecastDate,
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to create alert");
-      return response.json();
-    },
-    onSuccess: () => {
-      toast.success("Alert created successfully");
-      onSaved?.();
-      onClose();
-    },
-  });
-
-  const updateAlertMutation = useMutation({
-    mutationFn: async (alert: AlertConfig) => {
-      const toastId = toast.loading("Updating alert...");
-
-      try {
-        console.log("Updating alert with ID:", alert.id);
-        const response = await fetch(`/api/alerts/${alert.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(alert),
-        });
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({ error: `HTTP error ${response.status}` }));
-          toast.dismiss(toastId);
-          throw new Error(
-            errorData.error || `Failed to update alert (${response.status})`
-          );
-        }
-
-        const result = await response.json();
-        toast.dismiss(toastId);
-        return result;
-      } catch (error) {
-        toast.dismiss(toastId);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      toast.success("Alert Updated", {
-        description: "Your alert has been updated successfully.",
-      });
-
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-
-      onSaved?.();
-      onClose();
-    },
-    onError: (error: Error) => {
-      console.error("Update error:", error);
-      toast.error("Error", {
-        description: error.message,
-      });
-    },
-  });
-
-  const hasForecaseData = (date: Date) => {
-    if (!availableDates) return false;
-    return availableDates.some((d: string) => {
-      const forecastDate = new Date(d);
-      return forecastDate.toDateString() === date.toDateString();
-    });
-  };
-
-  const fetchLogEntry = async (logEntryId: string) => {
-    try {
-      const response = await fetch(`/api/logs/${logEntryId}`);
-      if (!response.ok) throw new Error("Failed to fetch log entry");
-
-      const logEntry = await response.json();
-      setSelectedLogEntry(logEntry);
-    } catch (error) {
-      console.error("Error fetching log entry:", error);
-      toast.error("Failed to load log entry details");
-    }
-  };
-
-  const fetchForecast = async (region: string, date: Date | string) => {
-    if (!region || !date) return null;
-
-    setIsFetchingForecast(true);
-    setForecastData(null);
-
-    let dateStr;
-    try {
-      dateStr =
-        typeof date === "string"
-          ? date
-          : date instanceof Date && !isNaN(date.getTime())
-            ? date.toISOString().split("T")[0]
-            : "";
-    } catch (error) {
-      console.error("Invalid date format:", date, error);
-      dateStr = "";
-    }
-
-    if (!dateStr) {
-      toast.error("Invalid date format");
-      setIsFetchingForecast(false);
-      return null;
-    }
-
-    const combinationKey = `${region}-${dateStr}`;
-
-    if (fetchedCombinations.has(combinationKey)) {
-      setIsFetchingForecast(false);
-      return null;
-    }
-
-    try {
-      console.log(`Fetching forecast for ${region} on ${dateStr}`);
-      const response = await fetch(
-        `/api/raid-logs/forecast?region=${encodeURIComponent(
-          region
-        )}&date=${encodeURIComponent(dateStr)}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch forecast: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("Forecast data:", data);
-
-      setFetchedCombinations(new Set(fetchedCombinations).add(combinationKey));
-      setForecastData(data);
-      return data;
-    } catch (error) {
-      console.error("Error fetching forecast:", error);
-      toast.error("Failed to load forecast data");
-      return null;
-    } finally {
-      setIsFetchingForecast(false);
-    }
-  };
-
-  useEffect(() => {
-    if (alertConfig.region && alertConfig.forecastDate) {
-      const dateStr = getDateString(alertConfig.forecastDate);
-      const combinationKey = `${alertConfig.region}-${dateStr}`;
-
-      setFetchedCombinations((prev) => {
-        if (!prev.has(combinationKey)) {
-          if (alertConfig.region && alertConfig.forecastDate) {
-            fetchForecast(alertConfig.region, alertConfig.forecastDate);
-          }
-          return new Set(prev).add(combinationKey);
-        }
-        return prev;
-      });
-    }
-  }, [alertConfig.region, alertConfig.forecastDate]);
-
-  useEffect(() => {
-    if (existingAlert?.logEntry) {
-      setSelectedLogEntry(existingAlert.logEntry);
-      setSearchTerm(existingAlert.logEntry.beachName || "");
-    }
-  }, [existingAlert?.logEntry]);
-
-  const saveAlert = async () => {
-    console.log("Saving alert with config:", alertConfig);
-    console.log("Notification method:", alertConfig.notificationMethod);
-    console.log("Contact info:", alertConfig.contactInfo);
-    console.log("Alert type:", alertType);
-
-    if (
-      !alertConfig.name ||
-      !alertConfig.region ||
-      !alertConfig.notificationMethod ||
-      !alertConfig.contactInfo
-    ) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    try {
-      const alertData: AlertConfigTypes = {
-        id: existingAlert?.id || uuidv4(),
-        name: alertConfig.name!,
-        region: alertConfig.region!,
-        properties: alertConfig.properties || [],
-        notificationMethod: alertConfig.notificationMethod!,
-        contactInfo: alertConfig.contactInfo!,
-        active: alertConfig.active ?? true,
-        logEntryId: selectedLogEntry?.id || logEntry?.id || null,
-        alertType: alertType,
-        starRating: alertType === "rating" ? starRating : null,
-        forecastDate: alertConfig.forecastDate || new Date(),
-        forecast: null,
-        forecastId: null,
-        userId: session?.user?.id || "",
-      };
-
-      if (isEditing) {
-        updateAlertMutation.mutate({
-          ...alertData,
-          forecast: existingAlert?.forecast || null,
-          forecastId: existingAlert?.forecastId || null,
-          logEntry: existingAlert?.logEntryId || null,
-        } as AlertConfig);
-      } else {
-        createAlertMutation.mutate(alertData);
-      }
-    } catch (error) {
-      console.error("Error saving alert:", error);
-      toast.error("Failed to save alert");
-    }
-  };
 
   const getDateString = (date: Date | string | undefined): string => {
     if (!date) return "";
@@ -720,405 +303,502 @@ export default function ForecastAlertModal({
     return "";
   };
 
-  const getPropertyUnit = (property: string): string => {
-    switch (property.toLowerCase()) {
-      case "windspeed":
-        return "kts";
-      case "winddirection":
-      case "swelldirection":
-        return "°";
-      case "swellheight":
-        return "m";
-      case "swellperiod":
-        return "s";
-      default:
-        return "";
+  return (
+    <div className="px-6 py-4 space-y-8">
+      <div className="space-y-4">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
+              1
+            </span>
+            Alert Name
+          </h3>
+          <Input
+            value={alertConfig.name || ""}
+            onChange={(e) =>
+              setAlertConfig({ ...alertConfig, name: e.target.value })
+            }
+            className="font-primary bg-white border-gray-200 focus:border-[var(--color-tertiary)]"
+            placeholder="Enter alert name..."
+          />
+        </div>
+
+        <div className="flex space-x-1 mb-4 bg-gray-100 p-1 rounded-md">
+          <button
+            onClick={() => setCreationMode("logEntry")}
+            className={cn(
+              "flex-1 py-1.5 px-2 text-xs font-medium rounded font-primary transition-colors",
+              creationMode === "logEntry"
+                ? "bg-white text-gray-800 shadow-sm"
+                : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            From Log Entry
+          </button>
+          <button
+            onClick={() => setCreationMode("beachVariables")}
+            className={cn(
+              "flex-1 py-1.5 px-2 text-xs font-medium rounded font-primary transition-colors",
+              creationMode === "beachVariables"
+                ? "bg-white text-gray-800 shadow-sm"
+                : "text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            Beach Variables
+          </button>
+        </div>
+
+        {creationMode === "logEntry" ? (
+          <div className="space-y-4">
+            <div className="space-y-4 mb-5">
+              <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
+                  1
+                </span>
+                Select Log Entry
+              </h3>
+
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <Search className="absolute left-3 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search your log entries..."
+                    className="pl-10 py-2 font-primary bg-white border-gray-200 focus:border-[var(--color-tertiary)] transition-colors"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {isLoadingLogEntries ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : (
+                <ScrollArea className="h-[300px] rounded-lg border border-gray-200">
+                  <div className="p-2 space-y-2">
+                    {filteredLogEntries.length > 0 ? (
+                      filteredLogEntries.map((entry: LogEntry) => (
+                        <div
+                          key={entry.id}
+                          onClick={() => setSelectedLogEntry(entry)}
+                          className={cn(
+                            "p-4 rounded-lg cursor-pointer transition-all",
+                            "hover:bg-gray-50 hover:border-[var(--color-tertiary)]/20",
+                            "border",
+                            selectedLogEntry?.id === entry.id
+                              ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
+                              : "border-gray-200"
+                          )}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-medium font-primary text-gray-900">
+                              {entry.beachName || "Unnamed Beach"}
+                            </h4>
+                            <span className="text-sm text-gray-500 font-primary">
+                              {format(new Date(entry.date), "MMM d, yyyy")}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">
+                              {entry.region}
+                            </span>
+                            {entry.surferRating && (
+                              <div className="flex items-center gap-0.5">
+                                <StarRatingSelector
+                                  value={entry.surferRating}
+                                  readOnly={true}
+                                  onChange={() => {}}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
+                        <Search className="h-8 w-8 mb-2 text-gray-400" />
+                        <p className="font-primary">
+                          {searchTerm
+                            ? "No matching log entries found"
+                            : "No log entries available"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700 font-primary">
+                Select Beach
+              </label>
+              <SearchableSelect
+                items={
+                  beaches?.map((beach: { name: string; region: string }) => ({
+                    value: beach.name,
+                    label: beach.name,
+                  })) || []
+                }
+                onSelect={async (value) => {
+                  try {
+                    // Fetch beach details first
+                    const response = await fetch(
+                      `/api/beaches/${encodeURIComponent(value)}`
+                    );
+                    if (!response.ok)
+                      throw new Error("Failed to fetch beach details");
+                    const beachDetails = await response.json();
+
+                    // Update alert config with beach details and initialize properties
+                    setAlertConfig({
+                      ...alertConfig,
+                      region: value,
+                      name: `${value} Alert`,
+                      properties: [
+                        {
+                          property: "windSpeed" as ForecastProperty,
+                          range: 2,
+                          optimalValue:
+                            beachDetails.optimalWindDirections?.[0] || 0,
+                        },
+                        {
+                          property: "windDirection" as ForecastProperty,
+                          range: 10,
+                          optimalValue:
+                            beachDetails.optimalWindDirections?.[0] || 0,
+                        },
+                        {
+                          property: "swellHeight" as ForecastProperty,
+                          range: 0.2,
+                          optimalValue: beachDetails.swellSize?.optimal || 0,
+                        },
+                        {
+                          property: "swellPeriod" as ForecastProperty,
+                          range: 1,
+                          optimalValue:
+                            ((beachDetails?.idealSwellPeriod?.min ?? 0) +
+                              (beachDetails?.idealSwellPeriod?.max ?? 0)) /
+                            2,
+                        },
+                        {
+                          property: "swellDirection" as ForecastProperty,
+                          range: 10,
+                          optimalValue:
+                            beachDetails.optimalSwellDirections?.optimal || 0,
+                        },
+                      ],
+                    });
+                  } catch (error) {
+                    console.error("Error fetching beach details:", error);
+                  }
+                }}
+                placeholder="Search beaches..."
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-8 pt-4">
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
+              2
+            </span>
+            Alert Type
+          </h3>
+          <RadioGroup
+            value={alertType}
+            onValueChange={(value: string) => {
+              setAlertType(value as AlertType);
+              setAlertConfig({
+                ...alertConfig,
+                alertType: value as AlertType,
+              });
+            }}
+            className="grid gap-3"
+          >
+            <div
+              className={cn(
+                "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
+                "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
+                alertType === "variables" &&
+                  "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
+              )}
+            >
+              <RadioGroupItem value="variables" id="variables" />
+              <Label
+                htmlFor="variables"
+                className="font-primary cursor-pointer"
+              >
+                Set Forecast Variables
+              </Label>
+            </div>
+            <div
+              className={cn(
+                "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
+                "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
+                alertType === "rating" &&
+                  "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
+              )}
+            >
+              <RadioGroupItem value="rating" id="rating" />
+              <Label htmlFor="rating" className="font-primary cursor-pointer">
+                Set Star Rating
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {alertType === "variables" && (
+          <div className="mt-4">
+            <AlertConfiguration isEmbedded={true} />
+          </div>
+        )}
+
+        {alertType === "rating" && (
+          <div className="space-y-4">
+            <h4 className="font-medium font-primary text-gray-700">
+              Minimum Star Rating
+            </h4>
+            <StarRatingSelector
+              value={starRating}
+              onChange={handleStarRatingChange}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AlertModalFooter() {
+  const {
+    alertConfig,
+    beachDetails,
+    createAlertMutation,
+    updateAlertMutation,
+    selectedLogEntry,
+    existingAlert,
+    alertType,
+    starRating,
+    creationMode,
+    properties,
+    onClose,
+  } = useAlert();
+  const router = useRouter();
+
+  const saveAlert = async () => {
+    if (
+      !alertConfig.name ||
+      !alertConfig.region ||
+      !alertConfig.notificationMethod ||
+      (alertConfig.notificationMethod !== "app" && !alertConfig.contactInfo)
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-  };
 
-  function getForecastProperty(property: string): string {
-    switch (property.toLowerCase()) {
-      case "windspeed":
-        return "windSpeed";
-      case "winddirection":
-        return "windDirection";
-      case "swellheight":
-        return "swellHeight";
-      case "swellperiod":
-        return "swellPeriod";
-      case "swelldirection":
-        return "swellDirection";
-      default:
-        return property;
+    try {
+      // Create forecast data with correct types
+      const forecast: ForecastData =
+        creationMode === "beachVariables"
+          ? {
+              // Use average of min and max for swell size
+              windSpeed: beachDetails?.swellSize?.min || 0,
+              // Convert cardinal direction to degrees if it's a string
+              windDirection:
+                typeof beachDetails?.optimalWindDirections?.[0] === "string"
+                  ? cardinalToDegreesMap[
+                      beachDetails.optimalWindDirections[0]
+                    ] || 0
+                  : beachDetails?.optimalWindDirections?.[0] || 0,
+              swellHeight:
+                ((beachDetails?.swellSize?.min ?? 0) +
+                  (beachDetails?.swellSize?.max ?? 0)) /
+                  2 || 0,
+              swellPeriod:
+                ((beachDetails?.idealSwellPeriod?.min ?? 0) +
+                  (beachDetails?.idealSwellPeriod?.max ?? 0)) /
+                2,
+              swellDirection: beachDetails?.optimalSwellDirections?.min || 0,
+              id: uuidv4(),
+              date: new Date(),
+              region: alertConfig.region || "",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }
+          : null;
+
+      // Create alert properties with correct values
+      const alertProperties = [
+        {
+          property: "windSpeed" as ForecastProperty,
+          range: 2,
+          optimalValue: beachDetails?.swellSize?.min || 0,
+        },
+        {
+          property: "windDirection" as ForecastProperty,
+          range: 10,
+          optimalValue:
+            typeof beachDetails?.optimalWindDirections?.[0] === "string"
+              ? cardinalToDegreesMap[beachDetails.optimalWindDirections[0]] || 0
+              : beachDetails?.optimalWindDirections?.[0] || 0,
+        },
+        {
+          property: "swellHeight" as ForecastProperty,
+          range: 0.2,
+          optimalValue:
+            ((beachDetails?.swellSize?.min ?? 0) +
+              (beachDetails?.swellSize?.max ?? 0)) /
+              2 || 0,
+        },
+        {
+          property: "swellPeriod" as ForecastProperty,
+          range: 1,
+          optimalValue:
+            ((beachDetails?.idealSwellPeriod?.min ?? 0) +
+              (beachDetails?.idealSwellPeriod?.max ?? 0)) /
+            2,
+        },
+        {
+          property: "swellDirection" as ForecastProperty,
+          range: 10,
+          optimalValue: beachDetails?.optimalSwellDirections?.min || 0,
+        },
+      ];
+
+      const alertData: AlertConfigTypes = {
+        ...alertConfig,
+        alertType,
+        properties: alertProperties,
+        starRating: alertType === "rating" ? starRating : null,
+        contactInfo:
+          alertConfig.notificationMethod === "app"
+            ? "app-notification"
+            : alertConfig.contactInfo,
+        forecast: creationMode === "beachVariables" ? forecast : null,
+      };
+
+      if (existingAlert) {
+        await updateAlertMutation.mutateAsync(alertData as AlertConfig);
+        toast.success("Alert updated successfully");
+      } else {
+        await createAlertMutation.mutateAsync(alertData);
+        toast.success("Alert created successfully");
+      }
+
+      onClose();
+      router.push("/dashboard/alerts");
+    } catch (error) {
+      console.error("Error saving alert:", error);
+      toast.error("Failed to save alert. Please try again.");
     }
-  }
-
-  function getForecastPropertyValue(
-    forecast: any,
-    property: ForecastProperty
-  ): number {
-    switch (property) {
-      case "waveHeight":
-        return forecast.swellHeight || 0;
-      case "wavePeriod":
-        return forecast.swellPeriod || 0;
-      default:
-        return forecast[property] || 0;
-    }
-  }
-
-  useEffect(() => {
-    setAlertConfig((prev) => ({
-      ...prev,
-      properties,
-    }));
-  }, [properties]);
-
-  useEffect(() => {
-    if (selectedLogEntry) {
-      setAlertConfig((prev) => ({
-        ...prev,
-        region: selectedLogEntry.region || prev.region,
-        logEntryId: selectedLogEntry.id,
-        alertType: selectedLogEntry.surferRating ? "rating" : prev.alertType,
-        starRating:
-          selectedLogEntry.surferRating && selectedLogEntry.surferRating >= 5
-            ? 5
-            : selectedLogEntry.surferRating &&
-                selectedLogEntry.surferRating >= 4
-              ? 4
-              : selectedLogEntry.surferRating &&
-                  selectedLogEntry.surferRating >= 3
-                ? 3
-                : prev.starRating,
-      }));
-    }
-  }, [selectedLogEntry]);
-
-  const [selectedNotificationMethods, setSelectedNotificationMethods] =
-    useState<string[]>(
-      existingAlert?.notificationMethod
-        ? existingAlert.notificationMethod === "email"
-          ? ["email"]
-          : ["app"]
-        : ["app"]
-    );
-
-  const handleStarRatingChange = (rating: number) => {
-    setStarRating(rating);
-    setAlertConfig((prev) => ({
-      ...prev,
-      starRating: rating,
-    }));
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] bg-white max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-white border-b pb-6">
-          <DialogHeader className="px-6 pt-6">
-            <DialogTitle className="text-2xl font-bold font-primary text-[var(--color-primary)]">
-              {isEditing ? "Edit Alert" : "Create New Alert"}
-            </DialogTitle>
-            <DialogDescription className="font-primary text-gray-600 mt-2">
-              {isEditing
-                ? "Modify your alert settings below"
-                : logEntry
-                  ? `Creating alert for ${logEntry.beachName}`
-                  : "Select a logged session to create an alert for similar conditions"}
-            </DialogDescription>
-          </DialogHeader>
-        </div>
+    <div className="sticky bottom-0 border-t bg-gray-50 p-6 rounded-b-lg">
+      <Button
+        onClick={saveAlert}
+        className={cn(
+          "w-full font-primary",
+          "bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/90",
+          "transition-colors text-white font-medium"
+        )}
+        disabled={
+          !alertConfig.name ||
+          (creationMode === "logEntry" && !selectedLogEntry)
+        }
+      >
+        {existingAlert ? "Save Changes" : "Create Alert"}
+      </Button>
+    </div>
+  );
+}
 
-        <div className="px-6 py-4 space-y-8">
-          <div className="space-y-6">
-            {!logEntry && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
-                    1
-                  </span>
-                  Select Log Entry
-                </h3>
+interface SearchableSelectProps {
+  items: { value: string; label: string }[];
+  onSelect: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}
 
-                <div className="relative">
-                  <div className="relative flex items-center">
-                    <Search className="absolute left-3 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search your log entries..."
-                      className="pl-10 py-2 font-primary bg-white border-gray-200 focus:border-[var(--color-tertiary)] transition-colors"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
+export function SearchableSelect({
+  items,
+  onSelect,
+  placeholder = "Search...",
+  className,
+}: SearchableSelectProps) {
+  const [search, setSearch] = React.useState("");
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [selectedValue, setSelectedValue] = React.useState("");
 
-                {isLoadingLogEntries ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[300px] rounded-lg border border-gray-200">
-                    <div className="p-2 space-y-2">
-                      {filteredLogEntries.length > 0 ? (
-                        filteredLogEntries.map((entry: LogEntry) => (
-                          <div
-                            key={entry.id}
-                            onClick={() => setSelectedLogEntry(entry)}
-                            className={cn(
-                              "p-4 rounded-lg cursor-pointer transition-all",
-                              "hover:bg-gray-50 hover:border-[var(--color-tertiary)]/20",
-                              "border",
-                              selectedLogEntry?.id === entry.id
-                                ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
-                                : "border-gray-200"
-                            )}
-                          >
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium font-primary text-gray-900">
-                                {entry.beachName || "Unnamed Beach"}
-                              </h4>
-                              <span className="text-sm text-gray-500 font-primary">
-                                {format(new Date(entry.date), "MMM d, yyyy")}
-                              </span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">
-                                {entry.region}
-                              </span>
-                              {entry.surferRating && (
-                                <div className="flex items-center gap-0.5">
-                                  <StarRatingSelector
-                                    value={entry.surferRating}
-                                    onChange={() => {
-                                      // Handle rating change
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
-                          <Search className="h-8 w-8 mb-2 text-gray-400" />
-                          <p className="font-primary">
-                            {searchTerm
-                              ? "No matching log entries found"
-                              : "No log entries available"}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                )}
-              </div>
-            )}
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) =>
+      item.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [items, search]);
 
-            {(selectedLogEntry || logEntry) && (
-              <div className="space-y-8 pt-4">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
-                      2
-                    </span>
-                    Alert Name
-                  </h3>
-                  <Input
-                    value={alertConfig.name || ""}
-                    onChange={(e) =>
-                      setAlertConfig({ ...alertConfig, name: e.target.value })
-                    }
-                    className="font-primary bg-white border-gray-200 focus:border-[var(--color-tertiary)]"
-                    placeholder={`Alert for ${selectedLogEntry?.beachName}`}
-                  />
-                </div>
+  const handleSelect = (value: string, label: string) => {
+    setSelectedValue(label);
+    setSearch(label);
+    onSelect(value);
+    setIsOpen(false);
+  };
 
-                {/* Add Reference Forecast section */}
-                {(selectedLogEntry?.forecast || logEntry?.forecast) && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
-                      Alert Reference Forecast
-                    </h3>
-                    <div className="rounded-lg border border-gray-200 p-4 space-y-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Wind Speed</p>
-                          <p className="font-medium">
-                            {(
-                              selectedLogEntry?.forecast?.windSpeed ||
-                              logEntry?.forecast?.windSpeed ||
-                              0
-                            ).toFixed(1)}{" "}
-                            kts
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Wind Direction
-                          </p>
-                          <p className="font-medium">
-                            {degreesToCardinal(
-                              selectedLogEntry?.forecast?.windDirection ||
-                                logEntry?.forecast?.windDirection ||
-                                0
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Swell Height</p>
-                          <p className="font-medium">
-                            {(
-                              selectedLogEntry?.forecast?.swellHeight ||
-                              logEntry?.forecast?.swellHeight ||
-                              0
-                            ).toFixed(1)}{" "}
-                            m
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Swell Period</p>
-                          <p className="font-medium">
-                            {(
-                              selectedLogEntry?.forecast?.swellPeriod ||
-                              logEntry?.forecast?.swellPeriod ||
-                              0
-                            ).toFixed(1)}{" "}
-                            s
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Swell Direction
-                          </p>
-                          <p className="font-medium">
-                            {degreesToCardinal(
-                              selectedLogEntry?.forecast?.swellDirection ||
-                                logEntry?.forecast?.swellDirection ||
-                                0
-                            )}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Rating</p>
-                          <div className="flex items-center gap-0.5">
-                            <StarRatingSelector
-                              value={selectedLogEntry?.surferRating || 0}
-                              onChange={() => {
-                                // Handle rating change
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold font-primary text-gray-600 flex items-center">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white text-sm mr-2">
-                      3
-                    </span>
-                    Alert Type
-                  </h3>
-                  <RadioGroup
-                    value={alertType}
-                    onValueChange={(value: string) => {
-                      setAlertType(value as AlertType);
-                      setAlertConfig((prev) => ({
-                        ...prev,
-                        alertType: value as AlertType,
-                      }));
-                    }}
-                    className="grid gap-3"
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
-                        "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
-                        alertType === "variables" &&
-                          "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
-                      )}
-                    >
-                      <RadioGroupItem value="variables" id="variables" />
-                      <Label
-                        htmlFor="variables"
-                        className="font-primary cursor-pointer"
-                      >
-                        Set Forecast Variables
-                      </Label>
-                    </div>
-                    <div
-                      className={cn(
-                        "flex items-center space-x-3 p-4 rounded-lg border border-gray-200",
-                        "transition-colors hover:border-[var(--color-tertiary)]/50 hover:bg-gray-50",
-                        alertType === "rating" &&
-                          "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5"
-                      )}
-                    >
-                      <RadioGroupItem value="rating" id="rating" />
-                      <Label
-                        htmlFor="rating"
-                        className="font-primary cursor-pointer"
-                      >
-                        Set Star Rating
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {alertType === "variables" && (
-                  <div className="mt-4">
-                    <AlertConfiguration
-                      existingConfig={alertConfig}
-                      selectedLogEntry={selectedLogEntry}
-                      onSave={(config) => {
-                        setAlertConfig((prev) => ({
-                          ...prev,
-                          ...config,
-                          properties: config.properties,
-                          notificationMethod: config.notificationMethod,
-                          active: config.active,
-                        }));
-                      }}
-                      isEmbedded={true}
-                    />
-                  </div>
-                )}
-
-                {alertType === "rating" && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium font-primary text-gray-700">
-                      Minimum Star Rating
-                    </h4>
-                    <StarRatingSelector
-                      value={starRating}
-                      onChange={handleStarRatingChange}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 border-t bg-gray-50 p-6 rounded-b-lg">
-          <Button
-            onClick={saveAlert}
-            className={cn(
-              "w-full font-primary",
-              "bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/90",
-              "transition-colors text-white font-medium"
-            )}
-            disabled={!selectedLogEntry || !alertConfig.name}
+  return (
+    <div className={cn("relative", className)}>
+      <div className="flex items-center border rounded-md bg-white">
+        <Search className="ml-3 h-4 w-4 text-gray-500" />
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          className="w-full p-2 outline-none font-primary"
+        />
+        {search && (
+          <button
+            onClick={() => {
+              setSearch("");
+              setSelectedValue("");
+            }}
+            className="mr-2 text-gray-500 hover:text-gray-700"
           >
-            {isEditing ? "Save Changes" : "Create Alert"}
-          </Button>
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[300px] overflow-auto">
+          {filteredItems.length > 0 ? (
+            filteredItems.map((item, index) => (
+              <div
+                key={`${item.label}-${index}`}
+                className="px-3 py-2 cursor-pointer hover:bg-gray-100 font-primary"
+                onClick={() => handleSelect(item.value, item.label)}
+              >
+                {item.label}
+              </div>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-gray-500 font-primary">
+              No results found.
+            </div>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
 }

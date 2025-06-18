@@ -9,11 +9,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        "brand-1": "var(--color-primary)", // Replace with your brand color
-        "brand-2": "var(--color-secondary)", // Replace with your brand color
-        "brand-3": "var(--color-tertiary)", // Replace with your brand color
+        "brand-1": "var(--color-primary)",
+        "brand-2": "var(--color-secondary)",
+        "brand-3": "var(--color-tertiary)",
       },
       fontFamily: {
         primary: ["var(--font-inter)", "Inter", "sans-serif"],

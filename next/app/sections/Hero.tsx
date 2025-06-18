@@ -733,6 +733,7 @@ export default function HeroSection({ data }: HeroProps) {
                         variant="outline"
                         size="sm"
                         className="font-primary text-sm sm:text-base bg-gradient-to-r from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/10 border-[var(--color-tertiary)] text-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/30 transition-all duration-300 uppercase tracking-wider font-semibold"
+                        suppressHydrationWarning
                       >
                         Explore
                       </Button>
@@ -747,6 +748,7 @@ export default function HeroSection({ data }: HeroProps) {
                   onClick={prevFeature}
                   className="bg-gray-800/90 backdrop-blur-sm rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-lg hover:bg-gray-700 transition-all duration-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50 group"
                   aria-label="Previous feature"
+                  suppressHydrationWarning
                 >
                   <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-[var(--color-tertiary)]" />
                 </button>
@@ -754,6 +756,7 @@ export default function HeroSection({ data }: HeroProps) {
                   onClick={nextFeature}
                   className="bg-gray-800/90 backdrop-blur-sm rounded-full p-1.5 sm:p-2 md:p-2.5 shadow-lg hover:bg-gray-700 transition-all duration-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50 group"
                   aria-label="Next feature"
+                  suppressHydrationWarning
                 >
                   <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:text-[var(--color-tertiary)]" />
                 </button>
@@ -775,6 +778,7 @@ export default function HeroSection({ data }: HeroProps) {
                       : "bg-gray-600/70 w-1.5 sm:w-2 hover:bg-gray-500"
                   }`}
                   aria-label={`Go to feature ${index + 1}`}
+                  suppressHydrationWarning
                 />
               ))}
             </div>

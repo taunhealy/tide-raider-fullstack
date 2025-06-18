@@ -113,13 +113,13 @@ export default function StickyForecastWidget() {
 
   return (
     <>
-      {/* Blurred background bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-45 bg-white/70 backdrop-blur-md" />
+      {/* Blurred background bar - hide on mobile */}
+      <div className="hidden md:block fixed bottom-0 left-0 right-0 h-45 bg-white/70 backdrop-blur-md" />
 
-      {/* Widgets container */}
+      {/* Widgets container - hide on mobile */}
       <div
         ref={widgetRef}
-        className="fixed bottom-9 left-2 right-9 z-40 flex justify-center gap-4"
+        className="hidden md:flex fixed bottom-9 left-2 right-9 z-40 justify-center gap-2"
       >
         {/* Sponsor Carousel */}
         <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200 w-32">

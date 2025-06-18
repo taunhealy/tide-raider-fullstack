@@ -19,7 +19,7 @@ const AlertSchema = z.object({
   properties: z
     .array(AlertPropertySchema)
     .min(1, "At least one property is required"),
-  notificationMethod: z.enum(["email", "whatsapp", "both"]),
+  notificationMethod: z.enum(["email", "whatsapp", "both", "app"]),
   contactInfo: z.string().min(1, "Contact information is required"),
   active: z.boolean().default(true),
   logEntryId: z.string().nullable().optional(),

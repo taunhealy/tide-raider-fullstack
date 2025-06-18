@@ -11,9 +11,11 @@ interface ActiveFilterBadgesProps {
   onFilterChange: (filters: Partial<FilterConfig>) => void;
 }
 
+// Using your existing CSS variables with hover states
 const badgeClassName =
-  "inline-flex items-center bg-cyan-100 text-cyan-800 text-sm px-3 py-1 rounded-full font-primary";
-const buttonClassName = "ml-2 text-cyan-600 hover:text-cyan-900";
+  "inline-flex items-center bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] text-sm px-3 py-1 rounded-full font-primary hover:opacity-80 transition-opacity";
+const buttonClassName =
+  "ml-2 text-[var(--color-text-secondary)] hover:opacity-70 transition-opacity";
 
 export function ActiveFilterBadges({
   filters,

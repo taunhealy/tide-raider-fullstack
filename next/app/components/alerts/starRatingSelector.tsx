@@ -5,24 +5,28 @@ import { StarIcon } from "lucide-react";
 interface StarRatingSelectorProps {
   value: number;
   onChange: (value: number) => void;
+  readOnly?: boolean;
 }
 
 export function StarRatingSelector({
   value,
   onChange,
+  readOnly = false,
 }: StarRatingSelectorProps) {
   return (
     <div className="flex items-center gap-4">
-      <div className="flex-1">
-        <Slider
-          value={[value]}
-          onValueChange={([newValue]) => onChange(newValue)}
-          min={1}
-          max={5}
-          step={1}
-          className="[&>span]:bg-[var(--color-tertiary)]"
-        />
-      </div>
+      {!readOnly && (
+        <div className="flex-1">
+          <Slider
+            value={[value]}
+            onValueChange={([newValue]) => onChange(newValue)}
+            min={1}
+            max={5}
+            step={1}
+            className="[&>span]:bg-[var(--color-tertiary)]"
+          />
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className="flex">
           {Array.from({ length: value }).map((_, i) => (

@@ -22,7 +22,9 @@ export default function AlertPage() {
     queryFn: async () => {
       if (!alertId || alertId === "new") return null;
 
-      const response = await fetch(`/api/alerts/${alertId}?include=logEntry`);
+      const response = await fetch(
+        `/api/alerts/${alertId}?include=logEntry.forecast,logEntry.beach`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch alert");
       }

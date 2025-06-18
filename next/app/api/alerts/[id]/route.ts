@@ -24,10 +24,11 @@ export async function GET(
         logEntry: {
           include: {
             forecast: true,
-            beach: true, // Include beach data
+            beach: true,
           },
         },
-        forecast: true, // Include direct forecast relation
+        forecast: true,
+        beach: true,
       },
     });
 

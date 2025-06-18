@@ -1,0 +1,173 @@
+import { PrismaClient, Prisma } from "@prisma/client";
+import { beachData } from "../app/data/beachData";
+
+const prisma = new PrismaClient();
+
+function getContinent(country: string): string {
+  // Get all unique continents from beach data
+  const continentMap: Record<string, string> = {};
+
+  // Build the map from actual beach data
+  beachData.forEach((beach) => {
+    if (beach.country && beach.region && beach.continent) {
+      continentMap[beach.country.name] = beach.continent;
+    }
+  });
+
+  const continent = continentMap[country];
+  if (!continent) {
+    console.error(
+      `No continent mapping found for country: ${country}, defaulting to Africa`
+    );
+    return "Africa"; // Default to a valid continent
+  }
+  return continent;
+}
+
+// Helper function to generate random dates within a range
+function randomDate(start: Date, end: Date) {
+  return new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime())
+  );
+}
+
+// Helper function to generate random rating (1-5)
+function randomRating() {
+  return Math.floor(Math.random() * 5) + 1;
+}
+
+// Helper function to generate random wind and swell conditions
+function generateRandomForecast() {
+  return {
+    windSpeed: Math.floor(Math.random() * 30),
+    windDirection: Math.floor(Math.random() * 360),
+    swellHeight: Number((Math.random() * 4 + 0.5).toFixed(1)),
+    swellPeriod: Math.floor(Math.random() * 16) + 4,
+    swellDirection: Math.floor(Math.random() * 360),
+  };
+}
+
+// Sample comments for more realistic data
+const sampleComments = [
+  "Dev test comment 1",
+  "Dev test comment 2",
+  "Dev test comment 3",
+  "Dev test comment 4",
+  "Dev test comment 5",
+  "Dev test comment 6",
+  "Dev test comment 7",
+  "Dev test comment 8",
+  "Dev test comment 9",
+];
+
+// Sample surfer names for more realistic data
+const sampleSurfers = [
+  "Alex Thompson",
+  "Sarah Chen",
+  "Mike O'Connor",
+  "Kai Waterman",
+  "Luna Rodriguez",
+  "Tom Kelly",
+  "Emma Wilson",
+  "James Smith",
+  "Olivia Brown",
+  "Noah Garcia",
+];
+
+async function main() {
+  console.log("Starting to seed log entries...");
+
+  // First, get all beaches from the database
+  const beaches = await prisma.beach.findMany({
+    include: {
+      region: true,
+      country: {
+        include: {
+          continent: true,
+        },
+      },
+    },
+  });
+
+  // Create multiple log entries for each beach
+  for (const beach of beaches) {
+    // Create 3-7 log entries per beach
+    const numEntries = Math.floor(Math.random() * 5) + 3;
+
+    for (let i = 0; i < numEntries; i++) {
+      const date = randomDate(
+        new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
+        new Date()
+      );
+
+      // Create forecast first
+      const forecastData = generateRandomForecast();
+      const forecast = await prisma.forecastA.upsert({
+        where: {
+          date_region: {
+            // This is the unique constraint name
+            date: date,
+            region: beach.region.name,
+          },
+        },
+        update: forecastData, // If it exists, update with new data
+        create: {
+          date: date,
+          region: beach.region.name,
+          ...forecastData,
+        },
+      });
+
+      // Create user if doesn't exist
+      const surferName =
+        sampleSurfers[Math.floor(Math.random() * sampleSurfers.length)];
+      const surferEmail = `${surferName.toLowerCase().replace(/\s+/g, ".")}@example.com`;
+
+      let user = await prisma.user.findFirst({
+        where: { email: surferEmail },
+      });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            name: surferName,
+            email: surferEmail,
+          },
+        });
+      }
+
+      // Create log entry
+      await prisma.logEntry.create({
+        data: {
+          date: date,
+          beachName: beach.name,
+          surferName: surferName,
+          surferEmail: surferEmail,
+          surferRating: randomRating(),
+          comments:
+            sampleComments[Math.floor(Math.random() * sampleComments.length)],
+          isPrivate: Math.random() > 0.8, // 20% chance of being private
+          isAnonymous: Math.random() > 0.9, // 10% chance of being anonymous
+          continent: beach.country.continent.name,
+          country: beach.country.name,
+          region: beach.region.name,
+          waveType: beach.waveType,
+          beachId: beach.id,
+          userId: user.id,
+          forecastId: forecast.id,
+        },
+      });
+    }
+  }
+
+  console.log("Seeding completed!");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -1,6 +1,8 @@
-# Portfolio Project with Next.js
+# Tide Raider full stack app with Next.js and .NET
 
-A modern, responsive portfolio website built with Next.js, featuring dynamic content management and interactive UI components.
+Next.js API (Vercel) Lightweight CRUD, auth, client-facing logic Vercel (Serverless) Fast, scalable APIs for frontend interactions.
+
+.NET Server (Azure) for heavy backend tasks (data scraping, DB ops, batch jobs) Azure App Service / Functions CPU-intensive, long-running, or scheduled tasks.
 
 ## Features
 
@@ -67,13 +69,13 @@ Retries and fault tolerance
 ## Surf Break Scoring Flow
 
 Forecast Data + Beaches
-       ↓
+↓
 calculateRegionScores (gets scores for all beaches)
-       ↓
+↓
 setBeachScores (stores in context)
-       ↓
+↓
 getSortedBeachesByScore (prepares for display)
-       ↓
+↓
 BeachCard (displays individual beach with score)
 
 ## Beach Scoring

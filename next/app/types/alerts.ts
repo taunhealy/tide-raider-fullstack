@@ -38,6 +38,7 @@ export interface Alert {
 export interface AlertProperty {
   property: ForecastProperty;
   range: number;
+  optimalValue: number;
 }
 
 export interface AlertConfig {
@@ -61,10 +62,35 @@ export interface AlertConfig {
 // Use this for creating/updating alerts
 export type AlertConfigTypes = AlertConfig;
 
-export interface ForecastData {
+export type ForecastData = {
   windSpeed: number;
   windDirection: number;
   swellHeight: number;
   swellPeriod: number;
   swellDirection: number;
+  id: string;
+  date: Date;
+  region: string;
+  createdAt: Date;
+  updatedAt: Date;
+} | null;
+
+type PropertyUpdateAction = {
+  index: number;
+  key: "property" | "range" | "optimalValue";
+  value: ForecastProperty | number;
+};
+
+// Proper type definitions
+export interface BeachDetails {
+  swellSize: { min: number; max: number };
+  optimalWindDirections: string[]; // Array of cardinal directions
+  idealSwellPeriod: { min: number; max: number };
+  optimalSwellDirections: { min: number; max: number; cardinal: string };
+}
+
+export interface AlertContextState {
+  alertConfig: AlertConfigTypes;
+  properties: AlertProperty[];
+  // ... other state
 }

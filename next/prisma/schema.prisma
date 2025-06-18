@@ -297,6 +297,7 @@ model Beach {
   bestMonthOfYear        String?
   isHiddenGem            Boolean?
   sheltered              Boolean?
+  alerts                 Alert[]
   adConnections          AdBeachConnection[]
   region                 Region                  @relation(fields: [regionId], references: [id])
   rentalItems            BeachRentalConnection[]
@@ -582,6 +583,8 @@ model AdClick {
 model Alert {
   id                 String              @id @default(uuid())
   name               String
+  beachId            String?             // New field
+  beach              Beach?              @relation(fields: [beachId], references: [id])
   region             String
   properties         Json
   notificationMethod String

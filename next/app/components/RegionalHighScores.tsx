@@ -141,7 +141,7 @@ function RegionalHighScoresContent({
         <p className="text-gray-600 text-sm font-primary">
           Error loading surf breaks. Please try again.
         </p>
-      ) : !data || data.beaches.length === 0 ? (
+      ) : data?.beaches?.length === 0 ? (
         <p className="text-gray-600 text-sm font-primary">
           No good surf breaks found for this time period in {selectedRegion}.
         </p>
