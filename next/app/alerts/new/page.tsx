@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ForecastAlertModal from "@/app/components/alerts/ForecastAlertModal";
+import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useSession } from "next-auth/react";
 import { LogEntry } from "@/app/types/raidlogs";

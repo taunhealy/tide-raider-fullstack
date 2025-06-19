@@ -5,6 +5,10 @@ import {
   AlertProperty,
   ForecastProperty,
 } from "@/app/types/alerts";
+import { AlertProperty as PrismaAlertProperty } from "@prisma/client";
+
+// Use the Prisma type without id and alertId for creation
+type CreateAlertProperty = Omit<PrismaAlertProperty, "id" | "alertId">;
 
 type PropertyUpdateAction = {
   index: number;
@@ -42,9 +46,9 @@ const getPropertyConfig = (propertyId: string) => {
   );
 };
 
-export function usePropertyManager(initialProperties: AlertProperty[]) {
+export function usePropertyManager(initialProperties: CreateAlertProperty[]) {
   const [properties, setProperties] =
-    useState<AlertProperty[]>(initialProperties);
+    useState<CreateAlertProperty[]>(initialProperties);
 
   const updateProperty = useCallback(
     ({ index, key, value }: PropertyUpdateAction) => {

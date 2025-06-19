@@ -3,18 +3,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 import { prisma } from "@/app/lib/prisma";
 import { z } from "zod";
+import { AlertType, Prisma } from "@prisma/client";
 
-// Schema for alert properties validation
+// Improve validation schema
 const AlertPropertySchema = z.object({
-  property: z.string(),
+  property: z.enum([
+    "windSpeed",
+    "windDirection",
+    "swellHeight",
+    "swellPeriod",
+    "swellDirection",
+    "waveHeight",
+    "wavePeriod",
+    "temperature",
+  ]),
+  optimalValue: z.number(),
   range: z.number().min(1).max(100),
+  sourceType: z.enum(["beach_optimal", "log_entry", "custom"]).optional(),
+  sourceId: z.string().optional(),
 });
 
-// Schema for alert validation
 const AlertSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, "Name is required"),
-  region: z.string().min(1, "Region is required"),
+  regionId: z.string().min(1, "Region is required"),
   forecastDate: z.union([z.string(), z.date()]).optional(),
   properties: z
     .array(AlertPropertySchema)
@@ -23,9 +35,13 @@ const AlertSchema = z.object({
   contactInfo: z.string().min(1, "Contact information is required"),
   active: z.boolean().default(true),
   logEntryId: z.string().nullable().optional(),
-  alertType: z.enum(["variables", "rating"]).default("variables"),
+  beachId: z.string().nullable().optional(),
+  alertType: z.nativeEnum(AlertType).default(AlertType.VARIABLES),
   starRating: z.number().min(1).max(5).nullable().optional(),
 });
+
+// Type the create operation
+type AlertCreateInput = Prisma.AlertCreateInput;
 
 // Add this near the top with other constants
 const AVAILABLE_STAR_RATINGS = ["3+", "4+", "5"] as const;
@@ -34,7 +50,6 @@ const AVAILABLE_STAR_RATINGS = ["3+", "4+", "5"] as const;
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
-  // Add this check at the beginning of the function
   if (searchParams.has("starRatings")) {
     return NextResponse.json(AVAILABLE_STAR_RATINGS);
   }
@@ -125,7 +140,6 @@ export async function GET(req: NextRequest) {
 
     // Case 3: Fetching user's alerts - requires authentication
     if (!isAuthenticated) {
-      // In beta mode, return empty array instead of 401
       if (isBetaMode) {
         return NextResponse.json([]);
       }
@@ -137,16 +151,18 @@ export async function GET(req: NextRequest) {
         userId: session.user.id,
       },
       include: {
+        properties: true,
+        region: true,
         logEntry: {
-          select: {
-            beachName: true,
-            date: true,
+          include: {
             forecast: true,
+            beach: true,
           },
         },
+        beach: true,
       },
       orderBy: {
-        createdAt: "desc",
+        forecastDate: "desc",
       },
     });
 
@@ -168,30 +184,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await req.json();
-    console.log("Received alert data:", data); // Debug
+    const data = AlertSchema.parse(await req.json());
 
-    // Clean date handling - ensure we only use YYYY-MM-DD
-    const cleanDate = new Date(data.date || data.forecastDate);
-    const dateOnly = cleanDate.toISOString().split("T")[0];
+    const createInput: AlertCreateInput = {
+      name: data.name,
+      region: {
+        connect: { id: data.regionId },
+      },
+      notificationMethod: data.notificationMethod,
+      contactInfo: data.contactInfo,
+      active: data.active,
+      user: {
+        connect: { id: session.user.id },
+      },
+      forecastDate: new Date(data.forecastDate || Date.now()),
+      alertType: data.alertType,
+      starRating: data.starRating,
+      properties: {
+        create: data.properties.map((prop) => ({
+          property: prop.property,
+          optimalValue: prop.optimalValue,
+          range: prop.range,
+          sourceType: prop.sourceType,
+          sourceId: prop.sourceId,
+        })),
+      },
+      ...(data.logEntryId && {
+        logEntry: { connect: { id: data.logEntryId } },
+      }),
+      ...(data.beachId && {
+        beach: { connect: { id: data.beachId } },
+      }),
+    };
 
     const alert = await prisma.alert.create({
-      data: {
-        name: data.name,
-        region: data.region,
-        properties: data.properties,
-        notificationMethod: data.notificationMethod,
-        contactInfo: data.contactInfo,
-        active: data.active ?? true,
-        userId: session.user.id,
-        logEntryId: data.logEntryId,
-        forecastDate: new Date(dateOnly), // Use clean date
-        alertType: data.alertType || "variables",
-        starRating: data.starRating || null,
-      },
+      data: createInput,
       include: {
-        forecast: true,
-        logEntry: true,
+        properties: true,
+        region: true,
+        logEntry: {
+          include: {
+            forecast: true,
+            beach: true,
+          },
+        },
+        beach: true,
       },
     });
 

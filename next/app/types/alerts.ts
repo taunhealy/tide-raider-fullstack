@@ -1,50 +1,52 @@
-import { LogEntry } from "@/app/types/raidlogs";
-import type { ForecastA } from "@prisma/client";
+import { ForecastA, LogEntry, Alert, AlertProperty, Region, Prisma, AlertType } from "@prisma/client";
+
+// Only keep custom types not in Prisma
+export type NotificationMethod = "email" | "whatsapp" | "app" | "both";
 
 export type ForecastProperty =
   | "windSpeed"
   | "windDirection"
   | "swellHeight"
   | "swellPeriod"
-  | "swellDirection"
-  | "waveHeight"
-  | "wavePeriod"
-  | "temperature";
+  | "swellDirection";
+
+// Beach details from API
+export interface BeachDetails {
+  swellSize: { min: number; max: number };
+  optimalWindDirections: string[];
+  idealSwellPeriod: { min: number; max: number };
+  optimalSwellDirections: { min: number; max: number; cardinal: string };
+}
+
+// Export Prisma types directly
+export type { Alert, AlertType, AlertProperty } from "@prisma/client";
+
+// Use Prisma's types for operations
+export type AlertCreate = Prisma.AlertCreateInput;
+export type AlertUpdate = Prisma.AlertUpdateInput;
 
 export type AlertStarRating = "3+" | "4+" | "5";
 
-export type NotificationMethod = "email" | "whatsapp" | "app";
+// Create input types for creation/updates (without auto-generated fields)
+export type CreateAlertInput = Omit<Alert, "id"> & {
+  properties: Omit<AlertProperty, "id" | "alertId">[];
+};
 
-export interface Alert {
-  id: string;
-  name: string;
-  region: string;
-  forecastDate: Date;
-  properties: any;
-  notificationMethod: string;
-  contactInfo: string;
-  active: boolean;
-  userId: string;
-  logEntryId?: string | null;
-  alertType: string;
-  starRating?: string | null;
-  forecastId?: string | null;
+// For creating new properties, use:
+type AlertPropertyCreateInput = Prisma.AlertPropertyCreateInput;
+
+// Extended Alert type with populated relations (for display purposes)
+export interface AlertWithRelations extends Alert {
+  region?: Region;
+  properties: AlertProperty[];
   logEntry?: LogEntry | null;
   forecast?: ForecastA | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AlertProperty {
-  property: ForecastProperty;
-  range: number;
-  optimalValue: number;
 }
 
 export interface AlertConfig {
   id: string;
   name: string;
-  region: string | null;
+  regionId: string;
   forecastDate: Date;
   properties: AlertProperty[];
   notificationMethod: NotificationMethod;
@@ -52,7 +54,7 @@ export interface AlertConfig {
   active: boolean;
   logEntry?: LogEntry | null;
   logEntryId: string | null;
-  alertType: "variables" | "rating";
+  alertType: AlertType;
   starRating: number | null;
   forecast: ForecastA | null;
   forecastId: string | null;
@@ -81,16 +83,7 @@ type PropertyUpdateAction = {
   value: ForecastProperty | number;
 };
 
-// Proper type definitions
-export interface BeachDetails {
-  swellSize: { min: number; max: number };
-  optimalWindDirections: string[]; // Array of cardinal directions
-  idealSwellPeriod: { min: number; max: number };
-  optimalSwellDirections: { min: number; max: number; cardinal: string };
-}
-
 export interface AlertContextState {
   alertConfig: AlertConfigTypes;
   properties: AlertProperty[];
-  // ... other state
 }

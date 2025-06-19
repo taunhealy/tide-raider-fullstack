@@ -6,11 +6,12 @@ export async function GET(
   { params }: { params: { name: string } }
 ) {
   try {
-    const beachName = params.name;
+    const { name } = await params;
+    const beachName = decodeURIComponent(name);
 
     const beach = await prisma.beach.findFirst({
       where: {
-        name: decodeURIComponent(beachName),
+        name: beachName,
       },
       select: {
         id: true,

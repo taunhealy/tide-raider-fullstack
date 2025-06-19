@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import ForecastAlertModal from "@/app/components/alerts/ForecastAlertModal";
+import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { AlertConfig } from "@/app/types/alerts";
 import { useQuery } from "@tanstack/react-query";

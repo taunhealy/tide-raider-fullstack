@@ -551,12 +551,13 @@ model Region {
   name       String
   countryId  String
   continent  String?
-  country    Country       @relation(fields: [countryId], references: [id])
+  country    Country     @relation(fields: [countryId], references: [id])
   ads        Ad[]
   adRequests AdRequest[]
   beaches    Beach[]
   events     Event[]
   stories    Story[]
+  alerts     Alert[]
 }
 
 model Comment {
@@ -583,26 +584,31 @@ model AdClick {
 model Alert {
   id                 String              @id @default(uuid())
   name               String
-  beachId            String?             // New field
+  beachId            String?             
   beach              Beach?              @relation(fields: [beachId], references: [id])
-  region             String
-  properties         Json
+  regionId           String
+  region             Region              @relation(fields: [regionId], references: [id])
   notificationMethod String
   contactInfo        String
   active             Boolean             @default(true)
   userId             String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
   logEntryId         String?
-  alertType          String              @default("variables")
+  alertType          AlertType           @default(VARIABLES)
   starRating         Int?
   forecastDate       DateTime            @db.Date
   forecastId         String?
   forecast           ForecastA?          @relation(fields: [forecastId], references: [id])
   logEntry           LogEntry?           @relation(fields: [logEntryId], references: [id])
   user               User                @relation(fields: [userId], references: [id])
-  checks             AlertCheck[]
-  notifications      AlertNotification[]
+  properties         AlertProperty[]
+  checks             AlertCheck[]        @relation("AlertChecks")
+  notifications      AlertNotification[] @relation("AlertNotifications")
+
+  @@index([forecastId])
+  @@index([logEntryId])
+  @@index([userId])
+  @@index([beachId])
+  @@index([regionId])
 }
 
 model AlertCheck {
@@ -611,7 +617,7 @@ model AlertCheck {
   checkedAt DateTime @default(now())
   success   Boolean
   details   String?
-  alert     Alert    @relation(fields: [alertId], references: [id])
+  alert     Alert    @relation("AlertChecks", fields: [alertId], references: [id], onDelete: Cascade)
 
   @@index([alertId])
   @@index([checkedAt])
@@ -627,7 +633,7 @@ model AlertNotification {
   beachId       String?
   beachName     String?
   region        String?
-  alert         Alert          @relation(fields: [alertId], references: [id])
+  alert         Alert    @relation("AlertNotifications", fields: [alertId], references: [id], onDelete: Cascade)
   notifications Notification[]
 
   @@index([alertId])
@@ -745,4 +751,20 @@ enum RequestStatus {
   REJECTED
   CANCELLED
   COMPLETED
+}
+
+model AlertProperty {
+  id           String   @id @default(uuid())
+  alertId      String
+  property     String   // e.g. "windSpeed", "swellHeight"
+  optimalValue Float
+  range        Float
+  alert        Alert    @relation(fields: [alertId], references: [id])
+
+  @@index([alertId])
+}
+
+enum AlertType {
+  VARIABLES
+  RATING
 }
