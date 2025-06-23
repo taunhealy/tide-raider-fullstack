@@ -83,11 +83,16 @@ export function ActiveFilterBadges({
   return (
     <div className="flex flex-wrap gap-2 mb-4 px-1">
       {filters.beaches?.map((beach) => (
-        <div key={beach} className={badgeClassName}>
+        <div
+          key={typeof beach === "string" ? beach : beach.id}
+          className={badgeClassName}
+        >
           <span className="mr-1">Beach:</span>
-          {beach}
+          {typeof beach === "string" ? beach : beach.name}
           <button
-            onClick={() => removeBeachFilter(beach)}
+            onClick={() =>
+              removeBeachFilter(typeof beach === "string" ? beach : beach.id)
+            }
             className={buttonClassName}
           >
             <X className="h-3 w-3" />

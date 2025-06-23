@@ -49,7 +49,7 @@ export default function HeroProduct({ data }: { data?: any }) {
   }, [beaches, selectedBeachId]);
 
   // Get all unique regions from featured beaches
-  const regions = [...new Set(beaches.map((b) => b.region.name))];
+  const regions = [...new Set(beaches.map((b) => b.region?.name))];
   const initialRegion = regions[0];
 
   // Add a new state for tracking scraping process
@@ -103,7 +103,7 @@ export default function HeroProduct({ data }: { data?: any }) {
 
   // Use React Query's useQueries to fetch multiple regions efficiently
   const regionQueries = useQueries({
-    queries: [...new Set([initialRegion, currentBeach?.region.name])]
+    queries: [...new Set([initialRegion, currentBeach?.region?.name])]
       .filter(Boolean)
       .map((region) => ({
         queryKey: ["surf-conditions", region],
@@ -119,7 +119,7 @@ export default function HeroProduct({ data }: { data?: any }) {
     const regionDataMap = regionQueries.reduce(
       (acc, query, index) => {
         const region = [
-          ...new Set([initialRegion, currentBeach?.region.name]),
+          ...new Set([initialRegion, currentBeach?.region?.name]),
         ].filter(Boolean)[index];
         if (region) {
           acc[region as string] = query.data;
@@ -132,12 +132,12 @@ export default function HeroProduct({ data }: { data?: any }) {
     // Map beach IDs to their region data
     return beaches.reduce(
       (acc, beach) => {
-        acc[beach.id] = regionDataMap[beach.region.name] || null;
+        acc[beach.id] = regionDataMap[beach.region?.name ?? ""] || null;
         return acc;
       },
       {} as Record<string, BaseForecastData | null>
     );
-  }, [beaches, regionQueries, initialRegion, currentBeach?.region.name]);
+  }, [beaches, regionQueries, initialRegion, currentBeach?.region?.name]);
 
   // Update loading state
   const isLoading = regionQueries.some((query) => query.isLoading);
@@ -570,7 +570,7 @@ export default function HeroProduct({ data }: { data?: any }) {
                                   {beach.name}
                                 </h3>
                                 <p className="font-primary text-xs text-gray-600">
-                                  {beach.country}
+                                  {beach.country?.name}
                                 </p>
                               </div>
 
@@ -599,7 +599,7 @@ export default function HeroProduct({ data }: { data?: any }) {
                                     {beach.name}
                                   </h3>
                                   <p className="font-primary text-xs md:text-[10px] text-[var(--color-text-secondary)]">
-                                    {beach.country}
+                                    {beach.country?.name}
                                   </p>
                                 </div>
                               </div>

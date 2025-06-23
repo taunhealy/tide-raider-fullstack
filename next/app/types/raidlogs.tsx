@@ -1,4 +1,4 @@
-import { ForecastA } from "@prisma/client";
+import { Beach, ForecastA } from "@prisma/client";
 import React from "react";
 
 export interface LogEntry {
@@ -43,6 +43,14 @@ export interface LogEntry {
   };
 }
 
+export interface RaidLogFilters {
+  beaches: Array<{ id: string }>;
+  regions: string[];
+  countries: string[];
+  minRating?: number;
+  isPrivate?: boolean;
+}
+
 export interface CreateLogEntryInput {
   beachName: string;
   userId: string;
@@ -67,20 +75,12 @@ export interface SortConfig {
 }
 
 export interface FilterConfig {
-  beachId?: string;
-  regionId?: string;
-  isPrivate: boolean;
-  beachName?: string;
-  regions?: string[];
-  countries?: string[];
-  beachIds?: string[];
-  waveTypes?: string[];
-  surferName?: string;
-  minRating?: number | null;
+  beaches: string[];
+  regions: string[];
+  countries: string[];
+  minRating: number | null;
   dateRange?: { start: string; end: string };
-  entries?: LogEntry[];
-  surfers?: string[];
-  region?: string;
+  isPrivate: boolean;
 }
 
 export interface QuestLogTableColumn {
@@ -111,4 +111,9 @@ export interface SurfCondition {
   };
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface RaidLogResponse {
+  entries: LogEntry[];
+  total: number;
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { urlForImage } from "@/app/lib/urlForImage";
 import Image from "next/image";
 import { SanityImage } from "../types";

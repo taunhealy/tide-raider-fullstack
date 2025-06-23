@@ -169,3 +169,18 @@ export interface AdSlot {
 export const beachData: Beach[] = [
   // Import beach data from beachData.txt and paste it here
 ];
+
+export interface BeachUI {
+  id: string;
+  name: string;
+  waveType: string;
+  difficulty: string;
+  region: {
+    id: string;
+    name: string;
+  } | null;
+  country: {
+    id: string;
+    name: string;
+  } | null;
+}

@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import { SubscriptionProvider } from "./SubscriptionProvider";
 import { BeachProvider } from "@/app/context/BeachContext";
 import { beachData } from "@/app/types/beaches";
+import { FilterProvider } from "../context/FilterContext";
 
 const queryClient = new QueryClient();
 
@@ -20,11 +21,13 @@ export default function AppProviders({
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <SubscriptionProvider>
-          <BeachProvider initialBeaches={beachData}>
-            {children}
-            <Toaster position="top-right" />
-            <ReactQueryDevtools initialIsOpen={false} />
-          </BeachProvider>
+          <FilterProvider>
+            <BeachProvider initialBeaches={beachData}>
+              {children}
+              <Toaster position="top-right" />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </BeachProvider>
+          </FilterProvider>
         </SubscriptionProvider>
       </SessionProvider>
     </QueryClientProvider>
