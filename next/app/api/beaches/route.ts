@@ -14,11 +14,13 @@ export async function GET(request: Request) {
   try {
     // Get the latest forecast data first
     const forecastData = await prisma.forecastA.findFirst({
-      where: {
-        region: regionId || undefined,
-      },
+      where: regionId
+        ? {
+            regionId: regionId,
+          }
+        : undefined,
       orderBy: {
-        createdAt: "desc",
+        date: "desc",
       },
     });
 
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
       // Get the stored scores
       const beachScores = await prisma.beachDailyScore.findMany({
         where: {
-          region: regionId || "Global",
+          regionId: regionId || "Global",
           date: new Date(),
         },
       });

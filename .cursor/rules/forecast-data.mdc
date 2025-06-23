@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Maintain proper referential integrity
+Allow for easier joins and queries
+Prevent orphaned forecast data
+Follow database best practices

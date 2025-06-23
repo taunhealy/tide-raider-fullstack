@@ -109,19 +109,19 @@ export async function GET(req: NextRequest) {
     if (searchParams.has("region") && !region) {
       const forecasts = await prisma.forecastA.findMany({
         select: {
-          region: true,
+          regionId: true,
         },
-        distinct: ["region"],
+        distinct: ["regionId"],
       });
 
-      const regions = forecasts.map((forecast) => forecast.region);
+      const regions = forecasts.map((forecast) => forecast.regionId);
       return NextResponse.json(regions);
     }
 
     if (region) {
       const forecasts = await prisma.forecastA.findMany({
         where: {
-          region: region,
+          regionId: region,
         },
         select: {
           date: true,

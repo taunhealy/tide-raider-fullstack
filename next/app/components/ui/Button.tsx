@@ -15,6 +15,7 @@ export interface ButtonProps
   size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
   isActive?: boolean;
+  asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

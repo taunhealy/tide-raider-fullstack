@@ -2,8 +2,6 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "./auth-adapter";
 import { prisma } from "@/app/lib/prisma";
-import type { Session, User } from "next-auth";
-import { JWT } from "next-auth/jwt";
 
 declare module "next-auth/jwt" {
   interface JWT {

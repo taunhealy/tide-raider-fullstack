@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";
+import { Metadata } from "next";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -25,11 +26,19 @@ const montserrat = Montserrat({
   fallback: ["Arial", "sans-serif"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title:
     "Tide Raider - Daily Surf Forecast, Surf Report & Surf Spot Suggestions",
   description:
     "Read the surf report and find the best surf spots in Africa, based on current surf conditions",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png" }],
+  },
 };
 
 export default function RootLayout({
@@ -69,19 +78,7 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
+
         <link
           rel="apple-touch-icon"
           sizes="180x180"

@@ -1,17 +1,23 @@
-import { ForecastA } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
-export function useForecast(region: string, date: Date) {
+export function useForecast(regionId: string, date: Date) {
   return useQuery({
-    queryKey: ["forecast", region, date],
+    queryKey: ["forecast", regionId, date],
     queryFn: async () => {
       const response = await fetch(
-        `/api/raid-logs/forecast?region=${encodeURIComponent(region)}&date=${date.toISOString()}`
+        `/api/surf-conditions?` +
+          new URLSearchParams({
+            date: date.toISOString().split("T")[0],
+            regionId: regionId,
+          })
       );
-      if (!response.ok) throw new Error("Failed to fetch forecast");
-      const data: ForecastA = await response.json();
-      return data;
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch forecast");
+      }
+
+      return response.json();
     },
-    enabled: !!region && !!date,
+    enabled: !!regionId && !!date,
   });
 }

@@ -35,7 +35,7 @@ const logEntrySchema = z.object({
   }),
   continent: z.string(),
   country: z.string(),
-  region: z.string(),
+  regionId: z.string(),
   waveType: z.string(),
   isAnonymous: z.boolean().optional(),
   userId: z.string().optional(),
@@ -65,18 +65,17 @@ interface Forecast {
   };
 }
 
-// Add this helper function at the top
-async function getForecast(date: Date, region: string) {
+// Update getForecast function to use regionId
+async function getForecast(date: Date, regionId: string) {
   return prisma.forecastA.findFirst({
     where: {
       date: {
         gte: new Date(date.setUTCHours(0, 0, 0, 0)),
         lt: new Date(date.setUTCDate(date.getUTCDate() + 1)),
       },
-      region: region,
+      regionId: regionId, // Use regionId instead of region
     },
     select: {
-      // Remove the 'forecast' field from selection
       windSpeed: true,
       windDirection: true,
       swellHeight: true,
@@ -84,7 +83,7 @@ async function getForecast(date: Date, region: string) {
       swellDirection: true,
     },
     orderBy: {
-      updatedAt: "desc",
+      date: "desc",
     },
   });
 }
@@ -151,7 +150,7 @@ export async function GET(req: NextRequest) {
 
     // Add other filters
     if (beaches.length > 0) whereClause.beachName = { in: beaches };
-    if (regions.length > 0) whereClause.region = { in: regions };
+    if (regions.length > 0) whereClause.regionId = { in: regions };
     if (countries.length > 0) whereClause.country = { in: countries };
     if (minRating > 0) whereClause.surferRating = { gte: minRating };
     if (maxRating < 5)
@@ -188,19 +187,25 @@ export async function GET(req: NextRequest) {
         date: true,
         surferName: true,
         surferEmail: true,
-        beachName: true,
         surferRating: true,
         comments: true,
         isPrivate: true,
         isAnonymous: true,
-        continent: true,
-        country: true,
-        region: true,
         waveType: true,
         imageUrl: true,
         videoUrl: true,
         videoPlatform: true,
         userId: true,
+        // Include full region relation
+        region: {
+          select: {
+            id: true,
+            name: true,
+            continent: true,
+            country: true,
+          },
+        },
+        beach: true,
         forecast: true,
         user: {
           select: {
@@ -249,28 +254,20 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await req.json();
-
-    // Extract forecast data from the request
     const forecastData = data.forecast || data.forecastData;
 
-    if (!forecastData) {
-      return NextResponse.json(
-        { error: "Missing forecast data" },
-        { status: 400 }
-      );
-    }
-
-    // Just use the date string directly, Prisma will handle it as a date-only field
+    // Update forecast upsert to use regionId
     const forecast = await prisma.forecastA.upsert({
       where: {
-        date_region: {
-          date: new Date(data.date), // Prisma will ignore time with @db.Date
-          region: data.region,
+        date_regionId: {
+          // Updated unique constraint name
+          date: new Date(data.date),
+          regionId: data.regionId, // Use regionId
         },
       },
       create: {
-        date: new Date(data.date), // Prisma will ignore time with @db.Date
-        region: data.region,
+        date: new Date(data.date),
+        regionId: data.regionId, // Use regionId
         windSpeed: forecastData.windSpeed,
         windDirection: forecastData.windDirection,
         swellHeight: forecastData.swellHeight,
@@ -280,17 +277,20 @@ export async function POST(req: NextRequest) {
       update: {},
     });
 
+    // Update logEntry creation
     const logEntry = await prisma.logEntry.create({
       data: {
-        beachName: data.beachName,
         date: new Date(data.date),
         surferEmail: session.user.email,
         surferName: data.surferName,
         surferRating: data.surferRating,
         comments: data.comments,
-        continent: data.continent,
-        country: data.country,
-        region: data.region,
+        beach: {
+          connect: { id: data.beachId },
+        },
+        region: {
+          connect: { id: data.regionId },
+        },
         waveType: data.waveType,
         isAnonymous: data.isAnonymous,
         isPrivate: data.isPrivate,
@@ -304,24 +304,26 @@ export async function POST(req: NextRequest) {
       },
       include: {
         forecast: true,
+        region: true,
+        beach: true,
       },
     });
 
-    // If createAlert is true, create an alert
+    // Update alert creation
     if (data.createAlert && data.alertConfig) {
-      const alertConfig = data.alertConfig;
-
       await prisma.alert.create({
         data: {
-          name: alertConfig.name,
-          region: alertConfig.region || data.region,
-          forecastDate: new Date(data.date),
-          properties: alertConfig.properties,
-          notificationMethod: alertConfig.notificationMethod,
-          contactInfo: alertConfig.contactInfo,
-          active: alertConfig.active,
-          alertType: alertConfig.alertType || "variables",
-          starRating: alertConfig.starRating,
+          name: data.alertConfig.name,
+          region: {
+            connect: { id: data.regionId || data.alertConfig.regionId },
+          },
+          forecastDate: forecast.date,
+          properties: data.alertConfig.properties,
+          notificationMethod: data.alertConfig.notificationMethod,
+          contactInfo: data.alertConfig.contactInfo,
+          active: data.alertConfig.active,
+          alertType: data.alertConfig.alertType || "variables",
+          starRating: data.alertConfig.starRating,
           user: {
             connect: { id: session.user.id },
           },

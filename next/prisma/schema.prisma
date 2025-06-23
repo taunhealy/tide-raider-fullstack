@@ -171,7 +171,8 @@ model LogEntry {
   isAnonymous  Boolean    @default(false)
   continent    String?
   country      String?
-  region       String?
+  regionId     String
+  region       Region     @relation(fields: [regionId], references: [id])
   waveType     String?
   beachId      String?
   userId       String?    @map("user_id")
@@ -181,6 +182,7 @@ model LogEntry {
   forecast     ForecastA? @relation(fields: [forecastId], references: [id])
   user         User?      @relation(fields: [userId], references: [id])
 
+  @@index([regionId])
   @@index([isPrivate])
   @@index([userId])
   @@index([date])
@@ -250,21 +252,17 @@ model BeachSafariConnection {
 model BeachDailyScore {
   id         String   @id @default(cuid())
   beachId    String
-  region     String
-  score      Int      // Stored as integer (0-5 scale)
-  conditions Json     // Store the conditions that led to this score
+  regionId   String
+  region     Region   @relation(fields: [regionId], references: [id])
+  score      Int    
+  conditions Json     
   date       DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  // Relationships
   beach      Beach    @relation(fields: [beachId], references: [id])
 
-  // Indexes for efficient querying
-  @@unique([beachId, date])  // One score per beach per day
-  @@index([date, region])    // For querying scores by date and region
-  @@index([beachId, date])   // For querying scores for a specific beach
-  @@index([score])          // For sorting by score
+  @@index([regionId])
+  @@unique([beachId, date])
 }
 
 model Beach {
@@ -370,9 +368,8 @@ model Board {
 model ForecastA {
   id             String     @id @default(uuid())
   date           DateTime   @db.Date
-  region         String
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  regionId       String
+  region         Region     @relation(fields: [regionId], references: [id])
   windSpeed      Int        @default(0)
   windDirection  Float      @default(0)
   swellHeight    Float      @default(0)
@@ -381,7 +378,8 @@ model ForecastA {
   alerts         Alert[]
   logEntries     LogEntry[]
 
-  @@unique([date, region])
+  @@unique([date, regionId])
+  @@index([regionId])
 }
 
 model ForecastB {
@@ -552,12 +550,15 @@ model Region {
   countryId  String
   continent  String?
   country    Country     @relation(fields: [countryId], references: [id])
+  forecasts  ForecastA[]
   ads        Ad[]
   adRequests AdRequest[]
   beaches    Beach[]
   events     Event[]
   stories    Story[]
   alerts     Alert[]
+  beachDailyScores BeachDailyScore[]
+  logEntries LogEntry[]
 }
 
 model Comment {

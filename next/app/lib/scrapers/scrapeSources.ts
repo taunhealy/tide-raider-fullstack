@@ -1,245 +1,244 @@
-import { WindData } from "@/app/types/wind";
+import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
-import { ValidRegion } from "@/app/lib/regions";
 
 interface RegionSourceConfig {
-  region: string;
+  regionId: string;
   sourceA: {
     url: string;
-    scraper: (url: string, region: ValidRegion) => Promise<WindData>;
+    scraper: (url: string, regionId: string) => Promise<BaseForecastData>;
   };
 }
 
-export const REGION_CONFIGS: RegionSourceConfig[] = [
-  {
-    region: "Western Cape",
+export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
+  "western-cape": {
+    regionId: "western-cape",
     sourceA: {
       url: "https://www.windfinder.com/forecast/muizenberg_beach",
       scraper: scraperA,
     },
   },
-  {
-    region: "Eastern Cape",
+  "eastern-cape": {
+    regionId: "eastern-cape",
     sourceA: {
       url: "https://www.windfinder.com/forecast/jeffreys_bay",
       scraper: scraperA,
     },
   },
-  {
-    region: "KwaZulu-Natal",
+  "kwaZulu-Natal": {
+    regionId: "kwaZulu-Natal",
     sourceA: {
       url: "https://www.windfinder.com/forecast/durban_bluff",
       scraper: scraperA,
     },
   },
-  {
-    region: "Northern Cape",
+  "northern-cape": {
+    regionId: "northern-cape",
     sourceA: {
       url: "https://www.windfinder.com/forecast/port_nolloth",
       scraper: scraperA,
     },
   },
-  {
-    region: "Swakopmund",
+  swakopmund: {
+    regionId: "swakopmund",
     sourceA: {
       url: "https://www.windfinder.com/forecast/swakopmund",
       scraper: scraperA,
     },
   },
-  {
-    region: "Inhambane Province",
+  "inhambane-province": {
+    regionId: "inhambane-province",
     sourceA: {
       url: "https://www.windfinder.com/forecast/tofo",
       scraper: scraperA,
     },
   },
-  {
-    region: "Ponta do Ouro",
+  "ponta-do-ouro": {
+    regionId: "ponta-do-ouro",
     sourceA: {
       url: "https://www.windfinder.com/forecast/ponta_do_ouro",
       scraper: scraperA,
     },
   },
-  {
-    region: "Madagascar South",
+  "madagascar-south": {
+    regionId: "madagascar-south",
     sourceA: {
       url: "https://www.windfinder.com/forecast/anakao",
       scraper: scraperA,
     },
   },
-  {
-    region: "Madagascar West",
+  "madagascar-west": {
+    regionId: "madagascar-west",
     sourceA: {
       url: "https://www.windfinder.com/forecast/anakao",
       scraper: scraperA,
     },
   },
-  {
-    region: "Madagascar East",
+  "madagascar-east": {
+    regionId: "madagascar-east",
     sourceA: {
       url: "https://www.windfinder.com/forecast/farafangana",
       scraper: scraperA,
     },
   },
-  {
-    region: "Mozambique",
+  mozambique: {
+    regionId: "mozambique",
     sourceA: {
       url: "https://www.windfinder.com/forecast/maputo_costa_do_sol",
       scraper: scraperA,
     },
   },
-  {
-    region: "Zambia",
+  zambia: {
+    regionId: "zambia",
     sourceA: {
       url: "https://www.windfinder.com/forecast/livingstone",
       scraper: scraperA,
     },
   },
-  {
-    region: "Luanda Province",
+  "luanda-province": {
+    regionId: "luanda-province",
     sourceA: {
       url: "https://www.windfinder.com/forecast/cabo_ledo",
       scraper: scraperA,
     },
   },
-  {
-    region: "Benguela",
+  benguela: {
+    regionId: "benguela",
     sourceA: {
       url: "https://www.windfinder.com/forecast/caota",
       scraper: scraperA,
     },
   },
-  {
-    region: "Gabon Coast",
+  "gabon-coast": {
+    regionId: "gabon-coast",
     sourceA: {
       url: "https://www.windfinder.com/forecast/cocobeach_estuaire_gabon",
       scraper: scraperA,
     },
   },
-  {
-    region: "Liberia",
+  liberia: {
+    regionId: "liberia",
     sourceA: {
       url: "https://www.windfinder.com/forecast/monrovia_montserrado_liberia",
       scraper: scraperA,
     },
   },
-  {
-    region: "Bali",
+  bali: {
+    regionId: "bali",
     sourceA: {
       url: "https://www.windfinder.com/forecast/bali_uluwatu",
       scraper: scraperA,
     },
   },
-  {
-    region: "Puntarenas Province",
+  "puntarenas-province": {
+    regionId: "puntarenas-province",
     sourceA: {
       url: "https://www.windfinder.com/forecast/puntarenas",
       scraper: scraperA,
     },
   },
-  {
-    region: "Queensland",
+  queensland: {
+    regionId: "queensland",
     sourceA: {
       url: "https://www.windfinder.com/forecast/noosa_main_beach",
       scraper: scraperA,
     },
   },
-  {
-    region: "Waikato",
+  waikato: {
+    regionId: "waikato",
     sourceA: {
       url: "https://www.windfinder.com/forecast/raglan_waikato_new_zealand",
       scraper: scraperA,
     },
   },
-  {
-    region: "San Salvador",
+  "san-salvador": {
+    regionId: "san-salvador",
     sourceA: {
       url: "https://www.windfinder.com/forecast/san_salvador_san_salvador_el_salvador",
       scraper: scraperA,
     },
   },
-  {
-    region: "Costa del Balsamo",
+  "costa-del-balsamo": {
+    regionId: "costa-del-balsamo",
     sourceA: {
       url: "https://www.windfinder.com/forecast/el_zonte",
       scraper: scraperA,
     },
   },
-  {
-    region: "Chicama",
+  chicama: {
+    regionId: "chicama",
     sourceA: {
       url: "https://www.windfinder.com/forecast/chicama",
       scraper: scraperA,
     },
   },
-  {
-    region: "Andalucia",
+  andalucia: {
+    regionId: "andalucia",
     sourceA: {
       url: "https://www.windfinder.com/forecast/fuentes_de_andalucia",
       scraper: scraperA,
     },
   },
-  {
-    region: "Granada",
+  granada: {
+    regionId: "granada",
     sourceA: {
       url: "https://www.windfinder.com/forecast/paripé",
       scraper: scraperA,
     },
   },
-  {
-    region: "California",
+  california: {
+    regionId: "california",
     sourceA: {
       url: "https://www.windfinder.com/forecast/california_maryland_usa",
       scraper: scraperA,
     },
   },
-  {
-    region: "New South Wales",
+  "new-south-wales": {
+    regionId: "new-south-wales",
     sourceA: {
       url: "https://www.windfinder.com/forecast/bondi_beach",
       scraper: scraperA,
     },
   },
-  {
-    region: "Scotland",
+  scotland: {
+    regionId: "scotland",
     sourceA: {
       url: "https://www.windfinder.com/forecast/oban_airport",
       scraper: scraperA,
     },
   },
-  {
-    region: "Suðuroy",
+  suðuroy: {
+    regionId: "suðuroy",
     sourceA: {
       url: "https://www.windfinder.com/forecast/vagur_suduroy_faroe_islands",
       scraper: scraperA,
     },
   },
-  {
-    region: "Streymoy",
+  streymoy: {
+    regionId: "streymoy",
     sourceA: {
       url: "https://www.windfinder.com/forecast/torshavn",
       scraper: scraperA,
     },
   },
-  {
-    region: "Sandoy",
+  sandoy: {
+    regionId: "sandoy",
     sourceA: {
       url: "https://www.windfinder.com/forecast/kollafjordhur_streymoy_faroe_islands",
       scraper: scraperA,
     },
   },
-  {
-    region: "Central Morocco",
+  "central-morocco": {
+    regionId: "central-morocco",
     sourceA: {
       url: "https://www.windfinder.com/forecast/taghazout",
       scraper: scraperA,
     },
   },
-  {
-    region: "Morocco",
+  morocco: {
+    regionId: "morocco",
     sourceA: {
       url: "https://www.windfinder.com/forecast/taghazout",
       scraper: scraperA,
     },
   },
-];
+};

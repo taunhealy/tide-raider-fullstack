@@ -7,11 +7,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "../lib/utils";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { handleSignIn } from "../lib/auth-utils";
 import Image from "next/image";
 import NotificationBadge from "./notifications/NotificationBadge";
 
+// Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
   { href: "/raid", label: "Raid" },
   { href: "/raidlogs", label: "Log Book" },
@@ -19,17 +20,66 @@ const NAVIGATION_ITEMS = [
   { href: "/alerts", label: "Alerts" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
-];
+] as const;
 
 export default function Navbar() {
-  const { data: session, status } = useSession({
-    required: false,
-  });
+  const { data: session, status } = useSession({ required: false });
   const { isSubscribed } = useSubscription();
   const pathname = usePathname();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until authentication is checked
+  if (status === "loading" || !mounted) {
+    return null; // Or a loading spinner
+  }
+
+  // Simple function to render profile image consistently
+  const ProfileImage = () => {
+    if (!session?.user?.image) return null;
+
+    return (
+      <Image
+        key={session.user.image}
+        src={session.user.image}
+        alt="Profile"
+        width={32}
+        height={32}
+        className="rounded-full"
+      />
+    );
+  };
+
+  // Simple function to render auth button consistently
+  const AuthButton = () => {
+    if (status !== "authenticated" && status !== "unauthenticated") {
+      return null;
+    }
+
+    return status === "authenticated" ? (
+      <Button
+        variant="outline"
+        onClick={() => signOut()}
+        className="transition-all duration-300 font-primary"
+      >
+        Sign Out
+      </Button>
+    ) : (
+      <Button
+        variant="outline"
+        onClick={() => handleSignIn()}
+        className="transition-all duration-300 font-primary"
+      >
+        Sign In
+      </Button>
+    );
+  };
 
   const handleHomeClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,20 +130,14 @@ export default function Navbar() {
             </ul>
           </nav>
           <div className="flex gap-4 items-center">
-            {session ? (
+            {session && (
               <>
                 <div className="relative">
                   <button
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
                     className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
                   >
-                    <Image
-                      src={session.user?.image || "/default-avatar.png"}
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
+                    <ProfileImage />
                     <NotificationBadge />
                   </button>
 
@@ -123,22 +167,8 @@ export default function Navbar() {
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => signOut()}
-                  className="transition-all duration-300 font-primary"
-                >
-                  Sign Out
-                </Button>
+                <AuthButton />
               </>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={() => handleSignIn()}
-                className="transition-all duration-300 font-primary"
-              >
-                Sign In
-              </Button>
             )}
           </div>
         </div>
@@ -147,32 +177,10 @@ export default function Navbar() {
         <div className="md:hidden flex items-center gap-4">
           {session && (
             <div className="flex items-center gap-2">
-              <Image
-                src={session.user?.image || "/default-avatar.png"}
-                alt="Profile"
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
+              <ProfileImage />
             </div>
           )}
-          {session ? (
-            <Button
-              variant="outline"
-              onClick={() => signOut()}
-              className="transition-all duration-300 font-primary"
-            >
-              Sign Out
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={() => handleSignIn()}
-              className="transition-all duration-300 font-primary"
-            >
-              Sign In
-            </Button>
-          )}
+          <AuthButton />
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 hover:bg-gray-50 rounded-md transition-colors"
@@ -191,13 +199,7 @@ export default function Navbar() {
                 <>
                   <li className="px-2 py-3">
                     <div className="flex items-center gap-3 mb-4">
-                      <Image
-                        src={session.user?.image || "/default-avatar.png"}
-                        alt="Profile"
-                        width={40}
-                        height={40}
-                        className="rounded-full"
-                      />
+                      <ProfileImage />
                       <span className="font-primary text-[var(--color-text-primary)]">
                         {session.user?.name}
                       </span>

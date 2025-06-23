@@ -81,7 +81,7 @@ export function RaidLogForm({
   >(entry?.videoPlatform || null);
 
   const { data: forecastData } = useForecast(
-    selectedBeach?.region?.name || "",
+    selectedBeach?.regionId || "",
     new Date(selectedDate)
   );
 
@@ -278,7 +278,7 @@ export function RaidLogForm({
         waveType: selectedBeach.waveType,
         isAnonymous,
         isPrivate,
-        forecast: forecastData,
+        forecastId: forecastData?.id,
         imageUrl: imageUrl || undefined,
         videoUrl: videoUrl || undefined,
         videoPlatform: videoPlatform || undefined,
@@ -410,12 +410,6 @@ export function RaidLogForm({
       swellDirection: safeParseFloat(data.swellDirection),
     });
   };
-
-  useEffect(() => {
-    if (forecastData) {
-      debugForecastData(forecastData);
-    }
-  }, [forecastData]);
 
   const handleSubscriptionAction = () => {
     if (!session?.user) {

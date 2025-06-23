@@ -728,6 +728,7 @@ export default function RaidLogTable({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
               {currentItems.map((entry) => (
                 <Link
+                  key={entry.id}
                   href={`/raidlogs/${entry.id}`}
                   className="block"
                   onClick={(e) => {
@@ -962,7 +963,7 @@ export default function RaidLogTable({
                     </PaginationItem>
 
                     {Array.from({ length: totalPages }).map((_, i) => (
-                      <PaginationItem key={i}>
+                      <PaginationItem key={`page-${i}`}>
                         <PaginationLink
                           onClick={() => handlePageChange(i + 1)}
                           isActive={currentPage === i + 1}
@@ -1008,7 +1009,7 @@ export default function RaidLogTable({
                     <tr>
                       {columnsWithAction.map((column) => (
                         <th
-                          key={column.key}
+                          key={`header-${column.key}`}
                           className={cn(
                             "px-2 py-2 text-xs text-left text-gray-500 uppercase tracking-wider font-primary",
                             column.key === "date"
@@ -1035,7 +1036,7 @@ export default function RaidLogTable({
 
                       return (
                         <tr
-                          key={entry.id}
+                          key={`row-${entry.id}`}
                           className="hover:bg-gray-50 cursor-pointer"
                           onClick={(e) => {
                             // Don't navigate if clicking on a button

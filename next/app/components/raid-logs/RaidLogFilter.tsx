@@ -15,7 +15,7 @@ type FilterConfig = {
 
 interface RaidLogFilterProps {
   beaches: Beach[];
-  selectedBeaches?: string[];
+  selectedBeachIds?: string[];
   onFilterChange: (filters: Partial<FilterConfig>) => void;
   isOpen: boolean;
   onClose: () => void;
@@ -23,12 +23,11 @@ interface RaidLogFilterProps {
 
 export function RaidLogFilter({
   beaches,
-  selectedBeaches: initialSelectedBeaches,
+  selectedBeachIds = [],
   onFilterChange,
   isOpen,
   onClose,
 }: RaidLogFilterProps) {
-  const selectedBeaches = initialSelectedBeaches ?? [];
   const [beachSearch, setBeachSearch] = useState("");
   const [isBeachOpen, setIsBeachOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
@@ -49,13 +48,13 @@ export function RaidLogFilter({
   ).sort();
 
   const handleBeachToggle = useCallback(
-    (beachName: string) => {
-      const newBeaches = selectedBeaches.includes(beachName)
-        ? selectedBeaches.filter((b) => b !== beachName)
-        : [...selectedBeaches, beachName];
-      onFilterChange({ beaches: newBeaches });
+    (beachId: string) => {
+      const newBeachIds = selectedBeachIds.includes(beachId)
+        ? selectedBeachIds.filter((id) => id !== beachId)
+        : [...selectedBeachIds, beachId];
+      onFilterChange({ beachIds: newBeachIds });
     },
-    [selectedBeaches, onFilterChange]
+    [selectedBeachIds, onFilterChange]
   );
 
   const handleRatingSelect = (rating: number) => {
@@ -169,7 +168,7 @@ export function RaidLogFilter({
             onClick={() => setIsBeachOpen(!isBeachOpen)}
             className="w-full flex justify-between items-center p-2 border rounded-md hover:bg-gray-50"
           >
-            <span>Beaches ({selectedBeaches.length})</span>
+            <span>Beaches ({selectedBeachIds.length})</span>
             <ChevronDown
               className={`h-4 w-4 transition-transform ${isBeachOpen ? "rotate-180" : ""}`}
             />
@@ -193,8 +192,8 @@ export function RaidLogFilter({
                     >
                       <input
                         type="checkbox"
-                        checked={selectedBeaches.includes(beach.name)}
-                        onChange={() => handleBeachToggle(beach.name)}
+                        checked={selectedBeachIds.includes(beach.id)}
+                        onChange={() => handleBeachToggle(beach.id)}
                         className="mr-2"
                       />
                       <span className="text-sm">{beach.name}</span>
@@ -207,26 +206,29 @@ export function RaidLogFilter({
         </div>
 
         {/* Selected Filters Display */}
-        {(selectedBeaches.length > 0 ||
+        {(selectedBeachIds.length > 0 ||
           selectedRegions.length > 0 ||
           selectedRating > 0) && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Active Filters</h3>
             <div className="flex flex-wrap gap-2">
-              {selectedBeaches.map((beach) => (
-                <div
-                  key={beach}
-                  className="flex items-center bg-gray-100 px-3 py-1 rounded-md text-sm"
-                >
-                  {beach}
-                  <button
-                    onClick={() => handleBeachToggle(beach)}
-                    className="ml-2 text-gray-500 hover:text-gray-700"
+              {selectedBeachIds.map((beachId) => {
+                const beach = beaches.find((b) => b.id === beachId);
+                return (
+                  <div
+                    key={beachId}
+                    className="flex items-center bg-gray-100 px-3 py-1 rounded-md text-sm"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+                    {beach?.name}
+                    <button
+                      onClick={() => handleBeachToggle(beachId)}
+                      className="ml-2 text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
               {selectedRegions.map((region) => (
                 <div
                   key={region}

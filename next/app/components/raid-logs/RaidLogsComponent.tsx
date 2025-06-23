@@ -52,13 +52,25 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterConfig>) => {
-      setFilters((prev) => ({ ...prev, ...newFilters }));
+      // Ensure beaches are stored as IDs
+      const processedFilters = {
+        ...newFilters,
+        beachIds: newFilters.beachIds
+          ?.map((beach: Beach | string) => {
+            if (typeof beach === "string") return beach;
+            if (typeof beach === "object" && beach !== null) return beach.id;
+            return "";
+          })
+          .filter(Boolean),
+      };
+
+      setFilters((prev) => ({ ...prev, ...processedFilters }));
 
       // Update URL params
       const params = new URLSearchParams(searchParams);
 
       // Update each filter type in the URL
-      Object.entries(newFilters).forEach(([key, value]) => {
+      Object.entries(processedFilters).forEach(([key, value]) => {
         if (Array.isArray(value)) {
           if (value.length > 0) {
             params.set(key, value.join(","));
@@ -124,7 +136,22 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
 
       console.log("Fetching raid logs with params:", params.toString());
       const res = await fetch(`/api/raid-logs?${params.toString()}`);
-      console.log("Raid logs API response status:", res.status);
+
+      // Add debug logging
+      console.log("Response status:", res.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(res.headers.entries())
+      );
+
+      // Check content type
+      const contentType = res.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        // If not JSON, get the text to see what we received
+        const text = await res.text();
+        console.error("Received non-JSON response:", text);
+        throw new Error(`Expected JSON but received ${contentType}`);
+      }
 
       if (res.status === 401) {
         toast.error("Please sign in to view private logs", {
@@ -146,7 +173,6 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
       }
 
       const data = await res.json();
-      console.log("Raid logs API response data:", data);
       return { entries: data };
     },
   });
@@ -161,11 +187,9 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
   }, [logEntriesData?.entries, error]);
 
   const handleBeachClick = useCallback(
-    (beachName: string) => {
-      const beach = beaches.find((b) => b.name === beachName);
-      if (beach) {
-        setSelectedBeach(beach);
-      }
+    (beachId: string) => {
+      const beach = beaches.find((b) => b.id === beachId);
+      if (beach) setSelectedBeach(beach);
     },
     [beaches]
   );
@@ -247,7 +271,7 @@ export const RaidLogsComponent: React.FC<RaidLogsComponentProps> = ({
             <div className="overflow-x-auto">
               <RaidLogTable
                 entries={filteredEntries}
-                isSubscribed={session?.user?.isSubscribed}
+                isSubscribed={false}
                 isLoading={isLoading}
                 showPrivateOnly={isPrivate}
                 onBeachClick={handleBeachClick}

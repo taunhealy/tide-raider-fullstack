@@ -34,3 +34,13 @@ export function formatItemType(itemType: string) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
+
+export function formatNotificationMethod(method: string): string {
+  const methods: Record<string, string> = {
+    email: "Email",
+    whatsapp: "WhatsApp",
+    app: "App Notification",
+    both: "Email & WhatsApp",
+  };
+  return methods[method] || method;
+}

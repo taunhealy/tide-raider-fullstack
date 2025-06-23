@@ -67,15 +67,17 @@ export interface SortConfig {
 }
 
 export interface FilterConfig {
+  beachId?: string;
+  regionId?: string;
+  isPrivate: boolean;
   beachName?: string;
   regions?: string[];
   countries?: string[];
-  beaches?: string[];
+  beachIds?: string[];
   waveTypes?: string[];
   surferName?: string;
   minRating?: number | null;
   dateRange?: { start: string; end: string };
-  isPrivate: boolean;
   entries?: LogEntry[];
   surfers?: string[];
   region?: string;
