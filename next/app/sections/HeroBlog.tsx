@@ -51,7 +51,7 @@ export default function HeroBlogSection({ data }: Props) {
   const allCategories = data.categories || [];
   const containerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const filteredPosts = useMemo(() => {
     return data.posts
@@ -70,51 +70,35 @@ export default function HeroBlogSection({ data }: Props) {
       });
   }, [data.posts, activeCategory]);
 
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current) return;
-
-    const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 1);
-  }, []);
-
-  const scroll = (direction: "left" | "right") => {
-    if (!containerRef.current) return;
-
-    const scrollAmount = containerRef.current.clientWidth;
-    containerRef.current.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  };
-
   useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 1);
+    };
+
     const container = containerRef.current;
     if (container) {
       container.addEventListener("scroll", handleScroll);
       handleScroll();
 
-      window.addEventListener("load", handleScroll);
-
       window.addEventListener("resize", handleScroll);
+
+      return () => {
+        container.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleScroll);
+      };
     }
+  }, []);
 
-    return () => {
-      container?.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("load", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [handleScroll, filteredPosts]);
-
-  useEffect(() => {
-    const cleanup = () => {
-      const shareButtons = document.querySelectorAll(".share-button");
-      shareButtons.forEach((button) => {
-        button.replaceWith(button.cloneNode(true));
-      });
-    };
-
-    return cleanup;
+  const scroll = useCallback((direction: "left" | "right") => {
+    if (!containerRef.current) return;
+    const scrollAmount = containerRef.current.clientWidth;
+    containerRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
   }, []);
 
   return (
@@ -199,31 +183,26 @@ export default function HeroBlogSection({ data }: Props) {
         </div>
 
         <div className="hidden md:block">
-          <div
-            className={`absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out ${
-              canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <button
-              onClick={() => scroll("left")}
-              className="bg-white rounded-full p-2 hover:bg-gray-50 transition-colors shadow-md"
-            >
-              <ChevronLeft size={24} />
-            </button>
-          </div>
-
-          <div
-            className={`absolute right-0 top-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out ${
-              canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <button
-              onClick={() => scroll("right")}
-              className="bg-white rounded-full p-2 hover:bg-gray-50 transition-colors shadow-md"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
+          {canScrollLeft && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out opacity-100 pointer-events-auto">
+              <button
+                onClick={() => scroll("left")}
+                className="bg-white rounded-full p-2 hover:bg-gray-50 transition-colors shadow-md"
+              >
+                <ChevronLeft size={24} />
+              </button>
+            </div>
+          )}
+          {canScrollRight && (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 transition-opacity duration-300 ease-in-out opacity-100 pointer-events-auto">
+              <button
+                onClick={() => scroll("right")}
+                className="bg-white rounded-full p-2 hover:bg-gray-50 transition-colors shadow-md"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>

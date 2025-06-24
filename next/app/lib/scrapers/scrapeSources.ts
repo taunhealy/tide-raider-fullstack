@@ -24,8 +24,8 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
   },
-  "kwaZulu-Natal": {
-    regionId: "kwaZulu-Natal",
+  "kwazulu-natal": {
+    regionId: "kwazulu-natal",
     sourceA: {
       url: "https://www.windfinder.com/forecast/durban_bluff",
       scraper: scraperA,

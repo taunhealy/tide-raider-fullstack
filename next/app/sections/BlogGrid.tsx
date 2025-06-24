@@ -81,13 +81,7 @@ export default function BlogGrid({ data }: BlogProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredPosts.map((post: HeroPost) => (
-          <Link
-            key={post._id}
-            href={`/blog/${typeof post.slug === "string" ? post.slug : post.slug.current}`}
-            className="flex flex-col hover:no-underline"
-          >
             <BlogCard post={post} />
-          </Link>
         ))}
       </div>
     </section>

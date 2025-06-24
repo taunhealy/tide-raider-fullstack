@@ -7,10 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useBeach } from "@/app/context/BeachContext";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { usePagination } from "@/app/hooks/usePagination";
-import {
-  calculateRegionScores,
-  getSortedBeachesByScore,
-} from "@/app/lib/scoreUtils";
+import { useRaidFilters } from "@/app/hooks/useRaidFilters";
+import { LAST_REGION_KEY, LAST_REGION_ID_KEY } from "@/app/constants/storage";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -22,22 +20,6 @@ import BeachHeaderControls from "@/app/components/raid/BeachHeaderControls";
 
 // Constants
 const ITEMS_PER_PAGE = 18;
-const LAST_REGION_KEY = "lastVisitedRegion";
-const LAST_REGION_ID_KEY = "lastVisitedRegionId";
-
-// Loading components
-function BeachListViewSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="h-12 bg-gray-200 rounded animate-pulse" />
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-48 bg-gray-200 rounded animate-pulse" />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 interface TodayRating {
   beachId: string;
@@ -54,15 +36,12 @@ export default function BeachContainer() {
   const {
     filters,
     setFilters,
-    beaches,
     setBeaches,
-    beachScores,
-    setBeachScores,
-    setTodayGoodBeaches,
     currentPage,
     setForecastData,
     setLoadingState,
   } = useBeach();
+  const { getInitialFilters } = useRaidFilters();
 
   // Queries
   const { data: forecastData, isLoading: isForecastLoading } = useQuery({
@@ -78,7 +57,11 @@ export default function BeachContainer() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const { data: beachData } = useQuery({
+  const {
+    data: beachData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["beaches", filters.location.regionId],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -91,6 +74,7 @@ export default function BeachContainer() {
       if (!response.ok) throw new Error("Failed to fetch beaches");
       return response.json();
     },
+    enabled: !!filters.location.regionId,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -125,8 +109,8 @@ export default function BeachContainer() {
   const { data: ads = [] } = useQuery({
     queryKey: ["ads", filters.location.regionId],
     queryFn: () =>
-      fetch(`/api/ads?regionId=${filters.location.regionId}`).then((res) =>
-        res.json()
+      fetch(`/api/advertising/ads?regionId=${filters.location.regionId}`).then(
+        (res) => res.json()
       ),
     enabled: !!filters.location.regionId,
     staleTime: 1000 * 60 * 5,
@@ -135,41 +119,12 @@ export default function BeachContainer() {
   // Filtered beaches
   const filteredBeaches = useFilteredBeaches();
 
-  // Sort beaches by score - updated to use getSortedBeachesByScore
-  const sortedBeaches = useMemo(() => {
-    if (
-      !filteredBeaches ||
-      !beachScores ||
-      Object.keys(beachScores).length === 0
-    ) {
-      return [];
-    }
-    return getSortedBeachesByScore(filteredBeaches, beachScores);
-  }, [filteredBeaches, beachScores]);
-
   // Pagination
   const { currentItems } = usePagination(
-    sortedBeaches,
+    filteredBeaches,
     currentPage,
     ITEMS_PER_PAGE
   );
-
-  // Calculate scores when we have both beaches and forecast data
-  useEffect(() => {
-    if (beaches?.length && forecastData) {
-      const scores = calculateRegionScores(
-        beaches,
-        filters.location.region || null,
-        forecastData
-      );
-      console.log("Beach scores before setting:", {
-        scores,
-        sampleBeach: beaches[0].name,
-        sampleScore: scores[beaches[0].id],
-      });
-      setBeachScores(scores);
-    }
-  }, [beaches, forecastData, filters.location.region, setBeachScores]);
 
   // Effects
   useEffect(() => {
@@ -177,53 +132,34 @@ export default function BeachContainer() {
   }, [forecastData, setForecastData]);
 
   useEffect(() => {
+    console.log("Current filters:", filters);
+    console.log("Beach data:", beachData);
+    console.log("Filtered beaches:", filteredBeaches);
     if (beachData) setBeaches(beachData);
-  }, [beachData, setBeaches]);
-
-  useEffect(() => {
-    if (todayRatings) {
-      const goodBeaches = todayRatings
-        .filter((rating: TodayRating) => rating.score >= 4)
-        .map((rating: TodayRating) => ({
-          beachId: rating.beachId,
-          region: rating.region,
-          score: rating.score,
-        }));
-      setTodayGoodBeaches(goodBeaches);
-    }
-  }, [todayRatings, setTodayGoodBeaches]);
+  }, [beachData, setBeaches, filters]);
 
   useEffect(() => {
     setLoadingState("forecast", isForecastLoading);
   }, [isForecastLoading, setLoadingState]);
 
-  // Initial region setup from URL or localStorage
+  // Handle initial filters setup
   useEffect(() => {
-    const regionFromUrl = searchParams.get("region");
     const regionIdFromUrl = searchParams.get("regionId");
 
-    if (regionFromUrl && regionIdFromUrl) {
-      setFilters({
-        ...filters,
-        location: {
-          ...filters.location,
-          region: regionFromUrl,
-          regionId: regionIdFromUrl,
-        },
-      });
+    if (regionIdFromUrl) {
+      // URL params take precedence
+      setFilters(
+        getInitialFilters({ regionId: regionIdFromUrl }) // Just pass regionId
+      );
     } else {
-      const lastRegion = localStorage.getItem(LAST_REGION_KEY);
+      // Try localStorage
       const lastRegionId = localStorage.getItem(LAST_REGION_ID_KEY);
 
-      if (lastRegion && lastRegionId && !filters.location.regionId) {
-        setFilters({
-          ...filters,
-          location: {
-            ...filters.location,
-            region: lastRegion,
-            regionId: lastRegionId,
-          },
-        });
+      if (lastRegionId && !filters.location.regionId) {
+        setFilters(getInitialFilters({ regionId: lastRegionId }));
+      } else {
+        // Use default filters
+        setFilters(getInitialFilters({}));
       }
     }
   }, []);
@@ -235,6 +171,9 @@ export default function BeachContainer() {
       localStorage.setItem(LAST_REGION_ID_KEY, filters.location.regionId);
     }
   }, [filters.location.region, filters.location.regionId]);
+
+  // Only show error state
+  if (error) return <div>Error loading beaches</div>;
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
@@ -249,20 +188,29 @@ export default function BeachContainer() {
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
-            <Suspense fallback={<BeachListViewSkeleton />}>
-              <div className="flex flex-col gap-5">
-                <BeachHeaderControls
-                  showFilters={showFilters}
-                  setShowFilters={setShowFilters}
-                  regions={allRegions}
-                />
-                <div className="grid grid-cols-1 gap-[16px]">
-                  {currentItems.map((beach, index) => (
+            <div className="flex flex-col gap-5">
+              <BeachHeaderControls
+                showFilters={showFilters}
+                setShowFilters={setShowFilters}
+                regions={allRegions}
+              />
+
+              <div className="grid grid-cols-1 gap-[16px] relative">
+                {isLoading && (
+                  <div className="absolute inset-0 bg-white/50 z-10 flex items-start justify-end p-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--color-bg-tertiary)]"></div>
+                  </div>
+                )}
+
+                {!isLoading && !currentItems.length ? (
+                  <div>No beaches found</div>
+                ) : (
+                  currentItems.map((beach, index) => (
                     <BeachCard key={beach.id} beachId={beach.id} />
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-            </Suspense>
+            </div>
           </main>
 
           <Suspense

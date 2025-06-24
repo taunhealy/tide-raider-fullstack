@@ -3,7 +3,6 @@
 import { urlForImage } from "@/app/lib/urlForImage";
 import Link from "next/link";
 import ClientImage from "@/app/components/ClientImage";
-import { Post } from "@/app/types/blog";
 import { formatCountryName } from "@/app/lib/formatters";
 
 interface Category {

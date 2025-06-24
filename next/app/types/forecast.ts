@@ -10,6 +10,8 @@ export interface CoreForecastData {
   swellHeight: number;
   swellPeriod: number;
   swellDirection: number;
+  date: Date;
+  regionId: string; // matches our Prisma schema
 }
 
 export interface BaseForecastData extends CoreForecastData {

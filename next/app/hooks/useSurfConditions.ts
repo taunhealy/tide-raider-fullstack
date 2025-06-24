@@ -1,17 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
-import { WindData } from "@/app/types/wind";
+"use client";
 
-export function useSurfConditions(region: string) {
+import { useQuery } from "@tanstack/react-query";
+import { BaseForecastData } from "@/app/types/forecast";
+
+export function useSurfConditions(region: string | undefined) {
   return useQuery({
-    queryKey: ["surfConditions", region],
+    queryKey: ["surf-conditions", region],
     queryFn: async () => {
-      const response = await fetch(
+      if (!region) return null;
+      const res = await fetch(
         `/api/surf-conditions?region=${encodeURIComponent(region)}`
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch conditions");
-      }
-      return response.json();
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return res.json() as Promise<BaseForecastData>;
     },
     enabled: !!region,
     staleTime: 1000 * 60 * 5, // 5 minutes

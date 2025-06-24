@@ -8,9 +8,18 @@ import { Toaster } from "sonner";
 import { SubscriptionProvider } from "./SubscriptionProvider";
 import { BeachProvider } from "@/app/context/BeachContext";
 import { beachData } from "@/app/types/beaches";
-import { FilterProvider } from "../context/FilterContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes
+      gcTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 export default function AppProviders({
   children,
@@ -21,13 +30,11 @@ export default function AppProviders({
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
         <SubscriptionProvider>
-          <FilterProvider>
-            <BeachProvider initialBeaches={beachData}>
-              {children}
-              <Toaster position="top-right" />
-              <ReactQueryDevtools initialIsOpen={false} />
-            </BeachProvider>
-          </FilterProvider>
+          <BeachProvider initialBeaches={beachData}>
+            {children}
+            <Toaster position="top-right" />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </BeachProvider>
         </SubscriptionProvider>
       </SessionProvider>
     </QueryClientProvider>

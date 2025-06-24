@@ -31,10 +31,6 @@ interface BeachContextType {
   forecastData: ForecastData | null;
   setForecastData: (data: ForecastData | null) => void;
 
-  // Scores state
-  beachScores: BeachScoreMap;
-  setBeachScores: (scores: BeachScoreMap) => void;
-
   // UI state
   currentPage: number;
   setCurrentPage: (page: number) => void;
@@ -44,12 +40,6 @@ interface BeachContextType {
   // Status flags
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
-
-  // Today's good beaches
-  todayGoodBeaches: { beachId: string; region: string; score: number }[];
-  setTodayGoodBeaches: (
-    beaches: { beachId: string; region: string; score: number }[]
-  ) => void;
 
   // Separate loading states for different data types
   loadingStates: {
@@ -61,6 +51,9 @@ interface BeachContextType {
     type: "forecast" | "beaches" | "scores",
     isLoading: boolean
   ) => void;
+
+  beachScores: BeachScoreMap;
+  setBeachScores: (scores: BeachScoreMap) => void;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);

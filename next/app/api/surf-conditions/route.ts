@@ -4,10 +4,10 @@ import { randomUUID } from "crypto";
 import {} from "@/app/lib/surfUtils";
 
 import { redis } from "@/app/lib/redis";
-import { BaseForecastData } from "@/app/types/forecast";
+import { BaseForecastData, CoreForecastData } from "@/app/types/forecast";
 import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
-import { storeBeachDailyScores } from "@/app/lib/beachDailyScores";
+import { ScoreService } from "@/app/services/scores/ScoreService";
 
 function getTodayDate() {
   const date = new Date();
@@ -59,16 +59,13 @@ export async function getLatestConditions(
 
   const today = getTodayDate();
 
-  // Use the forecasts route instead of direct database query
-  const response = await fetch(
-    `/api/forecasts?` +
-      new URLSearchParams({
-        date: today.toISOString().split("T")[0],
-        regionId: region.id,
-      })
-  );
-
-  const existingForecast = response.ok ? await response.json() : null;
+  // Direct database query instead of API call
+  const existingForecast = await prisma.forecastA.findFirst({
+    where: {
+      date: today,
+      regionId: region.id,
+    },
+  });
 
   if (existingForecast && !forceRefresh) {
     console.log("Found existing forecast:", existingForecast);
@@ -87,7 +84,7 @@ export async function getLatestConditions(
 
   try {
     console.log("Attempting to scrape from:", regionConfig.sourceA.url);
-    const forecast: BaseForecastData = await scraperA(
+    const forecast: CoreForecastData = await scraperA(
       regionConfig.sourceA.url,
       region.id
     );
@@ -106,7 +103,7 @@ export async function getLatestConditions(
       where: {
         date_regionId: {
           date: forecast.date,
-          regionId: region.id,
+          regionId: forecast.regionId,
         },
       },
       update: {
@@ -119,7 +116,7 @@ export async function getLatestConditions(
       create: {
         id: randomUUID(),
         date: forecast.date,
-        regionId: region.id,
+        regionId: forecast.regionId,
         windSpeed: forecast.windSpeed,
         windDirection: forecast.windDirection,
         swellHeight: forecast.swellHeight,
@@ -180,18 +177,27 @@ async function dedupedEnsureBeachScores(
   }
 
   try {
-    const existingScores = await prisma.beachDailyScore.count({
+    const existingScores = await prisma.beachDailyScore.findMany({
       where: {
         date: date,
         regionId: regionId,
       },
+      select: {
+        score: true,
+      },
     });
 
-    if (existingScores === 0) {
+    if (
+      existingScores.length === 0 ||
+      existingScores.every((s) => s.score === 0)
+    ) {
       console.log(
-        `🔄 No scores found for ${regionId} on ${date}, generating...`
+        `🔄 No valid scores found for ${regionId} on ${date}, generating...`
       );
-      await storeBeachDailyScores(conditions, regionId, date);
+      await ScoreService.calculateAndStoreScores(regionId, {
+        ...conditions,
+        date: date,
+      });
     } else {
       console.log(`✅ Scores already exist for ${regionId} on ${date}`);
     }
@@ -230,6 +236,7 @@ export async function GET(request: Request) {
     });
 
     if (!forecast) {
+      console.log("No forecast found in database, attempting to scrape...");
       try {
         const newForecast = await getLatestConditions(true, region.id);
         // Get the complete forecast with all fields from the database
@@ -239,7 +246,11 @@ export async function GET(request: Request) {
           },
         });
       } catch (scrapeError) {
-        // ... error handling stays the same ...
+        console.error("Scraping failed:", scrapeError);
+        return NextResponse.json(
+          { error: "Failed to fetch conditions" },
+          { status: 500 }
+        );
       }
     }
 

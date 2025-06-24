@@ -1,10 +1,10 @@
 import type { Beach } from "../types/beaches";
-import type { WindData } from "../types/wind";
+import type { CoreForecastData } from "../types/forecast";
 
 interface BeachTableProps {
   beaches: Beach[];
-  windData: WindData | null;
-  isBeachSuitable: (beach: Beach, conditions: WindData) => any;
+  windData: CoreForecastData | null;
+  isBeachSuitable: (beach: Beach, conditions: CoreForecastData) => any;
 }
 
 export default function BeachTable({
@@ -50,12 +50,12 @@ export default function BeachTable({
                         {suitability.score === 4
                           ? "🏄‍♂️ YEEEWWWW!"
                           : suitability.score === 3
-                          ? "🏄‍♂️"
-                          : suitability.score === 2
-                          ? "👍"
-                          : suitability.score === 1
-                          ? "🤔"
-                          : "💩"}
+                            ? "🏄‍♂️"
+                            : suitability.score === 2
+                              ? "👍"
+                              : suitability.score === 1
+                                ? "🤔"
+                                : "💩"}
                       </span>
                       <span className="score-badge">
                         {"⭐".repeat(suitability.score)}
@@ -80,17 +80,21 @@ export default function BeachTable({
                   {beach.crimeLevel === "High"
                     ? "💀"
                     : beach.crimeLevel === "Medium"
-                    ? "⚠️"
-                    : "👮"}
+                      ? "⚠️"
+                      : "👮"}
                 </td>
                 <td>
-                  <span title={
-                    beach.sharkAttack.hasAttack 
-                      ? beach.sharkAttack.incidents?.map(i => 
-                          `${i.date}: ${i.outcome} - ${i.details}`
-                        ).join('\n')
-                      : "No shark attacks reported"
-                  }>
+                  <span
+                    title={
+                      beach.sharkAttack.hasAttack
+                        ? beach.sharkAttack.incidents
+                            ?.map(
+                              (i) => `${i.date}: ${i.outcome} - ${i.details}`
+                            )
+                            .join("\n")
+                        : "No shark attacks reported"
+                    }
+                  >
                     {beach.sharkAttack.hasAttack ? "🦈" : "❌"}
                   </span>
                 </td>

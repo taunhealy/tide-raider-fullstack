@@ -1,6 +1,100 @@
-import NextAuth from "next-auth";
-import { authOptions } from "@/app/lib/authOptions";
+import NextAuth, { AuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@/app/lib/auth-adapter";
+import { prisma } from "@/app/lib/prisma";
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    sub?: string;
+    isSubscribed?: boolean;
+    hasActiveTrial?: boolean;
+    trialEndDate?: Date | null;
+    picture?: string;
+  }
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      isSubscribed: boolean;
+      hasActiveTrial: boolean;
+      trialEndDate?: Date | null;
+    };
+  }
+
+  interface User {
+    id: string;
+    isSubscribed?: boolean;
+    hasActiveTrial?: boolean;
+  }
+}
+
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/auth/signin",
+  },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If already on the signin page and trying to redirect there again, go to home
+      if (url.includes("/auth/signin") && url.includes("callbackUrl")) {
+        return baseUrl;
+      }
+
+      // Standard redirect logic
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      } else if (url.startsWith("http")) {
+        return url;
+      }
+      return baseUrl;
+    },
+
+    session: ({ session, user }) => ({
+      ...session,
+      user: {
+        ...session.user,
+        id: user.id,
+      },
+    }),
+
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+
+        // Fetch subscription info from database
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            subscriptionStatus: true,
+            hasActiveTrial: true,
+            trialEndDate: true,
+          },
+        });
+
+        token.isSubscribed = dbUser?.subscriptionStatus === "ACTIVE";
+        token.hasActiveTrial = dbUser?.hasActiveTrial || false;
+        token.trialEndDate = dbUser?.trialEndDate || null;
+      }
+      return token;
+    },
+  },
+};
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

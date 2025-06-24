@@ -1,10 +1,9 @@
 import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
-import { WindData } from "../../types/wind";
 import { USER_AGENTS } from "@/app/lib/proxy/userAgents";
 import { ProxyManager } from "@/app/lib/proxy/proxyManager";
-import { ProxyConfig } from "@/app/lib/proxy/types";
 import { createHash } from "crypto";
+import { BaseForecastData } from "../../types/forecast";
 
 // Add at the top of the file
 declare global {
@@ -89,16 +88,25 @@ async function getBrowser() {
   }
 }
 
-export async function scraperA(url: string, region: string): Promise<WindData> {
+export async function scraperA(
+  url: string,
+  region: string
+): Promise<BaseForecastData> {
   console.log("\n=== Starting Puppeteer Scraper ===");
+  console.log("Scraping URL:", url);
+  console.log("Region:", region);
+
   let browser = null;
   const proxy = proxyManager.getProxyForRegion(region);
   const startTime = Date.now();
 
   try {
     browser = await getBrowser();
+    console.log("✅ Browser launched");
 
     const page = await browser.newPage();
+    console.log("✅ New page created");
+
     await page.setUserAgent(
       USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
     );
@@ -159,37 +167,52 @@ export async function scraperA(url: string, region: string): Promise<WindData> {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    let forecast: WindData | null = null;
+    let forecast: BaseForecastData | null = null;
 
+    console.log("🔍 Parsing weather data...");
     cleanHtml.forEach((row) => {
       const timeStr = row.time?.toString() || "";
       const hour = parseInt(timeStr.replace("h", ""));
+      console.log(`Found data for hour: ${hour}`);
 
       if (hour >= 5 && hour <= 11) {
+        console.log(`✅ Found morning forecast data for hour ${hour}`);
         forecast = {
+          id: `${region}-${today.toISOString().split("T")[0]}`,
+          region,
+          date: today,
+          createdAt: new Date(),
+          updatedAt: new Date(),
           windSpeed: parseInt(row.windSpeed || "0"),
           windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
           swellHeight: parseFloat(row.waveHeight || "0"),
           swellPeriod: parseInt((row.wavePeriod || "0").replace(/\s+s$/, "")),
           swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
-          date: today,
-          region,
+          regionId: region,
         };
+        console.log("📊 Forecast data:", forecast);
         return;
       }
     });
 
     if (!forecast) {
+      console.error("❌ No morning forecast found between 05h-11h");
       throw new Error("No morning forecast data found between 05h-11h");
     }
 
+    console.log("✅ Successfully scraped forecast data");
     proxyManager.reportProxySuccess(proxy.host, Date.now() - startTime);
     return forecast;
   } catch (error) {
+    console.error("\n❌ Scraping failed:", {
+      url,
+      region,
+      error: (error as Error).message,
+      stack: (error as Error).stack,
+    });
     if (proxy) {
       proxyManager.reportProxyFailure(proxy.host);
     }
-    console.error("\n❌ Error in Puppeteer scraper:", error);
     throw error;
   } finally {
     if (browser) {

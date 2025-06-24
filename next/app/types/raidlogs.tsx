@@ -79,7 +79,7 @@ export interface FilterConfig {
   regions: string[];
   countries: string[];
   minRating: number | null;
-  dateRange?: { start: string; end: string };
+  dateRange: { start: string; end: string };
   isPrivate: boolean;
 }
 

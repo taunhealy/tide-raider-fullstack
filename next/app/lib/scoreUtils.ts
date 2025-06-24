@@ -331,21 +331,6 @@ export function calculateRegionScores(
   return scores;
 }
 
-export function getSortedBeachesByScore(
-  beaches: Beach[],
-  beachScores: Record<string, { score: number; region: string }>
-): BeachWithScore[] {
-  return [...beaches]
-    .map(
-      (beach) =>
-        ({
-          ...beach,
-          score: beachScores[beach.id]?.score || 0,
-        }) as unknown as BeachWithScore
-    )
-    .sort((a, b) => b.score - a.score);
-}
-
 export function getScoreDisplay(score: number): ScoreDisplay {
   const roundedScore = Math.round(score * 2) / 2;
 

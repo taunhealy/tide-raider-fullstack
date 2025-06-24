@@ -10,6 +10,7 @@ export interface SharkIncident {
 
 export interface Region {
   id: string;
+  regionId: string;
   name: string;
   countryId: string;
   country?: Country;

@@ -23,6 +23,8 @@ import { cn } from "@/app/lib/utils";
 import gsap from "gsap";
 import { useBeach } from "@/app/context/BeachContext";
 import type { Beach } from "@/app/types/beaches";
+import { ErrorBoundary } from "./ErrorBoundary";
+import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
 
 import type { ForecastData } from "@/app/types/forecast";
 
@@ -167,8 +169,12 @@ const BeachCard = memo(
       },
     });
 
+    if (isLocalLoading) {
+      return <BeachCardSkeleton />;
+    }
+
     return (
-      <>
+      <ErrorBoundary>
         {/* Main Card Container */}
         <div
           ref={cardRef}
@@ -452,7 +458,7 @@ const BeachCard = memo(
             onSubscribe={handleSubscribe}
           />
         )}
-      </>
+      </ErrorBoundary>
     );
   },
   (prev, next) => prev.beachId === next.beachId

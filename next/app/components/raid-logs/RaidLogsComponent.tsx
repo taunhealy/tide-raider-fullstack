@@ -18,6 +18,7 @@ import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import { LogEntry } from "@/app/types/raidlogs";
+import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
 
 const defaultFilters: FilterConfig = {
   beaches: [],
@@ -30,10 +31,7 @@ const defaultFilters: FilterConfig = {
 
 interface RaidLogsComponentProps {
   userId?: string;
-  initialFilters?: {
-    isPrivate: boolean;
-    userId?: string;
-  };
+  initialFilters?: Partial<FilterConfig>;
 }
 
 interface MainContentProps {
@@ -48,11 +46,11 @@ export function RaidLogsComponent({
   userId,
   initialFilters,
 }: RaidLogsComponentProps) {
+  const { filters, updateFilters, resetFilters } = useRaidLogFilters({
+    initialFilters,
+  });
+
   // State
-  const [filters, setFilters] = useState<FilterConfig>(defaultFilters);
-  const [isPrivate, setIsPrivate] = useState(
-    initialFilters?.isPrivate ?? false
-  );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
@@ -64,15 +62,15 @@ export function RaidLogsComponent({
     data: logEntriesData,
     isLoading,
     error,
-  } = useRaidLogsData(filters, isPrivate, userId);
+  } = useRaidLogsData(filters, filters.isPrivate, userId);
   const router = useRouter();
 
   // Handlers
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterConfig>) => {
-      setFilters((prev) => ({ ...prev, ...newFilters }));
+      updateFilters(newFilters);
     },
-    []
+    [updateFilters]
   );
 
   const handlePrivateToggle = useCallback(() => {
@@ -85,9 +83,8 @@ export function RaidLogsComponent({
       });
       return;
     }
-    setIsPrivate((prev) => !prev);
-    setFilters((prev) => ({ ...prev, isPrivate: !isPrivate }));
-  }, [session, isPrivate]);
+    updateFilters({ isPrivate: !filters.isPrivate });
+  }, [session, filters.isPrivate, updateFilters]);
 
   const handleBeachClick = useCallback(
     (beachId: string) => {
@@ -102,7 +99,7 @@ export function RaidLogsComponent({
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
         {/* Header */}
         <Header
-          isPrivate={isPrivate}
+          isPrivate={filters.isPrivate}
           onPrivateToggle={handlePrivateToggle}
           onFilterOpen={() => setIsFilterOpen(true)}
           onModalOpen={() => setIsModalOpen(true)}
@@ -120,7 +117,7 @@ export function RaidLogsComponent({
           entries={logEntriesData?.entries || []}
           isLoading={isLoading}
           error={error}
-          isPrivate={isPrivate}
+          isPrivate={filters.isPrivate}
           onBeachClick={handleBeachClick}
         />
 
@@ -129,7 +126,9 @@ export function RaidLogsComponent({
           beaches={beaches}
           selectedBeachIds={filters.beaches}
           selectedRegionIds={filters.regions}
+          selectedMinRating={filters.minRating}
           onFilterChange={handleFilterChange}
+          onReset={resetFilters}
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
         />

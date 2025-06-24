@@ -60,17 +60,6 @@ export const homePageQuery = groq`*[_type == "homepage"] | order(_createdAt desc
     title,
     imagePhotographer
   },
-  heroProduct{
-    title,
-    leftDescription,
-    rightDescription,
-    leftImage,
-    filterItems[]{
-      _key,
-      type,
-      icon
-    }
-  }
 }`;
 
 // Add this with the other query exports

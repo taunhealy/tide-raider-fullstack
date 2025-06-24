@@ -16,6 +16,8 @@ export default function RegionFilterButton({
   count,
   isLoading = false,
 }: RegionFilterButtonProps) {
+  console.log(`RegionFilterButton ${region} received count:`, count);
+
   return (
     <button
       onClick={onClick}

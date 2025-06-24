@@ -3,19 +3,13 @@ import { useBeach } from "@/app/context/BeachContext";
 import type { BeachWithScore } from "@/app/types/scores";
 
 export function useFilteredBeaches() {
-  const { beaches, filters, beachScores, forecastData } = useBeach();
+  const { beaches, filters } = useBeach();
 
   return useMemo(() => {
     if (!beaches?.length) return [];
 
-    // Add scores to beaches
-    const beachesWithScores = beaches.map((beach) => ({
-      ...beach,
-      score: beachScores[beach.id]?.score || 0,
-    })) as BeachWithScore[];
-
-    // Filter beaches based on filters
-    const filtered = beachesWithScores.filter((beach) => {
+    // Type assertion to BeachWithScore since we know beaches have scores
+    return (beaches as BeachWithScore[]).filter((beach) => {
       // Search filter
       if (filters.searchQuery) {
         const searchLower = filters.searchQuery.toLowerCase();
@@ -77,7 +71,5 @@ export function useFilteredBeaches() {
 
       return true;
     });
-
-    return filtered;
-  }, [beaches, filters, beachScores, forecastData]);
+  }, [beaches, filters]);
 }
