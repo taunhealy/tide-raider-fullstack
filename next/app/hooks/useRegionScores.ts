@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useBeach } from "@/app/context/BeachContext";
+import { useBeachContext } from "@/app/context/BeachContext";
 
 export function useRegionCounts() {
-  const { loadingStates, beachScores } = useBeach();
+  const { loadingStates, beachScores } = useBeachContext();
   const hasScores = Object.keys(beachScores).length > 0;
 
   console.log("useRegionCounts conditions:", {

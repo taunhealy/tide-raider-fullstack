@@ -1,7 +1,6 @@
 // app/components/StickyForecastWidget.tsx
 "use client";
 
-import { useBeach } from "@/app/context/BeachContext";
 import {
   getWindEmoji,
   getSwellEmoji,
@@ -11,23 +10,26 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
+import { ForecastData } from "../types/forecast";
 
 // Register ScrollTrigger plugin
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-export default function StickyForecastWidget() {
-  // Add try-catch for context usage
-  let contextData;
-  try {
-    contextData = useBeach();
-  } catch (error) {
-    // If context is not available, don't render the widget
-    return null;
-  }
+interface StickyForecastWidgetProps {
+  selectedRegion: string;
+  selectedRegionId: string;
+  forecastData: ForecastData | null;
+  isLoading: boolean;
+}
 
-  const { forecastData: windData, filters } = contextData;
+export default function StickyForecastWidget({
+  selectedRegion,
+  selectedRegionId,
+  forecastData,
+  isLoading,
+}: StickyForecastWidgetProps) {
   const widgetRef = useRef<HTMLDivElement>(null);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -103,12 +105,12 @@ export default function StickyForecastWidget() {
   // Format the data for display with fallback values
   const forecast = {
     date: new Date(),
-    region: filters.location.region || "Global",
-    windSpeed: windData?.windSpeed || 0,
-    windDirection: windData?.windDirection || 0,
-    swellHeight: windData?.swellHeight || 0,
-    swellPeriod: windData?.swellPeriod || 0,
-    swellDirection: windData?.swellDirection || 0,
+    region: selectedRegion || "Global",
+    windSpeed: forecastData?.windSpeed || 0,
+    windDirection: forecastData?.windDirection || 0,
+    swellHeight: forecastData?.swellHeight || 0,
+    swellPeriod: forecastData?.swellPeriod || 0,
+    swellDirection: forecastData?.swellDirection || 0,
   };
 
   return (

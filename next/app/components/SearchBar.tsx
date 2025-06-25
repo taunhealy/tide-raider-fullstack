@@ -1,66 +1,43 @@
+"use client";
+
 import { Search } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import debounce from "lodash/debounce";
-import { useBeach } from "@/app/context/BeachContext";
-import type { Beach, FilterType } from "@/app/types/beaches";
-import RecentRegionSearch from "./RecentRegionSearch";
+import type { Beach } from "@/app/types/beaches";
 
 interface SearchBarProps {
   value: string;
-  onChange: (value: string) => void;
+  onSearch: (value: string) => void;
+  onBeachSelect?: (beach: Beach) => void;
+  suggestions?: Beach[];
   placeholder?: string;
   className?: string;
 }
 
 export default function SearchBar({
   value,
-  onChange,
+  onSearch,
+  onBeachSelect,
+  suggestions = [],
   placeholder = "Search breaks...",
   className,
 }: SearchBarProps) {
-  const { beaches, filters, setFilters } = useBeach();
   const [localValue, setLocalValue] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Create debounced function once and clean it up properly
-  const debouncedUpdate = useRef(
-    debounce((value: string) => {
-      onChange(value);
+  const debouncedSearch = useRef(
+    debounce((searchValue: string) => {
+      onSearch(searchValue);
     }, 300)
   ).current;
 
-  // Filter beaches based on search input
-  const filteredBeaches = beaches.filter((beach) =>
-    beach.name.toLowerCase().includes(localValue.toLowerCase())
-  );
-
-  // Handle beach selection
-  const handleBeachSelect = (beach: Beach) => {
-    setLocalValue(beach.name);
-    onChange(beach.name);
-    setShowSuggestions(false);
-    // Update region filter when beach is selected
-    setFilters({
-      ...filters,
-      location: {
-        ...filters.location,
-        region: beach.region?.name || "",
-        regionId: beach.regionId || "",
-        country: beach.countryId || "",
-        continent: beach.continent || "",
-      },
-    });
-  };
-
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
-      debouncedUpdate.cancel();
+      debouncedSearch.cancel();
     };
-  }, [debouncedUpdate]);
+  }, [debouncedSearch]);
 
-  // Keep local value in sync with prop value
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
@@ -78,11 +55,10 @@ export default function SearchBar({
             const newValue = e.target.value;
             setLocalValue(newValue);
             setShowSuggestions(true);
-            debouncedUpdate(newValue);
+            debouncedSearch(newValue);
           }}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => {
-            // Delay hiding suggestions to allow click events to register
             setTimeout(() => setShowSuggestions(false), 200);
           }}
           placeholder={placeholder}
@@ -93,27 +69,29 @@ export default function SearchBar({
           )}
         />
 
-        {/* Beach Suggestions */}
-        {showSuggestions && localValue && filteredBeaches.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            {filteredBeaches.map((beach) => (
-              <div
-                key={beach.id}
-                className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleBeachSelect(beach)}
-              >
-                <div className="font-medium">{beach.name}</div>
-                <div className="text-sm text-gray-500">
-                  {beach.region?.name}, {beach.countryId}
+        {showSuggestions &&
+          localValue &&
+          suggestions.length > 0 &&
+          onBeachSelect && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.map((beach) => (
+                <div
+                  key={beach.id}
+                  className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    onBeachSelect(beach);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <div className="font-medium">{beach.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {beach.region?.name}, {beach.countryId}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
       </div>
-
-      {/* Recent Regions */}
-      <RecentRegionSearch />
     </div>
   );
 }

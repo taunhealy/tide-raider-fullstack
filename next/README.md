@@ -66,6 +66,22 @@ Better error handling
 Monitoring and logging
 Retries and fault tolerance
 
+## State Management & Hooks Architecture
+
+Context (State Management):
+
+Manages application state
+Shares state between components
+Handles state updates
+Example: BeachContext managing filters, selected beaches, UI state
+
+Hooks (Data Fetching/Logic):
+
+Handles API calls
+Contains business logic
+Manages data transformations
+Example: useBeachData fetching counts, scores, forecast data
+
 ## Surf Break Scoring Flow
 
 Forecast Data + Beaches

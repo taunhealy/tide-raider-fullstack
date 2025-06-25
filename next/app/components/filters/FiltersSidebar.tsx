@@ -2,18 +2,22 @@
 
 import type { FilterType, Difficulty, CrimeLevel } from "@/app/types/beaches";
 import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
-import { useBeach } from "@/app/context/BeachContext";
 
 interface FiltersSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  filters: FilterType;
+  onFilterChange: (newFilters: FilterType) => void;
+  beaches: Beach[];
 }
 
 export default function FiltersSidebar({
   isOpen,
   onClose,
+  filters,
+  onFilterChange,
+  beaches,
 }: FiltersSidebarProps) {
-  const { filters, setFilters, beaches } = useBeach();
   const { waveTypes } = useBeachAttributes(beaches);
 
   const toggleArrayFilter = <T extends string>(
@@ -25,7 +29,7 @@ export default function FiltersSidebar({
       ? currentValues.filter((v) => v !== value)
       : [...currentValues, value];
 
-    setFilters({
+    onFilterChange({
       ...filters,
       [key]: newValues,
     });
@@ -116,7 +120,7 @@ export default function FiltersSidebar({
                 id="sharkAttack"
                 checked={filters.sharkAttack.includes("true")}
                 onChange={(e) => {
-                  setFilters({
+                  onFilterChange({
                     ...filters,
                     sharkAttack: e.target.checked ? ["true"] : [],
                   });
@@ -147,7 +151,7 @@ export default function FiltersSidebar({
               step="0.5"
               value={filters.minPoints}
               onChange={(e) =>
-                setFilters({
+                onFilterChange({
                   ...filters,
                   minPoints: parseFloat(e.target.value),
                 })
@@ -169,7 +173,7 @@ export default function FiltersSidebar({
           {/* Clear All Filters */}
           <button
             onClick={() => {
-              setFilters({
+              onFilterChange({
                 ...filters,
                 waveType: [],
                 difficulty: [],

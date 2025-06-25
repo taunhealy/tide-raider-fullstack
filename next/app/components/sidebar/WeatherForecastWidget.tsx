@@ -1,12 +1,16 @@
 "use client";
 
 // components/sidebar/WeatherForecastWidget.tsx
-import { useBeach } from "@/app/context/BeachContext";
+import { useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { ForecastData } from "@/app/types/forecast";
+import { useBeachContext } from "@/app/context/BeachContext";
 
 interface WeatherForecastWidgetProps {
+  selectedRegion: string;
+  selectedRegionId: string;
   forecastData: ForecastData | null;
+  isLoading: boolean;
 }
 
 const LoadingState = () => (
@@ -26,11 +30,33 @@ const NoDataState = () => (
 );
 
 export default function WeatherForecastWidget({
+  selectedRegion,
+  selectedRegionId,
   forecastData,
+  isLoading,
 }: WeatherForecastWidgetProps) {
-  const { loadingStates } = useBeach();
+  const { loadingStates } = useBeachContext();
 
-  if (loadingStates.forecast || !forecastData) {
+  // Debug logging
+  useEffect(() => {
+    console.log("WeatherForecastWidget state:", {
+      selectedRegion,
+      selectedRegionId,
+      forecastDataPresent: !!forecastData,
+      forecastDataDetails: forecastData,
+      isLoading,
+      contextLoadingStates: loadingStates,
+    });
+  }, [
+    selectedRegion,
+    selectedRegionId,
+    forecastData,
+    isLoading,
+    loadingStates,
+  ]);
+
+  // Show loading state if either prop or context indicates loading
+  if (isLoading || loadingStates.forecast) {
     return (
       <div
         className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
@@ -49,22 +75,7 @@ export default function WeatherForecastWidget({
             </h3>
           </div>
         </div>
-
-        {/* Grid Layout with skeleton loading */}
-        <div className="grid grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md aspect-square flex flex-col relative"
-            >
-              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-              <div className="h-4 w-20 bg-gray-700 rounded animate-pulse mb-2"></div>
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="h-8 w-16 bg-gray-700 rounded animate-pulse"></div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <LoadingState />
       </div>
     );
   }
@@ -78,9 +89,39 @@ export default function WeatherForecastWidget({
     typeof forecastData.swellPeriod !== "undefined" &&
     typeof forecastData.swellDirection !== "undefined";
 
+  // Debug logging for data validation
   if (!hasRequiredData) {
-    return <NoDataState />;
+    console.warn("Missing required forecast data:", {
+      forecastData,
+      windDirection: forecastData?.windDirection,
+      windSpeed: forecastData?.windSpeed,
+      swellHeight: forecastData?.swellHeight,
+      swellPeriod: forecastData?.swellPeriod,
+      swellDirection: forecastData?.swellDirection,
+    });
   }
+
+  if (!hasRequiredData) {
+    return (
+      <div
+        className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
+        style={{
+          borderColor: "rgba(28, 217, 255, 0.4)",
+          boxShadow:
+            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        <NoDataState />
+      </div>
+    );
+  }
+
+  // Debug logging for forecast data
+  console.log("Rendering forecast data:", {
+    forecastData,
+    windDirection: degreesToCardinal(forecastData.windDirection),
+    swellDirection: degreesToCardinal(forecastData.swellDirection),
+  });
 
   return (
     <div
@@ -118,22 +159,16 @@ export default function WeatherForecastWidget({
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="space-y-2 text-center">
               <span className="text-2xl font-semibold text-white font-primary">
-                {degreesToCardinal(forecastData.windDirection) || "N/A"}
+                {degreesToCardinal(forecastData.windDirection)}
               </span>
               <span className="block text-sm text-gray-300 font-primary">
-                {typeof forecastData.windDirection === "number"
-                  ? forecastData.windDirection.toFixed(1)
-                  : "N/A"}
-                °
+                {forecastData.windDirection.toFixed(1)}°
               </span>
               <span className="block text-sm text-gray-300 font-primary">
-                {typeof forecastData.windSpeed === "number"
-                  ? `${forecastData.windSpeed} kts`
-                  : "N/A"}
+                {forecastData.windSpeed} kts
               </span>
             </div>
           </div>
-          <div className="absolute inset-0 border border-[var(--color-tertiary)]/0 group-hover:border-[var(--color-tertiary)]/30 rounded-lg transition-all duration-300"></div>
         </div>
 
         {/* Swell Height */}
@@ -144,12 +179,9 @@ export default function WeatherForecastWidget({
           </label>
           <div className="flex-1 flex flex-col items-center justify-center">
             <span className="text-2xl font-semibold text-white font-primary">
-              {typeof forecastData.swellHeight === "number"
-                ? `${forecastData.swellHeight}m`
-                : "N/A"}
+              {forecastData.swellHeight}m
             </span>
           </div>
-          <div className="absolute inset-0 border border-[var(--color-tertiary)]/0 group-hover:border-[var(--color-tertiary)]/30 rounded-lg transition-all duration-300"></div>
         </div>
 
         {/* Swell Period */}
@@ -160,10 +192,9 @@ export default function WeatherForecastWidget({
           </label>
           <div className="flex-1 flex flex-col items-center justify-center">
             <span className="text-2xl font-semibold text-white font-primary">
-              {forecastData.swellPeriod || "N/A"}s
+              {forecastData.swellPeriod}s
             </span>
           </div>
-          <div className="absolute inset-0 border border-[var(--color-tertiary)]/0 group-hover:border-[var(--color-tertiary)]/30 rounded-lg transition-all duration-300"></div>
         </div>
 
         {/* Swell Direction */}
@@ -175,16 +206,13 @@ export default function WeatherForecastWidget({
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="space-y-2 text-center">
               <span className="text-2xl font-semibold text-white font-primary">
-                {degreesToCardinal(forecastData.swellDirection) || "N/A"}
+                {degreesToCardinal(forecastData.swellDirection)}
               </span>
               <span className="block text-sm text-gray-300 font-primary">
-                {typeof forecastData.swellDirection === "number"
-                  ? `${forecastData.swellDirection}°`
-                  : "N/A"}
+                {forecastData.swellDirection}°
               </span>
             </div>
           </div>
-          <div className="absolute inset-0 border border-[var(--color-tertiary)]/0 group-hover:border-[var(--color-tertiary)]/30 rounded-lg transition-all duration-300"></div>
         </div>
       </div>
     </div>

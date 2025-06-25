@@ -26,6 +26,11 @@ export interface BaseForecastData extends CoreForecastData {
 export interface ForecastData extends BaseForecastData {
   forecasts?: { [date: string]: BaseForecastData };
   alerts?: Alert[]; // Matches Prisma relation
+  scores?: Array<{
+    beachId: string;
+    appearances: number;
+    averageScore: number;
+  }>;
 }
 
 // Component Props types

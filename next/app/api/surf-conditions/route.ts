@@ -239,7 +239,6 @@ export async function GET(request: Request) {
       console.log("No forecast found in database, attempting to scrape...");
       try {
         const newForecast = await getLatestConditions(true, region.id);
-        // Get the complete forecast with all fields from the database
         forecast = await prisma.forecastA.findFirst({
           where: {
             id: newForecast.id,
@@ -261,10 +260,54 @@ export async function GET(request: Request) {
       );
     }
 
-    // Use the deduped version instead
     await dedupedEnsureBeachScores(region.id, forecast.date, forecast);
 
-    return NextResponse.json(forecast);
+    // Get both scores and beaches in parallel for better performance
+    const [scores, beaches] = await Promise.all([
+      prisma.beachDailyScore.findMany({
+        where: {
+          date: forecast.date,
+          regionId: region.id,
+        },
+        select: {
+          beachId: true,
+          score: true,
+        },
+      }),
+      prisma.beach.findMany({
+        where: {
+          regionId: region.id,
+        },
+        include: {
+          region: true,
+        },
+      }),
+    ]);
+
+    // Calculate scores
+    const beachScores = Object.fromEntries(
+      scores.map((score) => [
+        score.beachId,
+        {
+          score: score.score,
+          region: region.id,
+          conditions: {
+            windSpeed: forecast.windSpeed,
+            windDirection: forecast.windDirection,
+            swellHeight: forecast.swellHeight,
+            swellDirection: forecast.swellDirection,
+            swellPeriod: forecast.swellPeriod,
+          },
+        },
+      ])
+    );
+
+    // Return combined response with forecast, scores, and beaches
+    return NextResponse.json({
+      ...forecast,
+      scores: beachScores,
+      beaches,
+    });
   } catch (error) {
     console.error("Detailed error in GET route:", error);
     return NextResponse.json(

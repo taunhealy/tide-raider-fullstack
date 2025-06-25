@@ -63,15 +63,6 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
     },
   });
 
-  console.log("MediaGrid received beach:", {
-    id: beach.id,
-    name: beach.name,
-    region: beach.region,
-  });
-
-  // Add detailed logging for videos
-  console.log("Raw videos prop:", videos);
-
   // Ensure videos is always an array and has the correct shape
   const beachVideos = Array.isArray(videos)
     ? videos.filter(
@@ -163,15 +154,6 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
 
   // For adventure experiences
   const adventureServices = [...adventureAdServices];
-
-  // Add these console logs
-  console.log("MediaGrid Data:", {
-    latestLogEntry: latestLogEntry?.[0],
-    hasVideo: latestLogEntry?.[0]?.videoUrl,
-    videoPlatform: latestLogEntry?.[0]?.videoPlatform,
-    allMediaLength: beachVideos.length,
-    allMedia: beachVideos,
-  });
 
   return (
     <div className="space-y-6">

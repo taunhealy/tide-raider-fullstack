@@ -1,109 +1,77 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
+import { Suspense, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { useBeach } from "@/app/context/BeachContext";
-import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
+import { useBeachContext } from "@/app/context/BeachContext";
 import { usePagination } from "@/app/hooks/usePagination";
-import { useRaidFilters } from "@/app/hooks/useRaidFilters";
 import { LAST_REGION_KEY, LAST_REGION_ID_KEY } from "@/app/constants/storage";
+import { useBeachData } from "@/app/hooks/useBeachData";
 
 // Components
-import StickyForecastWidget from "./StickyForecastWidget";
-import RightSidebar from "./raid/RightSidebar";
-import LeftSidebar from "./raid/LeftSidebar";
+import StickyForecastWidget from "@/app/components/StickyForecastWidget";
+import RightSidebar from "@/app/components/raid/RightSidebar";
+import LeftSidebar from "@/app/components/raid/LeftSidebar";
 import BeachCard from "@/app/components/BeachCard";
 import FilterSidebar from "@/app/components/filters/FiltersSidebar";
 import BeachHeaderControls from "@/app/components/raid/BeachHeaderControls";
+import SidebarSkeleton from "@/app/components/SidebarSkeleton";
+import LoadingIndicator from "@/app/components/LoadingIndicator";
+import EmptyState from "@/app/components/EmptyState";
 
 // Constants
 const ITEMS_PER_PAGE = 18;
 
-interface TodayRating {
-  beachId: string;
-  region: string;
-  score: number;
-}
-
 export default function BeachContainer() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // Context
+  // Get state from context
   const {
     filters,
-    setFilters,
-    setBeaches,
     currentPage,
-    setForecastData,
+    isSidebarOpen,
+    setSidebarOpen,
+    setFilters,
     setLoadingState,
-  } = useBeach();
-  const { getInitialFilters } = useRaidFilters();
+    filteredBeaches,
+    setBeachScores,
+  } = useBeachContext();
 
-  // Queries
-  const { data: forecastData, isLoading: isForecastLoading } = useQuery({
-    queryKey: ["forecast", filters.location.regionId],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/surf-conditions?regionId=${filters.location.regionId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch forecast data");
-      return response.json();
-    },
-    enabled: !!filters.location.regionId,
-    staleTime: 1000 * 60 * 5,
+  // Use BeachData hook to fetch beaches and scores
+  const { beaches, beachScores, forecastData, isLoading } = useBeachData();
+
+  // Add these console logs to debug the data flow
+  console.log("Debug Data:", {
+    "All Beaches": beaches.length,
+    "Filtered Beaches": filteredBeaches.length,
+    "Current Region": filters.location.regionId,
+    "Beach Scores": Object.keys(beachScores).length,
+    "Raw Beaches": beaches,
+    "Raw Filtered": filteredBeaches,
+    "Forecast Data": forecastData,
+    "Loading State": isLoading,
   });
 
-  const {
-    data: beachData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["beaches", filters.location.regionId],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.location.regionId)
-        params.append("regionId", filters.location.regionId);
-      params.append("sortField", "score");
-      params.append("sortDirection", "desc");
+  // Use pagination hook
+  const { currentItems } = usePagination(
+    filteredBeaches,
+    currentPage,
+    ITEMS_PER_PAGE
+  );
 
-      const response = await fetch(`/api/beaches?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch beaches");
-      return response.json();
-    },
-    enabled: !!filters.location.regionId,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: todayRatings } = useQuery({
-    queryKey: ["today-ratings", filters.location.region],
-    queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
-      const regionParam = filters.location.region
-        ? `&region=${encodeURIComponent(filters.location.region)}`
-        : "";
-      const response = await fetch(
-        `/api/beach-scores?date=${today}${regionParam}`
-      );
-      if (!response.ok) return [];
-      return response.json().then((data) => data.scores || []);
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
+  // Fetch additional data
   const { data: allRegions = [] } = useQuery({
     queryKey: ["all-regions"],
     queryFn: () => fetch("/api/regions").then((res) => res.json()),
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
   const { data: blogPosts = [] } = useQuery({
     queryKey: ["blog-posts"],
     queryFn: () => fetch("/api/blog-posts").then((res) => res.json()),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const { data: ads = [] } = useQuery({
@@ -113,58 +81,44 @@ export default function BeachContainer() {
         (res) => res.json()
       ),
     enabled: !!filters.location.regionId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Filtered beaches
-  const filteredBeaches = useFilteredBeaches();
-
-  // Pagination
-  const { currentItems } = usePagination(
-    filteredBeaches,
-    currentPage,
-    ITEMS_PER_PAGE
-  );
-
-  // Effects
+  // Update beach scores in context when they change
   useEffect(() => {
-    if (forecastData) setForecastData(forecastData);
-  }, [forecastData, setForecastData]);
+    if (beachScores) {
+      setBeachScores(beachScores);
+    }
+  }, [beachScores, setBeachScores]);
 
+  // Update loading states
   useEffect(() => {
-    console.log("Current filters:", filters);
-    console.log("Beach data:", beachData);
-    console.log("Filtered beaches:", filteredBeaches);
-    if (beachData) setBeaches(beachData);
-  }, [beachData, setBeaches, filters]);
+    setLoadingState("forecast", isLoading);
+    setLoadingState("beaches", isLoading);
+    setLoadingState("scores", isLoading);
+  }, [isLoading, setLoadingState]);
 
-  useEffect(() => {
-    setLoadingState("forecast", isForecastLoading);
-  }, [isForecastLoading, setLoadingState]);
-
-  // Handle initial filters setup
+  // Handle initial region setup from URL or localStorage
   useEffect(() => {
     const regionIdFromUrl = searchParams.get("regionId");
 
-    if (regionIdFromUrl) {
-      // URL params take precedence
-      setFilters(
-        getInitialFilters({ regionId: regionIdFromUrl }) // Just pass regionId
-      );
-    } else {
-      // Try localStorage
+    if (regionIdFromUrl && regionIdFromUrl !== filters.location.regionId) {
+      setFilters({
+        ...filters,
+        location: { ...filters.location, regionId: regionIdFromUrl },
+      });
+    } else if (!filters.location.regionId) {
       const lastRegionId = localStorage.getItem(LAST_REGION_ID_KEY);
-
-      if (lastRegionId && !filters.location.regionId) {
-        setFilters(getInitialFilters({ regionId: lastRegionId }));
-      } else {
-        // Use default filters
-        setFilters(getInitialFilters({}));
+      if (lastRegionId) {
+        setFilters({
+          ...filters,
+          location: { ...filters.location, regionId: lastRegionId },
+        });
       }
     }
-  }, []);
+  }, [searchParams, filters, setFilters]);
 
-  // Save region to localStorage when it changes
+  // Persist region selection
   useEffect(() => {
     if (filters.location.region && filters.location.regionId) {
       localStorage.setItem(LAST_REGION_KEY, filters.location.region);
@@ -172,66 +126,116 @@ export default function BeachContainer() {
     }
   }, [filters.location.region, filters.location.regionId]);
 
-  // Only show error state
-  if (error) return <div>Error loading beaches</div>;
+  // Modal handlers
+  const handleOpenModal = (beachName: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("beach", beachName);
+    router.push(`${pathname}?${params}`, { scroll: false });
+  };
+
+  const handleCloseModal = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete("beach");
+    router.replace(`${pathname}?${params}`, { scroll: false });
+  };
+
+  console.log("Beach Scores:", beachScores);
+  console.log(
+    "Current Items with Scores:",
+    currentItems.map((beach) => ({
+      id: beach.id,
+      name: beach.name,
+      score: beachScores[beach.id]?.score,
+    }))
+  );
 
   return (
-    <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col">
+    <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
-        <Suspense
-          fallback={
-            <div className="w-full h-96 bg-gray-200 rounded animate-pulse" />
-          }
-        >
+        <Suspense fallback={<SidebarSkeleton />}>
           <LeftSidebar blogPosts={blogPosts} regions={allRegions} />
         </Suspense>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
-            <div className="flex flex-col gap-5">
-              <BeachHeaderControls
-                showFilters={showFilters}
-                setShowFilters={setShowFilters}
-                regions={allRegions}
-              />
+            <BeachHeaderControls
+              showFilters={isSidebarOpen}
+              onToggleFilters={(show) => setSidebarOpen(show)}
+              beaches={beaches}
+              filters={filters}
+              onFiltersChange={setFilters}
+            />
 
-              <div className="grid grid-cols-1 gap-[16px] relative">
-                {isLoading && (
-                  <div className="absolute inset-0 bg-white/50 z-10 flex items-start justify-end p-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--color-bg-tertiary)]"></div>
+            <div className="grid grid-cols-1 gap-[16px] relative">
+              {!filters.location.regionId ? (
+                <EmptyState message="Select a region to view beaches" />
+              ) : isLoading && beaches.length === 0 ? (
+                <LoadingIndicator />
+              ) : beaches.length === 0 ? (
+                <EmptyState message="No beaches found in this region" />
+              ) : filteredBeaches.length === 0 ? (
+                <EmptyState message="No beaches match your current filters" />
+              ) : (
+                <>
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+                      <LoadingIndicator />
+                    </div>
+                  )}
+                  <div className={isLoading ? "opacity-50" : ""}>
+                    {currentItems.map((beach) => {
+                      console.log(`Preparing BeachCard for ${beach.name}:`, {
+                        beachId: beach.id,
+                        hasForecastData: !!forecastData,
+                        hasScore: !!beachScores[beach.id],
+                        score: beachScores[beach.id]?.score,
+                        isLoading,
+                      });
+
+                      return (
+                        <BeachCard
+                          key={beach.id}
+                          beach={beach}
+                          score={beachScores[beach.id]?.score ?? 0}
+                          forecastData={forecastData}
+                          isLoading={isLoading}
+                          onOpenModal={() => handleOpenModal(beach.name)}
+                          onCloseModal={handleCloseModal}
+                        />
+                      );
+                    })}
                   </div>
-                )}
-
-                {!isLoading && !currentItems.length ? (
-                  <div>No beaches found</div>
-                ) : (
-                  currentItems.map((beach, index) => (
-                    <BeachCard key={beach.id} beachId={beach.id} />
-                  ))
-                )}
-              </div>
+                </>
+              )}
             </div>
           </main>
 
-          <Suspense
-            fallback={
-              <div className="w-full h-96 bg-gray-200 rounded animate-pulse" />
-            }
-          >
+          <Suspense fallback={<SidebarSkeleton />}>
             <RightSidebar
               availableAds={ads}
               selectedRegion={filters.location.region}
+              forecastData={forecastData}
+              isLoading={isLoading}
             />
           </Suspense>
         </div>
       </div>
 
       <FilterSidebar
-        isOpen={showFilters}
-        onClose={() => setShowFilters(false)}
+        isOpen={isSidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        filters={filters}
+        onFilterChange={setFilters}
+        beaches={beaches}
       />
+
       <Suspense fallback={null}>
-        <StickyForecastWidget />
+        <StickyForecastWidget
+          selectedRegion={filters.location.region}
+          selectedRegionId={filters.location.regionId}
+          forecastData={forecastData}
+          isLoading={isLoading}
+        />
       </Suspense>
     </div>
   );

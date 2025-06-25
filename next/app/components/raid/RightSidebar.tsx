@@ -3,10 +3,11 @@ import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
-import { useBeach } from "@/app/context/BeachContext";
+import { useBeachContext } from "@/app/context/BeachContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useMemo } from "react";
 import RaidLogSidebar from "@/app/components/RaidLogSidebar";
+import { ForecastData } from "@/app/types/forecast";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -138,15 +139,17 @@ const RaidLogSkeleton = () => (
 interface RightSidebarProps {
   availableAds: any[];
   selectedRegion?: string;
-  beaches?: any[];
+  forecastData: ForecastData | null;
+  isLoading: boolean;
 }
 
 export default function RightSidebar({
   availableAds,
   selectedRegion = "Western Cape",
-  beaches = [],
+  forecastData,
+  isLoading,
 }: RightSidebarProps) {
-  const { forecastData, beaches: allBeaches, isLoading } = useBeach();
+  const { beaches: allBeaches, filters } = useBeachContext();
 
   const handleBeachClick = (beach: any) => {
     // Implement beach click handler logic
@@ -164,7 +167,14 @@ export default function RightSidebar({
       };
     } else {
       return {
-        forecast: <WeatherForecastWidget forecastData={forecastData} />,
+        forecast: (
+          <WeatherForecastWidget
+            selectedRegion={selectedRegion}
+            selectedRegionId={filters.location.regionId}
+            forecastData={forecastData}
+            isLoading={isLoading}
+          />
+        ),
         highScores: selectedRegion ? (
           <RegionalHighScores
             beaches={allBeaches}
@@ -185,6 +195,7 @@ export default function RightSidebar({
     selectedRegion,
     allBeaches,
     availableAds,
+    filters.location.regionId,
     handleBeachClick,
   ]);
 

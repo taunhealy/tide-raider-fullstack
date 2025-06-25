@@ -1,23 +1,61 @@
+"use client";
+
 import { cn } from "@/app/lib/utils";
 import SearchBar from "../SearchBar";
-
-import { Region } from "@/app/types/beaches";
-import { useBeach } from "@/app/context/BeachContext";
+import RecentRegionSearch from "../RecentRegionSearch";
+import type { Beach, FilterType } from "@/app/types/beaches";
+import type { Region } from "@/app/types/regions";
 
 interface BeachHeaderControlsProps {
   showFilters: boolean;
-  setShowFilters: (show: boolean) => void;
-  regions: Region[];
+  onToggleFilters: (show: boolean) => void;
+  beaches: Beach[];
+  filters: FilterType;
+  onFiltersChange: (filters: FilterType) => void;
 }
 
 export default function BeachHeaderControls({
   showFilters,
-  setShowFilters,
-  regions,
+  onToggleFilters,
+  beaches,
+  filters,
+  onFiltersChange,
 }: BeachHeaderControlsProps) {
-  const { filters, setFilters } = useBeach();
+  const filteredBeaches = beaches.filter((beach) =>
+    beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
+  );
 
-  console.log("Current filters in HeaderControls:", filters);
+  const handleSearch = (value: string) => {
+    onFiltersChange({ ...filters, searchQuery: value });
+  };
+
+  const handleBeachSelect = (beach: Beach) => {
+    onFiltersChange({
+      ...filters,
+      searchQuery: beach.name,
+      location: {
+        ...filters.location,
+        region: beach.region?.name || "",
+        regionId: beach.regionId || "",
+        country: beach.countryId || "",
+        continent: beach.continent || "",
+      },
+    });
+  };
+
+  const handleRegionSelect = (region: Region) => {
+    console.log("Region selected in BeachHeaderControls:", region);
+    onFiltersChange({
+      ...filters,
+      location: {
+        ...filters.location,
+        region: region.name,
+        regionId: region.id,
+        country: region.country || "",
+        continent: region.continent || "",
+      },
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -33,15 +71,19 @@ export default function BeachHeaderControls({
             <div className="w-full sm:w-auto flex-1">
               <SearchBar
                 value={filters.searchQuery}
-                onChange={(value) => {
-                  console.log("Search value changing to:", value);
-                  setFilters({ ...filters, searchQuery: value });
-                }}
+                onSearch={handleSearch}
+                onBeachSelect={handleBeachSelect}
+                suggestions={filteredBeaches}
                 placeholder="Search breaks..."
+              />
+              <RecentRegionSearch
+                selectedRegionId={filters.location.regionId}
+                onRegionSelect={handleRegionSelect}
+                className="mt-2"
               />
             </div>
             <button
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => onToggleFilters(!showFilters)}
               className={cn(
                 "font-primary",
                 "text-black font-semibold",

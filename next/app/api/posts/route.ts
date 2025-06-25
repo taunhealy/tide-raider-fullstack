@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
       data = await client.fetch(postsByCategorySlugQuery, {
         categorySlug: category,
       });
-      console.log(`API Response for category '${category}':`, data);
 
       // Return the posts directly as an array
       return NextResponse.json(data);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
-import { useBeach } from "@/app/context/BeachContext";
+import { useBeachContext } from "@/app/context/BeachContext";
 import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
 
 // Optional: Use react-leaflet if you have it installed
@@ -10,7 +10,7 @@ import { useBeachAttributes } from "@/app/hooks/useBeachAttributes";
 // import "leaflet/dist/leaflet.css";
 
 export default function MapView() {
-  const { beaches, beachScores, forecastData: windData } = useBeach();
+  const { beaches, beachScores, forecastData: windData } = useBeachContext();
   const { uniqueRegions } = useBeachAttributes(beaches);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
@@ -59,7 +59,8 @@ export default function MapView() {
               >
                 {region}
                 <div className="text-xs text-gray-500 mt-1">
-                  {beaches.filter((b) => b.region.name === region).length} spots
+                  {beaches.filter((b) => b.region?.name === region).length}{" "}
+                  spots
                 </div>
               </div>
             ))}

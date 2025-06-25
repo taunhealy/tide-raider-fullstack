@@ -1,43 +1,73 @@
 "use client";
 
-import { useLocationFilter } from "@/app/hooks/useLocationFilter";
+import { useBeachContext } from "@/app/context/BeachContext";
 import { useRegionCounts } from "@/app/hooks/useRegionScores";
 import { FilterHeader } from "@/app/components/ui/FilterHeader";
 import RegionFilterButton from "@/app/components/ui/RegionFilterButton";
-import type { FilterType, Region } from "@/app/types/beaches";
+import type { Region } from "@/app/types/beaches";
+import { useState, useMemo } from "react";
 
 interface LocationFilterProps {
-  filters: FilterType;
-  setFilters: (filters: FilterType) => void;
   regions: Region[];
+  selectedRegion: string;
+  selectedRegionId: string;
+  onRegionSelect: (region: Region | null) => void;
   disabled?: boolean;
 }
 
-export default function LocationFilter({
-  filters,
-  setFilters,
-  regions,
-}: LocationFilterProps) {
+export default function LocationFilter({ regions }: LocationFilterProps) {
+  console.log(
+    "[REGION_FILTER] Rendering with regions:",
+    regions.map((r) => r.id)
+  );
+  const { filters, updateFilters, setLoadingState } = useBeachContext();
   const { data: regionCountsData } = useRegionCounts();
-  const regionCounts = regionCountsData?.counts || {};
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loadingRegionId, setLoadingRegionId] = useState<string | null>(null);
 
-  console.log("regionCountsData from hook:", regionCountsData);
-  console.log("Processed regionCounts:", regionCounts);
-  console.log("Sample region:", regions[0]); // Log a sample region to see its structure
+  // Filter regions based on search
+  const filteredRegions = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return regions.filter(
+      (region) =>
+        region.name.toLowerCase().includes(query) ||
+        region.country?.name.toLowerCase().includes(query)
+    );
+  }, [regions, searchQuery]);
 
-  const {
-    searchQuery,
-    setSearchQuery,
-    filteredRegions,
-    groupedRegions,
-    updateUrlAndFilters,
-  } = useLocationFilter(filters, setFilters, regions);
+  const handleRegionSelect = async (region: Region | null) => {
+    if (!region) return;
+
+    setLoadingState("forecast", true);
+    setLoadingRegionId(region.id);
+
+    try {
+      // Just update the filters - this will trigger the context to handle data fetching
+      updateFilters({
+        ...filters,
+        location: {
+          regionId: region.id.toLowerCase(),
+          region: region.name,
+          country: region.country?.name || "",
+          continent: region.country?.continentId || "",
+        },
+      });
+    } catch (error) {
+      console.error("[REGION_SELECT] Error:", error);
+    } finally {
+      setLoadingState("forecast", false);
+      setLoadingRegionId(null);
+    }
+  };
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setFilters({
+    updateFilters({
       ...filters,
-      location: { ...filters.location, region: "", regionId: "" },
+      location: {
+        ...filters.location,
+        regionId: "",
+      },
     });
   };
 
@@ -48,99 +78,29 @@ export default function LocationFilter({
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onClearFilters={handleClearFilters}
-        placeholder="Search regions or countries..."
+        placeholder="Search regions..."
       />
 
-      <div className="flex flex-col gap-4">
-        {groupedRegions ? (
-          <GroupedRegionList
-            groupedRegions={groupedRegions}
-            filters={filters}
-            regionCounts={regionCounts}
-            onRegionSelect={updateUrlAndFilters}
-          />
-        ) : (
-          <RegionList
-            regions={filteredRegions}
-            filters={filters}
-            regionCounts={regionCounts}
-            onRegionSelect={updateUrlAndFilters}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface GroupedRegionListProps {
-  groupedRegions: Record<string, Region[]>;
-  filters: FilterType;
-  regionCounts: Record<string, number>;
-  onRegionSelect: (region: Region | null) => void;
-}
-
-function GroupedRegionList({
-  groupedRegions,
-  filters,
-  regionCounts,
-  onRegionSelect,
-}: GroupedRegionListProps) {
-  return Object.entries(groupedRegions).map(([countryName, countryRegions]) => (
-    <div key={countryName} className="space-y-2">
-      <h6 className="text-sm text-gray-600 font-primary">{countryName}</h6>
       <div className="flex flex-wrap gap-2">
-        {countryRegions.map((region) => {
-          console.log(`Region ${region.name} count:`, regionCounts[region.id]);
+        {filteredRegions.map((region) => {
+          const isSelected = filters.location.regionId === region.id;
+          const isLoading = loadingRegionId === region.id;
+
           return (
             <RegionFilterButton
               key={region.id}
-              region={region.name}
-              isSelected={filters.location.regionId === region.id}
-              onClick={() =>
-                onRegionSelect(
-                  filters.location.regionId === region.id ? null : region
-                )
-              }
-              count={regionCounts[region.id] || 0}
+              region={region}
+              isSelected={isSelected}
+              isLoading={isLoading}
+              onClick={() => {
+                console.log("[REGION_CLICK] Button clicked:", region.id);
+                handleRegionSelect(isSelected ? null : region);
+              }}
+              count={regionCountsData?.counts?.[region.id] || 0}
             />
           );
         })}
       </div>
-    </div>
-  ));
-}
-
-interface RegionListProps {
-  regions: Region[];
-  filters: FilterType;
-  regionCounts: Record<string, number>;
-  onRegionSelect: (region: Region | null) => void;
-}
-
-function RegionList({
-  regions,
-  filters,
-  regionCounts,
-  onRegionSelect,
-}: RegionListProps) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {regions.map((region) => {
-        console.log(`Region ${region.name} count:`, regionCounts[region.id]);
-        return (
-          <RegionFilterButton
-            key={region.id}
-            region={region.name}
-            isSelected={filters.location.regionId === region.id}
-            onClick={() =>
-              onRegionSelect(
-                filters.location.regionId === region.id ? null : region
-              )
-            }
-            count={regionCounts[region.id] || 0}
-          />
-        );
-      })}
     </div>
   );
 }

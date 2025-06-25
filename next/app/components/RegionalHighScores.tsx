@@ -68,12 +68,24 @@ function RegionalHighScoresContent({
       const { startDate, endDate } = getDateRange();
 
       const response = await fetch(
-        `/api/beach-scores?region=${encodeURIComponent(selectedRegion)}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        `/api/surf-conditions?regionId=${selectedRegion.toLowerCase()}&date=${startDate.toISOString()}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch scores");
 
-      const { scores } = await response.json();
+      const data = await response.json();
+
+      // Extract scores from the response
+      const beachScores = data.scores || {};
+
+      // Transform scores into the expected format
+      const scores = Object.entries(beachScores).map(
+        ([beachId, scoreData]: [string, any]) => ({
+          beachId,
+          appearances: 1, // Since we're getting daily scores
+          averageScore: scoreData.score || 0,
+        })
+      );
 
       // Map scores to beach details
       const beachesWithScores = scores

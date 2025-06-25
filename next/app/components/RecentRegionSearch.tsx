@@ -1,27 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { useBeach } from "@/app/context/BeachContext";
 import { cn } from "@/app/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import gsap from "gsap";
-import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import type { Region, UserSearch } from "@/app/types/regions";
+import { useBeachContext } from "@/app/context/BeachContext";
 
-interface UserSearch {
-  id: string;
-  region: {
-    id: string;
-    name: string;
-  };
+interface RecentRegionSearchProps {
+  selectedRegionId?: string;
+  onRegionSelect: (region: Region) => void;
+  className?: string;
 }
 
 export default function RecentRegionSearch({
+  selectedRegionId,
+  onRegionSelect,
   className,
-}: {
-  className?: string;
-}) {
-  const { filters, setFilters } = useBeach();
+}: RecentRegionSearchProps) {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const { updateFilters, filters, setLoadingState } = useBeachContext();
 
   // Enhanced caching strategy for recent searches
   const { data: recentSearches } = useQuery({
@@ -29,24 +27,13 @@ export default function RecentRegionSearch({
     queryFn: async () => {
       const res = await fetch("/api/user-searches?limit=5");
       if (!res.ok) throw new Error("Failed to fetch searches");
-      const data = await res.json();
-      localStorage.setItem("recentSearches", JSON.stringify(data));
-      return data;
+      return res.json();
     },
-    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
-    gcTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    initialData: () => {
-      // Try to get data from localStorage as initial data
-      try {
-        const cached = localStorage.getItem("recentSearches");
-        return cached ? JSON.parse(cached) : undefined;
-      } catch {
-        return undefined;
-      }
-    },
   });
 
   // Track new searches
@@ -60,48 +47,63 @@ export default function RecentRegionSearch({
       if (!res.ok) throw new Error("Failed to track search");
       return res.json();
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentSearches"] });
+    },
   });
 
   const handleButtonClick = async (search: UserSearch) => {
-    if (containerRef.current) {
-      setLoadingId(search.id);
+    if (!containerRef.current) return;
 
-      // Check if this region is already in recent searches
-      const isExistingRegion = recentSearches?.some(
-        (s: UserSearch) => s.region.id === search.region.id
-      );
+    // Set loading states
+    setLoadingState("forecast", true);
+    setLoadingState("beaches", true);
+    setLoadingId(search.id);
 
-      // Update filters first
-      setFilters({
+    try {
+      // Create region object
+      const selectedRegion = {
+        id: search.region.id,
+        name: search.region.name,
+        country: search.region.country,
+        continent: search.region.continent,
+      };
+
+      // Update context
+      updateFilters({
         ...filters,
         location: {
           ...filters.location,
-          region: search.region.name,
-          regionId: search.region.id,
+          regionId: selectedRegion.id.toLowerCase(),
+          region: selectedRegion.name,
+          country: selectedRegion.country,
+          continent: selectedRegion.continent,
         },
       });
 
-      // Only track and refetch if it's a new region
-      if (!isExistingRegion) {
-        await trackSearch(search.region.id);
-        await queryClient.invalidateQueries({ queryKey: ["recentSearches"] });
-      } else {
-        // Subtle bounce animation for existing region
-        const button = containerRef.current.querySelector(
-          `[data-region-id="${search.region.id}"]`
-        );
-        if (button) {
-          gsap.to(button, {
-            y: -4,
-            yoyo: true,
-            repeat: 1,
-            duration: 0.2,
-            ease: "power2.inOut",
-          });
-        }
+      // Notify parent
+      onRegionSelect(selectedRegion);
+
+      // Fetch forecast data first
+      const forecastRes = await fetch(
+        `/api/surf-conditions?regionId=${selectedRegion.id.toLowerCase()}`
+      );
+
+      if (!forecastRes.ok) {
+        throw new Error("Failed to fetch forecast data");
       }
 
-      setLoadingId(null);
+      // Track search in background without waiting
+      trackSearch(search.region.id);
+    } catch (error) {
+      console.error("Error during region selection:", error);
+    } finally {
+      // Small delay before resetting loading states to ensure UI updates
+      setTimeout(() => {
+        setLoadingState("forecast", false);
+        setLoadingState("beaches", false);
+        setLoadingId(null);
+      }, 500);
     }
   };
 
@@ -126,33 +128,32 @@ export default function RecentRegionSearch({
 
   return (
     <div ref={containerRef} className={cn("flex flex-wrap gap-2", className)}>
-      {recentSearches.map((search: UserSearch) => (
-        <button
-          key={search.id}
-          data-region-id={search.region.id}
-          onClick={() => handleButtonClick(search)}
-          disabled={loadingId !== null}
-          className={cn(
-            "px-3 py-1.5 text-sm rounded-full",
-            "bg-white border border-gray-200",
-            "hover:bg-gray-50 transition-colors",
-            "font-primary text-[var(--color-text-primary)]",
-            "flex items-center gap-2",
-            loadingId === search.id && "cursor-wait",
-            filters.location.regionId === search.region.id &&
-              "bg-[var(--color-bg-tertiary)] text-white border-transparent"
-          )}
-        >
-          {loadingId === search.id ? (
-            <>
-              <LoadingSpinner size="sm" />
-              {search.region.name}
-            </>
-          ) : (
-            search.region.name
-          )}
-        </button>
-      ))}
+      {recentSearches.map((search: UserSearch) => {
+        const isSelected =
+          selectedRegionId?.toLowerCase() === search.region.id.toLowerCase();
+        const isLoading = loadingId === search.id;
+
+        return (
+          <button
+            key={search.id}
+            data-region-id={search.region.id}
+            onClick={() => handleButtonClick(search)}
+            disabled={loadingId !== null}
+            className={cn(
+              "px-3 py-1.5 text-sm rounded-full",
+              "bg-white border border-gray-200",
+              "hover:bg-gray-50 transition-colors",
+              "font-primary text-[var(--color-text-primary)]",
+              "flex items-center gap-2",
+              isLoading && "cursor-wait opacity-70",
+              isSelected &&
+                "bg-[var(--color-bg-tertiary)] text-white border-transparent"
+            )}
+          >
+            {search.region.name}
+          </button>
+        );
+      })}
     </div>
   );
 }

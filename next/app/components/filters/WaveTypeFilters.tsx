@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { WAVE_TYPE_ICONS, WaveType } from "@/app/lib/constants";
-import { useBeach } from "@/app/context/BeachContext";
+import { useBeachContext } from "@/app/context/BeachContext";
 import { WAVE_TYPES } from "@/app/types/beaches";
 
 interface WaveTypeFilterProps {
@@ -14,7 +14,7 @@ export default function WaveTypeFilter({
   onWaveTypeChange,
   waveTypes,
 }: WaveTypeFilterProps) {
-  const { filters, setFilters } = useBeach();
+  const { filters, setFilters } = useBeachContext();
 
   return (
     <div className="mb-6 overflow-x-auto pb-2">
