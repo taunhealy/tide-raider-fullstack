@@ -5,8 +5,13 @@ import type { Country } from "@prisma/client";
 export interface Region {
   id: string;
   name: string;
-  country: string;
-  continent: string;
+  countryId: string;
+  continent?: string;
+  country?: {
+    id: string;
+    name: string;
+    continentId: string;
+  };
 }
 
 export interface UserSearch {

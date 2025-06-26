@@ -26,12 +26,12 @@ import type { Beach } from "@/app/types/beaches";
 import { ErrorBoundary } from "./ErrorBoundary";
 import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
 
-import type { ForecastData } from "@/app/types/forecast";
+import { CoreForecastData } from "@/app/types/forecast";
 
 interface BeachCardProps {
   beach: Beach;
   score: number;
-  forecastData: ForecastData | null;
+  forecastData: CoreForecastData | null;
   isLoading?: boolean;
   onOpenModal?: (beachName: string) => void;
   onCloseModal?: () => void;

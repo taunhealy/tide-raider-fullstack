@@ -1,13 +1,13 @@
+"use client";
+
+import { useBeachData } from "@/app/hooks/useBeachData";
+import { useBeachContext } from "@/app/context/BeachContext";
 import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
-import { useBeachContext } from "@/app/context/BeachContext";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { useMemo } from "react";
-import RaidLogSidebar from "@/app/components/RaidLogSidebar";
-import { ForecastData } from "@/app/types/forecast";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -136,76 +136,23 @@ const RaidLogSkeleton = () => (
   </div>
 );
 
-interface RightSidebarProps {
-  availableAds: any[];
-  selectedRegion?: string;
-  forecastData: ForecastData | null;
-  isLoading: boolean;
-}
-
-export default function RightSidebar({
-  availableAds,
-  selectedRegion = "Western Cape",
-  forecastData,
-  isLoading,
-}: RightSidebarProps) {
-  const { beaches: allBeaches, filters } = useBeachContext();
-
-  const handleBeachClick = (beach: any) => {
-    // Implement beach click handler logic
-  };
-
-  // Pre-determine what to render to avoid complex conditional logic
-  const sidebarContent = useMemo(() => {
-    if (isLoading) {
-      return {
-        forecast: <ForecastWidgetSkeleton />,
-        highScores: <RegionalHighScoresSkeleton />,
-        raidLog: <RaidLogSkeleton />,
-        adventures: <AdventureExperiencesSkeleton />,
-        services: <RegionalServicesSidebarSkeleton />,
-      };
-    } else {
-      return {
-        forecast: (
-          <WeatherForecastWidget
-            selectedRegion={selectedRegion}
-            selectedRegionId={filters.location.regionId}
-            forecastData={forecastData}
-            isLoading={isLoading}
-          />
-        ),
-        highScores: selectedRegion ? (
-          <RegionalHighScores
-            beaches={allBeaches}
-            selectedRegion={selectedRegion}
-            onBeachClick={handleBeachClick}
-          />
-        ) : null,
-        raidLog: <RaidLogSidebar />,
-        adventures: <AdventureExperiences selectedRegion={selectedRegion} />,
-        services: (
-          <RegionalSidebar selectedRegion={selectedRegion} ads={availableAds} />
-        ),
-      };
-    }
-  }, [
-    isLoading,
-    forecastData,
-    selectedRegion,
-    allBeaches,
-    availableAds,
-    filters.location.regionId,
-    handleBeachClick,
-  ]);
+export default function RightSidebar() {
+  const { filters } = useBeachContext();
+  const { beaches, forecastData, isLoading } = useBeachData();
 
   return (
     <aside className="space-y-6 lg:w-[250px] xl:w-[300px]">
-      {sidebarContent.forecast}
-      {sidebarContent.highScores}
-      {sidebarContent.raidLog}
-      {sidebarContent.adventures}
-      {sidebarContent.services}
+      <WeatherForecastWidget />
+      {filters.regionId && (
+        <RegionalHighScores
+          beaches={beaches}
+          selectedRegion={filters.regionId}
+        />
+      )}
+      <AdventureExperiences
+        selectedRegion={filters.region || filters.regionId}
+      />
+      <RegionalSidebar  />
       <FunFacts />
     </aside>
   );

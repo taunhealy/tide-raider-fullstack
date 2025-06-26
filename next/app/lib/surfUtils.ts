@@ -64,8 +64,8 @@ export function degreesToCardinal(degrees: number | null | string): string {
 //get condition reasons
 export function getConditionReasons(
   beach: Beach,
-  forecastData: BaseForecastData | null,
-  isGoodConditions: boolean = false
+  forecastData: CoreForecastData | null,
+  includeDetails: boolean = true
 ) {
   if (!forecastData?.windDirection || !forecastData?.swellDirection) {
     return {
@@ -100,9 +100,9 @@ export function getConditionReasons(
   // Check wind direction
   const windCardinal = degreesToCardinal(forecastData.windDirection);
   const hasGoodWind = beach.optimalWindDirections.includes(windCardinal);
-  if (isGoodConditions ? hasGoodWind : !hasGoodWind) {
+  if (includeDetails ? hasGoodWind : !hasGoodWind) {
     reasons.push(
-      isGoodConditions
+      includeDetails
         ? `Perfect wind direction (${forecastData.windDirection})`
         : `Wind direction (${forecastData.windDirection}) not optimal`
     );
@@ -115,7 +115,7 @@ export function getConditionReasons(
   const swellDirDiff = Math.min(minSwellDiff, maxSwellDiff);
 
   if (
-    isGoodConditions
+    includeDetails
       ? swellDeg >= beach.optimalSwellDirections.min &&
         swellDeg <= beach.optimalSwellDirections.max
       : !(
@@ -124,7 +124,7 @@ export function getConditionReasons(
         )
   ) {
     reasons.push(
-      isGoodConditions
+      includeDetails
         ? `Great swell direction (${forecastData.swellDirection}°)`
         : `Swell direction (${forecastData.swellDirection}°) outside optimal range`
     );
@@ -135,8 +135,8 @@ export function getConditionReasons(
     forecastData.swellHeight >= beach.swellSize.min &&
     forecastData.swellHeight <= beach.swellSize.max;
 
-  if (isGoodConditions ? hasGoodSwellHeight : !hasGoodSwellHeight) {
-    if (isGoodConditions) {
+  if (includeDetails ? hasGoodSwellHeight : !hasGoodSwellHeight) {
+    if (includeDetails) {
       reasons.push(`Perfect wave height (${forecastData.swellHeight}m)`);
     } else {
       const issue =

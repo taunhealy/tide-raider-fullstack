@@ -10,27 +10,19 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
-import { ForecastData } from "../types/forecast";
+import { useBeachContext } from "../context/BeachContext";
+import { useBeachData } from "../hooks/useBeachData";
+import { CoreForecastData } from "@/app/types/forecast";
 
 // Register ScrollTrigger plugin
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-interface StickyForecastWidgetProps {
-  selectedRegion: string;
-  selectedRegionId: string;
-  forecastData: ForecastData | null;
-  isLoading: boolean;
-}
-
-export default function StickyForecastWidget({
-  selectedRegion,
-  selectedRegionId,
-  forecastData,
-  isLoading,
-}: StickyForecastWidgetProps) {
+export default function StickyForecastWidget() {
   const widgetRef = useRef<HTMLDivElement>(null);
+  const { filters } = useBeachContext();
+  const { forecastData } = useBeachData();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const { data: sponsors = [] } = useQuery({
@@ -103,14 +95,14 @@ export default function StickyForecastWidget({
   }, [currentIndex, sponsors.length]);
 
   // Format the data for display with fallback values
-  const forecast = {
+  const forecast: CoreForecastData = {
     date: new Date(),
-    region: selectedRegion || "Global",
-    windSpeed: forecastData?.windSpeed || 0,
-    windDirection: forecastData?.windDirection || 0,
-    swellHeight: forecastData?.swellHeight || 0,
-    swellPeriod: forecastData?.swellPeriod || 0,
-    swellDirection: forecastData?.swellDirection || 0,
+    regionId: filters.regionId,
+    windSpeed: forecastData?.windSpeed ?? 0,
+    windDirection: forecastData?.windDirection ?? 0,
+    swellHeight: forecastData?.swellHeight ?? 0,
+    swellPeriod: forecastData?.swellPeriod ?? 0,
+    swellDirection: forecastData?.swellDirection ?? 0,
   };
 
   return (
@@ -174,7 +166,7 @@ export default function StickyForecastWidget({
               Today's Forecast
             </h4>
             <span className="text-xs text-gray-500 font-primary">
-              {forecast.region}
+              {forecast.regionId}
             </span>
           </div>
 

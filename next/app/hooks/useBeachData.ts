@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBeachContext } from "@/app/context/BeachContext";
 import type { BeachScoreMap } from "@/app/types/scores";
-import type { ForecastData } from "@/app/types/forecast";
+import type { CoreForecastData } from "@/app/types/forecast";
 import type { Beach } from "@/app/types/beaches";
 
 interface BeachScore {
@@ -20,42 +20,89 @@ interface BeachScore {
 interface SurfConditionsResponse {
   beaches: Beach[];
   scores: BeachScoreMap;
-  forecast: ForecastData;
+  forecast: CoreForecastData;
 }
 
 export function useBeachData() {
-  const { filters } = useBeachContext();
+  const {
+    filters,
+    setForecastData,
+    setBeachScores,
+    setBeaches,
+    setLoadingState,
+  } = useBeachContext();
 
   const { data, isLoading, isFetching } = useQuery<SurfConditionsResponse>({
-    queryKey: ["surf-conditions", filters.location.regionId],
+    queryKey: ["surf-conditions", filters.regionId],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/surf-conditions?regionId=${filters.location.regionId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch surf conditions");
-      const result = await response.json();
+      console.log("Fetching surf conditions for region:", filters.regionId);
+      setLoadingState("forecast", true);
+      try {
+        const response = await fetch(
+          `/api/surf-conditions?regionId=${filters.regionId}`
+        );
+        if (!response.ok) {
+          console.error("API error:", response.status, response.statusText);
+          throw new Error("Failed to fetch surf conditions");
+        }
+        const result = await response.json();
+        console.log("API response:", result);
 
-      // Validate the scores structure
-      console.log("API response scores:", {
-        hasScores: !!result.scores,
-        scoreType: typeof result.scores,
-        sampleScore: result.scores && Object.entries(result.scores)[0],
-      });
+        // Handle flat structure from API
+        if (result) {
+          const forecastData = {
+            windSpeed: result.windSpeed,
+            windDirection: result.windDirection,
+            swellHeight: result.swellHeight,
+            swellPeriod: result.swellPeriod,
+            swellDirection: result.swellDirection,
+            date: result.date || new Date(),
+            regionId: filters.regionId,
+          };
+          console.log("Setting forecast data:", forecastData);
+          setForecastData(forecastData);
+        }
 
-      return result;
+        if (result.scores) {
+          console.log(
+            "Setting beach scores:",
+            Object.keys(result.scores).length
+          );
+          setBeachScores(result.scores);
+        }
+        if (result.beaches) {
+          console.log("Setting beaches:", result.beaches.length);
+          setBeaches(result.beaches);
+        }
+
+        return result;
+      } catch (error) {
+        console.error("Error in useBeachData:", error);
+        throw error;
+      } finally {
+        setLoadingState("forecast", false);
+      }
     },
-    enabled: !!filters.location.regionId,
+    enabled: !!filters.regionId,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 
-  // Ensure scores match the BeachScoreMap type
-  const scores: BeachScoreMap = data?.scores || {};
-
+  // Return the forecast data directly from the response if it's flat
   return {
     beaches: data?.beaches || [],
-    beachScores: scores,
-    forecastData: data?.forecast || null,
-    isLoading: isLoading || isFetching, // Consider both initial load and background updates
+    beachScores: data?.scores || {},
+    forecastData: data
+      ? {
+          windSpeed: data.windSpeed,
+          windDirection: data.windDirection,
+          swellHeight: data.swellHeight,
+          swellPeriod: data.swellPeriod,
+          swellDirection: data.swellDirection,
+          date: data.date || new Date(),
+          regionId: filters.regionId,
+        }
+      : null,
+    isLoading: isLoading || isFetching,
   };
 }

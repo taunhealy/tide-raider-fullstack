@@ -1,46 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useBeachContext } from "@/app/context/BeachContext";
+import { useQuery } from "@tanstack/react-query";
 import { Ad } from "@/app/types/ads";
 import { AD_CATEGORIES } from "@/app/lib/advertising/constants";
 import { Badge } from "@/app/components/ui/badge";
 
-interface RegionalSidebarProps {
-  selectedRegion: string;
-  ads: Ad[] | undefined;
-}
+export default function RegionalSidebar() {
+  const { filters } = useBeachContext();
 
-export default function RegionalSidebar({
-  selectedRegion,
-  ads = [], // Provide default empty array
-}: RegionalSidebarProps) {
+  // Fetch ads using TanStack Query
+  const { data: ads = [] } = useQuery<Ad[]>({
+    queryKey: ["ads", filters.regionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/ads?regionId=${filters.regionId}`);
+      if (!response.ok) throw new Error("Failed to fetch ads");
+      return response.json();
+    },
+    enabled: !!filters.regionId,
+  });
+
   const [filteredAds, setFilteredAds] = useState<
     (Ad | { id: string; category: string; isPlaceholder: true })[]
   >([]);
 
-  useEffect(() => {
-    if (!selectedRegion) return;
-
-    // Ensure ads is an array
-    const adsArray = Array.isArray(ads) ? ads : [];
+  // Memoize the ads processing to prevent infinite updates
+  const processedAds = useMemo(() => {
+    if (!filters.regionId) return [];
 
     // Filter ads based on selected region and category
-    const regionAds = adsArray.filter((ad) => {
-      // Add null check before toString()
-      return ad.regionId != null && ad.regionId.toString() === selectedRegion;
+    const regionAds = ads.filter((ad) => {
+      return ad.regionId != null && ad.regionId.toString() === filters.regionId;
     });
 
     // Group ads by category and select one from each
-    const categorizedAds = Object.keys(AD_CATEGORIES).reduce(
+    return Object.keys(AD_CATEGORIES).reduce(
       (acc, category) => {
         const categoryAds = regionAds.filter((ad) => ad.category === category);
         if (categoryAds.length > 0) {
-          // Rotate ads daily using timestamp
           const dayTimestamp = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
           const selectedIndex = dayTimestamp % categoryAds.length;
           acc.push(categoryAds[selectedIndex]);
         } else {
-          // Add placeholder for empty category
           acc.push({
             id: `placeholder-${category}`,
             category,
@@ -51,11 +53,14 @@ export default function RegionalSidebar({
       },
       [] as (Ad | { id: string; category: string; isPlaceholder: true })[]
     );
+  }, [filters.regionId, ads]);
 
-    setFilteredAds(categorizedAds);
-  }, [selectedRegion, ads]);
+  // Update state only when processed ads change
+  useEffect(() => {
+    setFilteredAds(processedAds);
+  }, [processedAds]);
 
-  if (!selectedRegion) return null;
+  if (!filters.regionId) return null;
 
   return (
     <aside className="hidden lg:block w-64 space-y-4 flex-shrink-0">
@@ -78,7 +83,7 @@ export default function RegionalSidebar({
                 {categoryInfo?.emoji} {categoryInfo?.label}
               </Badge>
               <p className="text-sm text-gray-600 mb-2 font-primary">
-                {categoryInfo?.label || ad.category} in {selectedRegion}?
+                {categoryInfo?.label || ad.category} in {filters.regionId}?
               </p>
               <div className="h-px bg-gray-100 my-3 w-2/3 mx-auto"></div>
               <p className="heading-7 text-[var(--color-text-secondary)] font-primary font-medium">
@@ -112,7 +117,7 @@ export default function RegionalSidebar({
             </h3>
 
             <p className="text-sm font-primary text-gray-500 mb-3">
-              {selectedRegion}
+              {filters.regionId}
             </p>
 
             <div className="h-px bg-gray-100 my-3"></div>

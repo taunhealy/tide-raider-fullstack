@@ -1,61 +1,26 @@
 "use client";
 
-import { cn } from "@/app/lib/utils";
+import { useBeachData } from "@/app/hooks/useBeachData";
+import { useBeachContext } from "@/app/context/BeachContext";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
-import type { Beach, FilterType } from "@/app/types/beaches";
-import type { Region } from "@/app/types/regions";
+import { cn } from "@/app/lib/utils";
 
 interface BeachHeaderControlsProps {
   showFilters: boolean;
   onToggleFilters: (show: boolean) => void;
-  beaches: Beach[];
-  filters: FilterType;
-  onFiltersChange: (filters: FilterType) => void;
 }
 
 export default function BeachHeaderControls({
   showFilters,
   onToggleFilters,
-  beaches,
-  filters,
-  onFiltersChange,
 }: BeachHeaderControlsProps) {
+  const { filters, updateFilters } = useBeachContext();
+  const { beaches } = useBeachData();
+
   const filteredBeaches = beaches.filter((beach) =>
     beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
   );
-
-  const handleSearch = (value: string) => {
-    onFiltersChange({ ...filters, searchQuery: value });
-  };
-
-  const handleBeachSelect = (beach: Beach) => {
-    onFiltersChange({
-      ...filters,
-      searchQuery: beach.name,
-      location: {
-        ...filters.location,
-        region: beach.region?.name || "",
-        regionId: beach.regionId || "",
-        country: beach.countryId || "",
-        continent: beach.continent || "",
-      },
-    });
-  };
-
-  const handleRegionSelect = (region: Region) => {
-    console.log("Region selected in BeachHeaderControls:", region);
-    onFiltersChange({
-      ...filters,
-      location: {
-        ...filters.location,
-        region: region.name,
-        regionId: region.id,
-        country: region.country || "",
-        continent: region.continent || "",
-      },
-    });
-  };
 
   return (
     <div className="space-y-8">
@@ -71,14 +36,23 @@ export default function BeachHeaderControls({
             <div className="w-full sm:w-auto flex-1">
               <SearchBar
                 value={filters.searchQuery}
-                onSearch={handleSearch}
-                onBeachSelect={handleBeachSelect}
+                onSearch={(value) =>
+                  updateFilters({ ...filters, searchQuery: value })
+                }
                 suggestions={filteredBeaches}
                 placeholder="Search breaks..."
               />
               <RecentRegionSearch
-                selectedRegionId={filters.location.regionId}
-                onRegionSelect={handleRegionSelect}
+                selectedRegionId={filters.regionId}
+                onRegionSelect={(region) => {
+                  updateFilters({
+                    ...filters,
+                    regionId: region.id,
+                    region: region.name,
+                    country: region.country?.name || "",
+                    continent: region.continent || "",
+                  });
+                }}
                 className="mt-2"
               />
             </div>

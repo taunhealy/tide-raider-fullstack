@@ -98,11 +98,8 @@ function RegionalHighScoresContent({
             averageScore: score.averageScore ?? 0,
           } as BeachWithScore;
         })
-        .filter(Boolean)
-        .sort(
-          (a: BeachWithScore, b: BeachWithScore) =>
-            (b.averageScore ?? 0) - (a.averageScore ?? 0)
-        )
+        .filter((beach): beach is BeachWithScore => beach !== null)
+        .sort((a, b) => (b.averageScore ?? 0) - (a.averageScore ?? 0))
         .slice(0, 5);
 
       return { beaches: beachesWithScores };

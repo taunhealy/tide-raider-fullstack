@@ -3,13 +3,14 @@
 // components/sidebar/WeatherForecastWidget.tsx
 import { useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
-import { ForecastData } from "@/app/types/forecast";
+import { CoreForecastData } from "@/app/types/forecast";
+import { useBeachData } from "@/app/hooks/useBeachData";
 import { useBeachContext } from "@/app/context/BeachContext";
 
 interface WeatherForecastWidgetProps {
-  selectedRegion: string;
-  selectedRegionId: string;
-  forecastData: ForecastData | null;
+  regionId: string;
+  regionName: string;
+  forecastData: CoreForecastData | null;
   isLoading: boolean;
 }
 
@@ -29,91 +30,26 @@ const NoDataState = () => (
   </div>
 );
 
-export default function WeatherForecastWidget({
-  selectedRegion,
-  selectedRegionId,
-  forecastData,
-  isLoading,
-}: WeatherForecastWidgetProps) {
-  const { loadingStates } = useBeachContext();
+export default function WeatherForecastWidget() {
+  const { filters } = useBeachContext();
+  const { forecastData, isLoading } = useBeachData();
 
   // Debug logging
   useEffect(() => {
     console.log("WeatherForecastWidget state:", {
-      selectedRegion,
-      selectedRegionId,
+      regionId: filters.regionId,
       forecastDataPresent: !!forecastData,
       forecastDataDetails: forecastData,
       isLoading,
-      contextLoadingStates: loadingStates,
     });
-  }, [
-    selectedRegion,
-    selectedRegionId,
-    forecastData,
-    isLoading,
-    loadingStates,
-  ]);
+  }, [filters.regionId, forecastData, isLoading]);
 
-  // Show loading state if either prop or context indicates loading
-  if (isLoading || loadingStates.forecast) {
-    return (
-      <div
-        className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
-        style={{
-          borderColor: "rgba(28, 217, 255, 0.4)",
-          boxShadow:
-            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
-        }}
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-5 py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)]">
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-            <h3 className="font-primary font-bold text-lg md:text-xl text-white tracking-wider animate-pulse">
-              LOADING FORECAST
-            </h3>
-          </div>
-        </div>
-        <LoadingState />
-      </div>
-    );
+  if (isLoading) {
+    return <LoadingState />;
   }
 
-  // Extra safety check for required forecast properties
-  const hasRequiredData =
-    forecastData &&
-    typeof forecastData.windDirection !== "undefined" &&
-    typeof forecastData.windSpeed !== "undefined" &&
-    typeof forecastData.swellHeight !== "undefined" &&
-    typeof forecastData.swellPeriod !== "undefined" &&
-    typeof forecastData.swellDirection !== "undefined";
-
-  // Debug logging for data validation
-  if (!hasRequiredData) {
-    console.warn("Missing required forecast data:", {
-      forecastData,
-      windDirection: forecastData?.windDirection,
-      windSpeed: forecastData?.windSpeed,
-      swellHeight: forecastData?.swellHeight,
-      swellPeriod: forecastData?.swellPeriod,
-      swellDirection: forecastData?.swellDirection,
-    });
-  }
-
-  if (!hasRequiredData) {
-    return (
-      <div
-        className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
-        style={{
-          borderColor: "rgba(28, 217, 255, 0.4)",
-          boxShadow:
-            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
-        }}
-      >
-        <NoDataState />
-      </div>
-    );
+  if (!forecastData) {
+    return <NoDataState />;
   }
 
   // Debug logging for forecast data

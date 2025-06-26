@@ -39,25 +39,17 @@ export type CrimeLevel = "Low" | "Medium" | "High";
 
 // Add this to types/beaches.ts// Update FilterType interface
 export interface FilterType {
+  regionId: string;
+  region: string;
+  country: string;
+  continent: string;
   waveType: WaveType[];
   difficulty: Difficulty[];
-  location: {
-    region: string; // Store region name for display
-    regionId: string; // Store region ID for API calls
-    country: string;
-    continent: string;
-  };
-  crimeLevel: CrimeLevel[];
   minPoints: number;
+  crimeLevel: CrimeLevel[];
   sharkAttack: string[];
-  minDistance?: number;
   searchQuery: string;
   hasAttack: boolean;
-  incidents?: {
-    date: string;
-    outcome: "Fatal" | "Non-fatal" | "Unknown";
-    details: string;
-  }[];
 }
 
 export const WAVE_TYPES = [

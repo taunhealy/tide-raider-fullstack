@@ -1,54 +1,34 @@
+"use client";
+
 import { useBeachContext } from "@/app/context/BeachContext";
-import BlogPostsSidebar from "../BlogPostsSidebar";
 import LocationFilter from "../LocationFilter";
-import type { Post, Trip } from "@/app/types/blog";
-import RaidLogSidebar from "../RaidLogSidebar";
-import { Region } from "@/app/types/beaches";
+import BlogPostsSidebar from "../BlogPostsSidebar";
+import { useQuery } from "@tanstack/react-query";
 
-interface LeftSidebarProps {
-  blogPosts: {
-    posts: Post[];
-    trip: Trip;
-    categories: { title: string; slug: string }[];
-  };
-  regions: Region[];
-}
+export default function LeftSidebar() {
+  const { filters, updateFilters } = useBeachContext();
 
-export default function LeftSidebar({ blogPosts, regions }: LeftSidebarProps) {
-  // Get data from Context
-  const { filters, setFilters } = useBeachContext();
+  // Move data fetching to component level since it's sidebar specific
+  const { data: regions = [] } = useQuery({
+    queryKey: ["all-regions"],
+    queryFn: () => fetch("/api/regions").then((res) => res.json()),
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["blog-posts"],
+    queryFn: () => fetch("/api/blog-posts").then((res) => res.json()),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   return (
     <aside className="hidden lg:block lg:w-[250px] xl:w-[300px] flex-shrink-0">
       <div className="hidden lg:block space-y-6">
-        <LocationFilter
-          regions={regions}
-          selectedRegion={filters.location.region}
-          selectedRegionId={filters.location.regionId}
-          onRegionSelect={(region) => {
-            setFilters({
-              ...filters,
-              location: {
-                ...filters.location,
-                region: region?.name || "",
-                regionId: region?.id || "",
-              },
-            });
-          }}
-          disabled={false}
-        />
+        <LocationFilter regions={regions} />
         <BlogPostsSidebar
           posts={blogPosts}
-          selectedCountry={
-            filters.location.country.length > 0
-              ? filters.location.country
-              : undefined
-          }
-          selectedContinent={
-            filters.location.continent.length > 0
-              ? filters.location.continent
-              : undefined
-          }
+          selectedCountry={filters.country}
+          selectedContinent={filters.continent}
         />
       </div>
     </aside>

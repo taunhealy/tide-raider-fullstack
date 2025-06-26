@@ -4,7 +4,6 @@ import HeroBlogSection from "./sections/HeroBlog";
 import HeroSection from "./sections/Hero";
 import HeroImage from "./sections/HeroImage";
 import About from "./sections/About";
-import { LoadingSpinner } from "./components/ui/LoadingSpinner";
 
 export const revalidate = 0;
 
@@ -15,8 +14,8 @@ export default async function HomePage() {
     if (!content) {
       console.error("No content returned from Sanity");
       return (
-        <div className="font-primary">
-          <LoadingSpinner />
+        <div className="font-primary p-8 text-center">
+          <p>Unable to load content. Please try again later.</p>
         </div>
       );
     }
