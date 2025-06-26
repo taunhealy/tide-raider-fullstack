@@ -19,6 +19,10 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+function generateId() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
 export default function StickyForecastWidget() {
   const widgetRef = useRef<HTMLDivElement>(null);
   const { filters } = useBeachContext();
@@ -94,17 +98,6 @@ export default function StickyForecastWidget() {
     };
   }, [currentIndex, sponsors.length]);
 
-  // Format the data for display with fallback values
-  const forecast: CoreForecastData = {
-    date: new Date(),
-    regionId: filters.regionId,
-    windSpeed: forecastData?.windSpeed ?? 0,
-    windDirection: forecastData?.windDirection ?? 0,
-    swellHeight: forecastData?.swellHeight ?? 0,
-    swellPeriod: forecastData?.swellPeriod ?? 0,
-    swellDirection: forecastData?.swellDirection ?? 0,
-  };
-
   return (
     <>
       {/* Blurred background bar - hide on mobile */}
@@ -166,19 +159,19 @@ export default function StickyForecastWidget() {
               Today's Forecast
             </h4>
             <span className="text-xs text-gray-500 font-primary">
-              {forecast.regionId}
+              {forecastData?.regionId}
             </span>
           </div>
 
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center space-x-2 bg-blue-50 p-2 rounded-md flex-1">
               <span className="text-blue-800">
-                {getWindEmoji(forecast.windSpeed)}
+                {getWindEmoji(forecastData?.windSpeed ?? 0)}
               </span>
               <div>
                 <span className="text-gray-600 font-primary">Wind</span>
                 <p className="font-medium text-blue-800 font-primary">
-                  {forecast.windSpeed} kts
+                  {forecastData?.windSpeed ?? 0} kts
                 </p>
               </div>
             </div>
@@ -187,19 +180,19 @@ export default function StickyForecastWidget() {
               <div>
                 <span className="text-gray-600 font-primary">Direction</span>
                 <p className="font-medium text-blue-800 font-primary">
-                  {degreesToCardinal(forecast.windDirection)}
+                  {degreesToCardinal(forecastData?.windDirection ?? 0)}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2 bg-cyan-50 p-2 rounded-md flex-1">
               <span className="text-cyan-800">
-                {getSwellEmoji(forecast.swellHeight)}
+                {getSwellEmoji(forecastData?.swellHeight ?? 0)}
               </span>
               <div>
                 <span className="text-gray-600 font-primary">Swell</span>
                 <p className="font-medium text-cyan-800 font-primary">
-                  {forecast.swellHeight}m,{" "}
-                  {degreesToCardinal(forecast.swellDirection)}
+                  {forecastData?.swellHeight ?? 0}m,{" "}
+                  {degreesToCardinal(forecastData?.swellDirection ?? 0)}
                 </p>
               </div>
             </div>
@@ -208,7 +201,7 @@ export default function StickyForecastWidget() {
               <div>
                 <span className="text-gray-600 font-primary">Period</span>
                 <p className="font-medium text-cyan-800 font-primary">
-                  {forecast.swellPeriod}s
+                  {forecastData?.swellPeriod ?? 0}s
                 </p>
               </div>
             </div>

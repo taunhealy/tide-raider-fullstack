@@ -1,5 +1,6 @@
 import { Beach, ForecastA } from "@prisma/client";
 import React from "react";
+import { Beach as BeachType } from "@/app/types/beaches";
 
 export interface LogEntry {
   id: string;
@@ -75,7 +76,7 @@ export interface SortConfig {
 }
 
 export interface FilterConfig {
-  beaches: string[];
+  beaches: (string | Beach)[];
   regions: string[];
   countries: string[];
   minRating: number | null;

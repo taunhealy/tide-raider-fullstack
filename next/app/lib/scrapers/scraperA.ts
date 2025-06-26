@@ -3,7 +3,7 @@ import chromium from "@sparticuz/chromium";
 import { USER_AGENTS } from "@/app/lib/proxy/userAgents";
 import { ProxyManager } from "@/app/lib/proxy/proxyManager";
 import { createHash } from "crypto";
-import { BaseForecastData } from "../../types/forecast";
+import { BaseForecastData, CoreForecastData } from "@/app/types/forecast";
 
 // Add at the top of the file
 declare global {
@@ -165,7 +165,7 @@ export async function scraperA(
     }
 
     const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    today.setUTCHours(1, 0, 0, 0);
 
     let forecast: BaseForecastData | null = null;
 
@@ -178,17 +178,13 @@ export async function scraperA(
       if (hour >= 5 && hour <= 11) {
         console.log(`✅ Found morning forecast data for hour ${hour}`);
         forecast = {
-          id: `${region}-${today.toISOString().split("T")[0]}`,
-          region,
-          date: today,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          date: new Date(today),
+          regionId: region,
           windSpeed: parseInt(row.windSpeed || "0"),
           windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
           swellHeight: parseFloat(row.waveHeight || "0"),
           swellPeriod: parseInt((row.wavePeriod || "0").replace(/\s+s$/, "")),
           swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
-          regionId: region,
         };
         console.log("📊 Forecast data:", forecast);
         return;

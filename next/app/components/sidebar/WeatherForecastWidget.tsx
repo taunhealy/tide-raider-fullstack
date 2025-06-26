@@ -34,22 +34,30 @@ export default function WeatherForecastWidget() {
   const { filters } = useBeachContext();
   const { forecastData, isLoading } = useBeachData();
 
-  // Debug logging
-  useEffect(() => {
-    console.log("WeatherForecastWidget state:", {
-      regionId: filters.regionId,
-      forecastDataPresent: !!forecastData,
-      forecastDataDetails: forecastData,
-      isLoading,
-    });
-  }, [filters.regionId, forecastData, isLoading]);
+  console.log("WeatherForecastWidget state:", {
+    filters,
+    forecastDataPresent: !!forecastData,
+    isLoading,
+  });
+
+  if (!filters.regionId) {
+    return (
+      <div className="p-4 text-red-500">
+        Debug: No region selected in filters
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <LoadingState />;
   }
 
   if (!forecastData) {
-    return <NoDataState />;
+    return (
+      <div className="p-4">
+        Debug: No forecast data available for region: {filters.regionId}
+      </div>
+    );
   }
 
   // Debug logging for forecast data

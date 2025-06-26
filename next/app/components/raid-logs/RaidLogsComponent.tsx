@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRaidLogsData } from "@/app/hooks/useRaidLogsData";
-import { useBeaches } from "@/app/hooks/useBeaches";
+import { useBeachData } from "@/app/hooks/useBeachData";
 import { FilterConfig } from "@/app/types/raidlogs";
 import { Beach } from "@/app/types/beaches";
 import RaidLogTable from "@/app/components/raid-logs/RaidLogTable";
@@ -57,7 +57,7 @@ export function RaidLogsComponent({
 
   // Hooks
   const { data: session } = useSession();
-  const { data: beaches = [] } = useBeaches();
+  const { beaches = [] } = useBeachData();
   const {
     data: logEntriesData,
     isLoading,
@@ -124,7 +124,9 @@ export function RaidLogsComponent({
         {/* Modals */}
         <RaidLogFilter
           beaches={beaches}
-          selectedBeachIds={filters.beaches}
+          selectedBeachIds={filters.beaches.map((beach) =>
+            typeof beach === "string" ? beach : beach.id
+          )}
           selectedRegionIds={filters.regions}
           selectedMinRating={filters.minRating}
           onFilterChange={handleFilterChange}

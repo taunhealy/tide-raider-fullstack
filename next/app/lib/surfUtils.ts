@@ -2,11 +2,7 @@
 export const FREE_BEACH_LIMIT = 7;
 
 import type { Beach } from "@/app/types/beaches";
-import type {
-  BaseForecastData,
-  CoreForecastData,
-  ForecastDataProp,
-} from "@/app/types/forecast";
+import type { CoreForecastData } from "@/app/types/forecast";
 
 interface ScoreDisplay {
   description: string;

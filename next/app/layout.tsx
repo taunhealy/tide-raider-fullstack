@@ -5,6 +5,9 @@ import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
+import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/lib/authOptions";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -41,11 +44,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html
       lang="en"
@@ -95,7 +100,7 @@ export default function RootLayout({
         className="min-h-screen flex flex-col font-primary"
         suppressHydrationWarning
       >
-        <AppProviders>
+        <AppProviders session={session}>
           <NewsBannerWrapper />
           <Navbar />
           <main className="flex-grow">{children}</main>

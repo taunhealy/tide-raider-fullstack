@@ -23,12 +23,14 @@ const queryClient = new QueryClient({
 
 export default function AppProviders({
   children,
+  session,
 }: {
   children: React.ReactNode;
+  session?: any; // You should type this properly based on your session structure
 }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>
+      <SessionProvider session={session} refetchInterval={0}>
         <SubscriptionProvider>
           <BeachProvider initialBeaches={beachData}>
             {children}

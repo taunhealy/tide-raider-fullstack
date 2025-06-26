@@ -21,10 +21,6 @@ export default function RegionalSidebar() {
     enabled: !!filters.regionId,
   });
 
-  const [filteredAds, setFilteredAds] = useState<
-    (Ad | { id: string; category: string; isPlaceholder: true })[]
-  >([]);
-
   // Memoize the ads processing to prevent infinite updates
   const processedAds = useMemo(() => {
     if (!filters.regionId) return [];
@@ -55,16 +51,11 @@ export default function RegionalSidebar() {
     );
   }, [filters.regionId, ads]);
 
-  // Update state only when processed ads change
-  useEffect(() => {
-    setFilteredAds(processedAds);
-  }, [processedAds]);
-
   if (!filters.regionId) return null;
 
   return (
     <aside className="hidden lg:block w-64 space-y-4 flex-shrink-0">
-      {filteredAds.map((ad) => {
+      {processedAds.map((ad) => {
         const categoryKey = ad.category as keyof typeof AD_CATEGORIES;
         const categoryInfo = AD_CATEGORIES[categoryKey];
 

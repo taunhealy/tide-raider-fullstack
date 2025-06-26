@@ -1,31 +1,27 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { useBeachData } from "@/app/hooks/useBeachData";
 
 export function useRegionCounts() {
-  const { loadingStates, beachScores } = useBeachContext();
+  const { beachScores = {} } = useBeachData();
   const hasScores = Object.keys(beachScores).length > 0;
 
   console.log("useRegionCounts conditions:", {
-    loadingStates,
     beachScoresLength: Object.keys(beachScores).length,
     hasScores,
-    queryEnabled: !loadingStates.scores && hasScores,
+    queryEnabled: hasScores,
   });
 
   return useQuery({
     queryKey: ["region-counts"],
     queryFn: async () => {
-      const today = new Date();
+      const today = new Date().toISOString().split("T")[0];
       const response = await fetch(
-        `/api/beach-ratings/region-counts?date=${today.toISOString().split("T")[0]}`
+        `/api/beach-ratings/region-counts?date=${today}`
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch region counts");
-      }
-      const data = await response.json();
-      return data;
+      if (!response.ok) throw new Error("Failed to fetch region counts");
+      return response.json();
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });

@@ -1,5 +1,4 @@
 import React from "react";
-import { useBeach } from "@/app/context/BeachContext";
 
 interface Props {
   children: React.ReactNode;

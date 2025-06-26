@@ -10,7 +10,6 @@ import {
   useEffect,
 } from "react";
 import type { Beach } from "@/app/types/beaches";
-import type { CoreForecastData } from "@/app/types/forecast";
 import type { BeachScoreMap } from "@/app/types/scores";
 import {
   FilterType,
@@ -27,44 +26,15 @@ interface BeachSort {
 }
 
 interface BeachContextType {
-  beaches: Beach[];
-  setBeaches: (beaches: Beach[]) => void;
-  forecastData: CoreForecastData | null;
-  setForecastData: (data: CoreForecastData | null) => void;
   filters: FilterType;
   updateFilters: (filters: FilterType) => void;
-
+  beaches: Beach[];
   sort: BeachSort;
   setSort: (sort: BeachSort) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
   isSidebarOpen: boolean;
   setSidebarOpen: (isOpen: boolean) => void;
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
-  loadingStates: {
-    forecast: boolean;
-    beaches: boolean;
-    scores: boolean;
-  };
-  setLoadingState: (
-    type: "forecast" | "beaches" | "scores",
-    isLoading: boolean
-  ) => void;
-  beachScores: BeachScoreMap;
-  setBeachScores: (scores: BeachScoreMap) => void;
-  beachCounts: {
-    regions: Record<string, number>;
-    countries: Record<string, number>;
-    continents: Record<string, number>;
-  } | null;
-  setBeachCounts: (
-    counts: {
-      regions: Record<string, number>;
-      countries: Record<string, number>;
-      continents: Record<string, number>;
-    } | null
-  ) => void;
   filteredBeaches: Beach[];
 }
 
@@ -107,9 +77,6 @@ export function BeachProvider({
   });
 
   const [beaches, setBeaches] = useState<Beach[]>(initialBeaches);
-  const [forecastData, setForecastData] = useState<CoreForecastData | null>(
-    null
-  );
   const [beachScores, setBeachScores] = useState<BeachScoreMap>({});
 
   // Memoize todayGoodBeaches to prevent unnecessary rerenders
@@ -197,73 +164,77 @@ export function BeachProvider({
     () => initialFilters || getInitialFilters()
   );
 
-  // Simplified updateFilters function - no URL sync
-  const updateFilters = useCallback((newFilters: FilterType) => {
-    console.log("[DEBUG] updateFilters called with:", newFilters);
-    setFilters(newFilters);
-    setCurrentPage(1);
-  }, []);
+  // Simple, direct filter update
+  const updateFilters = useCallback(
+    (newFilters: FilterType) => {
+      console.log("Filter clicked:", newFilters);
+      if (newFilters.regionId !== filters.regionId) {
+        // Only update if region actually changed
+        setFilters(newFilters);
+        setCurrentPage(1);
+      }
+    },
+    [filters.regionId]
+  );
 
-  // Simplified filteredBeaches computation
+  // Move filtering logic here
   const filteredBeaches = useMemo(() => {
-    console.log("Filtering beaches:", {
-      totalBeaches: beaches.length,
-      regionFilter: filters.regionId,
-    });
+    const searchQuery = filters.searchQuery.toLowerCase();
 
-    return beaches.filter((beach) => {
-      // Region filter
-      if (filters.regionId && beach.regionId !== filters.regionId) {
-        return false;
-      }
+    return beaches
+      .filter((beach) => {
+        // Search filter
+        if (searchQuery) {
+          const matchesName = beach.name.toLowerCase().includes(searchQuery);
+          const matchesRegion = beach.region?.name
+            .toLowerCase()
+            .includes(searchQuery);
+          if (!matchesName && !matchesRegion) return false;
+        }
 
-      // Wave type filter
-      if (
-        filters.waveType.length > 0 &&
-        !filters.waveType.includes(beach.waveType)
-      ) {
-        return false;
-      }
+        // Region filter
+        if (filters.regionId && beach.regionId !== filters.regionId) {
+          return false;
+        }
 
-      // Difficulty filter
-      if (
-        filters.difficulty.length > 0 &&
-        !filters.difficulty.includes(beach.difficulty)
-      ) {
-        return false;
-      }
+        // Wave type filter
+        if (
+          filters.waveType.length > 0 &&
+          !filters.waveType.includes(beach.waveType)
+        ) {
+          return false;
+        }
 
-      // Search query
-      if (
-        filters.searchQuery &&
-        !beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
+        // Difficulty filter
+        if (
+          filters.difficulty.length > 0 &&
+          !filters.difficulty.includes(beach.difficulty)
+        ) {
+          return false;
+        }
 
-      return true;
-    });
-  }, [beaches, filters]);
+        // Search query
+        if (
+          filters.searchQuery &&
+          !beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
 
-  // In BeachContext.tsx, add this effect after the filters state initialization
-  useEffect(() => {
-    const regionId = searchParams.get("regionId");
-    if (regionId && filters.regionId !== regionId) {
-      console.log("Updating filters from URL params:", { regionId });
-      updateFilters({
-        ...filters,
-        regionId: regionId.toLowerCase(),
+        return true;
+      })
+      .sort((a, b) => {
+        const scoreA = beachScores[a.id]?.score ?? 0;
+        const scoreB = beachScores[b.id]?.score ?? 0;
+        return scoreB - scoreA;
       });
-    }
-  }, [searchParams, filters.regionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [beaches, filters, beachScores]);
 
   // Context value (just state and setters)
   const value = useMemo<BeachContextType>(
     () => ({
       beaches,
       setBeaches,
-      forecastData,
-      setForecastData,
       beachScores,
       setBeachScores: memoizedSetBeachScores,
       filters,
@@ -284,7 +255,6 @@ export function BeachProvider({
     }),
     [
       beaches,
-      forecastData,
       beachScores,
       filters,
       sort,

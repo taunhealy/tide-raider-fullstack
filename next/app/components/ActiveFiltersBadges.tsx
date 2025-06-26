@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
-import { useBeach } from "@/app/context/BeachContext";
+import { useBeachContext } from "@/app/context/BeachContext";
+import { useBeachData } from "@/app/hooks/useBeachData";
 
 interface ActiveFilterBadgesProps {
   filters: FilterConfig;
@@ -31,10 +32,10 @@ export function ActiveFilterBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
-  const { loadingStates, beachScores } = useBeach();
-  console.log("After useBeach:", { loadingStates, beachScores });
+  const { filters: contextFilters } = useBeachContext();
+  const { beaches = [] } = useBeachData();
 
-  // First declare the query
+  // Update the query to not depend on loadingStates
   const { data: regionCountsData } = useQuery({
     queryKey: ["region-counts"],
     queryFn: async () => {
@@ -46,15 +47,6 @@ export function ActiveFilterBadges({
       return response.json();
     },
     staleTime: 1000 * 60 * 5,
-    enabled: !loadingStates.scores && Object.keys(beachScores).length > 0,
-  });
-
-  // Then use it in the debug log
-  console.log("ActiveFiltersBadges:", {
-    loadingStates,
-    beachScoresCount: Object.keys(beachScores).length,
-    filters,
-    regionCounts: regionCountsData?.counts,
   });
 
   const regionCounts = regionCountsData?.counts || {};

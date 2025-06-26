@@ -1,60 +1,48 @@
 // next/app/types/forecast.ts
 
-import { Alert } from "@prisma/client";
+import { Alert, LogEntry } from "@prisma/client";
 import { Beach } from "./beaches";
+import { BeachScoreMap } from "./scores";
 
-// Base forecast data that matches Prisma ForecastA model
-export interface CoreForecastData {
+// Base forecast data with just the essential fields
+export interface BaseForecastData {
   windSpeed: number;
   windDirection: number;
   swellHeight: number;
   swellPeriod: number;
   swellDirection: number;
   date: Date;
-  regionId: string; // matches our Prisma schema
+  regionId: string;
 }
 
-export interface BaseForecastData extends CoreForecastData {
+// Core forecast data that includes all fields from the database
+export interface CoreForecastData extends BaseForecastData {
   id: string;
-  date: Date;
-  region: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-// Extended forecast data that includes additional fields
-export interface ForecastData extends BaseForecastData {
-  forecasts?: { [date: string]: BaseForecastData };
-  alerts?: Alert[]; // Matches Prisma relation
-  scores?: Array<{
-    beachId: string;
-    appearances: number;
-    averageScore: number;
-  }>;
+// Remove BaseForecastData and simplify to match schema
+export interface ForecastData extends CoreForecastData {
+  alerts?: Alert[];
+  logEntries?: LogEntry[];
 }
+
+// Keep only essential types, remove unused ones
+export type ForecastDataProp = CoreForecastData | null;
 
 // Component Props types
 export interface BeachContainerProps {
   initialBeaches: Beach[];
-  forecastData: BaseForecastData | null | undefined;
+  forecastData: ForecastData | null | undefined;
 }
-
-// For components that need forecast data
-export type ForecastDataProp = CoreForecastData | null | undefined;
 
 // Weekly forecast type
 export interface WeeklyForecast {
-  [date: string]: BaseForecastData;
+  [date: string]: ForecastData;
 }
 
-// Type for forecast responses
-export interface ForecastResponse {
-  data: ForecastData;
-  updatedAt: Date;
-}
 
 // Type for alert-related forecast data
-export interface AlertForecastData extends BaseForecastData {
+export interface AlertForecastData extends ForecastData {
   alertType?: string;
   starRating?: string;
   forecastDate: Date;

@@ -1,5 +1,13 @@
 import { prisma } from "@/app/lib/prisma";
+import { CoreForecastData } from "@/app/types/forecast";
 import type { Beach, ForecastA } from "@prisma/client";
+
+interface PaginationParams {
+  regionId: string;
+  date: Date;
+  page: number;
+  limit: number;
+}
 
 export class ScoreService {
   // Direction mapping utilities
@@ -496,5 +504,89 @@ export class ScoreService {
       }),
       prisma.beachDailyScore.createMany({ data: scores }),
     ]);
+  }
+
+  static async getPaginatedScoresWithBeaches({
+    regionId,
+    date,
+    page,
+    limit,
+    searchQuery,
+  }: PaginationParams & { searchQuery?: string }) {
+    console.log("Fetching with date:", date);
+
+    const whereClause = {
+      regionId,
+      ...(searchQuery
+        ? {
+            OR: [
+              { name: { contains: searchQuery, mode: "insensitive" as const } },
+              {
+                region: {
+                  name: { contains: searchQuery, mode: "insensitive" as const },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    // Get all beaches with their scores in a single query
+    const beachesWithScores = await prisma.beach.findMany({
+      where: whereClause,
+      include: {
+        beachDailyScores: {
+          where: {
+            date,
+            regionId,
+          },
+          orderBy: {
+            score: "desc",
+          },
+        },
+        region: true,
+      },
+    });
+
+    console.log(
+      "Beaches with scores:",
+      beachesWithScores.map((b) => ({
+        name: b.name,
+        score: b.beachDailyScores[0]?.score,
+        date: b.beachDailyScores[0]?.date,
+      }))
+    );
+
+    // Sort beaches by their score
+    const sortedBeaches = beachesWithScores.sort(
+      (a, b) =>
+        (b.beachDailyScores[0]?.score || 0) -
+        (a.beachDailyScores[0]?.score || 0)
+    );
+
+    // Apply pagination
+    const paginatedBeaches = sortedBeaches.slice(
+      (page - 1) * limit,
+      page * limit
+    );
+
+    // Create scores map
+    const scores = Object.fromEntries(
+      sortedBeaches.map((beach) => [
+        beach.id,
+        {
+          score: beach.beachDailyScores[0]?.score || 0,
+          beach: beach,
+        },
+      ])
+    );
+
+    return {
+      scores,
+      beaches: paginatedBeaches,
+      totalCount: sortedBeaches.length,
+      page,
+      limit,
+    };
   }
 }
