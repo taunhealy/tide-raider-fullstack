@@ -1,6 +1,6 @@
 // hooks/useBeachAttributes.ts
 import { useMemo, useCallback } from "react";
-import type { Beach } from "@/app/types/beaches";
+import { Beach } from "@prisma/client";
 
 interface RegionObject {
   name: string;
@@ -12,12 +12,12 @@ export function useBeachAttributes(initialBeaches: Beach[]) {
     const regionMap = new Map();
 
     (initialBeaches || []).forEach((beach) => {
-      if (beach.region && beach.regionId) {
+      if (beach.regionId) {
         regionMap.set(beach.regionId, {
           id: beach.regionId,
-          name: beach.region.name,
-          countryId: beach.region.countryId,
-          continent: beach.region.continent,
+          name: beach.name,
+          countryId: beach.countryId,
+          continent: beach.continent,
         });
       }
     });
@@ -38,13 +38,16 @@ export function useBeachAttributes(initialBeaches: Beach[]) {
   const uniqueCountries = useMemo(
     () =>
       Array.from(
-        new Set((initialBeaches || []).map((beach) => beach.country))
+        new Set((initialBeaches || []).map((beach) => beach.countryId))
       ).sort(),
     [initialBeaches]
   );
 
   const waveTypes = useMemo(
-    () => [...new Set((initialBeaches || []).map((beach) => beach.waveType))],
+    () =>
+      Array.from(
+        new Set(initialBeaches.map((beach) => beach.waveType as string))
+      ).filter(Boolean),
     [initialBeaches]
   );
 

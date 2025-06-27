@@ -30,11 +30,11 @@ export interface Continent {
 }
 
 export type Difficulty =
-  | "Beginner"
-  | "Intermediate"
-  | "Advanced"
-  | "All Levels"
-  | "Expert";
+  | "BEGINNER"
+  | "INTERMEDIATE"
+  | "ADVANCED"
+  | "EXPERT"
+  | "All Levels";
 export type CrimeLevel = "Low" | "Medium" | "High";
 
 // Add this to types/beaches.ts// Update FilterType interface
@@ -50,19 +50,29 @@ export interface FilterType {
   sharkAttack: string[];
   searchQuery: string;
   hasAttack: boolean;
+  optimalTide: string[];
+  bestSeasons: string[];
+  hasSharkAlert: boolean;
+  hasCoffeeShop: boolean;
 }
 
 export const WAVE_TYPES = [
-  "Beach Break",
-  "Reef Break",
-  "Point Break",
-  "Beach and Reef Break",
-  "Beach and Point Break",
+  "BEACH_BREAK",
+  "POINT_BREAK",
+  "REEF_BREAK",
+  "RIVER_MOUTH",
 ] as const;
 
 export type WaveType = (typeof WAVE_TYPES)[number];
 
-// Or if using type instead of interface:
+export type OptimalTide =
+  | "LOW_TO_MID"
+  | "MID_TO_HIGH"
+  | "LOW"
+  | "MID"
+  | "HIGH"
+  | "ALL"
+  | "UNKNOWN";
 
 export interface Beach {
   id: string;
@@ -83,21 +93,14 @@ export interface Beach {
   };
   sheltered?: boolean; // Made optional with ?
   bestSeasons: string[];
-  optimalTide:
-    | "Low"
-    | "Mid"
-    | "High"
-    | "All"
-    | "Low to Mid"
-    | "Mid to High"
-    | "unknown";
+  optimalTide: OptimalTide;
   description: string;
   difficulty:
-    | "Beginner"
-    | "Intermediate"
-    | "Advanced"
+    | "BEGINNER"
+    | "INTERMEDIATE"
+    | "ADVANCED"
     | "All Levels"
-    | "Expert";
+    | "EXPERT";
   waveType: WaveType;
   swellSize: {
     min: number;
@@ -114,7 +117,7 @@ export interface Beach {
   hazards: string[];
   crimeLevel: "Low" | "Medium" | "High";
   sharkAttack: SharkIncident;
-  image: string;
+  image?: string;
   coordinates: {
     lat: number;
     lng: number;

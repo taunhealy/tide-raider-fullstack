@@ -4,8 +4,18 @@ import { Beach } from "./beaches";
 
 export interface BeachScore {
   score: number;
-  region: string;
-  conditions: Pick<ForecastA, 'windSpeed' | 'windDirection' | 'swellHeight' | 'swellDirection' | 'swellPeriod'>
+  beach: {
+    beachDailyScores: Array<{
+      conditions: {
+        windSpeed: number;
+        windDirection: number;
+        swellHeight: number;
+        swellDirection: number;
+        swellPeriod: number;
+      };
+      date: string;
+    }>;
+  };
 }
 
 export type BeachScoreMap = Record<string, BeachScore>;

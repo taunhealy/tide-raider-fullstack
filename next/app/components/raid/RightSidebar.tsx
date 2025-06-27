@@ -1,13 +1,15 @@
 "use client";
 
 import { useBeachData } from "@/app/hooks/useBeachData";
-import { useBeachContext } from "@/app/context/BeachContext";
 import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
 import { Skeleton } from "@/app/components/ui/skeleton";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { useMemo } from "react";
+import { Beach } from "@/app/types/beaches";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -137,8 +139,8 @@ const RaidLogSkeleton = () => (
 );
 
 export default function RightSidebar() {
-  const { filters } = useBeachContext();
-  const { beaches, forecastData, isLoading } = useBeachData();
+  const { beaches, forecastData } = useBeachData();
+  const { filters } = useBeachFilters();
 
   return (
     <aside className="space-y-6 lg:w-[250px] xl:w-[300px]">
@@ -152,7 +154,7 @@ export default function RightSidebar() {
       <AdventureExperiences
         selectedRegion={filters.region || filters.regionId}
       />
-      <RegionalSidebar  />
+      <RegionalSidebar />
       <FunFacts />
     </aside>
   );

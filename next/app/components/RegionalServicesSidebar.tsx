@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useBeachContext } from "@/app/context/BeachContext";
 import { useQuery } from "@tanstack/react-query";
 import { Ad } from "@/app/types/ads";
 import { AD_CATEGORIES } from "@/app/lib/advertising/constants";
 import { Badge } from "@/app/components/ui/badge";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 export default function RegionalSidebar() {
-  const { filters } = useBeachContext();
+  const { filters } = useBeachFilters();
 
   // Fetch ads using TanStack Query
   const { data: ads = [] } = useQuery<Ad[]>({

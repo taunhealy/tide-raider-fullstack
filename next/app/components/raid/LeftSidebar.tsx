@@ -1,17 +1,29 @@
 "use client";
 
-import { useBeachContext } from "@/app/context/BeachContext";
 import LocationFilter from "../LocationFilter";
 import BlogPostsSidebar from "../BlogPostsSidebar";
 import { useQuery } from "@tanstack/react-query";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 export default function LeftSidebar() {
-  const { filters, updateFilters } = useBeachContext();
+  const { filters } = useBeachFilters();
 
-  // Move data fetching to component level since it's sidebar specific
-  const { data: regions = [] } = useQuery({
+  const {
+    data: regions = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["all-regions"],
-    queryFn: () => fetch("/api/regions").then((res) => res.json()),
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/regions");
+        if (!res.ok) throw new Error("Failed to fetch regions");
+        return res.json();
+      } catch (error) {
+        console.error("Error fetching regions:", error);
+        return [];
+      }
+    },
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
@@ -20,6 +32,12 @@ export default function LeftSidebar() {
     queryFn: () => fetch("/api/blog-posts").then((res) => res.json()),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  if (isError) {
+    return <div>Error fetching regions...</div>;
+  }
+
+  console.log("Regions data:", regions);
 
   return (
     <aside className="hidden lg:block lg:w-[250px] xl:w-[300px] flex-shrink-0">

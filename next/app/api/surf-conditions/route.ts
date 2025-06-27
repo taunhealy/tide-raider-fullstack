@@ -216,7 +216,7 @@ async function dedupedEnsureBeachScores(
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const regionId = searchParams.get("regionId");
+  const regionId = searchParams.get("regionId")?.toLowerCase();
   const searchQuery = searchParams.get("searchQuery") || undefined;
 
   if (!regionId) {
@@ -226,13 +226,37 @@ export async function GET(request: Request) {
     );
   }
 
+  // Check if regionId exists and is valid
+  const region = await prisma.region.findUnique({
+    where: { id: regionId },
+  });
+
+  if (!region) {
+    return NextResponse.json(
+      { error: `Region '${regionId}' not found` },
+      { status: 404 }
+    );
+  }
+
+  // Add rate limiting
+  if (!(await checkRateLimit(regionId))) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
 
   try {
+    // 1. Get/create forecast
     const forecast = await ForecastService.getOrCreateForecast(regionId);
 
-    // Update the service call to include search
+    // 2. Calculate and store scores (with Redis deduplication)
+    await dedupedEnsureBeachScores(regionId, forecast.date, forecast);
+
+    // 3. Add a small delay to ensure transaction completion
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // 4. Now get the scores after they're stored
     const { scores, beaches, totalCount } =
       await ScoreService.getPaginatedScoresWithBeaches({
         regionId,

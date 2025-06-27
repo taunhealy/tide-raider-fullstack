@@ -5,7 +5,7 @@ interface RegionFilterButtonProps {
   region: Region;
   isSelected: boolean;
   isLoading?: boolean;
-  onClick: () => void;
+  onClick: (region: Region) => void;
   count: number;
 }
 
@@ -18,7 +18,10 @@ export default function RegionFilterButton({
 }: RegionFilterButtonProps) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => {
+        console.log("Button clicked for region:", region);
+        onClick(region);
+      }}
       disabled={isLoading}
       className={cn(
         "px-3 py-1.5 text-sm rounded-full",

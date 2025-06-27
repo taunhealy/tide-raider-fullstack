@@ -21,7 +21,6 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import gsap from "gsap";
-import { useBeachContext } from "@/app/context/BeachContext";
 import type { Beach } from "@/app/types/beaches";
 import { ErrorBoundary } from "./ErrorBoundary";
 import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
@@ -200,6 +199,242 @@ const BeachCard = memo(function BeachCard({
         <div className="px-4 py-3 md:px-6 md:py-4">
           {isLocalLoading ? (
             <ConditionsSkeleton />
+          ) : typeof score === "number" && forecastData ? (
+            <div className="space-y-3 md:space-y-4">
+              <div className="flex items-center justify-between">
+                {/* Wave Type Icon and Beach Details */}
+                <div className="flex items-center gap-2 md:gap-3">
+                  {/* Wave Type Icon with Tooltip */}
+                  <div
+                    className="relative min-w-[40px] w-10 h-10 md:min-w-[54px] md:w-14 md:h-14 rounded-full overflow-hidden bg-gray-100 border border-gray-200"
+                    onMouseEnter={() => setShowWaveTypeHint(true)}
+                    onMouseLeave={() => setShowWaveTypeHint(false)}
+                  >
+                    <Image
+                      src={
+                        beach.waveType &&
+                        WAVE_TYPE_ICONS[beach.waveType as WaveType]
+                          ? WAVE_TYPE_ICONS[beach.waveType as WaveType]
+                          : WAVE_TYPE_ICONS["Beach Break"]
+                      }
+                      alt={`${beach.waveType || "Default"} icon`}
+                      fill
+                      className="object-cover"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
+                    />
+                    {beach.waveType && (
+                      <div
+                        className={`
+                        absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+                        bg-black bg-opacity-50 
+                        px-3 py-1 rounded-md 
+                        text-white text-sm 
+                        transition-all duration-300 ease-in-out
+                        whitespace-nowrap
+                        ${
+                          showWaveTypeHint
+                            ? "opacity-100 translate-y-0"
+                            : "opacity-0 translate-y-2"
+                        }
+                      `}
+                        data-no-animation
+                      >
+                        {beach.waveType}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Beach Information */}
+                  <div>
+                    <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
+                      {beach.name}
+                      {forecastData?.windSpeed &&
+                        forecastData.windSpeed > 25 && (
+                          <span title="Strong winds">🌪️</span>
+                        )}
+                      {beach.sharkAttack?.hasAttack && (
+                        <span title="At least 1 shark attack reported">
+                          {beach.sharkAttack.incidents?.some(
+                            (incident) =>
+                              new Date(incident.date).getTime() >
+                              new Date().getTime() -
+                                5 * 365 * 24 * 60 * 60 * 1000
+                          )
+                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                            : "🦈"}
+                        </span>
+                      )}
+                    </h4>
+                    <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
+                      {beach.region?.name}
+                    </h6>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1 md:gap-2">
+                  <GoogleMapsButton
+                    coordinates={beach.coordinates}
+                    name={beach.name}
+                    region={beach.region?.name}
+                    location={beach.location}
+                    className="hidden md:flex"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenModal();
+                    }}
+                    className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Suitability Rating and Conditions */}
+              <div className="mt-1 md:mt-3">
+                {isLocalLoading ? (
+                  <ConditionsSkeleton />
+                ) : typeof score === "number" && forecastData ? (
+                  // Show actual conditions when we have both score and forecast data
+                  <div className="flex flex-col gap-1 md:gap-2">
+                    <div className="flex items-center gap-2">
+                      {renderRating()}
+
+                      <div
+                        className="flex items-center gap-2 relative px-2 py-1 border border-gray-200 rounded-md bg-gray-50"
+                        onMouseEnter={() => setShowRatingHint(true)}
+                        onMouseLeave={() => setShowRatingHint(false)}
+                      >
+                        <div>{scoreDisplay.emoji}</div>
+
+                        <div
+                          className={`
+                        absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 
+                        px-3 py-1 bg-gray-900 text-white text-sm rounded-md 
+                        transition-opacity whitespace-nowrap
+                        ${showRatingHint ? "opacity-100" : "opacity-0"}
+                      `}
+                        >
+                          {scoreDisplay.description}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Current Conditions */}
+                    <div className="text-sm flex flex-col gap-1 border-t border-gray-200 pt-3 mt-3">
+                      <ul className="space-y-1.5">
+                        {getConditionReasons(
+                          beach,
+                          forecastData,
+                          false
+                        ).optimalConditions.map((condition, index, array) => (
+                          <li
+                            key={index}
+                            className={`flex items-center gap-2 md:gap-2 pb-2 ${
+                              index !== array.length - 1
+                                ? "border-b border-gray-200"
+                                : ""
+                            }`}
+                          >
+                            <span className="inline-flex items-center justify-center w-4 h-4">
+                              {condition.isMet ? (
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  className="w-4 h-4 text-[var(--color-tertiary)]"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <path
+                                    d="M20 6L9 17L4 12"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              ) : (
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  className="w-4 h-4 text-[var(--color-text-secondary)]"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <path
+                                    d="M18 6L6 18M6 6l12 12"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              )}
+                            </span>
+                            <span
+                              className={`text-xs md:text-sm ${
+                                condition.isMet
+                                  ? "text-gray-800"
+                                  : "text-gray-500"
+                              }`}
+                            >
+                              <span className="font-medium md:font-semibold font-primary">
+                                {condition.text.split(":")[0]}:
+                              </span>{" "}
+                              <span className="font-normal font-primary">
+                                {condition.text.split(":")[1]}
+                              </span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  // Show optimal conditions when no surf data is available
+                  <div className="text-sm flex flex-col gap-1">
+                    <p className="text-base font-semibold font-primary md:text-lg">
+                      Optimal Conditions:
+                    </p>
+                    <ul className="space-y-1">
+                      <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
+                        <span className="font-medium">Wind Direction:</span>
+                        {beach.optimalWindDirections.join(", ")}
+                      </li>
+                      <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
+                        <span className="font-medium">Swell Direction:</span>
+                        {beach.optimalSwellDirections.min}° -{" "}
+                        {beach.optimalSwellDirections.max}°
+                      </li>
+                      <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
+                        <span className="font-medium">Wave Size:</span>
+                        {beach.swellSize.min}m - {beach.swellSize.max}m
+                      </li>
+                      <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
+                        <span className="font-medium">Swell Period:</span>
+                        {beach.idealSwellPeriod.min}s -{" "}
+                        {beach.idealSwellPeriod.max}s
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Media Grid - Now inside the card */}
+              <div className="mt-3 md:mt-4">
+                <MediaGrid
+                  beach={{
+                    id: beach.id,
+                    name: beach.name,
+                    region: {
+                      id: beach.regionId,
+                      name: beach.region?.name || "",
+                      country: beach.country,
+                    },
+                  }}
+                  videos={beach.videos}
+                />
+              </div>
+            </div>
           ) : (
             <div className="space-y-3 md:space-y-4">
               <div className="flex items-center justify-between">
@@ -298,8 +533,8 @@ const BeachCard = memo(function BeachCard({
               <div className="mt-1 md:mt-3">
                 {isLocalLoading ? (
                   <ConditionsSkeleton />
-                ) : score !== undefined ? (
-                  // Show actual conditions when we have a score
+                ) : typeof score === "number" && forecastData ? (
+                  // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
                       {renderRating()}

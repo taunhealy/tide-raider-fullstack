@@ -1,26 +1,32 @@
 "use client";
 
-import { useBeachData } from "@/app/hooks/useBeachData";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
 import { cn } from "@/app/lib/utils";
+import { Beach } from "@/app/types/beaches";
 
 interface BeachHeaderControlsProps {
   showFilters: boolean;
   onToggleFilters: (show: boolean) => void;
+  onSearch: (value: string) => void;
+  onRegionSelect: (regionId: string) => void;
+  currentRegion: string;
+  beaches: Beach[];
 }
 
 export default function BeachHeaderControls({
   showFilters,
   onToggleFilters,
-}: BeachHeaderControlsProps) {
-  const { filters, updateFilters } = useBeachContext();
-  const { beaches } = useBeachData();
 
-  const filteredBeaches = beaches.filter((beach) =>
-    beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
-  );
+  currentRegion,
+  beaches,
+}: BeachHeaderControlsProps) {
+  const searchParams = useSearchParams();
+
+  // Get current filter values from URL
+  const currentWaveTypes = searchParams.get("waveType")?.split(",") || [];
+  const currentDifficulty = searchParams.get("difficulty")?.split(",") || [];
 
   return (
     <div className="space-y-8">
@@ -34,25 +40,9 @@ export default function BeachHeaderControls({
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
             <div className="w-full sm:w-auto flex-1">
-              <SearchBar
-                value={filters.searchQuery}
-                onSearch={(value) =>
-                  updateFilters({ ...filters, searchQuery: value })
-                }
-                suggestions={filteredBeaches}
-                placeholder="Search breaks..."
-              />
+              <SearchBar beaches={beaches} placeholder="Search breaks..." />
               <RecentRegionSearch
-                selectedRegionId={filters.regionId}
-                onRegionSelect={(region) => {
-                  updateFilters({
-                    ...filters,
-                    regionId: region.id,
-                    region: region.name,
-                    country: region.country?.name || "",
-                    continent: region.continent || "",
-                  });
-                }}
+                selectedRegionId={currentRegion}
                 className="mt-2"
               />
             </div>
@@ -70,12 +60,7 @@ export default function BeachHeaderControls({
                 "mt-0 sm:mt-0"
               )}
             >
-              <span>Filters</span>
-              {Object.values(filters).some((f) =>
-                Array.isArray(f) ? f.length > 0 : f !== 0
-              ) && (
-                <span className="w-2 h-2 rounded-full bg-[var(--color-bg-tertiary)]" />
-              )}
+              <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
             </button>
           </div>
         </div>

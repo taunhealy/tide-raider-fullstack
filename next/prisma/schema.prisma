@@ -275,10 +275,10 @@ model Beach {
   optimalWindDirections  String[]
   optimalSwellDirections Json
   bestSeasons            String[]
-  optimalTide            String
+  optimalTide            OptimalTide
   description            String
-  difficulty             String
-  waveType               String
+  difficulty             Difficulty
+  waveType               WaveType
   swellSize              Json
   idealSwellPeriod       Json
   waterTemp              Json
@@ -780,4 +780,28 @@ model UserSearch {
   
   @@index([userId])
   @@index([createdAt])
+}
+
+enum OptimalTide {
+  LOW
+  MID
+  HIGH
+  ALL
+  LOW_TO_MID
+  MID_TO_HIGH
+  UNKNOWN
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum WaveType {
+  BEACH_BREAK
+  POINT_BREAK
+  REEF_BREAK
+  RIVER_MOUTH
 }

@@ -335,7 +335,7 @@ export class ScoreService {
   }
 
   /**
-   * Calculate and store scores for beaches in a region
+   * Calculate and store scores for beaches in a region by comparing optimal conditions and today's forecast
    */
   static async calculateAndStoreScores(
     regionId: string,
@@ -349,12 +349,17 @@ export class ScoreService {
       | "date"
     >
   ) {
+    let beaches: Beach[] = [];
+    let scores: any[] = [];
+
     try {
-      const beaches = await prisma.beach.findMany({
+      beaches = await prisma.beach.findMany({
         where: { regionId },
       });
 
-      const scores = beaches.map((beach) => ({
+      console.log(`Found ${beaches.length} beaches for region ${regionId}`);
+
+      scores = beaches.map((beach) => ({
         beachId: beach.id,
         regionId,
         score: this.calculateScore(beach, forecastData),
@@ -368,18 +373,53 @@ export class ScoreService {
         },
       }));
 
-      await prisma.$transaction([
-        prisma.beachDailyScore.deleteMany({
-          where: { regionId, date: forecastData.date },
-        }),
-        prisma.beachDailyScore.createMany({ data: scores }),
-      ]);
+      console.log(
+        `Attempting to upsert ${scores.length} scores for date ${forecastData.date}`
+      );
+
+      const upsertOperations = scores.map((score) =>
+        prisma.beachDailyScore.upsert({
+          where: {
+            beachId_date: {
+              beachId: score.beachId,
+              date: score.date,
+            },
+          },
+          update: {
+            score: score.score,
+            conditions: score.conditions,
+          },
+          create: {
+            beachId: score.beachId,
+            regionId: score.regionId,
+            score: score.score,
+            date: score.date,
+            conditions: score.conditions,
+          },
+        })
+      );
+
+      const results = await prisma.$transaction(upsertOperations);
+      console.log(
+        `Successfully upserted ${results.length} scores for region ${regionId}`,
+        {
+          date: forecastData.date,
+          firstScore: results[0],
+          lastScore: results[results.length - 1],
+          scoresUpdated: results.length === scores.length,
+        }
+      );
 
       return scores;
     } catch (error) {
       console.error(
-        `Failed to calculate scores for region ${regionId}:`,
-        error
+        `Failed to calculate/store scores for region ${regionId}:`,
+        {
+          error,
+          date: forecastData.date,
+          beachCount: beaches.length,
+          scoreCount: scores.length,
+        }
       );
       throw error;
     }
@@ -428,82 +468,6 @@ export class ScoreService {
       }),
       {} as Record<string, number>
     );
-  }
-
-  private static async getScoresFromAPI(regionId: string, date: Date) {
-    const response = await fetch(
-      `/api/beach-scores?region=${regionId}&date=${date.toISOString()}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch scores");
-    }
-    return response.json();
-  }
-
-  static async getOrCalculateScores(regionId: string, date: Date) {
-    try {
-      // Try to get existing scores
-      const existingScores = await this.getScores(regionId, date);
-      if (existingScores.length > 0) {
-        return existingScores;
-      }
-
-      // Get forecast data
-      const forecast = await prisma.forecastA.findFirst({
-        where: { regionId, date },
-      });
-
-      if (!forecast) {
-        throw new Error("No forecast data available");
-      }
-
-      // Get beaches and calculate scores
-      const beaches = await prisma.beach.findMany({
-        where: { regionId },
-      });
-
-      const calculatedScores = beaches.map((beach) => ({
-        beachId: beach.id,
-        regionId,
-        score: this.calculateScore(beach, forecast),
-        conditions: {
-          windSpeed: forecast.windSpeed,
-          windDirection: forecast.windDirection,
-          swellHeight: forecast.swellHeight,
-          swellDirection: forecast.swellDirection,
-          swellPeriod: forecast.swellPeriod,
-        },
-        date,
-      }));
-
-      // Store new scores
-      await this.storeScores(calculatedScores);
-
-      return calculatedScores;
-    } catch (error) {
-      console.error("Error in getOrCalculateScores:", error);
-      throw error;
-    }
-  }
-
-  static async storeScores(
-    scores: {
-      beachId: string;
-      regionId: string;
-      score: number;
-      conditions: any;
-      date: Date;
-    }[]
-  ) {
-    return prisma.$transaction([
-      prisma.beachDailyScore.deleteMany({
-        where: {
-          regionId: scores[0].regionId,
-          date: scores[0].date,
-        },
-      }),
-      prisma.beachDailyScore.createMany({ data: scores }),
-    ]);
   }
 
   static async getPaginatedScoresWithBeaches({

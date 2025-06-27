@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { CoreForecastData } from "@/app/types/forecast";
 import { useBeachData } from "@/app/hooks/useBeachData";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { useSearchParams } from "next/navigation";
 
 interface WeatherForecastWidgetProps {
   regionId: string;
@@ -31,21 +31,21 @@ const NoDataState = () => (
 );
 
 export default function WeatherForecastWidget() {
-  const { filters } = useBeachContext();
+  const searchParams = useSearchParams();
   const { forecastData, isLoading } = useBeachData();
 
+  const regionId = searchParams.get("regionId");
+  const regionName = searchParams.get("region");
+
   console.log("WeatherForecastWidget state:", {
-    filters,
+    regionId,
+    regionName,
     forecastDataPresent: !!forecastData,
     isLoading,
   });
 
-  if (!filters.regionId) {
-    return (
-      <div className="p-4 text-red-500">
-        Debug: No region selected in filters
-      </div>
-    );
+  if (!regionId) {
+    return <div className="p-4 text-red-500">Debug: No region selected</div>;
   }
 
   if (isLoading) {
@@ -55,7 +55,7 @@ export default function WeatherForecastWidget() {
   if (!forecastData) {
     return (
       <div className="p-4">
-        Debug: No forecast data available for region: {filters.regionId}
+        Debug: No forecast data available for region: {regionId}
       </div>
     );
   }

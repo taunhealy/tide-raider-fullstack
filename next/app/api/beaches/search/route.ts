@@ -5,64 +5,63 @@ import { prisma } from "@/app/lib/prisma";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const term = searchParams.get("term");
+  const regionId = searchParams.get("regionId");
 
   if (!term || term.length < 2) {
     return NextResponse.json([]);
   }
 
   try {
-    // First try to search in the database
-    const dbBeaches = await prisma.beach.findMany({
-      where: {
+    // First search for beaches in the current region
+    let regionBeaches: any[] = [];
+    if (regionId) {
+      regionBeaches = await prisma.beach.findMany({
+        where: {
+          regionId: regionId,
+          OR: [
+            { name: { contains: term, mode: "insensitive" } },
+            { location: { contains: term, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          country: true,
+          region: { select: { name: true } },
+        },
+        take: 5,
+      });
+    }
+
+    // If we don't have enough results from the current region, search all regions
+    let otherBeaches: any[] = [];
+    if (regionBeaches.length < 5) {
+      const whereClause: any = {
         OR: [
           { name: { contains: term, mode: "insensitive" } },
           { location: { contains: term, mode: "insensitive" } },
         ],
-      },
-      select: {
-        id: true,
-        name: true,
-        country: true,
-        region: { select: { name: true } },
-      },
-      take: 10,
-    });
+      };
 
-    // Format database results
-    const dbResults = dbBeaches.map((beach) => ({
-      id: beach.id,
-      name: beach.name,
-      country: beach.country,
-      region: beach.region.name,
-    }));
+      // Exclude the current region if we already have results from it
+      if (regionId && regionBeaches.length > 0) {
+        whereClause.NOT = { regionId };
+      }
 
-    // If we have enough results from the database, return them
-    if (dbResults.length >= 5) {
-      return NextResponse.json(dbResults);
+      otherBeaches = await prisma.beach.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          name: true,
+          country: true,
+          region: { select: { name: true } },
+        },
+        take: 5 - regionBeaches.length,
+      });
     }
 
-    // Otherwise, also search in the static data
-    const termLower = term.toLowerCase();
-    const staticResults = beachData
-      .filter(
-        (beach) =>
-          beach.name.toLowerCase().includes(termLower) ||
-          beach.location.toLowerCase().includes(termLower)
-      )
-      .map((beach) => ({
-        id: beach.id,
-        name: beach.name,
-        country: beach.country,
-        region: beach.region,
-      }))
-      .slice(0, 10 - dbResults.length);
-
-    // Combine results, removing duplicates
-    const allBeachIds = new Set(dbResults.map((b) => b.id));
-    const combinedResults = [
-      ...dbResults,
-      ...staticResults.filter((b) => !allBeachIds.has(b.id)),
-    ];
+    // Combine results, prioritizing the current region
+    const combinedResults = [...regionBeaches, ...otherBeaches];
 
     return NextResponse.json(combinedResults);
   } catch (error) {

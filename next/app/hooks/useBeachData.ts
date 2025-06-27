@@ -1,26 +1,34 @@
 // hooks/useBeachData.ts
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useBeachContext } from "@/app/context/BeachContext";
-import type { BeachScoreMap } from "@/app/types/scores";
-import type { CoreForecastData } from "@/app/types/forecast";
-import type { Beach } from "@/app/types/beaches";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { InfiniteData } from "@tanstack/react-query";
+import { Beach as PrismaBeach } from "@prisma/client";
+import { CoreForecastData } from "../types/forecast";
+import { BeachScoreMap } from "../types/scores";
+import { Beach } from "../types/beaches";
 
 interface BeachScore {
   score: number;
-  region: string;
-  conditions: {
-    windSpeed: number;
-    windDirection: number;
-    swellHeight: number;
-    swellDirection: number;
-    swellPeriod: number;
+  beach: {
+    id: string;
+    // other beach properties
+    beachDailyScores: Array<{
+      conditions: {
+        windSpeed: number;
+        windDirection: number;
+        swellHeight: number;
+        swellDirection: number;
+        swellPeriod: number;
+      };
+      date: string;
+      // other properties
+    }>;
   };
 }
 
 interface SurfConditionsResponse {
-  beaches: Beach[];
+  beaches: PrismaBeach[];
   scores: BeachScoreMap;
   forecast: CoreForecastData | null;
   pagination: {
@@ -46,9 +54,12 @@ async function fetchBeaches({
 }
 
 export function useBeachData() {
-  const { filters } = useBeachContext();
+  const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  const regionId = searchParams.get("regionId") || "";
+  const searchQuery = searchParams.get("searchQuery") || "";
 
   const { data, isLoading, isFetching, error, hasNextPage, fetchNextPage } =
     useInfiniteQuery<
@@ -58,26 +69,58 @@ export function useBeachData() {
       string[],
       number
     >({
-      queryKey: ["beaches", filters.regionId, filters.searchQuery],
+      queryKey: ["beaches", regionId, searchQuery],
       queryFn: (context) =>
         fetchBeaches({
-          regionId: filters.regionId,
+          regionId,
           page: context.pageParam,
-          searchQuery: filters.searchQuery,
+          searchQuery,
         }),
       getNextPageParam: (lastPage) =>
         lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined,
       initialPageParam: 1,
-      enabled: !!filters.regionId,
+      enabled: !!regionId,
+      retry: 3,
+      retryDelay: 1000,
+      staleTime: 60000,
     });
 
   // Combine all pages of data
-  const allBeaches = data?.pages.flatMap((page) => page.beaches) ?? [];
-  const allScores = data?.pages.reduce(
-    (acc, page) => ({ ...acc, ...page.scores }),
-    {}
-  );
+  const rawBeaches = data?.pages.flatMap((page) => page.beaches) ?? [];
+  const allScores: BeachScoreMap =
+    data?.pages.reduce((acc, page) => ({ ...acc, ...page.scores }), {}) ?? {};
   const forecast = data?.pages[0]?.forecast;
+
+  // Transform beaches to match the Beach type
+  const allBeaches = rawBeaches.map(
+    (beach: any): Beach => ({
+      ...beach,
+      optimalSwellDirections:
+        typeof beach.optimalSwellDirections === "string"
+          ? JSON.parse(beach.optimalSwellDirections)
+          : beach.optimalSwellDirections || { min: 0, max: 0, cardinal: "N" },
+      swellSize:
+        typeof beach.swellSize === "string"
+          ? JSON.parse(beach.swellSize)
+          : beach.swellSize,
+      idealSwellPeriod:
+        typeof beach.idealSwellPeriod === "string"
+          ? JSON.parse(beach.idealSwellPeriod)
+          : beach.idealSwellPeriod,
+      waterTemp:
+        typeof beach.waterTemp === "string"
+          ? JSON.parse(beach.waterTemp)
+          : beach.waterTemp,
+      coordinates:
+        typeof beach.coordinates === "string"
+          ? JSON.parse(beach.coordinates)
+          : beach.coordinates,
+      sharkAttack:
+        typeof beach.sharkAttack === "string"
+          ? JSON.parse(beach.sharkAttack)
+          : beach.sharkAttack,
+    })
+  );
 
   return {
     beaches: allBeaches,

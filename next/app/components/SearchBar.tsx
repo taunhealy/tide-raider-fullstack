@@ -6,71 +6,107 @@ import { useEffect, useRef, useState } from "react";
 import debounce from "lodash/debounce";
 import type { Beach } from "@/app/types/beaches";
 import { useId } from "react";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface SearchBarProps {
   placeholder?: string;
   className?: string;
+  beaches: Beach[];
 }
 
 export default function SearchBar({
   placeholder = "Search breaks...",
   className,
+  beaches,
 }: SearchBarProps) {
-  const { filters, updateFilters, beaches } = useBeachContext();
+  const { filters, updateFilter } = useBeachFilters();
   const [mounted, setMounted] = useState(false);
-  const [localValue, setLocalValue] = useState(filters.searchQuery);
+  const [localValue, setLocalValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchId = useId();
+  const [searchResults, setSearchResults] = useState<Beach[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Update local value when filter value changes
+  // Initialize localValue after component mounts
   useEffect(() => {
-    setLocalValue(filters.searchQuery);
-  }, [filters.searchQuery]);
+    if (mounted && filters.searchQuery) {
+      setLocalValue(filters.searchQuery);
+    }
+  }, [mounted, filters.searchQuery]);
 
-  // Handle mounting
+  // Set mounted state
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const handleSearch = (searchValue: string) => {
-    updateFilters({ ...filters, searchQuery: searchValue });
+    updateFilter("searchQuery", searchValue);
   };
 
   const debouncedSearch = useRef(debounce(handleSearch, 300)).current;
 
-  // Cleanup debounced function
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setLocalValue(newValue);
-    setShowSuggestions(true);
-    debouncedSearch(newValue);
+
+    // Clear the search query parameter if input is empty
+    if (!newValue) {
+      updateFilter("searchQuery", "");
+      setSearchResults([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    if (newValue.length >= 2) {
+      setIsSearching(true);
+      try {
+        // Get current regionId from URL
+        const currentRegionId = new URLSearchParams(window.location.search).get(
+          "regionId"
+        );
+
+        const response = await fetch(
+          `/api/beaches/search?term=${encodeURIComponent(newValue)}${
+            currentRegionId ? `&regionId=${currentRegionId}` : ""
+          }`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsSearching(false);
+      }
+      setShowSuggestions(true);
+    } else {
+      setSearchResults([]);
+      setShowSuggestions(false);
+    }
   };
 
   const handleBlur = () => {
-    // Use RAF to ensure this happens after any click events
     requestAnimationFrame(() => {
       setShowSuggestions(false);
     });
   };
 
-  // Filter suggestions based on input
-  const suggestions = beaches
-    .filter(
-      (beach) =>
-        beach.name.toLowerCase().includes(localValue.toLowerCase()) ||
-        beach.region?.name.toLowerCase().includes(localValue.toLowerCase())
-    )
-    .slice(0, 5); // Limit to 5 suggestions
+  const handleSelectBeach = (beach: Beach) => {
+    setLocalValue(beach.name);
+    updateFilter("searchQuery", beach.name);
+    setShowSuggestions(false);
+  };
 
-  // Render static markup during SSR and initial hydration
+  const suggestions = searchResults.slice(0, 5);
+
   if (!mounted) {
     return (
       <div className="space-y-3">
@@ -82,7 +118,7 @@ export default function SearchBar({
             <input
               type="text"
               readOnly
-              defaultValue={localValue}
+              value="" // Always provide a value, never undefined
               placeholder={placeholder}
               aria-label="Search"
               className={cn(
@@ -139,6 +175,7 @@ export default function SearchBar({
                 role="option"
                 aria-selected="false"
                 className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                onMouseDown={() => handleSelectBeach(beach)}
               >
                 <div className="font-medium">{beach.name}</div>
                 <div className="text-sm text-gray-500">

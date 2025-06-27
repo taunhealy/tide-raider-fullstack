@@ -1,6 +1,7 @@
-import { beachData } from "../app/data/beachData";
+import { beachData } from "@/app/data/beachData";
 import { HARDCODED_COUNTRIES } from "../app/lib/location/countries/constants";
 import { prisma } from "@/app/lib/prisma";
+import { Difficulty, WaveType, OptimalTide } from "@prisma/client";
 
 // Add this utility function to your seed.ts file
 async function getCountryAndRegionIds(countryName: string, regionName: string) {
@@ -53,6 +54,46 @@ uniqueRegions.forEach((regions, country) => {
 // Add this utility function at the top of seed.ts
 function transformRegionToId(regionName: string): string {
   return regionName.toLowerCase().replace(/\s+/g, "-");
+}
+
+// Add a utility function to map your data to Prisma enums
+function mapDifficulty(value: string): Difficulty {
+  const map: Record<string, Difficulty> = {
+    BEGINNER: "BEGINNER",
+    INTERMEDIATE: "INTERMEDIATE",
+    ADVANCED: "ADVANCED",
+    EXPERT: "EXPERT",
+    // Add any other mappings needed
+  };
+  return map[value] || "INTERMEDIATE"; // Default fallback
+}
+
+function mapWaveType(value: string): WaveType {
+  const map: Record<string, WaveType> = {
+    BEACH_BREAK: "BEACH_BREAK",
+    POINT_BREAK: "POINT_BREAK",
+    REEF_BREAK: "REEF_BREAK",
+    RIVER_MOUTH: "RIVER_MOUTH",
+    // Add any other mappings needed
+  };
+  return map[value] || "BEACH_BREAK"; // Default fallback
+}
+
+function mapOptimalTide(value: string): OptimalTide {
+  const map: Record<string, OptimalTide> = {
+    All: "ALL",
+    "All Tides": "ALL",
+    Mid: "MID",
+    "Mid Tide": "MID",
+    Low: "LOW",
+    "Low Tide": "LOW",
+    High: "HIGH",
+    "High Tide": "HIGH",
+    "Low to Mid": "LOW_TO_MID",
+    "Mid to High": "MID_TO_HIGH",
+    // Add any other mappings needed
+  };
+  return map[value] || "UNKNOWN"; // Default fallback
 }
 
 async function main() {
@@ -214,15 +255,15 @@ async function main() {
               optimalWindDirections: beach.optimalWindDirections,
               optimalSwellDirections: beach.optimalSwellDirections,
               bestSeasons: beach.bestSeasons,
-              optimalTide: beach.optimalTide,
+              optimalTide: mapOptimalTide(beach.optimalTide as string),
               description: beach.description,
-              difficulty: beach.difficulty,
-              waveType: beach.waveType,
+              difficulty: mapDifficulty(beach.difficulty),
+              waveType: mapWaveType(beach.waveType),
               swellSize: beach.swellSize,
               idealSwellPeriod: beach.idealSwellPeriod,
               waterTemp: beach.waterTemp,
               hazards: beach.hazards,
-              crimeLevel: beach.crimeLevel,
+              crimeLevel: beach.crimeLevel as string,
               sharkAttack: beach.sharkAttack,
               coordinates: beach.coordinates,
               // Add any other required fields
@@ -240,16 +281,30 @@ async function main() {
       );
     }
 
-    console.log("5. Checking user...");
-    const userId = "cmc96jvht0000v0b0sic16ghk";
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    console.log("5. Creating or finding a user...");
+    let user;
+    try {
+      // Try to find an existing user
+      user = await prisma.user.findFirst();
 
-    if (!user) {
-      throw new Error("⚠️ User not found. Please create user first.");
+      if (!user) {
+        // Create a new user if none exists
+        user = await prisma.user.create({
+          data: {
+            name: "Demo User",
+            email: "demo@example.com",
+            roles: ["SURFER"],
+            skillLevel: "INTERMEDIATE",
+          },
+        });
+        console.log("✓ Created new user:", user.id);
+      } else {
+        console.log("✓ Found existing user:", user.id);
+      }
+    } catch (error) {
+      console.error("Failed to create/find user:", error);
+      throw error;
     }
-    console.log("✓ User found:", user.id);
 
     const beach = await prisma.beach.findFirst({
       include: {
@@ -358,7 +413,7 @@ async function main() {
             comments: entry.comments,
             isPrivate: entry.isPrivate,
             isAnonymous: entry.isAnonymous,
-            user: { connect: { id: userId } },
+            user: { connect: { id: user.id } },
             beach: { connect: { id: beach.id } },
             region: { connect: { id: beach.region.id } },
             forecast: { connect: { id: forecast.id } },

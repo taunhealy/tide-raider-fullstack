@@ -1,25 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/app/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import gsap from "gsap";
 import type { Region, UserSearch } from "@/app/types/region";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface RecentRegionSearchProps {
   selectedRegionId?: string;
-  onRegionSelect: (region: Region) => void;
   className?: string;
 }
 
 export default function RecentRegionSearch({
   selectedRegionId,
-  onRegionSelect,
   className,
 }: RecentRegionSearchProps) {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const { updateFilters, filters, setLoadingState } = useBeachContext();
+  const { updateFilter } = useBeachFilters();
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Enhanced caching strategy for recent searches
   const { data: recentSearches } = useQuery({
@@ -55,53 +58,28 @@ export default function RecentRegionSearch({
   const handleButtonClick = async (search: UserSearch) => {
     if (!containerRef.current) return;
 
-    // Set loading states
-    setLoadingState("forecast", true);
-    setLoadingState("beaches", true);
     setLoadingId(search.id);
 
     try {
-      // Create region object
-      const selectedRegion = {
+      const selectedRegion: Region = {
         id: search.region.id,
         name: search.region.name,
-        country: search.region.country,
+        countryId: search.region.country?.id || "",
         continent: search.region.continent,
+        country: search.region.country,
       };
 
-      // Update context
-      updateFilters({
-        ...filters,
-        location: {
-          ...filters.location,
-          regionId: selectedRegion.id.toLowerCase(),
-          region: selectedRegion.name,
-          country: selectedRegion.country,
-          continent: selectedRegion.continent,
-        },
-      });
+      // Use updateFilter instead of directly manipulating URL
+      updateFilter("regionId", selectedRegion.id.toLowerCase());
+      updateFilter("region", selectedRegion.name);
+      updateFilter("country", selectedRegion.country?.name || "");
+      updateFilter("continent", selectedRegion.continent || "");
 
-      // Notify parent
-      onRegionSelect(selectedRegion);
-
-      // Fetch forecast data first
-      const forecastRes = await fetch(
-        `/api/surf-conditions?regionId=${selectedRegion.id.toLowerCase()}`
-      );
-
-      if (!forecastRes.ok) {
-        throw new Error("Failed to fetch forecast data");
-      }
-
-      // Track search in background without waiting
       trackSearch(search.region.id);
     } catch (error) {
       console.error("Error during region selection:", error);
     } finally {
-      // Small delay before resetting loading states to ensure UI updates
       setTimeout(() => {
-        setLoadingState("forecast", false);
-        setLoadingState("beaches", false);
         setLoadingId(null);
       }, 500);
     }

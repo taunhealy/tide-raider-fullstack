@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense } from "react";
-import { useBeachContext } from "@/app/context/BeachContext";
+import { Suspense, useMemo, useCallback, useState, useEffect } from "react";
 import { useBeachData } from "@/app/hooks/useBeachData";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -16,27 +17,71 @@ import LoadingIndicator from "./LoadingIndicator";
 import EmptyState from "./EmptyState";
 
 export default function BeachContainer() {
-  const { filters, isSidebarOpen, setSidebarOpen } = useBeachContext();
-  const {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { filters, updateFilter } = useBeachFilters();
+  const { beaches, beachScores, isLoading, hasNextPage, loadMore } =
+    useBeachData();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    console.log(
+      "Beach scores structure:",
+      Object.keys(beachScores).length > 0
+        ? Object.entries(beachScores)
+            .slice(0, 1)
+            .map(([id, data]) => ({
+              id,
+              keys: Object.keys(data),
+              data: JSON.stringify(data),
+            }))
+        : "No scores available"
+    );
+  }, [beachScores]);
+
+  useEffect(() => {
+    // If we have beaches but no scores, refetch after a delay
+    if (beaches.length > 0 && Object.keys(beachScores).length === 0) {
+      const timer = setTimeout(() => {
+        // Force a refetch of the data
+        queryClient.invalidateQueries({
+          queryKey: ["beaches", filters.regionId, filters.searchQuery],
+        });
+      }, 2000); // 2 second delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [
     beaches,
     beachScores,
-    forecastData,
-    isLoading,
-    hasNextPage,
-    loadMore,
-  } = useBeachData();
+    filters.regionId,
+    filters.searchQuery,
+    queryClient,
+  ]);
 
-  // First filter by search query
-  const filteredBeaches = beaches.filter((beach) =>
-    beach.name.toLowerCase().includes(filters.searchQuery.toLowerCase())
+  const filteredBeaches = useMemo(() => {
+    return beaches.filter((beach) => {
+      if (filters.regionId && beach.regionId !== filters.regionId) return false;
+      if (
+        filters.waveTypes.length &&
+        !filters.waveTypes.includes(beach.waveType)
+      )
+        return false;
+      if (
+        filters.difficulty.length &&
+        !filters.difficulty.includes(beach.difficulty)
+      )
+        return false;
+      if (filters.hasSharkAlert && !beach.hasSharkAlert) return false;
+      return true;
+    });
+  }, [beaches, filters]);
+
+  const handleRegionSelect = useCallback(
+    (regionId: string) => {
+      updateFilter("regionId", regionId);
+    },
+    [updateFilter]
   );
-
-  // Then sort by score
-  const sortedBeaches = filteredBeaches.sort((a, b) => {
-    const scoreA = beachScores[a.id]?.score ?? 0;
-    const scoreB = beachScores[b.id]?.score ?? 0;
-    return scoreB - scoreA; // Sort in descending order (highest score first)
-  });
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
@@ -49,17 +94,21 @@ export default function BeachContainer() {
           <main className="min-w-0 overflow-y-auto">
             <BeachHeaderControls
               showFilters={isSidebarOpen}
-              onToggleFilters={(show) => setSidebarOpen(show)}
+              onToggleFilters={setSidebarOpen}
+              onSearch={(value) => updateFilter("searchQuery", value)}
+              onRegionSelect={handleRegionSelect}
+              currentRegion={filters.regionId}
+              beaches={beaches}
             />
 
             <div className="grid grid-cols-1 gap-[16px] relative">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
-              ) : isLoading && beaches.length === 0 ? (
+              ) : isLoading ? (
                 <LoadingIndicator />
               ) : beaches.length === 0 ? (
                 <EmptyState message="No beaches found in this region" />
-              ) : sortedBeaches.length === 0 ? (
+              ) : filteredBeaches.length === 0 ? (
                 <EmptyState message="No beaches match your current filters" />
               ) : (
                 <>
@@ -69,13 +118,29 @@ export default function BeachContainer() {
                     </div>
                   )}
                   <div className={isLoading ? "opacity-50" : ""}>
-                    {sortedBeaches.map((beach) => (
+                    {filteredBeaches.map((beach) => (
                       <BeachCard
                         key={beach.id}
                         beach={beach}
                         score={beachScores[beach.id]?.score ?? 0}
-                        forecastData={forecastData}
-                        isLoading={isLoading}
+                        forecastData={
+                          isLoading
+                            ? null
+                            : beachScores[beach.id]?.beach
+                                  ?.beachDailyScores?.[0]?.conditions
+                              ? {
+                                  id: beach.id,
+                                  regionId: beach.regionId,
+                                  date: new Date(
+                                    beachScores[beach.id]?.beach
+                                      ?.beachDailyScores?.[0]?.date ||
+                                      new Date()
+                                  ),
+                                  ...beachScores[beach.id]?.beach
+                                    ?.beachDailyScores[0].conditions,
+                                }
+                              : null
+                        }
                       />
                     ))}
                   </div>
@@ -98,6 +163,8 @@ export default function BeachContainer() {
       <FilterSidebar
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onFilterUpdate={updateFilter}
+        currentFilters={filters as any}
       />
 
       <StickyForecastWidget />
