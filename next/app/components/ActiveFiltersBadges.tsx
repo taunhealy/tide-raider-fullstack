@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
-import { useBeachContext } from "@/app/context/BeachContext";
 import { useBeachData } from "@/app/hooks/useBeachData";
 
 interface ActiveFilterBadgesProps {
@@ -32,7 +31,6 @@ export function ActiveFilterBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
-  const { filters: contextFilters } = useBeachContext();
   const { beaches = [] } = useBeachData();
 
   // Update the query to not depend on loadingStates
@@ -74,23 +72,26 @@ export function ActiveFilterBadges({
 
   return (
     <div className="flex flex-wrap gap-2 mb-4 px-1">
-      {filters.beaches?.map((beach) => (
-        <div
-          key={typeof beach === "string" ? beach : beach.id}
-          className={badgeClassName}
-        >
-          <span className="mr-1">Beach:</span>
-          {typeof beach === "string" ? beach : beach.name}
-          <button
-            onClick={() =>
-              removeBeachFilter(typeof beach === "string" ? beach : beach.id)
-            }
-            className={buttonClassName}
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ))}
+      {filters.beaches?.map((beach) => {
+        const beachId = typeof beach === "string" ? beach : beach.id;
+        const beachName =
+          typeof beach === "string"
+            ? beaches.find((b) => b.id === beach)?.name || beach
+            : beach.name;
+
+        return (
+          <div key={beachId} className={badgeClassName}>
+            <span className="mr-1">Beach:</span>
+            {beachName}
+            <button
+              onClick={() => removeBeachFilter(beachId)}
+              className={buttonClassName}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        );
+      })}
       {filters.regions?.map((region) => (
         <div key={region} className={badgeClassName}>
           <span className="mr-1">Region:</span>

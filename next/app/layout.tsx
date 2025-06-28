@@ -5,7 +5,6 @@ import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
-import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 

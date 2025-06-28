@@ -6,6 +6,7 @@ import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { CoreForecastData } from "@/app/types/forecast";
 import { useBeachData } from "@/app/hooks/useBeachData";
 import { useSearchParams } from "next/navigation";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
 
 interface WeatherForecastWidgetProps {
   regionId: string;
@@ -37,35 +38,20 @@ export default function WeatherForecastWidget() {
   const regionId = searchParams.get("regionId");
   const regionName = searchParams.get("region");
 
-  console.log("WeatherForecastWidget state:", {
-    regionId,
-    regionName,
-    forecastDataPresent: !!forecastData,
-    isLoading,
-  });
+  const getWidgetContent = () => {
+    if (!regionId) {
+      return "Please select a region to view forecast";
+    }
+    if (isLoading) {
+      return <LoadingSpinner />;
+    }
+    if (!forecastData) {
+      return "No forecast data available";
+    }
+    return null;
+  };
 
-  if (!regionId) {
-    return <div className="p-4 text-red-500">Debug: No region selected</div>;
-  }
-
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
-  if (!forecastData) {
-    return (
-      <div className="p-4">
-        Debug: No forecast data available for region: {regionId}
-      </div>
-    );
-  }
-
-  // Debug logging for forecast data
-  console.log("Rendering forecast data:", {
-    forecastData,
-    windDirection: degreesToCardinal(forecastData.windDirection),
-    swellDirection: degreesToCardinal(forecastData.swellDirection),
-  });
+  const statusMessage = getWidgetContent();
 
   return (
     <div
@@ -81,8 +67,10 @@ export default function WeatherForecastWidget() {
         <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-5 py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)]">
           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
           <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-          <h3 className="font-primary font-bold text-lg md:text-xl text-white tracking-wider">
-            TODAY'S FORECAST
+          <h3
+            className={`font-primary font-bold text-lg md:text-xl text-white tracking-wider ${isLoading ? "animate-pulse" : ""}`}
+          >
+            {"TODAY'S FORECAST"}
           </h3>
         </div>
         <div className="flex items-center justify-end">
@@ -92,73 +80,98 @@ export default function WeatherForecastWidget() {
         </div>
       </div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Wind Direction */}
-        <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-          <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-            Wind
-          </label>
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="space-y-2 text-center">
-              <span className="text-2xl font-semibold text-white font-primary">
-                {degreesToCardinal(forecastData.windDirection)}
-              </span>
-              <span className="block text-sm text-gray-300 font-primary">
-                {forecastData.windDirection.toFixed(1)}°
-              </span>
-              <span className="block text-sm text-gray-300 font-primary">
-                {forecastData.windSpeed} kts
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Swell Height */}
-        <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-          <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-            Swell Height
-          </label>
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-white font-primary">
-              {forecastData.swellHeight}m
-            </span>
-          </div>
-        </div>
-
-        {/* Swell Period */}
-        <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-          <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-            Swell Period
-          </label>
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-white font-primary">
-              {forecastData.swellPeriod}s
-            </span>
-          </div>
-        </div>
-
-        {/* Swell Direction */}
-        <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-          <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-            Swell Direction
-          </label>
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="space-y-2 text-center">
-              <span className="text-2xl font-semibold text-white font-primary">
-                {degreesToCardinal(forecastData.swellDirection)}
-              </span>
-              <span className="block text-sm text-gray-300 font-primary">
-                {forecastData.swellDirection}°
+      {statusMessage ? (
+        <div className="grid place-items-center h-[120px]">
+          <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-4 rounded-lg border border-gray-700 shadow-md">
+            <div className="flex items-center space-x-3">
+              <svg
+                className="w-5 h-5 text-[var(--color-tertiary)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-gray-300 font-primary">
+                {statusMessage}
               </span>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        // Grid Layout
+        <div className="grid grid-cols-2 gap-4">
+          {/* Wind Direction */}
+          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+              Wind
+            </label>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="space-y-2 text-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {degreesToCardinal(forecastData!.windDirection)}
+                </span>
+                <span className="block text-sm text-gray-300 font-primary">
+                  {forecastData!.windDirection.toFixed(1)}°
+                </span>
+                <span className="block text-sm text-gray-300 font-primary">
+                  {forecastData!.windSpeed} kts
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Swell Height */}
+          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+              Swell Height
+            </label>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <span className="text-2xl font-semibold text-white font-primary">
+                {forecastData!.swellHeight}m
+              </span>
+            </div>
+          </div>
+
+          {/* Swell Period */}
+          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+              Swell Period
+            </label>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <span className="text-2xl font-semibold text-white font-primary">
+                {forecastData!.swellPeriod}s
+              </span>
+            </div>
+          </div>
+
+          {/* Swell Direction */}
+          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+              Swell Direction
+            </label>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="space-y-2 text-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {degreesToCardinal(forecastData!.swellDirection)}
+                </span>
+                <span className="block text-sm text-gray-300 font-primary">
+                  {forecastData!.swellDirection}°
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

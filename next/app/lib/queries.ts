@@ -18,7 +18,7 @@ const postFields = groq`
 `;
 
 // Simple query to test connection and see all documents
-export const homePageQuery = groq`*[_type == "homepage"] | order(_createdAt desc)[0] {
+export const homePageQuery = groq`*[_type == "landingPage"] | order(_createdAt desc)[0] {
   _id,
   _type,
   hero {

@@ -8,8 +8,6 @@ import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
-import { useMemo } from "react";
-import { Beach } from "@/app/types/beaches";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (

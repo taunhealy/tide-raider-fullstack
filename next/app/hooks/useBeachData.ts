@@ -53,7 +53,7 @@ async function fetchBeaches({
   return response.json();
 }
 
-export function useBeachData() {
+export function useBeachData(options?: { requireRegion?: boolean }) {
   const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -79,7 +79,7 @@ export function useBeachData() {
       getNextPageParam: (lastPage) =>
         lastPage.pagination.hasMore ? lastPage.pagination.page + 1 : undefined,
       initialPageParam: 1,
-      enabled: !!regionId,
+      enabled: options?.requireRegion ? !!regionId : true,
       retry: 3,
       retryDelay: 1000,
       staleTime: 60000,

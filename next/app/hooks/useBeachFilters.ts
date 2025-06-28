@@ -1,17 +1,8 @@
 import { useMemo, useCallback } from "react";
 import { Beach, Region } from "@/app/types/beaches";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-
-interface BeachFilters {
-  regionId: string;
-  waveTypes: string[];
-  difficulty: string[];
-  hasSharkAlert: boolean;
-  country: string;
-  continent: string;
-  region: string;
-  searchQuery: string;
-}
+import { FILTERS } from "@/app/config/filters";
+import { FilterType } from "@/app/config/filters";
 
 const transformBeachData = (beach: any): Beach => ({
   ...beach,
@@ -55,21 +46,34 @@ export const useBeachFilters = () => {
   const pathname = usePathname();
 
   const filters = {
-    regionId: searchParams.get("regionId")?.toLowerCase() || "",
-    waveTypes: searchParams.get("waveType")?.split(",") || [],
-    difficulty: searchParams.get("difficulty")?.split(",") || [],
-    hasSharkAlert: searchParams.get("hasSharkAlert") === "true",
+    // Handle standard filters
+    ...FILTERS.reduce(
+      (acc, filter) => {
+        const value = searchParams.get(filter.urlParam);
+        if (filter.type === "array") {
+          acc[filter.key] = value?.split(",") || [];
+        } else if (filter.type === "boolean") {
+          acc[filter.key] = value === "true";
+        } else if (filter.type === "number") {
+          acc[filter.key] = value ? Number(value) : 0;
+        }
+        return acc;
+      },
+      {} as Record<FilterType, any>
+    ),
+    // Handle region-related parameters
+    regionId: searchParams.get("regionId") || "",
+    region: searchParams.get("region") || "",
     country: searchParams.get("country") || "",
     continent: searchParams.get("continent") || "",
-    region: searchParams.get("region") || "",
-    searchQuery: searchParams.get("searchQuery") || "",
   };
 
   const updateFilter = useCallback(
     (filterType: string, value: string | string[]) => {
-      console.log(`updateFilter called: ${filterType} = ${value}`);
-
       const params = new URLSearchParams(searchParams);
+
+      const region = params.get("regionId");
+
       if (Array.isArray(value)) {
         if (value.length) {
           params.set(filterType, value.join(","));
@@ -82,9 +86,13 @@ export const useBeachFilters = () => {
         params.delete(filterType);
       }
 
+      if (filters.regionId && filterType !== "regionId") {
+        params.set("regionId", filters.regionId);
+      }
+
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams, filters.regionId]
   );
 
   const selectRegion = useCallback(

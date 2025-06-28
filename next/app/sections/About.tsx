@@ -22,13 +22,13 @@ export default function About({ data }: AboutProps) {
           <div className="order-2 lg:order-1">
             <div className="relative h-[240px] md:h-[400px] lg:h-[540px] rounded-2xl overflow-hidden">
               <div
-                className="absolute inset-0 bg-gradient-to-br from-white to-gray-800/30 backdrop-blur-lg rounded-xl border border-[var(--color-tertiary)]/40 flex items-center justify-center"
+                className="absolute inset-0 bg-white rounded-xl border border-[var(--color-tertiary)]/40 flex items-center justify-center"
                 style={{
                   boxShadow:
                     "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
                 }}
               >
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--color-tertiary)]/5 to-transparent"></div>
+                <div className="absolute inset-0"></div>
 
                 <div
                   className="relative w-[85%] h-[85%] rounded-lg overflow-hidden border border-[var(--color-tertiary)]/70"
@@ -37,8 +37,9 @@ export default function About({ data }: AboutProps) {
                   }}
                 >
                   <Image
-                    src="https://media.tideraider.com/Leonardo_Phoenix_10_A_majestic_worn_leatherbound_log_book_lies_0.webp"
+                    src="https://media.tideraider.com/austin-neill-uHD0uyp79Dg-unsplash.webp"
                     alt="Studio Ghibli-style illustration for About section"
+                    title="Photographer: Austin Neill"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover object-center"
@@ -46,9 +47,9 @@ export default function About({ data }: AboutProps) {
                   />
                 </div>
 
-                <div className="absolute top-4 left-4 w-3 h-3 bg-[var(--color-tertiary)] rounded-full opacity-90"></div>
-                <div className="absolute bottom-4 right-4 w-3 h-3 bg-[var(--color-tertiary)] rounded-full opacity-70"></div>
-                <div className="absolute top-4 right-4 w-2 h-2 bg-white rounded-full opacity-70"></div>
+                <div className="absolute top-4 left-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[10px] border-b-[#f8dab3]" />
+                <div className="absolute bottom-4 right-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-[var(--color-tertiary)]" />
+                <div className="absolute top-4 right-4 w-2 h-2 bg-white rounded-full opacity-90"></div>
                 <div className="absolute bottom-4 left-4 w-2 h-2 bg-white rounded-full opacity-70"></div>
               </div>
             </div>
@@ -64,6 +65,9 @@ export default function About({ data }: AboutProps) {
                 Tide Raider is a platform for travelling surfers and surf
                 photographers to explore, share and promote surf travel.
               </p>
+              <Button>
+                <span>Let's go</span>
+              </Button>
 
               <div className="mt-8 pt-6 border-t border-white backdrop-blur-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -7,6 +7,7 @@ import { RegionFilter } from "../RegionFilter";
 import { useRegions } from "@/app/hooks/useRegions";
 import { RatingFilter } from "@/app/components/RatingFilter";
 import { Button } from "@/app/components/ui/Button";
+import { FilterConfig } from "@/app/types/raidlogs";
 
 interface RaidLogFilterProps {
   isOpen: boolean;
@@ -17,17 +18,6 @@ interface RaidLogFilterProps {
   onFilterChange: (filters: Partial<FilterConfig>) => void;
   onReset: () => void;
   beaches: Beach[];
-}
-
-interface FilterConfig {
-  beaches: string[];
-  regions: string[];
-  minRating: number | null;
-  dateRange: {
-    start: string;
-    end: string;
-  };
-  isPrivate: boolean;
 }
 
 export function RaidLogFilter({

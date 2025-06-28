@@ -530,17 +530,18 @@ export default function HeroSection({ data }: HeroProps) {
 
   if (!data) {
     return (
-      <section className="relative w-full h-[60vh] md:h-[90vh] md:px-[121.51px] bg-gray-100">
+      <section className="relative w-full h-[100svh] min-h-[600px] overflow-hidden px-4 sm:px-6 md:px-8 lg:px-16 bg-gray-900">
         <div className="absolute inset-0 flex items-center justify-center">
-          <p>Loading hero content...</p>
+          <div className="space-y-4 text-center">
+            <div className="w-12 h-12 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto"></div>
+            <p className="text-white/80 font-primary animate-pulse">
+              Loading hero content...
+            </p>
+          </div>
         </div>
       </section>
     );
   }
-
-  const imageUrl = data?.heroImage?.asset
-    ? urlForImage(data.heroImage)?.width(1920).height(1080).url()
-    : null;
 
   return (
     <section
@@ -565,15 +566,13 @@ export default function HeroSection({ data }: HeroProps) {
         {/* Background image */}
         <div className="absolute inset-0">
           <Image
-            src={imageUrl || ""}
-            alt={data?.heroImage?.alt || ""}
+            src="https://media.tideraider.com/Leonardo_Phoenix_10_a_beautiful_island_barelling.jpg"
+            alt="Barreling island wave"
+            title="Art Style: Studio Ghibli"
             fill
             priority
             sizes="100vw"
             className="object-cover"
-            ref={imageRef}
-            placeholder="blur"
-            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
           />
         </div>
 
@@ -582,15 +581,7 @@ export default function HeroSection({ data }: HeroProps) {
           ref={textRef}
           className="absolute left-4 sm:left-8 md:left-[120px] lg:left-[180px] top-1/2 -translate-y-1/2 pr-2 sm:pr-3 md:pr-4"
         >
-          <div className="writing-mode-vertical-rl rotate-270 space-y-1 sm:space-y-1.5 md:space-y-2">
-            <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 sm:px-4 md:px-5 py-2 sm:py-3 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)]">
-              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 sm:w-2 h-1.5 sm:h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 sm:w-2 h-1.5 sm:h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-              <h2 className="font-primary font-bold text-xl sm:text-2xl md:text-4xl lg:text-[64px] leading-none tracking-tighter text-white">
-                {data?.heroHeading}
-              </h2>
-            </div>
-          </div>
+          <div className="writing-mode-vertical-rl rotate-270 space-y-1 sm:space-y-1.5 md:space-y-2"></div>
         </div>
 
         {/* Product Feature Slider - replacing the START button */}
@@ -657,14 +648,6 @@ export default function HeroSection({ data }: HeroProps) {
                       {/* Hexagonal frame with glow */}
                       <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl rotate-45 transform-gpu"></div>
                       <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl -rotate-45 transform-gpu"></div>
-
-                      {/* Inner hexagon with accent color */}
-                      <div className="absolute inset-[3px] bg-gradient-to-b from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/5 rounded-lg rotate-45 transform-gpu"></div>
-                      <div className="absolute inset-[3px] bg-gradient-to-b from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/5 rounded-lg -rotate-45 transform-gpu"></div>
-
-                      {/* Decorative elements */}
-                      <div className="absolute top-0 left-0 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[var(--color-tertiary)] rounded-full opacity-70 blur-[1px]"></div>
-                      <div className="absolute bottom-0 right-0 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[var(--color-tertiary)] rounded-full opacity-70 blur-[1px]"></div>
 
                       {/* Common white border for all features */}
                       <div className="absolute inset-0 border border-white/30 rounded-xl"></div>

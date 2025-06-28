@@ -1,4 +1,7 @@
 // app/components/ui/FilterDrawer.tsx
+import { X } from "lucide-react";
+import { cn } from "@/app/lib/utils";
+
 interface FilterDrawerProps {
   children: React.ReactNode;
   isOpen: boolean;

@@ -63,7 +63,7 @@ export class ScoreService {
       | "swellDirection"
       | "swellPeriod"
     >
-  ): number {
+  ): number | null {
     try {
       console.log("Starting score calculation for beach:", {
         beachId: beach.id,
@@ -330,7 +330,7 @@ export class ScoreService {
           idealSwellPeriod: beach.idealSwellPeriod,
         },
       });
-      return 0;
+      return null;
     }
   }
 
@@ -539,7 +539,7 @@ export class ScoreService {
       sortedBeaches.map((beach) => [
         beach.id,
         {
-          score: beach.beachDailyScores[0]?.score || 0,
+          score: beach.beachDailyScores[0]?.score ?? null,
           beach: beach,
         },
       ])

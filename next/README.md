@@ -68,7 +68,7 @@ Retries and fault tolerance
 
 ## State Management & Hooks Architecture
 
-Context (State Management):
+Hooks/Context (State Management):
 
 Manages application state
 Shares state between components
@@ -109,3 +109,10 @@ Stores scores in BeachDailyScore table
 beach-scores/route.ts (optional endpoint):
 Can be used to manually trigger score generation such as high scores
 Uses the same storeBeachDailyScores utility
+
+## State Management
+
+URL parameters serve as the source of truth for filter state
+Parameter changes automatically trigger new API requests to fetch data from the server
+The UI always reflects the current filter state
+

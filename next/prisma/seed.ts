@@ -96,6 +96,110 @@ function mapOptimalTide(value: string): OptimalTide {
   return map[value] || "UNKNOWN"; // Default fallback
 }
 
+// Add this near the top of your seed.ts file
+const sampleLogEntries = [
+  {
+    date: new Date("2024-03-20"),
+    surferName: "Dummy Surfer 1",
+    surferEmail: "dummy.surfer1@example.com",
+    beachName: "[DUMMY] Muizenberg",
+    surferRating: 5,
+    comments: "[DUMMY DATA] Perfect offshore conditions, clean 4-6ft waves",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-19"),
+    surferName: "Dummy Surfer 2",
+    surferEmail: "dummy.surfer2@example.com",
+    beachName: "[DUMMY] Jeffreys Bay",
+    surferRating: 4,
+    comments: "[DUMMY DATA] Fun morning session, light crowd",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-18"),
+    surferName: "Dummy Surfer 3",
+    surferEmail: "dummy.surfer3@example.com",
+    beachName: "[DUMMY] Victoria Bay",
+    surferRating: 3,
+    comments: "[DUMMY DATA] Bit choppy but still manageable",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-17"),
+    surferName: "Dummy Surfer 4",
+    surferEmail: "dummy.surfer4@example.com",
+    beachName: "[DUMMY] Nahoon Reef",
+    surferRating: 5,
+    comments: "[DUMMY DATA] Epic dawn patrol, glassy conditions",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-16"),
+    surferName: "Dummy Surfer 5",
+    surferEmail: "dummy.surfer5@example.com",
+    beachName: "[DUMMY] Cape St Francis",
+    surferRating: 4,
+    comments: "[DUMMY DATA] Good size waves, afternoon session",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-15"),
+    surferName: "Dummy Surfer 6",
+    surferEmail: "dummy.surfer6@example.com",
+    beachName: "[DUMMY] Elands Bay",
+    surferRating: 2,
+    comments: "[DUMMY DATA] Onshore winds made it messy",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-14"),
+    surferName: "Dummy Surfer 7",
+    surferEmail: "dummy.surfer7@example.com",
+    beachName: "[DUMMY] Supertubes",
+    surferRating: 5,
+    comments: "[DUMMY DATA] Perfect peeling rights, long rides",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-13"),
+    surferName: "Dummy Surfer 8",
+    surferEmail: "dummy.surfer8@example.com",
+    beachName: "[DUMMY] Stilbaai",
+    surferRating: 4,
+    comments: "[DUMMY DATA] Clean morning waves, light offshore",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-12"),
+    surferName: "Dummy Surfer 9",
+    surferEmail: "dummy.surfer9@example.com",
+    beachName: "[DUMMY] Buffels Bay",
+    surferRating: 3,
+    comments: "[DUMMY DATA] Average conditions but fun session",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+  {
+    date: new Date("2024-03-11"),
+    surferName: "Dummy Surfer 10",
+    surferEmail: "dummy.surfer10@example.com",
+    beachName: "[DUMMY] Dungeons",
+    surferRating: 5,
+    comments: "[DUMMY DATA] Pumping swell, perfect conditions",
+    isPrivate: false,
+    isAnonymous: false,
+  },
+];
+
 async function main() {
   try {
     console.log("1. Creating continents...");
@@ -320,95 +424,31 @@ async function main() {
     console.log("✓ Found beach for log entries:", beach.name);
 
     console.log("6. Creating log entries...");
-    // Get a random beach for the log entries
-    const sampleLogEntries = [
-      {
-        date: new Date("2024-03-15"),
-        surferRating: 4,
-        comments: "Great morning session, clean waves",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-14"),
-        surferRating: 5,
-        comments: "Perfect conditions, offshore winds",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-13"),
-        surferRating: 3,
-        comments: "Bit choppy but still fun",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-12"),
-        surferRating: 4,
-        comments: "Early morning glass-off",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-11"),
-        surferRating: 2,
-        comments: "Crowded and messy",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-10"),
-        surferRating: 5,
-        comments: "Epic swell, perfect size",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-09"),
-        surferRating: 4,
-        comments: "Good size waves, light crowd",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-08"),
-        surferRating: 3,
-        comments: "Fun afternoon session",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-      {
-        date: new Date("2024-03-07"),
-        surferRating: 4,
-        comments: "Clean morning waves",
-        isPrivate: false,
-        isAnonymous: false,
-      },
-    ];
-
+    // Create log entries
     for (const entry of sampleLogEntries) {
       try {
-        console.log(`Creating forecast for date: ${entry.date}`);
-
+        // Create a forecast for this entry
         const forecast = await prisma.forecastA.create({
           data: {
             date: entry.date,
             region: {
               connect: { id: beach.region.id },
             },
-            windSpeed: 15,
-            windDirection: 180,
-            swellHeight: 1.5,
-            swellPeriod: 12,
-            swellDirection: 200,
+            windSpeed: Math.floor(Math.random() * 20) + 5, // Random wind speed 5-25
+            windDirection: Math.floor(Math.random() * 360), // Random direction 0-360
+            swellHeight: Math.random() * 3 + 0.5, // Random swell 0.5-3.5m
+            swellPeriod: Math.floor(Math.random() * 8) + 8, // Random period 8-16s
+            swellDirection: Math.floor(Math.random() * 360), // Random direction 0-360
           },
         });
 
-        console.log(`Creating log entry for date: ${entry.date}`);
+        // Create the log entry
         await prisma.logEntry.create({
           data: {
             date: entry.date,
+            surferName: entry.surferName,
+            surferEmail: entry.surferEmail,
+            beachName: entry.beachName,
             surferRating: entry.surferRating,
             comments: entry.comments,
             isPrivate: entry.isPrivate,
@@ -420,7 +460,7 @@ async function main() {
           },
         });
 
-        console.log(`✓ Created log entry and forecast for ${entry.date}`);
+        console.log(`Created log entry for ${entry.date}`);
       } catch (error) {
         console.error(`Failed to create entry for ${entry.date}:`, error);
       }

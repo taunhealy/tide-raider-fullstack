@@ -218,12 +218,59 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const regionId = searchParams.get("regionId")?.toLowerCase();
   const searchQuery = searchParams.get("searchQuery") || undefined;
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
 
+  // If no regionId is provided, return all beaches
   if (!regionId) {
-    return NextResponse.json(
-      { error: "Region ID is required" },
-      { status: 400 }
-    );
+    try {
+      const beaches = await prisma.beach.findMany({
+        take: limit,
+        skip: (page - 1) * limit,
+        where: {
+          name: searchQuery
+            ? {
+                contains: searchQuery,
+                mode: "insensitive",
+              }
+            : undefined,
+        },
+        include: {
+          region: {
+            include: {
+              country: true,
+            },
+          },
+        },
+      });
+
+      const totalCount = await prisma.beach.count({
+        where: {
+          name: searchQuery
+            ? {
+                contains: searchQuery,
+                mode: "insensitive",
+              }
+            : undefined,
+        },
+      });
+
+      return NextResponse.json({
+        beaches,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          hasMore: page * limit < totalCount,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching beaches:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch beaches" },
+        { status: 500 }
+      );
+    }
   }
 
   // Check if regionId exists and is valid
@@ -243,18 +290,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
-
   try {
     // 1. Get/create forecast
     const forecast = await ForecastService.getOrCreateForecast(regionId);
 
     // 2. Calculate and store scores (with Redis deduplication)
     await dedupedEnsureBeachScores(regionId, forecast.date, forecast);
-
-    // 3. Add a small delay to ensure transaction completion
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // 4. Now get the scores after they're stored
     const { scores, beaches, totalCount } =
@@ -266,7 +307,20 @@ export async function GET(request: Request) {
         searchQuery,
       });
 
-    return NextResponse.json({
+    const cacheKey = `scored-beaches:${regionId}:${forecast.date.toISOString().split("T")[0]}`;
+
+    // Check cache
+    const cached = await redis.get(cacheKey);
+    if (cached && typeof cached === "string") {
+      try {
+        return NextResponse.json(JSON.parse(cached));
+      } catch (e) {
+        console.warn("Cache parse error:", e);
+      }
+    }
+
+    // Prepare result
+    const result = {
       forecast,
       scores,
       beaches,
@@ -276,7 +330,18 @@ export async function GET(request: Request) {
         limit,
         hasMore: page * limit < totalCount,
       },
-    });
+    };
+
+    // Store in cache as string
+    try {
+      await redis.set(cacheKey, JSON.stringify(result), {
+        ex: 900, // 15 minutes expiration
+      });
+    } catch (e) {
+      console.warn("Cache set error:", e);
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

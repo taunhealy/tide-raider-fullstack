@@ -679,6 +679,9 @@ export default function RaidLogTable({
     });
   };
 
+  console.log("RaidLogTable entries:", entries);
+  console.log("normalizedEntries:", normalizedEntries);
+
   if (isLoading) {
     return <TableSkeleton />;
   }

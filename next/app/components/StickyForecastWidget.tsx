@@ -10,9 +10,8 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
-import { useBeachContext } from "../context/BeachContext";
 import { useBeachData } from "../hooks/useBeachData";
-import { CoreForecastData } from "@/app/types/forecast";
+import { useSearchParams } from "next/navigation";
 
 // Register ScrollTrigger plugin
 if (typeof window !== "undefined") {
@@ -25,8 +24,9 @@ function generateId() {
 
 export default function StickyForecastWidget() {
   const widgetRef = useRef<HTMLDivElement>(null);
-  const { filters } = useBeachContext();
   const { forecastData } = useBeachData();
+  const searchParams = useSearchParams();
+  const regionName = searchParams.get("region");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const { data: sponsors = [] } = useQuery({
@@ -159,7 +159,7 @@ export default function StickyForecastWidget() {
               Today's Forecast
             </h4>
             <span className="text-xs text-gray-500 font-primary">
-              {forecastData?.regionId}
+              {regionName}
             </span>
           </div>
 

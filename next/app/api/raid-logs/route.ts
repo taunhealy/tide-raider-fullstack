@@ -176,52 +176,55 @@ export async function GET(req: NextRequest) {
 
     console.log("Where clause:", JSON.stringify(whereClause, null, 2));
 
-    // Fetch log entries
-    const logEntries = await prisma.logEntry.findMany({
-      where: whereClause,
-      orderBy: { date: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        id: true,
-        date: true,
-        surferName: true,
-        surferEmail: true,
-        surferRating: true,
-        comments: true,
-        isPrivate: true,
-        isAnonymous: true,
-        waveType: true,
-        imageUrl: true,
-        videoUrl: true,
-        videoPlatform: true,
-        userId: true,
-        // Include full region relation
-        region: {
-          select: {
-            id: true,
-            name: true,
-            continent: true,
-            country: true,
+    // Add total count query alongside entries query
+    const [logEntries, total] = await Promise.all([
+      prisma.logEntry.findMany({
+        where: whereClause,
+        orderBy: { date: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          date: true,
+          surferName: true,
+          surferEmail: true,
+          surferRating: true,
+          comments: true,
+          isPrivate: true,
+          isAnonymous: true,
+          waveType: true,
+          imageUrl: true,
+          videoUrl: true,
+          videoPlatform: true,
+          userId: true,
+          // Include full region relation
+          region: {
+            select: {
+              id: true,
+              name: true,
+              continent: true,
+              country: true,
+            },
+          },
+          beach: true,
+          forecast: true,
+          user: {
+            select: {
+              id: true,
+              nationality: true,
+              name: true,
+            },
+          },
+          alerts: {
+            select: {
+              id: true,
+              userId: true,
+            },
           },
         },
-        beach: true,
-        forecast: true,
-        user: {
-          select: {
-            id: true,
-            nationality: true,
-            name: true,
-          },
-        },
-        alerts: {
-          select: {
-            id: true,
-            userId: true,
-          },
-        },
-      },
-    });
+      }),
+      prisma.logEntry.count({ where: whereClause }),
+    ]);
 
     console.log(`Found ${logEntries.length} log entries`);
 
@@ -230,13 +233,19 @@ export async function GET(req: NextRequest) {
       ...entry,
       hasAlert: entry.alerts.length > 0,
       alertId: entry.alerts[0]?.id || null,
-      // Add a flag to indicate if the alert belongs to the current user
       isMyAlert: entry.alerts.some(
         (alert) => alert.userId === session?.user?.id
       ),
     }));
 
-    return NextResponse.json(enhancedEntries);
+    // Return the correct structure
+    return NextResponse.json({
+      entries: enhancedEntries,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("❌ Error fetching raid logs:", error);
     return NextResponse.json(

@@ -2,44 +2,24 @@
 
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRaidLogsData } from "@/app/hooks/useRaidLogsData";
 import { useBeachData } from "@/app/hooks/useBeachData";
-import { FilterConfig } from "@/app/types/raidlogs";
-import { Beach } from "@/app/types/beaches";
-import RaidLogTable from "@/app/components/raid-logs/RaidLogTable";
+import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
+import { Beach as BeachType } from "@/app/types/beaches";
 import { RaidLogFilter } from "@/app/components/raid-logs/RaidLogFilter";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 import { ActiveFilterBadges } from "@/app/components/ActiveFiltersBadges";
-import { LogVisibilityToggle } from "../LogVisibilityToggle";
-import { Button } from "../ui/Button";
 import { toast } from "sonner";
 import { handleSignIn } from "@/app/lib/auth-utils";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter } from "next/navigation";
-import { Session } from "next-auth";
-import { LogEntry } from "@/app/types/raidlogs";
 import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
-
-const defaultFilters: FilterConfig = {
-  beaches: [],
-  regions: [],
-  countries: [],
-  minRating: null,
-  dateRange: { start: "", end: "" },
-  isPrivate: false,
-};
+import { Header } from "./Header";
+import RaidLogTable from "./RaidLogTable";
+import { useQuery } from "@tanstack/react-query";
 
 interface RaidLogsComponentProps {
   userId?: string;
   initialFilters?: Partial<FilterConfig>;
-}
-
-interface MainContentProps {
-  entries: LogEntry[];
-  isLoading: boolean;
-  error: Error | null;
-  isPrivate: boolean;
-  onBeachClick: (beachId: string) => void;
 }
 
 export function RaidLogsComponent({
@@ -50,25 +30,41 @@ export function RaidLogsComponent({
     initialFilters,
   });
 
-  // State
+  // State hooks
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
+  const [selectedBeach, setSelectedBeach] = useState<BeachType | null>(null);
 
-  // Hooks
+  // Data fetching hooks
   const { data: session } = useSession();
-  const { beaches = [] } = useBeachData();
+  const { data: beaches = [], isLoading: isBeachesLoading } = useBeachData();
+
+  // Updated React Query hook to match API response
   const {
-    data: logEntriesData,
-    isLoading,
+    data: raidLogsData,
+    isLoading: isLogsLoading,
     error,
-  } = useRaidLogsData(filters, filters.isPrivate, userId);
+  } = useQuery<RaidLogsResponse>({
+    queryKey: ["raidLogs", filters, filters.isPrivate, userId],
+    queryFn: () =>
+      raidLogsClient.getRaidLogs(filters, filters.isPrivate, userId),
+    // Remove the select transform since API returns correct structure
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    placeholderData: (prev) => prev,
+  });
+
   const router = useRouter();
 
-  // Handlers
+  // Callbacks
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterConfig>) => {
-      updateFilters(newFilters);
+      const updatedFilters = { ...newFilters };
+      if (updatedFilters.beaches) {
+        updatedFilters.beaches = updatedFilters.beaches.map((beach) =>
+          typeof beach === "string" ? beach : beach.id
+        );
+      }
+      updateFilters(updatedFilters);
     },
     [updateFilters]
   );
@@ -97,144 +93,82 @@ export function RaidLogsComponent({
   return (
     <div className="bg-[var(--color-bg-secondary)] p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative">
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
-        {/* Header */}
-        <Header
-          isPrivate={filters.isPrivate}
-          onPrivateToggle={handlePrivateToggle}
-          onFilterOpen={() => setIsFilterOpen(true)}
-          onModalOpen={() => setIsModalOpen(true)}
-          session={session}
-        />
+        {(isBeachesLoading || isLogsLoading) && <div>Loading...</div>}
 
-        {/* Filters */}
-        <ActiveFilterBadges
-          filters={filters}
-          onFilterChange={handleFilterChange}
-        />
+        {error && !isLogsLoading && (
+          <div className="text-red-500">
+            Error loading data: {(error as Error).message}
+          </div>
+        )}
 
-        {/* Content */}
-        <MainContent
-          entries={logEntriesData?.entries || []}
-          isLoading={isLoading}
-          error={error}
-          isPrivate={filters.isPrivate}
-          onBeachClick={handleBeachClick}
-        />
+        {!isBeachesLoading && !isLogsLoading && !error && raidLogsData && (
+          <>
+            <Header
+              isPrivate={filters.isPrivate}
+              onPrivateToggle={handlePrivateToggle}
+              onFilterOpen={() => setIsFilterOpen(true)}
+              onModalOpen={() => setIsModalOpen(true)}
+              session={session}
+            />
 
-        {/* Modals */}
-        <RaidLogFilter
-          beaches={beaches}
-          selectedBeachIds={filters.beaches.map((beach) =>
-            typeof beach === "string" ? beach : beach.id
-          )}
-          selectedRegionIds={filters.regions}
-          selectedMinRating={filters.minRating}
-          onFilterChange={handleFilterChange}
-          onReset={resetFilters}
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-        />
+            <ActiveFilterBadges
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
 
-        <RaidLogForm
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          beaches={beaches}
-        />
+            {/* Add pagination info if needed */}
+            <div className="text-sm text-gray-500 mb-4">
+              Showing {raidLogsData.entries.length} of {raidLogsData.total}{" "}
+              entries
+              {raidLogsData.totalPages > 1 &&
+                ` (Page ${raidLogsData.page} of ${raidLogsData.totalPages})`}
+            </div>
 
-        {selectedBeach && (
-          <BeachDetailsModal
-            beach={selectedBeach}
-            isOpen={true}
-            onClose={() => setSelectedBeach(null)}
-            isSubscribed={!!session?.user?.isSubscribed}
-            onSubscribe={() => router.push("/pricing")}
-          />
+            {!raidLogsData.entries.length ? (
+              <div className="text-center py-8 md:py-12">
+                <p className="text-gray-500">No matching sessions found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <RaidLogTable
+                  entries={raidLogsData.entries}
+                  isSubscribed={false}
+                  isLoading={isLogsLoading}
+                  showPrivateOnly={filters.isPrivate}
+                  onBeachClick={handleBeachClick}
+                />
+              </div>
+            )}
+
+            <RaidLogFilter
+              beaches={beaches}
+              selectedRegionIds={filters.regions}
+              selectedBeachIds={beaches.id}
+              selectedMinRating={filters.minRating}
+              onFilterChange={handleFilterChange}
+              onReset={resetFilters}
+              isOpen={isFilterOpen}
+              onClose={() => setIsFilterOpen(false)}
+            />
+
+            <RaidLogForm
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              beaches={beaches}
+            />
+
+            {selectedBeach && (
+              <BeachDetailsModal
+                beach={selectedBeach}
+                isOpen={true}
+                onClose={() => setSelectedBeach(null)}
+                isSubscribed={!!session?.user?.isSubscribed}
+                onSubscribe={() => router.push("/pricing")}
+              />
+            )}
+          </>
         )}
       </div>
-    </div>
-  );
-}
-
-// Separate components for better organization
-interface HeaderProps {
-  isPrivate: boolean;
-  onPrivateToggle: () => void;
-  onFilterOpen: () => void;
-  onModalOpen: () => void;
-  session: Session | null;
-}
-
-function Header({
-  isPrivate,
-  onPrivateToggle,
-  onFilterOpen,
-  onModalOpen,
-  session,
-}: HeaderProps) {
-  return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 w-full">
-      <div className="w-full border-b border-gray-200 pb-3 sm:border-0 sm:pb-0">
-        <h2 className="text-xl sm:text-2xl font-semibold font-primary">
-          Raid Sessions
-        </h2>
-      </div>
-      <div
-        className="flex flex-row
-      gap-3 md:gap-4 items-center w-full md:w-auto"
-      >
-        <LogVisibilityToggle isPrivate={isPrivate} onChange={onPrivateToggle} />
-
-        <Button
-          size="sm"
-          className="whitespace-nowrap hover:bg-gray-50 transition-colors"
-          onClick={onModalOpen}
-        >
-          Post
-        </Button>
-
-        <Button
-          onClick={onFilterOpen}
-          variant="outline"
-          size="sm"
-          className="inline-flex hover:bg-gray-50 transition-colors"
-        >
-          Filter
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function MainContent({
-  entries,
-  isLoading,
-  error,
-  isPrivate,
-  onBeachClick,
-}: MainContentProps) {
-  if (entries.length === 0) {
-    return (
-      <div className="text-center py-8 md:py-12">
-        <p className="text-gray-500 mb-4">
-          {isLoading
-            ? "Loading sessions..."
-            : error
-              ? "Error loading sessions"
-              : "No matching sessions found"}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <RaidLogTable
-        entries={entries}
-        isSubscribed={false}
-        isLoading={isLoading}
-        showPrivateOnly={isPrivate}
-        onBeachClick={onBeachClick}
-      />
     </div>
   );
 }

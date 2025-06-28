@@ -150,7 +150,9 @@ function RegionalHighScoresContent({
         <p className="text-gray-600 text-sm font-primary">
           Error loading surf breaks. Please try again.
         </p>
-      ) : data?.beaches?.length === 0 ? (
+      ) : !data ? (
+        <div className="text-gray-600 text-sm font-primary">Loading...</div>
+      ) : data.beaches.length === 0 ? (
         <p className="text-gray-600 text-sm font-primary">
           No good surf breaks found for this time period in {selectedRegion}.
         </p>
@@ -168,7 +170,7 @@ function RegionalHighScoresContent({
             </span>
           </div>
           <div className="space-y-0">
-            {data?.beaches.map((beach: BeachWithScore, index: number) => {
+            {data.beaches.map((beach: BeachWithScore, index: number) => {
               // Ensure we have valid numbers before any calculations
               const score =
                 typeof beach.averageScore === "number"
@@ -213,7 +215,7 @@ export default function RegionalHighScores(props: RegionalHighScoresProps) {
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
       <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
         {props.selectedRegion
-          ? `High Scores in ${props.selectedRegion}`
+          ? `High Scores in ${props.selectedRegion.charAt(0).toUpperCase() + props.selectedRegion.slice(1)}`
           : "High Scores"}
       </h3>
 

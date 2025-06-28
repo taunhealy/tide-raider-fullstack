@@ -15,16 +15,19 @@ export default async function HomePage() {
       console.error("No content returned from Sanity");
       return (
         <div className="font-primary p-8 text-center">
-          <p>Unable to load content. Please try again later.</p>
+          <div className="space-y-4">
+            <div className="w-12 h-12 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto"></div>
+            <p className="text-gray-600 animate-pulse">
+              Loading hero content...
+            </p>
+          </div>
         </div>
       );
     }
 
-    console.log("Hero content:", content?.hero);
-
     return (
       <main>
-        <HeroSection data={content.hero} />
+        <HeroSection data={content} />
         <About data={content.about} />
         <HeroBlogSection data={content.blog} />
         <HeroImage data={content.heroImage} />
@@ -33,7 +36,7 @@ export default async function HomePage() {
   } catch (error) {
     console.error("Error fetching homepage content:", error);
     return (
-      <div className="font-primary">
+      <div className="font-primary p-8 text-center">
         <p>Error loading content. Please try again later.</p>
       </div>
     );

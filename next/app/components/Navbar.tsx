@@ -20,10 +20,10 @@ const NAVIGATION_ITEMS = [
   { href: "/alerts", label: "Alerts" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
-] as const;
+] as const; 
 
 export default function Navbar() {
-  const { data: session, status } = useSession({ required: false });
+  const { data: session, status } = useSession();
   const { isSubscribed } = useSubscription();
   const pathname = usePathname();
   const router = useRouter();
@@ -58,11 +58,7 @@ export default function Navbar() {
 
   // Simple function to render auth button consistently
   const AuthButton = () => {
-    if (status !== "authenticated" && status !== "unauthenticated") {
-      return null;
-    }
-
-    return status === "authenticated" ? (
+    return session ? (
       <Button
         variant="outline"
         onClick={() => signOut()}
@@ -73,7 +69,10 @@ export default function Navbar() {
     ) : (
       <Button
         variant="outline"
-        onClick={() => handleSignIn()}
+        onClick={(e) => {
+          e.preventDefault();
+          handleSignIn(window.location.pathname);
+        }}
         className="transition-all duration-300 font-primary"
       >
         Sign In
@@ -130,46 +129,44 @@ export default function Navbar() {
             </ul>
           </nav>
           <div className="flex gap-4 items-center">
-            {session && (
-              <>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
-                  >
-                    <ProfileImage />
-                    <NotificationBadge />
-                  </button>
+            <div className="relative">
+              {session && (
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
+                >
+                  <ProfileImage />
+                  <NotificationBadge />
+                </button>
+              )}
 
-                  {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 font-primary">
-                      <Link
-                        href="/dashboard"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/dashboard/notifications"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Notifications
-                      </Link>
-                      <Link
-                        href={`/profile/${session.user.id}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                    </div>
-                  )}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 font-primary">
+                  <Link
+                    href="/dashboard"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/notifications"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    Notifications
+                  </Link>
+                  <Link
+                    href={`/profile/${session!.user.id}`}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    Profile
+                  </Link>
                 </div>
-                <AuthButton />
-              </>
-            )}
+              )}
+            </div>
+            <AuthButton />
           </div>
         </div>
 
