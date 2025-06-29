@@ -470,14 +470,16 @@ export class ScoreService {
     );
   }
 
-  static async getPaginatedScoresWithBeaches({
+  static async getBeachesWithScores({
     regionId,
     date,
-    page,
-    limit,
     searchQuery,
-  }: PaginationParams & { searchQuery?: string }) {
-    console.log("Fetching with date:", date);
+  }: {
+    regionId: string;
+    date: Date;
+    searchQuery?: string;
+  }) {
+    console.log("Fetching all beaches with scores for date:", date);
 
     const whereClause = {
       regionId,
@@ -495,7 +497,7 @@ export class ScoreService {
         : {}),
     };
 
-    // Get all beaches with their scores in a single query
+    // Get ALL beaches with their scores in a single query
     const beachesWithScores = await prisma.beach.findMany({
       where: whereClause,
       include: {
@@ -507,34 +509,20 @@ export class ScoreService {
           orderBy: {
             score: "desc",
           },
+          take: 1,
         },
         region: true,
       },
     });
 
-    console.log(
-      "Beaches with scores:",
-      beachesWithScores.map((b) => ({
-        name: b.name,
-        score: b.beachDailyScores[0]?.score,
-        date: b.beachDailyScores[0]?.date,
-      }))
-    );
-
-    // Sort beaches by their score
+    // Sort ALL beaches by their score
     const sortedBeaches = beachesWithScores.sort(
       (a, b) =>
         (b.beachDailyScores[0]?.score || 0) -
         (a.beachDailyScores[0]?.score || 0)
     );
 
-    // Apply pagination
-    const paginatedBeaches = sortedBeaches.slice(
-      (page - 1) * limit,
-      page * limit
-    );
-
-    // Create scores map
+    // Create scores map for ALL beaches
     const scores = Object.fromEntries(
       sortedBeaches.map((beach) => [
         beach.id,
@@ -547,10 +535,8 @@ export class ScoreService {
 
     return {
       scores,
-      beaches: paginatedBeaches,
+      beaches: sortedBeaches,
       totalCount: sortedBeaches.length,
-      page,
-      limit,
     };
   }
 }

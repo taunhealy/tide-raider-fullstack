@@ -466,6 +466,59 @@ async function main() {
       }
     }
 
+    // Add the video update functionality
+    console.log("7. Updating beach videos from beachData...");
+    let updatedCount = 0;
+
+    // Process each beach that has videos
+    for (const beach of beachData.filter(
+      (b) => b.videos && Array.isArray(b.videos) && b.videos.length > 0
+    )) {
+      try {
+        // Use upsert to ensure the beach exists before updating
+        await prisma.beach.upsert({
+          where: { id: beach.id },
+          update: { videos: beach.videos },
+          create: {
+            id: beach.id,
+            name: beach.name,
+            continent: beach.continent || "Africa",
+            countryId: beach.country?.id || "za",
+            regionId: transformRegionToId(beach.region as unknown as string),
+            location: beach.location || "",
+            distanceFromCT: beach.distanceFromCT || 0,
+            optimalWindDirections: beach.optimalWindDirections || [],
+            optimalSwellDirections: beach.optimalSwellDirections || {},
+            bestSeasons: beach.bestSeasons || [],
+            optimalTide: mapOptimalTide(beach.optimalTide as string),
+            description: beach.description || "",
+            difficulty: mapDifficulty(beach.difficulty),
+            waveType: mapWaveType(beach.waveType),
+            swellSize: beach.swellSize || {},
+            idealSwellPeriod: beach.idealSwellPeriod || {},
+            waterTemp: beach.waterTemp || {},
+            hazards: beach.hazards || [],
+            crimeLevel: (beach.crimeLevel as string) || "Low",
+            sharkAttack: beach.sharkAttack || {},
+            coordinates: beach.coordinates || {},
+            videos: beach.videos,
+          },
+        });
+
+        updatedCount++;
+        console.log(
+          `✓ Updated videos for beach: ${beach.name} (${beach.id}) - ${beach.videos?.length || 0} videos`
+        );
+      } catch (error) {
+        console.error(
+          `Failed to update videos for beach ${beach.name}:`,
+          error
+        );
+      }
+    }
+
+    console.log(`✓ Updated videos for ${updatedCount} beaches`);
+
     console.log("✅ Seeding complete!");
   } catch (error) {
     console.error("❌ Seed failed:", error);

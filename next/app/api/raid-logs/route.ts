@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 
 import { z } from "zod";
+import { randomUUID } from "crypto";
 
 function getTodayDate() {
   const date = new Date();
@@ -105,6 +106,7 @@ export async function GET(req: NextRequest) {
   const limit = Number(searchParams.get("limit")) || 50;
   const isPrivate = searchParams.get("isPrivate") === "true";
   const filterUserId = searchParams.get("userId");
+  const beachId = searchParams.get("beachId");
 
   const session = await getServerSession(authOptions);
 
@@ -149,7 +151,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Add other filters
-    if (beaches.length > 0) whereClause.beachName = { in: beaches };
+    if (beachId) {
+      whereClause.beachId = beachId;
+    } else if (beaches.length > 0) {
+      whereClause.beachId = { in: beaches };
+    }
     if (regions.length > 0) whereClause.regionId = { in: regions };
     if (countries.length > 0) whereClause.country = { in: countries };
     if (minRating > 0) whereClause.surferRating = { gte: minRating };
@@ -263,30 +269,18 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await req.json();
-    const forecastData = data.forecast || data.forecastData;
 
-    // Update forecast upsert to use regionId
-    const forecast = await prisma.forecastA.upsert({
-      where: {
-        date_regionId: {
-          // Updated unique constraint name
-          date: new Date(data.date),
-          regionId: data.regionId, // Use regionId
-        },
-      },
-      create: {
-        date: new Date(data.date),
-        regionId: data.regionId, // Use regionId
-        windSpeed: forecastData.windSpeed,
-        windDirection: forecastData.windDirection,
-        swellHeight: forecastData.swellHeight,
-        swellPeriod: forecastData.swellPeriod,
-        swellDirection: forecastData.swellDirection,
-      },
-      update: {},
+    // Get the beach name before creating the log entry
+    const beach = await prisma.beach.findUnique({
+      where: { id: data.beachId },
+      select: { name: true },
     });
 
-    // Update logEntry creation
+    if (!beach) {
+      return NextResponse.json({ error: "Beach not found" }, { status: 400 });
+    }
+
+    // Create the log entry with beach name
     const logEntry = await prisma.logEntry.create({
       data: {
         date: new Date(data.date),
@@ -294,6 +288,7 @@ export async function POST(req: NextRequest) {
         surferName: data.surferName,
         surferRating: data.surferRating,
         comments: data.comments,
+        beachName: beach.name, // Store the beach name
         beach: {
           connect: { id: data.beachId },
         },
@@ -304,11 +299,13 @@ export async function POST(req: NextRequest) {
         isAnonymous: data.isAnonymous,
         isPrivate: data.isPrivate,
         imageUrl: data.imageUrl,
+        videoUrl: data.videoUrl,
+        videoPlatform: data.videoPlatform,
         user: {
           connect: { id: session.user.id },
         },
         forecast: {
-          connect: { id: forecast.id },
+          connect: { id: data.forecastId },
         },
       },
       include: {
@@ -317,34 +314,6 @@ export async function POST(req: NextRequest) {
         beach: true,
       },
     });
-
-    // Update alert creation
-    if (data.createAlert && data.alertConfig) {
-      await prisma.alert.create({
-        data: {
-          name: data.alertConfig.name,
-          region: {
-            connect: { id: data.regionId || data.alertConfig.regionId },
-          },
-          forecastDate: forecast.date,
-          properties: data.alertConfig.properties,
-          notificationMethod: data.alertConfig.notificationMethod,
-          contactInfo: data.alertConfig.contactInfo,
-          active: data.alertConfig.active,
-          alertType: data.alertConfig.alertType || "variables",
-          starRating: data.alertConfig.starRating,
-          user: {
-            connect: { id: session.user.id },
-          },
-          logEntry: {
-            connect: { id: logEntry.id },
-          },
-          forecast: {
-            connect: { id: forecast.id },
-          },
-        },
-      });
-    }
 
     return NextResponse.json(logEntry);
   } catch (error) {

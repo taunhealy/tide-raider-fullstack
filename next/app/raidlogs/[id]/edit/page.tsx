@@ -1,40 +1,36 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
-import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Beach } from "@/app/types/beaches";
-import { useBeaches } from "@/app/hooks/useBeaches";
 
-export default function RaidLogPage({ params }: { params: { id: string } }) {
+import { useRouter } from "next/navigation";
+
+import { useBeaches } from "@/app/hooks/useBeaches";
+import { useRaidLog } from "@/app/hooks/useRaidLog";
+
+export default function EditRaidLogPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { data: session } = useSession();
   const router = useRouter();
-  const { data: beaches = [], isLoading: isLoadingBeaches } = useBeaches();
+  const { data: beaches, isLoading: isLoadingBeaches } = useBeaches();
+  const { data: entry, isLoading: isLoadingEntry } = useRaidLog(params.id);
 
-  const { data: entry, isLoading } = useQuery({
-    queryKey: ["raidLog", params.id],
-    queryFn: async () => {
-      const [logRes, alertRes] = await Promise.all([
-        fetch(`/api/raid-logs/${params.id}`),
-        fetch(`/api/alerts?logEntryId=${params.id}`),
-      ]);
+  if (isLoadingBeaches || isLoadingEntry) {
+    return <div>Loading...</div>;
+  }
 
-      const logData = await logRes.json();
-      const alertData = await alertRes.json();
-
-      return {
-        ...logData,
-        existingAlert: alertData,
-      };
-    },
+  console.log("Entry data:", {
+    entry,
+    beach: entry?.beach,
+    beaches: beaches?.slice(0, 3),
   });
 
-  if (isLoading || isLoadingBeaches) return <RandomLoader isLoading={true} />;
-
   const isAuthor = entry?.surferEmail === session?.user?.email;
+
+  const selectedBeach = beaches?.find((beach) => beach.id === entry?.beachId);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -42,9 +38,12 @@ export default function RaidLogPage({ params }: { params: { id: string } }) {
         <RaidLogForm
           isOpen={true}
           onClose={() => router.push("/raidlogs")}
-          entry={entry}
+          entry={{
+            ...entry,
+            beach: selectedBeach,
+          }}
           isEditing={true}
-          beaches={beaches}
+          beaches={beaches || []}
           userEmail={session?.user?.email || ""}
         />
       ) : (

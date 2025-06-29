@@ -45,6 +45,13 @@ const truncateText = (text: string, limit: number) => {
   return text;
 };
 
+const formatWaveType = (waveType: string) => {
+  return waveType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.toLowerCase().slice(1))
+    .join(" ");
+};
+
 export default function BeachDetailsModal({
   beach,
   isOpen,
@@ -126,7 +133,10 @@ export default function BeachDetailsModal({
               label="Distance"
               value={`${beach.distanceFromCT}km from CT`}
             />
-            <DetailItem label="Wave Type" value={beach.waveType} />
+            <DetailItem
+              label="Wave Type"
+              value={formatWaveType(beach.waveType)}
+            />
             <DetailItem label="Difficulty" value={beach.difficulty} />
             <DetailItem
               label="Wave Size"

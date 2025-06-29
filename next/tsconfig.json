@@ -32,6 +32,6 @@
     "app/components/WaveAnimation.jsx",
     "../BeachCard.tsx",
     "../@/app/components/alerts/AlertsList.tsx"
-  ],
+, "scripts/updateBeachVideos.js"  ],
   "exclude": ["node_modules"]
 }

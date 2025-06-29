@@ -67,15 +67,13 @@ export async function getLatestConditions(
     },
   });
 
-  if (existingForecast && !forceRefresh) {
+  if (existingForecast) {
     console.log("Found existing forecast:", existingForecast);
     return existingForecast;
   }
 
-  // 2. If no data exists or force refresh, scrape and store
-  console.log(
-    "No existing forecast found or force refresh requested. Scraping..."
-  );
+  // Only create new forecast if none exists
+  console.log("No existing forecast found. Scraping...");
 
   const regionConfig = REGION_CONFIGS[region.id];
   if (!regionConfig) {
@@ -217,9 +215,14 @@ async function dedupedEnsureBeachScores(
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const regionId = searchParams.get("regionId")?.toLowerCase();
+  const dateParam = searchParams.get("date");
   const searchQuery = searchParams.get("searchQuery") || undefined;
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
+
+  // Use provided date or fallback to today
+  const targetDate = dateParam ? new Date(dateParam) : getTodayDate();
+  targetDate.setUTCHours(0, 0, 0, 0);
 
   // If no regionId is provided, return all beaches
   if (!regionId) {
@@ -295,19 +298,17 @@ export async function GET(request: Request) {
     const forecast = await ForecastService.getOrCreateForecast(regionId);
 
     // 2. Calculate and store scores (with Redis deduplication)
-    await dedupedEnsureBeachScores(regionId, forecast.date, forecast);
+    await dedupedEnsureBeachScores(regionId, targetDate, forecast);
 
     // 4. Now get the scores after they're stored
     const { scores, beaches, totalCount } =
-      await ScoreService.getPaginatedScoresWithBeaches({
+      await ScoreService.getBeachesWithScores({
         regionId,
-        date: forecast.date,
-        page,
-        limit,
+        date: targetDate,
         searchQuery,
       });
 
-    const cacheKey = `scored-beaches:${regionId}:${forecast.date.toISOString().split("T")[0]}`;
+    const cacheKey = `scored-beaches:${regionId}:${targetDate.toISOString().split("T")[0]}`;
 
     // Check cache
     const cached = await redis.get(cacheKey);

@@ -40,41 +40,46 @@ interface MediaGridProps {
     shapers?: { name: string; url?: string }[];
     beerSpots?: { name: string; url?: string }[];
   };
-  logEntry?: {
-    imageUrl?: string | null;
-    videoUrl?: string | null;
-    videoPlatform?: "youtube" | "vimeo" | null;
-  };
 }
 
-function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
+function MediaGridBase({ videos = [], beach }: MediaGridProps) {
   // Fetch latest log entry for this beach
-  const { data: latestLogEntry, isLoading: isLoadingLog } = useQuery<
-    LogEntry[]
-  >({
+  const {
+    data: latestLogEntry,
+    isLoading: isLoadingLog,
+    error: logError,
+  } = useQuery<LogEntry[]>({
     queryKey: ["raid-logs", beach.name],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/raid-logs?beaches=${encodeURIComponent(beach.name)}&limit=1`
-      );
-      if (!response.ok) throw new Error("Failed to fetch log entry");
-      const data = await response.json();
-      return data;
+      try {
+        const response = await fetch(
+          `/api/raid-logs?beachId=${beach.id}&limit=1`
+        );
+        if (!response.ok) throw new Error("Failed to fetch log entry");
+        const data = await response.json();
+        return data.entries;
+      } catch (err) {
+        console.error("Error fetching log entries:", err);
+        return [];
+      }
     },
+    retry: 1,
+    staleTime: 60000, // 1 minute
   });
 
   // Ensure videos is always an array and has the correct shape
-  const beachVideos = Array.isArray(videos)
-    ? videos.filter(
-        (video) =>
-          video &&
-          typeof video.url === "string" &&
-          typeof video.title === "string" &&
-          (video.platform === "youtube" || video.platform === "vimeo")
-      )
-    : [];
+  const beachVideos =
+    Array.isArray(videos) && videos
+      ? videos.filter(
+          (video) =>
+            video &&
+            typeof video.url === "string" &&
+            typeof video.title === "string" &&
+            (video.platform === "youtube" || video.platform === "vimeo")
+        )
+      : [];
 
-  const { data: ads = [] } = useQuery<Ad[]>({
+  const { data: ads = [], error: adsError } = useQuery<Ad[]>({
     queryKey: ["ads", beach.id, beach.region],
     queryFn: async () => {
       const response = await fetch(
@@ -85,6 +90,8 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
       const data = await response.json();
       return Array.isArray(data.ads) ? data.ads : [];
     },
+    retry: 1,
+    staleTime: 60000,
   });
 
   // Separate local and adventure ads
@@ -307,21 +314,21 @@ function MediaGridBase({ videos = [], beach, logEntry }: MediaGridProps) {
                 href={video.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative aspect-video rounded-lg overflow-hidden group border border-[var(--color-border-light)] hover:border-[var(--color-border-medium)] transition-all duration-200"
+                className="relative aspect-video rounded-lg overflow-hidden group/card border border-[var(--color-border-light)] hover:border-[var(--color-border-medium)] transition-all duration-200"
               >
                 <div
-                  className="absolute inset-0 bg-cover bg-center"
+                  className="absolute inset-0 bg-cover bg-center transition-all duration-300 group-hover/card:opacity-60 group-hover/card:blur-[1px] cursor-pointer"
                   style={{
                     backgroundImage: `url(${getVideoThumbnail(video.url, video.platform)})`,
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-75" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-90 scale-95 group-hover:scale-100">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover/card:opacity-90" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-90 scale-95 group-hover/card:scale-100 group-hover/card:opacity-50 transition-all duration-300">
                   <div className="w-12 h-12 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center shadow-lg">
                     <VideoIcon className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3.5">
+                <div className="absolute bottom-0 left-0 right-0 p-3.5 transform translate-y-[100%] group-hover/card:translate-y-0 transition-transform duration-300 ease-out">
                   <h3 className="text-white text-sm font-medium font-primary line-clamp-2 drop-shadow-lg">
                     {video.title}
                   </h3>

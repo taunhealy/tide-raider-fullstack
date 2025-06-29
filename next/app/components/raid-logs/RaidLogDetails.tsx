@@ -126,8 +126,8 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
               <div className="flex items-center gap-2 text-gray-600 font-primary mb-4">
                 <MapPin className="w-4 h-4" />
                 <p>
-                  {entry.region
-                    ? `${entry.region}${entry.country ? `, ${entry.country}` : ""}`
+                  {entry.region?.name
+                    ? `${entry.region.name}${entry.country ? `, ${entry.country}` : ""}`
                     : "No location specified"}
                 </p>
               </div>

@@ -27,7 +27,13 @@ export async function GET(request: Request) {
           id: true,
           name: true,
           country: true,
-          region: { select: { name: true } },
+          regionId: true,
+          region: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
         take: 5,
       });
@@ -54,7 +60,13 @@ export async function GET(request: Request) {
           id: true,
           name: true,
           country: true,
-          region: { select: { name: true } },
+          regionId: true,
+          region: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
         take: 5 - regionBeaches.length,
       });

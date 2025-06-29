@@ -42,13 +42,12 @@ export async function GET(
           select: {
             id: true,
             date: true,
-            windSpeed: true, // Int @default(0)
-            windDirection: true, // Float @default(0)
-            swellHeight: true, // Float @default(0)
-            swellPeriod: true, // Int @default(0)
-            swellDirection: true, // Float @default(0)
-            createdAt: true,
-            updatedAt: true,
+            windSpeed: true,
+            windDirection: true,
+            swellHeight: true,
+            swellPeriod: true,
+            swellDirection: true,
+            regionId: true,
           },
         },
         user: {

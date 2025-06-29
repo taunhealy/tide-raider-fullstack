@@ -1,17 +1,9 @@
-// app/types/regions.ts
-import type { Country } from "@prisma/client";
+// app/types/region.ts
+import type { Region } from "@/app/types/beaches";
 
-// Match your Prisma schema but only include what UI needs
-export interface Region {
+export interface UserSearch {
   id: string;
-  name: string;
-  countryId: string;
-  continent?: string;
-  country?: {
-    id: string;
-    name: string;
-    continentId: string;
-  };
+  region: Region;
 }
 
 export interface UserSearch {

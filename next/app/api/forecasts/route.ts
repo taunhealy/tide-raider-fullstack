@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     if (!forecast) {
       // If no forecast exists, trigger a scrape to get and store the data
       try {
-        forecast = await getLatestConditions(true, region.name) as ForecastA;
+        forecast = (await getLatestConditions(true, region.name)) as ForecastA;
       } catch (scrapeError) {
         console.error("Failed to scrape forecast data:", scrapeError);
         return NextResponse.json(

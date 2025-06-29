@@ -26,7 +26,7 @@ const LoadingState = () => (
 const NoDataState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
     <span className="text-gray-300 font-primary text-center">
-      No forecast data available. Please select a region to view forecast.
+      No forecast data available. Awaiting region selection.
     </span>
   </div>
 );
@@ -40,7 +40,7 @@ export default function WeatherForecastWidget() {
 
   const getWidgetContent = () => {
     if (!regionId) {
-      return "Please select a region to view forecast";
+      return "Awaiting region selection";
     }
     if (isLoading) {
       return <LoadingSpinner />;

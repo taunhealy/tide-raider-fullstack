@@ -1,28 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/app/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import gsap from "gsap";
-import type { Region, UserSearch } from "@/app/types/region";
+import type { UserSearch } from "@/app/types/region";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface RecentRegionSearchProps {
-  selectedRegionId?: string;
   className?: string;
 }
 
 export default function RecentRegionSearch({
-  selectedRegionId,
   className,
 }: RecentRegionSearchProps) {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const { updateFilter } = useBeachFilters();
-
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { filters, selectRegion } = useBeachFilters();
 
   // Enhanced caching strategy for recent searches
   const { data: recentSearches } = useQuery({
@@ -40,6 +33,7 @@ export default function RecentRegionSearch({
   });
 
   // Track new searches
+
   const { mutate: trackSearch } = useMutation({
     mutationFn: async (regionId: string) => {
       const res = await fetch("/api/user-searches", {
@@ -57,31 +51,33 @@ export default function RecentRegionSearch({
 
   const handleButtonClick = async (search: UserSearch) => {
     if (!containerRef.current) return;
-
     setLoadingId(search.id);
 
     try {
-      const selectedRegion: Region = {
+      console.log("Full search object:", search);
+      console.log("Region data:", search.region);
+
+      // Make sure we have all the required fields
+      const selectedRegion = {
         id: search.region.id,
+        regionId: search.region.id,
         name: search.region.name,
         countryId: search.region.country?.id || "",
-        continent: search.region.continent,
-        country: search.region.country,
+        country: search.region.country
+          ? {
+              id: search.region.country.id || "",
+              name: search.region.country.name || "",
+              continentId: search.region.country.continentId || "",
+            }
+          : undefined,
+        continent: search.region.continent || "",
       };
 
-      // Use updateFilter instead of directly manipulating URL
-      updateFilter("regionId", selectedRegion.id.toLowerCase());
-      updateFilter("region", selectedRegion.name);
-      updateFilter("country", selectedRegion.country?.name || "");
-      updateFilter("continent", selectedRegion.continent || "");
-
-      trackSearch(search.region.id);
-    } catch (error) {
-      console.error("Error during region selection:", error);
+      console.log("Selecting region with data:", selectedRegion);
+      await selectRegion(selectedRegion);
+      await trackSearch(search.region.id.toLowerCase());
     } finally {
-      setTimeout(() => {
-        setLoadingId(null);
-      }, 500);
+      setTimeout(() => setLoadingId(null), 500);
     }
   };
 
@@ -102,13 +98,24 @@ export default function RecentRegionSearch({
     }
   }, [recentSearches]);
 
+  // Add debug logging for filters
+  useEffect(() => {
+    console.log("Current filters:", filters);
+  }, [filters]);
+
   if (!recentSearches?.length) return null;
 
   return (
     <div ref={containerRef} className={cn("flex flex-wrap gap-2", className)}>
       {recentSearches.map((search: UserSearch) => {
-        const isSelected =
-          selectedRegionId?.toLowerCase() === search.region.id.toLowerCase();
+        const isSelected = filters.regionId
+          ? filters.regionId.toLowerCase() === search.region.id.toLowerCase()
+          : false;
+        console.log(`Region ${search.region.name} comparison:`, {
+          filterRegionId: filters.regionId,
+          searchRegionId: search.region.id,
+          isSelected,
+        });
         const isLoading = loadingId === search.id;
 
         return (
@@ -120,7 +127,7 @@ export default function RecentRegionSearch({
             className={cn(
               "px-3 py-1.5 text-sm rounded-full",
               "bg-white border border-gray-200",
-              "hover:bg-gray-50 transition-colors",
+              "hover:bg-[var(--color-bg-tertiary)] transition-colors",
               "font-primary text-[var(--color-text-primary)]",
               "flex items-center gap-2",
               isLoading && "cursor-wait opacity-70",

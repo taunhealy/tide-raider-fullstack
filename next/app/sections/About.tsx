@@ -58,15 +58,15 @@ export default function About({ data }: AboutProps) {
           <div className="order-1 lg:order-2 flex flex-col justify-center">
             <div className="bg-white/90 backdrop-blur-md rounded-lg md:rounded-xl p-6 md:p-8 lg:p-10 shadow-sm border border-gray-100 max-w-[540px]">
               <h2 className="font-primary text-xl md:text-2xl lg:text-3xl font-semibold mb-4 md:mb-6">
-                Explore new surf breaks and share your tales.
+                Explore new surf breaks and share your experience.
               </h2>
 
               <p className="font-primary text-base md:text-lg text-gray-700 mb-6">
                 Tide Raider is a platform for travelling surfers and surf
                 photographers to explore, share and promote surf travel.
               </p>
-              <Button>
-                <span>Let's go</span>
+              <Button variant="ghost">
+                <span>Start Raiding</span>
               </Button>
 
               <div className="mt-8 pt-6 border-t border-white backdrop-blur-sm">

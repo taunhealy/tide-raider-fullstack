@@ -1,70 +1,54 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
-import { cn } from "@/app/lib/utils";
+import { Button } from "@/app/components/ui/Button";
+import FilterSidebar from "../filters/FiltersSidebar";
 import { Beach } from "@/app/types/beaches";
 
 interface BeachHeaderControlsProps {
-  showFilters: boolean;
-  onToggleFilters: (show: boolean) => void;
   onSearch: (value: string) => void;
   onRegionSelect: (regionId: string) => void;
   currentRegion: string;
   beaches: Beach[];
 }
 
-export default function BeachHeaderControls({
-  showFilters,
-  onToggleFilters,
-
-  currentRegion,
-  beaches,
-}: BeachHeaderControlsProps) {
+export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
+  // Manage filter sidebar state locally
+  const [showFilters, setShowFilters] = useState(false);
   const searchParams = useSearchParams();
 
-  // Get current filter values from URL
-  const currentWaveTypes = searchParams.get("waveType")?.split(",") || [];
-  const currentDifficulty = searchParams.get("difficulty")?.split(",") || [];
-
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:gap-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h3 className="text-xl sm:text-2xl font-semi-bold text-[var(--color-text-primary)] font-primary">
-            Surf Breaks
-          </h3>
-        </div>
+    <>
+      <div className="space-y-8">
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"></div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
-            <div className="w-full sm:w-auto flex-1">
-              <SearchBar beaches={beaches} placeholder="Search breaks..." />
-              <RecentRegionSearch
-                selectedRegionId={currentRegion}
-                className="mt-2"
-              />
+          <div className="flex flex-col">
+            <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
+              <div className="flex flex-col w-full sm:w-auto flex-1 gap-3">
+                <SearchBar />
+                <RecentRegionSearch />
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setShowFilters(!showFilters)}
+                className="border border-gray-200 rounded-[21px] w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
+              </Button>
             </div>
-            <button
-              onClick={() => onToggleFilters(!showFilters)}
-              className={cn(
-                "font-primary",
-                "text-black font-semibold",
-                "bg-white border border-gray-200",
-                "px-4 py-2",
-                "rounded-[21px]",
-                "flex items-center gap-2",
-                "hover:bg-gray-50 transition-colors",
-                "w-full sm:w-auto justify-center sm:justify-start",
-                "mt-0 sm:mt-0"
-              )}
-            >
-              <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Include FilterSidebar directly in this component */}
+      <FilterSidebar
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
+    </>
   );
 }

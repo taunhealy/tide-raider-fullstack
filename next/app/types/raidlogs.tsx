@@ -14,7 +14,12 @@ export interface LogEntry {
   isAnonymous: boolean;
   continent?: string | null;
   country?: string | null;
-  region?: string | null;
+  region?: {
+    id: string;
+    name: string;
+    continent: string | null;
+    country: string | null;
+  } | null;
   waveType?: string | null;
   beachId?: string | null;
   forecastId?: string | null;

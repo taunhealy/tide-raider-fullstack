@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import debounce from "lodash/debounce";
 import type { Beach } from "@/app/types/beaches";
 import { useId } from "react";
@@ -11,105 +11,96 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 interface SearchBarProps {
   placeholder?: string;
   className?: string;
-  beaches: Beach[];
 }
 
 export default function SearchBar({
   placeholder = "Search breaks...",
   className,
-  beaches,
 }: SearchBarProps) {
   const { filters, updateFilter } = useBeachFilters();
   const [mounted, setMounted] = useState(false);
   const [localValue, setLocalValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const searchId = useId();
   const [searchResults, setSearchResults] = useState<Beach[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const ignoreBlurRef = useRef(false);
+  const searchId = useId();
 
-  // Initialize localValue after component mounts
   useEffect(() => {
     if (mounted && filters.searchQuery) {
       setLocalValue(filters.searchQuery);
     }
   }, [mounted, filters.searchQuery]);
 
-  // Set mounted state
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleSearch = (searchValue: string) => {
-    updateFilter("searchQuery", searchValue);
-  };
-
-  const debouncedSearch = useRef(debounce(handleSearch, 300)).current;
-
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
-
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setLocalValue(newValue);
-
-    // Clear the search query parameter if input is empty
-    if (!newValue) {
-      updateFilter("searchQuery", "");
-      setSearchResults([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    if (newValue.length >= 2) {
-      setIsSearching(true);
-      try {
-        // Get current regionId from URL
-        const currentRegionId = new URLSearchParams(window.location.search).get(
-          "regionId"
-        );
-
-        const response = await fetch(
-          `/api/beaches/search?term=${encodeURIComponent(newValue)}${
-            currentRegionId ? `&regionId=${currentRegionId}` : ""
-          }`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setSearchResults(data);
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setIsSearching(false);
-      }
-      setShowSuggestions(true);
-    } else {
-      setSearchResults([]);
-      setShowSuggestions(false);
-    }
-  };
-
   const handleBlur = () => {
-    requestAnimationFrame(() => {
-      setShowSuggestions(false);
-    });
+    if (!ignoreBlurRef.current) {
+      setTimeout(() => setShowSuggestions(false), 200);
+    }
+    ignoreBlurRef.current = false;
   };
 
   const handleSelectBeach = (beach: Beach) => {
+    ignoreBlurRef.current = true;
     setLocalValue(beach.name);
+    updateFilter("regionId", beach.regionId.toLowerCase());
+    updateFilter("region", beach.region?.name || "");
+    updateFilter("country", beach.region?.country?.name || "");
+    updateFilter("continent", beach.region?.continent || "");
     updateFilter("searchQuery", beach.name);
     setShowSuggestions(false);
   };
+
+  const handleChange = useMemo(
+    () =>
+      debounce(async (value: string) => {
+        updateFilter("searchQuery", value);
+
+        if (!value || value.length < 3) {
+          setSearchResults([]);
+          setShowSuggestions(false);
+          return;
+        }
+
+        setIsSearching(true);
+        try {
+          const currentRegionId = new URLSearchParams(
+            window.location.search
+          ).get("regionId");
+          const response = await fetch(
+            `/api/beaches/search?term=${encodeURIComponent(value)}${
+              currentRegionId ? `&regionId=${currentRegionId}` : ""
+            }`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setSearchResults(data);
+            setShowSuggestions(true);
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 500),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      handleChange.cancel();
+    };
+  }, [handleChange]);
 
   const suggestions = searchResults.slice(0, 5);
 
   if (!mounted) {
     return (
-      <div className="space-y-3">
+      <div className="">
         <div className={cn("relative w-full max-w-md font-primary", className)}>
           <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -119,7 +110,7 @@ export default function SearchBar({
               type="text"
               readOnly
               value="" // Always provide a value, never undefined
-              placeholder={placeholder}
+              placeholder="Search Surf Breaks"
               aria-label="Search"
               className={cn(
                 "w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg",
@@ -145,7 +136,10 @@ export default function SearchBar({
             type="text"
             id={searchId}
             value={localValue}
-            onChange={handleChange}
+            onChange={(e) => {
+              setLocalValue(e.target.value);
+              handleChange(e.target.value);
+            }}
             onFocus={() => setShowSuggestions(true)}
             onBlur={handleBlur}
             placeholder={placeholder}
@@ -175,7 +169,13 @@ export default function SearchBar({
                 role="option"
                 aria-selected="false"
                 className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                onMouseDown={() => handleSelectBeach(beach)}
+                onClick={() => {
+                  handleSelectBeach(beach);
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // Prevent blur from firing too soon
+                  handleSelectBeach(beach);
+                }}
               >
                 <div className="font-medium">{beach.name}</div>
                 <div className="text-sm text-gray-500">

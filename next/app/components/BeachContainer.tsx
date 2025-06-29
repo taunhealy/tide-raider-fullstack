@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +10,6 @@ import StickyForecastWidget from "./StickyForecastWidget";
 import RightSidebar from "./raid/RightSidebar";
 import LeftSidebar from "./raid/LeftSidebar";
 import BeachCard from "./BeachCard";
-import FilterSidebar from "./filters/FiltersSidebar";
 import BeachHeaderControls from "./raid/BeachHeaderControls";
 import SidebarSkeleton from "./SidebarSkeleton";
 import LoadingIndicator from "./LoadingIndicator";
@@ -19,8 +18,31 @@ import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
 
 import type { Beach } from "@/app/types/beaches";
 
+// Add this helper function at the top of the file
+const getBeachForecastData = (
+  beach: Beach,
+  beachScores: Record<string, any>
+) => {
+  const score = beachScores[beach.id]?.score ?? 0;
+
+  // Extract forecast data or return null if unavailable
+  const conditions =
+    beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.conditions;
+  const date = beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.date;
+
+  const forecastData = conditions
+    ? {
+        id: beach.id,
+        regionId: beach.regionId,
+        date: date ? new Date(date) : new Date(),
+        ...conditions,
+      }
+    : null;
+
+  return { score, forecastData };
+};
+
 export default function BeachContainer() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { filters, updateFilter } = useBeachFilters();
 
   // Use the new hook for server-side filtering
@@ -41,17 +63,30 @@ export default function BeachContainer() {
 
   // Simplify the loading state logic
   useEffect(() => {
-    // Check if we have at least one valid score
-    const hasValidScores = beaches?.some(
-      (beach) => typeof beachScores[beach.id]?.score === "number"
+    // Consider data ready if:
+    // 1. We have beaches AND
+    // 2. Either we have at least one valid score OR loading has completed
+    const hasBeaches = beaches && beaches.length > 0;
+    const hasAnyValidScores = beaches?.some(
+      (beach) => beachScores[beach.id]?.score !== undefined
     );
 
-    setDataReady(!isLoading && hasValidScores);
-  }, [beaches, isLoading, beachScores]);
+    setDataReady(hasBeaches && (hasAnyValidScores || !isLoading));
+  }, [beaches, beachScores, isLoading]);
 
   const handleRegionSelect = (regionId: string) => {
     updateFilter("regionId", regionId);
   };
+
+  const sortedBeaches = useMemo(() => {
+    return (
+      beaches?.sort((a, b) => {
+        const scoreA = beachScores[a.id]?.score ?? 0;
+        const scoreB = beachScores[b.id]?.score ?? 0;
+        return scoreB - scoreA; // Sort descending (highest score first)
+      }) ?? []
+    );
+  }, [beaches, beachScores]);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
@@ -63,56 +98,44 @@ export default function BeachContainer() {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
             <BeachHeaderControls
-              showFilters={isSidebarOpen}
-              onToggleFilters={setSidebarOpen}
               onSearch={(value) => updateFilter("searchQuery", value)}
               onRegionSelect={handleRegionSelect}
               currentRegion={filters.regionId}
               beaches={beaches}
             />
 
-            <div className="grid grid-cols-1 gap-[16px] relative">
+            <div className="grid grid-cols-1 gap-5 relative">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
               ) : !dataReady ? (
-                <>
+                <div className="space-y-4 mt-4">
                   <LoadingIndicator />
-                  {beaches?.length > 0 &&
-                    beaches
-                      .slice(0, 5)
-                      .map((_, index) => (
-                        <BeachCardSkeleton key={`skeleton-${index}`} />
-                      ))}
-                </>
-              ) : beaches.length === 0 ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, index) => (
+                      <BeachCardSkeleton key={`skeleton-${index}`} />
+                    ))}
+                  </div>
+                </div>
+              ) : sortedBeaches.length === 0 ? (
                 <EmptyState message="No beaches found in this region" />
               ) : (
                 <>
                   <div>
-                    {beaches.map((beach) => (
-                      <BeachCard
-                        key={beach.id}
-                        beach={beach}
-                        score={beachScores[beach.id]?.score ?? 0}
-                        forecastData={
-                          beachScores[beach.id]?.beach?.beachDailyScores?.[0]
-                            ?.conditions
-                            ? {
-                                id: beach.id,
-                                regionId: beach.regionId,
-                                date: new Date(
-                                  beachScores[
-                                    beach.id
-                                  ]?.beach?.beachDailyScores[0].date
-                                ),
-                                ...beachScores[beach.id]?.beach
-                                  ?.beachDailyScores[0].conditions,
-                              }
-                            : null
-                        }
-                        isLoading={!beachScores[beach.id]?.score}
-                      />
-                    ))}
+                    {sortedBeaches.map((beach) => {
+                      const { score, forecastData } = getBeachForecastData(
+                        beach,
+                        beachScores
+                      );
+                      return (
+                        <BeachCard
+                          key={beach.id}
+                          beach={beach}
+                          score={score}
+                          forecastData={forecastData}
+                          isLoading={!beachScores[beach.id]?.score}
+                        />
+                      );
+                    })}
                   </div>
 
                   {hasNextPage && (
@@ -130,11 +153,6 @@ export default function BeachContainer() {
           <RightSidebar />
         </div>
       </div>
-
-      <FilterSidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
 
       <StickyForecastWidget />
     </div>

@@ -31,9 +31,9 @@ interface BeachCardProps {
   beach: Beach;
   score: number;
   forecastData: CoreForecastData | null;
-  isLoading?: boolean;
   onOpenModal?: (beachName: string) => void;
   onCloseModal?: () => void;
+  isLoading: boolean;
 }
 
 const ConditionsSkeleton = () => (
@@ -55,8 +55,6 @@ const BeachCard = memo(function BeachCard({
   score,
   forecastData,
   isLoading,
-  onOpenModal,
-  onCloseModal,
 }: BeachCardProps) {
   // Add enhanced debug logging
   console.log(`Rendering beach ${beach.name} with data:`, {
@@ -72,7 +70,6 @@ const BeachCard = memo(function BeachCard({
           swellPeriod: forecastData.swellPeriod,
         }
       : null,
-    isLoading,
   });
 
   console.log("Beach card forecast data:", {
@@ -131,7 +128,10 @@ const BeachCard = memo(function BeachCard({
   ]);
   const beachSessions = Array.isArray(recentEntries)
     ? recentEntries.filter(
-        (entry) => entry.beachName?.toLowerCase() === beach.name?.toLowerCase()
+        (entry) =>
+          // Check both beachId and beachName
+          entry.beachId === beach.id ||
+          entry.beachName?.toLowerCase() === beach.name?.toLowerCase()
       )
     : [];
 
@@ -419,21 +419,25 @@ const BeachCard = memo(function BeachCard({
                 )}
               </div>
 
-              {/* Media Grid - Now inside the card */}
-              <div className="mt-3 md:mt-4">
-                <MediaGrid
-                  beach={{
-                    id: beach.id,
-                    name: beach.name,
-                    region: {
-                      id: beach.regionId,
-                      name: beach.region?.name || "",
-                      country: beach.country,
-                    },
-                  }}
-                  videos={beach.videos}
-                />
-              </div>
+              {/* Media Grid - Only show if videos exist */}
+              {beach.videos && beach.videos.length > 0 && (
+                <div className="mt-3 md:mt-4">
+                  <ErrorBoundary>
+                    <MediaGrid
+                      beach={{
+                        id: beach.id,
+                        name: beach.name,
+                        region: {
+                          id: beach.regionId,
+                          name: beach.region?.name || "",
+                          country: beach.country,
+                        },
+                      }}
+                      videos={beach.videos}
+                    />
+                  </ErrorBoundary>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3 md:space-y-4">
@@ -655,21 +659,25 @@ const BeachCard = memo(function BeachCard({
                 )}
               </div>
 
-              {/* Media Grid - Now inside the card */}
-              <div className="mt-3 md:mt-4">
-                <MediaGrid
-                  beach={{
-                    id: beach.id,
-                    name: beach.name,
-                    region: {
-                      id: beach.regionId,
-                      name: beach.region?.name || "",
-                      country: beach.country,
-                    },
-                  }}
-                  videos={beach.videos}
-                />
-              </div>
+              {/* Media Grid - Only show if videos exist */}
+              {beach.videos && beach.videos.length > 0 && (
+                <div className="mt-3 md:mt-4">
+                  <ErrorBoundary>
+                    <MediaGrid
+                      beach={{
+                        id: beach.id,
+                        name: beach.name,
+                        region: {
+                          id: beach.regionId,
+                          name: beach.region?.name || "",
+                          country: beach.country,
+                        },
+                      }}
+                      videos={beach.videos}
+                    />
+                  </ErrorBoundary>
+                </div>
+              )}
             </div>
           )}
         </div>

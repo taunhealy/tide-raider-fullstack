@@ -15,7 +15,16 @@ import { useRouter } from "next/navigation";
 import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
 import { Header } from "./Header";
 import RaidLogTable from "./RaidLogTable";
-import { useQuery } from "@tanstack/react-query";
+import { useRaidLogs } from "@/app/hooks/useRaidLogs";
+
+// Define the RaidLogsResponse interface
+interface RaidLogsResponse {
+  entries: LogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 interface RaidLogsComponentProps {
   userId?: string;
@@ -37,21 +46,18 @@ export function RaidLogsComponent({
 
   // Data fetching hooks
   const { data: session } = useSession();
-  const { data: beaches = [], isLoading: isBeachesLoading } = useBeachData();
+  const { beaches = [], isLoading: isBeachesLoading } = useBeachData();
 
-  // Updated React Query hook to match API response
+  // Replace the direct useQuery with useRaidLogs
   const {
     data: raidLogsData,
     isLoading: isLogsLoading,
     error,
-  } = useQuery<RaidLogsResponse>({
-    queryKey: ["raidLogs", filters, filters.isPrivate, userId],
-    queryFn: () =>
-      raidLogsClient.getRaidLogs(filters, filters.isPrivate, userId),
-    // Remove the select transform since API returns correct structure
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    placeholderData: (prev) => prev,
-  });
+  } = useRaidLogs(filters, filters.isPrivate, userId) as {
+    data: RaidLogsResponse | undefined;
+    isLoading: boolean;
+    error: Error | null;
+  };
 
   const router = useRouter();
 
@@ -84,7 +90,7 @@ export function RaidLogsComponent({
 
   const handleBeachClick = useCallback(
     (beachId: string) => {
-      const beach = beaches.find((b) => b.id === beachId);
+      const beach = beaches.find((b: BeachType) => b.id === beachId);
       if (beach) setSelectedBeach(beach);
     },
     [beaches]
@@ -143,7 +149,7 @@ export function RaidLogsComponent({
             <RaidLogFilter
               beaches={beaches}
               selectedRegionIds={filters.regions}
-              selectedBeachIds={beaches.id}
+              selectedBeachIds={filters.beaches as string[]}
               selectedMinRating={filters.minRating}
               onFilterChange={handleFilterChange}
               onReset={resetFilters}

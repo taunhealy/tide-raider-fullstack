@@ -95,38 +95,29 @@ export const useBeachFilters = () => {
     [router, pathname, searchParams, filters.regionId]
   );
 
-  const selectRegion = useCallback(
-    (region: Region | null) => {
-      console.log("selectRegion called with:", region);
+  const selectRegion = (region: Region | null) => {
+    const params = new URLSearchParams(searchParams);
 
-      // Create a single URLSearchParams instance
-      const params = new URLSearchParams(searchParams);
+    if (!region) {
+      // Clear all region-related params
+      params.delete("regionId");
+      // Remove redundant params
+      params.delete("region");
+      params.delete("country");
+      params.delete("continent");
+    } else {
+      // Only keep regionId as the source of truth
+      const formattedRegionId = region.id.toLowerCase().replace(/\s+/g, "-");
+      params.set("regionId", formattedRegionId);
 
-      if (region) {
-        // Update all region-related parameters at once
-        params.set("regionId", region.id.toLowerCase());
-        params.set("region", region.name);
-        if (region.country) {
-          params.set("country", region.country.name || "");
-        }
-        if (region.continent) {
-          params.set("continent", region.continent || "");
-        } else {
-          params.delete("continent");
-        }
-      } else {
-        // Clear all region-related parameters at once
-        params.delete("regionId");
-        params.delete("region");
-        params.delete("country");
-        params.delete("continent");
-      }
+      // Remove redundant params
+      params.delete("region");
+      params.delete("country");
+      params.delete("continent");
+    }
 
-      // Make a single router.push call with all parameter changes
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return {
     filters,

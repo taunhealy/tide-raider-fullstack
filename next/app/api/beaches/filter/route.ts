@@ -83,19 +83,19 @@ export async function GET(request: Request) {
       ...baseQuery,
       orderBy: [
         {
-          name: "asc", // Default sort by name if no scores
+          name: "asc",
         },
       ],
       skip,
       take: limit,
     });
 
-    // Sort beaches by score in memory if scores exist
-    const sortedBeaches = beaches.sort((a, b) => {
-      const scoreA = a.beachDailyScores?.[0]?.score ?? -1;
-      const scoreB = b.beachDailyScores?.[0]?.score ?? -1;
-      return scoreB - scoreA; // Descending order
-    });
+    // Remove the in-memory sort since we're doing it at DB level
+    const sortedBeaches = beaches.sort(
+      (a, b) =>
+        (b.beachDailyScores[0]?.score || 0) -
+        (a.beachDailyScores[0]?.score || 0)
+    );
 
     // Transform the response
     const scoreMap = sortedBeaches.reduce(

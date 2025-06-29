@@ -7,6 +7,7 @@ import type { Region } from "@/app/types/beaches";
 import { useState, useMemo, useEffect } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useSearchParams } from "next/navigation";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface LocationFilterProps {
   regions: Region[];
@@ -17,6 +18,23 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { filters, selectRegion } = useBeachFilters();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+
+  // Add tracking mutation
+  const { mutate: trackSearch } = useMutation({
+    mutationFn: async (regionId: string) => {
+      const res = await fetch("/api/user-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regionId }),
+      });
+      if (!res.ok) throw new Error("Failed to track search");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentSearches"] });
+    },
+  });
 
   // Debug logging for URL parameters
   useEffect(() => {
@@ -94,6 +112,7 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
                     region
                   );
                   selectRegion(region);
+                  trackSearch(region.id.toLowerCase());
                 }}
                 count={regionCountsData?.[region.id] || 0}
               />
