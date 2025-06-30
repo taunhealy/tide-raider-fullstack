@@ -52,6 +52,17 @@ import { useAppMode } from "@/app/context/AppModeContext";
 import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { MediaModal } from "@/app/components/raid-logs/MediaModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/app/components/ui/alert-dialog";
 
 interface QuestTableProps {
   entries: LogEntry[];
@@ -69,9 +80,9 @@ interface LogEntryDisplayProps {
   entry: {
     user?: {
       id: string;
-      nationality?: string;
-      name?: string;
-    };
+      nationality: string | null;
+      name: string;
+    } | null;
     surferName?: string | null;
   };
   isAnonymous: boolean;
@@ -257,12 +268,12 @@ function TableSkeleton() {
 const normalizeLogEntry = (entry: LogEntry): LogEntry => {
   return {
     ...entry,
-    date: new Date(entry.date),
+    date: format(new Date(entry.date), "yyyy-MM-dd"),
     isPrivate: entry.isPrivate ?? false,
     isAnonymous: entry.isAnonymous ?? false,
-    hasAlert: entry.hasAlert ?? false,
-    isMyAlert: entry.isMyAlert ?? false,
-    alertId: entry.alertId ?? "",
+    hasAlert: entry.alerts?.length > 0,
+    isMyAlert: false,
+    alertId: entry.alerts?.[0]?.id ?? "",
   };
 };
 
@@ -430,21 +441,45 @@ export default function RaidLogTable({
 
   const router = useRouter();
 
-  // Delete mutation
+  // Add state for the entry to be deleted
+  const [entryToDelete, setEntryToDelete] = useState<LogEntry | null>(null);
+
+  // Update the delete mutation with better error handling
   const deleteMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      const response = await fetch(`/api/raid-logs/${entryId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Delete failed");
-      return response.json();
+      try {
+        const response = await fetch(`/api/raid-logs?id=${entryId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to delete log entry");
+        }
+
+        return response.json();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        throw new Error("Failed to delete log entry");
+      }
     },
     onSuccess: () => {
-      // Invalidate all related queries
-      queryClient.invalidateQueries({
-        queryKey: ["raidLogs"],
-        refetchType: "active",
-      });
+      queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
+      toast.success("Log entry deleted successfully");
+      setEntryToDelete(null);
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete log entry"
+      );
+      setEntryToDelete(null);
     },
   });
 
@@ -462,9 +497,9 @@ export default function RaidLogTable({
     router.push(`/raidlogs/${entry.id}/edit`);
   };
 
-  // Delete handler
-  const handleDelete = (entryId: string) => {
-    deleteMutation.mutate(entryId);
+  // Update the handleDelete function
+  const handleDelete = (entry: LogEntry) => {
+    setEntryToDelete(entry);
   };
 
   // Create new alert handler
@@ -560,7 +595,7 @@ export default function RaidLogTable({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(entry.id);
+                  handleDelete(entry);
                 }}
                 className="text-gray-500 hover:text-red-600"
                 disabled={deleteMutation.isPending}
@@ -682,6 +717,57 @@ export default function RaidLogTable({
   console.log("RaidLogTable entries:", entries);
   console.log("normalizedEntries:", normalizedEntries);
 
+  // Add the DeleteConfirmationDialog to the main component return
+  const DeleteConfirmationDialog = () => {
+    if (!entryToDelete) return null;
+
+    const formattedDate = format(new Date(entryToDelete.date), "MMM d, yyyy");
+    const beachName =
+      entryToDelete.beach?.name || entryToDelete.beachName || "Unknown beach";
+
+    return (
+      <AlertDialog
+        open={!!entryToDelete}
+        onOpenChange={(open) => !open && setEntryToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Surf Session</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete your surf session at {beachName}{" "}
+              on {formattedDate}?
+              <br />
+              <br />
+              <span className="font-medium text-red-600">
+                This action cannot be undone.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (entryToDelete.id) {
+                  deleteMutation.mutate(entryToDelete.id);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <span className="loading-spinner" />
+                  Deleting...
+                </div>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  };
+
   if (isLoading) {
     return <TableSkeleton />;
   }
@@ -730,23 +816,16 @@ export default function RaidLogTable({
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
               {currentItems.map((entry) => (
-                <Link
+                <div
                   key={entry.id}
-                  href={`/raidlogs/${entry.id}`}
-                  className="block"
-                  onClick={(e) => {
-                    // Stop propagation for buttons inside
-                    if ((e.target as HTMLElement).closest("button")) {
-                      e.stopPropagation();
-                    }
-                  }}
+                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col"
                 >
-                  <div
-                    key={entry.id}
-                    className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-grow">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-grow">
+                      <Link
+                        href={`/raidlogs/${entry.id}`}
+                        className="block hover:opacity-75 transition-opacity"
+                      >
                         <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
                           {entry.beach?.name || "No beach specified"}
                         </h3>
@@ -758,191 +837,190 @@ export default function RaidLogTable({
                             📍 {entry.region?.name ?? "No region"}
                           </p>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAlertClick(entry);
-                                }}
-                                className={cn(
-                                  "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
-                                )}
-                              >
-                                <Bell
-                                  className={cn(
-                                    "w-4 h-4 cursor-pointer",
-                                    entry.hasAlert
-                                      ? entry.isMyAlert
-                                        ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
-                                        : "text-[var(--color-alert-icon-rating)] fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                      : "text-gray-500 fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                  )}
-                                />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-sm">
-                                {getGatedTooltip(
-                                  getBellTooltipText(entry, hasAccess)
-                                )}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        {session?.user?.email === entry.surferEmail && (
-                          <>
+                      </Link>
+                    </div>
+                    <div className="flex gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleEdit(entry);
+                                handleAlertClick(entry);
                               }}
-                              className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(entry.id);
-                              }}
-                              className="text-gray-500 hover:text-red-600"
-                              disabled={deleteMutation.isPending}
-                            >
-                              {deleteMutation.isPending ? (
-                                <span className="loading-spinner" />
-                              ) : (
-                                <X className="w-4 h-4" />
+                              className={cn(
+                                "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
                               )}
+                            >
+                              <Bell
+                                className={cn(
+                                  "w-4 h-4 cursor-pointer",
+                                  entry.hasAlert
+                                    ? entry.isMyAlert
+                                      ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
+                                      : "text-[var(--color-alert-icon-rating)] fill-none hover:text-[var(--color-alert-icon-rating)]"
+                                    : "text-gray-500 fill-none hover:text-[var(--color-alert-icon-rating)]"
+                                )}
+                              />
                             </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <StarRating rating={entry.surferRating ?? 0} />
-                    </div>
-
-                    <div className="text-sm font-primary">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-600">Logger:</span>
-                        <LogEntryDisplay
-                          entry={entry}
-                          isAnonymous={entry.isAnonymous ?? false}
-                        />
-                      </div>
-
-                      {/* Forecast info with badges */}
-                      {entry.forecast && (
-                        <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5 inline-block">
-                          <div className="flex flex-wrap gap-1.5">
-                            {entry.forecast.windSpeed != null && (
-                              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                                <span className="mr-1">
-                                  {getGatedEmoji(
-                                    getWindEmoji(entry.forecast.windSpeed)
-                                  )}
-                                </span>
-                                <span>{entry.forecast.windSpeed}kts</span>
-                              </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-sm">
+                              {getGatedTooltip(
+                                getBellTooltipText(entry, hasAccess)
+                              )}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      {session?.user?.email === entry.surferEmail && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(entry);
+                            }}
+                            className="text-gray-500 hover:text-[var(--color-text-primary)]"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(entry);
+                            }}
+                            className="text-gray-500 hover:text-red-600"
+                            disabled={deleteMutation.isPending}
+                          >
+                            {deleteMutation.isPending ? (
+                              <span className="loading-spinner" />
+                            ) : (
+                              <X className="w-4 h-4" />
                             )}
-
-                            {entry.forecast.windDirection != null && (
-                              <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                                <span>
-                                  {degreesToCardinal(
-                                    entry.forecast.windDirection
-                                  )}
-                                </span>
-                              </div>
-                            )}
-
-                            {entry.forecast.swellHeight != null && (
-                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                                <span className="mr-1">
-                                  {getGatedEmoji(
-                                    getSwellEmoji(entry.forecast.swellHeight)
-                                  )}
-                                </span>
-                                <span>{entry.forecast.swellHeight}m</span>
-                              </div>
-                            )}
-
-                            {entry.forecast.swellPeriod != null && (
-                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                                <span>{entry.forecast.swellPeriod}s</span>
-                              </div>
-                            )}
-
-                            {entry.forecast.swellDirection != null && (
-                              <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                                <span>
-                                  {degreesToCardinal(
-                                    entry.forecast.swellDirection
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                          </button>
+                        </>
                       )}
                     </div>
+                  </div>
 
-                    {entry.comments && (
-                      <p className="text-sm text-gray-700 break-words font-primary line-clamp-2 mt-2">
-                        <span className="font-medium">Comments:</span>{" "}
-                        {entry.comments}
-                      </p>
-                    )}
+                  <div className="flex items-center justify-between">
+                    <StarRating rating={entry.surferRating ?? 0} />
+                  </div>
 
-                    {/* Image section */}
-                    {entry.imageUrl ||
-                    (entry.videoUrl && entry.videoPlatform) ? (
-                      <div className="mt-auto pt-2 w-full">
-                        <div className="relative w-full aspect-video rounded-md overflow-hidden">
-                          <button
-                            onClick={(e) => handleMediaClick(e, entry)}
-                            className="relative w-full h-full block"
-                          >
-                            {entry.imageUrl ? (
-                              <Image
-                                src={entry.imageUrl}
-                                alt="Session photo"
-                                fill={true}
-                                className="object-cover rounded-md hover:opacity-90 transition-opacity"
-                              />
-                            ) : entry.videoUrl && entry.videoPlatform ? (
-                              <>
-                                <Image
-                                  src={getVideoThumbnail(
-                                    entry.videoUrl,
-                                    entry.videoPlatform
-                                  )}
-                                  alt="Video thumbnail"
-                                  fill={true}
-                                  className="object-cover rounded-md hover:opacity-90 transition-opacity"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <VideoIcon className="w-8 h-8 text-white" />
-                                </div>
-                              </>
-                            ) : null}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-auto pt-2 w-full">
-                        <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-                          <ImageIcon className="w-8 h-8 text-gray-300" />
+                  <div className="text-sm font-primary">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-gray-600">Logger:</span>
+                      <LogEntryDisplay
+                        entry={entry}
+                        isAnonymous={entry.isAnonymous ?? false}
+                      />
+                    </div>
+
+                    {/* Forecast info with badges */}
+                    {entry.forecast && (
+                      <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5 inline-block">
+                        <div className="flex flex-wrap gap-1.5">
+                          {entry.forecast.windSpeed != null && (
+                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                              <span className="mr-1">
+                                {getGatedEmoji(
+                                  getWindEmoji(entry.forecast.windSpeed)
+                                )}
+                              </span>
+                              <span>{entry.forecast.windSpeed}kts</span>
+                            </div>
+                          )}
+
+                          {entry.forecast.windDirection != null && (
+                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                              <span>
+                                {degreesToCardinal(
+                                  entry.forecast.windDirection
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                          {entry.forecast.swellHeight != null && (
+                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                              <span className="mr-1">
+                                {getGatedEmoji(
+                                  getSwellEmoji(entry.forecast.swellHeight)
+                                )}
+                              </span>
+                              <span>{entry.forecast.swellHeight}m</span>
+                            </div>
+                          )}
+
+                          {entry.forecast.swellPeriod != null && (
+                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                              <span>{entry.forecast.swellPeriod}s</span>
+                            </div>
+                          )}
+
+                          {entry.forecast.swellDirection != null && (
+                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                              <span>
+                                {degreesToCardinal(
+                                  entry.forecast.swellDirection
+                                )}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
-                </Link>
+
+                  {entry.comments && (
+                    <p className="text-sm text-gray-700 break-words font-primary line-clamp-2 mt-2">
+                      <span className="font-medium">Comments:</span>{" "}
+                      {entry.comments}
+                    </p>
+                  )}
+
+                  {/* Image section */}
+                  {entry.imageUrl || (entry.videoUrl && entry.videoPlatform) ? (
+                    <div className="mt-auto pt-2 w-full">
+                      <div className="relative w-full aspect-video rounded-md overflow-hidden">
+                        <button
+                          onClick={(e) => handleMediaClick(e, entry)}
+                          className="relative w-full h-full block"
+                        >
+                          {entry.imageUrl ? (
+                            <Image
+                              src={entry.imageUrl}
+                              alt="Session photo"
+                              fill={true}
+                              className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                            />
+                          ) : entry.videoUrl && entry.videoPlatform ? (
+                            <>
+                              <Image
+                                src={getVideoThumbnail(
+                                  entry.videoUrl,
+                                  entry.videoPlatform
+                                )}
+                                alt="Video thumbnail"
+                                fill={true}
+                                className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <VideoIcon className="w-8 h-8 text-white" />
+                              </div>
+                            </>
+                          ) : null}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-auto pt-2 w-full">
+                      <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-gray-300" />
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -1155,16 +1233,7 @@ export default function RaidLogTable({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleEdit(entry);
-                                    }}
-                                    className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(entry.id);
+                                      handleDelete(entry);
                                     }}
                                     className="text-gray-500 hover:text-red-600"
                                     disabled={deleteMutation.isPending}
@@ -1211,6 +1280,8 @@ export default function RaidLogTable({
         videoUrl={selectedMedia?.videoUrl}
         videoPlatform={selectedMedia?.videoPlatform}
       />
+
+      <DeleteConfirmationDialog />
     </>
   );
 }

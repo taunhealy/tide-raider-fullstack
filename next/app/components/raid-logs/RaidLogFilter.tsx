@@ -36,7 +36,7 @@ export function RaidLogFilter({
 
   return (
     <FilterDrawer isOpen={isOpen} onClose={onClose}>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 p-3">
         <h2 className="text-lg font-semibold">Filters</h2>
         <Button variant="ghost" size="sm" onClick={onReset}>
           Reset

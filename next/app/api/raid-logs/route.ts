@@ -94,7 +94,106 @@ async function getForecast(date: Date, regionId: string) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
-  // Extract all filter parameters
+  // If an ID is provided, fetch a single log entry
+  const id = searchParams.get("id");
+  if (id) {
+    try {
+      const entry = await prisma.logEntry.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          date: true,
+          surferName: true,
+          surferEmail: true,
+          surferRating: true,
+          comments: true,
+          isPrivate: true,
+          isAnonymous: true,
+          waveType: true,
+          imageUrl: true,
+          videoUrl: true,
+          videoPlatform: true,
+          userId: true,
+          region: {
+            select: {
+              id: true,
+              name: true,
+              continent: true,
+              country: true,
+            },
+          },
+          beach: {
+            select: {
+              id: true,
+              name: true,
+              region: {
+                select: {
+                  id: true,
+                  name: true,
+                  country: true,
+                  continent: true,
+                },
+              },
+              waveType: true,
+              difficulty: true,
+            },
+          },
+          forecast: {
+            select: {
+              id: true,
+              date: true,
+              windSpeed: true,
+              windDirection: true,
+              swellHeight: true,
+              swellPeriod: true,
+              swellDirection: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              nationality: true,
+              name: true,
+            },
+          },
+          alerts: {
+            select: {
+              id: true,
+              userId: true,
+            },
+          },
+        },
+      });
+
+      if (!entry) {
+        return NextResponse.json(
+          { error: "Log entry not found" },
+          { status: 404 }
+        );
+      }
+
+      // Check privacy settings
+      if (entry.isPrivate) {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email || entry.userId !== session.user.id) {
+          return NextResponse.json(
+            { error: "Unauthorized to view this private entry" },
+            { status: 403 }
+          );
+        }
+      }
+
+      return NextResponse.json(entry);
+    } catch (error) {
+      console.error("Failed to fetch log entry:", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500 }
+      );
+    }
+  }
+
+  // Otherwise, handle the list query (existing code)
   const beaches = searchParams.get("beaches")?.split(",").filter(Boolean) || [];
   const regions = searchParams.get("regions")?.split(",").filter(Boolean) || [];
   const countries =
@@ -229,7 +328,18 @@ export async function GET(req: NextRequest) {
               difficulty: true,
             },
           },
-          forecast: true,
+          // Update the forecast selection to include all necessary fields
+          forecast: {
+            select: {
+              id: true,
+              date: true,
+              windSpeed: true,
+              windDirection: true,
+              swellHeight: true,
+              swellPeriod: true,
+              swellDirection: true,
+            },
+          },
           user: {
             select: {
               id: true,
@@ -284,72 +394,88 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
     const data = await request.json();
 
-    // First find the beach and forecast for the selected date
-    const [beach, forecast] = await Promise.all([
+    // First find the beach and region
+    const [beach, region] = await Promise.all([
       prisma.beach.findFirst({
-        where: { name: data.beachName },
-      }),
-      prisma.forecastA.findFirst({
         where: {
-          regionId: data.regionId,
-          date: {
-            gte: new Date(new Date(data.date).setHours(0, 0, 0, 0)),
-            lt: new Date(new Date(data.date).setHours(23, 59, 59, 999)),
-          },
+          OR: [{ id: data.beachId }, { name: data.beachName }],
         },
-        select: { id: true }, // Just need the ID for connection
+      }),
+      prisma.region.findUnique({
+        where: { id: data.regionId },
       }),
     ]);
 
+    if (!region) {
+      return NextResponse.json(
+        { message: "Region not found" },
+        { status: 404 }
+      );
+    }
+
+    // Find or create forecast for the date and region
+    const forecast = data.forecastId
+      ? await prisma.forecastA.findUnique({
+          where: { id: data.forecastId },
+        })
+      : await prisma.forecastA.findFirst({
+          where: {
+            regionId: region.id,
+            date: {
+              gte: new Date(new Date(data.date).setHours(0, 0, 0, 0)),
+              lt: new Date(new Date(data.date).setHours(23, 59, 59, 999)),
+            },
+          },
+        });
+
+    // Create the log entry with proper relations
     const logEntry = await prisma.logEntry.create({
       data: {
         date: new Date(data.date),
         surferName: data.surferName,
-        user: {
-          connect: {
-            id: session.user.id,
-          },
-        },
-        region: {
-          connect: {
-            id: data.regionId,
-          },
-        },
-        beach: beach
-          ? {
-              connect: {
-                id: beach.id,
-              },
-            }
-          : undefined,
-        forecast: forecast
-          ? {
-              connect: {
-                id: forecast.id,
-              },
-            }
-          : undefined,
-        beachName: data.beachName,
         surferEmail: data.surferEmail,
+        beachName: data.beachName,
         surferRating: data.surferRating,
         comments: data.comments,
-        isPrivate: data.isPrivate,
-        isAnonymous: data.isAnonymous,
+        isPrivate: data.isPrivate ?? false,
+        isAnonymous: data.isAnonymous ?? false,
         imageUrl: data.imageUrl,
         videoUrl: data.videoUrl,
         videoPlatform: data.videoPlatform,
         waveType: data.waveType,
+
+        // Relations using connect
+        user: {
+          connect: { id: session.user.id },
+        },
+        region: {
+          connect: { id: region.id },
+        },
+        ...(beach && {
+          beach: {
+            connect: { id: beach.id },
+          },
+        }),
+        ...(forecast && {
+          forecast: {
+            connect: { id: forecast.id },
+          },
+        }),
+      },
+      include: {
+        beach: true,
+        region: true,
+        forecast: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            nationality: true,
+          },
+        },
+        alerts: true,
       },
     });
 
@@ -371,4 +497,57 @@ function convertDegreesToCardinal(degrees: number) {
   const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   const index = Math.round(degrees / 45) % 8;
   return directions[index] || "N/A";
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get ID from query parameters instead of URL path
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ message: "No ID provided" }, { status: 400 });
+    }
+
+    // Check if the log entry exists and belongs to the user
+    const logEntry = await prisma.logEntry.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!logEntry) {
+      return NextResponse.json(
+        { message: "Log entry not found" },
+        { status: 404 }
+      );
+    }
+
+    if (logEntry.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: "Unauthorized to delete this log entry" },
+        { status: 403 }
+      );
+    }
+
+    // Delete the log entry
+    await prisma.logEntry.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "Log entry deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting log entry:", error);
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to delete log entry",
+      },
+      { status: 500 }
+    );
+  }
 }

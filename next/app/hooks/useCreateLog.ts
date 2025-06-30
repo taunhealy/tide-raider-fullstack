@@ -2,8 +2,7 @@
 import { Beach } from "@/app/types/beaches";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Prisma } from "@prisma/client";
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export function useCreateLog() {
   const queryClient = useQueryClient();
@@ -60,15 +59,15 @@ export function useCreateLog() {
       }
       return response.json();
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
+      toast.success("Session logged successfully!");
+    },
     onError: (error) => {
       console.error("Log creation error:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to create log entry"
       );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
-      toast.success("Session logged successfully!");
     },
   });
 }

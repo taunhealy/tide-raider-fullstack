@@ -162,32 +162,26 @@ model LogEntry {
   beachName    String?
   surferRating Int        @default(0)
   comments     String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
   imageUrl     String?
   videoUrl     String?
   videoPlatform String?
   isPrivate    Boolean    @default(false)
   isAnonymous  Boolean    @default(false)
-  continent    String?
-  country      String?
-  regionId     String
-  region       Region     @relation(fields: [regionId], references: [id])
   waveType     String?
   beachId      String?
   userId       String?    @map("user_id")
+  regionId     String
   forecastId   String?
-  alerts       Alert[]
+  
   beach        Beach?     @relation(fields: [beachId], references: [id])
+  region       Region     @relation(fields: [regionId], references: [id])
   forecast     ForecastA? @relation(fields: [forecastId], references: [id])
   user         User?      @relation(fields: [userId], references: [id])
+  alerts       Alert[]
 
   @@index([regionId])
-  @@index([isPrivate])
-  @@index([userId])
-  @@index([date])
   @@index([beachId])
-  @@index([surferRating])
+  @@index([userId])
   @@index([forecastId])
 }
 

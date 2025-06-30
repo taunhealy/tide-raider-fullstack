@@ -20,22 +20,32 @@ import { cn } from "@/app/lib/utils";
 import CommentThread from "@/app/components/comments/CommentThread";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
 import { Button } from "@/app/components/ui/Button";
-import type { LogEntry } from "@/app/types/raidlogs";
+import type { Prisma } from "@prisma/client";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { useState } from "react";
 import { MediaModal } from "./MediaModal";
+import type { VideoPlatform } from "@/app/types/raidlogs";
+import { useRaidLog } from "@/app/hooks/useRaidLog";
 
 interface RaidLogDetailsProps {
-  entry: LogEntry & {
-    existingAlert?: { message: string } | null;
-  };
+  id: string;
 }
 
-export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
+export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const isOwner = session?.user?.id === entry.userId;
+  const isOwner = session?.user?.id === id;
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+
+  const { data: entry, isLoading, error } = useRaidLog(id);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error || !entry) {
+    return <div>Failed to load raid log</div>;
+  }
 
   // Handle forecast data properly - it might be an array or a single object
   const forecastData =
@@ -133,7 +143,7 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
                 <MapPin className="w-4 h-4" />
                 <p>
                   {entry.region?.name
-                    ? `${entry.region.name}${entry.country ? `, ${entry.country}` : ""}`
+                    ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
                     : "No location specified"}
                 </p>
               </div>
@@ -228,18 +238,6 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
                 </div>
               </div>
             )}
-
-            {/* Alert Section */}
-            {entry.existingAlert && entry.existingAlert.message && (
-              <div className="bg-amber-50 p-5 rounded-lg border-l-4 border-amber-400">
-                <h2 className="font-primary text-lg font-medium mb-2 text-amber-800">
-                  Alert
-                </h2>
-                <p className="text-amber-700 font-primary">
-                  {entry.existingAlert.message}
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Sidebar - 1/3 width on desktop */}
@@ -285,7 +283,7 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
         onClose={() => setIsMediaModalOpen(false)}
         imageUrl={entry.imageUrl}
         videoUrl={entry.videoUrl}
-        videoPlatform={entry.videoPlatform}
+        videoPlatform={entry.videoPlatform as VideoPlatform}
       />
     </div>
   );

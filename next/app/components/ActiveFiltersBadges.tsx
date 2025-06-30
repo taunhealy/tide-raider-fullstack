@@ -13,9 +13,9 @@ interface ActiveFilterBadgesProps {
 
 // Using your existing CSS variables with hover states
 const badgeClassName =
-  "inline-flex items-center bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] text-sm px-3 py-1 rounded-full font-primary hover:opacity-80 transition-opacity";
+  "inline-flex items-center bg-[var(--color-tertiary)] text-[var(--color-text-primary)] text-sm px-3 py-1 rounded-full font-primary hover:opacity-80 transition-opacity";
 const buttonClassName =
-  "ml-2 text-[var(--color-text-secondary)] hover:opacity-70 transition-opacity";
+  "ml-2 text-[var(--color-text-primary)] hover:opacity-70 transition-opacity";
 
 export function ActiveFilterBadges({
   filters,
@@ -56,18 +56,6 @@ export function ActiveFilterBadges({
     sampleCount: filters.regions?.[0] ? regionCounts[filters.regions[0]] : null,
   });
 
-  // Add this before the return statement
-  console.log("DEBUG Region counts:", {
-    regionCounts,
-    filters,
-    hasRegions: !!filters.regions?.length,
-    firstRegion: filters.regions?.[0],
-    firstRegionCount: filters.regions?.[0]
-      ? regionCounts[filters.regions[0]]
-      : null,
-    allCounts: regionCounts,
-  });
-
   if (!hasActiveFilters) return null;
 
   return (
@@ -94,7 +82,7 @@ export function ActiveFilterBadges({
       })}
       {filters.regions?.map((region) => (
         <div key={region} className={badgeClassName}>
-          <span className="mr-1">Region:</span>
+          <span className="mr-1 font-semibold">Region:</span>
           {region}
           {regionCounts[region] > 0 && (
             <span className="ml-2 bg-white text-black rounded-full w-5 h-5 flex items-center justify-center text-xs">

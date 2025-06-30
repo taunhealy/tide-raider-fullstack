@@ -58,7 +58,7 @@ export function FilterControls({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-5">
       {/* Beach Search */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Beach</label>
@@ -121,7 +121,7 @@ export function FilterControls({
               className={cn(
                 "px-3 py-1 rounded-full text-sm",
                 selectedRegions.includes(region.id)
-                  ? "bg-blue-500 text-white"
+                  ? "bg-[var--cyan] text-white"
                   : "bg-gray-100 hover:bg-gray-200"
               )}
             >

@@ -195,20 +195,6 @@ export function RaidLogForm({
     }
   }, [entry, beaches]);
 
-  // Add debug logging for initial state
-  useEffect(() => {
-    if (entry) {
-      console.log("Entry data:", {
-        id: entry.id,
-        beachName: entry.beachName,
-        date: entry.date,
-        forecast: entry.forecast,
-        region: entry.region,
-        country: entry.country,
-      });
-    }
-  }, [entry]);
-
   // Add debug logging for beaches
   useEffect(() => {
     console.log("Available beaches:", {
@@ -269,8 +255,6 @@ export function RaidLogForm({
         selectedDate,
         forecastData,
         isAnonymous,
-        session,
-        userEmail,
         surferRating,
         comments,
         isPrivate,

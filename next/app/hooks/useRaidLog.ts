@@ -3,16 +3,26 @@ import { useQuery } from "@tanstack/react-query";
 import type { LogEntry } from "@/app/types/raidlogs";
 
 export function useRaidLog(id: string) {
-  return useQuery<LogEntry>({
+  return useQuery({
     queryKey: ["raidLog", id],
     queryFn: async () => {
-      const response = await fetch(`/api/raid-logs/${id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch raid log");
-      }
-      return response.json();
+      const [logRes, alertRes] = await Promise.all([
+        fetch(`/api/raid-logs?id=${id}`, {
+          credentials: "include",
+        }),
+        fetch(`/api/alerts?logEntryId=${id}`, {
+          credentials: "include",
+        }),
+      ]);
+
+      if (!logRes.ok) throw new Error("Failed to fetch log entry");
+      const logData = await logRes.json();
+      const alertData = alertRes.ok ? await alertRes.json() : [];
+
+      return {
+        ...logData,
+        existingAlert: alertData.length > 0 ? alertData[0] : null,
+      };
     },
-    enabled: !!id, // Only run query if we have an ID
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }

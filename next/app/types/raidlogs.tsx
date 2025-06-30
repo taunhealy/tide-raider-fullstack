@@ -4,38 +4,63 @@ import { Beach as BeachType } from "@/app/types/beaches";
 
 export interface LogEntry {
   id: string;
-  date: Date;
+  date: string;
   surferName: string | null;
   surferEmail: string | null;
-  beachName: string | null;
   surferRating: number;
   comments: string | null;
   isPrivate: boolean;
   isAnonymous: boolean;
-  continent: string | null;
-  country: string | null;
-  regionId: string;
   waveType: string | null;
-  beachId: string | null;
-  forecastId: string | null;
-  userId: string | null;
-  hasAlert?: boolean;
-  isMyAlert?: boolean;
-  alertId?: string;
   imageUrl: string | null;
   videoUrl: string | null;
   videoPlatform: VideoPlatform | null;
-  forecast: ForecastA | null;
-  region: Region;
-  beach: Beach | null;
-  user?: {
+  userId: string | null;
+  beachName: string;
+  region: {
     id: string;
-    nationality?: string;
-    name?: string;
-    image?: string;
-    email?: string;
+    name: string;
+    continent: string | null;
+    country: {
+      id: string;
+      name: string;
+      continentId: string;
+    };
   };
+  beach: {
+    id: string;
+    name: string;
+    region: {
+      id: string;
+      name: string;
+      country: {
+        id: string;
+        name: string;
+        continentId: string;
+      };
+      continent: string | null;
+    };
+    waveType: string;
+    difficulty: string;
+  } | null;
+  forecast: {
+    id: string;
+    date: string;
+    windSpeed: number;
+    windDirection: number;
+    swellHeight: number;
+    swellPeriod: number;
+    swellDirection: number;
+  } | null;
+  user: {
+    id: string;
+    nationality: string | null;
+    name: string;
+  } | null;
   alerts: Alert[];
+  hasAlert?: boolean;
+  isMyAlert?: boolean;
+  alertId?: string;
 }
 
 export interface RaidLogFilters {

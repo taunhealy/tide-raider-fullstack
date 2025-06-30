@@ -241,7 +241,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                       <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 rounded-full text-xs font-primary">
                         <span className="hidden sm:inline mr-1">
                           {getSwellEmoji(
-                            latestLogEntry[0].forecast.swellHeight
+                          latestLogEntry[0].forecast.swellHeight
                           )}
                         </span>
                         <span>
