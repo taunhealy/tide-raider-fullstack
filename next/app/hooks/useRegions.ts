@@ -1,6 +1,6 @@
 // app/hooks/useRegions.ts
 import { useQuery } from "@tanstack/react-query";
-import type { Region } from "../types/region";
+import type { Region } from "../types/regions";
 
 export function useRegions() {
   return useQuery<Region[]>({

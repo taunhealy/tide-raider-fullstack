@@ -242,9 +242,9 @@ export async function PATCH(
           data: {
             name:
               updatedLogEntry.beachName ||
-              updatedLogEntry.region ||
+              updatedLogEntry.regionId ||
               "Unnamed location",
-            region: updatedLogEntry.region || "",
+            regionId: updatedLogEntry.regionId || "",
             properties: alertConfig.properties || [
               { property: "windSpeed", range: 2 },
               { property: "windDirection", range: 10 },

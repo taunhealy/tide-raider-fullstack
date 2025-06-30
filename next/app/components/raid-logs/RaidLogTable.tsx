@@ -748,17 +748,14 @@ export default function RaidLogTable({
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-grow">
                         <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
-                          {renderGatedContent(
-                            entry.beachName,
-                            "Sign in to view"
-                          )}
+                          {entry.beach?.name || "No beach specified"}
                         </h3>
                         <div className="space-y-1">
                           <p className="text-sm text-gray-500 font-primary">
                             📖 {format(new Date(entry.date), "MMM d, yyyy")}
                           </p>
                           <p className="text-sm text-gray-500 font-primary">
-                            📍 {entry.region}
+                            📍 {entry.region?.name ?? "No region"}
                           </p>
                         </div>
                       </div>
@@ -1063,15 +1060,12 @@ export default function RaidLogTable({
                                 }}
                                 className="font-primary text-sm text-gray-900 hover:text-brand-3 transition-colors text-left"
                               >
-                                {renderGatedContent(
-                                  entry.beachName,
-                                  "Sign in to view"
-                                )}
+                                {entry.beach?.name || "No beach specified"}
                               </button>
                             </div>
                           </td>
                           <td className="px-2 py-3 whitespace-nowrap min-w-[100px] text-sm font-primary">
-                            {entry.region}
+                            {entry.region?.name ?? "No region"}
                           </td>
                           <td className="px-2 py-3 whitespace-nowrap min-w-[120px]">
                             <LogEntryDisplay

@@ -93,8 +93,8 @@ export async function GET(request: Request) {
     // Remove the in-memory sort since we're doing it at DB level
     const sortedBeaches = beaches.sort(
       (a, b) =>
-        (b.beachDailyScores[0]?.score || 0) -
-        (a.beachDailyScores[0]?.score || 0)
+        (Number(b.beachDailyScores[0]?.score) || 0) -
+        (Number(a.beachDailyScores[0]?.score) || 0)
     );
 
     // Transform the response

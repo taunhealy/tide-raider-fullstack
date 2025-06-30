@@ -5,6 +5,7 @@ import { authOptions } from "@/app/lib/authOptions";
 
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 
 function getTodayDate() {
   const date = new Date();
@@ -212,7 +213,22 @@ export async function GET(req: NextRequest) {
               country: true,
             },
           },
-          beach: true,
+          beach: {
+            select: {
+              id: true,
+              name: true,
+              region: {
+                select: {
+                  id: true,
+                  name: true,
+                  country: true,
+                  continent: true,
+                },
+              },
+              waveType: true,
+              difficulty: true,
+            },
+          },
           forecast: true,
           user: {
             select: {
@@ -261,57 +277,79 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await req.json();
-
-    // Get the beach name before creating the log entry
-    const beach = await prisma.beach.findUnique({
-      where: { id: data.beachId },
-      select: { name: true },
+    // Verify user exists
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
     });
 
-    if (!beach) {
-      return NextResponse.json({ error: "Beach not found" }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Create the log entry with beach name
+    const data = await request.json();
+
+    // First find the beach and forecast for the selected date
+    const [beach, forecast] = await Promise.all([
+      prisma.beach.findFirst({
+        where: { name: data.beachName },
+      }),
+      prisma.forecastA.findFirst({
+        where: {
+          regionId: data.regionId,
+          date: {
+            gte: new Date(new Date(data.date).setHours(0, 0, 0, 0)),
+            lt: new Date(new Date(data.date).setHours(23, 59, 59, 999)),
+          },
+        },
+        select: { id: true }, // Just need the ID for connection
+      }),
+    ]);
+
     const logEntry = await prisma.logEntry.create({
       data: {
         date: new Date(data.date),
-        surferEmail: session.user.email,
         surferName: data.surferName,
-        surferRating: data.surferRating,
-        comments: data.comments,
-        beachName: beach.name, // Store the beach name
-        beach: {
-          connect: { id: data.beachId },
+        user: {
+          connect: {
+            id: session.user.id,
+          },
         },
         region: {
-          connect: { id: data.regionId },
+          connect: {
+            id: data.regionId,
+          },
         },
-        waveType: data.waveType,
-        isAnonymous: data.isAnonymous,
+        beach: beach
+          ? {
+              connect: {
+                id: beach.id,
+              },
+            }
+          : undefined,
+        forecast: forecast
+          ? {
+              connect: {
+                id: forecast.id,
+              },
+            }
+          : undefined,
+        beachName: data.beachName,
+        surferEmail: data.surferEmail,
+        surferRating: data.surferRating,
+        comments: data.comments,
         isPrivate: data.isPrivate,
+        isAnonymous: data.isAnonymous,
         imageUrl: data.imageUrl,
         videoUrl: data.videoUrl,
         videoPlatform: data.videoPlatform,
-        user: {
-          connect: { id: session.user.id },
-        },
-        forecast: {
-          connect: { id: data.forecastId },
-        },
-      },
-      include: {
-        forecast: true,
-        region: true,
-        beach: true,
+        waveType: data.waveType,
       },
     });
 
@@ -319,7 +357,10 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error creating log entry:", error);
     return NextResponse.json(
-      { error: "Failed to create log entry" },
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to create log entry",
+      },
       { status: 500 }
     );
   }

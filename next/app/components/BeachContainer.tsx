@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/app/components/ui/Button";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -104,7 +105,7 @@ export default function BeachContainer() {
               beaches={beaches}
             />
 
-            <div className="grid grid-cols-1 gap-5 relative">
+            <div className="grid grid-cols-1 gap-5 relative mt-5">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
               ) : !dataReady ? (
@@ -139,12 +140,9 @@ export default function BeachContainer() {
                   </div>
 
                   {hasNextPage && (
-                    <button
-                      onClick={() => loadMore()}
-                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-primary"
-                    >
+                    <Button onClick={() => loadMore()} variant="default">
                       Load More Beaches
-                    </button>
+                    </Button>
                   )}
                 </>
               )}

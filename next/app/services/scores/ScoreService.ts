@@ -1,6 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 import { CoreForecastData } from "@/app/types/forecast";
 import type { Beach, ForecastA } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 interface PaginationParams {
   regionId: string;
@@ -107,7 +108,7 @@ export class ScoreService {
       let score = 5;
       const deductions = [];
 
-      // Wind direction scoring
+      // Wind direction scoring - More lenient and rewards near-optimal conditions
       const windCardinal = this.degreesToCardinal(conditions.windDirection);
       console.log("Wind direction check:", {
         current: conditions.windDirection,
@@ -128,37 +129,38 @@ export class ScoreService {
         );
 
         if (minAngleDiff <= 22.5) {
-          score -= 1;
+          // Reward near-optimal conditions
+          score += 0.5;
+          deductions.push({
+            type: "wind-direction",
+            amount: -0.5, // Negative means bonus
+            reason: "near optimal conditions",
+          });
+        } else if (minAngleDiff <= 45) {
+          score -= 1; // Reduced penalty
           deductions.push({
             type: "wind-direction",
             amount: 1,
-            reason: "slight deviation",
-          });
-        } else if (minAngleDiff <= 45) {
-          score -= 2;
-          deductions.push({
-            type: "wind-direction",
-            amount: 2,
             reason: "moderate deviation",
           });
         } else if (minAngleDiff <= 90) {
-          score -= 3;
+          score -= 2; // Reduced from -3
           deductions.push({
             type: "wind-direction",
-            amount: 3,
+            amount: 2,
             reason: "significant deviation",
           });
         } else {
-          score -= 4;
+          score -= 3; // Reduced from -4
           deductions.push({
             type: "wind-direction",
-            amount: 4,
+            amount: 3,
             reason: "extreme deviation",
           });
         }
       }
 
-      // Wind strength scoring
+      // Wind strength scoring - Kept as is since it's already reasonable
       console.log("Wind strength check:", {
         speed: conditions.windSpeed,
         sheltered: beach.sheltered,
@@ -182,7 +184,15 @@ export class ScoreService {
         }
       }
 
-      // Wave size scoring
+      // Check if other conditions are favorable for more lenient scoring
+      const goodConditions =
+        conditions.swellHeight >= parsedBeach.swellSize.min &&
+        conditions.swellHeight <= parsedBeach.swellSize.max &&
+        conditions.swellPeriod >= parsedBeach.idealSwellPeriod.min &&
+        conditions.swellPeriod <= parsedBeach.idealSwellPeriod.max &&
+        conditions.windSpeed <= 25;
+
+      // Wave size scoring - More lenient when close to range
       console.log("Wave size check:", {
         current: conditions.swellHeight,
         optimal: parsedBeach.swellSize,
@@ -199,30 +209,30 @@ export class ScoreService {
           Math.abs(conditions.swellHeight - parsedBeach.swellSize.max)
         );
         if (heightDiff <= 0.5) {
-          score -= 1;
+          score -= 0.5; // Reduced from -1
+          deductions.push({
+            type: "wave-size",
+            amount: 0.5,
+            reason: "slightly outside optimal range",
+          });
+        } else if (heightDiff <= 1) {
+          score -= 1; // Reduced from -2
           deductions.push({
             type: "wave-size",
             amount: 1,
-            reason: "slight mismatch",
-          });
-        } else if (heightDiff <= 1) {
-          score -= 2;
-          deductions.push({
-            type: "wave-size",
-            amount: 2,
             reason: "moderate mismatch",
           });
         } else {
-          score -= 3;
+          score -= 2; // Reduced from -3
           deductions.push({
             type: "wave-size",
-            amount: 3,
+            amount: 2,
             reason: "significant mismatch",
           });
         }
       }
 
-      // Swell direction scoring
+      // Swell direction scoring - More strict penalties
       console.log("Swell direction check:", {
         current: conditions.swellDirection,
         optimal: parsedBeach.optimalSwellDirections,
@@ -242,38 +252,32 @@ export class ScoreService {
         );
         const swellDirDiff = Math.min(minDiff, maxDiff);
 
-        if (swellDirDiff <= 10) {
-          score -= 1;
+        // Remove the penalty multiplier and increase base penalties
+        if (swellDirDiff <= 20) {
+          score -= 1; // Was 1
           deductions.push({
             type: "swell-direction",
             amount: 1,
-            reason: "slight deviation",
+            reason: "slight deviation from optimal swell direction",
           });
-        } else if (swellDirDiff <= 20) {
+        } else if (swellDirDiff <= 45) {
           score -= 2;
           deductions.push({
             type: "swell-direction",
             amount: 2,
-            reason: "moderate deviation",
+            reason: "moderate deviation from optimal swell direction",
           });
-        } else if (swellDirDiff <= 30) {
+        } else {
           score -= 3;
           deductions.push({
             type: "swell-direction",
             amount: 3,
-            reason: "significant deviation",
-          });
-        } else {
-          score -= 4;
-          deductions.push({
-            type: "swell-direction",
-            amount: 4,
-            reason: "extreme deviation",
+            reason: "significant deviation from optimal swell direction",
           });
         }
       }
 
-      // Swell period scoring
+      // Swell period scoring - More lenient
       console.log("Swell period check:", {
         current: conditions.swellPeriod,
         optimal: parsedBeach.idealSwellPeriod,
@@ -290,47 +294,28 @@ export class ScoreService {
           Math.abs(conditions.swellPeriod - parsedBeach.idealSwellPeriod.max)
         );
         if (periodDiff <= 2) {
-          score -= 1;
+          score -= 0.5; //
           deductions.push({
             type: "swell-period",
-            amount: 1,
+            amount: 0.5,
             reason: "slight mismatch",
           });
         } else {
-          score -= 2;
+          score -= 1; // Reduced from -2
           deductions.push({
             type: "swell-period",
-            amount: 2,
+            amount: 1,
             reason: "significant mismatch",
           });
         }
       }
 
-      const finalScore = Math.max(0, Math.round(score));
-      console.log("Score calculation complete:", {
-        beachId: beach.id,
-        beachName: beach.name,
-        initialScore: 5,
-        deductions,
-        rawScore: score,
-        finalScore,
-      });
+      const finalScore = Math.max(0, score);
 
-      return finalScore;
+      return Number(finalScore.toFixed(1));
     } catch (error) {
-      console.error("Error calculating beach score:", {
-        beachId: beach.id,
-        beachName: beach.name,
-        error,
-        conditions,
-        beach: {
-          optimalWindDirections: beach.optimalWindDirections,
-          optimalSwellDirections: beach.optimalSwellDirections,
-          swellSize: beach.swellSize,
-          idealSwellPeriod: beach.idealSwellPeriod,
-        },
-      });
-      return null;
+      console.error("Error calculating beach score:", error);
+      return 0;
     }
   }
 
@@ -359,19 +344,28 @@ export class ScoreService {
 
       console.log(`Found ${beaches.length} beaches for region ${regionId}`);
 
-      scores = beaches.map((beach) => ({
-        beachId: beach.id,
-        regionId,
-        score: this.calculateScore(beach, forecastData),
-        date: forecastData.date,
-        conditions: {
-          windSpeed: forecastData.windSpeed,
-          windDirection: forecastData.windDirection,
-          swellHeight: forecastData.swellHeight,
-          swellDirection: forecastData.swellDirection,
-          swellPeriod: forecastData.swellPeriod,
-        },
-      }));
+      scores = beaches.map((beach) => {
+        const calculatedScore = this.calculateScore(beach, forecastData);
+
+        // Convert score to integer 0-10 by multiplying by 2 and rounding
+        const integerScore =
+          calculatedScore === null ? 0 : Math.round(calculatedScore * 2);
+
+        return {
+          beachId: beach.id,
+          regionId,
+          // Store as regular integer
+          score: integerScore,
+          date: forecastData.date,
+          conditions: {
+            windSpeed: forecastData.windSpeed,
+            windDirection: forecastData.windDirection,
+            swellHeight: forecastData.swellHeight,
+            swellDirection: forecastData.swellDirection,
+            swellPeriod: forecastData.swellPeriod,
+          },
+        };
+      });
 
       console.log(
         `Attempting to upsert ${scores.length} scores for date ${forecastData.date}`
@@ -518,8 +512,8 @@ export class ScoreService {
     // Sort ALL beaches by their score
     const sortedBeaches = beachesWithScores.sort(
       (a, b) =>
-        (b.beachDailyScores[0]?.score || 0) -
-        (a.beachDailyScores[0]?.score || 0)
+        (Number(b.beachDailyScores[0]?.score) || 0) -
+        (Number(a.beachDailyScores[0]?.score) || 0)
     );
 
     // Create scores map for ALL beaches

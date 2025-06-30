@@ -1,10 +1,13 @@
 // hooks/useCreateLog.ts
-import { Beach } from "@prisma/client";
+import { Beach } from "@/app/types/beaches";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Prisma } from "@prisma/client";
+import { getSession, useSession } from "next-auth/react";
 
 export function useCreateLog() {
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
   return useMutation({
     mutationFn: async (data: {
@@ -12,8 +15,6 @@ export function useCreateLog() {
       selectedDate: string;
       forecastData: any;
       isAnonymous: boolean;
-      session: any;
-      userEmail?: string;
       surferRating: number;
       comments: string;
       isPrivate: boolean;
@@ -21,35 +22,49 @@ export function useCreateLog() {
       videoUrl?: string;
       videoPlatform?: string | null;
     }) => {
-      const newEntry = {
-        beachId: data.selectedBeach.id,
-        beachName: data.selectedBeach.name,
-        date: new Date(data.selectedDate),
+      if (!session?.user) {
+        throw new Error("You must be logged in to create a log entry");
+      }
+
+      const payload = {
+        date: data.selectedDate,
+        surferEmail: session.user.email,
         surferName: data.isAnonymous
           ? "Anonymous"
-          : (data.session?.user as { name?: string })?.name ||
-            data.userEmail?.split("@")[0] ||
-            "Anonymous Surfer",
+          : session.user.name || "Anonymous Surfer",
+        beachId: data.selectedBeach.id,
+        beachName: data.selectedBeach.name,
+        regionId: data.selectedBeach.regionId,
         surferRating: data.surferRating,
         comments: data.comments,
-        regionId: data.selectedBeach.regionId,
-        waveType: data.selectedBeach.waveType,
-        isAnonymous: data.isAnonymous,
         isPrivate: data.isPrivate,
-        forecastId: data.forecastData.id,
+        isAnonymous: data.isAnonymous,
         imageUrl: data.uploadedImageUrl || null,
         videoUrl: data.videoUrl || null,
         videoPlatform: data.videoPlatform || null,
+        forecastId: data.forecastData?.id || null,
       };
 
       const response = await fetch("/api/raid-logs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEntry),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Failed to create log entry");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create log entry");
+      }
       return response.json();
+    },
+    onError: (error) => {
+      console.error("Log creation error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create log entry"
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raidLogs"] });

@@ -119,9 +119,36 @@ export const useBeachFilters = () => {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const selectBeach = (beach: Beach | null) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (!beach) {
+      // Clear all beach-related params
+      params.delete("regionId");
+      params.delete("searchQuery");
+      params.delete("region");
+      params.delete("country");
+      params.delete("continent");
+    } else {
+      // Set all beach-related params
+      params.set("regionId", beach.regionId.toLowerCase());
+      params.set("searchQuery", beach.name);
+
+      // Optional UI state params
+      if (beach.region?.name) params.set("region", beach.region.name);
+      if (beach.region?.country?.name)
+        params.set("country", beach.region.country.name);
+      if (beach.region?.continent)
+        params.set("continent", beach.region.continent);
+    }
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   return {
     filters,
     updateFilter,
     selectRegion,
+    selectBeach,
   };
 };

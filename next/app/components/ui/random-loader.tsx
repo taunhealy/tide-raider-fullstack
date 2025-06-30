@@ -11,7 +11,7 @@ export function RandomLoader({ isLoading }: RandomLoaderProps) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-white/30">
-      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[var(--color-tertiary)]"></div>
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[var(--color-tertiary)]"></div>
     </div>
   );
 }

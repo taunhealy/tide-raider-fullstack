@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useBeachData } from "@/app/hooks/useBeachData";
+import { useBeaches } from "@/app/hooks/useBeaches";
 import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
 import { Beach as BeachType } from "@/app/types/beaches";
 import { RaidLogFilter } from "@/app/components/raid-logs/RaidLogFilter";
@@ -16,6 +16,7 @@ import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
 import { Header } from "./Header";
 import RaidLogTable from "./RaidLogTable";
 import { useRaidLogs } from "@/app/hooks/useRaidLogs";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
 
 // Define the RaidLogsResponse interface
 interface RaidLogsResponse {
@@ -46,7 +47,7 @@ export function RaidLogsComponent({
 
   // Data fetching hooks
   const { data: session } = useSession();
-  const { beaches = [], isLoading: isBeachesLoading } = useBeachData();
+  const { data: beaches, isLoading: isBeachesLoading } = useBeaches();
 
   // Replace the direct useQuery with useRaidLogs
   const {
@@ -90,7 +91,7 @@ export function RaidLogsComponent({
 
   const handleBeachClick = useCallback(
     (beachId: string) => {
-      const beach = beaches.find((b: BeachType) => b.id === beachId);
+      const beach = beaches?.find((b: BeachType) => b.id === beachId);
       if (beach) setSelectedBeach(beach);
     },
     [beaches]
@@ -99,7 +100,7 @@ export function RaidLogsComponent({
   return (
     <div className="bg-[var(--color-bg-secondary)] p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative">
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
-        {(isBeachesLoading || isLogsLoading) && <div>Loading...</div>}
+        {(isBeachesLoading || isLogsLoading) && <LoadingSpinner />}
 
         {error && !isLogsLoading && (
           <div className="text-red-500">
@@ -147,7 +148,6 @@ export function RaidLogsComponent({
             )}
 
             <RaidLogFilter
-              beaches={beaches}
               selectedRegionIds={filters.regions}
               selectedBeachIds={filters.beaches as string[]}
               selectedMinRating={filters.minRating}
@@ -160,7 +160,6 @@ export function RaidLogsComponent({
             <RaidLogForm
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
-              beaches={beaches}
             />
 
             {selectedBeach && (

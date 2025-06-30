@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FilterConfig,
   LogEntry,
+  RaidLogResponse,
   RaidLogResponse as RaidLogsResponse,
 } from "@/app/types/raidlogs";
 
@@ -39,45 +40,35 @@ export function useRaidLogs(
   const query = useQuery({
     queryKey: ["raidLogs", filters, isPrivate, userId],
     queryFn: () => fetchRaidLogs(filters, isPrivate, userId),
-    select: (data) => ({
+    select: (data: RaidLogResponse) => ({
       entries: data.entries.map(
-        (entry: any): LogEntry => ({
-          id: entry.id || "",
-          date: new Date(entry.date || new Date()),
-          surferName: entry.surferName || null,
-          surferEmail: entry.surferEmail || null,
-          beachName: entry.beachName || null,
-          surferRating: entry.surferRating || 0,
-          comments: entry.comments || null,
-          isPrivate: entry.isPrivate || false,
-          isAnonymous: entry.isAnonymous || false,
-          continent: entry.continent || null,
-          country: entry.country || null,
-          region: entry.region?.name || null,
-          waveType: entry.waveType || null,
-          beachId: entry.beachId || null,
-          forecastId: entry.forecastId || null,
-          userId: entry.userId || null,
-          hasAlert: entry.hasAlert || false,
-          isMyAlert: entry.isMyAlert || false,
-          alertId: entry.alertId || "",
-          imageUrl: entry.imageUrl || null,
-          videoUrl: entry.videoUrl || null,
-          videoPlatform: entry.videoPlatform || null,
-          forecast: entry.forecast
+        (entry): LogEntry => ({
+          ...entry,
+          region: entry.region
             ? {
-                ...entry.forecast,
-                swellHeight:
-                  Number(entry.forecast.swellHeight?.toFixed(2)) || 0,
+                id: entry.region.id,
+                name: entry.region.name,
+                continent: entry.region.continent,
+                country: entry.region.country,
               }
             : null,
-          user: entry.user
+          beach: entry.beach
             ? {
-                id: entry.user.id || "",
-                nationality: entry.user.nationality || "",
-                name: entry.user.name || "",
+                id: entry.beach.id,
+                name: entry.beach.name,
+                region: entry.beach.region
+                  ? {
+                      id: entry.beach.region.id,
+                      name: entry.beach.region.name,
+                      country: entry.beach.region.country,
+                      continent: entry.beach.region.continent,
+                    }
+                  : undefined,
+                waveType: entry.beach.waveType,
+                difficulty: entry.beach.difficulty,
               }
-            : undefined,
+            : null,
+          // other fields...
         })
       ),
       total: data.total,

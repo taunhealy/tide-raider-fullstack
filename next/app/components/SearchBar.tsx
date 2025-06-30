@@ -17,7 +17,7 @@ export default function SearchBar({
   placeholder = "Search breaks...",
   className,
 }: SearchBarProps) {
-  const { filters, updateFilter } = useBeachFilters();
+  const { filters, selectBeach } = useBeachFilters();
   const [mounted, setMounted] = useState(false);
   const [localValue, setLocalValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,18 +47,14 @@ export default function SearchBar({
   const handleSelectBeach = (beach: Beach) => {
     ignoreBlurRef.current = true;
     setLocalValue(beach.name);
-    updateFilter("regionId", beach.regionId.toLowerCase());
-    updateFilter("region", beach.region?.name || "");
-    updateFilter("country", beach.region?.country?.name || "");
-    updateFilter("continent", beach.region?.continent || "");
-    updateFilter("searchQuery", beach.name);
     setShowSuggestions(false);
+    selectBeach(beach);
   };
 
   const handleChange = useMemo(
     () =>
       debounce(async (value: string) => {
-        updateFilter("searchQuery", value);
+        setLocalValue(value);
 
         if (!value || value.length < 3) {
           setSearchResults([]);
@@ -68,13 +64,8 @@ export default function SearchBar({
 
         setIsSearching(true);
         try {
-          const currentRegionId = new URLSearchParams(
-            window.location.search
-          ).get("regionId");
           const response = await fetch(
-            `/api/beaches/search?term=${encodeURIComponent(value)}${
-              currentRegionId ? `&regionId=${currentRegionId}` : ""
-            }`
+            `/api/beaches/search?term=${encodeURIComponent(value)}`
           );
           if (response.ok) {
             const data = await response.json();

@@ -21,12 +21,13 @@ import Image from "next/image";
 import { useAppMode } from "@/app/context/AppModeContext";
 import { getVideoId } from "@/app/lib/videoUtils";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
+import { useBeaches } from "@/app/hooks/useBeaches";
 
 interface RaidLogFormProps {
   userEmail?: string;
   isOpen?: boolean;
   onClose?: () => void;
-  beaches: Beach[];
+  beaches?: Beach[];
   entry?: LogEntry;
   isEditing?: boolean;
 }
@@ -40,20 +41,20 @@ export function RaidLogForm({
   userEmail,
   isOpen = false,
   onClose = () => {},
-  beaches,
   entry,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
   const { isBetaMode } = useAppMode();
   const { isSubscribed, hasActiveTrial } = useSubscription();
   const { data: session } = useSession();
+  const { data: beaches, isLoading } = useBeaches();
   const router = useRouter();
   const { mutate: handleTrial } = useHandleTrial();
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(
-    entry
+    entry && beaches
       ? beaches.find((beach) => beach.name === entry.beachName) || null
       : null
   );
@@ -168,14 +169,14 @@ export function RaidLogForm({
   };
 
   useEffect(() => {
-    if (entry && beaches.length > 0) {
+    if (entry && beaches && beaches.length > 0) {
       console.log("Initializing beach selection:", {
         entryBeachName: entry.beachName,
-        availableBeaches: beaches.map((b) => b.name),
+        availableBeaches: beaches?.map((b) => b.name),
         entry,
-        beaches: beaches.slice(0, 3), // Log first 3 beaches for brevity
+        beaches: beaches?.slice(0, 3),
       });
-      const matchingBeach = beaches.find(
+      const matchingBeach = beaches?.find(
         (beach) => beach.name === entry.beachName
       );
       if (matchingBeach) {
@@ -188,7 +189,7 @@ export function RaidLogForm({
     } else {
       console.log("Missing data for beach initialization:", {
         hasEntry: !!entry,
-        beachesLength: beaches.length,
+        beachesLength: beaches?.length,
         entryBeachName: entry?.beachName,
       });
     }
@@ -211,11 +212,11 @@ export function RaidLogForm({
   // Add debug logging for beaches
   useEffect(() => {
     console.log("Available beaches:", {
-      count: beaches.length,
-      firstThree: beaches.slice(0, 3).map((b) => ({
-        name: b.name,
-        region: b.region?.name,
-        country: b.region?.country?.name,
+      count: beaches?.length,
+      firstThree: beaches?.slice(0, 3).map((b) => ({
+        name: b?.name,
+        region: b?.region?.name,
+        country: b?.region?.country?.name,
       })),
     });
   }, [beaches]);
@@ -244,6 +245,25 @@ export function RaidLogForm({
     }
 
     try {
+      // Upload image if selected
+      let uploadedUrl = null;
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload image");
+        }
+
+        const data = await response.json();
+        uploadedUrl = data.imageUrl;
+      }
+
       await createLog({
         selectedBeach,
         selectedDate,
@@ -254,7 +274,7 @@ export function RaidLogForm({
         surferRating,
         comments,
         isPrivate,
-        uploadedImageUrl,
+        uploadedImageUrl: uploadedUrl,
         videoUrl,
         videoPlatform,
       });
@@ -299,17 +319,6 @@ export function RaidLogForm({
     }
     const parsed = parseFloat(value);
     return isNaN(parsed) ? 0 : parsed;
-  };
-
-  const debugForecastData = (data: any) => {
-    if (!data) return;
-    console.log("Forecast data for alert:", {
-      windSpeed: safeParseFloat(data.windSpeed),
-      windDirection: safeParseFloat(data.windDirection),
-      swellHeight: safeParseFloat(data.swellHeight),
-      swellPeriod: safeParseFloat(data.swellPeriod),
-      swellDirection: safeParseFloat(data.swellDirection),
-    });
   };
 
   const handleSubscriptionAction = () => {
@@ -393,7 +402,7 @@ export function RaidLogForm({
           </button>
 
           <h2 className="text-2xl font-bold mb-6 font-primary text-[var(--color-primary)]">
-            {entry?.id ? "Edit Session" : "Log Session"}
+            {entry ? "Edit Session" : "Log Session"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -676,7 +685,7 @@ export function RaidLogForm({
               >
                 {isSubmitting
                   ? "Submitting..."
-                  : entry?.id
+                  : entry
                     ? "Update Session"
                     : "Log Session"}
               </Button>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useBeaches } from "@/app/hooks/useBeaches";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
+import { RandomLoader } from "@/app/components/ui/random-loader";
 
 export default function EditRaidLogPage({
   params,
@@ -19,7 +20,7 @@ export default function EditRaidLogPage({
   const { data: entry, isLoading: isLoadingEntry } = useRaidLog(params.id);
 
   if (isLoadingBeaches || isLoadingEntry) {
-    return <div>Loading...</div>;
+    return <RandomLoader isLoading={true} />;
   }
 
   console.log("Entry data:", {
@@ -32,16 +33,26 @@ export default function EditRaidLogPage({
 
   const selectedBeach = beaches?.find((beach) => beach.id === entry?.beachId);
 
+  // Transform the beach object to match expected format
+  const transformedBeach = selectedBeach
+    ? {
+        ...selectedBeach,
+        region: selectedBeach.region
+          ? {
+              ...selectedBeach.region,
+              country: selectedBeach.region.country?.name,
+            }
+          : undefined,
+      }
+    : null;
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {isAuthor ? (
+      {isAuthor && entry ? (
         <RaidLogForm
           isOpen={true}
           onClose={() => router.push("/raidlogs")}
-          entry={{
-            ...entry,
-            beach: selectedBeach,
-          }}
+          entry={entry}
           isEditing={true}
           beaches={beaches || []}
           userEmail={session?.user?.email || ""}

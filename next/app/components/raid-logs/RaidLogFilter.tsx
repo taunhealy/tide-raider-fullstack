@@ -1,13 +1,12 @@
 "use client";
 
-import type { Beach } from "@/app/types/beaches";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
-import { BeachFilter } from "@/app/components/BeachFilter";
-import { RegionFilter } from "../RegionFilter";
 import { useRegions } from "@/app/hooks/useRegions";
-import { RatingFilter } from "@/app/components/RatingFilter";
+import { useBeaches } from "@/app/hooks/useBeaches";
 import { Button } from "@/app/components/ui/Button";
 import { FilterConfig } from "@/app/types/raidlogs";
+import { RandomLoader } from "@/app/components/ui/random-loader";
+import { FilterControls } from "./FilterControls";
 
 interface RaidLogFilterProps {
   isOpen: boolean;
@@ -17,7 +16,6 @@ interface RaidLogFilterProps {
   selectedMinRating: number | null;
   onFilterChange: (filters: Partial<FilterConfig>) => void;
   onReset: () => void;
-  beaches: Beach[];
 }
 
 export function RaidLogFilter({
@@ -28,9 +26,13 @@ export function RaidLogFilter({
   selectedMinRating,
   onFilterChange,
   onReset,
-  beaches,
 }: RaidLogFilterProps) {
   const { data: regions = [] } = useRegions();
+  const { data: beaches, isLoading } = useBeaches();
+
+  if (isLoading) {
+    return <RandomLoader isLoading={true} />;
+  }
 
   return (
     <FilterDrawer isOpen={isOpen} onClose={onClose}>
@@ -40,19 +42,13 @@ export function RaidLogFilter({
           Reset
         </Button>
       </div>
-      <BeachFilter
-        selectedBeaches={selectedBeachIds}
-        onChange={(beaches) => onFilterChange({ beaches })}
-        beaches={beaches}
-      />
-      <RegionFilter
-        selectedRegions={selectedRegionIds}
-        onChange={(regions) => onFilterChange({ regions })}
+      <FilterControls
+        beaches={beaches || []}
         regions={regions}
-      />
-      <RatingFilter
-        minRating={selectedMinRating}
-        onChange={(minRating) => onFilterChange({ minRating })}
+        selectedBeaches={selectedBeachIds}
+        selectedRegions={selectedRegionIds}
+        selectedMinRating={selectedMinRating}
+        onFilterChange={onFilterChange}
       />
     </FilterDrawer>
   );

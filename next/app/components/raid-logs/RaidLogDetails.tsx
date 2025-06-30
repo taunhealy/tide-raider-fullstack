@@ -43,6 +43,12 @@ export default function RaidLogDetails({ entry }: RaidLogDetailsProps) {
       ? entry.forecast[0]
       : entry.forecast;
 
+  console.log("Debug - RaidLogDetails:", {
+    entry,
+    hasForecast: !!entry.forecast,
+    forecastData,
+  });
+
   // Check if media is available
   const hasMedia = entry.imageUrl || (entry.videoUrl && entry.videoPlatform);
 

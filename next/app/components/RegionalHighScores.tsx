@@ -4,6 +4,7 @@ import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays, subYears, startOfDay, endOfDay } from "date-fns";
+import { RandomLoader } from "@/app/components/ui/random-loader";
 
 type TimePeriod = "today" | "week" | "year" | "3years";
 
@@ -114,6 +115,10 @@ function RegionalHighScoresContent({
     "3years": "3 Years",
   };
 
+  if (!data) {
+    return <RandomLoader isLoading={true} />;
+  }
+
   return (
     <>
       {/* Time period tabs */}
@@ -150,8 +155,6 @@ function RegionalHighScoresContent({
         <p className="text-gray-600 text-sm font-primary">
           Error loading surf breaks. Please try again.
         </p>
-      ) : !data ? (
-        <div className="text-gray-600 text-sm font-primary">Loading...</div>
       ) : data.beaches.length === 0 ? (
         <p className="text-gray-600 text-sm font-primary">
           No good surf breaks found for this time period in {selectedRegion}.

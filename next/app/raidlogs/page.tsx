@@ -2,7 +2,6 @@
 
 import { RaidLogsComponent } from "@/app/components/raid-logs/RaidLogsComponent";
 import { useSession } from "next-auth/react";
-import { beachData } from "@/app/types/beaches"; // Import beach data
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useRouter } from "next/navigation";
 

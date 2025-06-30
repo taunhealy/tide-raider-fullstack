@@ -65,9 +65,11 @@ export default function About({ data }: AboutProps) {
                 Tide Raider is a platform for travelling surfers and surf
                 photographers to explore, share and promote surf travel.
               </p>
-              <Button variant="ghost">
-                <span>Start Raiding</span>
-              </Button>
+              <Link href="/raid">
+                <Button variant="default">
+                  <span>Start Raiding</span>
+                </Button>
+              </Link>
 
               <div className="mt-8 pt-6 border-t border-white backdrop-blur-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

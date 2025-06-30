@@ -31,8 +31,7 @@ export default function RegionFilterButton({
         "flex items-center gap-2",
         "relative",
         isLoading && "cursor-wait opacity-70",
-        isSelected &&
-          "bg-[var(--color-bg-tertiary)] border border-black/40 text-black"
+        isSelected && "bg-[var(--color-bg-tertiary)]  text-white"
       )}
     >
       <span className="relative z-10">{region.name}</span>

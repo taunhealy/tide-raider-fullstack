@@ -14,6 +14,7 @@ interface FilteredBeachesResponse {
 
 export function useFilteredBeaches() {
   const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("searchQuery") || "";
   const regionId = searchParams.get("regionId") || "";
 
   // Create a query string from all search params except page
@@ -27,11 +28,13 @@ export function useFilteredBeaches() {
       Error,
       { pages: FilteredBeachesResponse[]; pageParams: number[] }
     >({
-      queryKey: ["filteredBeaches", baseQueryString],
+      queryKey: ["filtered-beaches", regionId, searchQuery],
       queryFn: async ({ pageParam = 1 }) => {
         const queryString = `${baseQueryString}&page=${pageParam}`;
-        const response = await fetch(`/api/beaches/filter?${queryString}`);
-        if (!response.ok) throw new Error("Failed to fetch filtered beaches");
+        const response = await fetch(
+          `/api/surf-conditions?regionId=${regionId}&searchQuery=${searchQuery}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch beaches");
         return response.json();
       },
       getNextPageParam: (lastPage) =>

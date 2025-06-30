@@ -67,7 +67,7 @@ export default function HeroSection({ data }: HeroProps) {
     {
       id: 1,
       title: "Raid",
-      description: "Discover the top surf spots of the day.",
+      description: "Quickly reveal the best surf spots for today.",
       icon: "raid-icon",
       link: "/raid",
     },
@@ -95,7 +95,7 @@ export default function HeroSection({ data }: HeroProps) {
     {
       id: 5,
       title: "Chronicles",
-      description: "Share your wild tales.",
+      description: "Share your stories.",
       icon: "chronicles-icon",
       link: "/chronicles",
     },
@@ -533,7 +533,7 @@ export default function HeroSection({ data }: HeroProps) {
       <section className="relative w-full h-[100svh] min-h-[600px] overflow-hidden px-4 sm:px-6 md:px-8 lg:px-16 bg-gray-900">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="space-y-4 text-center">
-            <div className="w-12 h-12 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto"></div>
+            <div className="w-6 h-12 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto"></div>
             <p className="text-white/80 font-primary animate-pulse">
               Loading hero content...
             </p>

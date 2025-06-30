@@ -1,52 +1,41 @@
-import { Beach, ForecastA } from "@prisma/client";
+import { Beach, Region, User, ForecastA, Alert } from "@prisma/client";
 import React from "react";
 import { Beach as BeachType } from "@/app/types/beaches";
 
 export interface LogEntry {
   id: string;
   date: Date;
-  surferName?: string | null;
-  surferEmail?: string | null;
-  beachName?: string | null;
+  surferName: string | null;
+  surferEmail: string | null;
+  beachName: string | null;
   surferRating: number;
-  comments?: string | null;
+  comments: string | null;
   isPrivate: boolean;
   isAnonymous: boolean;
-  continent?: string | null;
-  country?: string | null;
-  region?: {
-    id: string;
-    name: string;
-    continent: string | null;
-    country: string | null;
-  } | null;
-  waveType?: string | null;
-  beachId?: string | null;
-  forecastId?: string | null;
-  userId?: string | null;
+  continent: string | null;
+  country: string | null;
+  regionId: string;
+  waveType: string | null;
+  beachId: string | null;
+  forecastId: string | null;
+  userId: string | null;
   hasAlert?: boolean;
   isMyAlert?: boolean;
   alertId?: string;
-  imageUrl?: string | null;
-  videoUrl?: string | null;
-  videoPlatform?: "youtube" | "vimeo" | null;
-  forecast?: {
-    id: string;
-    date: Date;
-    region: string;
-    createdAt: Date;
-    updatedAt: Date;
-    windSpeed: number;
-    windDirection: number;
-    swellHeight: number;
-    swellPeriod: number;
-    swellDirection: number;
-  } | null;
+  imageUrl: string | null;
+  videoUrl: string | null;
+  videoPlatform: VideoPlatform | null;
+  forecast: ForecastA | null;
+  region: Region;
+  beach: Beach | null;
   user?: {
     id: string;
     nationality?: string;
     name?: string;
+    image?: string;
+    email?: string;
   };
+  alerts: Alert[];
 }
 
 export interface RaidLogFilters {
@@ -55,24 +44,6 @@ export interface RaidLogFilters {
   countries: string[];
   minRating?: number;
   isPrivate?: boolean;
-}
-
-export interface CreateLogEntryInput {
-  beachName: string;
-  userId: string;
-  date: Date;
-  surferName: string;
-  surferRating: number;
-  comments?: string;
-  imageUrl?: string;
-  isPrivate?: boolean;
-  beach?: {
-    continent: string;
-    country: string;
-    region: string;
-    waveType: string;
-  };
-  forecast?: ForecastA;
 }
 
 export interface SortConfig {
@@ -123,3 +94,5 @@ export interface RaidLogResponse {
   entries: LogEntry[];
   total: number;
 }
+
+export type VideoPlatform = "youtube" | "vimeo";

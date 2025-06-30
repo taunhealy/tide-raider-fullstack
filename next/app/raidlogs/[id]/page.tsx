@@ -1,19 +1,13 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
+import { RandomLoader } from "@/app/components/ui/random-loader";
 
 // Dynamic import for the client component
 const RaidLogDetails = dynamic(
   () => import("@/app/components/raid-logs/RaidLogDetails"),
   {
-    loading: () => (
-      <div className="w-full h-[70vh] flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-48 bg-gray-200 rounded mb-6"></div>
-          <div className="h-64 w-full max-w-4xl bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    ),
+    loading: () => <RandomLoader isLoading={true} />,
   }
 );
 
@@ -34,6 +28,12 @@ async function getRaidLogData(id: string) {
     if (!logRes.ok) return null;
     const logData = await logRes.json();
     let alertData = alertRes.ok ? await alertRes.json() : [];
+
+    console.log("Debug - Log Data:", {
+      logData,
+      hasForecast: !!logData.forecast,
+      forecastData: logData.forecast,
+    });
 
     return {
       ...logData,
@@ -58,16 +58,7 @@ export default async function RaidLogPage({
   return (
     <div className="bg-[var(--color-bg-secondary)] min-h-screen py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <Suspense
-          fallback={
-            <div className="w-full h-[70vh] flex items-center justify-center">
-              <div className="animate-pulse flex flex-col items-center">
-                <div className="h-12 w-48 bg-gray-200 rounded mb-6"></div>
-                <div className="h-64 w-full max-w-4xl bg-gray-200 rounded"></div>
-              </div>
-            </div>
-          }
-        >
+        <Suspense fallback={<RandomLoader isLoading={true} />}>
           <RaidLogDetails entry={entry} />
         </Suspense>
       </div>

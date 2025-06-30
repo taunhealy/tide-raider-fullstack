@@ -232,7 +232,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                           {getWindEmoji(latestLogEntry[0].forecast.windSpeed)}
                         </span>
                         <span>
-                          {latestLogEntry[0].forecast.windSpeed}kts{" "}
+                          {latestLogEntry[0].forecast.windSpeed.toFixed(2)}kts{" "}
                           {degreesToCardinal(
                             latestLogEntry[0].forecast.windDirection
                           )}
@@ -245,7 +245,7 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
                           )}
                         </span>
                         <span>
-                          {latestLogEntry[0].forecast.swellHeight}m @{" "}
+                          {latestLogEntry[0].forecast.swellHeight.toFixed(2)}m @{" "}
                           {latestLogEntry[0].forecast.swellPeriod}s{" "}
                           {degreesToCardinal(
                             latestLogEntry[0].forecast.swellDirection

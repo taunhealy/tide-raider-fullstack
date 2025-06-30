@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/app/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import gsap from "gsap";
-import type { UserSearch } from "@/app/types/region";
+import type { UserSearch } from "@/app/types/regions";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface RecentRegionSearchProps {

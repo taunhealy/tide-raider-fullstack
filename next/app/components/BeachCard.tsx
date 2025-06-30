@@ -1,5 +1,6 @@
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { getScoreDisplay } from "@/app/lib/scoreDisplay";
+import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { useHandleSubscribe } from "@/app/hooks/useHandleSubscribe";
 import { useState, useEffect, useRef, memo } from "react";
@@ -301,7 +302,7 @@ const BeachCard = memo(function BeachCard({
                   // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
-                      {renderRating()}
+                      <BlueStarRating score={score} />
 
                       <div
                         className="flex items-center gap-2 relative px-2 py-1 border border-gray-200 rounded-md bg-gray-50"
@@ -541,7 +542,7 @@ const BeachCard = memo(function BeachCard({
                   // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
-                      {renderRating()}
+                      <BlueStarRating score={score} />
 
                       <div
                         className="flex items-center gap-2 relative px-2 py-1 border border-gray-200 rounded-md bg-gray-50"
