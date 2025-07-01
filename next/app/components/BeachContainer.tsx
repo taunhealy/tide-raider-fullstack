@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
+import { useBeachData } from "@/app/hooks/useBeachData";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -17,7 +18,7 @@ import LoadingIndicator from "./LoadingIndicator";
 import EmptyState from "./EmptyState";
 import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
 
-import type { Beach } from "@/app/types/beaches";
+import type { Beach, BeachInitialData } from "@/app/types/beaches";
 
 // Add this helper function at the top of the file
 const getBeachForecastData = (
@@ -43,37 +44,23 @@ const getBeachForecastData = (
   return { score, forecastData };
 };
 
-export default function BeachContainer() {
+interface BeachContainerProps {
+  initialData: BeachInitialData | null;
+}
+
+export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter } = useBeachFilters();
-
-  // Use the new hook for server-side filtering
-  const { beaches, beachScores, isLoading, hasNextPage, loadMore } =
-    useFilteredBeaches();
-  const queryClient = useQueryClient();
-  const [dataReady, setDataReady] = useState(false);
-
-  // Add more detailed debug logging
-  console.log("Detailed render state:", {
-    isLoading,
-    dataReady,
-    beachScoresLength: Object.keys(beachScores).length,
-    hasBeaches: beaches?.length > 0,
-    beachScoresExample: beaches?.[0]?.id ? beachScores[beaches[0].id] : null,
-    firstBeachId: beaches?.[0]?.id,
+  const { beaches, beachScores, isLoading } = useBeachData({
+    requireRegion: true,
   });
+  const queryClient = useQueryClient();
 
-  // Simplify the loading state logic
-  useEffect(() => {
-    // Consider data ready if:
-    // 1. We have beaches AND
-    // 2. Either we have at least one valid score OR loading has completed
-    const hasBeaches = beaches && beaches.length > 0;
-    const hasAnyValidScores = beaches?.some(
-      (beach) => beachScores[beach.id]?.score !== undefined
-    );
-
-    setDataReady(hasBeaches && (hasAnyValidScores || !isLoading));
-  }, [beaches, beachScores, isLoading]);
+  // Remove isClient state and conditional rendering
+  const isDataReady = Boolean(
+    !isLoading &&
+      beaches?.length > 0 &&
+      Object.keys(beachScores || {}).length > 0
+  );
 
   const handleRegionSelect = (regionId: string) => {
     updateFilter("regionId", regionId);
@@ -81,10 +68,10 @@ export default function BeachContainer() {
 
   const sortedBeaches = useMemo(() => {
     return (
-      beaches?.sort((a, b) => {
+      beaches?.sort((a: Beach, b: Beach) => {
         const scoreA = beachScores[a.id]?.score ?? 0;
         const scoreB = beachScores[b.id]?.score ?? 0;
-        return scoreB - scoreA; // Sort descending (highest score first)
+        return scoreB - scoreA;
       }) ?? []
     );
   }, [beaches, beachScores]);
@@ -108,42 +95,27 @@ export default function BeachContainer() {
             <div className="grid grid-cols-1 gap-5 relative mt-5">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
-              ) : !dataReady ? (
-                <div className="space-y-4 mt-4">
-                  <LoadingIndicator />
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, index) => (
-                      <BeachCardSkeleton key={`skeleton-${index}`} />
-                    ))}
-                  </div>
+              ) : !isDataReady ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, index) => (
+                    <BeachCardSkeleton key={`skeleton-${index}`} count={1} />
+                  ))}
                 </div>
               ) : sortedBeaches.length === 0 ? (
                 <EmptyState message="No beaches found in this region" />
               ) : (
                 <>
                   <div>
-                    {sortedBeaches.map((beach) => {
-                      const { score, forecastData } = getBeachForecastData(
-                        beach,
-                        beachScores
-                      );
-                      return (
-                        <BeachCard
-                          key={beach.id}
-                          beach={beach}
-                          score={score}
-                          forecastData={forecastData}
-                          isLoading={!beachScores[beach.id]?.score}
-                        />
-                      );
-                    })}
+                    {sortedBeaches.map((beach: Beach) => (
+                      <BeachCard
+                        key={beach.id}
+                        beach={beach}
+                        score={beachScores[beach.id]?.score ?? 0}
+                        forecastData={beachScores[beach.id]?.forecastData}
+                        isLoading={!beachScores[beach.id]?.score}
+                      />
+                    ))}
                   </div>
-
-                  {hasNextPage && (
-                    <Button onClick={() => loadMore()} variant="default">
-                      Load More Beaches
-                    </Button>
-                  )}
                 </>
               )}
             </div>

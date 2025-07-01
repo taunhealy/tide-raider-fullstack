@@ -9,6 +9,9 @@ import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
 import { ScoreService } from "@/app/services/scores/ScoreService";
 import { ForecastService } from "@/app/services/forecasts/ForecastService";
+import { FILTERS } from "@/app/config/filters";
+import type { FilterConfig } from "@/app/config/filters";
+import { BeachService } from "@/app/services/beaches/BeachService";
 
 function getTodayDate() {
   const date = new Date();
@@ -39,6 +42,7 @@ const CACHE_TIMES = {
     return Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
   },
   SCRAPE_LOCK: 60 * 2, // 2 minute scrape lock
+  SCORES: 900, // 15 minutes cache for scores
 };
 
 export async function getLatestConditions(
@@ -215,128 +219,47 @@ async function dedupedEnsureBeachScores(
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const regionId = searchParams.get("regionId")?.toLowerCase();
-  const dateParam = searchParams.get("date");
-  const searchQuery = searchParams.get("searchQuery") || undefined;
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "10");
 
-  // Use provided date or fallback to today
-  const targetDate = dateParam ? new Date(dateParam) : getTodayDate();
-  targetDate.setUTCHours(0, 0, 0, 0);
-
-  // If no regionId is provided, return all beaches
   if (!regionId) {
-    try {
-      const beaches = await prisma.beach.findMany({
-        take: limit,
-        skip: (page - 1) * limit,
-        where: {
-          name: searchQuery
-            ? {
-                contains: searchQuery,
-                mode: "insensitive",
-              }
-            : undefined,
-        },
-        include: {
-          region: {
-            include: {
-              country: true,
-            },
-          },
-        },
-      });
-
-      const totalCount = await prisma.beach.count({
-        where: {
-          name: searchQuery
-            ? {
-                contains: searchQuery,
-                mode: "insensitive",
-              }
-            : undefined,
-        },
-      });
-
-      return NextResponse.json({
-        beaches,
-        pagination: {
-          total: totalCount,
-          page,
-          limit,
-          hasMore: page * limit < totalCount,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching beaches:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch beaches" },
-        { status: 500 }
-      );
-    }
-  }
-
-  // Check if regionId exists and is valid
-  const region = await prisma.region.findUnique({
-    where: { id: regionId },
-  });
-
-  if (!region) {
     return NextResponse.json(
-      { error: `Region '${regionId}' not found` },
-      { status: 404 }
+      { error: "regionId is required" },
+      { status: 400 }
     );
   }
 
-  // Add rate limiting
+  // Check rate limit
   if (!(await checkRateLimit(regionId))) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
   try {
-    // 1. Get/create forecast
-    const forecast = await ForecastService.getOrCreateForecast(regionId);
+    // Check Redis cache
+    const targetDate = searchParams.get("date")
+      ? new Date(searchParams.get("date")!)
+      : new Date();
+    targetDate.setUTCHours(0, 0, 0, 0);
 
-    // 2. Calculate and store scores (with Redis deduplication)
-    await dedupedEnsureBeachScores(regionId, targetDate, forecast);
+    const cacheKey = REDIS_KEYS.CACHE(
+      regionId,
+      targetDate.toISOString().split("T")[0]
+    );
 
-    // 4. Now get the scores after they're stored
-    const { scores, beaches, totalCount } =
-      await ScoreService.getBeachesWithScores({
-        regionId,
-        date: targetDate,
-        searchQuery,
-      });
-
-    const cacheKey = `scored-beaches:${regionId}:${targetDate.toISOString().split("T")[0]}`;
-
-    // Check cache
     const cached = await redis.get(cacheKey);
-    if (cached && typeof cached === "string") {
+    if (cached) {
       try {
-        return NextResponse.json(JSON.parse(cached));
+        return NextResponse.json(JSON.parse(cached as string));
       } catch (e) {
         console.warn("Cache parse error:", e);
       }
     }
 
-    // Prepare result
-    const result = {
-      forecast,
-      scores,
-      beaches,
-      pagination: {
-        total: totalCount,
-        page,
-        limit,
-        hasMore: page * limit < totalCount,
-      },
-    };
+    // Get filtered beaches using service
+    const result = await BeachService.getFilteredBeaches(searchParams);
 
-    // Store in cache as string
+    // Cache result
     try {
       await redis.set(cacheKey, JSON.stringify(result), {
-        ex: 900, // 15 minutes expiration
+        ex: CACHE_TIMES.SCORES,
       });
     } catch (e) {
       console.warn("Cache set error:", e);
@@ -349,8 +272,5 @@ export async function GET(request: Request) {
       { error: "Failed to fetch data" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
-    await prisma.$connect();
   }
 }

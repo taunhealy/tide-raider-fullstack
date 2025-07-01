@@ -468,12 +468,14 @@ export class ScoreService {
     regionId,
     date,
     searchQuery,
+    filters = {},
   }: {
     regionId: string;
     date: Date;
     searchQuery?: string;
+    filters?: Record<string, any>;
   }) {
-    console.log("Fetching all beaches with scores for date:", date);
+    console.log("Fetching beaches with scores and filters:", { filters });
 
     const whereClause = {
       regionId,
@@ -489,6 +491,28 @@ export class ScoreService {
             ],
           }
         : {}),
+      // Add dynamic filters with proper Prisma operators
+      ...Object.entries(filters).reduce(
+        (acc, [key, value]) => {
+          if (value) {
+            if (Array.isArray(value)) {
+              // Handle array filters (like waveTypes, difficulty, etc.)
+              acc[key] = { in: value };
+            } else if (typeof value === "boolean") {
+              // Handle boolean filters (like hasSharkAlert, hasCoffeeShop)
+              acc[key] = value;
+            } else if (typeof value === "number") {
+              // Handle numeric filters (like minPoints)
+              acc[key] = { gte: value };
+            } else {
+              // Handle string filters
+              acc[key] = value;
+            }
+          }
+          return acc;
+        },
+        {} as Record<string, any>
+      ),
     };
 
     // Get ALL beaches with their scores in a single query

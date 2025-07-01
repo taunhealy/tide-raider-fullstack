@@ -1,3 +1,6 @@
+import { BeachDailyScore } from "@prisma/client";
+import { ForecastData } from "./forecast";
+
 export interface SharkIncident {
   hasAttack: boolean;
   incidents?: {
@@ -179,4 +182,20 @@ export interface BeachUI {
     id: string;
     name: string;
   } | null;
+}
+
+export interface BeachInitialData {
+  scores: Record<
+    string,
+    {
+      score: number;
+      beach: Beach & {
+        region: Region;
+        beachDailyScores: BeachDailyScore[];
+      };
+    }
+  >;
+  beaches: Beach[];
+  forecast: ForecastData;
+  totalCount: number;
 }

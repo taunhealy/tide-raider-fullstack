@@ -1,4 +1,8 @@
-export default function BeachCardSkeleton() {
+interface BeachCardSkeletonProps {
+  count: number;
+}
+
+export default function BeachCardSkeleton({ count }: BeachCardSkeletonProps) {
   return (
     <div className="animate-pulse bg-white rounded-lg p-4 shadow-sm border border-gray-100">
       <div className="flex items-center gap-4">

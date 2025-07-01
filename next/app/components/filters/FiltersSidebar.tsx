@@ -3,32 +3,7 @@
 import { FILTERS } from "@/app/config/filters";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useRouter, usePathname } from "next/navigation";
-import { useRef, useEffect } from "react";
-
-// Custom hook for handling clicks outside an element
-function useClickOutside(
-  ref: React.RefObject<HTMLElement>,
-  handler: () => void,
-  isActive: boolean
-) {
-  useEffect(() => {
-    if (!isActive) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        handler();
-      }
-    };
-
-    // Use React's way of adding event listeners
-    window.addEventListener("mousedown", handleClickOutside);
-
-    // Clean up
-    return () => {
-      window.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [ref, handler, isActive]);
-}
+import { useRef } from "react";
 
 interface FilterSidebarProps {
   isOpen: boolean;
@@ -41,10 +16,6 @@ export default function FilterSidebar({ isOpen, onClose }: FilterSidebarProps) {
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Use our custom hook
-  useClickOutside(sidebarRef, onClose, isOpen);
-
-  // Use a slide-in animation instead of overlay
   return (
     <div
       ref={sidebarRef}

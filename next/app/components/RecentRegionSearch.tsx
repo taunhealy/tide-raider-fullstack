@@ -16,6 +16,7 @@ export default function RecentRegionSearch({
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const { filters, selectRegion } = useBeachFilters();
+  const isInitialLoadRef = useRef(true);
 
   // Enhanced caching strategy for recent searches
   const { data: recentSearches } = useQuery({
@@ -102,6 +103,31 @@ export default function RecentRegionSearch({
   useEffect(() => {
     console.log("Current filters:", filters);
   }, [filters]);
+
+  // Initial region selection effect
+  useEffect(() => {
+    if (recentSearches?.length && isInitialLoadRef.current) {
+      const mostRecentSearch = recentSearches[0];
+      const selectedRegion = {
+        id: mostRecentSearch.region.id,
+        regionId: mostRecentSearch.region.id,
+        name: mostRecentSearch.region.name,
+        countryId: mostRecentSearch.region.country?.id || "",
+        country: mostRecentSearch.region.country
+          ? {
+              id: mostRecentSearch.region.country.id || "",
+              name: mostRecentSearch.region.country.name || "",
+              continentId: mostRecentSearch.region.country.continentId || "",
+            }
+          : undefined,
+        continent: mostRecentSearch.region.continent || "",
+      };
+
+      selectRegion(selectedRegion);
+      trackSearch(mostRecentSearch.region.id.toLowerCase());
+      isInitialLoadRef.current = false;
+    }
+  }, [recentSearches]); // Only depend on recentSearches
 
   if (!recentSearches?.length) return null;
 

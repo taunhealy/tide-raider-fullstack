@@ -116,3 +116,4 @@ URL parameters serve as the source of truth for filter state
 Parameter changes automatically trigger new API requests to fetch data from the server
 The UI always reflects the current filter state
 
+
