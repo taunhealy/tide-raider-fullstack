@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { CoreForecastData } from "@/app/types/forecast";
-import { useBeachData } from "@/app/hooks/useBeachData";
+import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useSearchParams } from "next/navigation";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 
@@ -33,7 +33,18 @@ const NoDataState = () => (
 
 export default function WeatherForecastWidget() {
   const searchParams = useSearchParams();
-  const { forecastData, isLoading } = useBeachData();
+  const { beachScores, isLoading } = useFilteredBeaches({
+    initialData: null,
+    enabled: true,
+  });
+
+  // Get the selected beach ID from the URL or use the first beach
+  const beachId =
+    searchParams.get("beachId") || Object.keys(beachScores || {})[0];
+
+  // Access forecast data correctly based on the transform function
+  const forecastData =
+    (beachId && beachScores?.[beachId]?.forecastData) || null;
 
   const regionId = searchParams.get("regionId");
   const regionName = searchParams.get("region");
@@ -118,7 +129,7 @@ export default function WeatherForecastWidget() {
                   {degreesToCardinal(forecastData!.windDirection)}
                 </span>
                 <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData!.windDirection.toFixed(1)}°
+                  {forecastData.windDirection.toFixed(1)}°
                 </span>
                 <span className="block text-sm text-gray-300 font-primary">
                   {forecastData!.windSpeed} kts

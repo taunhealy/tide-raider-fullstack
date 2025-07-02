@@ -8,10 +8,8 @@ import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
 import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
 import { ScoreService } from "@/app/services/scores/ScoreService";
-import { ForecastService } from "@/app/services/forecasts/ForecastService";
-import { FILTERS } from "@/app/config/filters";
-import type { FilterConfig } from "@/app/config/filters";
 import { BeachService } from "@/app/services/beaches/BeachService";
+import { ForecastA } from "@prisma/client";
 
 function getTodayDate() {
   const date = new Date();
@@ -81,7 +79,18 @@ export async function getLatestConditions(
 
   const regionConfig = REGION_CONFIGS[region.id];
   if (!regionConfig) {
-    throw new Error(`Invalid region configuration for ${region.id}`);
+    console.error(`Missing region configuration for ${region.id}`);
+    // Return a default forecast instead of throwing
+    return {
+      id: randomUUID(),
+      regionId: region.id,
+      date: today,
+      windSpeed: 0,
+      windDirection: 0,
+      swellHeight: 0,
+      swellPeriod: 0,
+      swellDirection: 0,
+    };
   }
 
   try {
@@ -90,6 +99,9 @@ export async function getLatestConditions(
       regionConfig.sourceA.url,
       region.id
     );
+
+    // More detailed logging
+    console.log("Scraped forecast data:", scrapedForecast);
 
     if (scrapedForecast) {
       // Strip time from date
@@ -146,7 +158,17 @@ export async function getLatestConditions(
     return forecast;
   } catch (error) {
     console.error(`Failed to scrape data for ${region.id}:`, error);
-    throw error;
+    // Return a default forecast instead of throwing
+    return {
+      id: randomUUID(),
+      regionId: region.id,
+      date: today,
+      windSpeed: 0,
+      windDirection: 0,
+      swellHeight: 0,
+      swellPeriod: 0,
+      swellDirection: 0,
+    };
   }
 }
 
@@ -160,8 +182,8 @@ async function checkRateLimit(region: string): Promise<boolean> {
     await redis.expire(key, CACHE_TIMES.RATE_LIMIT);
   }
 
-  // Allow 30 requests per hour per region
-  return limit <= 30;
+  // Increase the limit from 30 to 100 requests per hour per region
+  return limit <= 100;
 }
 
 // Add this function to implement request deduplication
@@ -228,7 +250,10 @@ export async function GET(request: Request) {
   }
 
   // Check rate limit
-  if (!(await checkRateLimit(regionId))) {
+  if (
+    !(await checkRateLimit(regionId)) &&
+    process.env.NODE_ENV === "production"
+  ) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }
 
@@ -247,25 +272,61 @@ export async function GET(request: Request) {
     const cached = await redis.get(cacheKey);
     if (cached) {
       try {
-        return NextResponse.json(JSON.parse(cached as string));
+        // Handle both string and object cache values
+        const cachedData =
+          typeof cached === "string" ? JSON.parse(cached) : cached;
+        return NextResponse.json(cachedData);
       } catch (e) {
         console.warn("Cache parse error:", e);
       }
     }
 
-    // Get filtered beaches using service
-    const result = await BeachService.getFilteredBeaches(searchParams);
+    // Get filtered beaches directly using ScoreService
+    const searchQuery = searchParams.get("searchQuery") || undefined;
+    const filters = {}; // Parse any additional filters from searchParams
 
-    // Cache result
+    const result = await ScoreService.getBeachesWithScores({
+      regionId,
+      date: targetDate,
+      searchQuery,
+      filters,
+    });
+
+    // Fetch the forecast data for the region
+    let forecastData: ForecastA | null = null;
     try {
-      await redis.set(cacheKey, JSON.stringify(result), {
-        ex: CACHE_TIMES.SCORES,
-      });
-    } catch (e) {
-      console.warn("Cache set error:", e);
+      forecastData = await getLatestConditions(false, regionId);
+
+      // Add forecast data to each beach score
+      if (forecastData && result.scores) {
+        Object.keys(result.scores).forEach((beachId) => {
+          if (result.scores[beachId]) {
+            (result.scores[beachId] as any).forecastData = forecastData;
+            (result.scores[beachId] as any).hasForecastData = true;
+          }
+        });
+      }
+
+      // After fetching forecast data
+      if (forecastData) {
+        try {
+          console.log("Ensuring beach scores are calculated...");
+          await dedupedEnsureBeachScores(regionId, targetDate, forecastData);
+          console.log("Beach scores calculation completed or already exists");
+        } catch (error) {
+          console.error("Failed to ensure beach scores:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch forecast data:", error);
     }
 
-    return NextResponse.json(result);
+    // Return the complete response
+    return NextResponse.json({
+      ...result,
+      forecastData,
+      hasForecastData: !!forecastData,
+    });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

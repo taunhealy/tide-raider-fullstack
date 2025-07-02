@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 import { Beach, Region } from "@/app/types/beaches";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { FILTERS } from "@/app/config/filters";
-import { FilterType } from "@/app/config/filters";
+import { FilterType } from "@/app/types/filters";
 
 const transformBeachData = (beach: any): Beach => ({
   ...beach,

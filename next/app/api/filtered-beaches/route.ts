@@ -7,25 +7,39 @@ export async function GET(request: Request) {
   today.setUTCHours(0, 0, 0, 0);
 
   // Build where clause from filters
-  const whereClause = FILTERS.reduce((acc, filter) => {
-    const value = searchParams.get(filter.urlParam);
-    if (value) {
-      switch (filter.type) {
-        case "array":
-          acc[filter.beachProp] = { in: value.split(",") };
-          break;
-        case "boolean":
-          acc[filter.beachProp] = value === "true";
-          break;
-        case "number":
-          acc[filter.beachProp] = { gte: parseFloat(value) };
-          break;
-        default:
-          acc[filter.beachProp] = value;
+  const whereClause = FILTERS.reduce(
+    (acc, filter) => {
+      const value = searchParams.get(filter.urlParam);
+      if (value) {
+        switch (filter.type) {
+          case "array":
+            // Handle enum case conversion for specific fields
+            if (
+              ["bestSeasons", "waveType", "difficulty", "crimeLevel"].includes(
+                filter.beachProp
+              )
+            ) {
+              acc[filter.beachProp] = {
+                in: value.split(",").map((v) => v.toUpperCase()),
+              };
+            } else {
+              acc[filter.beachProp] = { in: value.split(",") };
+            }
+            break;
+          case "boolean":
+            acc[filter.beachProp] = value === "true";
+            break;
+          case "number":
+            acc[filter.beachProp] = { gte: parseFloat(value) };
+            break;
+          default:
+            acc[filter.beachProp] = value;
+        }
       }
-    }
-    return acc;
-  }, {} as Record<string, any>);
+      return acc;
+    },
+    {} as Record<string, any>
+  );
 
   // Get filtered beaches with their scores
   const beaches = await prisma.beach.findMany({
@@ -33,14 +47,14 @@ export async function GET(request: Request) {
     include: {
       beachDailyScores: {
         where: { date: today },
-        select: { score: true }
+        select: { score: true },
       },
-      region: true
-    }
+      region: true,
+    },
   });
 
   return Response.json({
     beaches,
-    totalCount: beaches.length
+    totalCount: beaches.length,
   });
 }

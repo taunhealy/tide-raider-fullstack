@@ -4,6 +4,8 @@ import { Beach, BeachInitialData } from "../types/beaches";
 import { BeachScoreMap } from "../types/scores";
 import { useMemo } from "react";
 import { transformBeachScores } from "@/app/lib/transforms/beachTransforms";
+import { useBeachFilters } from "./useBeachFilters";
+import { BeachService } from "@/app/services/beaches/BeachService";
 
 interface FilteredBeachesResponse {
   beaches: any[];
@@ -76,7 +78,6 @@ export function useFilteredBeaches({
         if (!response.ok) throw new Error("Failed to fetch beaches");
         const json = await response.json();
 
-        // Transform the data here before returning
         return {
           beaches: json.beaches || [],
           scores: json.scores || {},
@@ -103,7 +104,6 @@ export function useFilteredBeaches({
       enabled: enabled && !!searchParams.get("regionId"),
     });
 
-  // Transform and combine data from all pages
   const transformedData = useMemo(() => {
     if (!data?.pages) return { beaches: [], beachScores: {} };
 

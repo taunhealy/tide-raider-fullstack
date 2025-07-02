@@ -4,6 +4,7 @@ import { FILTERS } from "@/app/config/filters";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useRouter, usePathname } from "next/navigation";
 import { useRef } from "react";
+import { Filters } from "@/app/types/filters";
 
 interface FilterSidebarProps {
   isOpen: boolean;
@@ -11,7 +12,10 @@ interface FilterSidebarProps {
 }
 
 export default function FilterSidebar({ isOpen, onClose }: FilterSidebarProps) {
-  const { filters, updateFilter } = useBeachFilters();
+  const { filters, updateFilter } = useBeachFilters() as {
+    filters: Filters;
+    updateFilter: (param: string, value: any) => void;
+  };
   const router = useRouter();
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -61,14 +65,17 @@ export default function FilterSidebar({ isOpen, onClose }: FilterSidebarProps) {
                       key={option}
                       onClick={() => {
                         const currentValue = filters[filter.key] as string[];
-                        const updated = currentValue.includes(option)
-                          ? currentValue.filter((v) => v !== option)
-                          : [...currentValue, option];
+                        const enumValue = option.toUpperCase();
+                        const updated = currentValue.includes(enumValue)
+                          ? currentValue.filter((v) => v !== enumValue)
+                          : [...currentValue, enumValue];
                         updateFilter(filter.urlParam, updated);
                       }}
                       className={`px-3 py-1 rounded-full text-sm font-primary ${
-                        (filters[filter.key] as string[]).includes(option)
-                          ? "bg-cyan-600 text-white"
+                        (filters[filter.key] as string[]).includes(
+                          option.toUpperCase()
+                        )
+                          ? "bg-[var(--color-tertiary)] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >

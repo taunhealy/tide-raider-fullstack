@@ -1,6 +1,16 @@
 import { prisma } from "@/app/lib/prisma";
 import { CoreForecastData } from "@/app/types/forecast";
-import type { Beach, ForecastA } from "@prisma/client";
+import type {
+  Beach,
+  ForecastA,
+  Difficulty,
+  WaveType,
+  CrimeLevel,
+  Season,
+  Month,
+  Hazard,
+  SharkRisk,
+} from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 interface PaginationParams {
@@ -9,6 +19,48 @@ interface PaginationParams {
   page: number;
   limit: number;
 }
+
+// Database-specific filter interface
+interface BeachFiltersDB {
+  difficulty?: Difficulty[]; // Prisma enum
+  waveType?: WaveType[]; // Prisma enum
+  crimeLevel?: string[];
+  isHiddenGem?: boolean;
+}
+
+interface GetBeachesParams {
+  regionId: string;
+  date: Date;
+  searchQuery?: string;
+  filters?: Partial<BeachFiltersDB>; // Use DB-specific interface
+}
+
+// Update FilterKeys to include all possible filter keys
+type FilterKeys = keyof typeof FILTER_MAPPINGS;
+
+const FILTER_MAPPINGS = {
+  difficulty: (values: string[]) => ({
+    in: values.map((v) => v.toUpperCase() as Difficulty),
+  }),
+  waveType: (values: string[]) => ({
+    in: values.map((v) => v.toUpperCase() as WaveType),
+  }),
+  crimeLevel: (values: string[]) => ({
+    in: values.map((v) => v.toUpperCase() as CrimeLevel),
+  }),
+  bestSeasons: (values: string[]) => ({
+    hasSome: values.map((v) => v.toUpperCase() as Season),
+  }),
+  hazards: (values: string[]) => ({
+    hasSome: values.map((v) => v.toUpperCase() as Hazard),
+  }),
+  bestMonthOfYear: (values: string[]) => ({
+    equals: values[0].toUpperCase() as Month,
+  }),
+  sharkAttack: (values: string[]) => ({
+    equals: values[0].toUpperCase() as SharkRisk,
+  }),
+} as const;
 
 export class ScoreService {
   // Direction mapping utilities
@@ -310,7 +362,7 @@ export class ScoreService {
         }
       }
 
-      const finalScore = Math.max(0, score);
+      const finalScore = Math.min(5, Math.max(0, score));
 
       return Number(finalScore.toFixed(1));
     } catch (error) {
@@ -469,49 +521,45 @@ export class ScoreService {
     date,
     searchQuery,
     filters = {},
-  }: {
-    regionId: string;
-    date: Date;
-    searchQuery?: string;
-    filters?: Record<string, any>;
-  }) {
+  }: GetBeachesParams) {
     console.log("Fetching beaches with scores and filters:", { filters });
 
-    const whereClause = {
+    const whereClause: Prisma.BeachWhereInput = {
       regionId,
       ...(searchQuery
         ? {
             OR: [
-              { name: { contains: searchQuery, mode: "insensitive" as const } },
+              { name: { contains: searchQuery, mode: "insensitive" } },
               {
                 region: {
-                  name: { contains: searchQuery, mode: "insensitive" as const },
+                  name: { contains: searchQuery, mode: "insensitive" },
                 },
               },
             ],
           }
         : {}),
-      // Add dynamic filters with proper Prisma operators
       ...Object.entries(filters).reduce(
-        (acc, [key, value]) => {
+        (acc: Prisma.BeachWhereInput, [key, value]) => {
           if (value) {
             if (Array.isArray(value)) {
-              // Handle array filters (like waveTypes, difficulty, etc.)
-              acc[key] = { in: value };
-            } else if (typeof value === "boolean") {
-              // Handle boolean filters (like hasSharkAlert, hasCoffeeShop)
-              acc[key] = value;
-            } else if (typeof value === "number") {
-              // Handle numeric filters (like minPoints)
-              acc[key] = { gte: value };
-            } else {
-              // Handle string filters
-              acc[key] = value;
+              // Handle enum case conversion for specific fields
+              if (
+                [
+                  "bestSeasons",
+                  "waveType",
+                  "difficulty",
+                  "crimeLevel",
+                ].includes(key)
+              ) {
+                (acc as any)[key] = { in: value.map((v) => v.toUpperCase()) };
+              } else {
+                (acc as any)[key] = { in: value };
+              }
             }
           }
           return acc;
         },
-        {} as Record<string, any>
+        {} as Prisma.BeachWhereInput
       ),
     };
 

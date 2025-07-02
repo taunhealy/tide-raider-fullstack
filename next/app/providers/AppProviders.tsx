@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
+import { BeachProvider } from "@/app/context/BeachContext";
 
 import { SubscriptionProvider } from "./SubscriptionProvider";
-import { BeachProvider } from "@/app/context/BeachContext";
 import { beachData } from "@/app/types/beaches";
 
 const queryClient = new QueryClient({

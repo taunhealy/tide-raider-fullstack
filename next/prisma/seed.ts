@@ -1,7 +1,16 @@
 import { beachData } from "@/app/data/beachData";
 import { HARDCODED_COUNTRIES } from "../app/lib/location/countries/constants";
 import { prisma } from "@/app/lib/prisma";
-import { Difficulty, WaveType, OptimalTide } from "@prisma/client";
+import {
+  Difficulty,
+  WaveType,
+  OptimalTide,
+  CrimeLevel,
+  Season,
+  Month,
+  Hazard,
+  SharkRisk,
+} from "@prisma/client";
 
 // Add this utility function to your seed.ts file
 async function getCountryAndRegionIds(countryName: string, regionName: string) {
@@ -94,6 +103,84 @@ function mapOptimalTide(value: string): OptimalTide {
     // Add any other mappings needed
   };
   return map[value] || "UNKNOWN"; // Default fallback
+}
+
+// Add these mapping functions for the new enums
+function mapCrimeLevel(value: string): CrimeLevel {
+  const map: Record<string, CrimeLevel> = {
+    Low: "LOW",
+    Medium: "MEDIUM",
+    High: "HIGH",
+    // Add any other mappings needed
+  };
+  return map[value] || "LOW"; // Default fallback
+}
+
+function mapSeason(value: string): Season {
+  // Convert any input to uppercase
+  const upperValue = value.toUpperCase();
+  const map: Record<string, Season> = {
+    SUMMER: "SUMMER",
+    AUTUMN: "AUTUMN",
+    WINTER: "WINTER",
+    SPRING: "SPRING",
+  };
+  return map[upperValue] || "SUMMER"; // Default fallback
+}
+
+function mapMonth(value: string | undefined): Month | null {
+  if (!value) return null;
+
+  const map: Record<string, Month> = {
+    January: "JANUARY",
+    February: "FEBRUARY",
+    March: "MARCH",
+    April: "APRIL",
+    May: "MAY",
+    June: "JUNE",
+    July: "JULY",
+    August: "AUGUST",
+    September: "SEPTEMBER",
+    October: "OCTOBER",
+    November: "NOVEMBER",
+    December: "DECEMBER",
+  };
+  return map[value] || null;
+}
+
+function mapHazards(values: string[]): Hazard[] {
+  const map: Record<string, Hazard> = {
+    Rocks: "ROCKS",
+    Currents: "CURRENTS",
+    Sharks: "SHARKS",
+    Jellyfish: "JELLYFISH",
+    Pollution: "POLLUTION",
+    Riptides: "RIPTIDES",
+    "Shallow Reef": "SHALLOW_REEF",
+    Localism: "LOCALISM",
+    Crowds: "CROWDS",
+    "Boat Traffic": "BOAT_TRAFFIC",
+    "Strong Undertow": "STRONG_UNDERTOW",
+    "Submerged Objects": "SUBMERGED_OBJECTS",
+  };
+
+  return values.map((v) => map[v] || "ROCKS").filter(Boolean) as Hazard[];
+}
+
+function mapSharkRisk(value: any): SharkRisk {
+  // Assuming sharkAttack in beachData has a risk property
+  if (!value || typeof value !== "object") return "NONE";
+
+  const risk = value.risk || "None";
+  const map: Record<string, SharkRisk> = {
+    None: "NONE",
+    Low: "LOW",
+    Moderate: "MODERATE",
+    High: "HIGH",
+    Extreme: "EXTREME",
+  };
+
+  return map[risk] || "NONE";
 }
 
 // Add this near the top of your seed.ts file
@@ -358,7 +445,9 @@ async function main() {
               distanceFromCT: beach.distanceFromCT,
               optimalWindDirections: beach.optimalWindDirections,
               optimalSwellDirections: beach.optimalSwellDirections,
-              bestSeasons: beach.bestSeasons,
+              bestSeasons: {
+                set: beach.bestSeasons.map((season) => mapSeason(season)),
+              },
               optimalTide: mapOptimalTide(beach.optimalTide as string),
               description: beach.description,
               difficulty: mapDifficulty(beach.difficulty),
@@ -366,9 +455,10 @@ async function main() {
               swellSize: beach.swellSize,
               idealSwellPeriod: beach.idealSwellPeriod,
               waterTemp: beach.waterTemp,
-              hazards: beach.hazards,
-              crimeLevel: beach.crimeLevel as string,
-              sharkAttack: beach.sharkAttack,
+              hazards: mapHazards(beach.hazards),
+              crimeLevel: mapCrimeLevel(beach.crimeLevel as string),
+              sharkAttack: mapSharkRisk(beach.sharkAttack),
+              bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
               coordinates: beach.coordinates,
               // Add any other required fields
             },
@@ -478,7 +568,15 @@ async function main() {
         // Use upsert to ensure the beach exists before updating
         await prisma.beach.upsert({
           where: { id: beach.id },
-          update: { videos: beach.videos },
+          update: {
+            videos: beach.videos,
+            bestSeasons:
+              beach.bestSeasons?.map((season) => mapSeason(season)) || [],
+            hazards: mapHazards(beach.hazards || []),
+            crimeLevel: mapCrimeLevel(beach.crimeLevel as string),
+            sharkAttack: mapSharkRisk(beach.sharkAttack),
+            bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
+          },
           create: {
             id: beach.id,
             name: beach.name,
@@ -489,7 +587,8 @@ async function main() {
             distanceFromCT: beach.distanceFromCT || 0,
             optimalWindDirections: beach.optimalWindDirections || [],
             optimalSwellDirections: beach.optimalSwellDirections || {},
-            bestSeasons: beach.bestSeasons || [],
+            bestSeasons:
+              beach.bestSeasons?.map((season) => mapSeason(season)) || [],
             optimalTide: mapOptimalTide(beach.optimalTide as string),
             description: beach.description || "",
             difficulty: mapDifficulty(beach.difficulty),
@@ -497,9 +596,10 @@ async function main() {
             swellSize: beach.swellSize || {},
             idealSwellPeriod: beach.idealSwellPeriod || {},
             waterTemp: beach.waterTemp || {},
-            hazards: beach.hazards || [],
-            crimeLevel: (beach.crimeLevel as string) || "Low",
-            sharkAttack: beach.sharkAttack || {},
+            hazards: mapHazards(beach.hazards || []),
+            crimeLevel: mapCrimeLevel(beach.crimeLevel as string),
+            sharkAttack: mapSharkRisk(beach.sharkAttack),
+            bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
             coordinates: beach.coordinates || {},
             videos: beach.videos,
           },

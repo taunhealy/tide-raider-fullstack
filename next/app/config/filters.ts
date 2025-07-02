@@ -1,66 +1,49 @@
 import { Beach } from "@/app/types/beaches";
+import { FilterConfig } from "@/app/types/filters";
 
-// Base filter types
-export type FilterType =
-  | "waveTypes"
-  | "difficulty"
-  | "optimalTide"
-  | "bestSeasons"
-  | "crimeLevel"
-  | "hasSharkAlert"
-  | "hasCoffeeShop"
-  | "sharkAttack"
-  | "minPoints"
-  | "regionId"
-  | "searchQuery"
-  | "country"
-  | "continent";
+// UI-specific enums for filters
+const WAVE_TYPES = {
+  BEACH_BREAK: "BEACH_BREAK",
+  POINT_BREAK: "POINT_BREAK",
+  REEF_BREAK: "REEF_BREAK",
+  RIVER_MOUTH: "RIVER_MOUTH",
+} as const;
 
-// The complete filters interface that can be used across the app
-export interface Filters {
-  regionId: string;
-  searchQuery: string;
-  waveTypes: string[];
-  difficulty: string[];
-  optimalTide: string[];
-  bestSeasons: string[];
-  crimeLevel: string[];
-  hasSharkAlert: boolean;
-  hasCoffeeShop: boolean;
-  sharkAttack: boolean;
-  minPoints: number;
-  country: string;
-  continent: string;
-}
-
-export interface FilterConfig {
-  key: FilterType;
-  type: "array" | "boolean" | "number" | "string"; // Added string type
-  label: string;
-  options?: string[];
-  min?: number;
-  max?: number;
-  step?: number;
-  urlParam: string;
-  beachProp: keyof Beach;
-}
+const DIFFICULTY = {
+  BEGINNER: "BEGINNER",
+  INTERMEDIATE: "INTERMEDIATE",
+  ADVANCED: "ADVANCED",
+  EXPERT: "EXPERT",
+} as const;
 
 export const FILTERS: FilterConfig[] = [
   {
     key: "waveTypes",
     type: "array",
     label: "Wave Type",
-    options: ["Beach Break", "Point Break", "Reef Break", "River Mouth"],
-    urlParam: "waveTypes",
+    options: Object.values(WAVE_TYPES),
+    urlParam: "waveType",
     beachProp: "waveType",
+    displayNames: {
+      [WAVE_TYPES.BEACH_BREAK]: "Beach Break",
+      [WAVE_TYPES.POINT_BREAK]: "Point Break",
+      [WAVE_TYPES.REEF_BREAK]: "Reef Break",
+      [WAVE_TYPES.RIVER_MOUTH]: "River Mouth",
+    },
   },
   {
     key: "difficulty",
     type: "array",
     label: "Difficulty",
-    options: ["Beginner", "Intermediate", "Advanced", "Expert"],
+    options: Object.values(DIFFICULTY),
     urlParam: "difficulty",
     beachProp: "difficulty",
+    displayNames: {
+      [DIFFICULTY.BEGINNER]: "Beginner",
+      [DIFFICULTY.INTERMEDIATE]: "Intermediate",
+      [DIFFICULTY.ADVANCED]: "Advanced",
+      [DIFFICULTY.EXPERT]: "Expert",
+    },
   },
   {
     key: "optimalTide",

@@ -7,6 +7,8 @@ import RecentRegionSearch from "../RecentRegionSearch";
 import { Button } from "@/app/components/ui/Button";
 import FilterSidebar from "../filters/FiltersSidebar";
 import { Beach } from "@/app/types/beaches";
+import { cn } from "@/app/lib/utils";
+import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -32,13 +34,11 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                 <SearchBar />
                 <RecentRegionSearch />
               </div>
-              <Button
-                variant="ghost"
+              <FilterToggleButton
+                isActive={showFilters}
                 onClick={() => setShowFilters(!showFilters)}
-                className="border border-gray-200 rounded-[21px] w-full sm:w-auto justify-center sm:justify-start"
-              >
-                <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-              </Button>
+                className="ml-0 sm:ml-2"
+              />
             </div>
           </div>
         </div>

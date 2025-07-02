@@ -268,7 +268,7 @@ model Beach {
   distanceFromCT         Float
   optimalWindDirections  String[]
   optimalSwellDirections Json
-  bestSeasons            String[]
+  bestSeasons            Season[]
   optimalTide            OptimalTide
   description            String
   difficulty             Difficulty
@@ -276,9 +276,9 @@ model Beach {
   swellSize              Json
   idealSwellPeriod       Json
   waterTemp              Json
-  hazards                String[]
-  crimeLevel             String
-  sharkAttack            Json
+  hazards                Hazard[]
+  crimeLevel             CrimeLevel
+  sharkAttack            SharkRisk
   image                  String?
   coordinates            Json
   videos                 Json?
@@ -286,7 +286,7 @@ model Beach {
   advertisingPrice       Float?
   coffeeShop             Json?
   hasSharkAlert          Boolean?
-  bestMonthOfYear        String?
+  bestMonthOfYear        Month?
   isHiddenGem            Boolean?
   sheltered              Boolean?
   alerts                 Alert[]
@@ -787,4 +787,55 @@ enum WaveType {
   POINT_BREAK
   REEF_BREAK
   RIVER_MOUTH
+}
+
+enum CrimeLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Season {
+  SUMMER
+  AUTUMN
+  WINTER
+  SPRING
+}
+
+enum Month {
+  JANUARY
+  FEBRUARY
+  MARCH
+  APRIL
+  MAY
+  JUNE
+  JULY
+  AUGUST
+  SEPTEMBER
+  OCTOBER
+  NOVEMBER
+  DECEMBER
+}
+
+enum Hazard {
+  ROCKS
+  CURRENTS
+  SHARKS
+  JELLYFISH
+  POLLUTION
+  RIPTIDES
+  SHALLOW_REEF
+  LOCALISM
+  CROWDS
+  BOAT_TRAFFIC
+  STRONG_UNDERTOW
+  SUBMERGED_OBJECTS
+}
+
+enum SharkRisk {
+  NONE
+  LOW
+  MODERATE
+  HIGH
+  EXTREME
 }

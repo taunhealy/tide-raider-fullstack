@@ -5,7 +5,6 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
-import { useBeachData } from "@/app/hooks/useBeachData";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -50,8 +49,9 @@ interface BeachContainerProps {
 
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter } = useBeachFilters();
-  const { beaches, beachScores, isLoading } = useBeachData({
-    requireRegion: true,
+  const { beaches, beachScores, isLoading } = useFilteredBeaches({
+    initialData,
+    enabled: true,
   });
   const queryClient = useQueryClient();
 
@@ -75,6 +75,17 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       }) ?? []
     );
   }, [beaches, beachScores]);
+
+  useEffect(() => {
+    if (initialData) {
+      console.log("Initial data received:", {
+        beachCount: initialData.beaches?.length || 0,
+        hasScores: Boolean(initialData.scores),
+        hasForecast: Boolean(initialData.forecast),
+        forecastDetails: initialData.forecast,
+      });
+    }
+  }, [initialData]);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">

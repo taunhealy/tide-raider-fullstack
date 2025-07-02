@@ -1,28 +1,31 @@
-import BeachContainer from "@/app/components/BeachContainer";
 import { BeachService } from "@/app/services/beaches/BeachService";
-import { Suspense } from "react";
-import BeachCardSkeleton from "../components/skeletons/BeachCardSkeleton";
+import BeachContainer from "@/app/components/BeachContainer";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Raid | Tide Raider",
+  description: "Find the best surf spots in your area",
+};
 
 export default async function RaidPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const params = Object.fromEntries(
-    Object.entries(await searchParams)
-      .filter(([_, value]) => value !== undefined)
-      .map(([key, value]) => [key, Array.isArray(value) ? value[0] : value])
-  ) as Record<string, string>;
+  // Create a URLSearchParams object
+  const urlSearchParams = new URLSearchParams();
 
-  const initialData = (await searchParams.regionId)
-    ? await BeachService.getFilteredBeaches(new URLSearchParams(params))
+  // Use Object.entries to safely access searchParams
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (typeof value === "string") {
+      urlSearchParams.set(key, value);
+    }
+  });
+
+  // Only fetch data if we have a regionId parameter
+  const initialData = searchParams.regionId
+    ? await BeachService.getFilteredBeaches(urlSearchParams)
     : null;
 
-  return (
-    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
-      <div className="container mx-auto px-4 py-8">
-        <BeachContainer initialData={initialData} />
-      </div>
-    </div>
-  );
+  return <BeachContainer initialData={initialData} />;
 }

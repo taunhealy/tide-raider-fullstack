@@ -8,6 +8,7 @@ import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -137,7 +138,10 @@ const RaidLogSkeleton = () => (
 );
 
 export default function RightSidebar() {
-  const { beaches, forecastData } = useBeachData();
+  const { beaches } = useFilteredBeaches({
+    initialData: null,
+    enabled: true,
+  });
   const { filters } = useBeachFilters();
 
   return (

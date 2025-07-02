@@ -2,7 +2,7 @@ import { prisma } from "@/app/lib/prisma";
 import { ForecastService } from "../forecasts/ForecastService";
 import { ScoreService } from "../scores/ScoreService";
 import { FILTERS } from "@/app/config/filters";
-import type { FilterConfig } from "@/app/config/filters";
+import type { FilterConfig } from "@/app/types/filters";
 import type { Beach } from "@/app/types/beaches";
 import type { BeachInitialData } from "@/app/types/beaches";
 import type { ForecastData } from "@/app/types/forecast";
@@ -16,41 +16,26 @@ interface FilterParams {
   [key: string]: any;
 }
 
+//The service acts as the translation layer between the front-end and the back-end.
+//It takes the filters from the front-end, translates them into the format expected by the back-end,
+//and then calls the back-end to get the beaches.
+//It also takes the beaches from the back-end, translates them into the format expected by the front-end,
+//and then returns them to the front-end.
+
 export class BeachService {
-  static async getFilteredBeaches(
-    searchParams: URLSearchParams
-  ): Promise<BeachInitialData> {
-    const filters = this.parseFilters(searchParams);
-
-    if (!filters.regionId) {
-      throw new Error("regionId is required");
-    }
-
-    const targetDate = filters.date || new Date();
-    targetDate.setUTCHours(0, 0, 0, 0);
-
-    // Get or create forecast
-    const forecast = await ForecastService.getOrCreateForecast(
-      filters.regionId
+  static async getFilteredBeaches(searchParams: URLSearchParams) {
+    // Use absolute URL by getting the base URL from window.location
+    const baseUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "http://localhost:3000";
+    const response = await fetch(
+      `${baseUrl}/api/surf-conditions?${searchParams.toString()}`
     );
-
-    // Ensure scores exist
-    await this.ensureScores(filters.regionId, targetDate, forecast);
-
-    // Get beaches with scores
-    const result = await ScoreService.getBeachesWithScores({
-      regionId: filters.regionId,
-      date: targetDate,
-      searchQuery: filters.searchQuery,
-      filters: this.buildPrismaFilters(filters),
-    });
-
-    return {
-      scores: result.scores as BeachInitialData["scores"],
-      beaches: result.beaches as unknown as Beach[],
-      forecast: forecast as ForecastData,
-      totalCount: result.totalCount,
-    };
+    if (!response.ok) {
+      throw new Error("Failed to fetch filtered beaches");
+    }
+    return response.json();
   }
 
   private static parseFilters(searchParams: URLSearchParams): FilterParams {
@@ -95,7 +80,20 @@ export class BeachService {
       if (value !== undefined) {
         switch (filter.type) {
           case "array":
-            prismaFilters[filter.beachProp] = { in: value };
+            // Handle enum case conversion for specific fields
+            if (
+              ["bestSeasons", "waveType", "difficulty", "crimeLevel"].includes(
+                filter.beachProp
+              )
+            ) {
+              prismaFilters[filter.beachProp] = {
+                in: Array.isArray(value)
+                  ? value.map((v) => v.toUpperCase())
+                  : [value.toUpperCase()],
+              };
+            } else {
+              prismaFilters[filter.beachProp] = { in: value };
+            }
             break;
           case "boolean":
             prismaFilters[filter.beachProp] = value;

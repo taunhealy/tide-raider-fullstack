@@ -5,12 +5,13 @@ import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays, subYears, startOfDay, endOfDay } from "date-fns";
 import { RandomLoader } from "@/app/components/ui/random-loader";
+import { useRegions } from "@/app/hooks/useRegions";
 
 type TimePeriod = "today" | "week" | "year" | "3years";
 
 interface RegionalHighScoresProps {
   beaches: Beach[];
-  selectedRegion: string;
+  selectedRegion: string; // This is just the region ID
   onBeachClick?: (beach: Beach) => void;
 }
 
@@ -161,14 +162,14 @@ function RegionalHighScoresContent({
         </p>
       ) : (
         <>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-sm text-gray-600 font-primary">
               {timePeriod === "today"
-                ? "Today's total scores"
+                ? ""
                 : timePeriod === "week"
-                  ? "This week's total scores"
+                  ? ""
                   : timePeriod === "year"
-                    ? "This year's total scores"
+                    ? ""
                     : "Last 3 years' total scores"}
             </span>
           </div>
@@ -194,13 +195,13 @@ function RegionalHighScoresContent({
                     <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary">
                       {beach.name}
                     </h4>
-                    <p className="text-sm text-[var(--color-text-secondary)] font-primary">
-                      {`${score.toFixed(1)} points${beach.appearances > 1 ? ` over ${beach.appearances} days` : ""}`}
+                    <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
+                      {`${Math.round(score)} points${beach.appearances > 1 ? ` over ${beach.appearances} days` : ""}`}
                     </p>
                   </div>
 
-                  <div className="w-8 h-8 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium font-primary">
-                    {score.toFixed(1)}
+                  <div className="w-7 h-7 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium text-[12px] font-primary">
+                    {Math.round(score)}
                   </div>
                 </div>
               );
@@ -214,11 +215,14 @@ function RegionalHighScoresContent({
 
 // Main component with Suspense
 export default function RegionalHighScores(props: RegionalHighScoresProps) {
+  const { data: regions = [] } = useRegions();
+  const regionName = regions.find((r) => r.id === props.selectedRegion)?.name;
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
       <h3 className="text-lg font-semibold mb-4 text-gray-800 font-primary">
         {props.selectedRegion
-          ? `High Scores in ${props.selectedRegion.charAt(0).toUpperCase() + props.selectedRegion.slice(1)}`
+          ? `High Scores in ${regionName || props.selectedRegion}`
           : "High Scores"}
       </h3>
 
