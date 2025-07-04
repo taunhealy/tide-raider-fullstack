@@ -62,10 +62,10 @@ export const useBeachFilters = () => {
       {} as Record<FilterType, any>
     ),
     // Handle region-related parameters
-    regionId: searchParams.get("regionId") || "",
-    region: searchParams.get("region") || "",
-    country: searchParams.get("country") || "",
-    continent: searchParams.get("continent") || "",
+    regionId: searchParams.get("regionId") || null,
+    region: searchParams.get("region") || null,
+    country: searchParams.get("country") || null,
+    continent: searchParams.get("continent") || null,
   };
 
   const updateFilter = useCallback(

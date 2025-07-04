@@ -4,6 +4,7 @@ import { Alert, LogEntry } from "@prisma/client";
 import { Beach } from "./beaches";
 import { BeachScoreMap } from "./scores";
 
+
 // Base forecast data with just the essential fields
 export interface BaseForecastData {
   windSpeed: number;
@@ -39,7 +40,6 @@ export interface BeachContainerProps {
 export interface WeeklyForecast {
   [date: string]: ForecastData;
 }
-
 
 // Type for alert-related forecast data
 export interface AlertForecastData extends ForecastData {

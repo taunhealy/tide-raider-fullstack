@@ -1,19 +1,10 @@
 "use client";
 
 // components/sidebar/WeatherForecastWidget.tsx
-import { useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
-import { CoreForecastData } from "@/app/types/forecast";
-import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
-import { useSearchParams } from "next/navigation";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
-
-interface WeatherForecastWidgetProps {
-  regionId: string;
-  regionName: string;
-  forecastData: CoreForecastData | null;
-  isLoading: boolean;
-}
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { useQuery } from "@tanstack/react-query";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -32,22 +23,29 @@ const NoDataState = () => (
 );
 
 export default function WeatherForecastWidget() {
-  const searchParams = useSearchParams();
-  const { beachScores, isLoading } = useFilteredBeaches({
-    initialData: null,
-    enabled: true,
+  const {
+    filters: { regionId },
+  } = useBeachFilters();
+
+  const { data: forecastData, isLoading } = useQuery({
+    queryKey: ["forecast", regionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/forecast?regionId=${regionId}`);
+      if (!response.ok) throw new Error("Failed to fetch forecast");
+      return response.json();
+    },
+    enabled: !!regionId,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Get the selected beach ID from the URL or use the first beach
-  const beachId =
-    searchParams.get("beachId") || Object.keys(beachScores || {})[0];
-
-  // Access forecast data correctly based on the transform function
-  const forecastData =
-    (beachId && beachScores?.[beachId]?.forecastData) || null;
-
-  const regionId = searchParams.get("regionId");
-  const regionName = searchParams.get("region");
+  // Add a more specific identifier for this component
+  console.log("WeatherForecastWidget specific debug:", {
+    component: "WeatherForecastWidget",
+    regionId,
+    isDataPresent: !!forecastData,
+    isLoading,
+  });
 
   const getWidgetContent = () => {
     if (!regionId) {
@@ -62,7 +60,9 @@ export default function WeatherForecastWidget() {
     return null;
   };
 
-  const statusMessage = getWidgetContent();
+  // Fix: Only show status message if there's an error condition
+  const statusMessage =
+    !regionId || isLoading || !forecastData ? getWidgetContent() : null;
 
   return (
     <div
@@ -126,13 +126,13 @@ export default function WeatherForecastWidget() {
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="space-y-2 text-center">
                 <span className="text-2xl font-semibold text-white font-primary">
-                  {degreesToCardinal(forecastData!.windDirection)}
+                  {degreesToCardinal(forecastData?.windDirection)}
                 </span>
                 <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData.windDirection.toFixed(1)}°
+                  {forecastData?.windDirection?.toFixed(1)}°
                 </span>
                 <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData!.windSpeed} kts
+                  {forecastData?.windSpeed} kts
                 </span>
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function WeatherForecastWidget() {
             </label>
             <div className="flex-1 flex flex-col items-center justify-center">
               <span className="text-2xl font-semibold text-white font-primary">
-                {forecastData!.swellHeight}m
+                {forecastData?.swellHeight}m
               </span>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function WeatherForecastWidget() {
             </label>
             <div className="flex-1 flex flex-col items-center justify-center">
               <span className="text-2xl font-semibold text-white font-primary">
-                {forecastData!.swellPeriod}s
+                {forecastData?.swellPeriod}s
               </span>
             </div>
           </div>
@@ -173,10 +173,10 @@ export default function WeatherForecastWidget() {
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="space-y-2 text-center">
                 <span className="text-2xl font-semibold text-white font-primary">
-                  {degreesToCardinal(forecastData!.swellDirection)}
+                  {degreesToCardinal(forecastData?.swellDirection)}
                 </span>
                 <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData!.swellDirection}°
+                  {forecastData?.swellDirection}°
                 </span>
               </div>
             </div>

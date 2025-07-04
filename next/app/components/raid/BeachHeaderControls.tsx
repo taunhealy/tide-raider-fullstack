@@ -4,15 +4,14 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
-import { Button } from "@/app/components/ui/Button";
 import FilterSidebar from "../filters/FiltersSidebar";
 import { Beach } from "@/app/types/beaches";
-import { cn } from "@/app/lib/utils";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
+import { LocationFilter } from "@/app/types/filters";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
-  onRegionSelect: (regionId: string) => void;
+  onRegionSelect: (regionId: LocationFilter["regionId"]) => void;
   currentRegion: string;
   beaches: Beach[];
 }

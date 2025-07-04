@@ -4,7 +4,8 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
-import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
+import { useAllSurfConditions } from "@/app/hooks/useAllSurfConditions";
+import type { Beach } from "@/app/types/beaches";
 
 interface ActiveFilterBadgesProps {
   filters: FilterConfig;
@@ -17,7 +18,7 @@ const badgeClassName =
 const buttonClassName =
   "ml-2 text-[var(--color-text-primary)] hover:opacity-70 transition-opacity";
 
-export function ActiveFilterBadges({
+export function ActiveFiltersBadges({
   filters,
   onFilterChange,
 }: ActiveFilterBadgesProps) {
@@ -31,10 +32,9 @@ export function ActiveFilterBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
-  const { beaches } = useFilteredBeaches({
-    initialData: null,
-    enabled: true,
-  });
+  // Use surf-conditions data instead of useFilteredBeaches
+  const { data } = useAllSurfConditions(true);
+  const beaches = data?.beaches || [];
 
   // Update the query to not depend on loadingStates
   const { data: regionCountsData } = useQuery({
@@ -67,7 +67,7 @@ export function ActiveFilterBadges({
         const beachId = typeof beach === "string" ? beach : beach.id;
         const beachName =
           typeof beach === "string"
-            ? beaches.find((b) => b.id === beach)?.name || beach
+            ? beaches.find((b: Beach) => b.id === beach)?.name || beach
             : beach.name;
 
         return (

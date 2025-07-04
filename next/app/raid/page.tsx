@@ -12,17 +12,16 @@ export default async function RaidPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  // Create a URLSearchParams object
   const urlSearchParams = new URLSearchParams();
 
-  // Use Object.entries to safely access searchParams
+  // Convert searchParams to URLSearchParams
   Object.entries(searchParams).forEach(([key, value]) => {
     if (typeof value === "string") {
-      urlSearchParams.set(key, value);
+      urlSearchParams.append(key, value);
     }
   });
 
-  // Only fetch data if we have a regionId parameter
+  // Get initial data
   const initialData = searchParams.regionId
     ? await BeachService.getFilteredBeaches(urlSearchParams)
     : null;

@@ -19,6 +19,8 @@ import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
 
 import type { Beach, BeachInitialData } from "@/app/types/beaches";
 
+import { LocationFilter } from "../types/filters";
+
 // Add this helper function at the top of the file
 const getBeachForecastData = (
   beach: Beach,
@@ -49,21 +51,18 @@ interface BeachContainerProps {
 
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter } = useBeachFilters();
-  const { beaches, beachScores, isLoading } = useFilteredBeaches({
+  const { data, isLoading } = useFilteredBeaches({
     initialData,
     enabled: true,
   });
   const queryClient = useQueryClient();
 
-  // Remove isClient state and conditional rendering
-  const isDataReady = Boolean(
-    !isLoading &&
-      beaches?.length > 0 &&
-      Object.keys(beachScores || {}).length > 0
-  );
+  const beaches = data?.beaches || [];
+  const beachScores = data?.scores || {};
+  const forecastData = data?.forecastData ?? null;
 
-  const handleRegionSelect = (regionId: string) => {
-    updateFilter("regionId", regionId);
+  const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
+    updateFilter("regionId", regionId || ""); // Convert null to empty string
   };
 
   const sortedBeaches = useMemo(() => {
@@ -99,35 +98,27 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <BeachHeaderControls
               onSearch={(value) => updateFilter("searchQuery", value)}
               onRegionSelect={handleRegionSelect}
-              currentRegion={filters.regionId}
+              currentRegion={filters.regionId || ""}
               beaches={beaches}
             />
 
             <div className="grid grid-cols-1 gap-5 relative mt-5">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
-              ) : !isDataReady ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, index) => (
-                    <BeachCardSkeleton key={`skeleton-${index}`} count={1} />
-                  ))}
-                </div>
               ) : sortedBeaches.length === 0 ? (
                 <EmptyState message="No beaches found in this region" />
               ) : (
-                <>
-                  <div>
-                    {sortedBeaches.map((beach: Beach) => (
-                      <BeachCard
-                        key={beach.id}
-                        beach={beach}
-                        score={beachScores[beach.id]?.score ?? 0}
-                        forecastData={beachScores[beach.id]?.forecastData}
-                        isLoading={!beachScores[beach.id]?.score}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div>
+                  {sortedBeaches.map((beach: Beach) => (
+                    <BeachCard
+                      key={beach.id}
+                      beach={beach}
+                      score={beachScores[beach.id]?.score ?? 0}
+                      forecastData={beachScores[beach.id]?.forecastData ?? null}
+                      isLoading={!beachScores[beach.id]?.score}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </main>

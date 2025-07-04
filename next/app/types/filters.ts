@@ -19,7 +19,7 @@ export type FilterType =
 
 // The complete filters interface that can be used across the app
 export interface Filters {
-  regionId: string;
+  regionId: LocationFilter["regionId"];
   searchQuery: string;
   waveTypes: WaveType[]; // Use proper type
   difficulty: Difficulty[]; // Use proper type
@@ -49,7 +49,7 @@ export interface FilterConfig {
 
 export interface LocationFilter {
   region: string;
-  regionId: string;
+  regionId: string | null;
   country: string;
   continent: string;
 }
@@ -60,7 +60,7 @@ export interface RaidFilters {
   difficulty: Difficulty[];
   minPoints: number;
   crimeLevel: CrimeLevel[];
-  
+
   sharkAttack: string[];
   searchQuery: string;
   hasAttack: boolean;

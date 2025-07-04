@@ -138,7 +138,7 @@ const RaidLogSkeleton = () => (
 );
 
 export default function RightSidebar() {
-  const { beaches } = useFilteredBeaches({
+  const { data } = useFilteredBeaches({
     initialData: null,
     enabled: true,
   });
@@ -149,12 +149,12 @@ export default function RightSidebar() {
       <WeatherForecastWidget />
       {filters.regionId && (
         <RegionalHighScores
-          beaches={beaches}
+          beaches={data?.beaches || []}
           selectedRegion={filters.regionId}
         />
       )}
       <AdventureExperiences
-        selectedRegion={filters.region || filters.regionId}
+        selectedRegion={filters.region || filters.regionId || ""}
       />
       <RegionalSidebar />
       <FunFacts />

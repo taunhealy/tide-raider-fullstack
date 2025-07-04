@@ -131,7 +131,6 @@ const BeachCard = memo(function BeachCard({
     ? recentEntries.filter(
         (entry) =>
           // Check both beachId and beachName
-          entry.beachId === beach.id ||
           entry.beachName?.toLowerCase() === beach.name?.toLowerCase()
       )
     : [];
@@ -173,7 +172,7 @@ const BeachCard = memo(function BeachCard({
   };
 
   if (isLocalLoading) {
-    return <BeachCardSkeleton />;
+    return <BeachCardSkeleton count={1} />;
   }
 
   return (

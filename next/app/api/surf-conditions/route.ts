@@ -10,6 +10,7 @@ import { scraperA } from "@/app/lib/scrapers/scraperA";
 import { ScoreService } from "@/app/services/scores/ScoreService";
 import { BeachService } from "@/app/services/beaches/BeachService";
 import { ForecastA } from "@prisma/client";
+import { LocationFilter } from "@/app/types/filters";
 
 function getTodayDate() {
   const date = new Date();
@@ -45,7 +46,7 @@ const CACHE_TIMES = {
 
 export async function getLatestConditions(
   forceRefresh = false,
-  regionId: string
+  regionId: ForecastA["regionId"]
 ) {
   // Get the region from the database
   const region = await prisma.region.findUnique({
@@ -240,7 +241,9 @@ async function dedupedEnsureBeachScores(
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const regionId = searchParams.get("regionId")?.toLowerCase();
+  const regionId = searchParams.get("regionId")?.toLowerCase() as NonNullable<
+    LocationFilter["regionId"]
+  >;
 
   if (!regionId) {
     return NextResponse.json(
@@ -324,7 +327,7 @@ export async function GET(request: Request) {
     // Return the complete response
     return NextResponse.json({
       ...result,
-      forecastData,
+      forecastData: forecastData,
       hasForecastData: !!forecastData,
     });
   } catch (error) {

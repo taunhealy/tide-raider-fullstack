@@ -7,6 +7,7 @@ import type { Trip } from "@/app/types/blog";
 import { useQuery } from "@tanstack/react-query";
 import { HARDCODED_COUNTRIES } from "@/app/lib/location/countries/constants";
 import { PortableText } from "@portabletext/react";
+import { LocationFilter } from "../types/filters";
 
 interface Country {
   id: string;
@@ -19,9 +20,9 @@ interface BlogPostsSidebarProps {
     trip: Trip;
     categories: { title: string; slug: string }[];
   };
-  selectedRegion?: string;
-  selectedCountry?: string;
-  selectedContinent?: string;
+  selectedRegion?: LocationFilter;
+  selectedCountry?: string | null;
+  selectedContinent?: string | null;
 }
 
 export default function BlogPostsSidebar({
