@@ -63,6 +63,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
+import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 
 interface QuestTableProps {
   entries: LogEntry[];
@@ -173,24 +174,6 @@ function ForecastInfo({
           </p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-1">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={cn(
-            "w-4 h-4",
-            i < rating
-              ? "fill-[var(--color-alert-icon-rating)] text-[var(--color-alert-icon-rating)]"
-              : "fill-gray-200 text-gray-200"
-          )}
-        />
-      ))}
     </div>
   );
 }
@@ -904,7 +887,10 @@ export default function RaidLogTable({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <StarRating rating={entry.surferRating ?? 0} />
+                    <BlueStarRating
+                      score={entry.surferRating ?? 0}
+                      outOfFive={true}
+                    />
                   </div>
 
                   <div className="text-sm font-primary">
@@ -1152,7 +1138,10 @@ export default function RaidLogTable({
                             />
                           </td>
                           <td className="px-2 py-3 min-w-[100px]">
-                            <StarRating rating={entry.surferRating ?? 0} />
+                            <BlueStarRating
+                              score={entry.surferRating ?? 0}
+                              outOfFive={true}
+                            />
                           </td>
                           <td className="px-2 py-3 min-w-[150px]">
                             <ForecastInfo

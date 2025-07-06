@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
-import { useAllSurfConditions } from "@/app/hooks/useAllSurfConditions";
+import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import type { Beach } from "@/app/types/beaches";
 
 interface ActiveFilterBadgesProps {
@@ -18,7 +18,7 @@ const badgeClassName =
 const buttonClassName =
   "ml-2 text-[var(--color-text-primary)] hover:opacity-70 transition-opacity";
 
-export function ActiveFiltersBadges({
+export default function ActiveFiltersBadges({
   filters,
   onFilterChange,
 }: ActiveFilterBadgesProps) {
@@ -32,11 +32,12 @@ export function ActiveFiltersBadges({
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
 
-  // Use surf-conditions data instead of useFilteredBeaches
-  const { data } = useAllSurfConditions(true);
-  const beaches = data?.beaches || [];
+  const { data: filteredData } = useFilteredBeaches({
+    initialData: null,
+    enabled: true,
+  });
+  const beaches = filteredData?.beaches || [];
 
-  // Update the query to not depend on loadingStates
   const { data: regionCountsData } = useQuery({
     queryKey: ["region-counts"],
     queryFn: async () => {

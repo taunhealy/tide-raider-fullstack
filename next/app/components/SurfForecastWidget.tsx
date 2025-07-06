@@ -1,6 +1,10 @@
-import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { useState, useEffect } from "react";
 import type { CoreForecastData } from "@/app/types/forecast";
+import {
+  getWindEmoji,
+  getSwellEmoji,
+  degreesToCardinal,
+} from "@/app/lib/forecastUtils";
 
 interface SurfForecastWidgetProps {
   forecast: CoreForecastData;
@@ -23,52 +27,47 @@ export default function SurfForecastWidget({
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-      <div className="grid gap-4">
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-primary">Wind</span>
-            <div className="text-right">
-              <span className="font-primary text-gray-900">
-                {typeof forecast.windDirection === "number" &&
-                forecast.windDirection > 0
-                  ? degreesToCardinal(forecast.windDirection)
-                  : "N/A"}
-              </span>
-              <div className="text-sm font-primary text-gray-700">
-                {typeof forecast.windSpeed === "number" &&
-                forecast.windSpeed > 0
-                  ? `${forecast.windSpeed} kts`
-                  : "N/A"}
-              </div>
+    <div className="bg-white p-4 rounded-lg border border-gray-100">
+      <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5">
+        <div className="flex flex-col gap-1.5">
+          {/* Wind Speed Badge */}
+          {forecast.windSpeed != null && (
+            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+              <span className="mr-1">{getWindEmoji(forecast.windSpeed)}</span>
+              <span>{forecast.windSpeed}kts</span>
             </div>
-          </div>
-        </div>
+          )}
 
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-primary">Swell</span>
-            <div className="text-right">
-              <span className="font-primary text-gray-900">
-                {typeof forecast.swellHeight === "number" &&
-                forecast.swellHeight > 0
-                  ? `${forecast.swellHeight}m`
-                  : "N/A"}
-              </span>
-              <div className="text-sm font-primary text-gray-700">
-                {typeof forecast.swellPeriod === "number" &&
-                forecast.swellPeriod > 0
-                  ? `${forecast.swellPeriod}s period`
-                  : "N/A"}
-              </div>
-              <div className="text-sm font-primary text-gray-700">
-                {typeof forecast.swellDirection === "number" &&
-                forecast.swellDirection > 0
-                  ? degreesToCardinal(forecast.swellDirection)
-                  : "N/A"}
-              </div>
+          {/* Wind Direction Badge */}
+          {forecast.windDirection != null && (
+            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+              <span>{degreesToCardinal(forecast.windDirection)}</span>
             </div>
-          </div>
+          )}
+
+          {/* Swell Height Badge */}
+          {forecast.swellHeight != null && (
+            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+              <span className="mr-1">
+                {getSwellEmoji(forecast.swellHeight)}
+              </span>
+              <span>{forecast.swellHeight}m</span>
+            </div>
+          )}
+
+          {/* Swell Period Badge */}
+          {forecast.swellPeriod != null && (
+            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+              <span>{forecast.swellPeriod}s</span>
+            </div>
+          )}
+
+          {/* Swell Direction Badge */}
+          {forecast.swellDirection != null && (
+            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+              <span>{degreesToCardinal(forecast.swellDirection)}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

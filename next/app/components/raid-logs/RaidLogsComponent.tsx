@@ -7,7 +7,7 @@ import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
 import { Beach as BeachType } from "@/app/types/beaches";
 import { RaidLogFilter } from "@/app/components/raid-logs/RaidLogFilter";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
-import { ActiveFilterBadges } from "@/app/components/ActiveFiltersBadges";
+import ActiveFilterBadges from "@/app/components/ActiveFiltersBadges";
 import { toast } from "sonner";
 import { handleSignIn } from "@/app/lib/auth-utils";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
@@ -125,8 +125,6 @@ export function RaidLogsComponent({
 
             {/* Add pagination info if needed */}
             <div className="text-sm text-gray-500 mb-4">
-              Showing {raidLogsData.entries.length} of {raidLogsData.total}{" "}
-              entries
               {raidLogsData.totalPages > 1 &&
                 ` (Page ${raidLogsData.page} of ${raidLogsData.totalPages})`}
             </div>

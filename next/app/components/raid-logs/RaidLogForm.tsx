@@ -6,7 +6,6 @@ import { cn } from "@/app/lib/utils";
 import type { Beach } from "@/app/types/beaches";
 import type { LogEntry } from "@/app/types/raidlogs";
 import SurfForecastWidget from "../SurfForecastWidget";
-import confetti from "canvas-confetti";
 import { Button } from "@/app/components/ui/Button";
 import { validateFile, compressImageIfNeeded } from "@/app/lib/file";
 import { useSubscription } from "@/app/context/SubscriptionContext";
@@ -16,12 +15,15 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { useForecast } from "@/app/hooks/useForecast";
 import Image from "next/image";
 import { useAppMode } from "@/app/context/AppModeContext";
 import { getVideoId } from "@/app/lib/videoUtils";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
+import {
+  BlueStarRating,
+  InteractiveBlueStarRating,
+} from "@/app/lib/scoreDisplayBlueStars";
 
 interface RaidLogFormProps {
   userEmail?: string;
@@ -36,6 +38,9 @@ type LogEntryInput = Omit<
   LogEntry,
   "id" | "createdAt" | "updatedAt" | "hasAlert" | "isMyAlert" | "alertId"
 >;
+
+// Add this constant at the top of the file, outside the component
+const FORM_STATE_KEY = "raid_log_form_state";
 
 export function RaidLogForm({
   userEmail,
@@ -70,7 +75,6 @@ export function RaidLogForm({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [forecast, setForecast] = useState<any>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [isHovered, setIsHovered] = useState(false);
   const [isPrivate, setIsPrivate] = useState<boolean>(
@@ -92,10 +96,47 @@ export function RaidLogForm({
     data: forecastData,
     isLoading: isLoadingForecast,
     error: forecastError,
-  } = useForecast(
-    selectedBeach?.regionId || "",
-    selectedDate ? new Date(selectedDate) : new Date()
-  );
+  } = useQuery({
+    queryKey: ["forecast", selectedBeach?.regionId, selectedDate],
+    queryFn: async () => {
+      if (!selectedBeach?.regionId || !selectedDate) {
+        throw new Error("Missing beach or date");
+      }
+
+      const dateStr = new Date(selectedDate).toISOString().split("T")[0];
+      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&date=${dateStr}`;
+
+      console.log("Fetching forecast from:", url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error("API error:", response.status, response.statusText);
+        throw new Error(`Failed to fetch forecast: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("API response:", data);
+
+      // If data is empty or forecast is missing, try to use the full response
+      if (!data || !data.forecast) {
+        // If we have scores or other forecast data, try to use that
+        if (data.scores) {
+          // Extract first beach's forecast data if available
+          const firstBeachId = Object.keys(data.scores)[0];
+          if (firstBeachId && data.scores[firstBeachId]?.forecastData) {
+            return data.scores[firstBeachId].forecastData;
+          }
+        }
+
+        console.error("No usable forecast data in API response:", data);
+        throw new Error("No forecast data available");
+      }
+
+      return data.forecast;
+    },
+    enabled: !!selectedBeach?.regionId && !!selectedDate,
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Add debug logging
   useEffect(() => {
@@ -217,8 +258,64 @@ export function RaidLogForm({
 
   const { mutate: createLog } = useCreateLog();
 
+  // Add effect to restore form state after sign-in
+  useEffect(() => {
+    if (session?.user) {
+      const savedState = localStorage.getItem(FORM_STATE_KEY);
+      if (savedState) {
+        try {
+          const state = JSON.parse(savedState);
+          setSelectedDate(state.selectedDate || "");
+          setSelectedBeach(state.selectedBeach || null);
+          setSurferRating(state.surferRating || 0);
+          setComments(state.comments || "");
+          setIsAnonymous(state.isAnonymous || false);
+          setIsPrivate(state.isPrivate || false);
+          setVideoUrl(state.videoUrl || "");
+          setVideoPlatform(state.videoPlatform || null);
+
+          // Clean up
+          localStorage.removeItem(FORM_STATE_KEY);
+        } catch (error) {
+          console.error("Error restoring form state:", error);
+          localStorage.removeItem(FORM_STATE_KEY);
+        }
+      }
+    }
+  }, [session]);
+
+  // Function to save form state before sign-in
+  const saveFormState = () => {
+    const formState = {
+      selectedDate,
+      selectedBeach,
+      surferRating,
+      comments,
+      isAnonymous,
+      isPrivate,
+      videoUrl,
+      videoPlatform,
+    };
+
+    localStorage.setItem(FORM_STATE_KEY, JSON.stringify(formState));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!session?.user) {
+      saveFormState();
+      toast.error("Please sign in to log your session", {
+        action: {
+          label: "Sign In",
+          onClick: () =>
+            signIn("google", {
+              callbackUrl: `${window.location.origin}/raidlogs/new`,
+            }),
+        },
+      });
+      return;
+    }
 
     if (!selectedBeach || !selectedDate) {
       toast.error("Please select a beach and date");
@@ -307,7 +404,10 @@ export function RaidLogForm({
 
   const handleSubscriptionAction = () => {
     if (!session?.user) {
-      signIn("google");
+      saveFormState();
+      signIn("google", {
+        callbackUrl: `${window.location.origin}/raidlogs/new`,
+      });
       return;
     }
 
@@ -329,7 +429,7 @@ export function RaidLogForm({
 
   // Add this before rendering SurfForecastWidget
   console.log("Data being passed to SurfForecastWidget:", {
-    forecast,
+    forecastData,
     expectedShape: {
       windSpeed: "number",
       windDirection: "number",
@@ -338,6 +438,16 @@ export function RaidLogForm({
       swellDirection: "number",
     },
   });
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      // Only clean up if user is signed in (form submitted) or left the page
+      if (session?.user || !document.hidden) {
+        localStorage.removeItem(FORM_STATE_KEY);
+      }
+    };
+  }, [session?.user]);
 
   if (!isOpen) return null;
 
@@ -385,15 +495,18 @@ export function RaidLogForm({
             <X className="h-6 w-6" />
           </button>
 
-          <h2 className="text-2xl font-bold mb-6 font-primary text-[var(--color-primary)]">
+          <h2 className="text-[21px] font-bold mb-6 font-primary text-[var(--color-primary)]">
             {entry ? "Edit Session" : "Log Session"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="steps-container space-y-8">
               <div className="step">
-                <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                  1. Select Date
+                <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                    1
+                  </span>
+                  Select Date
                 </h3>
                 <input
                   type="date"
@@ -408,8 +521,11 @@ export function RaidLogForm({
               </div>
 
               <div className="step">
-                <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                  2. Select Beach
+                <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                    2
+                  </span>
+                  Select Beach
                 </h3>
                 <div className="relative">
                   <div className="flex items-center border rounded-md mb-2">
@@ -475,8 +591,11 @@ export function RaidLogForm({
 
               {selectedBeach && selectedDate && (
                 <div className="step">
-                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    3. Surf Conditions
+                  <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      3
+                    </span>
+                    Surf Conditions
                   </h3>
                   <div className="border rounded-lg p-4 bg-gray-50">
                     {isLoadingForecast ? (
@@ -496,33 +615,27 @@ export function RaidLogForm({
 
               {(forecastData || entry?.forecast) && (
                 <div className="step">
-                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    4. Rate Your Session
+                  <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      4
+                    </span>
+                    Rate Your Session
                   </h3>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                      <button
-                        key={rating}
-                        type="button"
-                        onClick={() => setSurferRating(rating)}
-                        className={cn(
-                          "p-1",
-                          rating <= surferRating
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        )}
-                      >
-                        <Star className="w-8 h-8 fill-current" />
-                      </button>
-                    ))}
-                  </div>
+                  <InteractiveBlueStarRating
+                    rating={surferRating}
+                    onRatingChange={setSurferRating}
+                    size={24}
+                  />
                 </div>
               )}
 
               {(surferRating > 0 || entry?.id) && (
                 <div className="step">
-                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    5. Add Comments
+                  <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      5
+                    </span>
+                    Add Comments
                   </h3>
                   <textarea
                     value={comments}
@@ -540,8 +653,11 @@ export function RaidLogForm({
 
               {(surferRating > 0 || entry?.id) && (
                 <div className="step">
-                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    6. Add Photo (Optional)
+                  <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      6
+                    </span>
+                    Add Photo (Optional)
                   </h3>
                   <div className="space-y-2">
                     <input
@@ -575,8 +691,11 @@ export function RaidLogForm({
 
               {(surferRating > 0 || entry?.id) && (
                 <div className="step">
-                  <h3 className="text-lg font-semibold mb-3 font-primary text-[var(--color-secondary)]">
-                    7. Add Video (Optional)
+                  <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      7
+                    </span>
+                    Add Video (Optional)
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -627,7 +746,10 @@ export function RaidLogForm({
               )}
 
               <div className="step border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 font-primary text-[var(--color-secondary)]">
+                <h3 className="text-[16px] font-semibold mb-4 font-primary text-[var(--color-primary)] flex items-center">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                    8
+                  </span>
                   Additional Options
                 </h3>
                 <div className="space-y-4">
@@ -639,7 +761,10 @@ export function RaidLogForm({
                       onChange={(e) => setIsAnonymous(e.target.checked)}
                       className="h-4 w-4"
                     />
-                    <label htmlFor="anonymous" className="font-primary">
+                    <label
+                      htmlFor="anonymous"
+                      className="font-primary text-[14px]"
+                    >
                       Post Anonymously
                     </label>
                   </div>
@@ -651,7 +776,10 @@ export function RaidLogForm({
                       onChange={(e) => setIsPrivate(e.target.checked)}
                       className="h-4 w-4"
                     />
-                    <label htmlFor="private" className="font-primary">
+                    <label
+                      htmlFor="private"
+                      className="font-primary text-[14px]"
+                    >
                       Keep Private
                     </label>
                   </div>
@@ -659,6 +787,7 @@ export function RaidLogForm({
               </div>
               <Button
                 type="submit"
+                variant="ghost"
                 disabled={
                   (!forecastData && !entry?.forecast) ||
                   !selectedBeach ||
@@ -666,12 +795,30 @@ export function RaidLogForm({
                   isSubmitting
                 }
                 className="w-full font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 py-2 mt-4"
+                onClick={(e) => {
+                  if (!session?.user) {
+                    e.preventDefault();
+                    saveFormState();
+                    toast.error("Please sign in to log your session", {
+                      action: {
+                        label: "Sign In",
+                        onClick: () =>
+                          signIn("google", {
+                            callbackUrl: `${window.location.origin}/raidlogs/new`,
+                          }),
+                      },
+                    });
+                    return;
+                  }
+                }}
               >
                 {isSubmitting
                   ? "Submitting..."
-                  : entry
-                    ? "Update Session"
-                    : "Log Session"}
+                  : !session?.user
+                    ? "Sign In to Log Session"
+                    : entry
+                      ? "Update Session"
+                      : "Log Session"}
               </Button>
             </div>
           </form>
