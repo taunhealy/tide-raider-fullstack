@@ -49,9 +49,22 @@ export const FILTERS: FilterConfig[] = [
     key: "optimalTide",
     type: "array",
     label: "Optimal Tide",
-    options: ["Low", "Mid", "High", "All", "Low to Mid", "Mid to High"],
+    options: [
+      "LOW",
+      "MID",
+      "HIGH",
+      "ALL",
+      "LOW_TO_MID",
+      "MID_TO_HIGH",
+      "UNKNOWN",
+    ],
     urlParam: "optimalTide",
     beachProp: "optimalTide",
+    displayNames: {
+      LOW: "Low",
+      MID: "Mid",
+      HIGH: "High",
+    },
   },
   {
     key: "bestSeasons",
@@ -92,5 +105,17 @@ export const FILTERS: FilterConfig[] = [
     step: 0.5,
     urlParam: "minPoints",
     beachProp: "id" as keyof Beach,
+  },
+  {
+    key: "hazards",
+    type: "array",
+    label: "Hazards",
+    options: ["ROCKS", "CURRENTS", "SHARKS", "JELLYFISH"],
+    urlParam: "hazards",
+    beachProp: "hazards",
+    displayNames: {
+      ROCKS: "Rocks",
+      CURRENTS: "Currents",
+    },
   },
 ];

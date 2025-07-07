@@ -7,6 +7,7 @@ import debounce from "lodash/debounce";
 import type { Beach } from "@/app/types/beaches";
 import { useId } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { useSearchParams } from "next/navigation";
 
 interface SearchBarProps {
   placeholder?: string;
@@ -17,6 +18,7 @@ export default function SearchBar({
   placeholder = "Search breaks...",
   className,
 }: SearchBarProps) {
+  const searchParams = useSearchParams();
   const { filters, selectBeach } = useBeachFilters();
   const [mounted, setMounted] = useState(false);
   const [localValue, setLocalValue] = useState("");
@@ -27,11 +29,21 @@ export default function SearchBar({
   const ignoreBlurRef = useRef(false);
   const searchId = useId();
 
+  // Update local value when URL search query changes
   useEffect(() => {
-    if (mounted && filters.searchQuery) {
-      setLocalValue(filters.searchQuery);
+    const urlSearchQuery = searchParams.get("searchQuery") || "";
+    setLocalValue(urlSearchQuery);
+  }, [searchParams]);
+
+  // Clear search when region changes
+  useEffect(() => {
+    const regionId = searchParams.get("regionId");
+    if (regionId !== filters.regionId) {
+      setLocalValue("");
+      setSearchResults([]);
+      setShowSuggestions(false);
     }
-  }, [mounted, filters.searchQuery]);
+  }, [searchParams, filters.regionId]);
 
   useEffect(() => {
     setMounted(true);

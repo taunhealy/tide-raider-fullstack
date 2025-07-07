@@ -15,7 +15,8 @@ export type FilterType =
   | "regionId"
   | "searchQuery"
   | "country"
-  | "continent";
+  | "continent"
+  | "hazards";
 
 // The complete filters interface that can be used across the app
 export interface Filters {
@@ -32,6 +33,7 @@ export interface Filters {
   minPoints: number;
   country: string;
   continent: string;
+  hazards: string[];
 }
 
 export interface FilterConfig {

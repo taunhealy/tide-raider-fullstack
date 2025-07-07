@@ -101,7 +101,6 @@ export const useBeachFilters = () => {
     if (!region) {
       // Clear all region-related params
       params.delete("regionId");
-      // Remove redundant params
       params.delete("region");
       params.delete("country");
       params.delete("continent");
@@ -115,6 +114,9 @@ export const useBeachFilters = () => {
       params.delete("country");
       params.delete("continent");
     }
+
+    // Always clear searchQuery when changing regions
+    params.delete("searchQuery");
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };

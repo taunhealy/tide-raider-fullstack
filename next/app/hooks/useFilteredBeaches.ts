@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { Beach, BeachInitialData } from "../types/beaches";
+import { useMemo } from "react";
 
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
@@ -26,10 +27,12 @@ export function useFilteredBeaches({
   const { filters } = useBeachFilters();
 
   return useQuery<UseFilteredBeachesResponse>({
-    queryKey: ["surfConditions", regionId],
+    queryKey: ["filteredBeaches", searchParams.toString()],
     queryFn: async () => {
-      const response = await fetch(`/api/surf-conditions?regionId=${regionId}`);
-      if (!response.ok) throw new Error("Failed to fetch conditions");
+      const response = await fetch(
+        `/api/filtered-beaches?${searchParams.toString()}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch filtered beaches");
       const data = await response.json();
 
       return {
