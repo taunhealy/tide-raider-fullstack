@@ -9,12 +9,8 @@
   },
   "crons": [
     {
-      "path": "/api/cron/expire-requests",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/daily-alerts",
-      "schedule": "1 0 * * *"
+      "path": "/api/cron/calculate-scores",
+      "schedule": "15 0 * * *"
     }
   ]
 }

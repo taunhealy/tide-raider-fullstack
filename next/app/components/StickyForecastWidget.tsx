@@ -10,7 +10,6 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
-import { useFilteredBeaches } from "../hooks/useFilteredBeaches";
 import { useSearchParams } from "next/navigation";
 
 // Register ScrollTrigger plugin
@@ -24,16 +23,22 @@ function generateId() {
 
 export default function StickyForecastWidget() {
   const widgetRef = useRef<HTMLDivElement>(null);
-  const { beachScores, isLoading } = useFilteredBeaches({
-    initialData: null,
-    enabled: true,
-  });
-
-  const forecastData = beachScores?.forecast?.forecastData || null;
-
   const searchParams = useSearchParams();
   const regionId = searchParams.get("regionId");
   const regionName = searchParams.get("region");
+
+  // Replace useFilteredBeaches with direct forecast query
+  const { data: forecastData, isLoading } = useQuery({
+    queryKey: ["forecast", regionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/forecast?regionId=${regionId}`);
+      if (!response.ok) throw new Error("Failed to fetch forecast");
+      return response.json();
+    },
+    enabled: !!regionId,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const { data: sponsors = [] } = useQuery({
@@ -115,50 +120,6 @@ export default function StickyForecastWidget() {
         ref={widgetRef}
         className="hidden md:flex fixed bottom-9 left-2 right-9 z-40 justify-center gap-2"
       >
-        {/* Sponsor Carousel */}
-        <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200 w-32">
-          <h4 className="text-sm font-semibold font-primary text-[var(--color-primary)] mb-2">
-            Sponsored by
-          </h4>
-          <div className="relative h-12">
-            {sponsors.length > 0 ? (
-              sponsors.map((sponsor: Sponsor, index: number) => (
-                <a
-                  key={sponsor.id}
-                  href={sponsor.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-sponsor-index={index}
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
-                    index === currentIndex ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  {!sponsor.logo ? (
-                    <span className="text-2xl">🐬</span>
-                  ) : (
-                    <img
-                      src={sponsor.logo}
-                      alt={sponsor.name}
-                      className="max-h-8 max-w-full object-contain"
-                    />
-                  )}
-                </a>
-              ))
-            ) : (
-              <a
-                href="https://www.kealogic.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                <span className="text-xs font-regular font-primary text-[var(--color-primary)] bg-cyan-50 px-3 py-1 rounded-full">
-                  Kea Logic
-                </span>
-              </a>
-            )}
-          </div>
-        </div>
-
         {/* Forecast Widget */}
         <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200 max-w-2xl">
           <div className="flex items-center justify-between mb-2">

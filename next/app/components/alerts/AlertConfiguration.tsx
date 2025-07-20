@@ -25,6 +25,7 @@ import {
   cardinalToDegreesMap,
   degreesToCardinal,
 } from "@/app/lib/directionUtils";
+import { useState } from "react";
 
 interface AlertConfigurationProps {
   isEmbedded?: boolean;
@@ -71,297 +72,132 @@ const defaultProperties = [
   },
 ];
 
-export function AlertConfiguration({
-  isEmbedded = false,
-}: AlertConfigurationProps) {
-  // Use the context directly
-  const {
-    alertConfig,
-    setAlertConfig,
-    selectedLogEntry,
-    properties,
-    updateProperty,
-    removeProperty,
-    addProperty,
-    getPropertyUnit,
-    getPropertyMaxRange,
-    getPropertyStep,
-    setProperties,
-    creationMode,
-    beachDetails,
-  } = useAlert();
+export function AlertConfiguration() {
+  const { alert, updateAlert, beachDetails } = useAlert();
+  const [properties, setProperties] = useState<typeof defaultProperties>([]);
 
-  // Get the appropriate max range and step for each property
-  const getPropertyConfig = (propertyId: string) => {
-    return {
-      maxRange: getPropertyMaxRange(propertyId),
-      step: getPropertyStep(propertyId),
-      unit: getPropertyUnit(propertyId),
-    };
-  };
-
-  // Update the useEffect to properly handle beach details
+  // Initialize properties from beach details only once
   useEffect(() => {
-    if (creationMode === "beachVariables" && beachDetails) {
-      // Convert cardinal wind direction to degrees
-      const windDegrees = beachDetails.optimalWindDirections?.[0]
-        ? cardinalToDegreesMap[beachDetails.optimalWindDirections[0]]
-        : 0;
+    if (!beachDetails) return;
 
-      const initialProperties = [
-        {
-          property: "windSpeed" as ForecastProperty,
-          range: 2,
-          optimalValue: 0, // Wind speed is not stored in beach data
-        },
-        {
-          property: "windDirection" as ForecastProperty,
-          range: 10,
-          optimalValue: windDegrees,
-        },
-        {
-          property: "swellHeight" as ForecastProperty,
-          range: 0.2,
-          optimalValue:
-            (beachDetails.swellSize.min + beachDetails.swellSize.max) / 2,
-        },
-        {
-          property: "swellPeriod" as ForecastProperty,
-          range: 1,
-          optimalValue:
-            (beachDetails.idealSwellPeriod.min +
-              beachDetails.idealSwellPeriod.max) /
-            2,
-        },
-        {
-          property: "swellDirection" as ForecastProperty,
-          range: 10,
-          optimalValue:
-            (beachDetails.optimalSwellDirections.min +
-              beachDetails.optimalSwellDirections.max) /
-            2,
-        },
-      ];
-      setProperties(initialProperties);
+    const initialProperties = [
+      {
+        property: "windSpeed" as ForecastProperty,
+        range: 2,
+        optimalValue: 10,
+      },
+      {
+        property: "windDirection" as ForecastProperty,
+        range: 10,
+        // Take first optimal wind direction or default to 0
+        optimalValue: beachDetails.optimalWindDirections?.[0]
+          ? Number(beachDetails.optimalWindDirections[0])
+          : 0,
+      },
+      {
+        property: "swellHeight" as ForecastProperty,
+        range: 0.2,
+        // Use average of min/max swell size
+        optimalValue:
+          typeof beachDetails.swellSize === "object"
+            ? (Number(beachDetails.swellSize.min) +
+                Number(beachDetails.swellSize.max)) /
+              2
+            : 1,
+      },
+      {
+        property: "swellPeriod" as ForecastProperty,
+        range: 1,
+        // Use average of ideal swell period
+        optimalValue:
+          typeof beachDetails.idealSwellPeriod === "object"
+            ? (Number(beachDetails.idealSwellPeriod.min) +
+                Number(beachDetails.idealSwellPeriod.max)) /
+              2
+            : 10,
+      },
+      {
+        property: "swellDirection" as ForecastProperty,
+        range: 10,
+        // Take first optimal swell direction or default to 0
+        optimalValue:
+          typeof beachDetails.optimalSwellDirections === "object"
+            ? Number(beachDetails.optimalSwellDirections.min)
+            : 0,
+      },
+    ];
+
+    setProperties(initialProperties);
+  }, [beachDetails]); // Remove updateAlert from dependencies
+
+  const getConfig = (prop: ForecastProperty) =>
+    ({
+      windSpeed: { maxRange: 15, step: 1, unit: "knots", label: "Wind Speed" },
+      windDirection: {
+        maxRange: 360,
+        step: 1,
+        unit: "°",
+        label: "Wind Direction",
+      },
+      swellHeight: { maxRange: 5, step: 0.1, unit: "m", label: "Swell Height" },
+      swellPeriod: {
+        maxRange: 20,
+        step: 0.1,
+        unit: "s",
+        label: "Swell Period",
+      },
+      swellDirection: {
+        maxRange: 360,
+        step: 1,
+        unit: "°",
+        label: "Swell Direction",
+      },
+    })[prop];
+
+  const formatValue = (value: number, property: ForecastProperty) => {
+    const config = getConfig(property);
+    if (property.includes("Direction")) {
+      return `${value}° (${degreesToCardinal(value)})`;
     }
-  }, [beachDetails, creationMode, setProperties]);
-
-  const handlePropertyUpdate = (
-    index: number,
-    key: "property" | "range" | "optimalValue",
-    value: ForecastProperty | number
-  ) => {
-    updateProperty({ index, key, value });
+    return `${value}${config.unit}`;
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="font-primary">Alert Conditions</CardTitle>
-        <CardDescription className="font-primary">
-          Set up alerts for specific surf conditions
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <Label className="text-lg font-semibold font-primary text-gray-600">
-              Forecast Properties
-            </Label>
+    <Card>
+      {properties.map((prop, index) => (
+        <div
+          key={index}
+          className="p-4 rounded-lg border border-gray-200 bg-white space-y-2"
+        >
+          <div className="flex justify-between">
+            <Label>{getConfig(prop.property).label}</Label>
+            <span className="text-sm text-gray-500">
+              {formatValue(prop.optimalValue, prop.property)}
+            </span>
           </div>
-
-          <div className="space-y-4">
-            {(properties.length > 0 ? properties : defaultProperties).map(
-              (prop, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-lg border border-gray-200 bg-white"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <Label className="font-primary text-gray-700">
-                      {prop.property === "windSpeed"
-                        ? "Wind Speed"
-                        : prop.property === "windDirection"
-                          ? "Wind Direction"
-                          : prop.property === "swellHeight"
-                            ? "Swell Height"
-                            : prop.property === "swellPeriod"
-                              ? "Swell Period"
-                              : "Swell Direction"}
-                    </Label>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label className="font-primary text-sm text-gray-600">
-                        Optimal Value
-                      </Label>
-                      <span className="text-sm text-gray-500 font-primary">
-                        {prop.property.includes("Direction")
-                          ? `${degreesToCardinal(prop.optimalValue)} (${prop.optimalValue}°)`
-                          : `${prop.optimalValue} ${getPropertyUnit(prop.property)}`}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[prop.optimalValue || 0]}
-                      onValueChange={(value) =>
-                        handlePropertyUpdate(index, "optimalValue", value[0])
-                      }
-                      max={getPropertyConfig(prop.property).maxRange * 2}
-                      step={getPropertyConfig(prop.property).step}
-                      className="[&>span]:bg-[var(--color-primary)]"
-                    />
-                  </div>
-
-                  <div className="space-y-2 mt-4">
-                    <div className="flex justify-between">
-                      <Label className="font-primary text-sm text-gray-600">
-                        Accuracy Range
-                      </Label>
-                      <span className="text-sm text-gray-500 font-primary">
-                        ±{prop.range} {getPropertyUnit(prop.property)}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[prop.range]}
-                      onValueChange={(value) =>
-                        handlePropertyUpdate(index, "range", value[0])
-                      }
-                      max={getPropertyConfig(prop.property).maxRange}
-                      step={getPropertyConfig(prop.property).step}
-                      className="[&>span]:bg-[var(--color-tertiary)]"
-                    />
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="font-primary">Notification Method</Label>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="app-notification"
-                checked={alertConfig.notificationMethod === "app"}
-                onChange={(e) => {
-                  if ((e.target as HTMLInputElement).checked) {
-                    setAlertConfig({
-                      ...alertConfig,
-                      notificationMethod: "app" as NotificationMethod,
-                      contactInfo: "app-notification",
-                    });
-                  }
-                }}
-              />
-              <Label
-                htmlFor="app-notification"
-                className="font-primary cursor-pointer"
-              >
-                In-App Notification
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="email-notification"
-                checked={alertConfig.notificationMethod === "email"}
-                onChange={(e) => {
-                  if ((e.target as HTMLInputElement).checked) {
-                    setAlertConfig({
-                      ...alertConfig,
-                      notificationMethod: "email" as NotificationMethod,
-                    });
-                  }
-                }}
-              />
-              <Label
-                htmlFor="email-notification"
-                className="font-primary cursor-pointer"
-              >
-                Email
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="whatsapp-notification"
-                checked={alertConfig.notificationMethod === "whatsapp"}
-                disabled={true}
-                onChange={(e) => {
-                  if ((e.target as HTMLInputElement).checked) {
-                    setAlertConfig({
-                      ...alertConfig,
-                      notificationMethod: "whatsapp" as NotificationMethod,
-                    });
-                  }
-                }}
-              />
-              <Label
-                htmlFor="whatsapp-notification"
-                className="font-primary cursor-pointer text-gray-400"
-              >
-                WhatsApp (Coming Soon)
-              </Label>
-            </div>
-
-            {alertConfig.notificationMethod === "email" && (
-              <div className="mt-2">
-                <Label
-                  htmlFor="contact-info"
-                  className="font-primary mb-1 block"
-                >
-                  Email Address
-                </Label>
-                <input
-                  id="contact-info"
-                  type="email"
-                  value={alertConfig.contactInfo || ""}
-                  onChange={(e) => {
-                    setAlertConfig({
-                      ...alertConfig,
-                      contactInfo: e.target.value,
-                    });
-                  }}
-                  placeholder="Enter your email address"
-                  className="w-full p-2 border rounded-md font-primary"
-                  required
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="active"
-            checked={alertConfig.active}
-            onChange={(e) =>
-              setAlertConfig({
-                ...alertConfig,
-                active: (e.target as HTMLInputElement).checked,
-              })
-            }
-          />
-          <Label htmlFor="active" className="font-primary">
-            Alert Active
-          </Label>
-        </div>
-      </CardContent>
-
-      {!isEmbedded && (
-        <CardFooter>
-          <Button
-            onClick={() => {
-              // No need for onSave since we're directly updating the context
+          <Slider
+            value={[prop.optimalValue]}
+            onValueChange={([value]) => {
+              const newProps = [...properties];
+              newProps[index] = { ...prop, optimalValue: value };
+              setProperties(newProps);
+              // Update alert context only when slider changes
+              updateAlert({
+                properties: { create: newProps },
+              });
             }}
-            className="w-full font-primary"
-          >
-            Save Alert
-          </Button>
-        </CardFooter>
-      )}
+            max={getConfig(prop.property).maxRange}
+            step={getConfig(prop.property).step}
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>0{getConfig(prop.property).unit}</span>
+            <span>
+              {getConfig(prop.property).maxRange}
+              {getConfig(prop.property).unit}
+            </span>
+          </div>
+        </div>
+      ))}
     </Card>
   );
 }

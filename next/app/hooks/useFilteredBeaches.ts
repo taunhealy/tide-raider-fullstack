@@ -1,8 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
-import { Beach, BeachInitialData } from "../types/beaches";
-import { useMemo } from "react";
-
+import { BeachInitialData } from "../types/beaches";
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
 
@@ -14,43 +11,36 @@ interface UseFilteredBeachesProps {
 interface UseFilteredBeachesResponse {
   beaches: any[];
   scores: Record<string, any>;
-  forecastData: CoreForecastData;
-  isLoading: boolean;
+  forecastData: CoreForecastData | null;
 }
 
 export function useFilteredBeaches({
   initialData,
   enabled = true,
 }: UseFilteredBeachesProps) {
-  const searchParams = useSearchParams();
-  const regionId = searchParams.get("regionId");
   const { filters } = useBeachFilters();
 
   return useQuery<UseFilteredBeachesResponse>({
-    queryKey: ["filteredBeaches", searchParams.toString()],
+    queryKey: ["filteredBeaches", filters], // React to filter changes
     queryFn: async () => {
-      const response = await fetch(
-        `/api/filtered-beaches?${searchParams.toString()}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch filtered beaches");
-      const data = await response.json();
-
-      return {
-        beaches: data.beaches || [],
-        scores: data.scores || {},
-        forecastData: data.forecastData || null,
-        isLoading: false,
-      };
-    },
-    enabled: enabled && !!regionId,
-    staleTime: 1000 * 60 * 5,
-    initialData: initialData
-      ? {
-          beaches: initialData.beaches,
-          scores: initialData.scores,
-          forecastData: initialData.forecast || null,
-          isLoading: false,
+      // Convert filters to URLSearchParams
+      const params = new URLSearchParams();
+      
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          if (Array.isArray(value)) {
+            if (value.length) params.set(key, value.join(','));
+          } else {
+            params.set(key, String(value));
+          }
         }
-      : undefined,
+      });
+
+      const response = await fetch(`/api/filtered-beaches?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch filtered beaches");
+      return response.json();
+    },
+    enabled: enabled && !!filters.regionId, // Use filters.regionId instead
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

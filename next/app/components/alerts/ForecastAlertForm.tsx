@@ -205,16 +205,22 @@ function AlertFormHeader() {
 
 function AlertFormBody({ logEntry }: { logEntry?: LogEntry | null }) {
   const { alert, updateAlert, mode, setMode, beachDetails } = useAlert();
-  const { data: beaches } = useQuery({
-    queryKey: ["beaches", alert.region?.connect?.id],
+  // Add state for search
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
+
+  // Replace the beaches query with a search query
+  const { data: beaches, isLoading } = useQuery({
+    queryKey: ["beaches-search", debouncedSearch],
     queryFn: async () => {
+      if (!debouncedSearch || debouncedSearch.length < 2) return [];
       const response = await fetch(
-        `/api/beaches?regionId=${alert.region?.connect?.id}`
+        `/api/beaches/search?term=${encodeURIComponent(debouncedSearch)}`
       );
       if (!response.ok) throw new Error("Failed to fetch beaches");
       return response.json();
     },
-    enabled: !!alert.region?.connect?.id,
+    enabled: debouncedSearch.length >= 2,
   });
 
   return (
@@ -278,22 +284,52 @@ function AlertFormBody({ logEntry }: { logEntry?: LogEntry | null }) {
       {mode === "beachVariables" && (
         <div className="space-y-4">
           <Label>Select Beach</Label>
-          <Select
-            onValueChange={(beachId: string) =>
-              updateAlert({ region: { connect: { id: beachId } } })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Search beaches..." />
-            </SelectTrigger>
-            <SelectContent>
-              {beaches?.map((beach: { id: string; name: string }) => (
-                <SelectItem key={beach.id} value={beach.id}>
-                  {beach.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search beaches..."
+              className="w-full"
+            />
+            {isLoading && (
+              <div className="absolute right-3 top-2.5">
+                <Skeleton className="h-4 w-4 rounded-full" />
+              </div>
+            )}
+            {beaches && beaches.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
+                <ScrollArea className="max-h-[200px]">
+                  {beaches.map(
+                    (beach: { id: string; name: string; regionId: string }) => (
+                      <button
+                        key={beach.id}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100"
+                        onClick={() => {
+                          // Log the beach data to verify what we're getting
+                          console.log("Selected beach:", beach);
+
+                          // Update both region and beach
+                          updateAlert({
+                            region: { connect: { id: beach.regionId } },
+                            beach: { connect: { id: beach.id } },
+                          });
+
+                          // Update the search input
+                          setSearchTerm(beach.name);
+
+                          // Close the dropdown by clearing the beaches data
+                          // Add state to control dropdown visibility
+                          // setDropdownVisible(false); // Add this state
+                        }}
+                      >
+                        {beach.name}
+                      </button>
+                    )
+                  )}
+                </ScrollArea>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

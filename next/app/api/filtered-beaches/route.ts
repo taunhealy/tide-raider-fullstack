@@ -23,9 +23,14 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Handle array parameters properly
+    const crimeLevelParam = searchParams.get("crimeLevel");
+    const crimeLevels = crimeLevelParam
+      ? (crimeLevelParam.split(",") as CrimeLevel[])
+      : undefined;
+
     const whereClause = {
       regionId,
-      // Search query filter
       ...(searchQuery && {
         OR: [
           {
@@ -39,15 +44,16 @@ export async function GET(request: Request) {
           },
         ],
       }),
-      // Sidebar filters
       ...(searchParams.get("optimalTide") && {
         optimalTide: searchParams.get("optimalTide") as OptimalTide,
       }),
       ...(searchParams.get("waveType") && {
         waveType: searchParams.get("waveType") as WaveType,
       }),
-      ...(searchParams.get("crimeLevel") && {
-        crimeLevel: searchParams.get("crimeLevel") as CrimeLevel,
+      ...(crimeLevels && {
+        crimeLevel: {
+          in: crimeLevels, // Use the properly split array
+        },
       }),
       ...(searchParams.get("bestSeasons") && {
         bestSeasons: {
@@ -64,18 +70,78 @@ export async function GET(request: Request) {
       }),
     };
 
+    // Get current date at midnight UTC
+    const currentDate = new Date();
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    // Fetch beaches with their daily scores
     const beaches = await prisma.beach.findMany({
       where: whereClause,
       include: {
         region: true,
         beachDailyScores: {
-          where: { date: new Date() },
-          select: { score: true, conditions: true },
+          where: { date: currentDate },
+          select: {
+            score: true,
+            conditions: true,
+            date: true,
+          },
         },
       },
     });
 
-    return NextResponse.json({ beaches });
+    // Transform scores into a flat dictionary
+    const scores = beaches.reduce(
+      (acc: Record<string, { score: number; forecastData: any }>, beach) => {
+        if (beach.beachDailyScores.length > 0) {
+          const dailyScore = beach.beachDailyScores[0];
+          acc[beach.id] = {
+            score: dailyScore.score,
+            forecastData: dailyScore.conditions
+              ? {
+                  id: beach.id,
+                  regionId: beach.regionId,
+                  date: dailyScore.date.toISOString(),
+                  ...(dailyScore.conditions as Record<string, unknown>), // Spread conditions safely
+                }
+              : null,
+          };
+        } else {
+          acc[beach.id] = {
+            score: 0,
+            forecastData: null,
+          };
+        }
+        return acc;
+      },
+      {}
+    );
+
+    // Get regional forecast data
+    const forecastData = await prisma.forecastA.findFirst({
+      where: {
+        regionId,
+        date: currentDate,
+      },
+      select: {
+        windSpeed: true,
+        windDirection: true,
+        swellHeight: true,
+        swellPeriod: true,
+        swellDirection: true,
+      },
+    });
+
+    // Return transformed data structure
+    return NextResponse.json({
+      beaches: beaches.map((beach) => {
+        // Remove the nested scores and keep other beach properties
+        const { beachDailyScores, ...beachData } = beach;
+        return beachData;
+      }),
+      scores,
+      forecastData,
+    });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

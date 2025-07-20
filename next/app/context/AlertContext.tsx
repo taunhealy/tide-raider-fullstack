@@ -10,9 +10,13 @@ import { LogEntry } from "@/app/types/raidlogs";
 import { useSession } from "next-auth/react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
-import { useMutation, UseMutationResult, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  UseMutationResult,
+  useQuery,
+} from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { BeachDetails } from "../types/alerts";
+import { BeachDetails, ForecastProperty } from "../types/alerts";
 
 // Use Prisma's type instead:
 type CreateAlertInput = Prisma.AlertCreateInput;
@@ -70,13 +74,29 @@ interface AlertProviderProps {
 // Add after imports
 interface AlertContextType {
   alert: Prisma.AlertCreateInput;
-  mode: "logEntry" | "beachVariables";
-  beachDetails: BeachDetails | null;
   updateAlert: (data: Partial<Prisma.AlertCreateInput>) => void;
-  setMode: (mode: "logEntry" | "beachVariables") => void;
   createAlert: UseMutationResult<any, Error, Prisma.AlertCreateInput>;
-  updateAlertMutation: UseMutationResult<any, Error, Prisma.AlertUpdateInput>;
+  beachDetails: BeachDetails | null;
   onClose: () => void;
+  mode: "logEntry" | "beachVariables";
+  setMode: (mode: "logEntry" | "beachVariables") => void;
+  updateAlertMutation: UseMutationResult<any, Error, Prisma.AlertUpdateInput>;
+  properties: Array<{
+    property:
+      | "windSpeed"
+      | "windDirection"
+      | "swellHeight"
+      | "swellPeriod"
+      | "swellDirection";
+    range: number;
+    optimalValue: number;
+  }>;
+  removeProperty: (index: number) => void;
+  updateProperty: (params: {
+    index: number;
+    key: "property" | "range" | "optimalValue";
+    value: ForecastProperty | number;
+  }) => void;
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
@@ -95,12 +115,15 @@ export function AlertProvider({
   });
 
   const { data: beachDetails } = useQuery({
-    queryKey: ["beach", state.alert.region?.connect?.id],
-    queryFn: () =>
-      fetch(`/api/beaches/${state.alert.region?.connect?.id}`).then((r) =>
-        r.json()
-      ),
-    enabled: !!state.alert.region?.connect?.id,
+    queryKey: ["beach", state.alert.beach?.connect?.id],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/beaches/${encodeURIComponent(state.alert.beach?.connect?.beach.id)}/`
+      );
+      if (!response.ok) throw new Error("Failed to fetch beach details");
+      return response.json();
+    },
+    enabled: !!state.alert.beach?.connect?.id,
   });
 
   const createAlert = useMutation({
@@ -144,6 +167,45 @@ export function AlertProvider({
 
         // Utils
         onClose,
+        properties: Array.isArray(state.alert.properties?.create)
+          ? state.alert.properties.create.map((prop) => ({
+              property: prop.property as
+                | "windSpeed"
+                | "windDirection"
+                | "swellHeight"
+                | "swellPeriod"
+                | "swellDirection",
+              range: Number(prop.range),
+              optimalValue: Number(prop.optimalValue),
+            }))
+          : [],
+        removeProperty: (index: number) => {
+          const newProperties = Array.isArray(state.alert.properties?.create)
+            ? [...state.alert.properties.create]
+            : [];
+          newProperties.splice(index, 1);
+          dispatch({
+            type: "UPDATE_ALERT",
+            payload: { properties: { create: newProperties } },
+          });
+        },
+        updateProperty: (params: {
+          index: number;
+          key: "property" | "range" | "optimalValue";
+          value: ForecastProperty | number;
+        }) => {
+          const newProperties = Array.isArray(state.alert.properties?.create)
+            ? [...state.alert.properties.create]
+            : [];
+          newProperties[params.index] = {
+            ...newProperties[params.index],
+            [params.key]: params.value,
+          };
+          dispatch({
+            type: "UPDATE_ALERT",
+            payload: { properties: { create: newProperties } },
+          });
+        },
       }}
     >
       {children}
