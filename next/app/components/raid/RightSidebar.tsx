@@ -8,6 +8,7 @@ import FunFacts from "../FunFacts";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
+import Sponsors from "../Sponsors";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -152,6 +153,7 @@ export default function RightSidebar() {
           selectedRegion={filters.regionId}
         />
       )}
+      <Sponsors/>
       <AdventureExperiences
         selectedRegion={filters.region || filters.regionId || ""}
       />
