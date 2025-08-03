@@ -8,6 +8,7 @@ import FilterSidebar from "../filters/FiltersSidebar";
 import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter } from "@/app/types/filters";
+import { useRegionCounts } from "@/app/hooks/useRegionCounts";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -20,6 +21,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
   const searchParams = useSearchParams();
+  const { data: regionCountsData } = useRegionCounts();
 
   return (
     <>
@@ -31,7 +33,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
               <div className="flex flex-col w-full sm:w-auto flex-1 gap-3">
                 <SearchBar />
-                <RecentRegionSearch />
+                <RecentRegionSearch regionCounts={regionCountsData} />
               </div>
               <FilterToggleButton
                 isActive={showFilters}

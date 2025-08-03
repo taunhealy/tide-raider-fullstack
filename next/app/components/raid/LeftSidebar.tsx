@@ -40,7 +40,7 @@ export default function LeftSidebar() {
   console.log("Regions data:", regions);
 
   return (
-    <aside className="hidden lg:block lg:w-[250px] xl:w-[300px] flex-shrink-0 mt-5">
+    <aside className="hidden lg:block lg:w-[200px] xl:w-[220px] flex-shrink-0 mt-5">
       <div className="hidden lg:block space-y-3">
         <LocationFilter regions={regions} />
         <BlogPostsSidebar

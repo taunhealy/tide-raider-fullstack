@@ -7,21 +7,19 @@ export const metadata: Metadata = {
   description: "Find the best surf spots in your area",
 };
 
-export default async function RaidPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const urlSearchParams = new URLSearchParams();
+type RaidPageProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
+export default async function RaidPage({ searchParams = {} }: RaidPageProps) {
   // Convert searchParams to URLSearchParams
+  const urlSearchParams = new URLSearchParams();
   Object.entries(searchParams).forEach(([key, value]) => {
     if (typeof value === "string") {
       urlSearchParams.append(key, value);
     }
   });
 
-  // Get initial data
   const initialData = searchParams.regionId
     ? await BeachService.getFilteredBeaches(urlSearchParams)
     : null;

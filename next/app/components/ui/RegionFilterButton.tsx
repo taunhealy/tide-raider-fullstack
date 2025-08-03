@@ -16,6 +16,14 @@ export default function RegionFilterButton({
   onClick,
   count,
 }: RegionFilterButtonProps) {
+  console.log(
+    "RegionFilterButton render:",
+    region.id,
+    region.name,
+    "count:",
+    count
+  );
+
   return (
     <button
       onClick={() => {
@@ -38,8 +46,8 @@ export default function RegionFilterButton({
       {count > 0 && (
         <span
           className={cn(
-            "text-xs px-1.5 rounded-full",
-            isSelected ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
+            "ml-2 text-xs rounded-full px-2 py-0.5",
+            isSelected ? "bg-white text-black" : "bg-gray-100 text-gray-600"
           )}
         >
           {count}
@@ -47,7 +55,7 @@ export default function RegionFilterButton({
       )}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-t-transparent border-[var(--color-tertiary)] rounded-full animate-spin"></div>
+          <div className="w-4 h-4 border-2 border-t-transparent border-[var(--color-primary)] rounded-full animate-spin"></div>
         </div>
       )}
     </button>

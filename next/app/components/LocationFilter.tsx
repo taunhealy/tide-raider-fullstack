@@ -1,6 +1,6 @@
 "use client";
 
-import { useRegionCounts } from "@/app/hooks/useRegionScores";
+import { useRegionCounts } from "@/app/hooks/useRegionCounts";
 import { FilterHeader } from "./ui/FilterHeader";
 import RegionFilterButton from "./ui/RegionFilterButton";
 import type { Region } from "@/app/types/beaches";
@@ -47,6 +47,14 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
     console.log("Regions data:", regions);
     console.log("Current region ID:", filters.regionId);
   }, [regions, filters.regionId]);
+
+  useEffect(() => {
+    console.log("regionCountsData", regionCountsData);
+    console.log(
+      "region.id",
+      regions.map((r) => r.id)
+    );
+  }, [regionCountsData, regions]);
 
   const filteredRegions = useMemo(() => {
     const query = searchQuery.toLowerCase();

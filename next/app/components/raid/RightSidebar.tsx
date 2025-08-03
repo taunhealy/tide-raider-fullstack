@@ -4,7 +4,6 @@ import { useBeachData } from "@/app/hooks/useBeachData";
 import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
-import RegionalSidebar from "../RegionalServicesSidebar";
 import FunFacts from "../FunFacts";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
@@ -156,7 +155,7 @@ export default function RightSidebar() {
       <AdventureExperiences
         selectedRegion={filters.region || filters.regionId || ""}
       />
-      <RegionalSidebar />
+      {/* regionalSidebar removed */}
       <FunFacts />
     </aside>
   );

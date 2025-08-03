@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -57,12 +58,18 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   });
   const queryClient = useQueryClient();
 
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const beaches = data?.beaches || [];
   const beachScores = data?.scores || {};
   const forecastData = data?.forecastData ?? null;
 
   const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
-    updateFilter("regionId", regionId || ""); // Convert null to empty string
+    updateFilter("regionId", regionId || "");
+    // Reset to first page when region changes
+    setCurrentPage(1);
   };
 
   const sortedBeaches = useMemo(() => {
@@ -74,6 +81,25 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       }) ?? []
     );
   }, [beaches, beachScores]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedBeaches.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBeaches = sortedBeaches.slice(startIndex, endIndex);
+
+  // Reset to first page if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of beach list
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -87,13 +113,13 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   }, [initialData]);
 
   return (
-    <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px]">
+    <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 lg:p-8 xl:p-12 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] max-w-7xl mx-auto w-full">
         <Suspense fallback={<SidebarSkeleton />}>
           <LeftSidebar />
         </Suspense>
 
-        <div className="grid grid-cols-1 p-9 xl:grid-cols-[1fr_400px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
+        <div className="grid grid-cols-1 p-9 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
             <BeachHeaderControls
               onSearch={(value) => updateFilter("searchQuery", value)}
@@ -109,7 +135,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                 <EmptyState message="No beaches found in this region" />
               ) : (
                 <div>
-                  {sortedBeaches.map((beach: Beach) => (
+                  {currentBeaches.map((beach: Beach) => (
                     <BeachCard
                       key={beach.id}
                       beach={beach}
@@ -118,6 +144,61 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                       isLoading={!beachScores[beach.id]?.score}
                     />
                   ))}
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from(
+                          { length: totalPages },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <Button
+                            key={page}
+                            variant={
+                              currentPage === page ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => handlePageChange(page)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1"
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Page Info */}
+                  {totalPages > 1 && (
+                    <div className="text-center text-sm text-gray-600 mb-4">
+                      Showing {startIndex + 1}-
+                      {Math.min(endIndex, sortedBeaches.length)} of{" "}
+                      {sortedBeaches.length} beaches
+                    </div>
+                  )}
                 </div>
               )}
             </div>

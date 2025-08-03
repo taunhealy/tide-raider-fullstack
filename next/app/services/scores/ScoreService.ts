@@ -500,7 +500,7 @@ export class ScoreService {
       by: ["regionId"],
       where: {
         date: normalizedDate,
-        score: { gte: 4 },
+        score: { gte: 8 },
       },
       _count: {
         beachId: true,

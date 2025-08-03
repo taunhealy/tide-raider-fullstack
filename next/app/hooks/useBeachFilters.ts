@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useCallback } from "react";
 import { Beach, Region } from "@/app/types/beaches";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";

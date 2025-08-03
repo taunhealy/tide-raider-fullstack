@@ -14,7 +14,7 @@ export function useBeachCounts(
 
       const today = new Date().toISOString().split("T")[0];
       const response = await fetch(
-        `/api/beach-counts?region=${encodeURIComponent(selectedRegion)}&date=${today}`
+        `/api/beach-ratings/region-counts?region=${encodeURIComponent(selectedRegion)}&date=${today}`
       );
       const data = await response.json();
 

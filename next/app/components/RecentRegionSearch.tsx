@@ -7,10 +7,12 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface RecentRegionSearchProps {
   className?: string;
+  regionCounts?: Record<string, number>;
 }
 
 export default function RecentRegionSearch({
   className,
+  regionCounts,
 }: RecentRegionSearchProps) {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -143,6 +145,7 @@ export default function RecentRegionSearch({
           isSelected,
         });
         const isLoading = loadingId === search.id;
+        const count = regionCounts?.[search.region.id] || 0;
 
         return (
           <button
@@ -152,16 +155,27 @@ export default function RecentRegionSearch({
             disabled={loadingId !== null}
             className={cn(
               "px-3 py-1.5 text-sm rounded-full",
-              "bg-white border border-gray-200",
-              "hover:bg-[var(--color-bg-tertiary)] transition-colors",
-              "font-primary text-[var(--color-text-primary)]",
-              "flex items-center gap-2",
+              "border border-gray-200",
+              "font-primary flex items-center gap-2",
               isLoading && "cursor-wait opacity-70",
-              isSelected &&
-                "bg-[var(--color-bg-tertiary)] text-white border-transparent"
+              isSelected
+                ? "bg-[var(--color-bg-tertiary)] text-white border-transparent"
+                : "bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] transition-colors"
             )}
           >
             {search.region.name}
+            {count > 0 && (
+              <span
+                className={cn(
+                  "ml-2 text-xs rounded-full px-2 py-0.5",
+                  isSelected
+                    ? "bg-white text-black" // Active: grey bg, black text
+                    : "bg-gray-100 text-gray-600" // Inactive: lighter bg, gray text
+                )}
+              >
+                {count}
+              </span>
+            )}
           </button>
         );
       })}
