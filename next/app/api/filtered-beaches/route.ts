@@ -90,35 +90,29 @@ export async function GET(request: Request) {
       },
     });
 
-    // Transform scores into a flat dictionary
+    // Transform scores into a flat dictionary, ensuring the full beach object is included.
     const scores = beaches.reduce(
-      (acc: Record<string, { score: number; forecastData: any }>, beach) => {
-        if (beach.beachDailyScores.length > 0) {
-          const dailyScore = beach.beachDailyScores[0];
-          acc[beach.id] = {
-            score: dailyScore.score,
-            forecastData: dailyScore.conditions
-              ? {
-                  id: beach.id,
-                  regionId: beach.regionId,
-                  date: dailyScore.date.toISOString(),
-                  ...(dailyScore.conditions as Record<string, unknown>), // Spread conditions safely
-                }
-              : null,
-          };
-        } else {
-          acc[beach.id] = {
-            score: 0,
-            forecastData: null,
-          };
-        }
+      (
+        acc: Record<string, { score: number; beach: (typeof beaches)[number] }>,
+        beach
+      ) => {
+        const dailyScore =
+          beach.beachDailyScores.length > 0 ? beach.beachDailyScores[0] : null;
+        acc[beach.id] = {
+          score: dailyScore?.score ?? 0,
+          beach: {
+            ...beach,
+            beachDailyScores: dailyScore ? [dailyScore] : [], // Ensure beachDailyScores is an array
+          },
+        };
         return acc;
       },
       {}
     );
 
     // Get regional forecast data
-    const forecastData = await prisma.forecastA.findFirst({
+    const forecast = await prisma.forecastA.findFirst({
+      // Renamed forecastData to forecast
       where: {
         regionId,
         date: currentDate,
@@ -140,7 +134,8 @@ export async function GET(request: Request) {
         return beachData;
       }),
       scores,
-      forecastData,
+      forecast, // Changed forecastData to forecast
+      totalCount: beaches.length, // Added totalCount
     });
   } catch (error) {
     console.error("API Error:", error);

@@ -22,29 +22,7 @@ import type { Beach, BeachInitialData } from "@/app/types/beaches";
 
 import { LocationFilter } from "../types/filters";
 
-// Add this helper function at the top of the file
-const getBeachForecastData = (
-  beach: Beach,
-  beachScores: Record<string, any>
-) => {
-  const score = beachScores[beach.id]?.score ?? 0;
-
-  // Extract forecast data or return null if unavailable
-  const conditions =
-    beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.conditions;
-  const date = beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.date;
-
-  const forecastData = conditions
-    ? {
-        id: beach.id,
-        regionId: beach.regionId,
-        date: date ? new Date(date) : new Date(),
-        ...conditions,
-      }
-    : null;
-
-  return { score, forecastData };
-};
+// Remove the getBeachForecastData helper function
 
 interface BeachContainerProps {
   initialData: BeachInitialData | null;
@@ -64,7 +42,19 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
   const beaches = data?.beaches || [];
   const beachScores = data?.scores || {};
-  const forecastData = data?.forecastData ?? null;
+  const forecast = data?.forecast ?? null; // Regional forecast
+  const totalCount = data?.totalCount || 0; // Added totalCount
+
+  // Add console logs for debugging
+  useEffect(() => {
+    if (data) {
+      console.log("Data from useFilteredBeaches:", data);
+      console.log("Extracted beaches:", beaches);
+      console.log("Extracted beachScores:", beachScores);
+      console.log("Extracted regional forecast:", forecast);
+      console.log("Extracted totalCount:", totalCount);
+    }
+  }, [data, beaches, beachScores, forecast, totalCount]);
 
   const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
     updateFilter("regionId", regionId || "");
@@ -135,15 +125,28 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                 <EmptyState message="No beaches found in this region" />
               ) : (
                 <div>
-                  {currentBeaches.map((beach: Beach) => (
-                    <BeachCard
-                      key={beach.id}
-                      beach={beach}
-                      score={beachScores[beach.id]?.score ?? 0}
-                      forecastData={beachScores[beach.id]?.forecastData ?? null}
-                      isLoading={!beachScores[beach.id]?.score}
-                    />
-                  ))}
+                  {currentBeaches.map((beach: Beach) => {
+                    const score = beachScores[beach.id]?.score ?? 0;
+                    // Directly use the regional forecast
+                    const beachForecastData = forecast; // Renamed to avoid confusion
+
+                    // Add console logs for debugging each beach card's data
+                    console.log(`Rendering beach ${beach.name} with data:`, {
+                      beachId: beach.id,
+                      score,
+                      forecastData: beachForecastData,
+                      isLoading: !score && isLoading,
+                    });
+                    return (
+                      <BeachCard
+                        key={beach.id}
+                        beach={beach}
+                        score={score}
+                        forecastData={beachForecastData} // Pass the regional forecast
+                        isLoading={!score && isLoading} // Adjust isLoading condition
+                      />
+                    );
+                  })}
 
                   {/* Pagination Controls */}
                   {totalPages > 1 && (

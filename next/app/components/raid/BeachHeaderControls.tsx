@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
-import FilterSidebar from "../filters/FiltersSidebar";
+
 import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter } from "@/app/types/filters";
@@ -35,21 +35,12 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                 <SearchBar />
                 <RecentRegionSearch regionCounts={regionCountsData} />
               </div>
-              <FilterToggleButton
-                isActive={showFilters}
-                onClick={() => setShowFilters(!showFilters)}
-                className="ml-0 sm:ml-2"
-              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Include FilterSidebar directly in this component */}
-      <FilterSidebar
-        isOpen={showFilters}
-        onClose={() => setShowFilters(false)}
-      />
     </>
   );
 }

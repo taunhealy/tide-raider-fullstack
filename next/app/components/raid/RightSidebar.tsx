@@ -153,10 +153,7 @@ export default function RightSidebar() {
           selectedRegion={filters.regionId}
         />
       )}
-      <Sponsors/>
-      <AdventureExperiences
-        selectedRegion={filters.region || filters.regionId || ""}
-      />
+
       {/* regionalSidebar removed */}
       <FunFacts />
     </aside>

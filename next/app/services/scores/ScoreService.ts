@@ -593,7 +593,7 @@ export class ScoreService {
       sortedBeaches.map((beach) => [
         beach.id,
         {
-          score: beach.beachDailyScores[0]?.score ?? null,
+          score: beach.beachDailyScores[0]?.score ?? 0, // Changed null to 0
           beach: beach,
         },
       ])

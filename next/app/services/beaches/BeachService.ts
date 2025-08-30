@@ -43,7 +43,7 @@ export class BeachService {
       regionId: searchParams.get("regionId")?.toLowerCase(),
       date: searchParams.get("date")
         ? new Date(searchParams.get("date")!)
-        : undefined,
+      : undefined,
       searchQuery: searchParams.get("searchQuery") || undefined,
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "10"),

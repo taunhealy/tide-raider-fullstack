@@ -3,12 +3,12 @@ import { prisma } from "@/app/lib/prisma";
 import { randomUUID } from "crypto";
 import {} from "@/app/lib/surfUtils";
 
-import { redis } from "@/app/lib/redis";
+// import { redis } from "@/app/lib/redis"; // Commented out redis import
 import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
 import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
 import { ScoreService } from "@/app/services/scores/ScoreService";
-import { BeachService } from "@/app/services/beaches/BeachService";
+// import { BeachService } from "@/app/services/beaches/BeachService"; // Commented out BeachService import
 import { ForecastA } from "@prisma/client";
 import { LocationFilter } from "@/app/types/filters";
 
@@ -18,31 +18,31 @@ function getTodayDate() {
   return date;
 }
 
-// Add these constants at the top
-const REDIS_KEYS = {
-  RATE_LIMIT: (region: string) => `rate-limit:${region}`,
-  CACHE: (region: string, date: string) => `surf-conditions:${region}:${date}`,
-  SCRAPE_LOCK: (date: string) => `scrape-lock:${date}`,
-};
+// Commented out Redis constants
+// const REDIS_KEYS = {
+//   RATE_LIMIT: (region: string) => `rate-limit:${region}`,
+//   CACHE: (region: string, date: string) => `surf-conditions:${region}:${date}`,
+//   SCRAPE_LOCK: (date: string) => `scrape-lock:${date}`,
+// };
 
-const CACHE_TIMES = {
-  RATE_LIMIT: 60 * 60, // 1 hour rate limit window
-  getRedisExpiry: () => {
-    const now = new Date();
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59
-    );
-    // Get seconds until end of day
-    return Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
-  },
-  SCRAPE_LOCK: 60 * 2, // 2 minute scrape lock
-  SCORES: 900, // 15 minutes cache for scores
-};
+// const CACHE_TIMES = {
+//   RATE_LIMIT: 60 * 60, // 1 hour rate limit window
+//   getRedisExpiry: () => {
+//     const now = new Date();
+//     const endOfDay = new Date(
+//       now.getFullYear(),
+//       now.getMonth(),
+//       now.getDate(),
+//       23,
+//       59,
+//       59
+//     );
+//     // Get seconds until end of day
+//     return Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
+//   },
+//   SCRAPE_LOCK: 60 * 2, // 2 minute scrape lock
+//   SCORES: 900, // 15 minutes cache for scores
+// };
 
 export async function getLatestConditions(
   forceRefresh = false,
@@ -173,71 +173,71 @@ export async function getLatestConditions(
   }
 }
 
-// Add rate limit helper
-async function checkRateLimit(region: string): Promise<boolean> {
-  const key = REDIS_KEYS.RATE_LIMIT(region);
-  const limit = await redis.incr(key);
+// Commented out rate limit helper
+// async function checkRateLimit(region: string): Promise<boolean> {
+//   const key = REDIS_KEYS.RATE_LIMIT(region);
+//   const limit = await redis.incr(key);
 
-  if (limit === 1) {
-    // Set expiry on first request
-    await redis.expire(key, CACHE_TIMES.RATE_LIMIT);
-  }
+//   if (limit === 1) {
+//     // Set expiry on first request
+//     await redis.expire(key, CACHE_TIMES.RATE_LIMIT);
+//   }
 
-  // Increase the limit from 30 to 100 requests per hour per region
-  return limit <= 100;
-}
+//   // Increase the limit from 30 to 100 requests per hour per region
+//   return limit <= 100;
+// }
 
-// Add this function to implement request deduplication
-async function dedupedEnsureBeachScores(
-  regionId: string,
-  date: Date,
-  conditions: any
-) {
-  const lockKey = `score-lock:${regionId}:${date.toISOString().split("T")[0]}`;
+// Commented out request deduplication function
+// async function dedupedEnsureBeachScores(
+//   regionId: string,
+//   date: Date,
+//   conditions: any
+// ) {
+//   const lockKey = `score-lock:${regionId}:${date.toISOString().split("T")[0]}`;
 
-  const acquired = await redis.set(lockKey, "1", {
-    nx: true,
-    ex: 60,
-  });
+//   const acquired = await redis.set(lockKey, "1", {
+//     nx: true,
+//     ex: 60,
+//   });
 
-  if (!acquired) {
-    console.log(
-      `🔒 Score generation for ${regionId} on ${date.toISOString().split("T")[0]} already in progress`
-    );
-    return;
-  }
+//   if (!acquired) {
+//     console.log(
+//       `🔒 Score generation for ${regionId} on ${date.toISOString().split("T")[0]} already in progress`
+//     );
+//     return;
+//   }
 
-  try {
-    const existingScores = await prisma.beachDailyScore.findMany({
-      where: {
-        date: date,
-        regionId: regionId,
-      },
-      select: {
-        score: true,
-      },
-    });
+//   try {
+//     const existingScores = await prisma.beachDailyScore.findMany({
+//       where: {
+//         date: date,
+//         regionId: regionId,
+//       },
+//       select: {
+//         score: true,
+//       },
+//     });
 
-    if (
-      existingScores.length === 0 ||
-      existingScores.every((s) => s.score === 0)
-    ) {
-      console.log(
-        `🔄 No valid scores found for ${regionId} on ${date}, generating...`
-      );
-      await ScoreService.calculateAndStoreScores(regionId, {
-        ...conditions,
-        date: date,
-      });
-    } else {
-      console.log(`✅ Scores already exist for ${regionId} on ${date}`);
-    }
-  } catch (error) {
-    console.error("Score generation failed:", error);
-  } finally {
-    await redis.del(lockKey);
-  }
-}
+//     if (
+//       existingScores.length === 0 ||
+//       existingScores.every((s) => s.score === 0)
+//     ) {
+//       console.log(
+//         `🔄 No valid scores found for ${regionId} on ${date}, generating...`
+//       );
+//       await ScoreService.calculateAndStoreScores(regionId, {
+//         ...conditions,
+//         date: date,
+//       });
+//     } else {
+//       console.log(`✅ Scores already exist for ${regionId} on ${date}`);
+//     }
+//   } catch (error) {
+//     console.error("Score generation failed:", error);
+//   } finally {
+//     await redis.del(lockKey);
+//   }
+// }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -252,37 +252,37 @@ export async function GET(request: Request) {
     );
   }
 
-  // Check rate limit
-  if (
-    !(await checkRateLimit(regionId)) &&
-    process.env.NODE_ENV === "production"
-  ) {
-    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-  }
+  // Commented out rate limit check
+  // if (
+  //   !(await checkRateLimit(regionId)) &&
+  //   process.env.NODE_ENV === "production"
+  // ) {
+  //   return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  // }
 
   try {
-    // Check Redis cache
+    // Commented out Redis cache check
     const targetDate = searchParams.get("date")
       ? new Date(searchParams.get("date")!)
       : new Date();
     targetDate.setUTCHours(0, 0, 0, 0);
 
-    const cacheKey = REDIS_KEYS.CACHE(
-      regionId,
-      targetDate.toISOString().split("T")[0]
-    );
+    // const cacheKey = REDIS_KEYS.CACHE(
+    //   regionId,
+    //   targetDate.toISOString().split("T")[0]
+    // );
 
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      try {
-        // Handle both string and object cache values
-        const cachedData =
-          typeof cached === "string" ? JSON.parse(cached) : cached;
-        return NextResponse.json(cachedData);
-      } catch (e) {
-        console.warn("Cache parse error:", e);
-      }
-    }
+    // const cached = await redis.get(cacheKey);
+    // if (cached) {
+    //   try {
+    //     // Handle both string and object cache values
+    //     const cachedData =
+    //       typeof cached === "string" ? JSON.parse(cached) : cached;
+    //     return NextResponse.json(cachedData);
+    //   } catch (e) {
+    //     console.warn("Cache parse error:", e);
+    //   }
+    // }
 
     // Get filtered beaches directly using ScoreService
     const searchQuery = searchParams.get("searchQuery") || undefined;
@@ -296,25 +296,19 @@ export async function GET(request: Request) {
     });
 
     // Fetch the forecast data for the region
-    let forecastData: ForecastA | null = null;
+    let forecast: ForecastA | null = null;
     try {
-      forecastData = await getLatestConditions(false, regionId);
-
-      // Add forecast data to each beach score
-      if (forecastData && result.scores) {
-        Object.keys(result.scores).forEach((beachId) => {
-          if (result.scores[beachId]) {
-            (result.scores[beachId] as any).forecastData = forecastData;
-            (result.scores[beachId] as any).hasForecastData = true;
-          }
-        });
-      }
+      forecast = await getLatestConditions(false, regionId);
 
       // After fetching forecast data
-      if (forecastData) {
+      if (forecast) {
         try {
           console.log("Ensuring beach scores are calculated...");
-          await dedupedEnsureBeachScores(regionId, targetDate, forecastData);
+          // await dedupedEnsureBeachScores(regionId, targetDate, forecast); // Commented out dedupedEnsureBeachScores
+          await ScoreService.calculateAndStoreScores(regionId, {
+            ...forecast,
+            date: targetDate,
+          });
           console.log("Beach scores calculation completed or already exists");
         } catch (error) {
           console.error("Failed to ensure beach scores:", error);
@@ -324,12 +318,16 @@ export async function GET(request: Request) {
       console.error("Failed to fetch forecast data:", error);
     }
 
-    // Return the complete response
-    return NextResponse.json({
-      ...result,
-      forecastData: forecastData,
-      hasForecastData: !!forecastData,
-    });
+    // Return the complete response in BeachInitialData format
+    const responseData = {
+      beaches: result.beaches,
+      scores: result.scores,
+      forecast: forecast,
+      totalCount: result.totalCount,
+    };
+
+    // No caching here, directly return
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

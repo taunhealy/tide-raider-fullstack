@@ -8,11 +8,8 @@ interface UseFilteredBeachesProps {
   enabled?: boolean;
 }
 
-interface UseFilteredBeachesResponse {
-  beaches: any[];
-  scores: Record<string, any>;
-  forecastData: CoreForecastData | null;
-}
+// Update the response type to match BeachInitialData
+interface UseFilteredBeachesResponse extends BeachInitialData {}
 
 export function useFilteredBeaches({
   initialData,
@@ -25,21 +22,24 @@ export function useFilteredBeaches({
     queryFn: async () => {
       // Convert filters to URLSearchParams
       const params = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
+        if (value !== null && value !== undefined && value !== "") {
           if (Array.isArray(value)) {
-            if (value.length) params.set(key, value.join(','));
+            if (value.length) params.set(key, value.join(","));
           } else {
             params.set(key, String(value));
           }
         }
       });
 
-      const response = await fetch(`/api/filtered-beaches?${params.toString()}`);
+      const response = await fetch(
+        `/api/filtered-beaches?${params.toString()}`
+      );
       if (!response.ok) throw new Error("Failed to fetch filtered beaches");
-      return response.json();
+      return response.json(); // This needs to return BeachInitialData structure
     },
+    initialData: initialData || undefined, // Add initialData here
     enabled: enabled && !!filters.regionId, // Use filters.regionId instead
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
