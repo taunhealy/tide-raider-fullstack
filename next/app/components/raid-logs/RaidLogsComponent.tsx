@@ -13,7 +13,7 @@ import { handleSignIn } from "@/app/lib/auth-utils";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter } from "next/navigation";
 import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
-import { Header } from "./Header";
+import { Header } from "./RaidLogHeader";
 import RaidLogTable from "./RaidLogTable";
 import { useRaidLogs } from "@/app/hooks/useRaidLogs";
 import { LoadingSpinner } from "../ui/LoadingSpinner";

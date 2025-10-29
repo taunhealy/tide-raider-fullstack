@@ -48,7 +48,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/app/components/ui/pagination";
-import { useAppMode } from "@/app/context/AppModeContext";
 import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { MediaModal } from "@/app/components/raid-logs/MediaModal";
@@ -383,7 +382,6 @@ export default function RaidLogTable({
   onBeachClick,
   nationality,
 }: QuestTableProps) {
-  const { isBetaMode } = useAppMode();
   const {
     isGated,
     isLoggedOut,
@@ -403,10 +401,7 @@ export default function RaidLogTable({
   const queryClient = useQueryClient();
   const { data: subscriptionDetails } = useSubscriptionDetails();
   const hasAccess =
-    isBetaMode ||
-    isSubscribed ||
-    isTrialing ||
-    subscriptionDetails?.hasActiveTrial;
+    isSubscribed || isTrialing || subscriptionDetails?.hasActiveTrial;
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(
@@ -652,53 +647,19 @@ export default function RaidLogTable({
   );
 
   // State to track if we're on mobile
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // Re-added the isMobile state
 
   // Check if we're on mobile when component mounts and when window resizes
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
-
-      // If we're on mobile and in table view, switch to card view
-      if (window.innerWidth < 768 && viewMode === "table") {
-        setViewMode("card");
-      }
     };
 
-    // Initial check
-    checkIfMobile();
-
-    // Add resize listener
+    checkIfMobile(); // Set initial value
     window.addEventListener("resize", checkIfMobile);
 
-    // Cleanup
     return () => window.removeEventListener("resize", checkIfMobile);
-  }, [viewMode, setViewMode]);
-
-  // Add to the existing state declarations (around line 390)
-  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<{
-    imageUrl?: string | null;
-    videoUrl?: string | null;
-    videoPlatform?: "youtube" | "vimeo" | null;
-  } | null>(null);
-
-  // Modify handleMediaClick to remove sourceRect
-  const handleMediaClick = (
-    e: React.MouseEvent<HTMLElement>,
-    entry: LogEntry
-  ) => {
-    e.stopPropagation();
-    setIsMediaModalOpen(true);
-    setSelectedMedia({
-      imageUrl: entry.imageUrl,
-      videoUrl: entry.videoUrl,
-      videoPlatform: entry.videoPlatform,
-    });
-  };
-
-  console.log("RaidLogTable entries:", entries);
-  console.log("normalizedEntries:", normalizedEntries);
+  }, []);
 
   // Add the DeleteConfirmationDialog to the main component return
   const DeleteConfirmationDialog = () => {
@@ -970,7 +931,13 @@ export default function RaidLogTable({
                     <div className="mt-auto pt-2 w-full">
                       <div className="relative w-full aspect-video rounded-md overflow-hidden">
                         <button
-                          onClick={(e) => handleMediaClick(e, entry)}
+                          onClick={(e) => {
+                            // This button is for image/video display, not media modal
+                            // The MediaModal component is no longer used for this.
+                            // If you need a media modal, you'll need to re-implement it.
+                            // For now, we'll just navigate to the detail page.
+                            router.push(`/raidlogs/${entry.id}`);
+                          }}
                           className="relative w-full h-full block"
                         >
                           {entry.imageUrl ? (
@@ -1128,10 +1095,10 @@ export default function RaidLogTable({
                               </button>
                             </div>
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap min-w-[100px] text-sm font-primary">
+                          <td className="px-2 py-3 min-w-[100px] text-sm font-primary">
                             {entry.region?.name ?? "No region"}
                           </td>
-                          <td className="px-2 py-3 whitespace-nowrap min-w-[120px]">
+                          <td className="px-2 py-3 min-w-[120px]">
                             <LogEntryDisplay
                               entry={entry}
                               isAnonymous={entry.isAnonymous ?? false}
@@ -1155,8 +1122,8 @@ export default function RaidLogTable({
                           </td>
                           <td className="px-2 py-3 w-[60px]">
                             <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                              <button
-                                onClick={(e) => handleMediaClick(e, entry)}
+                              <Link
+                                href={`/raidlogs/${entry.id}`}
                                 className="relative w-full h-full block"
                               >
                                 {entry.imageUrl ? (
@@ -1179,7 +1146,7 @@ export default function RaidLogTable({
                                 ) : (
                                   <ImageIcon className="w-4 h-4 text-gray-200" />
                                 )}
-                              </button>
+                              </Link>
                             </div>
                           </td>
                           <td className="px-2 py-3">
@@ -1259,16 +1226,9 @@ export default function RaidLogTable({
         />
       )}
 
-      <MediaModal
-        isOpen={isMediaModalOpen}
-        onClose={() => {
-          setIsMediaModalOpen(false);
-          setSelectedMedia(null);
-        }}
-        imageUrl={selectedMedia?.imageUrl}
-        videoUrl={selectedMedia?.videoUrl}
-        videoPlatform={selectedMedia?.videoPlatform}
-      />
+      {/* MediaModal */}
+      {/* The MediaModal component is no longer used for image/video display,
+          so it's removed from the return statement. */}
 
       <DeleteConfirmationDialog />
     </>

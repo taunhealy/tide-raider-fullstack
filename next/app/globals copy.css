@@ -9,33 +9,15 @@
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none; /* Chrome, Safari and Opera */
 }
 
 @layer base {
   :root {
-    /* Typography Variables */
-    --font-family-base: "Inter", sans-serif;
-    --font-size-xs: 12px; /* Small labels, footnotes */
-    --font-size-sm: 14px; /* Body text, table content */
-    --font-size-base: 16px; /* Default paragraph text */
-    --font-size-lg: 20px; /* Headings (H3/H4), card titles */
-    --font-size-xl: 32px; /* Main headings (H1) */
-    --line-height-tight: 1.2; /* Compact text, headings */
-    --line-height-normal: 1.5; /* Body text readability */
-    --font-weight-light: 300; /* Subtle emphasis */
-    --font-weight-normal: 400; /* Default weight */
-    --font-weight-bold: 700; /* Headings, strong text */
-    --font-weight-heading: 600; /* Existing heading weight */
-
-    /* Shadow Variables */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Subtle elevation for cards */
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Default for modals, dropdowns */
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Elevated elements like sidebars */
-
-    /* Existing Font Variables */
-    --font-montserrat: "Montserrat", system-ui, -apple-system,
-      BlinkMacSystemFont, sans-serif;
+    /* Fonts */
+    --font-inter: "Inter", sans-serif;
+    --font-montserrat: var(--font-secondary), "Montserrat", system-ui,
+      -apple-system, BlinkMacSystemFont, sans-serif;
 
     /* Brand Colors */
     --color-primary: #000000;
@@ -86,6 +68,9 @@
     --color-play-icon-bg: #ffffff;
     --color-play-icon-border: var(--color-tertiary);
 
+    /* Heading Font Weight */
+    --heading-font-weight: 600;
+
     /* Component Colors */
     --color-component-border: #93e6ff;
     --color-component-icon-bg: #e6f9ff;
@@ -95,58 +80,57 @@
   }
 
   /* Base Typography */
-  html {
-    font-family: var(--font-family-base);
-  }
-
-  /* Updated to use variables */
   .heading-1 {
-    @apply font-[var(--font-montserrat)] uppercase text-[320px] leading-[var(--line-height-tight)] text-black;
-    font-weight: var(--font-weight-heading);
+    @apply text-white font-secondary uppercase text-[320px] leading-tight tracking-tight font-black;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-2 {
-    @apply font-[var(--font-family-base)] text-[81px] leading-[var(--line-height-tight)];
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[81px] leading-tight;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-3 {
-    @apply font-[var(--font-family-base)] text-[54px] leading-[var(--line-height-tight)] font-bold;
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[54px] leading-snug font-bold;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-4 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-xl)] leading-[var(--line-height-tight)];
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[32px] leading-snug;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-5 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-lg)] leading-[var(--line-height-tight)];
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[21px] leading-snug;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-6 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-base)] leading-[var(--line-height-tight)];
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[16px] leading-snug;
+    font-weight: var(--heading-font-weight);
   }
 
   .heading-7 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-xs)] leading-[var(--line-height-tight)];
-    font-weight: var(--font-weight-heading);
+    @apply font-primary text-[12px] leading-snug;
+    font-weight: var(--heading-font-weight);
+  }
+
+  html {
+    font-family: var(--font-inter);
   }
 }
 
 @layer components {
   .text-main {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-base)] font-[var(--font-weight-normal)] leading-[var(--line-height-normal)] max-w-[54ch];
+    @apply font-primary text-[16px] font-normal leading-relaxed max-w-[54ch];
   }
 
   .text-large {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-lg)] font-[var(--font-weight-normal)] leading-[var(--line-height-normal)] max-w-[54ch];
+    @apply font-primary text-[21px] font-normal leading-snug max-w-[54ch];
   }
 
   .text-small {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-sm)] font-[var(--font-weight-normal)] leading-[var(--line-height-normal)] max-w-[54ch];
+    @apply font-primary text-[14px] font-normal leading-snug max-w-[54ch];
   }
 
   .section-padding {
@@ -189,13 +173,11 @@
   }
 
   .link-nav {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-base)] leading-6 transition-colors duration-200;
-    color: var(--color-text-secondary);
-    position: relative;
-  }
-
-  .link-nav:hover {
-    color: var(--color-text-primary);
+    @apply font-primary text-[16px] leading-6
+    transition-colors duration-200
+    text-[var(--color-text-secondary)]
+    hover:text-[var(--color-text-primary)]
+    relative;
   }
 
   .link-nav::after {
@@ -214,9 +196,10 @@
   }
 
   .link-nav-active {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-base)] leading-6 transition-colors duration-200;
-    color: var(--color-text-primary);
-    position: relative;
+    @apply font-primary text-[16px] leading-6
+    transition-colors duration-200
+    text-[var(--color-text-primary)]
+    relative;
   }
 
   .link-nav-active::after {
@@ -230,28 +213,28 @@
   }
 
   .btn-filter-active {
-    @apply bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2 rounded-md font-[var(--font-family-base)] text-[var(--font-size-sm)] transition-colors duration-200;
+    @apply bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2 rounded-md font-primary text-[14px] transition-colors duration-200;
   }
 
   .btn-filter-inactive {
-    @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md font-[var(--font-family-base)] text-[var(--font-size-sm)] transition-colors duration-200;
+    @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md font-primary text-[14px] transition-colors duration-200;
   }
 
   .btn-clear-filters {
-    @apply w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-[var(--font-family-base)] text-[var(--font-size-sm)] font-medium;
+    @apply w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-primary text-[14px] font-medium;
   }
 
   /* Badge styles for forecast data */
   .badge-wind {
-    @apply inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-[var(--font-size-xs)] font-[var(--font-family-base)];
+    @apply inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-primary;
   }
 
   .badge-swell {
-    @apply inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-[var(--font-size-xs)] font-[var(--font-family-base)];
+    @apply inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs font-primary;
   }
 
   .badge-generic {
-    @apply inline-flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-[var(--font-size-xs)] font-[var(--font-family-base)];
+    @apply inline-flex items-center bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-primary;
   }
 
   .forecast-container {
@@ -262,8 +245,9 @@
     @apply flex flex-wrap gap-2;
   }
 
+  /* Badge styles */
   .badge {
-    @apply inline-flex items-center px-3 py-1.5 rounded-full text-[var(--font-size-sm)] font-[var(--font-family-base)] transition-colors;
+    @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-primary transition-colors;
   }
 
   .badge-active {
@@ -275,7 +259,12 @@
   }
 
   .badge-inactive:hover {
-    background-color: var(--color-badge-hover);
+    background-color: rgba(
+      214,
+      181,
+      136,
+      0.4
+    ); /* This is #D6B588 with 0.4 opacity */
   }
 }
 
@@ -305,22 +294,6 @@
   }
 }
 
-/* Shadow-Using Styles */
-.arcade-button {
-  text-shadow:
-    0 0 10px rgba(0, 255, 255, 0.5),
-    0 0 20px rgba(0, 255, 255, 0.3),
-    0 0 30px rgba(0, 255, 255, 0.2);
-  box-shadow: var(--shadow-md); /* Use shadow variable */
-  transition: all 0.3s ease;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.arcade-button:hover {
-  box-shadow: var(--shadow-lg); /* Larger shadow on hover */
-}
-
-/* Existing Animations and Other Styles */
 @keyframes pulse-glow {
   0%,
   100% {
@@ -337,6 +310,25 @@
   }
 }
 
+.arcade-button {
+  text-shadow:
+    0 0 10px rgba(0, 255, 255, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.3),
+    0 0 30px rgba(0, 255, 255, 0.2);
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.2),
+    inset 0 0 20px rgba(0, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.arcade-button:hover {
+  animation-play-state: running;
+  box-shadow:
+    0 0 30px rgba(0, 255, 255, 0.4),
+    inset 0 0 30px rgba(0, 255, 255, 0.2);
+}
+
 /* Slider styles */
 .slider-container {
   position: relative;
@@ -351,6 +343,7 @@
   cursor: grabbing;
 }
 
+/* Optional: Add a visual indicator for draggable area */
 .slider-container::before {
   content: "";
   position: absolute;
@@ -358,10 +351,11 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: var(--color-border-light);
+  background-color: #e5e7eb;
   border-radius: 2px;
 }
 
+/* Optional: Add a visual indicator for current scroll position */
 .slider-container::after {
   content: "";
   position: absolute;
@@ -516,6 +510,7 @@
   animation: neon-pulse 2s ease-in-out infinite;
 }
 
+/* Add this below existing neon-text styles */
 .subtle-text-glow {
   text-shadow:
     0 0 1px rgba(255, 255, 255, 0.3),
@@ -527,7 +522,7 @@ canvas {
 }
 
 body {
-  font-family: var(--font-family-base);
+  font-family: var(--font-inter);
 }
 
 @keyframes bounce-cartoon {
@@ -575,10 +570,12 @@ body {
   }
 }
 
+/* For gradient transition */
 .group:hover .animate-bounce-cartoon {
   animation-duration: 1.5s;
 }
 
+/* Add text warping */
 .animate-bounce-cartoon span {
   display: inline-block;
   transform: translateZ(0);

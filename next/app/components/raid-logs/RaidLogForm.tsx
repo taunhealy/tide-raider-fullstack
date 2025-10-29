@@ -16,14 +16,13 @@ import { signIn } from "next-auth/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
-import { useAppMode } from "@/app/context/AppModeContext";
-import { getVideoId } from "@/app/lib/videoUtils";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
 import {
   BlueStarRating,
   InteractiveBlueStarRating,
 } from "@/app/lib/scoreDisplayBlueStars";
+import { getVideoId } from "@/app/lib/videoUtils";
 
 interface RaidLogFormProps {
   userEmail?: string;
@@ -49,7 +48,6 @@ export function RaidLogForm({
   entry,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
-  const { isBetaMode } = useAppMode();
   const { isSubscribed, hasActiveTrial } = useSubscription();
   const { data: session } = useSession();
   const { data: beaches, isLoading } = useBeaches();
@@ -454,11 +452,11 @@ export function RaidLogForm({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white max-h-[90vh] overflow-y-auto p-6 rounded-lg w-full max-w-md">
-        {!isBetaMode && !isSubscribed && !hasActiveTrial && (
+        {!isSubscribed && !hasActiveTrial && (
           <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-10 rounded-lg" />
         )}
 
-        {!isBetaMode && !isSubscribed && !hasActiveTrial && (
+        {!isSubscribed && !hasActiveTrial && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 gap-4 bg-white/50">
             <Lock className="h-16 w-16 text-gray-400" />
             <div className="text-center px-4">

@@ -1,4 +1,3 @@
-import { useAppMode } from "@/app/context/AppModeContext";
 import { useSubscription } from "@/app/context/SubscriptionContext";
 import { useSession } from "next-auth/react";
 
@@ -9,7 +8,6 @@ import { useSession } from "next-auth/react";
 export function useContentGating() {
   const { data: session } = useSession();
   const { isSubscribed, hasActiveTrial } = useSubscription();
-  const { isBetaMode } = useAppMode();
 
   // User is not logged in
   const isLoggedOut = !session?.user;
@@ -18,10 +16,10 @@ export function useContentGating() {
   // 1. Not in beta mode AND
   // 2. User is not subscribed AND
   // 3. User doesn't have an active trial
-  const isGated = !isBetaMode && !isSubscribed && !hasActiveTrial;
+  const isGated = !isSubscribed && !hasActiveTrial;
 
   // Specific gating for logged out users (even in beta mode)
-  const isLoggedOutGated = isLoggedOut && !isBetaMode;
+  const isLoggedOutGated = isLoggedOut;
 
   return {
     isGated,
