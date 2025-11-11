@@ -66,7 +66,7 @@ function alertReducer(state: AlertState, action: AlertAction): AlertState {
 // Provider props
 interface AlertProviderProps {
   children: React.ReactNode;
-  existingAlert?: Prisma.AlertCreateInput;
+  existingAlert?: Prisma.AlertCreateInput | any;
   onSaved?: () => void;
   onClose: () => void;
 }
@@ -118,7 +118,7 @@ export function AlertProvider({
     queryKey: ["beach", state.alert.beach?.connect?.id],
     queryFn: async () => {
       const response = await fetch(
-        `/api/beaches/${encodeURIComponent(state.alert.beach?.connect?.beach.id)}/`
+        `/api/beaches/${encodeURIComponent(state.alert.beach?.connect?.id)}/`
       );
       if (!response.ok) throw new Error("Failed to fetch beach details");
       return response.json();
