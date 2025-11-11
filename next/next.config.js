@@ -36,6 +36,7 @@ const nextConfig = {
       fs: false,
       path: false,
       stream: false,
+      crypto: false,
       worker_threads: false,
       "react-is": require.resolve("react-is"),
       "web-worker": false,
