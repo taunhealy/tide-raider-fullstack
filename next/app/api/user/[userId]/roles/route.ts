@@ -7,9 +7,10 @@ import { ROLE_OPTIONS } from "@/app/lib/users/constants";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
 
     // Verify authentication
@@ -21,14 +22,14 @@ export async function PUT(
     }
 
     // Verify ownership
-    if (session.user.id !== params.userId) {
+    if (session.user.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const { roles } = await request.json();
     const rolesToUpdate = Array.isArray(roles) ? roles : [];
 
-    console.log("Updating roles for user:", params.userId);
+    console.log("Updating roles for user:", userId);
     console.log("New roles:", rolesToUpdate);
 
     // Validate that all provided roles are valid UserRole enum values
@@ -45,7 +46,7 @@ export async function PUT(
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: { roles: rolesToUpdate },
       select: {
         id: true,

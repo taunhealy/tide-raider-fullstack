@@ -1,5 +1,5 @@
 // app/components/RegionFilter.tsx
-import type { Region } from "@/app/types/regions";
+import type { Region } from "@/app/types/beaches";
 
 interface RegionFilterProps {
   regions: Region[];

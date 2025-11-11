@@ -28,7 +28,7 @@ function deg2rad(deg: number) {
 
 export async function GET() {
   try {
-    const headersList = headers();
+    const headersList = await headers();
     const ip =
       headersList.get("x-forwarded-for") ||
       headersList.get("x-real-ip") ||

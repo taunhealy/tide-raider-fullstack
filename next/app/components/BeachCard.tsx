@@ -285,11 +285,13 @@ const BeachCard = memo(function BeachCard({
                     className="hidden md:flex"
                   />
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenModal();
                     }}
                     className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="View beach details"
                   >
                     <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
                   </button>
@@ -578,11 +580,13 @@ const BeachCard = memo(function BeachCard({
                     className="hidden md:flex"
                   />
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenModal();
                     }}
                     className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="View beach details"
                   >
                     <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
                   </button>

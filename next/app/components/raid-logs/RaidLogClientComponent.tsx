@@ -28,7 +28,7 @@ export default function RaidLogClientComponent({
 
   return (
     <SessionProvider>
-      <RaidLogDetails entry={entry} />
+      <RaidLogDetails id={entry.id} />
     </SessionProvider>
   );
 }

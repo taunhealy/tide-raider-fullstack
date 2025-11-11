@@ -26,7 +26,7 @@ async function getAlert(id: string) {
 export default async function EditAlertPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
 
@@ -34,7 +34,8 @@ export default async function EditAlertPage({
     redirect("/login");
   }
 
-  const alert = await getAlert(params.id);
+  const { id } = await params;
+  const alert = await getAlert(id);
 
   // If alert not found, redirect to alerts page
   if (!alert) {

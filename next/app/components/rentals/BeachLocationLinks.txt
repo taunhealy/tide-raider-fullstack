@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Beach, beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
+import type { Beach } from "@/app/types/beaches";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 
 interface BeachLocationLinksProps {
@@ -17,18 +18,19 @@ interface BeachLocationLinksProps {
 export default function BeachLocationLinks({
   beaches,
 }: BeachLocationLinksProps) {
+  const { beaches: dbBeaches } = useBeach();
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleBeachClick = (beachId: string) => {
-    // Find the beach in the beachData array
-    const beach = beachData.find((beach) => beach.id === beachId);
+    // Find the beach in the database beaches array
+    const beach = dbBeaches.find((beach) => beach.id === beachId);
 
     if (beach) {
       setSelectedBeach(beach);
       setIsModalOpen(true);
     } else {
-      console.error(`Beach with ID ${beachId} not found in beachData`);
+      console.error(`Beach with ID ${beachId} not found in database`);
     }
   };
 

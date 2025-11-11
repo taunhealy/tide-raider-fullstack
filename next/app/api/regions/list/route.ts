@@ -10,7 +10,7 @@ export async function GET() {
         country: true,
         continent: true,
       },
-      orderBy: [{ country: "asc" }, { name: "asc" }],
+      orderBy: [{ countryId: "asc" }, { name: "asc" }],
     });
 
     return NextResponse.json(regions);

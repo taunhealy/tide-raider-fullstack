@@ -3,8 +3,8 @@ import { prisma } from "@/app/lib/prisma";
 import { ScoreService } from "@/app/services/scores/ScoreService";
 import { getLatestConditions } from "@/app/api/surf-conditions/route";
 
-// Add this to ensure only Vercel cron jobs can call this endpoint
-export const runtime = "edge";
+// Use Node.js runtime for puppeteer/chromium support
+export const runtime = "nodejs";
 
 // Vercel automatically protects cron job routes
 // No need to check for a secret as only Vercel can call this endpoint

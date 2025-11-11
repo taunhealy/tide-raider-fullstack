@@ -5,9 +5,10 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
@@ -26,7 +27,7 @@ export async function DELETE(
     // Verify the notification belongs to the user before deleting
     const notification = await prisma.notification.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -41,7 +42,7 @@ export async function DELETE(
     // Delete the notification
     await prisma.notification.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
 

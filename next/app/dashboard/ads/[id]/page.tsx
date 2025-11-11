@@ -7,9 +7,10 @@ import { AD_CATEGORIES } from "@/app/lib/advertising/constants";
 import { format } from "date-fns";
 import CancelAdSubscriptionButton from "@/app/components/advertising/CancelAdSubscriptionButton";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const ad = await prisma.ad.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { companyName: true, title: true },
   });
 
@@ -28,18 +29,19 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function AdDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   // Redirect if not logged in
   if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=/dashboard/ads/${params.id}`);
+    redirect(`/login?callbackUrl=/dashboard/ads/${id}`);
   }
 
   // Fetch the ad
   const ad = await prisma.ad.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       region: true,
       adRequest: true,

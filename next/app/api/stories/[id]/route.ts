@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 import { prisma } from "@/app/lib/prisma";
-import { beachData } from "@/app/types/beaches";
+import { getBeachById } from "@/app/lib/beachService";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +26,7 @@ export async function PUT(
 
     // Verify the story exists and belongs to the user
     const existingStory = await prisma.story.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { author: true },
     });
 
@@ -37,18 +38,25 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get beach name from database if not custom
+    let beachName = "";
+    if (isCustomBeach) {
+      beachName = beach;
+    } else {
+      const beachData = await getBeachById(beach);
+      beachName = beachData?.name || "";
+    }
+
     // Update the story
     const updatedStory = await prisma.story.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title,
         date: new Date(date),
         details,
         category,
         link: link || null,
-        beachName: isCustomBeach
-          ? beach
-          : beachData.find((b) => b.id === beach)?.name || "",
+        beachName,
         ...(isCustomBeach || beach === "other"
           ? { beach: { disconnect: true } }
           : { beach: { connect: { id: beach } } }),
@@ -81,9 +89,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -91,7 +100,7 @@ export async function DELETE(
 
     // Verify the story exists and belongs to the user
     const story = await prisma.story.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { author: true },
     });
 
@@ -105,7 +114,7 @@ export async function DELETE(
 
     // Delete the story
     await prisma.story.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Story deleted successfully" });
@@ -120,12 +129,13 @@ export async function DELETE(
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const userStories = await prisma.story.findMany({
       where: {
-        authorId: params.userId,
+        authorId: userId,
       },
       include: {
         author: {

@@ -10,7 +10,7 @@ import { getVideoId } from "@/app/lib/videoUtils";
 import { SectionImage } from "@/app/types/blog";
 import { PortableTextBlock } from "next-sanity";
 import { MediaGrid } from "@/app/components/MediaGrid";
-import { beachData } from "@/app/types/beaches";
+import { getBeachById as fetchBeachById } from "@/app/lib/beachService";
 import { formatCountryName } from "@/app/lib/formatters";
 
 interface VideoItem {
@@ -23,30 +23,48 @@ interface VideoItem {
   layout: "full" | "half";
 }
 
-// Helper function to get beach data by ID
-const getBeachById = (beachId: string) => {
-  return beachData.find((beach) => beach.id === beachId);
-};
-
 export default async function BlogPost({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  if (!params.slug) return notFound();
+  const { slug } = await params;
+  if (!slug) return notFound();
 
   let post;
   try {
-    post = await client.fetch(
-      postQuery,
-      { slug: params.slug },
-      { cache: "no-store" }
-    );
+    post = await client.fetch(postQuery, { slug }, { cache: "no-store" });
   } catch (error) {
     return notFound();
   }
 
   if (!post) return notFound();
+
+  // Pre-fetch beach data for beachMediaGrid blocks
+  const beachReferences = new Set<string>();
+  if (post.sections) {
+    post.sections.forEach((section: any) => {
+      if (section.content && Array.isArray(section.content)) {
+        section.content.forEach((block: any) => {
+          if (
+            block._type === "beachMediaGrid" &&
+            block.beachReference?.beachId
+          ) {
+            beachReferences.add(block.beachReference.beachId);
+          }
+        });
+      }
+    });
+  }
+
+  // Fetch all needed beaches at once
+  const beachDataMap = new Map();
+  for (const beachId of beachReferences) {
+    const beach = await fetchBeachById(beachId);
+    if (beach) {
+      beachDataMap.set(beachId, beach);
+    }
+  }
 
   const safePost = {
     ...post,
@@ -136,7 +154,7 @@ export default async function BlogPost({
                           block._type === "beachMediaGrid" &&
                           block.beachReference?.beachId
                         ) {
-                          const beach = getBeachById(
+                          const beach = beachDataMap.get(
                             block.beachReference.beachId
                           );
 

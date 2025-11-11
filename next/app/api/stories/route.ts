@@ -20,13 +20,13 @@ export async function GET() {
             id: true,
             name: true,
             regionId: true,
-            country: true,
+            countryId: true,
             continent: true,
             region: {
               select: {
                 id: true,
                 name: true,
-                country: true,
+                countryId: true,
                 continent: true,
               },
             },
@@ -36,7 +36,7 @@ export async function GET() {
           select: {
             id: true,
             name: true,
-            country: true,
+            countryId: true,
             continent: true,
           },
         },
@@ -54,7 +54,7 @@ export async function GET() {
             id: story.beach.id,
             name: story.beach.name,
             region: story.beach.region?.name || story.region?.name || "",
-            country: story.beach.country || story.region?.country || "",
+            country: story.beach.countryId || story.region?.countryId || "",
             continent: story.beach.continent || story.region?.continent || "",
           }
         : undefined,
@@ -168,7 +168,8 @@ export async function POST(request: Request) {
             id: story.beach.id,
             name: story.beach.name,
             region: story.beach.region?.name || story.region?.name || "",
-            country: story.beach.region?.country || story.region?.country || "",
+            country:
+              story.beach.region?.countryId || story.region?.countryId || "",
             continent:
               story.beach.region?.continent || story.region?.continent || "",
           }

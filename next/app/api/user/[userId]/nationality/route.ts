@@ -5,11 +5,12 @@ import { authOptions } from "@/app/lib/authOptions";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.id !== params.userId) {
+    if (!session?.user?.id || session.user.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -17,12 +18,12 @@ export async function PATCH(
 
     // Add logging to debug
     console.log("Updating nationality:", {
-      userId: params.userId,
+      userId,
       nationality,
     });
 
     const updatedUser = await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: { nationality },
     });
 

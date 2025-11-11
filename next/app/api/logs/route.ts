@@ -75,14 +75,14 @@ export async function POST(req: NextRequest) {
     // First, create or find the ForecastA record
     const forecast = await prisma.forecastA.upsert({
       where: {
-        date_region: {
+        date_regionId: {
           date: new Date(data.date),
-          region: data.region,
+          regionId: data.region,
         },
       },
       create: {
         date: new Date(data.date),
-        region: data.region,
+        regionId: data.region,
         windSpeed: data.forecast.windSpeed,
         windDirection: data.forecast.windDirection,
         swellHeight: data.forecast.swellHeight,

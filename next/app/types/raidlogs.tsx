@@ -26,7 +26,7 @@ export interface LogEntry {
       name: string;
       continentId: string;
     };
-  };
+  } | null;
   beach: {
     id: string;
     name: string;
@@ -39,7 +39,7 @@ export interface LogEntry {
         continentId: string;
       };
       continent: string | null;
-    };
+    } | null;
     waveType: string;
     difficulty: string;
   } | null;

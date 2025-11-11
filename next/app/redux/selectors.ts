@@ -21,7 +21,6 @@ import {
   calculateRegionCounts,
   calculateAllBeachScores,
 } from "@/app/lib/scoreUtils";
-import { CoreForecastData } from "../types/forecast";
 import { filterBeaches } from "@/app/lib/filterUtils";
 import { sortBeachesByScore } from "@/app/lib/beachSortUtils";
 
@@ -97,7 +96,9 @@ export const selectRegionBeaches = createSelector(
   [selectFilteredBeaches, selectSelectedRegion],
   (filteredBeaches, selectedRegion) => {
     if (!filteredBeaches.length || !selectedRegion) return [];
-    return filteredBeaches.filter((beach) => beach.region === selectedRegion);
+    return filteredBeaches.filter(
+      (beach) => beach.region?.name === selectedRegion
+    );
   }
 );
 
@@ -154,17 +155,9 @@ export const selectBeachScores = createSelector(
   (allBeaches, forecastData) => {
     if (!forecastData || !allBeaches) return {};
 
-    // Extract core forecast data
-    const coreConditions: CoreForecastData = {
-      windSpeed: forecastData.windSpeed,
-      windDirection: forecastData.windDirection,
-      swellHeight: forecastData.swellHeight,
-      swellDirection: forecastData.swellDirection,
-      swellPeriod: forecastData.swellPeriod,
-    };
-
     // Use surfUtils to calculate all scores
-    return calculateAllBeachScores(allBeaches, coreConditions);
+    // forecastData already contains all CoreForecastData properties
+    return calculateAllBeachScores(allBeaches, forecastData);
   }
 );
 

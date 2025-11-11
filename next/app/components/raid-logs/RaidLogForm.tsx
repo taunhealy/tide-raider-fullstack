@@ -489,6 +489,7 @@ export function RaidLogForm({
             }}
             className="absolute top-0 right-0 text-gray-400 hover:text-gray-500 z-[102]"
             type="button"
+            aria-label="Close form"
           >
             <X className="h-6 w-6" />
           </button>
@@ -515,6 +516,7 @@ export function RaidLogForm({
                   max={new Date().toISOString().split("T")[0]}
                   required
                   className="p-2 border rounded w-full"
+                  aria-label="Select date"
                 />
               </div>
 
@@ -540,6 +542,7 @@ export function RaidLogForm({
                         type="button"
                         onClick={() => setSearchTerm("")}
                         className="mr-2 text-gray-400 hover:text-gray-600"
+                        aria-label="Clear search"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -579,6 +582,7 @@ export function RaidLogForm({
                         type="button"
                         onClick={() => setSelectedBeach(null)}
                         className="text-gray-400 hover:text-gray-600"
+                        aria-label="Clear selected beach"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -663,6 +667,7 @@ export function RaidLogForm({
                       accept="image/*"
                       onChange={handleFileChange}
                       className="w-full"
+                      aria-label="Upload image"
                     />
                     {imagePreview && (
                       <div className="relative w-32 h-32">
@@ -673,11 +678,13 @@ export function RaidLogForm({
                           className="object-cover rounded-md"
                         />
                         <button
+                          type="button"
                           onClick={() => {
                             setImagePreview(null);
                             setSelectedImage(null);
                           }}
                           className="absolute -top-2 -right-2 bg-white rounded-full p-1"
+                          aria-label="Remove image"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -710,6 +717,7 @@ export function RaidLogForm({
                           )
                         }
                         className="w-full p-2 border rounded-lg"
+                        aria-label="Select video platform"
                       >
                         <option value="">Select Platform</option>
                         <option value="youtube">YouTube</option>

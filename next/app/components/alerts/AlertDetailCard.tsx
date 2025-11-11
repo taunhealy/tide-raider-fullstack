@@ -4,10 +4,16 @@ import {
   getSwellEmoji,
   degreesToCardinal,
 } from "@/app/lib/forecastUtils";
+import { Alert, AlertProperty, AlertType } from "@prisma/client";
 
 interface AlertDetailCardProps {
-  alert: any; // Use any to bypass the type checking temporarily
-  alertProperties: any[];
+  alert: Alert & {
+    logEntry?: {
+      beach?: { name: string } | null;
+      forecast?: Record<string, any> | null;
+    } | null;
+  };
+  alertProperties: AlertProperty[];
 }
 
 export function AlertDetailCard({
@@ -20,20 +26,23 @@ export function AlertDetailCard({
         Alert Conditions
       </h2>
 
-      {alert.alertType === "variables" && (
+      {alert.alertType === AlertType.VARIABLES && (
         <div className="space-y-4">
           <p className="font-primary text-sm text-gray-600">
             Alert Triggers When:
           </p>
           <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-            {alertProperties.map((prop, index) => {
+            {alertProperties.map((prop) => {
               const forecastValue = alert.logEntry?.forecast?.[prop.property];
               const propName = prop.property.toLowerCase();
               const isWind = propName.includes("wind");
               const isSwell = propName.includes("swell");
 
               return (
-                <div key={index} className="flex items-center justify-between">
+                <div
+                  key={prop.id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     {propName === "windspeed" && (
                       <span>{getWindEmoji(forecastValue)}</span>
@@ -63,7 +72,7 @@ export function AlertDetailCard({
         </div>
       )}
 
-      {alert.alertType === "rating" && (
+      {alert.alertType === AlertType.RATING && (
         <div>
           <p className="font-primary text-sm text-gray-600">
             This alert will notify you when{" "}

@@ -16,7 +16,7 @@ export function useAllSurfConditions(regionId: string | null, enabled = true) {
       console.log("Surf conditions API response:", data);
 
       // Extract forecast data from the first beach in the scores object
-      const firstBeach = Object.values(data.scores || {})[0];
+      const firstBeach = Object.values(data.scores || {})[0] as any;
 
       const result = {
         ...data,

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 
 export default function CreateEventForm() {
+  const { beaches } = useBeach();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -13,17 +14,31 @@ export default function CreateEventForm() {
     link: "",
   });
 
-  // Extract unique countries and regions from beach data
+  // Extract unique countries and regions from database beaches
   const { countries, regionsByCountry } = useMemo(() => {
     const uniqueCountries = Array.from(
-      new Set(beachData.map((beach) => beach.country))
+      new Set(
+        beaches.map((beach) =>
+          typeof beach.country === "string"
+            ? beach.country
+            : beach.country?.id || beach.countryId || ""
+        )
+      )
     ).sort();
-    const regionMap = beachData.reduce(
+    const regionMap = beaches.reduce(
       (acc, beach) => {
-        if (!acc[beach.country]) {
-          acc[beach.country] = new Set();
+        const countryKey =
+          typeof beach.country === "string"
+            ? beach.country
+            : beach.country?.id || beach.countryId || "";
+        if (!acc[countryKey]) {
+          acc[countryKey] = new Set();
         }
-        acc[beach.country].add(beach.region);
+        const regionKey =
+          typeof beach.region === "string"
+            ? beach.region
+            : beach.region?.id || beach.regionId || "";
+        acc[countryKey].add(regionKey);
         return acc;
       },
       {} as Record<string, Set<string>>
@@ -38,7 +53,7 @@ export default function CreateEventForm() {
     );
 
     return { countries: uniqueCountries, regionsByCountry };
-  }, []);
+  }, [beaches]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +90,7 @@ export default function CreateEventForm() {
       <div>
         <label className="block text-sm font-medium text-gray-700">Title</label>
         <input
+          title="Title"
           type="text"
           required
           value={formData.title}
@@ -88,6 +104,7 @@ export default function CreateEventForm() {
           Description
         </label>
         <textarea
+          title="description"
           required
           value={formData.description}
           onChange={(e) =>
@@ -105,6 +122,7 @@ export default function CreateEventForm() {
           </label>
           <select
             required
+            title="select country"
             value={formData.country}
             onChange={(e) => {
               setFormData({
@@ -130,6 +148,7 @@ export default function CreateEventForm() {
           </label>
           <select
             required
+            title="select region"
             value={formData.region}
             onChange={(e) =>
               setFormData({ ...formData, region: e.target.value })
@@ -154,6 +173,7 @@ export default function CreateEventForm() {
             Start Time
           </label>
           <input
+            title="input start time"
             type="datetime-local"
             required
             value={formData.startTime}

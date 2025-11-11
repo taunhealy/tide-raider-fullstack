@@ -5,7 +5,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { X, Loader2, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import type { Story, StoryBeach } from "@/app/types/stories";
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 import { Button } from "@/app/components/ui/Button";
 import { STORY_CATEGORIES, StoryCategory } from "@/app/lib/constants";
 
@@ -23,6 +23,7 @@ export function EditPostModal({
   beaches,
 }: EditPostModalProps) {
   const queryClient = useQueryClient();
+  const { beaches: dbBeaches } = useBeach();
   const [searchTerm, setSearchTerm] = useState(story.beach?.name || "");
 
   const [formData, setFormData] = useState({
@@ -39,8 +40,8 @@ export function EditPostModal({
     formData.beach === "other"
   );
 
-  // Filter beaches based on search term
-  const filteredBeaches = beachData.filter((beach) =>
+  // Filter beaches based on search term from database
+  const filteredBeaches = dbBeaches.filter((beach) =>
     beach.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -50,7 +51,7 @@ export function EditPostModal({
     setIsCustomBeach(value === "other");
     setFormData({ ...formData, beach: value });
     setSearchTerm(
-      value === "other" ? "" : beachData.find((b) => b.id === value)?.name || ""
+      value === "other" ? "" : dbBeaches.find((b) => b.id === value)?.name || ""
     );
   };
 
@@ -65,6 +66,7 @@ export function EditPostModal({
         value={formData.beach}
         onChange={handleBeachChange}
         className="w-full px-3 py-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border-light)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-tertiary)]"
+        aria-label="Select beach"
       >
         <option value="other">Other</option>
         {beaches.map((beach) => (
@@ -133,8 +135,10 @@ export function EditPostModal({
               Edit Story
             </h3>
             <button
+              type="button"
               onClick={onClose}
               className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+              aria-label="Close modal"
             >
               <X className="w-6 h-6" />
             </button>
@@ -149,6 +153,7 @@ export function EditPostModal({
               <input
                 type="text"
                 required
+                aria-label="Story title"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
@@ -168,6 +173,7 @@ export function EditPostModal({
               <select
                 required
                 value={formData.category}
+                aria-label="Select category"
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -192,6 +198,7 @@ export function EditPostModal({
               <input
                 type="date"
                 required
+                aria-label="Story date"
                 value={formData.date}
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
@@ -208,6 +215,7 @@ export function EditPostModal({
               <textarea
                 required
                 value={formData.details}
+                aria-label="Story details"
                 onChange={(e) =>
                   setFormData({ ...formData, details: e.target.value })
                 }

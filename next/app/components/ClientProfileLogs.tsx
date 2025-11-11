@@ -23,9 +23,8 @@ export function ClientProfileLogs({ beaches, userId }: ClientProfileLogsProps) {
     <div className="min-h-screen bg-[var(--color-bg-secondary)]">
       <div className="container mx-auto p-6">
         <RaidLogsComponent
-          beaches={beaches}
           userId={userId}
-          initialFilters={{ isPrivate: false, userId: userId }}
+          initialFilters={{ isPrivate: false }}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/app/lib/utils";
@@ -10,10 +10,13 @@ export default function SurfSpotsWidget({
   title,
   region,
 }: SurfSpotsWidgetProps) {
+  const { beaches } = useBeach();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Filter beaches by region
-  const regionBeaches = beachData.filter((beach) => beach.region === region);
+  // Filter beaches by region from database
+  const regionBeaches = beaches.filter(
+    (beach) => beach.region?.name === region
+  );
 
   if (!regionBeaches.length) {
     return null;
@@ -37,6 +40,7 @@ export default function SurfSpotsWidget({
         <h3 className="text-lg font-semibold">{title || "Local Surf Spots"}</h3>
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={prevSlide}
             className={cn(
               "p-1 rounded-full transition-colors",
@@ -44,6 +48,7 @@ export default function SurfSpotsWidget({
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
             disabled={regionBeaches.length <= 1}
+            aria-label="Previous surf spot"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -51,6 +56,7 @@ export default function SurfSpotsWidget({
             {currentIndex + 1} / {regionBeaches.length}
           </span>
           <button
+            type="button"
             onClick={nextSlide}
             className={cn(
               "p-1 rounded-full transition-colors",
@@ -58,6 +64,7 @@ export default function SurfSpotsWidget({
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
             disabled={regionBeaches.length <= 1}
+            aria-label="Next surf spot"
           >
             <ChevronRight className="w-5 h-5" />
           </button>

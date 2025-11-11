@@ -21,7 +21,7 @@ export default async function StoriesPage() {
     id: beach.id,
     name: beach.name,
     region: beach.region?.name || "",
-    country: beach.region?.country || beach.country || "",
+    country: beach.region?.countryId || beach.countryId || "",
     continent: beach.region?.continent || beach.continent || "",
     isCustom: false,
   }));

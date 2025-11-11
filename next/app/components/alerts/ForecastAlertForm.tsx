@@ -55,7 +55,12 @@ import {
 
 interface ForecastAlertFormProps {
   logEntry?: LogEntry | null;
-  existingAlert?: Prisma.AlertCreateInput;
+  existingAlert?: Prisma.AlertCreateInput | any;
+  isOpen?: boolean;
+  onClose?: () => void;
+  onSaved?: () => void;
+  isNew?: boolean;
+  logEntries?: LogEntry[];
 }
 
 const forecastProperties = [

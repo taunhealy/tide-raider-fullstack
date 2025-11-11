@@ -12,8 +12,9 @@ import Link from "next/link";
 export default async function AlertDetailPage({
   params,
 }: {
-  params: { alertId: string };
+  params: Promise<{ alertId: string }>;
 }) {
+  const { alertId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -22,7 +23,7 @@ export default async function AlertDetailPage({
 
   const alert = await prisma.alert.findUnique({
     where: {
-      id: params.alertId,
+      id: alertId,
     },
     include: {
       checks: {
@@ -43,6 +44,7 @@ export default async function AlertDetailPage({
           forecast: true,
         },
       },
+      properties: true,
     },
   });
 
@@ -50,11 +52,8 @@ export default async function AlertDetailPage({
     notFound();
   }
 
-  // Format alert properties for display
-  const alertProperties =
-    typeof alert.properties === "string"
-      ? JSON.parse(alert.properties)
-      : alert.properties;
+  // Alert properties are loaded through the relation
+  const alertProperties = alert.properties || [];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -74,7 +73,7 @@ export default async function AlertDetailPage({
             {alert.name}
           </h1>
           <p className="font-primary text-gray-500 mt-1">
-            Created on {formatDate(alert.createdAt)}
+            {alert.active ? "Active" : "Inactive"}
           </p>
         </div>
         <Link href={`/alerts/${alert.id}`}>
@@ -141,7 +140,7 @@ export default async function AlertDetailPage({
                 <h3 className="font-primary text-sm font-medium text-gray-500">
                   Region
                 </h3>
-                <p className="font-primary">{alert.region}</p>
+                <p className="font-primary">{alert.regionId}</p>
               </div>
 
               <div>
@@ -158,7 +157,7 @@ export default async function AlertDetailPage({
                   Alert Type
                 </h3>
                 <p className="font-primary capitalize">
-                  {alert.alertType === "variables"
+                  {alert.alertType === "VARIABLES"
                     ? "Forecast Variables"
                     : "Star Rating"}
                 </p>

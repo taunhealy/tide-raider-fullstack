@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Beach } from "@prisma/client";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { RentalItemWithRelations } from "@/app/types/rentals";
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 import {
   PACKAGE_PRICES,
   ITEM_SPECIFICATIONS,

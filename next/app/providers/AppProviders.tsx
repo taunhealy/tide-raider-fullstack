@@ -5,9 +5,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { BeachProvider } from "@/app/context/BeachContext";
+import type { Beach } from "@/app/types/beaches";
 
 import { SubscriptionProvider } from "./SubscriptionProvider";
-import { beachData } from "@/app/types/beaches";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,15 +24,17 @@ const queryClient = new QueryClient({
 export default function AppProviders({
   children,
   session,
+  initialBeaches = [],
 }: {
   children: React.ReactNode;
   session?: any; // You should type this properly based on your session structure
+  initialBeaches?: Beach[];
 }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider session={session} refetchInterval={0}>
         <SubscriptionProvider>
-          <BeachProvider initialBeaches={beachData}>
+          <BeachProvider initialBeaches={initialBeaches}>
             {children}
             <Toaster position="top-right" />
             <ReactQueryDevtools initialIsOpen={false} />

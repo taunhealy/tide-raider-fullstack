@@ -6,21 +6,22 @@ import { authOptions } from "@/app/lib/authOptions";
 // GET User Profile (Public)
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     // Add validation for userId format
-    if (!params.userId || !/^[a-z0-9]+$/.test(params.userId)) {
+    if (!userId || !/^[a-z0-9]+$/.test(userId)) {
       return NextResponse.json(
         { error: "Invalid user ID format", code: "INVALID_ID" },
         { status: 400 }
       );
     }
 
-    console.log("API Request for user ID:", params.userId);
+    console.log("API Request for user ID:", userId);
 
     const user = await prisma.user.findUnique({
-      where: { id: params.userId },
+      where: { id: userId },
       select: {
         id: true,
         name: true,
@@ -62,8 +63,9 @@ export async function GET(
 // UPDATE User Profile (Authenticated)
 export async function PUT(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   const session = await getServerSession(authOptions);
 
   // Verify authentication
@@ -75,7 +77,7 @@ export async function PUT(
   }
 
   // Verify ownership
-  if (session.user.id !== params.userId) {
+  if (session.user.id !== userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -84,7 +86,7 @@ export async function PUT(
 
     // Update user data
     const updatedUser = await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: {
         bio: bio?.trim(),
         name: name?.trim(),

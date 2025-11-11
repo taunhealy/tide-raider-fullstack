@@ -21,7 +21,7 @@ export function AlertEditForm({ initialAlert }: AlertEditFormProps) {
   const [alertConfig, setAlertConfig] =
     useState<AlertConfigTypes>(initialAlert);
   const [alertType, setAlertType] = useState<"variables" | "rating">(
-    initialAlert.alertType || "variables"
+    (initialAlert.alertType?.toLowerCase() as "variables" | "rating") || "variables"
   );
   const [starRating, setStarRating] = useState(initialAlert.starRating || 3);
 

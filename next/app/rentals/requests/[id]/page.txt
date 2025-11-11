@@ -9,9 +9,10 @@ import { RentalRequestActions } from "@/app/components/rentals/RentalRequestActi
 import { RentalRequestChat } from "@/app/components/rentals/RentalRequestChat";
 import { RentalRequestWithRelations } from "@/app/types/rentals";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const request = await prisma.rentalItemRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       rentalItem: {
         select: { name: true },
@@ -34,18 +35,19 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function RentalRequestPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   // Redirect if not logged in
   if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=/rentals/requests/${params.id}`);
+    redirect(`/login?callbackUrl=/rentals/requests/${id}`);
   }
 
   // Fetch the rental request
   const request = (await prisma.rentalItemRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       rentalItem: {
         include: {

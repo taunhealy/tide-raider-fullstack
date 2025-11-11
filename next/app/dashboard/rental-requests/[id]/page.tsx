@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,8 +15,9 @@ import type {
 export default function RentalRequestPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
   const [request, setRequest] = useState<RentalRequestWithRelations | null>(
     null
@@ -34,7 +35,7 @@ export default function RentalRequestPage({
     const fetchRequestData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/rental-requests/${params.id}`);
+        const response = await fetch(`/api/rental-requests/${id}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch request data");
@@ -52,14 +53,14 @@ export default function RentalRequestPage({
     };
 
     fetchRequestData();
-  }, [params.id]);
+  }, [id]);
 
   const handleStatusUpdate = async (
     newStatus: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | "COMPLETED"
   ) => {
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/rental-requests/${params.id}/status`, {
+      const response = await fetch(`/api/rental-requests/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +86,7 @@ export default function RentalRequestPage({
   const handleSendMessage = async (content: string) => {
     try {
       const response = await fetch(
-        `/api/rental-requests/${params.id}/messages`,
+        `/api/rental-requests/${id}/messages`,
         {
           method: "POST",
           headers: {
@@ -179,7 +180,7 @@ export default function RentalRequestPage({
             <h2 className="text-xl font-semibold mb-4">Messages</h2>
             <RequestChat
               messages={messages}
-              requestId={params.id}
+              requestId={id}
               onSendMessage={handleSendMessage}
             />
           </div>

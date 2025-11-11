@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const forecast = await prisma.forecastA.findFirst({
       where: {
         date: new Date(dateOnly),
-        region: region,
+        regionId: region,
       },
     });
 
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       const createdForecast = await prisma.forecastA.create({
         data: {
           date: new Date(dateOnly),
-          region: region,
+          regionId: region,
         },
       });
       return NextResponse.json(createdForecast);

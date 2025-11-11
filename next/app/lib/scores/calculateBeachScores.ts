@@ -19,13 +19,19 @@ export function calculateBeachScores({
       beach.id,
       {
         score: dailyScores.find((s) => s.beachId === beach.id)?.score ?? 0,
-        region: region.id,
-        conditions: {
-          windSpeed: forecast.windSpeed,
-          windDirection: forecast.windDirection,
-          swellHeight: forecast.swellHeight,
-          swellDirection: forecast.swellDirection,
-          swellPeriod: forecast.swellPeriod,
+        beach: {
+          beachDailyScores: [
+            {
+              date: forecast.date.toISOString(),
+              conditions: {
+                windSpeed: forecast.windSpeed,
+                windDirection: forecast.windDirection,
+                swellHeight: forecast.swellHeight,
+                swellDirection: forecast.swellDirection,
+                swellPeriod: forecast.swellPeriod,
+              },
+            },
+          ],
         },
       },
     ])

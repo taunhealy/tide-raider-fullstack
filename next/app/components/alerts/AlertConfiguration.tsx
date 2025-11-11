@@ -72,7 +72,9 @@ const defaultProperties = [
   },
 ];
 
-export function AlertConfiguration() {
+export function AlertConfiguration({
+  isEmbedded = false,
+}: AlertConfigurationProps = {}) {
   const { alert, updateAlert, beachDetails } = useAlert();
   const [properties, setProperties] = useState<typeof defaultProperties>([]);
 

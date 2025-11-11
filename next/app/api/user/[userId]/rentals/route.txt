@@ -4,10 +4,10 @@ import { RentalItemType } from "@/app/types/rentals";
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = params.userId;
+    const { userId } = await params;
 
     // Fetch the user's rental items
     const rentalItems = await prisma.rentalItem.findMany({

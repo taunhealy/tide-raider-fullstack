@@ -5,9 +5,10 @@ import { authOptions } from "@/app/lib/authOptions";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -16,7 +17,7 @@ export async function DELETE(
 
     // 2. Fetch event with ownership verification
     const event = await prisma.event.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { userId: true },
     });
 
@@ -31,7 +32,7 @@ export async function DELETE(
 
     // 4. Delete event
     await prisma.event.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     // 5. Return success response

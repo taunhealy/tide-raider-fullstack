@@ -5,11 +5,11 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: logEntryId } = await params;
     const session = await getServerSession(authOptions);
-    const logEntryId = params.id;
 
     // Fetch the log entry without using include
     const logEntry = await prisma.logEntry.findUnique({
@@ -46,7 +46,7 @@ export async function GET(
     // Fetch forecast data separately if needed
     const forecastData = await prisma.forecastA.findFirst({
       where: {
-        region: logEntry.region || "",
+        regionId: logEntry.regionId || "",
         date: logEntry.date,
       },
     });

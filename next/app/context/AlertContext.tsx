@@ -117,8 +117,10 @@ export function AlertProvider({
   const { data: beachDetails } = useQuery({
     queryKey: ["beach", state.alert.beach?.connect?.id],
     queryFn: async () => {
+      const beachId = state.alert.beach?.connect?.id;
+      if (!beachId) throw new Error("Beach ID is required");
       const response = await fetch(
-        `/api/beaches/${encodeURIComponent(state.alert.beach?.connect?.id)}/`
+        `/api/beaches/${encodeURIComponent(beachId)}/`
       );
       if (!response.ok) throw new Error("Failed to fetch beach details");
       return response.json();

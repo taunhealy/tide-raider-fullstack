@@ -24,9 +24,10 @@ function formatItemType(itemType: string) {
     );
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const rentalItem = await prisma.rentalItem.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { name: true, itemType: true },
   });
 
@@ -45,14 +46,15 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function RentalItemPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const isAuthenticated = !!session?.user;
 
   try {
     const rentalItem = await prisma.rentalItem.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: {
           select: {
@@ -357,7 +359,7 @@ export default async function RentalItemPage({
               <div className="p-4 bg-[var(--color-bg-secondary)] rounded-lg text-center">
                 <p className="mb-2">Please sign in to contact the owner.</p>
                 <Link
-                  href={`/login?callbackUrl=/rentals/${params.id}`}
+                  href={`/login?callbackUrl=/rentals/${id}`}
                   className="btn-primary"
                 >
                   Sign In

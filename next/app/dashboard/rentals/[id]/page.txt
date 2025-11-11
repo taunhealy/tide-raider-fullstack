@@ -8,9 +8,10 @@ import { DeleteRentalItemButton } from "@/app/components/rentals/DeleteRentalIte
 import { RentalItemWithRelations } from "@/app/types/rentals";
 import { format } from "date-fns";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const rentalItem = await prisma.rentalItem.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { name: true },
   });
 
@@ -29,18 +30,19 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 export default async function EditRentalItemPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   // Redirect if not logged in
   if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=/dashboard/rentals/${params.id}`);
+    redirect(`/login?callbackUrl=/dashboard/rentals/${id}`);
   }
 
   // Fetch the rental item with complete relations
   const rentalItem = await prisma.rentalItem.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: {
         select: {
@@ -86,7 +88,7 @@ export default async function EditRentalItemPage({
   // Fetch rental requests with complete renter information
   const rentalRequests = await prisma.rentalItemRequest.findMany({
     where: {
-      rentalItemId: params.id,
+      rentalItemId: id,
     },
     include: {
       renter: {
@@ -121,12 +123,12 @@ export default async function EditRentalItemPage({
         </div>
         <div className="flex space-x-3">
           <Link
-            href={`/rentals/${params.id}`}
+            href={`/rentals/${id}`}
             className="btn-filter-inactive px-4 py-2 rounded-md"
           >
             View Listing
           </Link>
-          <DeleteRentalItemButton id={params.id} />
+          <DeleteRentalItemButton id={id} />
         </div>
       </div>
 

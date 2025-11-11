@@ -5,8 +5,9 @@ import { prisma } from "@/app/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -15,7 +16,7 @@ export async function GET(
 
   try {
     const ad = await prisma.ad.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         region: true,
         beachConnections: {
@@ -56,8 +57,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -69,7 +71,7 @@ export async function PATCH(
 
     // Verify ownership
     const existingAd = await prisma.ad.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         userId: true,
@@ -120,7 +122,7 @@ export async function PATCH(
 
     // First, update the ad details
     const updatedAd = await prisma.ad.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -130,7 +132,7 @@ export async function PATCH(
 
       // Delete existing beach connections
       await prisma.adBeachConnection.deleteMany({
-        where: { adId: params.id },
+        where: { adId: id },
       });
 
       // Create new beach connection - only use the first beach in the array
@@ -140,7 +142,7 @@ export async function PATCH(
 
         await prisma.adBeachConnection.create({
           data: {
-            adId: params.id,
+            adId: id,
             beachId: targetBeachId,
           },
         });
@@ -153,7 +155,7 @@ export async function PATCH(
 
     // Fetch the updated ad with beach connections
     const finalAd = await prisma.ad.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         beachConnections: {
           include: {
@@ -175,8 +177,9 @@ export async function PATCH(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -186,7 +189,7 @@ export async function POST(
   try {
     const { imageUrl } = await request.json();
     console.log("Received image update request:", {
-      adId: params.id,
+      adId: id,
       imageUrl,
     });
 
@@ -199,7 +202,7 @@ export async function POST(
 
     // Verify ownership
     const existingAd = await prisma.ad.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, userId: true, imageUrl: true },
     });
 
@@ -213,7 +216,7 @@ export async function POST(
 
     // Update only the image URL
     const updatedAd = await prisma.ad.update({
-      where: { id: params.id },
+      where: { id },
       data: { imageUrl },
     });
 

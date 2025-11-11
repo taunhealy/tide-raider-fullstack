@@ -25,7 +25,7 @@ export default function RaidLogClientWrapper({
   return (
     <SessionProvider>
       <ClientOnly>
-        <RaidLogDetails entry={entry} />
+        <RaidLogDetails id={entry.id} />
       </ClientOnly>
     </SessionProvider>
   );

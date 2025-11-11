@@ -63,7 +63,7 @@ export function useRaidLogs(
                       country: entry.beach.region.country,
                       continent: entry.beach.region.continent,
                     }
-                  : undefined,
+                  : null,
                 waveType: entry.beach.waveType,
                 difficulty: entry.beach.difficulty,
               }

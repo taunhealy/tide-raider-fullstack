@@ -1,9 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ForecastData } from "@/app/types/forecast";
-import {
-  fetchForecastData,
-  processForecastData,
-} from "@/app/services/forecastService";
+import { getLatestConditions } from "@/app/api/surf-conditions/route";
 
 interface ForecastState {
   data: ForecastData | null;
@@ -19,19 +16,18 @@ const initialState: ForecastState = {
   lastUpdated: null,
 };
 
-// Async thunk that uses the service
+// Async thunk that uses the API route
 export const fetchForecast = createAsyncThunk(
   "forecast/fetchForecast",
   async (region: string, { rejectWithValue }) => {
     try {
-      const response = await fetchForecastData(region);
+      const forecast = await getLatestConditions(false, region);
 
-      if (!response || !response.data) {
+      if (!forecast) {
         return rejectWithValue("No forecast data available");
       }
 
-      // Process data to ensure all fields exist
-      return processForecastData(response.data);
+      return forecast as ForecastData;
     } catch (error: any) {
       return rejectWithValue(error.message || "Failed to fetch forecast");
     }

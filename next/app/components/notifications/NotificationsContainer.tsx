@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { Bell, ShoppingBag, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { SpiralAnimation } from "@/app/components/alerts/SpiralAnimation";
+import RippleLoader from "@/app/components/ui/RippleLoader";
 
 interface Notification {
   id: string;
@@ -137,9 +137,8 @@ export default function NotificationsContainer() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-24 bg-gray-100 animate-pulse rounded-lg" />
-        <div className="h-24 bg-gray-100 animate-pulse rounded-lg" />
+      <div className="flex justify-center items-center py-12">
+        <RippleLoader isLoading={true} />
       </div>
     );
   }
@@ -147,9 +146,7 @@ export default function NotificationsContainer() {
   if (notifications.length === 0) {
     return (
       <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-        <div className="mb-3">
-          <SpiralAnimation size={80} />
-        </div>
+        <div className="mb-3"></div>
         <h3 className="font-primary text-lg font-medium text-gray-800">
           No notifications
         </h3>
@@ -207,9 +204,7 @@ export default function NotificationsContainer() {
 
       {filteredNotifications.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="mb-3">
-            <SpiralAnimation size={80} />
-          </div>
+          <div className="mb-3"></div>
           <h3 className="font-primary text-lg font-medium text-gray-800">
             No {activeTab !== "all" ? activeTab : ""} notifications
           </h3>

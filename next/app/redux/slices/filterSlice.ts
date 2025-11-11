@@ -1,22 +1,10 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
-import type { Region, Difficulty, CrimeLevel } from "@/app/types/beaches";
+import type { Region } from "@/app/types/beaches";
 import { fetchForecast } from "./forecastSlice";
 import { fetchBeachesByRegion } from "./beachSlice";
+import type { FilterState } from "@/app/lib/filterUtils";
 
 import { RootState } from "../store";
-export interface FilterState {
-  continent: string[];
-  country: string[];
-  waveType: string[];
-  difficulty: Difficulty[];
-  region: Region[];
-  crimeLevel: CrimeLevel[];
-  minPoints: number;
-  sharkAttack: string[];
-  minDistance?: number;
-  searchQuery: string;
-  selectedRegion: Region | null;
-}
 
 const initialState: FilterState = {
   continent: [],
@@ -46,7 +34,7 @@ export const filterSlice = createSlice({
       const { key, value } = action.payload;
       (state as any)[key] = value;
     },
-    setSelectedRegion: (state, action: PayloadAction<Region | null>) => {
+    setSelectedRegion: (state, action: PayloadAction<string | null>) => {
       state.selectedRegion = action.payload;
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {

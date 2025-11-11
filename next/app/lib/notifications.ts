@@ -1,8 +1,8 @@
 import { prisma } from "@/app/lib/prisma";
 import { sendEmail } from "@/app/lib/email";
 import { sendWhatsAppMessage } from "@/app/lib/whatsapp";
-import { fetchForecastData } from "@/app/services/forecastService";
-import { ForecastA } from "@prisma/client";
+import { getLatestConditions } from "@/app/api/surf-conditions/route";
+import { ForecastA, AlertType } from "@prisma/client";
 
 // Track which regions we've already fetched today to avoid duplicate API calls
 const fetchedForecasts = new Map();
@@ -30,9 +30,10 @@ export async function processUserAlerts(userId: string, today: Date) {
             forecast: true,
           },
         },
+        properties: true,
       },
       orderBy: {
-        region: "asc", // Group by region to optimize forecast fetching
+        regionId: "asc", // Group by region to optimize forecast fetching
       },
     });
 
@@ -71,8 +72,8 @@ export async function processUserAlerts(userId: string, today: Date) {
         result.alertsChecked++;
 
         // If we're processing a new region, fetch its forecast
-        if (currentRegion !== alert.region) {
-          currentRegion = alert.region;
+        if (currentRegion !== alert.regionId) {
+          currentRegion = alert.regionId;
 
           // Check if we already fetched this region's forecast today
           if (fetchedForecasts.has(currentRegion)) {
@@ -84,7 +85,7 @@ export async function processUserAlerts(userId: string, today: Date) {
             // First check if we already have this forecast in the database
             const existingForecast = await prisma.forecastA.findFirst({
               where: {
-                region: currentRegion,
+                regionId: currentRegion,
                 date: today,
               },
             });
@@ -96,7 +97,10 @@ export async function processUserAlerts(userId: string, today: Date) {
               );
             } else {
               // Fetch new forecast data from API
-              const apiForecaseData = await fetchForecastData(currentRegion);
+              const apiForecaseData = await getLatestConditions(
+                false,
+                currentRegion
+              );
 
               if (!apiForecaseData) {
                 console.error(
@@ -106,18 +110,8 @@ export async function processUserAlerts(userId: string, today: Date) {
                 continue;
               }
 
-              // Save to database
-              currentForecast = await prisma.forecastA.create({
-                data: {
-                  date: today,
-                  region: currentRegion,
-                  windSpeed: apiForecaseData.data.windSpeed,
-                  windDirection: apiForecaseData.data.windDirection,
-                  swellHeight: apiForecaseData.data.swellHeight,
-                  swellPeriod: apiForecaseData.data.swellPeriod,
-                  swellDirection: apiForecaseData.data.swellDirection,
-                },
-              });
+              // The API already returns a ForecastA object, so just use it
+              currentForecast = apiForecaseData;
             }
 
             // Cache the forecast
@@ -146,13 +140,7 @@ export async function processUserAlerts(userId: string, today: Date) {
         let conditionsMatch = false;
         let matchDetails = "";
 
-        if (alert.alertType === "variables") {
-          // Parse the properties JSON
-          const properties = alert.properties as Array<{
-            property: string;
-            range: number;
-          }>;
-
+        if (alert.alertType === AlertType.VARIABLES) {
           // For variable-based alerts, we need a reference forecast (usually from a log entry)
           const referenceForecast = alert.logEntry?.forecast;
 
@@ -174,7 +162,7 @@ export async function processUserAlerts(userId: string, today: Date) {
 
           // Check if all properties are within range
           const matchingProps: string[] = [];
-          const allPropsMatch = properties.every((prop) => {
+          const allPropsMatch = alert.properties?.every((prop) => {
             const forecastValue =
               currentForecast?.[prop.property as keyof typeof currentForecast];
             const referenceValue =
@@ -202,11 +190,11 @@ export async function processUserAlerts(userId: string, today: Date) {
           if (conditionsMatch) {
             matchDetails = matchingProps.join(", ");
           }
-        } else if (alert.alertType === "rating") {
+        } else if (alert.alertType === AlertType.RATING) {
           // We should query the stored score
           const dailyScore = await prisma.beachDailyScore.findFirst({
             where: {
-              region: alert.region,
+              regionId: alert.regionId,
               date: today,
             },
           });
@@ -214,8 +202,7 @@ export async function processUserAlerts(userId: string, today: Date) {
           const score = dailyScore?.score || 0;
 
           conditionsMatch =
-            (alert.starRating === "4+" && score >= 4) ||
-            (alert.starRating === "5" && score === 5);
+            alert.starRating !== null && score >= alert.starRating;
 
           if (conditionsMatch) {
             matchDetails = `Star rating: ${score}`;
@@ -264,9 +251,9 @@ export async function processUserAlerts(userId: string, today: Date) {
             const emailSuccess = await sendAlertEmail(
               alert.contactInfo,
               alert.name,
-              alert.region,
+              alert.regionId,
               matchDetails,
-              alert.user.name
+              alert.user?.name || "User"
             );
             notificationSuccess = emailSuccess;
           }
@@ -278,7 +265,7 @@ export async function processUserAlerts(userId: string, today: Date) {
             const whatsappSuccess = await sendAlertWhatsApp(
               alert.contactInfo,
               alert.name,
-              alert.region,
+              alert.regionId,
               matchDetails
             );
             notificationSuccess = notificationSuccess || whatsappSuccess;

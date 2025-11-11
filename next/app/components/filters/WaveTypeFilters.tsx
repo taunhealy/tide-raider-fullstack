@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { WAVE_TYPE_ICONS, WaveType } from "@/app/lib/constants";
-import { useBeachContext } from "@/app/context/BeachContext";
 import { WAVE_TYPES } from "@/app/types/beaches";
 
 interface WaveTypeFilterProps {
@@ -14,8 +13,6 @@ export default function WaveTypeFilter({
   onWaveTypeChange,
   waveTypes,
 }: WaveTypeFilterProps) {
-  const { filters, setFilters } = useBeachContext();
-
   return (
     <div className="mb-6 overflow-x-auto pb-2">
       <div className="flex flex-nowrap gap-2 min-w-max">
@@ -27,9 +24,6 @@ export default function WaveTypeFilter({
                 ? selectedWaveTypes.filter((t) => t !== waveType)
                 : ([...selectedWaveTypes, waveType] as WaveType[]);
               onWaveTypeChange(newWaveTypes);
-
-              // This is important - dispatch it to Redux
-              setFilters({ ...filters, waveType: newWaveTypes });
             }}
             className={`
               relative w-[60px] h-[60px] sm:w-[70px] sm:h-[70px] lg:w-[80px] lg:h-[80px] 
@@ -58,7 +52,7 @@ export default function WaveTypeFilter({
               sizes="(max-width: 640px) 60px, (max-width: 1024px) 70px, 80px"
               priority={
                 selectedWaveTypes.includes(waveType) ||
-                WAVE_TYPES.indexOf(waveType) < 3
+                waveTypes.indexOf(waveType) < 3
               }
               quality={80}
               onLoad={(e) => {

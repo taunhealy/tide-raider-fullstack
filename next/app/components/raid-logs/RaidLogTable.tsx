@@ -26,7 +26,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
-import { beachData, type Beach } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
+import type { Beach } from "@/app/types/beaches";
 
 import { toast } from "sonner";
 
@@ -382,6 +383,7 @@ export default function RaidLogTable({
   onBeachClick,
   nationality,
 }: QuestTableProps) {
+  const { beaches } = useBeach();
   const {
     isGated,
     isLoggedOut,
@@ -562,11 +564,13 @@ export default function RaidLogTable({
           {isOwner && (
             <>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleEdit(entry);
                 }}
                 className="text-gray-500 hover:text-[var(--color-text-primary)]"
+                aria-label="Edit raid log"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -788,6 +792,7 @@ export default function RaidLogTable({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleAlertClick(entry);
@@ -795,6 +800,7 @@ export default function RaidLogTable({
                               className={cn(
                                 "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
                               )}
+                              aria-label="Create alert for these conditions"
                             >
                               <Bell
                                 className={cn(
@@ -820,11 +826,13 @@ export default function RaidLogTable({
                       {session?.user?.email === entry.surferEmail && (
                         <>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEdit(entry);
                             }}
                             className="text-gray-500 hover:text-[var(--color-text-primary)]"
+                            aria-label="Edit raid log"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -1083,7 +1091,7 @@ export default function RaidLogTable({
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={(e) => {
-                                  const foundBeach = beachData.find(
+                                  const foundBeach = beaches.find(
                                     (b) => b.name === entry.beachName
                                   );
                                   console.log("Found beach data:", foundBeach);
@@ -1155,6 +1163,7 @@ export default function RaidLogTable({
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
+                                      type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleAlertClick(entry);
@@ -1162,6 +1171,7 @@ export default function RaidLogTable({
                                       className={cn(
                                         "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
                                       )}
+                                      aria-label="Create alert for these conditions"
                                     >
                                       <Bell
                                         className={cn(

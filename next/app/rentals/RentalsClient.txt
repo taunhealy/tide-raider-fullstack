@@ -8,12 +8,20 @@ import { SearchFilterSidebar } from "@/app/components/shared/SearchFilterSidebar
 import RippleLoader from "@/app/components/ui/RippleLoader";
 import { Button } from "@/app/components/ui/Button";
 import { RentalItemWithRelations } from "@/app/types/rentals";
-import {
-  LocationFilter,
-  LocationFilterType,
-} from "@/app/components/rentals/LocationFilter";
+// import {
+//   LocationFilter,
+//   LocationFilterType,
+// } from "@/app/components/rentals/LocationFilter";
 import { Session } from "next-auth";
 import { ITEM_CATEGORIES } from "@/app/lib/rentals/constants";
+
+// Temporary type definition for LocationFilter (future feature)
+type LocationFilterType = {
+  continent: string | null;
+  country: string | null;
+  region: string | null;
+  beach: string | null;
+};
 
 type Region = {
   id: string;
@@ -301,8 +309,8 @@ export default function RentalsClient({
           )}
         </div>
 
-        {/* Location Filter Component */}
-        <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-6 sm:mb-8">
+        {/* Location Filter Component - Temporarily disabled (future feature) */}
+        {/* <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-6 sm:mb-8">
           <LocationFilter
             locationFilters={locationFilters}
             onLocationFilterChange={handleLocationFilterChange}
@@ -310,7 +318,7 @@ export default function RentalsClient({
             onClearFilters={clearAllFilters}
             hasOtherActiveFilters={!!activeFilters.itemType}
           />
-        </div>
+        </div> */}
 
         {/* Rental Items Grid */}
         {loading ? (

@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { sendAlertNotification } from "./notificationService";
+import { AlertType } from "@prisma/client";
 
 // Move the AlertMatch interface here
 export interface AlertMatch {
@@ -41,14 +42,15 @@ export async function processUserAlerts(userId: string, today: Date) {
             beach: true,
           },
         },
+        properties: true,
       },
     });
 
     // Get today's forecasts for all relevant regions
-    const regions = [...new Set(userAlerts.map((alert) => alert.region))];
+    const regions = [...new Set(userAlerts.map((alert) => alert.regionId))];
     const todaysForecasts = await prisma.forecastA.findMany({
       where: {
-        region: { in: regions },
+        regionId: { in: regions },
         date: {
           gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
           lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
@@ -97,11 +99,11 @@ export async function processUserAlerts(userId: string, today: Date) {
 
         // Find today's forecast for this alert's region
         const todaysForecast = todaysForecasts.find(
-          (f) => f.region === alert.region
+          (f) => f.regionId === alert.regionId
         );
 
         if (!todaysForecast) {
-          console.log(`No forecast found for region ${alert.region} today`);
+          console.log(`No forecast found for region ${alert.regionId} today`);
           continue;
         }
 
@@ -110,16 +112,15 @@ export async function processUserAlerts(userId: string, today: Date) {
         const match: AlertMatch = {
           alertId: alert.id,
           alertName: alert.name,
-          region: alert.region,
+          region: alert.regionId,
           timestamp: new Date(),
           matchedProperties: [],
           matchDetails: "",
         };
 
         if (
-          alert.alertType === "variables" &&
-          alert.properties &&
-          Array.isArray(alert.properties)
+          alert.alertType === AlertType.VARIABLES &&
+          alert.properties?.length > 0
         ) {
           // For variable-based alerts, check if all properties are within range
           shouldSendAlert = true; // Start with true and set to false if any property is out of range
@@ -167,7 +168,7 @@ export async function processUserAlerts(userId: string, today: Date) {
             }
           }
         } else if (
-          alert.alertType === "rating" &&
+          alert.alertType === AlertType.RATING &&
           alert.starRating &&
           beachId
         ) {

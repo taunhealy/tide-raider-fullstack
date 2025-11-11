@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { AlertConfig } from "@/app/types/alerts";
+import { AlertType } from "@prisma/client";
 import { AlertConfigTypes } from "@/app/types/alerts";
 import { AlertsList } from "@/app/components/alerts/AlertsList";
 import { Button } from "@/app/components/ui/Button";
@@ -99,7 +100,7 @@ export default function AlertsPage() {
 
     return alerts.reduce(
       (acc, alert) => {
-        if (alert.alertType === "rating") {
+        if (alert.alertType === AlertType.RATING) {
           acc.rating += 1;
         } else {
           acc.variables += 1;

@@ -2,7 +2,7 @@
 
 import { Cloud, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { beachData } from "@/app/types/beaches";
+import { useBeach } from "@/app/context/BeachContext";
 import { WeatherWidgetProps } from "@/app/types/blog";
 
 interface WeatherData {
@@ -14,13 +14,15 @@ interface WeatherData {
 }
 
 export default function WeatherWidget({ title, region }: WeatherWidgetProps) {
-  // Get coordinates for the region from beachData
+  const { beaches } = useBeach();
+
+  // Get coordinates for the region from database beaches
   const getRegionCoordinates = (region: string) => {
-    const beach = beachData.find((beach) => beach.region === region);
+    const beach = beaches.find((beach) => beach.region?.name === region);
     return beach
       ? {
-          lat: beach.coordinates.lat,
-          lon: beach.coordinates.lng, // OpenWeather uses 'lon' not 'lng'
+          lat: (beach.coordinates as any).lat,
+          lon: (beach.coordinates as any).lng, // OpenWeather uses 'lon' not 'lng'
         }
       : null;
   };

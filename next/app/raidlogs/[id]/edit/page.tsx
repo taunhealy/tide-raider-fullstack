@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { useSession } from "next-auth/react";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 
@@ -12,12 +13,13 @@ import { RandomLoader } from "@/app/components/ui/random-loader";
 export default function EditRaidLogPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const { data: session } = useSession();
   const router = useRouter();
   const { data: beaches, isLoading: isLoadingBeaches } = useBeaches();
-  const { data: entry, isLoading: isLoadingEntry } = useRaidLog(params.id);
+  const { data: entry, isLoading: isLoadingEntry } = useRaidLog(id);
 
   if (isLoadingBeaches || isLoadingEntry) {
     return <RandomLoader isLoading={true} />;

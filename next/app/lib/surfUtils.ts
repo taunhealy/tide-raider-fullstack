@@ -179,7 +179,7 @@ export function getConditionReasons(
 
 export function getGatedBeaches(
   beaches: Beach[],
-  forecastData: BaseForecastData | null,
+  forecastData: CoreForecastData | null,
   isSubscribed: boolean,
   hasActiveTrial: boolean,
   isBetaMode: boolean = false

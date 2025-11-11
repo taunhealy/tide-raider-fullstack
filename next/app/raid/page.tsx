@@ -8,15 +8,16 @@ export const metadata: Metadata = {
 };
 
 type RaidPageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function RaidPage({ searchParams = {} }: RaidPageProps) {
+export default async function RaidPage({ searchParams }: RaidPageProps) {
+  const awaitedSearchParams = await searchParams || {};
   // Convert searchParams to URLSearchParams safely
   const urlSearchParams = new URLSearchParams();
   // Ensure searchParams is treated as a plain object for iteration
   const plainSearchParams = Object.fromEntries(
-    Object.entries(searchParams).filter(
+    Object.entries(awaitedSearchParams).filter(
       ([_, value]) => typeof value === "string" || Array.isArray(value)
     )
   );

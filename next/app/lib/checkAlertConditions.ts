@@ -9,6 +9,7 @@ export async function checkAlertConditions(alertId: string) {
       logEntry: {
         include: { forecast: true },
       },
+      properties: true,
     },
   });
 
@@ -17,7 +18,7 @@ export async function checkAlertConditions(alertId: string) {
   // Use the structured forecast data
   const forecast = await prisma.forecastA.findFirst({
     where: {
-      region: alert.region,
+      regionId: alert.regionId,
       date: alert.forecastDate,
     },
   });
@@ -25,9 +26,7 @@ export async function checkAlertConditions(alertId: string) {
   if (!forecast) return false;
 
   // Check if all conditions are met
-  return (
-    alert.properties as Array<{ property: string; range: number }>
-  )?.every((condition) => {
+  return alert.properties?.every((condition) => {
     const forecastValue = forecast[condition.property as keyof ForecastA];
     return (
       typeof forecastValue === "number" && forecastValue >= condition.range

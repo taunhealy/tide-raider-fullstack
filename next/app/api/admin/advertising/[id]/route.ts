@@ -5,12 +5,13 @@ import { adRejectionTemplate } from "@/app/lib/email-templates";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { action, reason } = await request.json();
     const adRequest = await prisma.adRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!adRequest) {
@@ -22,7 +23,7 @@ export async function POST(
 
     if (action === "approve") {
       await prisma.adRequest.update({
-        where: { id: params.id },
+        where: { id },
         data: { status: "active" },
       });
 
@@ -46,7 +47,7 @@ export async function POST(
       );
     } else {
       await prisma.adRequest.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: "rejected",
           rejectionReason: reason,

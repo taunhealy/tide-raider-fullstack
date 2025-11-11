@@ -7,18 +7,19 @@ import { z } from "zod";
 // GET - Fetch a specific alert with its log entry
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("Fetching alert with ID:", params.id);
+    console.log("Fetching alert with ID:", id);
     const alert = await prisma.alert.findUnique({
       where: {
-        id: params.id,
+        id,
       },
       include: {
         properties: true,
@@ -46,9 +47,10 @@ export async function GET(
 // PUT - Update an existing alert
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: alertId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -69,7 +71,7 @@ export async function PUT(
     } = data;
 
     const alert = await prisma.alert.update({
-      where: { id: params.id },
+      where: { id: alertId },
       data: {
         ...updateData,
         forecastDate: new Date(dateOnly),
@@ -124,7 +126,7 @@ const AlertUpdateSchema = z.object({
 // DELETE - Delete an alert
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -133,7 +135,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const alertId = params.id;
+    const { id: alertId } = await params;
 
     // Verify alert ownership
     const alert = await prisma.alert.findUnique({
@@ -191,7 +193,7 @@ export async function DELETE(
 // PATCH - Update an alert
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -199,7 +201,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const alertId = params.id;
+    const { id: alertId } = await params;
     const data = await req.json();
 
     // Validate request body

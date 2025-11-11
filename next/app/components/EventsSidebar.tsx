@@ -27,15 +27,18 @@ export default function EventsSidebar() {
     }
 
     const uniqueCountries = Array.from(
-      new Set(beaches.map((beach) => beach.country))
+      new Set(beaches.map((beach) => typeof beach.country === 'string' ? beach.country : beach.country?.id || ''))
     ).sort();
 
     const regionMap = beaches.reduce(
       (acc, beach) => {
-        if (!acc[beach.country]) {
-          acc[beach.country] = new Set();
+        const countryKey = typeof beach.country === 'string' ? beach.country : beach.country?.id || '';
+        if (!acc[countryKey]) {
+          acc[countryKey] = new Set();
         }
-        acc[beach.country].add(beach.region.name);
+        if (beach.region) {
+          acc[countryKey].add(beach.region.name);
+        }
         return acc;
       },
       {} as Record<string, Set<string>>

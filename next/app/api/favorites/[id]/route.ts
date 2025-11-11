@@ -5,8 +5,9 @@ import { authOptions } from "@/app/lib/authOptions";
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -14,7 +15,7 @@ export async function DELETE(
 
   try {
     const favorite = await prisma.userFavorite.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!favorite) {
@@ -26,7 +27,7 @@ export async function DELETE(
     }
 
     await prisma.userFavorite.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
@@ -40,8 +41,9 @@ export async function DELETE(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,7 +54,7 @@ export async function PUT(
 
     // First verify the favorite exists and belongs to user
     const existingFavorite = await prisma.userFavorite.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingFavorite) {
@@ -68,7 +70,7 @@ export async function PUT(
 
     // Now perform the update
     const updatedFavorite = await prisma.userFavorite.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title,
         videoLink,

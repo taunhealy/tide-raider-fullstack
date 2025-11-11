@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -11,7 +11,8 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
 
-export default function EditAdPage({ params }: { params: { id: string } }) {
+export default function EditAdPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
@@ -33,9 +34,9 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
 
   // Fetch ad data
   const { data: ad, isLoading } = useQuery({
-    queryKey: ["ad", params.id],
+    queryKey: ["ad", id],
     queryFn: async () => {
-      const response = await fetch(`/api/ads/${params.id}/edit`);
+      const response = await fetch(`/api/ads/${id}/edit`);
       if (!response.ok) throw new Error("Failed to fetch ad");
       const data = await response.json();
       return {
@@ -111,7 +112,7 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
   // Update ad mutation
   const updateAdMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch(`/api/ads/${params.id}/edit`, {
+      const response = await fetch(`/api/ads/${id}/edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -121,9 +122,9 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ad", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["ad", id] });
       toast.success("Ad updated successfully");
-      router.push(`/dashboard/ads/${params.id}`);
+      router.push(`/dashboard/ads/${id}`);
       router.refresh();
     },
     onError: (error) => {
@@ -162,7 +163,7 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
           throw new Error("No image URL returned from upload");
         }
 
-        const response = await fetch(`/api/ads/${params.id}/edit`, {
+        const response = await fetch(`/api/ads/${id}/edit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imageUrl: data.imageUrl }),
@@ -178,7 +179,7 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
         toast.success("Image uploaded and saved successfully");
 
         // Refresh the ad data
-        queryClient.invalidateQueries({ queryKey: ["ad", params.id] });
+        queryClient.invalidateQueries({ queryKey: ["ad", id] });
       } catch (error) {
         console.error("Error updating image URL in database:", error);
         toast.error("Image uploaded but failed to save to database");
@@ -281,7 +282,7 @@ export default function EditAdPage({ params }: { params: { id: string } }) {
               Back To Your Ads
             </Button>
           </Link>
-          <Link href={`/dashboard/ads/${params.id}`}>
+          <Link href={`/dashboard/ads/${id}`}>
             <Button variant="outline" size="default">
               Cancel
             </Button>
