@@ -342,17 +342,30 @@ export async function GET(req: NextRequest) {
 
     // Validate whereClause before querying - ensure it's a valid Prisma where clause
     // Prisma where clauses can have nested objects, so we need to be careful
-    if (!whereClause || typeof whereClause !== "object" || Array.isArray(whereClause)) {
+    if (
+      !whereClause ||
+      typeof whereClause !== "object" ||
+      Array.isArray(whereClause)
+    ) {
       whereClause = {};
     }
-    
+
     // Remove top-level undefined/null values, but preserve nested Prisma operators (in, OR, etc.)
     const cleanedWhereClause: any = {};
     for (const [key, value] of Object.entries(whereClause)) {
       if (value !== undefined && value !== null) {
         // If it's a Prisma operator object (like { in: [...] } or { OR: [...] }), keep it as is
         const valueObj = value as any;
-        if (typeof value === "object" && !Array.isArray(value) && (valueObj.in || valueObj.OR || valueObj.gte || valueObj.lte || valueObj.lt || valueObj.gt)) {
+        if (
+          typeof value === "object" &&
+          !Array.isArray(value) &&
+          (valueObj.in ||
+            valueObj.OR ||
+            valueObj.gte ||
+            valueObj.lte ||
+            valueObj.lt ||
+            valueObj.gt)
+        ) {
           cleanedWhereClause[key] = value;
         } else if (typeof value !== "object" || Array.isArray(value)) {
           // Simple values or arrays

@@ -13,7 +13,7 @@ import {
   Hazard,
 } from "@prisma/client";
 import type { FilterConfig } from "@/app/types/filters";
-import type { Beach } from "@/app/types/beaches";
+import type { Beach, Region } from "@/app/types/beaches";
 import type { BeachInitialData } from "@/app/types/beaches";
 import type { ForecastData } from "@/app/types/forecast";
 
@@ -56,7 +56,10 @@ export class BeachService {
         ...(searchQuery && {
           OR: [
             {
-              name: { contains: searchQuery, mode: Prisma.QueryMode.insensitive },
+              name: {
+                contains: searchQuery,
+                mode: Prisma.QueryMode.insensitive,
+              },
             },
             {
               location: {
@@ -188,41 +191,60 @@ export class BeachService {
 
       // Transform scores into a flat dictionary, ensuring the full beach object is included.
       // Also ensure region has regionId property to match Region type
-      const scores = beaches.reduce(
-        (
-          acc: Record<string, { score: number; beach: (typeof beaches)[number] }>,
-          beach
-        ) => {
+      const scores: BeachInitialData["scores"] = beaches.reduce(
+        (acc, beach) => {
           const dailyScore =
-            beach.beachDailyScores.length > 0 ? beach.beachDailyScores[0] : null;
+            beach.beachDailyScores.length > 0
+              ? beach.beachDailyScores[0]
+              : null;
+
+          // Transform region to include regionId property
+          const transformedRegion: Region | null = beach.region
+            ? {
+                ...beach.region,
+                regionId: beach.region.id, // Add regionId to match Region type
+                continent: beach.region.continent ?? undefined, // Convert null to undefined
+              }
+            : null;
+
           acc[beach.id] = {
             score: dailyScore?.score ?? 0,
             beach: {
               ...beach,
-              region: beach.region
-                ? {
-                    ...beach.region,
-                    regionId: beach.region.id, // Add regionId to match Region type
-                  }
-                : beach.region,
+              region: transformedRegion,
               beachDailyScores: dailyScore ? [dailyScore] : [],
+            } as unknown as Beach & {
+              region: Region;
+              beachDailyScores: typeof beach.beachDailyScores;
             },
           };
           return acc;
         },
-        {}
+        {} as BeachInitialData["scores"]
       );
 
       // Return transformed data structure matching API response format
+      // Transform beaches array to include regionId in region
+      const transformedBeaches: Beach[] = beaches.map((beach) => {
+        const { beachDailyScores, ...beachData } = beach;
+        return {
+          ...beachData,
+          region: beach.region
+            ? {
+                ...beach.region,
+                regionId: beach.region.id, // Add regionId to match Region type
+                continent: beach.region.continent ?? undefined, // Convert null to undefined
+              }
+            : undefined,
+        } as unknown as Beach;
+      });
+
       return {
-        beaches: beaches.map((beach) => {
-          const { beachDailyScores, ...beachData } = beach;
-          return beachData;
-        }),
+        beaches: transformedBeaches,
         scores,
         forecast,
         totalCount: beaches.length,
-      };
+      } as BeachInitialData;
     } catch (error) {
       console.error("Error in getFilteredBeaches:", error);
       throw error;
@@ -234,7 +256,7 @@ export class BeachService {
       regionId: searchParams.get("regionId")?.toLowerCase(),
       date: searchParams.get("date")
         ? new Date(searchParams.get("date")!)
-      : undefined,
+        : undefined,
       searchQuery: searchParams.get("searchQuery") || undefined,
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "10"),
