@@ -24,18 +24,30 @@ interface FilterParams {
 
 export class BeachService {
   static async getFilteredBeaches(searchParams: URLSearchParams) {
-    // Use absolute URL by getting the base URL from window.location
-    const baseUrl =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost:3000";
-    const response = await fetch(
-      `${baseUrl}/api/surf-conditions?${searchParams.toString()}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch filtered beaches");
+    // In server components, use environment variable or construct URL properly
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+                    typeof window !== "undefined" ? window.location.origin :
+                    "http://localhost:3000";
+    
+    try {
+      const response = await fetch(
+        `${baseUrl}/api/filtered-beaches?${searchParams.toString()}`,
+        {
+          // Add cache headers for server-side requests
+          cache: 'no-store',
+        }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to fetch filtered beaches:", response.status, errorText);
+        throw new Error(`Failed to fetch filtered beaches: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      console.error("Error in getFilteredBeaches:", error);
+      throw error;
     }
-    return response.json();
   }
 
   private static parseFilters(searchParams: URLSearchParams): FilterParams {

@@ -12,33 +12,45 @@ type RaidPageProps = {
 };
 
 export default async function RaidPage({ searchParams }: RaidPageProps) {
-  const awaitedSearchParams = await searchParams || {};
-  // Convert searchParams to URLSearchParams safely
-  const urlSearchParams = new URLSearchParams();
-  // Ensure searchParams is treated as a plain object for iteration
-  const plainSearchParams = Object.fromEntries(
-    Object.entries(awaitedSearchParams).filter(
-      ([_, value]) => typeof value === "string" || Array.isArray(value)
-    )
-  );
+  try {
+    const awaitedSearchParams = await searchParams || {};
+    // Convert searchParams to URLSearchParams safely
+    const urlSearchParams = new URLSearchParams();
+    // Ensure searchParams is treated as a plain object for iteration
+    const plainSearchParams = Object.fromEntries(
+      Object.entries(awaitedSearchParams).filter(
+        ([_, value]) => typeof value === "string" || Array.isArray(value)
+      )
+    );
 
-  Object.entries(plainSearchParams).forEach(([key, value]) => {
-    if (typeof value === "string") {
-      urlSearchParams.append(key, value);
-    } else if (Array.isArray(value)) {
-      value.forEach((item) => {
-        if (typeof item === "string") {
-          urlSearchParams.append(key, item);
-        }
-      });
+    Object.entries(plainSearchParams).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        urlSearchParams.append(key, value);
+      } else if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (typeof item === "string") {
+            urlSearchParams.append(key, item);
+          }
+        });
+      }
+    });
+
+    const regionIdFromParams = urlSearchParams.get("regionId"); // Use get from URLSearchParams
+
+    let initialData = null;
+    if (regionIdFromParams) {
+      try {
+        initialData = await BeachService.getFilteredBeaches(urlSearchParams);
+      } catch (error) {
+        console.error("Error fetching filtered beaches:", error);
+        // Continue with null - component will handle empty state
+      }
     }
-  });
 
-  const regionIdFromParams = urlSearchParams.get("regionId"); // Use get from URLSearchParams
-
-  const initialData = regionIdFromParams
-    ? await BeachService.getFilteredBeaches(urlSearchParams)
-    : null;
-
-  return <BeachContainer initialData={initialData} />;
+    return <BeachContainer initialData={initialData} />;
+  } catch (error) {
+    console.error("Error in RaidPage:", error);
+    // Return component with null data - it will handle the error state
+    return <BeachContainer initialData={null} />;
+  }
 }
