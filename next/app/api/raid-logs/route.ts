@@ -114,6 +114,9 @@ export async function GET(req: NextRequest) {
           videoUrl: true,
           videoPlatform: true,
           userId: true,
+          beachName: true,
+          beachId: true,
+          regionId: true,
           region: {
             select: {
               id: true,

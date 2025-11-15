@@ -130,7 +130,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
             <div>
               <div className="flex flex-wrap items-start gap-2 mb-3">
                 <h1 className="text-2xl md:text-3xl font-primary font-semibold text-[var(--color-text-primary)]">
-                  {entry.beachName || "Unnamed Beach"}
+                  {entry.beach?.name || entry.beachName || "Unnamed Beach"}
                 </h1>
                 {Number(entry.surferRating) > 3 && (
                   <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full font-primary">

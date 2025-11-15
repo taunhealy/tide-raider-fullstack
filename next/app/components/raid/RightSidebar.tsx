@@ -5,6 +5,7 @@ import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import FunFacts from "../FunFacts";
+import RecentRaidLogs from "../RecentRaidLogs";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
@@ -155,6 +156,7 @@ export default function RightSidebar() {
       )}
 
       {/* regionalSidebar removed */}
+      <RecentRaidLogs />
       <FunFacts />
     </aside>
   );
