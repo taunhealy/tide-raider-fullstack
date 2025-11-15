@@ -1,5 +1,5 @@
 // next/app/contexts/AlertContext.tsx
-import React, { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from "react";
 import {
   Alert,
   AlertType,
@@ -24,14 +24,14 @@ type CreateAlertInput = Prisma.AlertCreateInput;
 // Core state - keep only what's necessary
 interface AlertState {
   alert: Prisma.AlertCreateInput;
-  mode: "logEntry" | "beachVariables";
+  mode: "logEntry" | "beachVariables" | "starRating";
   selectedLogEntry: LogEntry | null;
 }
 
 const initialState: AlertState = {
   alert: {
     name: "",
-    notificationMethod: "app",
+    notificationMethod: "email",
     contactInfo: "",
     active: true,
     alertType: AlertType.VARIABLES,
@@ -47,7 +47,7 @@ const initialState: AlertState = {
 // Simple actions
 type AlertAction =
   | { type: "UPDATE_ALERT"; payload: Partial<Prisma.AlertCreateInput> }
-  | { type: "SET_MODE"; payload: "logEntry" | "beachVariables" }
+  | { type: "SET_MODE"; payload: "logEntry" | "beachVariables" | "starRating" }
   | { type: "SET_LOG_ENTRY"; payload: LogEntry | null };
 
 function alertReducer(state: AlertState, action: AlertAction): AlertState {
@@ -67,6 +67,7 @@ function alertReducer(state: AlertState, action: AlertAction): AlertState {
 interface AlertProviderProps {
   children: React.ReactNode;
   existingAlert?: Prisma.AlertCreateInput | any;
+  logEntry?: LogEntry | null; // Add this
   onSaved?: () => void;
   onClose: () => void;
 }
@@ -78,8 +79,8 @@ interface AlertContextType {
   createAlert: UseMutationResult<any, Error, Prisma.AlertCreateInput>;
   beachDetails: BeachDetails | null;
   onClose: () => void;
-  mode: "logEntry" | "beachVariables";
-  setMode: (mode: "logEntry" | "beachVariables") => void;
+  mode: "logEntry" | "beachVariables" | "starRating";
+  setMode: (mode: "logEntry" | "beachVariables" | "starRating") => void;
   updateAlertMutation: UseMutationResult<any, Error, Prisma.AlertUpdateInput>;
   properties: Array<{
     property:
@@ -104,29 +105,90 @@ const AlertContext = createContext<AlertContextType | undefined>(undefined);
 export function AlertProvider({
   children,
   existingAlert,
+  logEntry, // Add this
   onSaved,
   onClose,
 }: AlertProviderProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  // Initialize mode based on existing alert type
+  const initialMode =
+    existingAlert?.alertType === AlertType.RATING
+      ? "starRating"
+      : existingAlert?.logEntry?.connect?.id ||
+          (existingAlert as any)?.logEntryId
+        ? "logEntry"
+        : "beachVariables";
+
   const [state, dispatch] = useReducer(alertReducer, {
     ...initialState,
     alert: existingAlert ?? initialState.alert,
+    mode: initialMode,
+    selectedLogEntry: logEntry ?? null, // Initialize from prop
   });
 
-  const { data: beachDetails } = useQuery({
+  // Add useEffect to update selectedLogEntry when logEntry prop changes
+  useEffect(() => {
+    if (logEntry) {
+      dispatch({ type: "SET_LOG_ENTRY", payload: logEntry });
+    }
+  }, [logEntry]);
+
+  // Update mode when existing alert type changes
+  useEffect(() => {
+    if (existingAlert?.alertType === AlertType.RATING) {
+      dispatch({ type: "SET_MODE", payload: "starRating" });
+    } else if (
+      existingAlert?.logEntry?.connect?.id ||
+      (existingAlert as any)?.logEntryId
+    ) {
+      dispatch({ type: "SET_MODE", payload: "logEntry" });
+    } else {
+      dispatch({ type: "SET_MODE", payload: "beachVariables" });
+    }
+  }, [existingAlert?.alertType, existingAlert?.logEntry?.connect?.id]);
+
+  // Pre-populate contactInfo with user's email if not already set
+  useEffect(() => {
+    if (session?.user?.email && !state.alert.contactInfo) {
+      dispatch({
+        type: "UPDATE_ALERT",
+        payload: { contactInfo: session.user.email },
+      });
+    }
+  }, [session?.user?.email, state.alert.contactInfo]);
+
+  const { data: beachDetails, error: beachError } = useQuery({
     queryKey: ["beach", state.alert.beach?.connect?.id],
     queryFn: async () => {
       const beachId = state.alert.beach?.connect?.id;
       if (!beachId) throw new Error("Beach ID is required");
       const response = await fetch(
-        `/api/beaches/${encodeURIComponent(beachId)}/`
+        `/api/beaches/${encodeURIComponent(beachId)}`
       );
-      if (!response.ok) throw new Error("Failed to fetch beach details");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 404) {
+          throw new Error(errorData.message || `Beach not found: ${beachId}`);
+        }
+        throw new Error(errorData.error || "Failed to fetch beach details");
+      }
       return response.json();
     },
     enabled: !!state.alert.beach?.connect?.id,
+    retry: false, // Don't retry on 404 errors
   });
+
+  // Show error toast when beach is not found
+  useEffect(() => {
+    if (beachError) {
+      const errorMessage =
+        beachError instanceof Error
+          ? beachError.message
+          : "Failed to load beach details";
+      toast.error(errorMessage);
+    }
+  }, [beachError]);
 
   const createAlert = useMutation({
     mutationFn: (data: Prisma.AlertCreateInput) =>
@@ -160,7 +222,7 @@ export function AlertProvider({
         // Actions
         updateAlert: (data: Partial<Prisma.AlertCreateInput>) =>
           dispatch({ type: "UPDATE_ALERT", payload: data }),
-        setMode: (mode: "logEntry" | "beachVariables") =>
+        setMode: (mode: "logEntry" | "beachVariables" | "starRating") =>
           dispatch({ type: "SET_MODE", payload: mode }),
 
         // Mutations

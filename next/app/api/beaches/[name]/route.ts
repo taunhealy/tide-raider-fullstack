@@ -9,24 +9,135 @@ export async function GET(
     const { name } = await params;
     const beachName = decodeURIComponent(name);
 
-    const beach = await prisma.beach.findFirst({
-      where: {
-        name: beachName,
-      },
-      select: {
-        id: true,
-        name: true,
-        optimalWindDirections: true,
-        optimalSwellDirections: true,
-        swellSize: true,
-        idealSwellPeriod: true,
-        waterTemp: true,
-      },
-    });
+    console.log(`[beaches/[name]] Looking up beach: "${beachName}"`);
+
+    // First, try matching by ID (UUID format check)
+    // UUIDs are typically 36 characters with dashes: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        beachName
+      );
+
+    let beach = null;
+
+    if (isUUID) {
+      console.log(`[beaches/[name]] Treating as UUID, looking up by ID`);
+      beach = await prisma.beach.findUnique({
+        where: {
+          id: beachName,
+        },
+        select: {
+          id: true,
+          name: true,
+          optimalWindDirections: true,
+          optimalSwellDirections: true,
+          swellSize: true,
+          idealSwellPeriod: true,
+          waterTemp: true,
+        },
+      });
+    }
+
+    // If not found by ID, try exact name match
+    if (!beach) {
+      console.log(`[beaches/[name]] Trying exact name match`);
+      beach = await prisma.beach.findFirst({
+        where: {
+          name: beachName,
+        },
+        select: {
+          id: true,
+          name: true,
+          optimalWindDirections: true,
+          optimalSwellDirections: true,
+          swellSize: true,
+          idealSwellPeriod: true,
+          waterTemp: true,
+        },
+      });
+    }
+
+    // If not found, try case-insensitive search
+    if (!beach) {
+      console.log(`[beaches/[name]] Trying case-insensitive name match`);
+      beach = await prisma.beach.findFirst({
+        where: {
+          name: {
+            equals: beachName,
+            mode: "insensitive",
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          optimalWindDirections: true,
+          optimalSwellDirections: true,
+          swellSize: true,
+          idealSwellPeriod: true,
+          waterTemp: true,
+        },
+      });
+    }
+
+    // If still not found, try with spaces/hyphens normalized
+    if (!beach) {
+      const normalizedName = beachName.replace(/[-_]/g, " ").trim();
+      const hyphenatedName = beachName.replace(/\s+/g, "-");
+
+      console.log(
+        `[beaches/[name]] Trying normalized: "${normalizedName}" and hyphenated: "${hyphenatedName}"`
+      );
+
+      beach = await prisma.beach.findFirst({
+        where: {
+          OR: [
+            {
+              name: {
+                equals: normalizedName,
+                mode: "insensitive",
+              },
+            },
+            {
+              name: {
+                equals: hyphenatedName,
+                mode: "insensitive",
+              },
+            },
+            // Also try the original with spaces/hyphens swapped
+            {
+              name: {
+                contains: normalizedName,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          optimalWindDirections: true,
+          optimalSwellDirections: true,
+          swellSize: true,
+          idealSwellPeriod: true,
+          waterTemp: true,
+        },
+      });
+    }
 
     if (!beach) {
-      return NextResponse.json({ error: "Beach not found" }, { status: 404 });
+      console.log(`[beaches/[name]] Beach not found: "${beachName}"`);
+      return NextResponse.json(
+        {
+          error: "Beach not found",
+          message: `Could not find beach with name or ID: ${beachName}`,
+        },
+        { status: 404 }
+      );
     }
+
+    console.log(
+      `[beaches/[name]] Found beach: "${beach.name}" (ID: ${beach.id})`
+    );
 
     // Transform the data to ensure proper typing
     const transformedBeach = {

@@ -191,7 +191,7 @@ export default function PricingPage() {
               <div className="px-[32px] py-[32px] bg-white">
                 <ul className="space-y-[16px] mb-[32px]">
                   {[
-                    "Set alerts to get notifications for your ideal surf conditions (SMS/App/Email)",
+                    "Set alerts to get notifications for your ideal surf conditions (Whatsapp/Email)",
                     "Cancel anytime",
                     "14-day free trial",
                   ].map((feature) => (

@@ -18,27 +18,53 @@ const AlertPropertySchema = z.object({
     "temperature",
   ]),
   optimalValue: z.number(),
-  range: z.number().min(1).max(100),
+  range: z.number().min(0.1).max(100), // Allow smaller ranges for exact matches (e.g., 0.5 for swellHeight)
   sourceType: z.enum(["beach_optimal", "log_entry", "custom"]).optional(),
   sourceId: z.string().optional(),
 });
 
-const AlertSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1, "Name is required"),
-  regionId: z.string().min(1, "Region is required"),
-  forecastDate: z.union([z.string(), z.date()]).optional(),
-  properties: z
-    .array(AlertPropertySchema)
-    .min(1, "At least one property is required"),
-  notificationMethod: z.enum(["email", "whatsapp", "both", "app"]),
-  contactInfo: z.string().min(1, "Contact information is required"),
-  active: z.boolean().default(true),
-  logEntryId: z.string().nullable().optional(),
-  beachId: z.string().nullable().optional(),
-  alertType: z.nativeEnum(AlertType).default(AlertType.VARIABLES),
-  starRating: z.number().min(1).max(5).nullable().optional(),
-});
+const AlertSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+    name: z.string().min(1, "Name is required"),
+    regionId: z.string().min(1, "Region is required"),
+    forecastDate: z.union([z.string(), z.date()]).optional(),
+    properties: z.array(AlertPropertySchema).optional(),
+    notificationMethod: z.enum(["email", "whatsapp", "both", "app"]),
+    contactInfo: z.string().min(1, "Contact information is required"),
+    active: z.boolean().default(true),
+    logEntryId: z.string().nullable().optional(),
+    beachId: z.string().nullable().optional(),
+    alertType: z.nativeEnum(AlertType).default(AlertType.VARIABLES),
+    starRating: z.number().min(1).max(5).nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      // If alertType is VARIABLES, properties are required
+      if (data.alertType === AlertType.VARIABLES) {
+        return data.properties && data.properties.length > 0;
+      }
+      return true;
+    },
+    {
+      message:
+        "At least one forecast property is required for VARIABLES alerts",
+      path: ["properties"],
+    }
+  )
+  .refine(
+    (data) => {
+      // If alertType is RATING, starRating is required
+      if (data.alertType === AlertType.RATING) {
+        return data.starRating !== null && data.starRating !== undefined;
+      }
+      return true;
+    },
+    {
+      message: "Star rating is required for RATING alerts",
+      path: ["starRating"],
+    }
+  );
 
 // Type the create operation
 type AlertCreateInput = Prisma.AlertCreateInput;
@@ -200,15 +226,17 @@ export async function POST(req: NextRequest) {
       forecastDate: new Date(data.forecastDate || Date.now()),
       alertType: data.alertType,
       starRating: data.starRating,
-      properties: {
-        create: data.properties.map((prop) => ({
-          property: prop.property,
-          optimalValue: prop.optimalValue,
-          range: prop.range,
-          sourceType: prop.sourceType,
-          sourceId: prop.sourceId,
-        })),
-      },
+      ...(data.properties &&
+        data.properties.length > 0 && {
+          properties: {
+            create: data.properties.map((prop) => ({
+              property: prop.property,
+              optimalValue: prop.optimalValue,
+              range: prop.range,
+              // Note: sourceType and sourceId are not in the Prisma schema
+            })),
+          },
+        }),
       ...(data.logEntryId && {
         logEntry: { connect: { id: data.logEntryId } },
       }),
@@ -235,8 +263,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(alert);
   } catch (error) {
     console.error("Alert creation error details:", error);
+
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Validation error",
+          issues: error.issues,
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to create alert" },
+      {
+        error: "Failed to create alert",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

@@ -155,7 +155,13 @@ export const selectBeachScores = createSelector(
   (allBeaches, forecastData) => {
     if (!forecastData || !allBeaches) return {};
 
-    // Use surfUtils to calculate all scores
+    // Ensure forecastData has all required CoreForecastData properties
+    // If it doesn't, we can't calculate scores
+    if (!forecastData.id || !forecastData.date || !forecastData.regionId) {
+      console.warn("Incomplete forecast data, cannot calculate scores");
+      return {};
+    }
+
     // forecastData already contains all CoreForecastData properties
     return calculateAllBeachScores(allBeaches, forecastData);
   }

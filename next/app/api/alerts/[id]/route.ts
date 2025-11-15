@@ -59,7 +59,7 @@ export async function PUT(
     const data = await req.json();
     const dateOnly = new Date(data.forecastDate).toISOString().split("T")[0];
 
-    // Remove fields that shouldn't be directly updated
+    // Extract properties and relations separately
     const {
       logEntry,
       logEntryId,
@@ -67,23 +67,90 @@ export async function PUT(
       forecastId,
       id,
       userId,
+      properties,
+      regionId,
+      beachId,
       ...updateData
     } = data;
 
-    const alert = await prisma.alert.update({
-      where: { id: alertId },
-      data: {
-        ...updateData,
-        forecastDate: new Date(dateOnly),
-        ...(logEntryId && {
+    // Use transaction to ensure data consistency
+    const updatedAlert = await prisma.$transaction(async (tx) => {
+      // Update properties if provided
+      if (properties && Array.isArray(properties)) {
+        // Delete existing properties
+        await tx.alertProperty.deleteMany({
+          where: { alertId },
+        });
+
+        // Create new properties
+        await tx.alertProperty.createMany({
+          data: properties.map((prop: any) => ({
+            alertId,
+            property: prop.property,
+            optimalValue: prop.optimalValue,
+            range: prop.range,
+          })),
+        });
+      }
+
+      // Update alert with new data
+      // Remove any relation fields that might have slipped through
+      const {
+        beachId: _beachId,
+        regionId: _regionId,
+        logEntryId: _logEntryId,
+        ...cleanUpdateData
+      } = updateData;
+
+      return tx.alert.update({
+        where: { id: alertId },
+        data: {
+          ...cleanUpdateData,
+          forecastDate: new Date(dateOnly),
+          ...(regionId && {
+            region: {
+              connect: { id: regionId },
+            },
+          }),
+          ...(beachId
+            ? {
+                beach: {
+                  connect: { id: beachId },
+                },
+              }
+            : beachId === null
+              ? {
+                  beach: {
+                    disconnect: true,
+                  },
+                }
+              : {}),
+          ...(logEntryId && {
+            logEntry: {
+              connect: { id: logEntryId },
+            },
+          }),
+          ...(logEntry?.connect?.id && {
+            logEntry: {
+              connect: { id: logEntry.connect.id },
+            },
+          }),
+        },
+        include: {
+          properties: true,
           logEntry: {
-            connect: { id: logEntryId },
+            include: {
+              forecast: true,
+              beach: true,
+            },
           },
-        }),
-      },
+          beach: true,
+          region: true,
+        },
+      });
     });
 
-    return NextResponse.json(alert);
+    return NextResponse.json(updatedAlert);
   } catch (error) {
     console.error("Error updating alert:", error);
     return NextResponse.json(

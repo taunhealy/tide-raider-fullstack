@@ -5,7 +5,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { BeachProvider } from "@/app/context/BeachContext";
-import type { Beach } from "@/app/types/beaches";
 
 import { SubscriptionProvider } from "./SubscriptionProvider";
 
@@ -28,7 +27,7 @@ export default function AppProviders({
 }: {
   children: React.ReactNode;
   session?: any; // You should type this properly based on your session structure
-  initialBeaches?: Beach[];
+  initialBeaches?: any[];
 }) {
   return (
     <QueryClientProvider client={queryClient}>

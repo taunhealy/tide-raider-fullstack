@@ -42,6 +42,9 @@ export async function processUserAlerts(userId: string, today: Date) {
             beach: true,
           },
         },
+        beach: {
+          select: { id: true, name: true },
+        },
         properties: true,
       },
     });
@@ -58,53 +61,113 @@ export async function processUserAlerts(userId: string, today: Date) {
       },
     });
 
-    // Get beach IDs from alerts
+    // Get beach IDs from alerts (both from logEntry and direct beachId)
     const beachIds = userAlerts
-      .filter((alert) => alert.logEntry?.beach?.id)
-      .map((alert) => alert.logEntry?.beach?.id)
+      .map((alert) => {
+        const beachId = alert.logEntry?.beach?.id || alert.beachId;
+        if (alert.alertType === AlertType.RATING && !beachId) {
+          console.log(
+            `[Alert Processor] WARNING: RATING alert ${alert.id} (${alert.name}) has no beachId!`
+          );
+        }
+        return beachId;
+      })
       .filter((id) => id !== undefined && id !== null) as string[];
 
+    console.log(
+      `[Alert Processor] Collected ${beachIds.length} beach IDs from ${userAlerts.length} alerts:`,
+      beachIds
+    );
+
     // Get beach ratings for today - check if the table exists first
-    let beachRatings: Array<{ beachId: string; score: number }> = [];
+    let beachRatings: Array<{
+      beachId: string;
+      score: number;
+      starRating: number;
+    }> = [];
     if (beachIds.length > 0) {
       try {
-        beachRatings = await prisma.beachDailyScore.findMany({
+        console.log(
+          `[Alert Processor] Fetching beach ratings for ${beachIds.length} beaches:`,
+          beachIds
+        );
+        const todayStart = new Date(new Date(today).setHours(0, 0, 0, 0));
+        const todayEnd = new Date(new Date(today).setHours(23, 59, 59, 999));
+
+        console.log(
+          `[Alert Processor] Querying beach ratings for date range: ${todayStart.toISOString()} to ${todayEnd.toISOString()}`
+        );
+
+        const ratingsData = await prisma.beachDailyScore.findMany({
           where: {
             beachId: { in: beachIds },
             date: {
-              gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
-              lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
+              gte: todayStart,
+              lt: todayEnd,
             },
           },
           select: {
             beachId: true,
             score: true,
+            starRating: true,
           },
         });
+
+        console.log(`[Alert Processor] Raw ratings data from DB:`, ratingsData);
+
+        // Use starRating from DB if available, otherwise calculate from score (for old records)
+        beachRatings = ratingsData.map((br) => ({
+          beachId: br.beachId,
+          score: br.score,
+          starRating:
+            br.starRating ?? Math.max(1, Math.min(5, Math.floor(br.score / 2))), // Use DB value or calculate
+        }));
+        console.log(
+          `[Alert Processor] Found ${beachRatings.length} beach ratings:`,
+          beachRatings.map((br) => ({
+            beachId: br.beachId,
+            score: br.score,
+            starRating: br.starRating,
+          }))
+        );
       } catch (error) {
         console.log(
           "Error fetching beach ratings, continuing without them:",
           error
         );
       }
+    } else {
+      console.log(`[Alert Processor] No beach IDs found to query ratings for`);
     }
 
     for (const alert of userAlerts) {
       try {
         result.alertsChecked++;
 
-        // Get the beach name from the logEntry relationship if available
-        const beachName = alert.logEntry?.beach?.name || "Unknown location";
-        const beachId = alert.logEntry?.beach?.id;
+        // Get the beach name and ID from logEntry or direct beach relation
+        const beachName =
+          alert.logEntry?.beach?.name ||
+          alert.beach?.name ||
+          "Unknown location";
+        const beachId = alert.logEntry?.beach?.id || alert.beachId;
 
-        // Find today's forecast for this alert's region
+        // Find today's forecast for this alert's region (only needed for VARIABLES alerts)
         const todaysForecast = todaysForecasts.find(
           (f) => f.regionId === alert.regionId
         );
 
-        if (!todaysForecast) {
-          console.log(`No forecast found for region ${alert.regionId} today`);
+        // Only require forecast for VARIABLES alerts, not RATING alerts
+        if (alert.alertType === AlertType.VARIABLES && !todaysForecast) {
+          console.log(
+            `No forecast found for region ${alert.regionId} today - skipping VARIABLES alert`
+          );
           continue;
+        }
+
+        if (alert.alertType === AlertType.RATING && !todaysForecast) {
+          console.log(
+            `No forecast found for region ${alert.regionId} today - continuing for RATING alert (forecast not required)`
+          );
         }
 
         // Check if alert conditions are met
@@ -123,6 +186,14 @@ export async function processUserAlerts(userId: string, today: Date) {
           alert.properties?.length > 0
         ) {
           // For variable-based alerts, check if all properties are within range
+          // Require forecast for VARIABLES alerts
+          if (!todaysForecast) {
+            console.log(
+              `[Alert Processor] Skipping VARIABLES alert ${alert.name} - no forecast available`
+            );
+            continue;
+          }
+
           shouldSendAlert = true; // Start with true and set to false if any property is out of range
 
           // Parse properties if it's a string
@@ -173,23 +244,43 @@ export async function processUserAlerts(userId: string, today: Date) {
           beachId
         ) {
           // For rating-based alerts, check if beach rating meets criteria
+          console.log(
+            `[Alert Processor] Processing RATING alert: ${alert.name}, beachId=${beachId}, required starRating=${alert.starRating}`
+          );
           const beachRating = beachRatings.find((br) => br.beachId === beachId);
 
           if (beachRating) {
-            const rating = beachRating.score;
-            shouldSendAlert = rating >= alert.starRating;
+            // Use starRating from calculated value (will use DB field once migration is run)
+            const currentStarRating = beachRating.starRating;
+
+            console.log(
+              `[Alert Processor] Beach ${beachId} (${beachName}): score=${beachRating.score}, starRating=${currentStarRating}, alert requires >= ${alert.starRating}`
+            );
+
+            shouldSendAlert = currentStarRating >= alert.starRating;
 
             // Add to matched properties
             match.matchedProperties.push({
               property: "starRating",
               logValue: alert.starRating,
-              forecastValue: rating.toString(),
-              difference: 0,
+              forecastValue: currentStarRating.toString(),
+              difference: Math.abs(currentStarRating - alert.starRating),
               withinRange: shouldSendAlert,
             });
+
+            console.log(
+              `[Alert Processor] RATING alert ${alert.name}: ${shouldSendAlert ? "WILL TRIGGER" : "will not trigger"} (${currentStarRating} >= ${alert.starRating})`
+            );
           } else {
-            console.log(`No beach rating found for beach ${beachId} today`);
+            console.log(
+              `[Alert Processor] No beach rating found for beach ${beachId} (${beachName}) today. Available beachIds:`,
+              beachRatings.map((br) => br.beachId)
+            );
           }
+        } else if (alert.alertType === AlertType.RATING) {
+          console.log(
+            `[Alert Processor] RATING alert ${alert.name} skipped: starRating=${alert.starRating}, beachId=${beachId}`
+          );
         }
 
         // Send notification if conditions are met

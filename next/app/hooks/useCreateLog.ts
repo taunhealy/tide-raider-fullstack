@@ -60,7 +60,11 @@ export function useCreateLog() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all log-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
+      queryClient.invalidateQueries({ queryKey: ["recentLogs"] });
+      queryClient.invalidateQueries({ queryKey: ["logs"] });
+      queryClient.invalidateQueries({ queryKey: ["questLogs"] });
       toast.success("Session logged successfully!");
     },
     onError: (error) => {

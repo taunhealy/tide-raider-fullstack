@@ -31,7 +31,7 @@ import { Button } from "@/app/components/ui/Button";
 
 interface BeachCardProps {
   beach: Beach;
-  score: number;
+  score: number | null; // Allow null to indicate "no score yet"
   forecastData: CoreForecastData | null;
   onOpenModal?: (beachName: string) => void;
   onCloseModal?: () => void;
@@ -97,7 +97,7 @@ const BeachCard = memo(function BeachCard({
   const [showIdealConditions, setShowIdealConditions] = useState(false);
 
   // Use score directly instead of looking it up
-  const scoreDisplay = getScoreDisplay(score);
+  const scoreDisplay = getScoreDisplay(score ?? 0);
 
   useEffect(() => {
     const card = cardRef.current;
@@ -200,9 +200,9 @@ const BeachCard = memo(function BeachCard({
       `}
       >
         <div className="px-4 py-3 md:px-6 md:py-4">
-          {isLocalLoading ? (
+          {isLocalLoading || isLoading ? (
             <ConditionsSkeleton />
-          ) : typeof score === "number" && forecastData ? (
+          ) : score !== null && typeof score === "number" && forecastData ? (
             <div className="space-y-3 md:space-y-4">
               <div className="flex items-center justify-between">
                 {/* Wave Type Icon and Beach Details */}
@@ -300,9 +300,11 @@ const BeachCard = memo(function BeachCard({
 
               {/* Suitability Rating and Conditions */}
               <div className="mt-1 md:mt-3">
-                {isLocalLoading ? (
+                {isLocalLoading || isLoading ? (
                   <ConditionsSkeleton />
-                ) : typeof score === "number" && forecastData ? (
+                ) : score !== null &&
+                  typeof score === "number" &&
+                  forecastData ? (
                   // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
@@ -595,9 +597,11 @@ const BeachCard = memo(function BeachCard({
 
               {/* Suitability Rating and Conditions */}
               <div className="mt-1 md:mt-3">
-                {isLocalLoading ? (
+                {isLocalLoading || isLoading ? (
                   <ConditionsSkeleton />
-                ) : typeof score === "number" && forecastData ? (
+                ) : score !== null &&
+                  typeof score === "number" &&
+                  forecastData ? (
                   // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">

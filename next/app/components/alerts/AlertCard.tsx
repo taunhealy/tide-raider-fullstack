@@ -18,6 +18,14 @@ import { formatNotificationMethod } from "@/app/lib/formatters";
 // Create an extended type that includes the properties relation
 type Alert = PrismaAlert & {
   properties?: AlertProperty[];
+  beach?: {
+    id: string;
+    name: string;
+  } | null;
+  region?: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 interface AlertCardProps {
@@ -85,7 +93,17 @@ export function AlertCard({
       </CardHeader>
       <CardContent className="flex-grow flex-1">
         <div className="text-sm space-y-2 sm:space-y-3 font-primary h-full flex flex-col">
-          <p className="text-gray-500">{alert.regionId}</p>
+          <p className="text-gray-500">{alert.region?.name || alert.regionId}</p>
+          
+          {/* Beach Badge */}
+          {alert.beach?.name && (
+            <div className="flex items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-sm font-medium text-amber-900">
+                <span>{alert.beach.name}</span>
+              </div>
+            </div>
+          )}
+          
           <p className="text-gray-500">
             <span className="font-medium text-gray-900">🔔</span>{" "}
             {formatNotificationMethod(alert.notificationMethod)}

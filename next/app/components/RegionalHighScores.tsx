@@ -34,9 +34,12 @@ function RegionalHighScoresContent({
 }: RegionalHighScoresProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("week");
 
+  // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
+  const today = new Date().toISOString().split("T")[0];
+
   // Use the new endpoint
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ["regionalHighScores", selectedRegion, timePeriod],
+    queryKey: ["regionalHighScores", selectedRegion, timePeriod, today],
     queryFn: async () => {
       if (!selectedRegion) return { beaches: [] };
 
@@ -47,7 +50,9 @@ function RegionalHighScoresContent({
       if (!response.ok) throw new Error("Failed to fetch scores");
       return response.json();
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 0, // Always consider data stale - refetch on mount/window focus
+    refetchOnMount: true, // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Time period tab labels

@@ -14,10 +14,10 @@ export function BeachProvider({
   initialBeaches,
 }: {
   children: ReactNode;
-  initialBeaches: Beach[];
+  initialBeaches: Beach[] | any[];
 }) {
   return (
-    <BeachContext.Provider value={{ beaches: initialBeaches }}>
+    <BeachContext.Provider value={{ beaches: initialBeaches as Beach[] }}>
       {children}
     </BeachContext.Provider>
   );

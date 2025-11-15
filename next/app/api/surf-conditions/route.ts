@@ -261,30 +261,49 @@ export async function GET(request: Request) {
   // }
 
   try {
-    // Commented out Redis cache check
     const targetDate = searchParams.get("date")
       ? new Date(searchParams.get("date")!)
       : new Date();
     targetDate.setUTCHours(0, 0, 0, 0);
 
-    // const cacheKey = REDIS_KEYS.CACHE(
-    //   regionId,
-    //   targetDate.toISOString().split("T")[0]
-    // );
+    // Step 1: Get or scrape forecast data FIRST
+    let forecast: ForecastA | null = null;
+    try {
+      forecast = await getLatestConditions(false, regionId);
+      console.log("Forecast fetched:", forecast ? "✓" : "✗");
+    } catch (error) {
+      console.error("Failed to fetch forecast data:", error);
+    }
 
-    // const cached = await redis.get(cacheKey);
-    // if (cached) {
-    //   try {
-    //     // Handle both string and object cache values
-    //     const cachedData =
-    //       typeof cached === "string" ? JSON.parse(cached) : cached;
-    //     return NextResponse.json(cachedData);
-    //   } catch (e) {
-    //     console.warn("Cache parse error:", e);
-    //   }
-    // }
+    // Step 2: Check if scores exist for today
+    const existingScores = await prisma.beachDailyScore.count({
+      where: {
+        regionId,
+        date: targetDate,
+      },
+    });
 
-    // Get filtered beaches directly using ScoreService
+    // Step 3: Only calculate scores if they don't exist AND we have forecast data
+    if (existingScores === 0 && forecast) {
+      console.log(
+        `Calculating scores for ${regionId} on ${targetDate.toISOString().split("T")[0]}...`
+      );
+      try {
+        await ScoreService.calculateAndStoreScores(regionId, {
+          ...forecast,
+          date: targetDate,
+        });
+        console.log("✓ Scores calculated and stored");
+      } catch (error) {
+        console.error("Failed to calculate scores:", error);
+      }
+    } else {
+      console.log(
+        `✓ Using existing scores (${existingScores} beaches) for ${regionId}`
+      );
+    }
+
+    // Step 4: Get beaches with their scores (no recalculation)
     const searchQuery = searchParams.get("searchQuery") || undefined;
     const filters = {}; // Parse any additional filters from searchParams
 
@@ -295,30 +314,7 @@ export async function GET(request: Request) {
       filters,
     });
 
-    // Fetch the forecast data for the region
-    let forecast: ForecastA | null = null;
-    try {
-      forecast = await getLatestConditions(false, regionId);
-
-      // After fetching forecast data
-      if (forecast) {
-        try {
-          console.log("Ensuring beach scores are calculated...");
-          // await dedupedEnsureBeachScores(regionId, targetDate, forecast); // Commented out dedupedEnsureBeachScores
-          await ScoreService.calculateAndStoreScores(regionId, {
-            ...forecast,
-            date: targetDate,
-          });
-          console.log("Beach scores calculation completed or already exists");
-        } catch (error) {
-          console.error("Failed to ensure beach scores:", error);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch forecast data:", error);
-    }
-
-    // Return the complete response in BeachInitialData format
+    // Return the complete response
     const responseData = {
       beaches: result.beaches,
       scores: result.scores,
@@ -326,7 +322,6 @@ export async function GET(request: Request) {
       totalCount: result.totalCount,
     };
 
-    // No caching here, directly return
     return NextResponse.json(responseData);
   } catch (error) {
     console.error("API Error:", error);

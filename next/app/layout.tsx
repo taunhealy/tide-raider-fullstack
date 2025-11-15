@@ -7,6 +7,7 @@ import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
+import { getAllBeaches } from "@/app/lib/beachService";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -49,6 +50,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
+  
+  // Fetch beaches from database for initial data
+  const beaches = await getAllBeaches();
 
   return (
     <html
@@ -99,7 +103,7 @@ export default async function RootLayout({
         className="min-h-screen flex flex-col font-primary"
         suppressHydrationWarning
       >
-        <AppProviders session={session}>
+        <AppProviders session={session} initialBeaches={beaches}>
           <NewsBannerWrapper />
           <Navbar />
           <main className="flex-grow">{children}</main>

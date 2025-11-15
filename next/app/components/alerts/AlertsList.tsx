@@ -43,11 +43,13 @@ export function AlertsList() {
     queryKey: ["alerts"],
     queryFn: async () => {
       const response = await fetch(
-        "/api/alerts?include=logEntry.forecast,logEntry.beach"
+        "/api/alerts?include=logEntry.forecast,logEntry.beach,beach"
       );
       if (!response.ok) throw new Error("Failed to fetch alerts");
       return response.json();
     },
+    staleTime: 0, // Always consider data stale to allow refetching
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   // Properly typed mutations

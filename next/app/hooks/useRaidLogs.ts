@@ -73,7 +73,8 @@ export function useRaidLogs(
       ),
       total: data.total,
     }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60, // 1 minute - shorter stale time for more fresh data
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const createMutation = useMutation({

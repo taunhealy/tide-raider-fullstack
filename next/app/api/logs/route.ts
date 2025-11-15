@@ -27,6 +27,20 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
       include: {
         forecast: true, // Include ForecastA data
+        beach: {
+          include: {
+            region: {
+              include: {
+                country: true,
+              },
+            },
+          },
+        },
+        region: {
+          include: {
+            country: true,
+          },
+        },
         alerts: {
           select: {
             id: true,
@@ -44,6 +58,7 @@ export async function GET(req: NextRequest) {
       // Structured forecast data now comes from the relation
       forecast: entry.forecast
         ? {
+            id: entry.forecast.id,
             windSpeed: entry.forecast.windSpeed,
             windDirection: entry.forecast.windDirection,
             swellHeight: entry.forecast.swellHeight,
@@ -51,6 +66,9 @@ export async function GET(req: NextRequest) {
             swellDirection: entry.forecast.swellDirection,
           }
         : null,
+      // Preserve beach and region data
+      beach: entry.beach,
+      region: entry.region,
     }));
 
     return NextResponse.json(enhancedLogEntries);

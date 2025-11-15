@@ -403,11 +403,17 @@ export class ScoreService {
         const integerScore =
           calculatedScore === null ? 0 : Math.round(calculatedScore * 2);
 
+        // Calculate star rating (1-5) from score (0-10)
+        // Score 0-1.99 = 0 stars, 2-3.99 = 1 star, 4-5.99 = 2 stars, 6-7.99 = 3 stars, 8-9.99 = 4 stars, 10 = 5 stars
+        const scoreOutOfFive = Math.floor(integerScore / 2);
+        const starRating = Math.max(1, Math.min(5, scoreOutOfFive)); // Clamp between 1-5
+
         return {
           beachId: beach.id,
           regionId,
           // Store as regular integer
           score: integerScore,
+          starRating: starRating, // Store star rating 1-5 for easier querying
           date: forecastData.date,
           conditions: {
             windSpeed: forecastData.windSpeed,
@@ -423,36 +429,29 @@ export class ScoreService {
         `Attempting to upsert ${scores.length} scores for date ${forecastData.date}`
       );
 
-      const upsertOperations = scores.map((score) =>
-        prisma.beachDailyScore.upsert({
-          where: {
-            beachId_date: {
-              beachId: score.beachId,
-              date: score.date,
-            },
-          },
-          update: {
-            score: score.score,
-            conditions: score.conditions,
-          },
-          create: {
-            beachId: score.beachId,
-            regionId: score.regionId,
-            score: score.score,
-            date: score.date,
-            conditions: score.conditions,
-          },
-        })
-      );
+      // Use bulk operations for better performance
+      // Step 1: Delete existing scores for this region and date
+      const deleteResult = await prisma.beachDailyScore.deleteMany({
+        where: {
+          regionId,
+          date: forecastData.date,
+        },
+      });
 
-      const results = await prisma.$transaction(upsertOperations);
+      console.log(`Deleted ${deleteResult.count} existing scores`);
+
+      // Step 2: Bulk insert all new scores
+      const createResult = await prisma.beachDailyScore.createMany({
+        data: scores,
+        skipDuplicates: true,
+      });
+
       console.log(
-        `Successfully upserted ${results.length} scores for region ${regionId}`,
+        `Successfully created ${createResult.count} scores for region ${regionId}`,
         {
           date: forecastData.date,
-          firstScore: results[0],
-          lastScore: results[results.length - 1],
-          scoresUpdated: results.length === scores.length,
+          scoresCalculated: scores.length,
+          scoresCreated: createResult.count,
         }
       );
 

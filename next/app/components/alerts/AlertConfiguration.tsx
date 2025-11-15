@@ -78,8 +78,23 @@ export function AlertConfiguration({
   const { alert, updateAlert, beachDetails } = useAlert();
   const [properties, setProperties] = useState<typeof defaultProperties>([]);
 
-  // Initialize properties from beach details only once
+  // Initialize properties - first check if alert already has properties, otherwise use beachDetails
   useEffect(() => {
+    // If alert already has properties, use those
+    if (
+      Array.isArray(alert.properties?.create) &&
+      alert.properties.create.length > 0
+    ) {
+      const existingProperties = alert.properties.create.map((prop) => ({
+        property: prop.property as ForecastProperty,
+        range: Number(prop.range),
+        optimalValue: Number(prop.optimalValue),
+      }));
+      setProperties(existingProperties);
+      return;
+    }
+
+    // Otherwise, initialize from beachDetails if available
     if (!beachDetails) return;
 
     const initialProperties = [
@@ -130,7 +145,14 @@ export function AlertConfiguration({
     ];
 
     setProperties(initialProperties);
-  }, [beachDetails]); // Remove updateAlert from dependencies
+
+    // Also update alert context with initial properties
+    if (initialProperties.length > 0) {
+      updateAlert({
+        properties: { create: initialProperties },
+      });
+    }
+  }, [beachDetails, alert.properties]); // Add alert.properties to dependencies
 
   const getConfig = (prop: ForecastProperty) =>
     ({
@@ -164,6 +186,20 @@ export function AlertConfiguration({
     return `${value}${config.unit}`;
   };
 
+  const formatRange = (
+    optimalValue: number,
+    range: number,
+    property: ForecastProperty
+  ) => {
+    const config = getConfig(property);
+    const min = Math.max(0, optimalValue - range);
+    const max = optimalValue + range;
+    if (property.includes("Direction")) {
+      return `${min.toFixed(1)}° - ${max.toFixed(1)}°`;
+    }
+    return `${min.toFixed(config.step < 1 ? 1 : 0)}${config.unit} - ${max.toFixed(config.step < 1 ? 1 : 0)}${config.unit}`;
+  };
+
   return (
     <Card>
       {properties.map((prop, index) => (
@@ -171,31 +207,87 @@ export function AlertConfiguration({
           key={index}
           className="p-4 rounded-lg border border-gray-200 bg-white space-y-2"
         >
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <Label>{getConfig(prop.property).label}</Label>
-            <span className="text-sm text-gray-500">
-              {formatValue(prop.optimalValue, prop.property)}
-            </span>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div className="font-medium">
+                {formatValue(prop.optimalValue, prop.property)}
+              </div>
+              <div className="text-xs text-gray-500">
+                Range:{" "}
+                {formatRange(prop.optimalValue, prop.range, prop.property)}
+              </div>
+            </div>
           </div>
-          <Slider
-            value={[prop.optimalValue]}
-            onValueChange={([value]) => {
-              const newProps = [...properties];
-              newProps[index] = { ...prop, optimalValue: value };
-              setProperties(newProps);
-              // Update alert context only when slider changes
-              updateAlert({
-                properties: { create: newProps },
-              });
-            }}
-            max={getConfig(prop.property).maxRange}
-            step={getConfig(prop.property).step}
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>0{getConfig(prop.property).unit}</span>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-xs text-gray-600">Optimal Value</Label>
+                <span className="text-xs text-gray-500">
+                  {formatValue(prop.optimalValue, prop.property)}
+                </span>
+              </div>
+              <Slider
+                value={[prop.optimalValue]}
+                onValueChange={([value]) => {
+                  const newProps = [...properties];
+                  newProps[index] = { ...prop, optimalValue: value };
+                  setProperties(newProps);
+                  // Update alert context only when slider changes
+                  updateAlert({
+                    properties: { create: newProps },
+                  });
+                }}
+                max={getConfig(prop.property).maxRange}
+                step={getConfig(prop.property).step}
+              />
+            </div>
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <Label className="text-xs text-gray-600">
+                  Variation Range (±)
+                </Label>
+                <span className="text-xs text-gray-500">
+                  ±
+                  {prop.range.toFixed(
+                    getConfig(prop.property).step < 1 ? 1 : 0
+                  )}
+                  {getConfig(prop.property).unit}
+                </span>
+              </div>
+              <Slider
+                value={[prop.range]}
+                onValueChange={([value]) => {
+                  const newProps = [...properties];
+                  newProps[index] = { ...prop, range: value };
+                  setProperties(newProps);
+                  // Update alert context only when slider changes
+                  updateAlert({
+                    properties: { create: newProps },
+                  });
+                }}
+                max={getConfig(prop.property).maxRange / 2}
+                step={getConfig(prop.property).step}
+                min={0.1}
+              />
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 pt-2 border-t">
             <span>
-              {getConfig(prop.property).maxRange}
-              {getConfig(prop.property).unit}
+              Min:{" "}
+              {
+                formatRange(prop.optimalValue, prop.range, prop.property).split(
+                  " - "
+                )[0]
+              }
+            </span>
+            <span>
+              Max:{" "}
+              {
+                formatRange(prop.optimalValue, prop.range, prop.property).split(
+                  " - "
+                )[1]
+              }
             </span>
           </div>
         </div>

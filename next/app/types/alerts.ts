@@ -12,6 +12,8 @@ export type ForecastProperty =
 
 // Beach details from API
 export interface BeachDetails {
+  id?: string;
+  name?: string;
   swellSize: { min: number; max: number };
   optimalWindDirections: string[];
   idealSwellPeriod: { min: number; max: number };

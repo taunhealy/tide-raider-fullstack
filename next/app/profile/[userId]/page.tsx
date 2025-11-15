@@ -17,14 +17,13 @@ import { urlForImage } from "@/app/lib/urlForImage";
 import { groq } from "next-sanity";
 import { client } from "@/app/lib/sanity";
 import NationalitySelector from "@/app/components/profile/NationalitySelector";
-import UserRentals from "@/app/components/profile/UserRentals";
 
 // Server component
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<
-    "account" | "logs" | "rentals" | "chronicles" | "favourites"
+    "account" | "logs" | "chronicles" | "favourites"
   >("account");
   const [avatarUrl, setAvatarUrl] = useState("");
 
@@ -144,13 +143,6 @@ export default function ProfilePage() {
             >
               Chronicles
             </Button>
-            <Button
-              variant={activeTab === "rentals" ? "default" : "outline"}
-              onClick={() => setActiveTab("rentals")}
-              className="text-sm xs:text-base px-3 py-1.5"
-            >
-              Rentals
-            </Button>
           </div>
 
           <div className="min-h-[300px] w-full overflow-auto">
@@ -180,12 +172,6 @@ export default function ProfilePage() {
             {activeTab === "chronicles" && (
               <div className="w-full overflow-x-auto px-2 sm:px-4">
                 <StoriesContainer beaches={beaches} userId={userId} />
-              </div>
-            )}
-
-            {activeTab === "rentals" && (
-              <div className="w-full overflow-x-auto px-2 sm:px-4">
-                <UserRentals userId={userId} isOwnProfile={isOwnProfile} />
               </div>
             )}
           </div>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { ScoreService } from "@/app/services/scores/ScoreService";
+import { getLatestConditions } from "../surf-conditions/route";
 import {
   Season,
   Prisma,
@@ -14,6 +16,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const regionId = searchParams.get("regionId")?.toLowerCase();
   const searchQuery = searchParams.get("searchQuery");
+
+  console.log(`[filtered-beaches] Request received for regionId: ${regionId}`);
 
   if (!regionId) {
     return NextResponse.json(
@@ -74,7 +78,110 @@ export async function GET(request: Request) {
     const currentDate = new Date();
     currentDate.setUTCHours(0, 0, 0, 0);
 
-    // Fetch beaches with their daily scores
+    // Step 1: Get or fetch forecast data
+    let forecast = await prisma.forecastA.findFirst({
+      where: {
+        regionId,
+        date: currentDate,
+      },
+      select: {
+        windSpeed: true,
+        windDirection: true,
+        swellHeight: true,
+        swellPeriod: true,
+        swellDirection: true,
+        date: true,
+      },
+    });
+
+    // If no forecast exists, try to fetch it
+    if (!forecast) {
+      try {
+        const fetchedForecast = await getLatestConditions(false, regionId);
+        if (fetchedForecast) {
+          forecast = {
+            windSpeed: fetchedForecast.windSpeed,
+            windDirection: fetchedForecast.windDirection,
+            swellHeight: fetchedForecast.swellHeight,
+            swellPeriod: fetchedForecast.swellPeriod,
+            swellDirection: fetchedForecast.swellDirection,
+            date: currentDate,
+          };
+        }
+      } catch (error) {
+        console.error("Failed to fetch forecast:", error);
+      }
+    }
+
+    // Step 2: Check if scores exist for today
+    const existingScores = await prisma.beachDailyScore.count({
+      where: {
+        regionId,
+        date: currentDate,
+      },
+    });
+
+    // Also check if all existing scores are 0 (which might indicate they need recalculation)
+    const existingScoresData = await prisma.beachDailyScore.findMany({
+      where: {
+        regionId,
+        date: currentDate,
+      },
+      select: {
+        score: true,
+        beachId: true,
+      },
+      take: 5, // Sample first 5
+    });
+
+    const allScoresZero =
+      existingScoresData.length > 0 &&
+      existingScoresData.every((s) => s.score === 0);
+    console.log(`Existing scores sample:`, existingScoresData);
+    console.log(`All scores are zero: ${allScoresZero}`);
+
+    // Step 3: Calculate scores if they don't exist OR if all scores are 0 (recalculate)
+    if ((existingScores === 0 || allScoresZero) && forecast) {
+      console.log(
+        `${existingScores === 0 ? "Calculating" : "Recalculating"} scores for ${regionId} on ${currentDate.toISOString().split("T")[0]}...`
+      );
+      try {
+        await ScoreService.calculateAndStoreScores(regionId, {
+          ...forecast,
+          date: currentDate,
+        });
+        console.log("✓ Scores calculated and stored");
+
+        // Verify scores were created and log sample values
+        const verifyScores = await prisma.beachDailyScore.findMany({
+          where: {
+            regionId,
+            date: currentDate,
+          },
+          select: {
+            beachId: true,
+            score: true,
+          },
+          take: 5,
+        });
+        console.log(
+          `✓ Verified ${verifyScores.length} scores exist for ${regionId}`
+        );
+        console.log(`Sample calculated scores:`, verifyScores);
+      } catch (error) {
+        console.error("Failed to calculate scores:", error);
+      }
+    } else if (existingScores === 0) {
+      console.log(
+        `⚠ No forecast data available for ${regionId}, cannot calculate scores`
+      );
+    } else {
+      console.log(
+        `✓ Using existing scores (${existingScores} beaches) for ${regionId}`
+      );
+    }
+
+    // Step 4: Fetch beaches with their daily scores (now guaranteed to exist)
     const beaches = await prisma.beach.findMany({
       where: whereClause,
       include: {
@@ -89,6 +196,11 @@ export async function GET(request: Request) {
         },
       },
     });
+
+    console.log(`Fetched ${beaches.length} beaches for ${regionId}`);
+    console.log(
+      `Beaches with scores: ${beaches.filter((b) => b.beachDailyScores.length > 0).length}`
+    );
 
     // Transform scores into a flat dictionary, ensuring the full beach object is included.
     const scores = beaches.reduce(
@@ -110,33 +222,36 @@ export async function GET(request: Request) {
       {}
     );
 
-    // Get regional forecast data
-    const forecast = await prisma.forecastA.findFirst({
-      // Renamed forecastData to forecast
-      where: {
-        regionId,
-        date: currentDate,
-      },
-      select: {
-        windSpeed: true,
-        windDirection: true,
-        swellHeight: true,
-        swellPeriod: true,
-        swellDirection: true,
-      },
-    });
+    console.log(
+      `Transformed scores object has ${Object.keys(scores).length} entries`
+    );
+    console.log(
+      `Sample scores:`,
+      Object.entries(scores)
+        .slice(0, 3)
+        .map(([id, data]) => ({ beachId: id, score: data.score }))
+    );
 
-    // Return transformed data structure
-    return NextResponse.json({
+    // Log the response structure
+    const responseData = {
       beaches: beaches.map((beach) => {
-        // Remove the nested scores and keep other beach properties
         const { beachDailyScores, ...beachData } = beach;
         return beachData;
       }),
       scores,
-      forecast, // Changed forecastData to forecast
-      totalCount: beaches.length, // Added totalCount
+      forecast,
+      totalCount: beaches.length,
+    };
+
+    console.log(`[filtered-beaches] Response:`, {
+      beachCount: responseData.beaches.length,
+      scoreCount: Object.keys(responseData.scores).length,
+      hasForecast: !!responseData.forecast,
+      sampleScoreKeys: Object.keys(responseData.scores).slice(0, 3),
     });
+
+    // Return transformed data structure
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json(

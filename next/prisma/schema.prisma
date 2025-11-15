@@ -249,6 +249,7 @@ model BeachDailyScore {
   regionId   String
   region     Region   @relation(fields: [regionId], references: [id])
   score      Int      @default(0)
+  starRating Int?     // Star rating 1-5, calculated from score (score / 2, clamped to 1-5)
   conditions Json     
   date       DateTime
   createdAt  DateTime @default(now())
@@ -256,6 +257,8 @@ model BeachDailyScore {
   beach      Beach    @relation(fields: [beachId], references: [id])
 
   @@index([regionId])
+  @@index([beachId, date])
+  @@index([starRating])
   @@unique([beachId, date])
 }
 

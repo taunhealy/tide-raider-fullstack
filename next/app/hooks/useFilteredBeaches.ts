@@ -39,8 +39,9 @@ export function useFilteredBeaches({
       if (!response.ok) throw new Error("Failed to fetch filtered beaches");
       return response.json(); // This needs to return BeachInitialData structure
     },
-    initialData: initialData || undefined, // Add initialData here
-    enabled: enabled && !!filters.regionId, // Use filters.regionId instead
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    initialData: initialData || undefined,
+    enabled: enabled && !!filters.regionId,
+    staleTime: 0, // Always refetch when query key changes (region change)
+    gcTime: 1000 * 60 * 5, // Keep cache for 5 minutes but always refetch
   });
 }

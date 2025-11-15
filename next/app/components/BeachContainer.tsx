@@ -60,6 +60,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     updateFilter("regionId", regionId || "");
     // Reset to first page when region changes
     setCurrentPage(1);
+    // Invalidate the query cache to force refetch
+    queryClient.invalidateQueries({ queryKey: ["filteredBeaches"] });
   };
 
   const sortedBeaches = useMemo(() => {
@@ -130,20 +132,25 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                     // Directly use the regional forecast
                     const beachForecastData = forecast; // Renamed to avoid confusion
 
+                    // Check if score actually exists in the scores object, not just if it's 0
+                    const hasScore = beach.id in beachScores;
+                    const scoreValue = hasScore ? score : null;
+
                     // Add console logs for debugging each beach card's data
                     console.log(`Rendering beach ${beach.name} with data:`, {
                       beachId: beach.id,
-                      score,
+                      score: scoreValue,
+                      hasScore,
                       forecastData: beachForecastData,
-                      isLoading: !score && isLoading,
+                      isLoading: !hasScore && isLoading,
                     });
                     return (
                       <BeachCard
                         key={beach.id}
                         beach={beach}
-                        score={score}
+                        score={scoreValue ?? 0} // Pass null if no score exists, but default to 0 for display
                         forecastData={beachForecastData} // Pass the regional forecast
-                        isLoading={!score && isLoading} // Adjust isLoading condition
+                        isLoading={!hasScore && isLoading} // Only show loading if score doesn't exist
                       />
                     );
                   })}

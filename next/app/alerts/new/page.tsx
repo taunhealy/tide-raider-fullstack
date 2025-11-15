@@ -55,6 +55,11 @@ export default function NewAlertPage() {
     }
   }, [status, router]);
 
+  // Handle log entry selection from child component
+  const handleLogEntrySelect = (logEntry: LogEntry | null) => {
+    setSelectedLogEntry(logEntry);
+  };
+
   const handleClose = () => {
     router.push("/dashboard/alerts");
   };
@@ -77,6 +82,7 @@ export default function NewAlertPage() {
         onSaved={handleAlertSaved}
         isNew={true}
         logEntries={logEntries}
+        onLogEntrySelect={handleLogEntrySelect}
       />
     </div>
   );

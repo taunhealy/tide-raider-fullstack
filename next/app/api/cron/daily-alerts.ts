@@ -2,7 +2,10 @@ import { processUserAlerts } from "@/app/lib/services/alertProcessor";
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
 
-// This endpoint will be triggered by a cron job at 12:01 AM every day
+// Increase timeout for processing multiple users (5 minutes)
+export const maxDuration = 300;
+
+// This endpoint will be triggered by a cron job every 6 hours
 export async function GET() {
   try {
     console.log("🔄 Starting daily alert check process");
