@@ -49,10 +49,23 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  let session;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Error getting session in layout:", error);
+    session = null;
+  }
   
   // Fetch beaches from database for initial data
-  const beaches = await getAllBeaches();
+  let beaches = [];
+  try {
+    beaches = await getAllBeaches();
+  } catch (error) {
+    console.error("Error fetching beaches in layout:", error);
+    // Continue with empty array - app will still work, just without initial beach data
+    beaches = [];
+  }
 
   return (
     <html
