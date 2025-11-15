@@ -44,6 +44,9 @@ export const metadata: Metadata = {
   },
 };
 
+// Force dynamic rendering since we use getServerSession which requires headers
+export const dynamic = 'force-dynamic';
+
 export default async function RootLayout({
   children,
 }: {
@@ -56,7 +59,7 @@ export default async function RootLayout({
     console.error("Error getting session in layout:", error);
     session = null;
   }
-  
+
   // Fetch beaches from database for initial data
   let beaches: BeachWithRelations[] = [];
   try {
