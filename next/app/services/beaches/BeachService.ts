@@ -187,6 +187,7 @@ export class BeachService {
       console.log(`Fetched ${beaches.length} beaches for ${regionId}`);
 
       // Transform scores into a flat dictionary, ensuring the full beach object is included.
+      // Also ensure region has regionId property to match Region type
       const scores = beaches.reduce(
         (
           acc: Record<string, { score: number; beach: (typeof beaches)[number] }>,
@@ -198,6 +199,12 @@ export class BeachService {
             score: dailyScore?.score ?? 0,
             beach: {
               ...beach,
+              region: beach.region
+                ? {
+                    ...beach.region,
+                    regionId: beach.region.id, // Add regionId to match Region type
+                  }
+                : beach.region,
               beachDailyScores: dailyScore ? [dailyScore] : [],
             },
           };
