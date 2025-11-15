@@ -213,8 +213,11 @@ export async function GET(req: NextRequest) {
   if (regionIdParam && regions.length === 0) {
     try {
       // Check if it's already a UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(regionIdParam);
-      
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          regionIdParam
+        );
+
       if (isUUID) {
         regions = [regionIdParam];
       } else {
@@ -228,7 +231,7 @@ export async function GET(req: NextRequest) {
           },
           select: { id: true },
         });
-        
+
         if (region) {
           regions = [region.id];
         } else {
@@ -256,7 +259,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const session = await getServerSession(authOptions);
+  let session;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (sessionError) {
+    console.error("Error getting session:", sessionError);
+    // Continue without session - will show only public logs
+    session = null;
+  }
 
   try {
     // Build dynamic where clause
@@ -597,7 +607,7 @@ export async function PUT(request: Request) {
     // Find the beach and region if provided
     let beach = null;
     let region = null;
-    
+
     if (updateData.beachId || updateData.beachName) {
       beach = await prisma.beach.findFirst({
         where: {
@@ -639,13 +649,27 @@ export async function PUT(request: Request) {
       ...(updateData.surferName && { surferName: updateData.surferName }),
       ...(updateData.surferEmail && { surferEmail: updateData.surferEmail }),
       ...(updateData.beachName && { beachName: updateData.beachName }),
-      ...(typeof updateData.surferRating === "number" && { surferRating: updateData.surferRating }),
-      ...(updateData.comments !== undefined && { comments: updateData.comments }),
-      ...(typeof updateData.isPrivate === "boolean" && { isPrivate: updateData.isPrivate }),
-      ...(typeof updateData.isAnonymous === "boolean" && { isAnonymous: updateData.isAnonymous }),
-      ...(updateData.imageUrl !== undefined && { imageUrl: updateData.imageUrl }),
-      ...(updateData.videoUrl !== undefined && { videoUrl: updateData.videoUrl }),
-      ...(updateData.videoPlatform !== undefined && { videoPlatform: updateData.videoPlatform }),
+      ...(typeof updateData.surferRating === "number" && {
+        surferRating: updateData.surferRating,
+      }),
+      ...(updateData.comments !== undefined && {
+        comments: updateData.comments,
+      }),
+      ...(typeof updateData.isPrivate === "boolean" && {
+        isPrivate: updateData.isPrivate,
+      }),
+      ...(typeof updateData.isAnonymous === "boolean" && {
+        isAnonymous: updateData.isAnonymous,
+      }),
+      ...(updateData.imageUrl !== undefined && {
+        imageUrl: updateData.imageUrl,
+      }),
+      ...(updateData.videoUrl !== undefined && {
+        videoUrl: updateData.videoUrl,
+      }),
+      ...(updateData.videoPlatform !== undefined && {
+        videoPlatform: updateData.videoPlatform,
+      }),
       ...(updateData.waveType && { waveType: updateData.waveType }),
     };
 
