@@ -340,6 +340,15 @@ export async function GET(req: NextRequest) {
       whereClause.date = { ...(whereClause.date || {}), lt: endDateObj };
     }
 
+    // Validate whereClause before querying
+    if (whereClause && typeof whereClause === "object") {
+      // Remove any undefined or null values that could cause Prisma errors
+      const cleanedWhereClause = Object.fromEntries(
+        Object.entries(whereClause).filter(([_, value]) => value !== undefined && value !== null)
+      );
+      whereClause = cleanedWhereClause;
+    }
+
     console.log("Where clause:", JSON.stringify(whereClause, null, 2));
 
     // Add total count query alongside entries query
