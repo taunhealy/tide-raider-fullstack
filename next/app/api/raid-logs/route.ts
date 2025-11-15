@@ -340,14 +340,27 @@ export async function GET(req: NextRequest) {
       whereClause.date = { ...(whereClause.date || {}), lt: endDateObj };
     }
 
-    // Validate whereClause before querying
-    if (whereClause && typeof whereClause === "object") {
-      // Remove any undefined or null values that could cause Prisma errors
-      const cleanedWhereClause = Object.fromEntries(
-        Object.entries(whereClause).filter(([_, value]) => value !== undefined && value !== null)
-      );
-      whereClause = cleanedWhereClause;
+    // Validate whereClause before querying - ensure it's a valid Prisma where clause
+    // Prisma where clauses can have nested objects, so we need to be careful
+    if (!whereClause || typeof whereClause !== "object" || Array.isArray(whereClause)) {
+      whereClause = {};
     }
+    
+    // Remove top-level undefined/null values, but preserve nested Prisma operators (in, OR, etc.)
+    const cleanedWhereClause: any = {};
+    for (const [key, value] of Object.entries(whereClause)) {
+      if (value !== undefined && value !== null) {
+        // If it's a Prisma operator object (like { in: [...] } or { OR: [...] }), keep it as is
+        const valueObj = value as any;
+        if (typeof value === "object" && !Array.isArray(value) && (valueObj.in || valueObj.OR || valueObj.gte || valueObj.lte || valueObj.lt || valueObj.gt)) {
+          cleanedWhereClause[key] = value;
+        } else if (typeof value !== "object" || Array.isArray(value)) {
+          // Simple values or arrays
+          cleanedWhereClause[key] = value;
+        }
+      }
+    }
+    whereClause = cleanedWhereClause;
 
     console.log("Where clause:", JSON.stringify(whereClause, null, 2));
 
