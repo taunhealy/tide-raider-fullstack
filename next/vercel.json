@@ -9,12 +9,8 @@
   },
   "crons": [
     {
-      "path": "/api/cron/calculate-scores",
-      "schedule": "15 0 * * *"
-    },
-    {
       "path": "/api/cron/daily-alerts",
-      "schedule": "0 6 * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
