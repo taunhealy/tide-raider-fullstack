@@ -85,11 +85,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
+    <header className="sticky top-0 z-[10000] bg-white">
       <div
         className={cn(
           "flex justify-between items-center px-4 md:px-8 py-4 bg-white",
-          "relative z-50"
+          "relative z-[10000]"
         )}
       >
         <Link
@@ -188,7 +188,7 @@ export default function Navbar() {
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
         <>
-          <nav className="md:hidden absolute w-full px-4 py-4 bg-white border-t border-[var(--color-border-light)] z-50">
+          <nav className="md:hidden absolute w-full px-4 py-4 bg-white border-t border-[var(--color-border-light)] z-[10000]">
             <ul className="space-y-2">
               {session && (
                 <>
