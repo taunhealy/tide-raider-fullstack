@@ -195,7 +195,8 @@ export async function GET(req: NextRequest) {
 
   // Otherwise, handle the list query (existing code)
   const beaches = searchParams.get("beaches")?.split(",").filter(Boolean) || [];
-  const regions = searchParams.get("regions")?.split(",").filter(Boolean) || [];
+  let regions = searchParams.get("regions")?.split(",").filter(Boolean) || [];
+  const regionIdParam = searchParams.get("regionId"); // Handle single regionId parameter
   const countries =
     searchParams.get("countries")?.split(",").filter(Boolean) || [];
   const minRating = Number(searchParams.get("minRating")) || 0;
@@ -207,6 +208,38 @@ export async function GET(req: NextRequest) {
   const isPrivate = searchParams.get("isPrivate") === "true";
   const filterUserId = searchParams.get("userId");
   const beachId = searchParams.get("beachId");
+
+  // If regionId is provided, convert slug to UUID if needed
+  if (regionIdParam && regions.length === 0) {
+    try {
+      // Check if it's already a UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(regionIdParam);
+      
+      if (isUUID) {
+        regions = [regionIdParam];
+      } else {
+        // It's a slug, find the region by id (slug) or name
+        const region = await prisma.region.findFirst({
+          where: {
+            OR: [
+              { id: regionIdParam },
+              { name: { contains: regionIdParam, mode: "insensitive" } },
+            ],
+          },
+          select: { id: true },
+        });
+        
+        if (region) {
+          regions = [region.id];
+        } else {
+          console.warn(`Region not found for regionId: ${regionIdParam}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error resolving regionId:", error);
+      // Continue without region filter if lookup fails
+    }
+  }
 
   const session = await getServerSession(authOptions);
 
