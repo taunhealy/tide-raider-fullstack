@@ -111,7 +111,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
           <LeftSidebar />
         </Suspense>
 
-        <div className="grid grid-cols-1 p-9 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
           <main className="min-w-0 overflow-y-auto">
             <BeachHeaderControls
               onSearch={(value) => updateFilter("searchQuery", value)}

@@ -145,7 +145,7 @@ export default function RightSidebar() {
   const { filters } = useBeachFilters();
 
   return (
-    <aside className="space-y-6 lg:w-[250px] xl:w-[300px]">
+    <aside className="space-y-8 lg:w-[250px] xl:w-[300px]">
       <WeatherForecastWidget />
       {filters.regionId && (
         <RegionalHighScores

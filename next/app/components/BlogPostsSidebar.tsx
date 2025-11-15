@@ -328,7 +328,7 @@ export default function BlogPostsSidebar({
   }
 
   return (
-    <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm mb-6">
+    <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm mb-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h3 className="heading-6 mr-4">
           {selectedCountry

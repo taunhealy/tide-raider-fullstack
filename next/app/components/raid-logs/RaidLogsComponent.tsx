@@ -16,7 +16,7 @@ import { useRaidLogFilters } from "@/app/hooks/useRaidLogsFilters";
 import { Header } from "./RaidLogHeader";
 import RaidLogTable from "./RaidLogTable";
 import { useRaidLogs } from "@/app/hooks/useRaidLogs";
-import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { RandomLoader } from "../ui/random-loader";
 
 // Define the RaidLogsResponse interface
 interface RaidLogsResponse {
@@ -100,7 +100,9 @@ export function RaidLogsComponent({
   return (
     <div className="bg-[var(--color-bg-secondary)] p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative">
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
-        {(isBeachesLoading || isLogsLoading) && <LoadingSpinner />}
+        {(isBeachesLoading || isLogsLoading) && (
+          <RandomLoader isLoading={isBeachesLoading || isLogsLoading} />
+        )}
 
         {error && !isLogsLoading && (
           <div className="text-red-500">

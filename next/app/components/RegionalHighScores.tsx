@@ -32,7 +32,7 @@ function RegionalHighScoresContent({
   selectedRegion,
   onBeachClick,
 }: RegionalHighScoresProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("week");
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("today");
 
   // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
   const today = new Date().toISOString().split("T")[0];
