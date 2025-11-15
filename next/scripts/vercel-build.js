@@ -1,57 +1,72 @@
 #!/usr/bin/env node
 
-const { execSync } = require("child_process");
+const { spawn } = require("child_process");
 
-console.log("🔧 Generating Prisma Client...");
-try {
-  execSync("npx prisma generate", { stdio: "inherit" });
-} catch (error) {
-  console.error("❌ Failed to generate Prisma Client");
-  process.exit(1);
+function runCommand(command, args = [], options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      stdio: "inherit",
+      shell: true,
+      ...options,
+    });
+
+    let errorOutput = "";
+
+    child.on("error", (error) => {
+      reject(error);
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        const error = new Error(`Command failed with exit code ${code}`);
+        error.code = code;
+        error.output = errorOutput;
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
 }
 
-console.log("📦 Running database migrations...");
-let migrationSucceeded = false;
-try {
-  execSync("npx prisma migrate deploy", {
-    stdio: "inherit",
-    maxBuffer: 1024 * 1024 * 10, // 10MB buffer
-  });
-  console.log("✅ Migrations applied successfully");
-  migrationSucceeded = true;
-} catch (error) {
-  // Check if it's a timeout or connection error (P1002, P1001, etc.)
-  const errorOutput =
-    error.stdout?.toString() ||
-    error.stderr?.toString() ||
-    error.message ||
-    error.toString();
-  if (
-    errorOutput.includes("P1002") ||
-    errorOutput.includes("timeout") ||
-    errorOutput.includes("advisory lock") ||
-    errorOutput.includes("Timed out")
-  ) {
-    console.warn(
-      "⚠️  Migration deploy timed out (this is common with Neon databases on Vercel)"
-    );
-    console.warn("   Error: P1002 - Database connection timeout");
+async function main() {
+  console.log("🔧 Generating Prisma Client...");
+  try {
+    await runCommand("npx", ["prisma", "generate"]);
+  } catch (error) {
+    console.error("❌ Failed to generate Prisma Client");
+    process.exit(1);
+  }
+
+  console.log("📦 Running database migrations...");
+  try {
+    await runCommand("npx", ["prisma", "migrate", "deploy"]);
+    console.log("✅ Migrations applied successfully");
+  } catch (error) {
+    // Migration failures are safe to ignore if migrations are already applied
+    // This is common with Neon databases on Vercel due to connection timeouts
+    console.warn("⚠️  Migration deploy failed or timed out");
     console.warn(
       "   This is safe to ignore if migrations are already applied."
     );
-    console.warn("   Continuing with build...");
-  } else {
-    console.warn("⚠️  Migration deploy failed:", errorOutput.substring(0, 200));
+    console.warn(
+      "   Common causes: P1002 timeout, advisory lock timeout, or connection issues"
+    );
     console.warn("   Continuing with build...");
   }
+
+  console.log("🏗️  Building Next.js application...");
+  try {
+    await runCommand("npx", ["next", "build"]);
+  } catch (error) {
+    console.error("❌ Build failed");
+    process.exit(1);
+  }
+
+  console.log("✅ Build completed successfully");
 }
 
-console.log("🏗️  Building Next.js application...");
-try {
-  execSync("npx next build", { stdio: "inherit" });
-} catch (error) {
-  console.error("❌ Build failed");
+main().catch((error) => {
+  console.error("❌ Unexpected error:", error);
   process.exit(1);
-}
-
-console.log("✅ Build completed successfully");
+});
