@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Search, X, Lock, Bell } from "lucide-react";
+import { Star, Search, X, Bell } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { cn } from "@/app/lib/utils";
 import type { Beach } from "@/app/types/beaches";
@@ -8,15 +8,13 @@ import type { LogEntry } from "@/app/types/raidlogs";
 import SurfForecastWidget from "../SurfForecastWidget";
 import { Button } from "@/app/components/ui/Button";
 import { validateFile, compressImageIfNeeded } from "@/app/lib/file";
-import { useSubscription } from "@/app/context/SubscriptionContext";
-import { useSession } from "next-auth/react";
-import { useHandleTrial } from "@/app/hooks/useHandleTrial";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
+import { useUpdateLog } from "@/app/hooks/useUpdateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
 import {
   BlueStarRating,
@@ -46,21 +44,18 @@ export function RaidLogForm({
   isOpen = false,
   onClose = () => {},
   entry,
+  beaches: beachesProp,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
-  const { isSubscribed, hasActiveTrial } = useSubscription();
   const { data: session } = useSession();
-  const { data: beaches, isLoading } = useBeaches();
   const router = useRouter();
-  const { mutate: handleTrial } = useHandleTrial();
+  const { data: beachesFromHook, isLoading } = useBeaches();
+  // Use prop beaches if provided, otherwise use hook data
+  const beaches = beachesProp || beachesFromHook;
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
-  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(
-    entry && beaches
-      ? beaches.find((beach) => beach.name === entry.beachName) || null
-      : null
-  );
+  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [surferRating, setSurferRating] = useState(entry?.surferRating || 0);
   const [comments, setComments] = useState(entry?.comments || "");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -207,32 +202,102 @@ export function RaidLogForm({
     onClose();
   };
 
+  // Initialize all form fields from entry when entry loads (for editing)
+  useEffect(() => {
+    if (entry) {
+      console.log("Initializing form from entry:", {
+        id: entry.id,
+        surferRating: entry.surferRating,
+        comments: entry.comments,
+        date: entry.date,
+        beachName: entry.beachName,
+        beachId: (entry as any).beachId,
+        beach: (entry as any).beach,
+      });
+
+      // Update all form fields from entry
+      if (entry.date) {
+        setSelectedDate(format(new Date(entry.date), "yyyy-MM-dd"));
+      }
+      if (entry.surferRating !== undefined && entry.surferRating !== null) {
+        setSurferRating(entry.surferRating);
+      }
+      if (entry.comments !== undefined && entry.comments !== null) {
+        setComments(entry.comments);
+      }
+      if (entry.isAnonymous !== undefined) {
+        setIsAnonymous(entry.isAnonymous);
+      }
+      if (entry.isPrivate !== undefined) {
+        setIsPrivate(entry.isPrivate);
+      }
+      if (entry.videoUrl !== undefined && entry.videoUrl !== null) {
+        setVideoUrl(entry.videoUrl);
+      }
+      if (entry.videoPlatform !== undefined && entry.videoPlatform !== null) {
+        setVideoPlatform(entry.videoPlatform as "youtube" | "vimeo" | null);
+      }
+      if (entry.imageUrl && !imagePreview) {
+        setImagePreview(entry.imageUrl);
+      }
+    }
+  }, [entry]);
+
+  // Initialize beach from entry when both entry and beaches are available
   useEffect(() => {
     if (entry && beaches && beaches.length > 0) {
-      console.log("Initializing beach selection:", {
-        entryBeachName: entry.beachName,
-        availableBeaches: beaches?.map((b) => b.name),
-        entry,
-        beaches: beaches?.slice(0, 3),
-      });
-      const matchingBeach = beaches?.find(
-        (beach) => beach.name === entry.beachName
-      );
-      if (matchingBeach) {
-        console.log("Found matching beach:", matchingBeach);
-        setSelectedBeach(matchingBeach);
-        setSearchTerm(matchingBeach.name);
-      } else {
-        console.log("No matching beach found for:", entry.beachName);
+      // Only initialize if we don't have a selected beach yet
+      if (!selectedBeach) {
+        console.log("Initializing beach selection:", {
+          entryBeachId: (entry as any).beachId,
+          entryBeachName: entry.beachName,
+          entryBeach: (entry as any).beach,
+          availableBeachesCount: beaches.length,
+          availableBeaches: beaches
+            ?.slice(0, 3)
+            .map((b) => ({ id: b.id, name: b.name })),
+        });
+
+        // Try multiple methods to find the beach:
+        // 1. Direct beach relation from entry
+        // 2. By beachId
+        // 3. By beachName
+        let matchingBeach: Beach | null = null;
+
+        // Method 1: Check if entry has a beach relation
+        if ((entry as any).beach?.id) {
+          matchingBeach =
+            beaches.find((beach) => beach.id === (entry as any).beach.id) ||
+            null;
+        }
+
+        // Method 2: Try by beachId
+        if (!matchingBeach && (entry as any).beachId) {
+          matchingBeach =
+            beaches.find((beach) => beach.id === (entry as any).beachId) ||
+            null;
+        }
+
+        // Method 3: Try by beachName (fallback)
+        if (!matchingBeach && entry.beachName) {
+          matchingBeach =
+            beaches.find((beach) => beach.name === entry.beachName) || null;
+        }
+
+        if (matchingBeach) {
+          console.log("Found matching beach:", matchingBeach.name);
+          setSelectedBeach(matchingBeach);
+          setSearchTerm(matchingBeach.name);
+        } else {
+          console.log("No matching beach found for:", {
+            beachId: (entry as any).beachId,
+            beachName: entry.beachName,
+            entryBeach: (entry as any).beach,
+          });
+        }
       }
-    } else {
-      console.log("Missing data for beach initialization:", {
-        hasEntry: !!entry,
-        beachesLength: beaches?.length,
-        entryBeachName: entry?.beachName,
-      });
     }
-  }, [entry, beaches]);
+  }, [entry, beaches, selectedBeach]);
 
   // Add debug logging for beaches
   useEffect(() => {
@@ -255,6 +320,7 @@ export function RaidLogForm({
   }, [selectedBeach, selectedDate]);
 
   const { mutate: createLog } = useCreateLog();
+  const { mutate: updateLog } = useUpdateLog();
 
   // Add effect to restore form state after sign-in
   useEffect(() => {
@@ -320,7 +386,8 @@ export function RaidLogForm({
       return;
     }
 
-    if (!forecastData?.id) {
+    // For editing, allow using existing forecast if no new forecast data
+    if (!entry?.id && !forecastData?.id) {
       toast.error("No forecast data available for this date");
       return;
     }
@@ -345,18 +412,33 @@ export function RaidLogForm({
         uploadedUrl = data.imageUrl;
       }
 
-      await createLog({
+      // Use existing image URL if no new image uploaded and editing
+      const finalImageUrl =
+        uploadedUrl ||
+        (entry?.imageUrl && !selectedImage ? entry.imageUrl : uploadedUrl);
+
+      const logData = {
         selectedBeach,
         selectedDate,
-        forecastData,
+        forecastData: forecastData || entry?.forecast,
         isAnonymous,
         surferRating,
         comments,
         isPrivate,
-        uploadedImageUrl: uploadedUrl,
+        uploadedImageUrl: finalImageUrl,
         videoUrl,
         videoPlatform,
-      });
+      };
+
+      // If editing, update instead of create
+      if (entry?.id) {
+        await updateLog({
+          id: entry.id,
+          ...logData,
+        });
+      } else {
+        await createLog(logData);
+      }
 
       router.push("/raidlogs");
       if (onClose) onClose();
@@ -400,22 +482,6 @@ export function RaidLogForm({
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const handleSubscriptionAction = () => {
-    if (!session?.user) {
-      saveFormState();
-      signIn("google", {
-        callbackUrl: `${window.location.origin}/raidlogs/new`,
-      });
-      return;
-    }
-
-    if (!hasActiveTrial) {
-      handleTrial({});
-    } else {
-      router.push("/pricing");
-    }
-  };
-
   const validateVideoUrl = (
     url: string,
     platform: "youtube" | "vimeo" | null
@@ -452,35 +518,6 @@ export function RaidLogForm({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white max-h-[90vh] overflow-y-auto p-6 rounded-lg w-full max-w-md">
-        {!isSubscribed && !hasActiveTrial && (
-          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-10 rounded-lg" />
-        )}
-
-        {!isSubscribed && !hasActiveTrial && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-20 gap-4 bg-white/50">
-            <Lock className="h-16 w-16 text-gray-400" />
-            <div className="text-center px-4">
-              <h3 className="text-lg font-semibold mb-2 font-primary">
-                Start Logging Your Sessions
-              </h3>
-              <p className="text-gray-600 mb-4 font-primary">
-                Track your surf journey with detailed logs and insights
-              </p>
-              <Button
-                variant="secondary"
-                onClick={handleSubscriptionAction}
-                className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
-              >
-                {!session?.user
-                  ? "Sign in to Start"
-                  : hasActiveTrial
-                    ? "Subscribe Now"
-                    : "Start Free Trial"}
-              </Button>
-            </div>
-          </div>
-        )}
-
         <div className="relative">
           <button
             onClick={() => {

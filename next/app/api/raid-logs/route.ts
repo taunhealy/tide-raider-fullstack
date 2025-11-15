@@ -507,6 +507,141 @@ function convertDegreesToCardinal(degrees: number) {
   return directions[index] || "N/A";
 }
 
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const data = await request.json();
+    const { id, ...updateData } = data;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Log entry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the log entry exists and belongs to the user
+    const existingEntry = await prisma.logEntry.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!existingEntry) {
+      return NextResponse.json(
+        { message: "Log entry not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingEntry.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: "Unauthorized to update this log entry" },
+        { status: 403 }
+      );
+    }
+
+    // Find the beach and region if provided
+    let beach = null;
+    let region = null;
+    
+    if (updateData.beachId || updateData.beachName) {
+      beach = await prisma.beach.findFirst({
+        where: {
+          OR: [
+            { id: updateData.beachId },
+            { name: updateData.beachName },
+          ].filter(Boolean),
+        },
+      });
+    }
+
+    if (updateData.regionId) {
+      region = await prisma.region.findUnique({
+        where: { id: updateData.regionId },
+      });
+    }
+
+    // Find or use existing forecast
+    let forecast = null;
+    if (updateData.forecastId) {
+      forecast = await prisma.forecastA.findUnique({
+        where: { id: updateData.forecastId },
+      });
+    } else if (updateData.date && region) {
+      forecast = await prisma.forecastA.findFirst({
+        where: {
+          regionId: region.id,
+          date: {
+            gte: new Date(new Date(updateData.date).setHours(0, 0, 0, 0)),
+            lt: new Date(new Date(updateData.date).setHours(23, 59, 59, 999)),
+          },
+        },
+      });
+    }
+
+    // Prepare update data
+    const updatePayload: any = {
+      ...(updateData.date && { date: new Date(updateData.date) }),
+      ...(updateData.surferName && { surferName: updateData.surferName }),
+      ...(updateData.surferEmail && { surferEmail: updateData.surferEmail }),
+      ...(updateData.beachName && { beachName: updateData.beachName }),
+      ...(typeof updateData.surferRating === "number" && { surferRating: updateData.surferRating }),
+      ...(updateData.comments !== undefined && { comments: updateData.comments }),
+      ...(typeof updateData.isPrivate === "boolean" && { isPrivate: updateData.isPrivate }),
+      ...(typeof updateData.isAnonymous === "boolean" && { isAnonymous: updateData.isAnonymous }),
+      ...(updateData.imageUrl !== undefined && { imageUrl: updateData.imageUrl }),
+      ...(updateData.videoUrl !== undefined && { videoUrl: updateData.videoUrl }),
+      ...(updateData.videoPlatform !== undefined && { videoPlatform: updateData.videoPlatform }),
+      ...(updateData.waveType && { waveType: updateData.waveType }),
+    };
+
+    // Update relations
+    if (beach) {
+      updatePayload.beach = { connect: { id: beach.id } };
+    }
+    if (region) {
+      updatePayload.region = { connect: { id: region.id } };
+    }
+    if (forecast) {
+      updatePayload.forecast = { connect: { id: forecast.id } };
+    }
+
+    // Update the log entry
+    const logEntry = await prisma.logEntry.update({
+      where: { id },
+      data: updatePayload,
+      include: {
+        beach: true,
+        region: true,
+        forecast: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            nationality: true,
+          },
+        },
+        alerts: true,
+      },
+    });
+
+    return NextResponse.json(logEntry);
+  } catch (error) {
+    console.error("Error updating log entry:", error);
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Failed to update log entry",
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

@@ -15,11 +15,10 @@ import NotificationBadge from "./notifications/NotificationBadge";
 // Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
   { href: "/raid", label: "Raid" },
-  { href: "/raidlogs", label: "Log Book" },
+  { href: "/raidlogs", label: "Logs" },
   { href: "/alerts", label: "Alerts" },
   { href: "/blog", label: "Blog" },
-  { href: "/pricing", label: "Pricing" },
-] as const; 
+] as const;
 
 export default function Navbar() {
   const { data: session, status } = useSession();

@@ -402,8 +402,8 @@ export default function RaidLogTable({
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { data: subscriptionDetails } = useSubscriptionDetails();
-  const hasAccess =
-    isSubscribed || isTrialing || subscriptionDetails?.hasActiveTrial;
+  // Allow all logged-in users access to logs (premium features are now free)
+  const hasAccess = !!session?.user || isSubscribed || isTrialing || subscriptionDetails?.hasActiveTrial;
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(

@@ -103,10 +103,10 @@ export async function PUT(
       } = updateData;
 
       return tx.alert.update({
-        where: { id: alertId },
-        data: {
+      where: { id: alertId },
+      data: {
           ...cleanUpdateData,
-          forecastDate: new Date(dateOnly),
+        forecastDate: new Date(dateOnly),
           ...(regionId && {
             region: {
               connect: { id: regionId },
@@ -125,11 +125,11 @@ export async function PUT(
                   },
                 }
               : {}),
-          ...(logEntryId && {
-            logEntry: {
-              connect: { id: logEntryId },
-            },
-          }),
+        ...(logEntryId && {
+          logEntry: {
+            connect: { id: logEntryId },
+          },
+        }),
           ...(logEntry?.connect?.id && {
             logEntry: {
               connect: { id: logEntry.connect.id },
@@ -146,7 +146,7 @@ export async function PUT(
           },
           beach: true,
           region: true,
-        },
+      },
       });
     });
 

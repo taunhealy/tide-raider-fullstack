@@ -13,10 +13,9 @@ export function useContentGating() {
   const isLoggedOut = !session?.user;
 
   // Content should be gated if:
-  // 1. Not in beta mode AND
-  // 2. User is not subscribed AND
-  // 3. User doesn't have an active trial
-  const isGated = !isSubscribed && !hasActiveTrial;
+  // 1. User is not logged in (allow all logged-in users access)
+  // Premium features are now free for all logged-in users
+  const isGated = isLoggedOut;
 
   // Specific gating for logged out users (even in beta mode)
   const isLoggedOutGated = isLoggedOut;

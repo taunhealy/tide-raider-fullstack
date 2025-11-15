@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
 import { AlertProperties } from "./AlertProperties";
-import { StarRating } from "./StarRating";
+import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { formatNotificationMethod } from "@/app/lib/formatters";
 
 // Create an extended type that includes the properties relation
@@ -93,8 +93,10 @@ export function AlertCard({
       </CardHeader>
       <CardContent className="flex-grow flex-1">
         <div className="text-sm space-y-2 sm:space-y-3 font-primary h-full flex flex-col">
-          <p className="text-gray-500">{alert.region?.name || alert.regionId}</p>
-          
+          <p className="text-gray-500">
+            {alert.region?.name || alert.regionId}
+          </p>
+
           {/* Beach Badge */}
           {alert.beach?.name && (
             <div className="flex items-center gap-2">
@@ -103,7 +105,7 @@ export function AlertCard({
               </div>
             </div>
           )}
-          
+
           <p className="text-gray-500">
             <span className="font-medium text-gray-900">🔔</span>{" "}
             {formatNotificationMethod(alert.notificationMethod)}
@@ -121,7 +123,15 @@ function AlertConditions({ alert }: { alert: Alert }) {
   }
 
   if (alert.alertType === AlertType.RATING) {
-    return <StarRating rating={alert.starRating} />;
+    return (
+      <div className="mt-2 pt-2 border-t border-gray-200">
+        <p className="font-medium mb-2">Alert for:</p>
+        <div className="flex items-center mt-1 bg-gray-50 p-3 rounded-md">
+          <BlueStarRating score={alert.starRating ?? 0} outOfFive={true} />
+          <span className="ml-3 font-primary">{alert.starRating}+ Stars</span>
+        </div>
+      </div>
+    );
   }
 
   return null;
