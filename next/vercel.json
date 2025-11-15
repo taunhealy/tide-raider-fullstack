@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "installCommand": "npm install --force && npx playwright install chromium",
   "framework": "nextjs",
   "functions": {
@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/daily-alerts",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 6 * * *"
     }
   ]
 }
