@@ -179,11 +179,7 @@ export class BeachService {
           region: true,
           beachDailyScores: {
             where: { date: currentDate },
-            select: {
-              score: true,
-              conditions: true,
-              date: true,
-            },
+            // Include all fields to match BeachDailyScore type
           },
         },
       });
