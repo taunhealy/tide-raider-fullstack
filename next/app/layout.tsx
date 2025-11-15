@@ -7,7 +7,7 @@ import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
-import { getAllBeaches } from "@/app/lib/beachService";
+import { getAllBeaches, type BeachWithRelations } from "@/app/lib/beachService";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -58,7 +58,7 @@ export default async function RootLayout({
   }
   
   // Fetch beaches from database for initial data
-  let beaches = [];
+  let beaches: BeachWithRelations[] = [];
   try {
     beaches = await getAllBeaches();
   } catch (error) {
