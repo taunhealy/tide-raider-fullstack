@@ -12,8 +12,17 @@ export function useRaidLog(id: string) {
         api.getAlerts({ logEntryId: id }).catch(() => []),
       ]);
 
+      // Extract the first entry from the entries array
+      const entry = logData.entries && logData.entries.length > 0 
+        ? logData.entries[0] 
+        : null;
+
+      if (!entry) {
+        throw new Error("Log entry not found");
+      }
+
       return {
-        ...logData,
+        ...entry,
         existingAlert:
           Array.isArray(alertData) && alertData.length > 0
             ? alertData[0]

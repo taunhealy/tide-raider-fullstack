@@ -26,9 +26,9 @@ export default function LeftSidebar() {
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
-  const { data: blogPosts = [] } = useQuery({
+  const { data: blogPosts } = useQuery({
     queryKey: ["blog-posts"],
-    queryFn: () => api.request<any[]>("/api/blog-posts"),
+    queryFn: () => api.request<{ posts: any[]; trip: any; categories: { title: string; slug: string }[] }>("/api/blog-posts"),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -42,11 +42,13 @@ export default function LeftSidebar() {
     <aside className="hidden lg:block lg:w-[280px] xl:w-[320px] flex-shrink-0 mt-5">
       <div className="hidden lg:block space-y-8 w-full">
         <LocationFilter regions={regions} />
-        <BlogPostsSidebar
-          posts={blogPosts}
-          selectedCountry={filters.country}
-          selectedContinent={filters.continent}
-        />
+        {blogPosts && (
+          <BlogPostsSidebar
+            posts={blogPosts}
+            selectedCountry={filters.country}
+            selectedContinent={filters.continent}
+          />
+        )}
       </div>
     </aside>
   );
