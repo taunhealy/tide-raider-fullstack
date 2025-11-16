@@ -16,16 +16,34 @@ function convertToAdapterUser(user: any): AdapterUser {
 export function PrismaAdapter(): Adapter {
   return {
     async createUser(data: Omit<AdapterUser, "id">) {
-      const user = await prisma.user.create({
-        data: {
-          ...data,
-          name: data.name || "",
-          hasActiveTrial: false,
-          subscriptionStatus: null,
-          subscriptionEndsAt: null,
-        },
-      });
-      return convertToAdapterUser(user);
+      try {
+        console.log(`[PrismaAdapter] Creating user with email: ${data.email}`);
+        const user = await prisma.user.create({
+          data: {
+            ...data,
+            name: data.name || "",
+            hasActiveTrial: false,
+            subscriptionStatus: null,
+            subscriptionEndsAt: null,
+          },
+        });
+        console.log(`[PrismaAdapter] ✅ User created: ${user.id}`);
+        return convertToAdapterUser(user);
+      } catch (error: any) {
+        console.error(`[PrismaAdapter] ❌ Error creating user:`, error);
+        // If user already exists (e.g., by email), try to fetch it
+        if (error.code === "P2002" && data.email) {
+          console.log(`[PrismaAdapter] User with email ${data.email} already exists, fetching...`);
+          const existingUser = await prisma.user.findUnique({
+            where: { email: data.email },
+          });
+          if (existingUser) {
+            console.log(`[PrismaAdapter] ✅ Found existing user: ${existingUser.id}`);
+            return convertToAdapterUser(existingUser);
+          }
+        }
+        throw error;
+      }
     },
 
     async getUser(id) {

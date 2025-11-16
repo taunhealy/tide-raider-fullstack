@@ -61,9 +61,19 @@ export default async function RootLayout({
   }
 
   // Fetch beaches from database for initial data
+  // Note: In production, this may fail if DATABASE_URL is not accessible (e.g., pgbouncer only works from Fly network)
+  // The app will work fine without initial beach data - beaches will be fetched client-side via API
   let beaches: BeachWithRelations[] = [];
   try {
-    beaches = await getAllBeaches();
+    // Only try to fetch if DATABASE_URL is available and accessible
+    if (
+      process.env.DATABASE_URL &&
+      !process.env.DATABASE_URL.includes("pgbouncer")
+    ) {
+      beaches = await getAllBeaches();
+    } else {
+      console.log("Skipping initial beach fetch - using backend API instead");
+    }
   } catch (error) {
     console.error("Error fetching beaches in layout:", error);
     // Continue with empty array - app will still work, just without initial beach data

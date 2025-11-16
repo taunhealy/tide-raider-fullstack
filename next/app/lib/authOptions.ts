@@ -56,6 +56,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
   },
+  debug: process.env.NODE_ENV === "development",
   callbacks: {
     async redirect({ url, baseUrl }) {
       // If already on the signin page and trying to redirect there again, go to home
