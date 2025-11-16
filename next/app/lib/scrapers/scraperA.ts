@@ -70,6 +70,7 @@ async function getBrowser() {
 
   if (!isVercel && process.env.NODE_ENV === "development") {
     // Local development - use Chrome/Chromium installed on the system
+    console.log("Using system Chrome for local development");
     return puppeteerCore.launch({
       headless: true,
       args: ["--no-sandbox"],
@@ -81,13 +82,13 @@ async function getBrowser() {
     });
   } else {
     // Production Vercel/serverless environment - use @sparticuz/chromium
-    console.log("Using @sparticuz/chromium for serverless environment");
+    console.log("Using @sparticuz/chromium for Vercel serverless environment");
     chromium.setGraphicsMode = false; // Disable graphics mode for serverless
     return puppeteerCore.launch({
       args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: true,
+      headless: chromium.headless === "new" ? true : chromium.headless,
       ignoreHTTPSErrors: true,
     });
   }

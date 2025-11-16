@@ -5,8 +5,6 @@ import {} from "@/app/lib/surfUtils";
 
 // import { redis } from "@/app/lib/redis"; // Commented out redis import
 import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
-import { REGION_CONFIGS } from "@/app/lib/scrapers/scrapeSources";
-import { scraperA } from "@/app/lib/scrapers/scraperA";
 import { ScoreService } from "@/app/services/scores/ScoreService";
 // import { BeachService } from "@/app/services/beaches/BeachService"; // Commented out BeachService import
 import { ForecastA } from "@prisma/client";
@@ -48,13 +46,52 @@ export async function getLatestConditions(
   forceRefresh = false,
   regionId: ForecastA["regionId"]
 ) {
-  // Get the region from the database
-  const region = await prisma.region.findUnique({
+  // Get the region from the database - try ID first, then name lookup
+  console.log(
+    `[getLatestConditions] 🔍 Looking up region by ID: "${regionId}"`
+  );
+  let region = await prisma.region.findUnique({
     where: { id: regionId },
   });
 
+  // If not found by ID, try to find by name (case-insensitive)
   if (!region) {
-    throw new Error("Invalid region ID");
+    console.log(
+      `[getLatestConditions] ⚠️ Region not found by ID, trying name lookup...`
+    );
+    // Convert slug to title case for name matching
+    // "western-cape" -> "Western Cape", "bali" -> "Bali"
+    const nameFromSlug = regionId
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    region = await prisma.region.findFirst({
+      where: {
+        OR: [
+          { id: regionId },
+          { name: { equals: nameFromSlug, mode: "insensitive" } },
+          { name: { equals: regionId, mode: "insensitive" } },
+          { name: { contains: regionId, mode: "insensitive" } },
+          { name: { contains: nameFromSlug, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (region) {
+      console.log(
+        `[getLatestConditions] ✅ Region found by name: ${region.id} (${region.name})`
+      );
+    }
+  } else {
+    console.log(
+      `[getLatestConditions] ✅ Region found by ID: ${region.id} (${region.name})`
+    );
+  }
+
+  if (!region) {
+    console.error(`[getLatestConditions] ❌ Invalid region ID: ${regionId}`);
+    throw new Error(`Invalid region ID: ${regionId}`);
   }
 
   console.log("=== getLatestConditions ===");
@@ -76,30 +113,56 @@ export async function getLatestConditions(
   }
 
   // Only create new forecast if none exists
-  console.log("No existing forecast found. Scraping...");
+  // Always use backend API for scraping - frontend should never scrape directly
+  console.log(
+    "No existing forecast found. Calling backend API for scraping..."
+  );
 
-  const regionConfig = REGION_CONFIGS[region.id];
-  if (!regionConfig) {
-    console.error(`Missing region configuration for ${region.id}`);
-    // Return a default forecast instead of throwing
-    return {
-      id: randomUUID(),
-      regionId: region.id,
-      date: today,
-      windSpeed: 0,
-      windDirection: 0,
-      swellHeight: 0,
-      swellPeriod: 0,
-      swellDirection: 0,
-    };
-  }
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
   try {
-    console.log("Attempting to scrape from:", regionConfig.sourceA.url);
-    const scrapedForecast: BaseForecastData = await scraperA(
-      regionConfig.sourceA.url,
-      region.id
+    console.log(
+      `[Frontend] Calling backend API for scraping: ${backendUrl}/api/forecast?regionId=${region.id}`
     );
+
+    const response = await fetch(
+      `${backendUrl}/api/forecast?regionId=${region.id}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        `Backend API returned ${response.status}: ${response.statusText}`
+      );
+      // Return a default forecast instead of throwing
+      return {
+        id: randomUUID(),
+        regionId: region.id,
+        date: today,
+        windSpeed: 0,
+        windDirection: 0,
+        swellHeight: 0,
+        swellPeriod: 0,
+        swellDirection: 0,
+      };
+    }
+
+    const forecastData = await response.json();
+    const scrapedForecast: BaseForecastData = {
+      regionId: forecastData.regionId || region.id,
+      date: new Date(forecastData.date),
+      windSpeed: forecastData.windSpeed,
+      windDirection: forecastData.windDirection,
+      swellHeight: forecastData.swellHeight,
+      swellPeriod: forecastData.swellPeriod,
+      swellDirection: forecastData.swellDirection,
+    };
+
+    console.log("✅ Successfully fetched forecast from backend API");
 
     // More detailed logging
     console.log("Scraped forecast data:", scrapedForecast);
