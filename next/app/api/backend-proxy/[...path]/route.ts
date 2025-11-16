@@ -12,6 +12,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { getToken } from "next-auth/jwt";
+import jwt from "jsonwebtoken";
 import { authOptions } from "@/app/lib/authOptions";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -92,35 +94,55 @@ async function handleProxy(
       "Content-Type": "application/json",
     };
 
-    // Get the NextAuth session token from cookies
-    // The backend expects this cookie value (which is a signed JWT)
-    // Backend will verify it using jwt.verify(token, NEXTAUTH_SECRET)
+    // Get the actual JWT token from NextAuth
+    // getToken() extracts and decodes the JWT from the encrypted session token
+    // This is what the backend expects - a plain JWT that can be verified
+    const jwtToken = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    });
 
-    // Log all cookies for debugging
-    const allCookies = req.cookies.getAll();
     console.log(
-      `[proxy] All cookies:`,
-      allCookies.map((c) => c.name)
+      `[proxy] JWT token from getToken:`,
+      !!jwtToken,
+      jwtToken?.sub || jwtToken?.id
     );
 
-    const sessionToken =
-      req.cookies.get("next-auth.session-token")?.value ||
-      req.cookies.get("__Secure-next-auth.session-token")?.value ||
-      null;
+    // jwtToken is the decoded JWT payload from NextAuth's encrypted session token
+    // We need to create a new plain JWT that the backend can verify with jwt.verify()
+    if (jwtToken) {
+      const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
 
-    if (sessionToken) {
-      backendHeaders.Authorization = `Bearer ${sessionToken}`;
-      console.log(
-        `[proxy] ✅ Added auth token for ${path} (length: ${sessionToken.length}, first 20 chars: ${sessionToken.substring(0, 20)}...)`
-      );
+      if (!secret) {
+        console.error(
+          `[proxy] ❌ NEXTAUTH_SECRET or AUTH_SECRET not configured`
+        );
+      } else {
+        // Create a new plain JWT from the decoded token payload
+        // This JWT can be verified by the backend using jwt.verify()
+        const payload: Record<string, any> = {
+          sub: jwtToken.sub || jwtToken.id,
+          id: jwtToken.id || jwtToken.sub,
+          email: jwtToken.email,
+        };
+
+        // Include exp and iat if they exist
+        if (jwtToken.exp) payload.exp = jwtToken.exp;
+        if (jwtToken.iat) payload.iat = jwtToken.iat;
+
+        const newJWT = jwt.sign(payload, secret, {
+          expiresIn: "7d", // Match NextAuth's default
+          algorithm: "HS256", // Use HS256 like NextAuth
+        });
+
+        backendHeaders.Authorization = `Bearer ${newJWT}`;
+        console.log(
+          `[proxy] ✅ Created new JWT from token object for ${path} (length: ${newJWT.length})`
+        );
+      }
     } else if (session) {
-      // Session exists but no cookie - this shouldn't happen
       console.log(
-        `[proxy] ⚠️ WARNING: Session exists but no session token cookie found`
-      );
-      console.log(
-        `[proxy] Available cookies:`,
-        allCookies.map((c) => `${c.name} (${c.value.length} chars)`)
+        `[proxy] ⚠️ WARNING: Session exists but getToken() returned null`
       );
     } else {
       console.log(
