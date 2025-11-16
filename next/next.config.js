@@ -70,12 +70,14 @@ const nextConfig = {
 
     return config;
   },
-  experimental: {
-    serverComponentsExternalPackages: ["@sparticuz/chromium"],
-    turbo: {
-      loaders: {
-        // Add loaders configuration if needed
-      },
+  // Moved from experimental.serverComponentsExternalPackages (deprecated in Next.js 15)
+  serverExternalPackages: ["@sparticuz/chromium"],
+
+  // Turbopack is now stable, moved from experimental.turbo
+  turbopack: {
+    rules: {
+      // Add rules configuration if needed (use glob patterns instead of extensions)
+      // Example: "*.mdx": ["mdx-loader"]
     },
   },
   transpilePackages: [

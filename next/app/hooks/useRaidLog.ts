@@ -13,9 +13,10 @@ export function useRaidLog(id: string) {
       ]);
 
       // Extract the first entry from the entries array
-      const entry = logData.entries && logData.entries.length > 0 
-        ? logData.entries[0] 
-        : null;
+      const entry =
+        logData.entries && logData.entries.length > 0
+          ? logData.entries[0]
+          : null;
 
       if (!entry) {
         throw new Error("Log entry not found");

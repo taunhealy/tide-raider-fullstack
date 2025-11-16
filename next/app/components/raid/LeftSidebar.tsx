@@ -28,7 +28,12 @@ export default function LeftSidebar() {
 
   const { data: blogPosts } = useQuery({
     queryKey: ["blog-posts"],
-    queryFn: () => api.request<{ posts: any[]; trip: any; categories: { title: string; slug: string }[] }>("/api/blog-posts"),
+    queryFn: () =>
+      api.request<{
+        posts: any[];
+        trip: any;
+        categories: { title: string; slug: string }[];
+      }>("/api/blog-posts"),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
