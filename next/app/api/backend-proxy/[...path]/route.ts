@@ -97,22 +97,67 @@ async function handleProxy(
     // Get the actual JWT token from NextAuth
     // getToken() extracts and decodes the JWT from the encrypted session token
     // This is what the backend expects - a plain JWT that can be verified
+    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+    console.log(
+      `[proxy] Secret available:`,
+      !!secret,
+      secret ? `(length: ${secret.length})` : ""
+    );
+
+    // Log all cookies for debugging
+    const allCookies = req.cookies.getAll();
+    console.log(
+      `[proxy] All cookies:`,
+      allCookies.map((c) => c.name)
+    );
+
     const jwtToken = await getToken({
       req,
-      secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+      secret: secret,
     });
 
     console.log(
       `[proxy] JWT token from getToken:`,
       !!jwtToken,
-      jwtToken?.sub || jwtToken?.id
+      jwtToken
+        ? `sub: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
+        : "null"
     );
+
+    if (!jwtToken) {
+      console.log(`[proxy] ⚠️ getToken() returned null - checking session...`);
+      console.log(
+        `[proxy] Session user:`,
+        session?.user?.id,
+        session?.user?.email
+      );
+
+      // Fallback: If getToken() fails but we have a session, create JWT from session
+      if (session?.user?.id && secret) {
+        console.log(`[proxy] Creating JWT from session data as fallback`);
+        const payload: Record<string, any> = {
+          sub: session.user.id,
+          id: session.user.id,
+          email: session.user.email || undefined,
+        };
+
+        const newJWT = jwt.sign(payload, secret, {
+          expiresIn: "7d",
+          algorithm: "HS256",
+        });
+
+        backendHeaders.Authorization = `Bearer ${newJWT}`;
+        console.log(
+          `[proxy] ✅ Created JWT from session for ${path} (length: ${newJWT.length})`
+        );
+      } else if (session?.user?.id && !secret) {
+        console.error(`[proxy] ❌ Cannot create JWT: secret not configured`);
+      }
+    }
 
     // jwtToken is the decoded JWT payload from NextAuth's encrypted session token
     // We need to create a new plain JWT that the backend can verify with jwt.verify()
     if (jwtToken) {
-      const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-
       if (!secret) {
         console.error(
           `[proxy] ❌ NEXTAUTH_SECRET or AUTH_SECRET not configured`
