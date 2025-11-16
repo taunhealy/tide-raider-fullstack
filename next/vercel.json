@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --force && npx playwright install chromium",
+  "installCommand": "npm install --force",
   "framework": "nextjs",
   "functions": {
     "app/api/**/*": {

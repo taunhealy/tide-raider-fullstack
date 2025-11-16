@@ -65,8 +65,11 @@ const getBrowserPath = () => {
 };
 
 async function getBrowser() {
-  if (process.env.NODE_ENV === "development") {
-    // For local development, use Chrome/Chromium installed on the system
+  // Check if running on Vercel (serverless environment)
+  const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
+
+  if (!isVercel && process.env.NODE_ENV === "development") {
+    // Local development - use Chrome/Chromium installed on the system
     return puppeteerCore.launch({
       headless: true,
       args: ["--no-sandbox"],
@@ -77,9 +80,11 @@ async function getBrowser() {
           : "/usr/bin/google-chrome", // Default Linux Chrome path
     });
   } else {
-    // Production Vercel environment
+    // Production Vercel/serverless environment - use @sparticuz/chromium
+    console.log("Using @sparticuz/chromium for serverless environment");
+    chromium.setGraphicsMode = false; // Disable graphics mode for serverless
     return puppeteerCore.launch({
-      args: [...chromium.args, "--no-sandbox"],
+      args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: true,
