@@ -31,10 +31,11 @@ export async function authenticateToken(
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    // Verify JWT token (NextAuth uses NEXTAUTH_SECRET)
-    const secret = process.env.NEXTAUTH_SECRET;
+    // Verify JWT token (NextAuth uses NEXTAUTH_SECRET or AUTH_SECRET)
+    // Support both variable names for compatibility
+    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
     if (!secret) {
-      throw new Error("NEXTAUTH_SECRET is not configured");
+      throw new Error("NEXTAUTH_SECRET or AUTH_SECRET is not configured");
     }
 
     const decoded = jwt.verify(token, secret) as {
@@ -98,7 +99,7 @@ export async function optionalAuth(
         req.cookies?.["__Secure-next-auth.session-token"];
 
     if (token) {
-      const secret = process.env.NEXTAUTH_SECRET;
+      const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
       if (secret) {
         try {
           const decoded = jwt.verify(token, secret) as {
