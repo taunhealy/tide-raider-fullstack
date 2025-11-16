@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { getLatestConditions } from "../surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

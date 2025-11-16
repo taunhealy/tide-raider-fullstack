@@ -1,7 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 import { sendEmail } from "@/app/lib/email";
 import { sendWhatsAppMessage } from "@/app/lib/whatsapp";
-import { getLatestConditions } from "@/app/api/surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 import { ForecastA, AlertType } from "@prisma/client";
 
 // Track which regions we've already fetched today to avoid duplicate API calls

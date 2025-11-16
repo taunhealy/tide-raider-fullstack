@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { ForecastData } from "@/app/types/forecast";
-import { getLatestConditions } from "@/app/api/surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 
 interface ForecastState {
   data: ForecastData | null;

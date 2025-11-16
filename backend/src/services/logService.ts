@@ -131,12 +131,16 @@ export class LogService {
     });
 
     // Create log entry
+    // Extract region and forecast from data and exclude them from the spread
+    // (they're not Prisma relations, just plain objects/strings)
+    const { region, forecast: forecastData, ...logData } = data;
     const logEntry = await prisma.logEntry.create({
       data: {
-        ...data,
+        ...logData,
         date: new Date(data.date),
         userId,
         forecastId: forecast.id,
+        regionId: region, // Set regionId directly
       },
       include: {
         forecast: true,

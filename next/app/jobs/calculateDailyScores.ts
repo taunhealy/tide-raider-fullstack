@@ -1,4 +1,4 @@
-import { getLatestConditions } from "@/app/api/surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 

@@ -1,7 +1,7 @@
 // next/app/api/forecasts/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { getLatestConditions } from "../surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 import { ForecastA } from "@prisma/client";
 
 export async function GET(request: Request) {

@@ -1,11 +1,11 @@
-import { Router, Response } from "express";
+import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/beaches
-router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/", optionalAuth, async (req: Request, res: Response) => {
   try {
     const regionId = req.query.regionId as string | undefined;
 
@@ -28,7 +28,7 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/beaches/:name
-router.get("/:name", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
 

@@ -1,6 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { CoreForecastData } from "@/app/types/forecast";
-import { getLatestConditions } from "@/app/api/surf-conditions/route";
+import { getLatestConditions } from "@/app/lib/forecast-utils";
 
 export class ForecastService {
   static async getOrCreateForecast(
