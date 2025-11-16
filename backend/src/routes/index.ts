@@ -10,10 +10,12 @@ import regionsRouter from "./regions";
 import notificationsRouter from "./notifications";
 import blogPostsRouter from "./blog-posts";
 import seedRouter from "./seed";
+import authRouter from "./auth";
 
 const router = Router();
 
 // Mount route handlers
+router.use("/auth", authRouter);
 router.use("/beaches", beachesRouter);
 router.use("/alerts", alertsRouter);
 router.use("/logs", logsRouter);

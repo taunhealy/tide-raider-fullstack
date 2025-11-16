@@ -24,10 +24,12 @@ export async function authenticateToken(
       `[auth] 🔒 Authentication required for ${req.method} ${req.path}`
     );
     // Get token from Authorization header or cookie
+    // Priority: 1. Authorization header, 2. auth-token cookie (our JWT), 3. NextAuth cookies (for backward compatibility)
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
-      : req.cookies?.["next-auth.session-token"] ||
+      : req.cookies?.["auth-token"] || // Our JWT cookie
+        req.cookies?.["next-auth.session-token"] ||
         req.cookies?.["__Secure-next-auth.session-token"];
 
     if (!token) {
@@ -211,7 +213,8 @@ export async function optionalAuth(
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
-      : req.cookies?.["next-auth.session-token"] ||
+      : req.cookies?.["auth-token"] || // Our JWT cookie
+        req.cookies?.["next-auth.session-token"] ||
         req.cookies?.["__Secure-next-auth.session-token"];
 
     console.log(

@@ -1,0 +1,16 @@
+# Google OAuth Redirect URI to add in Google Cloud Console
+
+# Production:
+https://tide-raider-backend.fly.dev/api/auth/google/callback
+
+# Development (if needed):
+http://localhost:3001/api/auth/google/callback
+
+# Instructions:
+# 1. Go to https://console.cloud.google.com/
+# 2. Navigate to APIs & Services → Credentials
+# 3. Click on your OAuth 2.0 Client ID
+# 4. Under "Authorized redirect URIs", click "ADD URI"
+# 5. Add: https://tide-raider-backend.fly.dev/api/auth/google/callback
+# 6. Click "SAVE"
+
