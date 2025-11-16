@@ -141,6 +141,9 @@ async function handleProxy(
           email: session.user.email || undefined,
         };
 
+        console.log(
+          `[proxy] 🔑 Using secret to sign JWT (fallback) (length: ${secret.length}, first 10 chars: ${secret.substring(0, 10)}...)`
+        );
         const newJWT = jwt.sign(payload, secret, {
           expiresIn: "7d",
           algorithm: "HS256",
@@ -178,6 +181,9 @@ async function handleProxy(
         if (jwtToken.exp) payload.exp = jwtToken.exp;
         if (jwtToken.iat) payload.iat = jwtToken.iat;
 
+        console.log(
+          `[proxy] 🔑 Using secret to sign JWT (length: ${secret.length}, first 10 chars: ${secret.substring(0, 10)}...)`
+        );
         const newJWT = jwt.sign(payload, secret, {
           expiresIn: "7d", // Match NextAuth's default
           algorithm: "HS256", // Use HS256 like NextAuth

@@ -20,6 +20,9 @@ export async function authenticateToken(
   next: NextFunction
 ) {
   try {
+    console.log(
+      `[auth] 🔒 Authentication required for ${req.method} ${req.path}`
+    );
     // Get token from Authorization header or cookie
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
@@ -47,6 +50,11 @@ export async function authenticateToken(
     console.log(
       `[auth] Secret configured: ${secret ? "YES" : "NO"} (length: ${secret?.length || 0})`
     );
+    if (secret) {
+      console.log(
+        `[auth] 🔑 Using secret to verify JWT (first 10 chars: ${secret.substring(0, 10)}...)`
+      );
+    }
 
     let userId: string | undefined;
     try {
@@ -134,6 +142,10 @@ export async function optionalAuth(
       : req.cookies?.["next-auth.session-token"] ||
         req.cookies?.["__Secure-next-auth.session-token"];
 
+    console.log(
+      `[auth] 🔓 Optional auth check for ${req.method} ${req.path} - token present: ${!!token}`
+    );
+
     if (token) {
       const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
       if (secret) {
@@ -163,6 +175,9 @@ export async function optionalAuth(
                 isSubscribed: user.subscriptionStatus === "ACTIVE",
                 hasActiveTrial: user.hasActiveTrial || false,
               };
+              console.log(
+                `[auth] ✅ Optional auth successful - userId: ${user.id}, email: ${user.email || "N/A"}`
+              );
             }
           }
         } catch (error) {
