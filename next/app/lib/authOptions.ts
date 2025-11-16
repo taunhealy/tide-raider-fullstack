@@ -78,6 +78,9 @@ export const authOptions: NextAuthOptions = {
         session.user.isSubscribed = !!token.isSubscribed;
         session.user.hasActiveTrial = !!token.hasActiveTrial;
         session.user.trialEndDate = token.trialEndDate || null;
+        console.log(
+          `[NextAuth] ✅ Session created for userId: ${token.id}, email: ${session.user.email || "N/A"}`
+        );
       }
       return session;
     },
@@ -85,6 +88,9 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        console.log(
+          `[NextAuth] 🔐 JWT token created/updated for userId: ${user.id}`
+        );
 
         // Fetch subscription info from database
         const dbUser = await prisma.user.findUnique({

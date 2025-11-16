@@ -150,6 +150,9 @@ async function handleProxy(
         console.log(
           `[proxy] ✅ Created JWT from session for ${path} (length: ${newJWT.length})`
         );
+        console.log(
+          `[proxy] 🔐 Auth token created (fallback) for userId: ${session.user.id}, email: ${session.user.email}`
+        );
       } else if (session?.user?.id && !secret) {
         console.error(`[proxy] ❌ Cannot create JWT: secret not configured`);
       }
@@ -183,6 +186,9 @@ async function handleProxy(
         backendHeaders.Authorization = `Bearer ${newJWT}`;
         console.log(
           `[proxy] ✅ Created new JWT from token object for ${path} (length: ${newJWT.length})`
+        );
+        console.log(
+          `[proxy] 🔐 Auth token created for userId: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
         );
       }
     } else if (session) {

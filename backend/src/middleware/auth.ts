@@ -67,6 +67,10 @@ export async function authenticateToken(
         console.log("[auth] Token decoded but no userId found");
         return res.status(401).json({ error: "Invalid token" });
       }
+
+      console.log(
+        `[auth] ✅ Token verified successfully for userId: ${userId}, email: ${decoded.email || "N/A"}`
+      );
     } catch (error) {
       console.error(
         "[auth] Token verification failed:",
@@ -76,6 +80,7 @@ export async function authenticateToken(
     }
 
     // Fetch user from database
+    console.log(`[auth] 🔍 Fetching user from database for userId: ${userId}`);
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -89,8 +94,13 @@ export async function authenticateToken(
     });
 
     if (!user) {
+      console.log(`[auth] ❌ User not found in database for userId: ${userId}`);
       return res.status(401).json({ error: "User not found" });
     }
+
+    console.log(
+      `[auth] ✅ Authentication successful - userId: ${user.id}, email: ${user.email || "N/A"}, name: ${user.name || "N/A"}`
+    );
 
     // Attach user to request
     req.user = {
