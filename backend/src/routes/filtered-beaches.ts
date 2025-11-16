@@ -65,14 +65,30 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
 
       if (!region) {
         // Log available regions for debugging
-        const allRegions = await prisma.region.findMany({
-          select: { id: true, name: true },
-          take: 20,
-        });
-        console.log(
-          `[filtered-beaches] 🔍 Sample of available regions in database:`,
-          allRegions.map((r) => `${r.id} -> "${r.name}"`)
-        );
+        console.log("[DEBUG] About to query regions with findMany...");
+        console.log("[DEBUG] Prisma client instance:", !!prisma);
+        console.log("[DEBUG] Region ID being searched:", regionIdParam);
+
+        try {
+          const allRegions = await prisma.region.findMany({
+            select: { id: true, name: true },
+            take: 20,
+          });
+          console.log("[DEBUG] Query executed successfully");
+          console.log("[DEBUG] Number of regions found:", allRegions.length);
+          console.log(
+            "[DEBUG] Query result:",
+            JSON.stringify(allRegions, null, 2)
+          );
+          console.log(
+            `[filtered-beaches] 🔍 Sample of available regions in database:`,
+            allRegions.map((r) => `${r.id} -> "${r.name}"`)
+          );
+        } catch (queryError: any) {
+          console.error("[DEBUG] Query failed with error:", queryError);
+          console.error("[DEBUG] Error message:", queryError.message);
+          console.error("[DEBUG] Error stack:", queryError.stack);
+        }
       }
     }
 

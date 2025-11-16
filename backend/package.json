@@ -59,7 +59,7 @@
     "typescript": "^5.7.3"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed-with-beaches.ts"
   },
   "engines": {
     "node": "22.x"
