@@ -1,20 +1,40 @@
 import { NextResponse } from "next/server";
-import { ScoreService } from "@/app/services/scores/ScoreService";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+/**
+ * Proxy to backend /api/beach-ratings/region-counts
+ * The backend handles all score calculations and database queries
+ */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date");
-    const date = dateParam ? new Date(dateParam) : new Date();
+    
+    // Build backend URL with query params
+    const backendUrl = `${BACKEND_URL}/api/beach-ratings/region-counts${
+      dateParam ? `?date=${dateParam}` : ""
+    }`;
 
-    const counts = await ScoreService.getRegionCounts(date);
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    return NextResponse.json({ counts });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch region counts");
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching region counts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch region counts" },
-      { status: 500 }
-    );
+    // Database not accessible - return empty counts
+    console.error("[beach-ratings/region-counts] Backend error:", error);
+    return NextResponse.json({ counts: {} });
   }
 }

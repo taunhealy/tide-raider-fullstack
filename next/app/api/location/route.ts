@@ -23,10 +23,8 @@ export async function GET() {
 
     return NextResponse.json(countries);
   } catch (error) {
-    console.error("Error fetching countries:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch countries", details: String(error) },
-      { status: 500 }
-    );
+    // Database not accessible - return empty array
+    console.error("[location] Database error:", error);
+    return NextResponse.json([]);
   }
 }

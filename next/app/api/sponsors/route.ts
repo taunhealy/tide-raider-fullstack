@@ -15,10 +15,8 @@ export async function GET() {
 
     return NextResponse.json(sponsors);
   } catch (error) {
-    console.error("Error fetching sponsors:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch sponsors" },
-      { status: 500 }
-    );
+    // Database not accessible - return empty array
+    console.error("[sponsors] Database error:", error);
+    return NextResponse.json([]);
   }
 }

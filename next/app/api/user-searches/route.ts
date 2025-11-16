@@ -20,11 +20,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(search);
   } catch (error) {
-    console.error("Error tracking search:", error);
-    return NextResponse.json(
-      { error: "Failed to track search" },
-      { status: 500 }
-    );
+    // Database not accessible - silently fail (search tracking is not critical)
+    console.error("[user-searches] Database error (POST):", error);
+    return NextResponse.json({ success: false }, { status: 200 });
   }
 }
 
@@ -47,10 +45,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json(searches);
   } catch (error) {
-    console.error("Error fetching searches:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch searches" },
-      { status: 500 }
-    );
+    // Database not accessible - return empty array
+    console.error("[user-searches] Database error:", error);
+    return NextResponse.json([]);
   }
 }

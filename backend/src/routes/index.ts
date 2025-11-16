@@ -11,6 +11,7 @@ import notificationsRouter from "./notifications";
 import blogPostsRouter from "./blog-posts";
 import seedRouter from "./seed";
 import authRouter from "./auth";
+import beachRatingsRouter from "./beach-ratings";
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.use("/regions", regionsRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/blog-posts", blogPostsRouter);
 router.use("/seed", seedRouter);
+router.use("/beach-ratings", beachRatingsRouter);
 
 // TODO: Add more route handlers here as needed
 // router.use("/user", userRouter);

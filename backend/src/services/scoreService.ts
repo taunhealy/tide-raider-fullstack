@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Beach, ForecastA } from "@prisma/client";
+import type { Beach, ForecastA, Prisma } from "@prisma/client";
 
 export class ScoreService {
   // Direction mapping utilities
@@ -264,5 +264,160 @@ export class ScoreService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Get stored scores for a specific date and region
+   */
+  static async getScores(regionId: string, date: Date) {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+
+    return prisma.beachDailyScore.findMany({
+      where: {
+        regionId,
+        date: normalizedDate,
+      },
+      include: {
+        beach: true,
+      },
+    });
+  }
+
+  /**
+   * Get region counts for beaches scoring 4 or higher (score >= 8)
+   */
+  static async getRegionCounts(date: Date) {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+
+    const regionCounts = await prisma.beachDailyScore.groupBy({
+      by: ["regionId"],
+      where: {
+        date: normalizedDate,
+        score: { gte: 8 },
+      },
+      _count: {
+        beachId: true,
+      },
+    });
+
+    return regionCounts.reduce(
+      (acc, { regionId, _count }) => ({
+        ...acc,
+        [regionId]: _count.beachId,
+      }),
+      {} as Record<string, number>
+    );
+  }
+
+  /**
+   * Get beaches with scores and filters
+   */
+  static async getBeachesWithScores({
+    regionId,
+    date,
+    searchQuery,
+    filters = {},
+  }: {
+    regionId: string;
+    date: Date;
+    searchQuery?: string;
+    filters?: Partial<{
+      difficulty?: string[];
+      waveType?: string[];
+      crimeLevel?: string[];
+      bestSeasons?: string[];
+      hazards?: string[];
+      bestMonthOfYear?: string[];
+      sharkAttack?: string[];
+      isHiddenGem?: boolean;
+    }>;
+  }) {
+    const normalizedDate = new Date(date);
+    normalizedDate.setUTCHours(0, 0, 0, 0);
+
+    const whereClause: Prisma.BeachWhereInput = {
+      regionId,
+      ...(searchQuery
+        ? {
+            OR: [
+              { name: { contains: searchQuery, mode: "insensitive" } },
+              {
+                region: {
+                  name: { contains: searchQuery, mode: "insensitive" },
+                },
+              },
+            ],
+          }
+        : {}),
+      ...Object.entries(filters).reduce(
+        (acc: Prisma.BeachWhereInput, [key, value]) => {
+          if (value) {
+            if (Array.isArray(value)) {
+              // Handle enum case conversion for specific fields
+              if (
+                [
+                  "bestSeasons",
+                  "waveType",
+                  "difficulty",
+                  "crimeLevel",
+                ].includes(key)
+              ) {
+                (acc as any)[key] = { in: value.map((v) => v.toUpperCase()) };
+              } else {
+                (acc as any)[key] = { in: value };
+              }
+            } else if (typeof value === "boolean") {
+              (acc as any)[key] = value;
+            }
+          }
+          return acc;
+        },
+        {} as Prisma.BeachWhereInput
+      ),
+    };
+
+    // Get ALL beaches with their scores in a single query
+    const beachesWithScores = await prisma.beach.findMany({
+      where: whereClause,
+      include: {
+        beachDailyScores: {
+          where: {
+            date: normalizedDate,
+            regionId,
+          },
+          orderBy: {
+            score: "desc",
+          },
+          take: 1,
+        },
+        region: true,
+      },
+    });
+
+    // Sort ALL beaches by their score
+    const sortedBeaches = beachesWithScores.sort(
+      (a, b) =>
+        (Number(b.beachDailyScores[0]?.score) || 0) -
+        (Number(a.beachDailyScores[0]?.score) || 0)
+    );
+
+    // Create scores map for ALL beaches
+    const scores = Object.fromEntries(
+      sortedBeaches.map((beach) => [
+        beach.id,
+        {
+          score: beach.beachDailyScores[0]?.score ?? 0,
+          beach: beach,
+        },
+      ])
+    );
+
+    return {
+      scores,
+      beaches: sortedBeaches,
+      totalCount: sortedBeaches.length,
+    };
   }
 }
