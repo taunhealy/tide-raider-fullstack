@@ -95,6 +95,14 @@ async function handleProxy(
     // Get the NextAuth session token from cookies
     // The backend expects this cookie value (which is a signed JWT)
     // Backend will verify it using jwt.verify(token, NEXTAUTH_SECRET)
+
+    // Log all cookies for debugging
+    const allCookies = req.cookies.getAll();
+    console.log(
+      `[proxy] All cookies:`,
+      allCookies.map((c) => c.name)
+    );
+
     const sessionToken =
       req.cookies.get("next-auth.session-token")?.value ||
       req.cookies.get("__Secure-next-auth.session-token")?.value ||
@@ -103,22 +111,25 @@ async function handleProxy(
     if (sessionToken) {
       backendHeaders.Authorization = `Bearer ${sessionToken}`;
       console.log(
-        `[proxy] Added auth token for ${path} (length: ${sessionToken.length})`
+        `[proxy] ✅ Added auth token for ${path} (length: ${sessionToken.length}, first 20 chars: ${sessionToken.substring(0, 20)}...)`
       );
     } else if (session) {
       // Session exists but no cookie - this shouldn't happen
       console.log(
-        `[proxy] WARNING: Session exists but no session token cookie found`
+        `[proxy] ⚠️ WARNING: Session exists but no session token cookie found`
       );
       console.log(
         `[proxy] Available cookies:`,
-        req.cookies.getAll().map((c) => c.name)
+        allCookies.map((c) => `${c.name} (${c.value.length} chars)`)
       );
     } else {
       console.log(
-        `[proxy] No session or token for ${path} - proceeding without auth`
+        `[proxy] ❌ No session or token for ${path} - proceeding without auth`
       );
     }
+
+    console.log(`[proxy] Forwarding ${method} request to: ${backendUrl}`);
+    console.log(`[proxy] Headers being sent:`, Object.keys(backendHeaders));
 
     // Forward request to backend
     const body =

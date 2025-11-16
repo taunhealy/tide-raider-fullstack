@@ -28,24 +28,50 @@ export async function authenticateToken(
         req.cookies?.["__Secure-next-auth.session-token"];
 
     if (!token) {
+      console.log("[auth] No token found in Authorization header or cookies");
       return res.status(401).json({ error: "Authentication required" });
     }
+
+    console.log(
+      `[auth] Token received (length: ${token.length}, first 20: ${token.substring(0, 20)}...)`
+    );
 
     // Verify JWT token (NextAuth uses NEXTAUTH_SECRET or AUTH_SECRET)
     // Support both variable names for compatibility
     const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
     if (!secret) {
+      console.error("[auth] NEXTAUTH_SECRET or AUTH_SECRET is not configured");
       throw new Error("NEXTAUTH_SECRET or AUTH_SECRET is not configured");
     }
 
-    const decoded = jwt.verify(token, secret) as {
-      sub?: string;
-      id?: string;
-      email?: string;
-    };
+    console.log(
+      `[auth] Secret configured: ${secret ? "YES" : "NO"} (length: ${secret?.length || 0})`
+    );
 
-    const userId = decoded.id || decoded.sub;
-    if (!userId) {
+    let userId: string | undefined;
+    try {
+      const decoded = jwt.verify(token, secret) as {
+        sub?: string;
+        id?: string;
+        email?: string;
+      };
+
+      console.log(`[auth] Token verified successfully, decoded:`, {
+        sub: decoded.sub,
+        id: decoded.id,
+        email: decoded.email,
+      });
+
+      userId = decoded.id || decoded.sub;
+      if (!userId) {
+        console.log("[auth] Token decoded but no userId found");
+        return res.status(401).json({ error: "Invalid token" });
+      }
+    } catch (error) {
+      console.error(
+        "[auth] Token verification failed:",
+        error instanceof Error ? error.message : error
+      );
       return res.status(401).json({ error: "Invalid token" });
     }
 
