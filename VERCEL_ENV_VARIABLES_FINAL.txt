@@ -1,0 +1,17 @@
+# Vercel Environment Variables - REQUIRED
+
+# Backend API URL (REQUIRED for OAuth to work)
+NEXT_PUBLIC_API_URL=https://tide-raider-backend.fly.dev
+
+# Remove these (if present):
+# - AUTH_URL="http://localhost:3000"  ❌ DELETE
+# - DATABASE_URL (if it's the Neon URL - keep it if you need it for NextAuth, but we're moving away from NextAuth)
+
+# Keep these (all good):
+# - All your other environment variables (SANITY, BLOB, AWS, etc.)
+# - NEXTAUTH_SECRET (if you still have NextAuth components)
+# - AUTH_SECRET (same as NEXTAUTH_SECRET)
+
+# IMPORTANT: 
+# After setting NEXT_PUBLIC_API_URL, redeploy your Vercel app for changes to take effect.
+

@@ -35,7 +35,9 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(),
+  // Temporarily disable adapter since we're using backend OAuth
+  // Adapter is only needed if NextAuth creates users (which backend does now)
+  // adapter: PrismaAdapter(),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -93,19 +95,27 @@ export const authOptions: NextAuthOptions = {
           `[NextAuth] 🔐 JWT token created/updated for userId: ${user.id}`
         );
 
-        // Fetch subscription info from database
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: {
-            subscriptionStatus: true,
-            hasActiveTrial: true,
-            trialEndDate: true,
-          },
-        });
+        // Try to fetch subscription info from database (optional - backend handles this)
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: {
+              subscriptionStatus: true,
+              hasActiveTrial: true,
+              trialEndDate: true,
+            },
+          });
 
-        token.isSubscribed = dbUser?.subscriptionStatus === "ACTIVE";
-        token.hasActiveTrial = dbUser?.hasActiveTrial || false;
-        token.trialEndDate = dbUser?.trialEndDate || null;
+          token.isSubscribed = dbUser?.subscriptionStatus === "ACTIVE";
+          token.hasActiveTrial = dbUser?.hasActiveTrial || false;
+          token.trialEndDate = dbUser?.trialEndDate || null;
+        } catch (error) {
+          // Database not accessible - that's okay, backend will handle auth
+          console.log(`[NextAuth] Database not accessible, using defaults`);
+          token.isSubscribed = false;
+          token.hasActiveTrial = false;
+          token.trialEndDate = null;
+        }
       }
       return token;
     },
