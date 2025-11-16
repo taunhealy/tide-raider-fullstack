@@ -64,7 +64,13 @@ async function handleProxy(
   pathSegments: string[]
 ) {
   try {
-    // Get session from NextAuth (cookies work here since it's same domain)
+    // Get session from NextAuth - need to pass headers for App Router
+    // Create headers object from request for getServerSession
+    const headers = new Headers();
+    req.headers.forEach((value, key) => {
+      headers.set(key, value);
+    });
+
     const session = await getServerSession(authOptions);
 
     // Reconstruct the backend path
@@ -73,21 +79,39 @@ async function handleProxy(
     const queryString = searchParams ? `?${searchParams}` : "";
     const backendUrl = `${BACKEND_URL}${path}${queryString}`;
 
-    // Prepare headers
-    const headers: HeadersInit = {
+    // Prepare headers for backend request
+    const backendHeaders: HeadersInit = {
       "Content-Type": "application/json",
     };
 
     // Add auth token if session exists
-    if (session) {
-      // Get the NextAuth session token from cookies
-      const token =
-        req.cookies.get("next-auth.session-token")?.value ||
-        req.cookies.get("__Secure-next-auth.session-token")?.value;
+    // Try multiple ways to get the token
+    let token: string | null = null;
 
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+    if (session) {
+      // Method 1: Get from cookies directly
+      token =
+        req.cookies.get("next-auth.session-token")?.value ||
+        req.cookies.get("__Secure-next-auth.session-token")?.value ||
+        null;
+
+      // Method 2: If no token in cookies but session exists, try to get from auth header
+      if (!token && req.headers.get("authorization")) {
+        const authHeader = req.headers.get("authorization");
+        if (authHeader?.startsWith("Bearer ")) {
+          token = authHeader.substring(7);
+        }
       }
+    }
+
+    if (token) {
+      backendHeaders.Authorization = `Bearer ${token}`;
+      console.log(`[proxy] Added auth token for ${path}`);
+    } else {
+      console.log(
+        `[proxy] No auth token found for ${path}, session:`,
+        !!session
+      );
     }
 
     // Forward request to backend
@@ -96,7 +120,7 @@ async function handleProxy(
 
     const response = await fetch(backendUrl, {
       method,
-      headers,
+      headers: backendHeaders,
       body,
     });
 
