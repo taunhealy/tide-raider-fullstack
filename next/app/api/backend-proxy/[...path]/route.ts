@@ -16,6 +16,10 @@ import { authOptions } from "@/app/lib/authOptions";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+// Route segment config - ensure this route is dynamic
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 // Handle all HTTP methods
 // Note: In Next.js 15+, params is a Promise and must be awaited
 export async function GET(
@@ -64,6 +68,8 @@ async function handleProxy(
   pathSegments: string[]
 ) {
   try {
+    console.log(`[proxy] ${method} request received for path:`, pathSegments);
+
     // Get session from NextAuth - need to pass headers for App Router
     // Create headers object from request for getServerSession
     const headers = new Headers();
@@ -71,7 +77,9 @@ async function handleProxy(
       headers.set(key, value);
     });
 
+    // Get session to verify user is authenticated
     const session = await getServerSession(authOptions);
+    console.log(`[proxy] Session found:`, !!session, session?.user?.id);
 
     // Reconstruct the backend path
     const path = `/${pathSegments.join("/")}`;
@@ -84,33 +92,31 @@ async function handleProxy(
       "Content-Type": "application/json",
     };
 
-    // Add auth token if session exists
-    // Try multiple ways to get the token
-    let token: string | null = null;
+    // Get the NextAuth session token from cookies
+    // The backend expects this cookie value (which is a signed JWT)
+    // Backend will verify it using jwt.verify(token, NEXTAUTH_SECRET)
+    const sessionToken =
+      req.cookies.get("next-auth.session-token")?.value ||
+      req.cookies.get("__Secure-next-auth.session-token")?.value ||
+      null;
 
-    if (session) {
-      // Method 1: Get from cookies directly
-      token =
-        req.cookies.get("next-auth.session-token")?.value ||
-        req.cookies.get("__Secure-next-auth.session-token")?.value ||
-        null;
-
-      // Method 2: If no token in cookies but session exists, try to get from auth header
-      if (!token && req.headers.get("authorization")) {
-        const authHeader = req.headers.get("authorization");
-        if (authHeader?.startsWith("Bearer ")) {
-          token = authHeader.substring(7);
-        }
-      }
-    }
-
-    if (token) {
-      backendHeaders.Authorization = `Bearer ${token}`;
-      console.log(`[proxy] Added auth token for ${path}`);
+    if (sessionToken) {
+      backendHeaders.Authorization = `Bearer ${sessionToken}`;
+      console.log(
+        `[proxy] Added auth token for ${path} (length: ${sessionToken.length})`
+      );
+    } else if (session) {
+      // Session exists but no cookie - this shouldn't happen
+      console.log(
+        `[proxy] WARNING: Session exists but no session token cookie found`
+      );
+      console.log(
+        `[proxy] Available cookies:`,
+        req.cookies.getAll().map((c) => c.name)
+      );
     } else {
       console.log(
-        `[proxy] No auth token found for ${path}, session:`,
-        !!session
+        `[proxy] No session or token for ${path} - proceeding without auth`
       );
     }
 
