@@ -635,23 +635,22 @@ async function main() {
             continue;
           }
 
-          const regionId = transformRegionToId(beach.regionId);
-          const region = await prisma.region.findFirst({
-            where: {
+          const regionName = beach.regionId;
+          const regionId = transformRegionToId(regionName);
+
+          // Ensure region exists (create or update if needed) instead of skipping the beach
+          const region = await prisma.region.upsert({
+            where: { id: regionId },
+            update: {
+              name: regionName,
+              countryId: country.id,
+            },
+            create: {
               id: regionId,
+              name: regionName,
               countryId: country.id,
             },
           });
-
-          if (!region) {
-            if (skippedCount < 5) {
-              console.warn(
-                `Skipping beach ${beach.name}: Region not found: ${beach.regionId} (transformed: ${regionId}) for country ${country.id}`
-              );
-            }
-            skippedCount++;
-            continue;
-          }
 
           // Debug: log first successful beach
           if (createdCount === 0) {

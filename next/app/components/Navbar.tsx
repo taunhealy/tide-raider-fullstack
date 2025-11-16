@@ -131,6 +131,7 @@ export default function Navbar() {
               {session && (
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  title="is Profile Open"
                   className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
                 >
                   <ProfileImage />

@@ -1,14 +1,15 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { authenticateToken, AuthRequest } from "../middleware/auth";
+import { AuthRequest, optionalAuth } from "../middleware/auth";
 
 const router = Router();
 
-// GET /api/notifications/count - Get notification count for authenticated user
-router.get("/count", authenticateToken, async (req: AuthRequest, res: Response) => {
+// GET /api/notifications/count - Get notification count (0 if unauthenticated)
+router.get("/count", optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      // If not authenticated, just return 0 to avoid noisy 401s in the frontend
+      return res.json({ count: 0 });
     }
 
     // Count unread notifications (if you have a notifications table)
@@ -18,9 +19,10 @@ router.get("/count", authenticateToken, async (req: AuthRequest, res: Response) 
     return res.json({ count });
   } catch (error) {
     console.error("Error fetching notification count:", error);
-    return res.status(500).json({ error: "Failed to fetch notification count" });
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch notification count" });
   }
 });
 
 export default router;
-

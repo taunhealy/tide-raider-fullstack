@@ -301,6 +301,32 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
         .length,
     });
 
+    // EXTRA DEBUG: if no beaches are found, inspect what's actually in the DB
+    if (beaches.length === 0) {
+      console.log(
+        `[filtered-beaches][DEBUG] No beaches returned for regionId=${regionId}. Inspecting DB...`
+      );
+
+      const sampleBeaches = await prisma.beach.findMany({
+        select: { id: true, name: true, regionId: true, countryId: true },
+        take: 10,
+      });
+      console.log(
+        "[filtered-beaches][DEBUG] Sample beaches in DB (first 10):",
+        sampleBeaches
+      );
+
+      const regionBeaches = await prisma.beach.findMany({
+        where: { regionId },
+        select: { id: true, name: true, regionId: true, countryId: true },
+        take: 10,
+      });
+      console.log(
+        `[filtered-beaches][DEBUG] Beaches for regionId=${regionId}:`,
+        regionBeaches
+      );
+    }
+
     // Transform scores into a flat dictionary, ensuring the full beach object is included.
     const scores = beaches.reduce(
       (
