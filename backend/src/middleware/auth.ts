@@ -15,10 +15,11 @@ export interface AuthRequest extends Request {
 
 // Middleware to verify JWT token from NextAuth
 export async function authenticateToken(
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
+  const authReq = req as AuthRequest;
   try {
     console.log(
       `[auth] 🔒 Authentication required for ${req.method} ${req.path}`
@@ -28,9 +29,9 @@ export async function authenticateToken(
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
-      : req.cookies?.["auth-token"] || // Our JWT cookie
-        req.cookies?.["next-auth.session-token"] ||
-        req.cookies?.["__Secure-next-auth.session-token"];
+      : (req as any).cookies?.["auth-token"] || // Our JWT cookie
+        (req as any).cookies?.["next-auth.session-token"] ||
+        (req as any).cookies?.["__Secure-next-auth.session-token"];
 
     if (!token) {
       console.log("[auth] No token found in Authorization header or cookies");
@@ -185,7 +186,7 @@ export async function authenticateToken(
     );
 
     // Attach user to request
-    req.user = {
+    authReq.user = {
       id: user.id,
       email: user.email || undefined,
       name: user.name || undefined,
@@ -205,10 +206,11 @@ export async function authenticateToken(
 
 // Optional authentication - doesn't fail if no token
 export async function optionalAuth(
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
+  const authReq = req as AuthRequest;
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
@@ -243,7 +245,7 @@ export async function optionalAuth(
             });
 
             if (user) {
-              req.user = {
+              authReq.user = {
                 id: user.id,
                 email: user.email || undefined,
                 name: user.name || undefined,

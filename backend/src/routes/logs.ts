@@ -1,4 +1,4 @@
-import { Router, Response } from "express";
+import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import {
   authenticateToken,
@@ -9,15 +9,16 @@ import {
 const router = Router();
 
 // GET /api/logs - Fetch user's log entries
-router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/", optionalAuth, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     // Return empty array for unauthenticated users
-    if (!req.user?.id) {
+    if (!authReq.user?.id) {
       return res.json([]);
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: req.user.email! },
+      where: { email: authReq.user.email! },
       select: { id: true },
     });
 
@@ -80,9 +81,10 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/logs - Create a new log entry
-router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/", authenticateToken, async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -111,7 +113,7 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
       data: {
         ...data,
         date: new Date(data.date),
-        userId: req.user.id,
+        userId: authReq.user.id,
         forecastId: forecast.id,
       },
       include: {
@@ -128,8 +130,9 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/logs/:id - Get a specific log entry
-router.get("/:id", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/:id", optionalAuth, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { id: logEntryId } = req.params;
 
     const logEntry = await prisma.logEntry.findUnique({
@@ -141,7 +144,7 @@ router.get("/:id", optionalAuth, async (req: AuthRequest, res: Response) => {
     }
 
     if (logEntry.isPrivate) {
-      if (!req.user?.id || logEntry.userId !== req.user.id) {
+      if (!authReq.user?.id || logEntry.userId !== authReq.user.id) {
         return res.status(403).json({
           error: "You don't have permission to access this log entry",
         });

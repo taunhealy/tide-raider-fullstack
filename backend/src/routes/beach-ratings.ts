@@ -41,9 +41,10 @@ router.get(
 router.post(
   "/calculate",
   authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 

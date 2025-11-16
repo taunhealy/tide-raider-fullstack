@@ -1,4 +1,4 @@
-import { Router, Response } from "express";
+import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import {
   authenticateToken,
@@ -41,7 +41,8 @@ const logEntrySchema = z.object({
 });
 
 // GET /api/raid-logs - List log entries with filters
-router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/", optionalAuth, async (req: Request, res: Response) => {
+  const authReq = req as unknown as AuthRequest;
   try {
     const {
       id,
@@ -138,7 +139,7 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
         }
 
         if (entry.isPrivate) {
-          if (!req.user?.id || entry.userId !== req.user.id) {
+          if (!authReq.user?.id || entry.userId !== authReq.user.id) {
             return res.status(403).json({
               error: "Unauthorized to view this private entry",
             });
@@ -228,25 +229,25 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
     if (filterUserIdStr) {
       whereClause.userId = filterUserIdStr;
 
-      if (!req.user?.id || req.user.id !== filterUserIdStr) {
+      if (!authReq.user?.id || authReq.user.id !== filterUserIdStr) {
         whereClause.isPrivate = false;
         whereClause.isAnonymous = false;
       }
     } else {
-      if (req.user?.id) {
+      if (authReq.user?.id) {
         whereClause.OR = [
           { isPrivate: false, isAnonymous: false },
-          { userId: req.user.id },
+          { userId: authReq.user.id },
         ];
       } else {
         whereClause.isPrivate = false;
         whereClause.isAnonymous = false;
       }
 
-      if (isPrivate && req.user?.id) {
+      if (isPrivate && authReq.user?.id) {
         whereClause = {
           isPrivate: true,
-          userId: req.user.id,
+          userId: authReq.user.id,
         };
       }
     }
@@ -377,7 +378,9 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
       ...entry,
       hasAlert: entry.alerts.length > 0,
       alertId: entry.alerts[0]?.id || null,
-      isMyAlert: entry.alerts.some((alert) => alert.userId === req.user?.id),
+      isMyAlert: entry.alerts.some(
+        (alert) => alert.userId === authReq.user?.id
+      ),
     }));
 
     return res.json({
@@ -394,14 +397,15 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/raid-logs - Create a new log entry
-router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/", authenticateToken, async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
+    const authReq = req as unknown as AuthRequest;
+    if (!authReq.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: authReq.user.id },
     });
 
     if (!user) {
@@ -454,7 +458,7 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
         videoPlatform: data.videoPlatform,
         waveType: data.waveType,
         user: {
-          connect: { id: req.user.id },
+          connect: { id: authReq.user.id },
         },
         region: {
           connect: { id: region.id },
@@ -496,9 +500,10 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /api/raid-logs - Update a log entry
-router.put("/", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.put("/", authenticateToken, async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
+    const authReq = req as unknown as AuthRequest;
+    if (!authReq.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
@@ -518,7 +523,7 @@ router.put("/", authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Log entry not found" });
     }
 
-    if (existingEntry.userId !== req.user.id) {
+    if (existingEntry.userId !== authReq.user.id) {
       return res.status(403).json({
         message: "Unauthorized to update this log entry",
       });
@@ -629,53 +634,50 @@ router.put("/", authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // DELETE /api/raid-logs - Delete a log entry
-router.delete(
-  "/",
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+router.delete("/", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as unknown as AuthRequest;
+    if (!authReq.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-      const { id } = req.query;
+    const { id } = req.query;
 
-      if (!id) {
-        return res.status(400).json({ message: "No ID provided" });
-      }
+    if (!id) {
+      return res.status(400).json({ message: "No ID provided" });
+    }
 
-      const logEntry = await prisma.logEntry.findUnique({
-        where: { id: id as string },
-        select: { userId: true },
-      });
+    const logEntry = await prisma.logEntry.findUnique({
+      where: { id: id as string },
+      select: { userId: true },
+    });
 
-      if (!logEntry) {
-        return res.status(404).json({ message: "Log entry not found" });
-      }
+    if (!logEntry) {
+      return res.status(404).json({ message: "Log entry not found" });
+    }
 
-      if (logEntry.userId !== req.user.id) {
-        return res.status(403).json({
-          message: "Unauthorized to delete this log entry",
-        });
-      }
-
-      await prisma.logEntry.delete({
-        where: { id: id as string },
-      });
-
-      return res.json({ message: "Log entry deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting log entry:", error);
-      return res.status(500).json({
-        message:
-          error instanceof Error ? error.message : "Failed to delete log entry",
+    if (logEntry.userId !== authReq.user.id) {
+      return res.status(403).json({
+        message: "Unauthorized to delete this log entry",
       });
     }
+
+    await prisma.logEntry.delete({
+      where: { id: id as string },
+    });
+
+    return res.json({ message: "Log entry deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting log entry:", error);
+    return res.status(500).json({
+      message:
+        error instanceof Error ? error.message : "Failed to delete log entry",
+    });
   }
-);
+});
 
 // GET /api/raid-logs/forecast - Get forecast for a region and date
-router.get("/forecast", async (req: AuthRequest, res: Response) => {
+router.get("/forecast", async (req: Request, res: Response) => {
   try {
     const { region, date } = req.query;
 
@@ -712,9 +714,10 @@ router.get("/forecast", async (req: AuthRequest, res: Response) => {
 router.get(
   "/user/:userId",
   authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const authReq = req as unknown as AuthRequest;
+      if (!authReq.user?.id) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -722,7 +725,7 @@ router.get(
 
       const entries = await prisma.logEntry.findMany({
         where: {
-          userId: req.user.id,
+          userId: authReq.user.id,
         },
         include: {
           forecast: true,

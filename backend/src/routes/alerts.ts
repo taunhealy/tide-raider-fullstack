@@ -1,4 +1,4 @@
-import { Router, Response } from "express";
+import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import {
   authenticateToken,
@@ -99,8 +99,9 @@ const AlertSchema = z
 const AVAILABLE_STAR_RATINGS = ["3+", "4+", "5"] as const;
 
 // GET /api/alerts - Fetch alerts, regions, or dates
-router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
+router.get("/", optionalAuth, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { starRatings, region, logEntryId } = req.query;
     const isBetaMode = process.env.NEXT_PUBLIC_APP_MODE === "beta";
 
@@ -109,7 +110,7 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
       return res.json(AVAILABLE_STAR_RATINGS);
     }
 
-    const isAuthenticated = !!req.user?.id;
+    const isAuthenticated = !!authReq.user?.id;
 
     // Case 0: If logEntryId is provided
     if (logEntryId) {
@@ -131,11 +132,11 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
       }
 
       let existingAlert = null;
-      if (isAuthenticated && req.user?.id) {
+      if (isAuthenticated && authReq.user?.id) {
         existingAlert = await prisma.alert.findFirst({
           where: {
             logEntryId: logEntryId as string,
-            userId: req.user.id,
+            userId: authReq.user.id,
           },
         });
       }
@@ -184,13 +185,13 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
     }
 
     // Case 3: Fetching user's alerts - return empty array for unauthenticated users
-    if (!isAuthenticated || !req.user?.id) {
+    if (!isAuthenticated || !authReq.user?.id) {
       return res.json([]);
     }
 
     const alerts = await prisma.alert.findMany({
       where: {
-        userId: req.user.id,
+        userId: authReq.user.id,
       },
       include: {
         properties: true,
@@ -216,9 +217,10 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/alerts - Create a new alert
-router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/", authenticateToken, async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -233,7 +235,7 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
       contactInfo: data.contactInfo,
       active: data.active,
       user: {
-        connect: { id: req.user.id },
+        connect: { id: authReq.user.id },
       },
       forecastDate: new Date(data.forecastDate || Date.now()),
       alertType: data.alertType,
@@ -290,7 +292,7 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/alerts/notify - Process alerts for a user
-router.post("/notify", async (req: AuthRequest, res: Response) => {
+router.post("/notify", async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
 
@@ -314,20 +316,268 @@ router.post("/notify", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/alerts/:id - Get a specific alert
+// GET /api/alerts/test-force?alertId=xxx - Force test an alert notification
 router.get(
-  "/:id",
+  "/test-force",
   authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { id } = req.params;
+      const alertId = req.query.alertId as string | undefined;
 
-      const alert = await prisma.alert.findUnique({
-        where: { id },
+      // Get user's alerts
+      const userAlerts = await prisma.alert.findMany({
+        where: {
+          userId: authReq.user.id,
+          active: true,
+        },
+        include: {
+          logEntry: {
+            include: {
+              beach: true,
+              forecast: true,
+            },
+          },
+          properties: true,
+        },
+      });
+
+      if (userAlerts.length === 0) {
+        return res.status(404).json({
+          error: "No active alerts found. Please create an alert first.",
+        });
+      }
+
+      // Find the alert to test
+      const alertToTest = alertId
+        ? userAlerts.find((a) => a.id === alertId)
+        : userAlerts[0];
+
+      if (!alertToTest) {
+        return res.status(404).json({
+          error: `Alert with ID ${alertId} not found`,
+          availableAlerts: userAlerts.map((a) => ({ id: a.id, name: a.name })),
+        });
+      }
+
+      console.log("🧪 Force testing alert:", alertToTest.id, alertToTest.name);
+
+      // Create a mock match to force trigger the notification
+      type AlertMatch = {
+        alertId: string;
+        alertName: string;
+        region: string;
+        timestamp: Date;
+        matchedProperties: Array<{
+          property: string;
+          logValue: any;
+          forecastValue: any;
+          difference: number;
+          withinRange: boolean;
+        }>;
+        matchDetails: string;
+      };
+      const mockMatch: AlertMatch = {
+        alertId: alertToTest.id,
+        alertName: alertToTest.name,
+        region: alertToTest.regionId,
+        timestamp: new Date(),
+        matchedProperties: alertToTest.properties?.map((prop: any) => ({
+          property: prop.property,
+          logValue: prop.optimalValue,
+          forecastValue: prop.optimalValue, // Match exactly for testing
+          difference: 0,
+          withinRange: true,
+        })) || [
+          {
+            property: "swellHeight",
+            logValue: 1.5,
+            forecastValue: 1.5,
+            difference: 0,
+            withinRange: true,
+          },
+        ],
+        matchDetails: "Test alert - conditions match (forced for testing)",
+      };
+
+      // Get beach name
+      const beachName =
+        (alertToTest.logEntry as any)?.beach?.name ||
+        (alertToTest.logEntry as any)?.beachName ||
+        "Test Beach";
+
+      // For testing, delete any existing notifications from today so we can test again
+      await prisma.alertNotification.deleteMany({
+        where: {
+          alertId: alertToTest.id,
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lt: new Date(new Date().setHours(24, 0, 0, 0)),
+          },
+        },
+      });
+
+      // Send the notification
+      console.log("📧 Sending test notification to:", alertToTest.contactInfo);
+      const { sendAlertNotification } = await import(
+        "../services/notificationService"
+      );
+      const success = await sendAlertNotification(
+        mockMatch,
+        alertToTest as any,
+        beachName
+      );
+
+      if (success) {
+        return res.json({
+          success: true,
+          message: "Test alert notification sent successfully!",
+          alert: {
+            id: alertToTest.id,
+            name: alertToTest.name,
+            notificationMethod: alertToTest.notificationMethod,
+            contactInfo: alertToTest.contactInfo,
+            beachName: beachName,
+          },
+          note: `Check ${alertToTest.contactInfo} for the test email`,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to send notification",
+          alert: {
+            id: alertToTest.id,
+            name: alertToTest.name,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error force testing alert:", error);
+      return res.status(500).json({
+        error: "Failed to test alert",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+// GET /api/alerts/:id - Get a specific alert
+router.get("/:id", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+
+    const alert = await prisma.alert.findUnique({
+      where: { id },
+      include: {
+        properties: true,
+        logEntry: {
+          include: {
+            forecast: true,
+            beach: true,
+          },
+        },
+        beach: true,
+        region: true,
+      },
+    });
+
+    if (!alert) {
+      return res.status(404).json({ error: "Alert not found" });
+    }
+
+    return res.json(alert);
+  } catch (error) {
+    console.error("Error fetching alert:", error);
+    return res.status(500).json({ error: "Failed to fetch alert" });
+  }
+});
+
+// PUT /api/alerts/:id - Update an alert
+router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { id: alertId } = req.params;
+    const data = req.body;
+    const dateOnly = new Date(data.forecastDate).toISOString().split("T")[0];
+
+    const {
+      logEntry,
+      logEntryId,
+      forecast,
+      forecastId,
+      id,
+      userId,
+      properties,
+      regionId,
+      beachId,
+      ...updateData
+    } = data;
+
+    const updatedAlert = await prisma.$transaction(async (tx: any) => {
+      if (properties && Array.isArray(properties)) {
+        await tx.alertProperty.deleteMany({
+          where: { alertId },
+        });
+
+        await tx.alertProperty.createMany({
+          data: properties.map((prop: any) => ({
+            alertId,
+            property: prop.property,
+            optimalValue: prop.optimalValue,
+            range: prop.range,
+          })),
+        });
+      }
+
+      const {
+        beachId: _beachId,
+        regionId: _regionId,
+        logEntryId: _logEntryId,
+        ...cleanUpdateData
+      } = updateData;
+
+      return tx.alert.update({
+        where: { id: alertId },
+        data: {
+          ...cleanUpdateData,
+          forecastDate: new Date(dateOnly),
+          ...(regionId && {
+            region: {
+              connect: { id: regionId },
+            },
+          }),
+          ...(beachId
+            ? {
+                beach: {
+                  connect: { id: beachId },
+                },
+              }
+            : beachId === null
+              ? {
+                  beach: {
+                    disconnect: true,
+                  },
+                }
+              : {}),
+          ...(logEntryId && {
+            logEntry: {
+              connect: { id: logEntryId },
+            },
+          }),
+        },
         include: {
           properties: true,
           logEntry: {
@@ -340,254 +590,145 @@ router.get(
           region: true,
         },
       });
+    });
 
-      if (!alert) {
-        return res.status(404).json({ error: "Alert not found" });
-      }
-
-      return res.json(alert);
-    } catch (error) {
-      console.error("Error fetching alert:", error);
-      return res.status(500).json({ error: "Failed to fetch alert" });
-    }
+    return res.json(updatedAlert);
+  } catch (error) {
+    console.error("Error updating alert:", error);
+    return res.status(500).json({ error: "Failed to update alert" });
   }
-);
-
-// PUT /api/alerts/:id - Update an alert
-router.put(
-  "/:id",
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
-      const { id: alertId } = req.params;
-      const data = req.body;
-      const dateOnly = new Date(data.forecastDate).toISOString().split("T")[0];
-
-      const {
-        logEntry,
-        logEntryId,
-        forecast,
-        forecastId,
-        id,
-        userId,
-        properties,
-        regionId,
-        beachId,
-        ...updateData
-      } = data;
-
-      const updatedAlert = await prisma.$transaction(async (tx: any) => {
-        if (properties && Array.isArray(properties)) {
-          await tx.alertProperty.deleteMany({
-            where: { alertId },
-          });
-
-          await tx.alertProperty.createMany({
-            data: properties.map((prop: any) => ({
-              alertId,
-              property: prop.property,
-              optimalValue: prop.optimalValue,
-              range: prop.range,
-            })),
-          });
-        }
-
-        const {
-          beachId: _beachId,
-          regionId: _regionId,
-          logEntryId: _logEntryId,
-          ...cleanUpdateData
-        } = updateData;
-
-        return tx.alert.update({
-          where: { id: alertId },
-          data: {
-            ...cleanUpdateData,
-            forecastDate: new Date(dateOnly),
-            ...(regionId && {
-              region: {
-                connect: { id: regionId },
-              },
-            }),
-            ...(beachId
-              ? {
-                  beach: {
-                    connect: { id: beachId },
-                  },
-                }
-              : beachId === null
-                ? {
-                    beach: {
-                      disconnect: true,
-                    },
-                  }
-                : {}),
-            ...(logEntryId && {
-              logEntry: {
-                connect: { id: logEntryId },
-              },
-            }),
-          },
-          include: {
-            properties: true,
-            logEntry: {
-              include: {
-                forecast: true,
-                beach: true,
-              },
-            },
-            beach: true,
-            region: true,
-          },
-        });
-      });
-
-      return res.json(updatedAlert);
-    } catch (error) {
-      console.error("Error updating alert:", error);
-      return res.status(500).json({ error: "Failed to update alert" });
-    }
-  }
-);
+});
 
 // PATCH /api/alerts/:id - Partial update an alert
-router.patch(
-  "/:id",
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      if (!req.user?.id) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+router.patch("/:id", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-      const { id: alertId } = req.params;
-      const data = req.body;
+    const { id: alertId } = req.params;
+    const data = req.body;
 
-      const AlertUpdateSchema = z.object({
-        active: z.boolean().optional(),
-        name: z.string().min(1).optional(),
-        regionId: z.string().min(1).optional(),
-        properties: z
-          .array(
-            z.object({
-              property: z.enum([
-                "windSpeed",
-                "windDirection",
-                "swellHeight",
-                "swellPeriod",
-                "swellDirection",
-              ]),
-              optimalValue: z.number(),
-              range: z.number().min(0),
-            })
-          )
-          .optional(),
-        notificationMethod: z
-          .enum(["email", "whatsapp", "app", "both"])
-          .optional(),
-        contactInfo: z.string().min(1).optional(),
-        forecastDate: z.date().optional(),
-        alertType: z.enum(["VARIABLES", "RATING"]).optional(),
-        starRating: z.number().min(1).max(5).nullable().optional(),
-        beachId: z.string().optional(),
+    const AlertUpdateSchema = z.object({
+      active: z.boolean().optional(),
+      name: z.string().min(1).optional(),
+      regionId: z.string().min(1).optional(),
+      properties: z
+        .array(
+          z.object({
+            property: z.enum([
+              "windSpeed",
+              "windDirection",
+              "swellHeight",
+              "swellPeriod",
+              "swellDirection",
+            ]),
+            optimalValue: z.number(),
+            range: z.number().min(0),
+          })
+        )
+        .optional(),
+      notificationMethod: z
+        .enum(["email", "whatsapp", "app", "both"])
+        .optional(),
+      contactInfo: z.string().min(1).optional(),
+      forecastDate: z.date().optional(),
+      alertType: z.enum(["VARIABLES", "RATING"]).optional(),
+      starRating: z.number().min(1).max(5).nullable().optional(),
+      beachId: z.string().optional(),
+    });
+
+    const validationResult = AlertUpdateSchema.safeParse(data);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: "Invalid alert data",
+        details: validationResult.error.format(),
       });
+    }
 
-      const validationResult = AlertUpdateSchema.safeParse(data);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          error: "Invalid alert data",
-          details: validationResult.error.format(),
+    const existingAlert = await prisma.alert.findFirst({
+      where: {
+        id: alertId,
+        userId: authReq.user.id,
+      },
+      include: {
+        properties: true,
+      },
+    });
+
+    if (!existingAlert) {
+      return res.status(404).json({ error: "Alert not found or unauthorized" });
+    }
+
+    const updatedAlert = await prisma.$transaction(async (tx: any) => {
+      if (data.properties) {
+        await tx.alertProperty.deleteMany({
+          where: { alertId },
+        });
+
+        await tx.alertProperty.createMany({
+          data: data.properties.map((prop: any) => ({
+            alertId,
+            property: prop.property,
+            optimalValue: prop.optimalValue,
+            range: prop.range,
+          })),
         });
       }
 
-      const existingAlert = await prisma.alert.findFirst({
-        where: {
-          id: alertId,
-          userId: req.user.id,
+      return tx.alert.update({
+        where: { id: alertId },
+        data: {
+          ...(data.name && { name: data.name }),
+          ...(data.regionId && { regionId: data.regionId }),
+          ...(data.active !== undefined && { active: data.active }),
+          ...(data.notificationMethod && {
+            notificationMethod: data.notificationMethod,
+          }),
+          ...(data.contactInfo && { contactInfo: data.contactInfo }),
+          ...(data.beachId && { beachId: data.beachId }),
+          ...(data.alertType && { alertType: data.alertType }),
+          ...(data.starRating !== undefined && {
+            starRating: data.starRating,
+          }),
+          ...(data.forecastDate && {
+            forecastDate: new Date(data.forecastDate),
+          }),
         },
         include: {
           properties: true,
+          logEntry: {
+            include: {
+              forecast: true,
+              beach: true,
+            },
+          },
+          beach: true,
+          region: true,
         },
       });
+    });
 
-      if (!existingAlert) {
-        return res
-          .status(404)
-          .json({ error: "Alert not found or unauthorized" });
-      }
+    await prisma.alertCheck.deleteMany({
+      where: { alertId },
+    });
 
-      const updatedAlert = await prisma.$transaction(async (tx: any) => {
-        if (data.properties) {
-          await tx.alertProperty.deleteMany({
-            where: { alertId },
-          });
-
-          await tx.alertProperty.createMany({
-            data: data.properties.map((prop: any) => ({
-              alertId,
-              property: prop.property,
-              optimalValue: prop.optimalValue,
-              range: prop.range,
-            })),
-          });
-        }
-
-        return tx.alert.update({
-          where: { id: alertId },
-          data: {
-            ...(data.name && { name: data.name }),
-            ...(data.regionId && { regionId: data.regionId }),
-            ...(data.active !== undefined && { active: data.active }),
-            ...(data.notificationMethod && {
-              notificationMethod: data.notificationMethod,
-            }),
-            ...(data.contactInfo && { contactInfo: data.contactInfo }),
-            ...(data.beachId && { beachId: data.beachId }),
-            ...(data.alertType && { alertType: data.alertType }),
-            ...(data.starRating !== undefined && {
-              starRating: data.starRating,
-            }),
-            ...(data.forecastDate && {
-              forecastDate: new Date(data.forecastDate),
-            }),
-          },
-          include: {
-            properties: true,
-            logEntry: {
-              include: {
-                forecast: true,
-                beach: true,
-              },
-            },
-            beach: true,
-            region: true,
-          },
-        });
-      });
-
-      await prisma.alertCheck.deleteMany({
-        where: { alertId },
-      });
-
-      return res.json(updatedAlert);
-    } catch (error) {
-      console.error("Error updating alert:", error);
-      return res.status(500).json({ error: "Failed to update alert" });
-    }
+    return res.json(updatedAlert);
+  } catch (error) {
+    console.error("Error updating alert:", error);
+    return res.status(500).json({ error: "Failed to update alert" });
   }
-);
+});
 
 // DELETE /api/alerts/:id - Delete an alert
 router.delete(
   "/:id",
   authenticateToken,
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
@@ -596,7 +737,7 @@ router.delete(
       const alert = await prisma.alert.findUnique({
         where: {
           id: alertId,
-          userId: req.user.id,
+          userId: authReq.user.id,
         },
       });
 

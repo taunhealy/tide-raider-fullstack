@@ -7,8 +7,17 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
+// Test route to verify routing works
+router.get("/test", (req: Request, res: Response) => {
+  res.json({
+    message: "Auth routes are working",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // JWT secret - should match frontend
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "your-secret-key";
+const JWT_SECRET =
+  process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "your-secret-key";
 
 // Frontend URL for redirects
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -19,11 +28,11 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.BACKEND_URL 
+      callbackURL: process.env.BACKEND_URL
         ? `${process.env.BACKEND_URL}/api/auth/google/callback`
         : process.env.NODE_ENV === "production"
-        ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-        : `http://localhost:3001/api/auth/google/callback`,
+          ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+          : `http://localhost:3001/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -122,6 +131,20 @@ passport.deserializeUser(async (id: string, done) => {
  */
 router.get(
   "/google",
+  (req: Request, res: Response, next: any) => {
+    console.log("[auth] 🔐 Google OAuth route accessed");
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error(
+        "[auth] ❌ Google OAuth not configured - missing credentials"
+      );
+      return res.status(500).json({
+        error: "OAuth not configured",
+        message: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set",
+      });
+    }
+    next();
+  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account",
@@ -135,7 +158,10 @@ router.get(
  */
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: `${FRONTEND_URL}/auth/signin?error=Callback` }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${FRONTEND_URL}/auth/signin?error=Callback`,
+  }),
   async (req: Request, res: Response) => {
     try {
       const user = req.user as any;
@@ -171,13 +197,15 @@ router.get(
         domain: isProduction ? undefined : undefined, // Let browser set domain
       });
 
-      console.log(`[auth] ✅ OAuth successful, redirecting to frontend with cookie for user: ${user.id}`);
+      console.log(
+        `[auth] ✅ OAuth successful, redirecting to frontend with cookie for user: ${user.id}`
+      );
 
       // Redirect to frontend with success
-      const redirectUrl = req.query.state 
-        ? `${FRONTEND_URL}${req.query.state}` 
+      const redirectUrl = req.query.state
+        ? `${FRONTEND_URL}${req.query.state}`
         : `${FRONTEND_URL}/raid`;
-      
+
       res.redirect(redirectUrl);
     } catch (error) {
       console.error("[auth] ❌ OAuth callback error:", error);
@@ -312,14 +340,15 @@ router.post("/logout", (req: Request, res: Response) => {
  * GET /api/auth/me
  * Get current user from JWT cookie
  */
-router.get("/me", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get("/me", authenticateToken, async (req: Request, res: Response) => {
   try {
-    if (!req.user?.id) {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: authReq.user.id },
       select: {
         id: true,
         email: true,
@@ -353,4 +382,3 @@ router.get("/me", authenticateToken, async (req: AuthRequest, res: Response) => 
 });
 
 export default router;
-
