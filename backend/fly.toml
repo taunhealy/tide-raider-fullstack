@@ -23,6 +23,7 @@ primary_region = "iad"
 [[services]]
   protocol = "tcp"
   internal_port = 3001
+  processes = ["app"]
 
   [[services.ports]]
     port = 80

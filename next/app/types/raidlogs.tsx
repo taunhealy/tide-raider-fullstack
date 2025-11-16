@@ -83,6 +83,8 @@ export interface FilterConfig {
   minRating: number | null;
   dateRange: { start: string; end: string };
   isPrivate: boolean;
+  page?: number;
+  limit?: number;
 }
 
 export interface QuestLogTableColumn {

@@ -11,6 +11,10 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);
 
+// Trust proxy (required for Fly.io and rate limiting)
+// Trust only the first proxy hop (Fly.io's proxy)
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(
   cors({
@@ -41,7 +45,13 @@ app.use(errorHandler);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🌐 Server accessible at http://localhost:${PORT}`);
+  console.log(
+    `🌐 Listening on 0.0.0.0:${PORT} (accessible from all network interfaces)`
+  );
+  if (process.env.FLY_APP_NAME) {
+    console.log(`✈️  Fly.io app: ${process.env.FLY_APP_NAME}`);
+    console.log(`🌍 Public URL: https://${process.env.FLY_APP_NAME}.fly.dev`);
+  }
 });
 
 // Server error handling is done via errorHandler middleware
