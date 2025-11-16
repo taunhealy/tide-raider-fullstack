@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { sendAlertNotification } from "@/app/lib/services/notificationService";
-import { prisma } from "@/app/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
-import { AlertMatch } from "@/app/lib/services/alertProcessor";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 /**
  * Test endpoint to force trigger an alert notification
- * This bypasses condition checking and directly sends a test notification
+ * Now calls backend API instead of using Prisma directly
  */
 export async function GET(request: Request) {
   try {
@@ -21,122 +20,37 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get alert ID from query params, or use the first alert
+    // Get alert ID from query params
     const { searchParams } = new URL(request.url);
     const alertId = searchParams.get("alertId");
 
-    // Get user's alerts
-    const userAlerts = await prisma.alert.findMany({
-      where: {
-        userId: session.user.id,
-        active: true,
-      },
-      include: {
-        logEntry: {
-          include: {
-            beach: true,
-            forecast: true,
-          },
-        },
-        properties: true,
+    // Call backend API to force test alert
+    const backendUrl = `${BACKEND_URL}/api/alerts/test-force${alertId ? `?alertId=${alertId}` : ""}`;
+
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward authorization if available
+        ...(session.user && {
+          Authorization: `Bearer ${session.user.id}`,
+        }),
       },
     });
 
-    if (userAlerts.length === 0) {
-      return NextResponse.json({
-        error: "No active alerts found. Please create an alert first.",
-      });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to test alert");
     }
 
-    // Find the alert to test
-    const alertToTest = alertId
-      ? userAlerts.find((a) => a.id === alertId)
-      : userAlerts[0];
+    const result = await response.json();
 
-    if (!alertToTest) {
-      return NextResponse.json({
-        error: `Alert with ID ${alertId} not found`,
-        availableAlerts: userAlerts.map((a) => ({ id: a.id, name: a.name })),
-      });
-    }
-
-    console.log("🧪 Force testing alert:", alertToTest.id, alertToTest.name);
-
-    // Create a mock match to force trigger the notification
-    const mockMatch: AlertMatch = {
-      alertId: alertToTest.id,
-      alertName: alertToTest.name,
-      region: alertToTest.regionId,
-      timestamp: new Date(),
-      matchedProperties: alertToTest.properties?.map((prop: any) => ({
-        property: prop.property,
-        logValue: prop.optimalValue,
-        forecastValue: prop.optimalValue, // Match exactly for testing
-        difference: 0,
-        withinRange: true,
-      })) || [
-        {
-          property: "swellHeight",
-          logValue: 1.5,
-          forecastValue: 1.5,
-          difference: 0,
-          withinRange: true,
-        },
-      ],
-      matchDetails: "Test alert - conditions match (forced for testing)",
-    };
-
-    // Get beach name
-    const beachName =
-      alertToTest.logEntry?.beach?.name ||
-      alertToTest.logEntry?.beachName ||
-      "Test Beach";
-
-    // For testing, delete any existing notifications from today so we can test again
-    await prisma.alertNotification.deleteMany({
-      where: {
-        alertId: alertToTest.id,
-        createdAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-          lt: new Date(new Date().setHours(24, 0, 0, 0)),
-        },
-      },
+    return NextResponse.json({
+      success: true,
+      ...result,
     });
-
-    // Send the notification
-    console.log("📧 Sending test notification to:", alertToTest.contactInfo);
-    const success = await sendAlertNotification(
-      mockMatch,
-      alertToTest,
-      beachName
-    );
-
-    if (success) {
-      return NextResponse.json({
-        success: true,
-        message: "Test alert notification sent successfully!",
-        alert: {
-          id: alertToTest.id,
-          name: alertToTest.name,
-          notificationMethod: alertToTest.notificationMethod,
-          contactInfo: alertToTest.contactInfo,
-          beachName: beachName,
-        },
-        note: `Check ${alertToTest.contactInfo} for the test email`,
-      });
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Failed to send notification",
-          alert: {
-            id: alertToTest.id,
-            name: alertToTest.name,
-          },
-        },
-        { status: 500 }
-      );
-    }
   } catch (error) {
     console.error("❌ Error force testing alert:", error);
     return NextResponse.json(

@@ -1,81 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/lib/authOptions";
-import { prisma } from "@/app/lib/prisma";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+/**
+ * Proxy to backend /api/logs
+ * The backend handles all log entry CRUD operations
+ */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const queryString = req.nextUrl.searchParams.toString();
+    const backendUrl = `${BACKEND_URL}/api/logs${queryString ? `?${queryString}` : ""}`;
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    console.log(`[logs] Proxying GET to backend: ${backendUrl}`);
 
-    // Get user ID
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email! },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Fetch log entries with both forecast and alerts
-    const logEntries = await prisma.logEntry.findMany({
-      where: { userId: user.id },
-      orderBy: { date: "desc" },
-      include: {
-        forecast: true, // Include ForecastA data
-        beach: {
-          include: {
-            region: {
-              include: {
-                country: true,
-              },
-            },
-          },
-        },
-        region: {
-          include: {
-            country: true,
-          },
-        },
-        alerts: {
-          select: {
-            id: true,
-            properties: true,
-            forecastId: true, // Include reference to forecast
-          },
-        },
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward authorization header if present
+        ...(req.headers.get("authorization") && {
+          Authorization: req.headers.get("authorization")!,
+        }),
       },
+      credentials: "include", // Include cookies for auth
     });
 
-    const enhancedLogEntries = logEntries.map((entry) => ({
-      ...entry,
-      hasAlert: entry.alerts.length > 0,
-      alertId: entry.alerts[0]?.id || null,
-      // Structured forecast data now comes from the relation
-      forecast: entry.forecast
-        ? {
-            id: entry.forecast.id,
-            windSpeed: entry.forecast.windSpeed,
-            windDirection: entry.forecast.windDirection,
-            swellHeight: entry.forecast.swellHeight,
-            swellPeriod: entry.forecast.swellPeriod,
-            swellDirection: entry.forecast.swellDirection,
-          }
-        : null,
-      // Preserve beach and region data
-      beach: entry.beach,
-      region: entry.region,
-    }));
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch logs");
+    }
 
-    return NextResponse.json(enhancedLogEntries);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching log entries:", error);
+    console.error("[logs] Backend error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch log entries" },
+      {
+        error: "Failed to fetch logs",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -83,52 +48,40 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const body = await req.text();
+    const backendUrl = `${BACKEND_URL}/api/logs`;
+
+    console.log(`[logs] Proxying POST to backend: ${backendUrl}`);
+
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward authorization header if present
+        ...(req.headers.get("authorization") && {
+          Authorization: req.headers.get("authorization")!,
+        }),
+      },
+      credentials: "include", // Include cookies for auth
+      body,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to create log");
     }
 
-    const data = await req.json();
-
-    // First, create or find the ForecastA record
-    const forecast = await prisma.forecastA.upsert({
-      where: {
-        date_regionId: {
-          date: new Date(data.date),
-          regionId: data.region,
-        },
-      },
-      create: {
-        date: new Date(data.date),
-        regionId: data.region,
-        windSpeed: data.forecast.windSpeed,
-        windDirection: data.forecast.windDirection,
-        swellHeight: data.forecast.swellHeight,
-        swellPeriod: data.forecast.swellPeriod,
-        swellDirection: data.forecast.swellDirection,
-      },
-      update: {}, // Don't update if exists
-    });
-
-    // Then create the log entry with the forecast relation
-    const logEntry = await prisma.logEntry.create({
-      data: {
-        ...data,
-        date: new Date(data.date),
-        userId: session.user.id,
-        forecastId: forecast.id, // Link to the forecast
-      },
-      include: {
-        forecast: true,
-        alerts: true,
-      },
-    });
-
-    return NextResponse.json(logEntry);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error creating log entry:", error);
+    console.error("[logs] Backend error:", error);
     return NextResponse.json(
-      { error: "Failed to create log entry" },
+      {
+        error: "Failed to create log",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

@@ -1,4 +1,3 @@
-import { BeachService } from "@/app/services/beaches/BeachService";
 import BeachContainer from "@/app/components/BeachContainer";
 import { Metadata } from "next";
 
@@ -11,12 +10,16 @@ type RaidPageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+/**
+ * Server component that fetches initial beach data from backend API
+ * This replaces BeachService which was using Prisma directly
+ */
 export default async function RaidPage({ searchParams }: RaidPageProps) {
   try {
-    const awaitedSearchParams = await searchParams || {};
+    const awaitedSearchParams = (await searchParams) || {};
+
     // Convert searchParams to URLSearchParams safely
     const urlSearchParams = new URLSearchParams();
-    // Ensure searchParams is treated as a plain object for iteration
     const plainSearchParams = Object.fromEntries(
       Object.entries(awaitedSearchParams).filter(
         ([_, value]) => typeof value === "string" || Array.isArray(value)
@@ -35,21 +38,53 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
       }
     });
 
-    const regionIdFromParams = urlSearchParams.get("regionId"); // Use get from URLSearchParams
-
+    const regionIdFromParams = urlSearchParams.get("regionId");
     let initialData = null;
+
+    // Only fetch if regionId is provided
     if (regionIdFromParams) {
       try {
-        initialData = await BeachService.getFilteredBeaches(urlSearchParams);
+        // Call backend API directly (server-side fetch works fine)
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const queryString = urlSearchParams.toString();
+        const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
+
+        console.log(
+          `[RaidPage] Fetching initial data from backend: ${backendApiUrl}`
+        );
+
+        const response = await fetch(backendApiUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // Server-side fetch doesn't need credentials, but we can add auth headers if needed
+          cache: "no-store", // Always fetch fresh data for SSR
+        });
+
+        if (response.ok) {
+          initialData = await response.json();
+          console.log(
+            `[RaidPage] ✅ Fetched ${initialData.beaches?.length || 0} beaches`
+          );
+        } else {
+          console.error(
+            `[RaidPage] Backend API returned ${response.status}: ${response.statusText}`
+          );
+        }
       } catch (error) {
-        console.error("Error fetching filtered beaches:", error);
+        console.error(
+          "[RaidPage] Error fetching filtered beaches from backend:",
+          error
+        );
         // Continue with null - component will handle empty state
       }
     }
 
     return <BeachContainer initialData={initialData} />;
   } catch (error) {
-    console.error("Error in RaidPage:", error);
+    console.error("[RaidPage] Error in RaidPage:", error);
     // Return component with null data - it will handle the error state
     return <BeachContainer initialData={null} />;
   }

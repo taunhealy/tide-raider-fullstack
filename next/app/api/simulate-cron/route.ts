@@ -1,74 +1,55 @@
-import { processUserAlerts } from "@/app/lib/services/alertProcessor";
-import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 /**
  * This is a utility endpoint to simulate the daily forecast alerts cron job
- * It follows the same logic as the cron job but can be triggered manually
+ * Now calls backend API instead of using Prisma directly
  */
 export async function GET() {
   try {
-    console.log("🔄 Simulating daily alert check process");
+    console.log("🔄 Simulating daily alert check process via backend");
 
-    // Get today's date (midnight)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // 1. Get all users with active alerts
-    const usersWithAlerts = await prisma.user.findMany({
-      where: {
-        alerts: {
-          some: {
-            active: true,
-          },
-        },
+    // Call backend cron endpoint
+    const backendUrl = `${BACKEND_URL}/api/cron/fetch-and-alert`;
+    
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-cron-secret": process.env.CRON_SECRET || "",
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
+      body: JSON.stringify({
+        timezone: "UTC",
+      }),
     });
 
-    console.log(`👥 Found ${usersWithAlerts.length} users with active alerts`);
-
-    // 2. Process alerts for each user
-    const results = {
-      usersProcessed: 0,
-      alertsChecked: 0,
-      notificationsSent: 0,
-      errors: 0,
-    };
-
-    for (const user of usersWithAlerts) {
-      try {
-        console.log(`👤 Processing alerts for user: ${user.id}`);
-
-        // Process all alerts for this user
-        const userResult = await processUserAlerts(user.id, today);
-
-        // Update overall results
-        results.usersProcessed++;
-        results.alertsChecked += userResult.alertsChecked;
-        results.notificationsSent += userResult.notificationsSent;
-        results.errors += userResult.errors;
-      } catch (error) {
-        console.error(`❌ Error processing alerts for user ${user.id}:`, error);
-        results.errors++;
-      }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to process alerts");
     }
 
-    console.log("✅ Daily alert check simulation completed", results);
+    const result = await response.json();
 
     return NextResponse.json({
       success: true,
       message: "Daily alert check simulation completed",
-      results,
+      results: result.alertResults || {
+        usersProcessed: 0,
+        alertsChecked: 0,
+        notificationsSent: 0,
+        errors: 0,
+      },
     });
   } catch (error) {
     console.error("❌ Error in daily alert check simulation:", error);
     return NextResponse.json(
-      { error: "Failed to process daily alerts simulation" },
+      {
+        error: "Failed to process daily alerts simulation",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

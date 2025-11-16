@@ -1,6 +1,10 @@
 import { Router, Request, Response } from "express";
 import { ScoreService } from "../services/scoreService";
-import { optionalAuth } from "../middleware/auth";
+import {
+  optionalAuth,
+  authenticateToken,
+  AuthRequest,
+} from "../middleware/auth";
 
 const router = Router();
 
@@ -29,5 +33,52 @@ router.get(
   }
 );
 
-export default router;
+/**
+ * POST /api/beach-ratings/calculate
+ * Calculate and store scores for a region and date
+ * Body: { regionId: string, date?: string, forecast?: {...} }
+ */
+router.post(
+  "/calculate",
+  authenticateToken,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
+      const { regionId, date, forecast } = req.body;
+
+      if (!regionId) {
+        return res.status(400).json({ error: "regionId is required" });
+      }
+
+      const targetDate = date ? new Date(date) : new Date();
+      targetDate.setUTCHours(0, 0, 0, 0);
+
+      if (!forecast) {
+        return res.status(400).json({ error: "forecast data is required" });
+      }
+
+      const scores = await ScoreService.calculateAndStoreScores(regionId, {
+        ...forecast,
+        date: targetDate,
+      });
+
+      return res.json({
+        success: true,
+        regionId,
+        date: targetDate,
+        scoresCalculated: scores.length,
+      });
+    } catch (error) {
+      console.error("[beach-ratings] Error calculating scores:", error);
+      return res.status(500).json({
+        error: "Failed to calculate scores",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+export default router;

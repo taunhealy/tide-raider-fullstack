@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
 import { randomUUID } from "crypto";
-import {} from "@/app/lib/surfUtils";
-
-// import { redis } from "@/app/lib/redis"; // Commented out redis import
-import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
-import { ScoreService } from "@/app/services/scores/ScoreService";
-// import { BeachService } from "@/app/services/beaches/BeachService"; // Commented out BeachService import
+import { CoreForecastData } from "@/app/types/forecast";
 import { ForecastA } from "@prisma/client";
 import { LocationFilter } from "@/app/types/filters";
 
@@ -42,92 +36,27 @@ function getTodayDate() {
 //   SCORES: 900, // 15 minutes cache for scores
 // };
 
+/**
+ * Get latest forecast conditions for a region
+ * This function now calls the backend API instead of using Prisma directly
+ * The backend handles region lookup, caching, and scraping
+ */
 export async function getLatestConditions(
   forceRefresh = false,
   regionId: ForecastA["regionId"]
-) {
-  // Get the region from the database - try ID first, then name lookup
-  console.log(
-    `[getLatestConditions] 🔍 Looking up region by ID: "${regionId}"`
-  );
-  let region = await prisma.region.findUnique({
-    where: { id: regionId },
-  });
-
-  // If not found by ID, try to find by name (case-insensitive)
-  if (!region) {
-    console.log(
-      `[getLatestConditions] ⚠️ Region not found by ID, trying name lookup...`
-    );
-    // Convert slug to title case for name matching
-    // "western-cape" -> "Western Cape", "bali" -> "Bali"
-    const nameFromSlug = regionId
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-
-    region = await prisma.region.findFirst({
-      where: {
-        OR: [
-          { id: regionId },
-          { name: { equals: nameFromSlug, mode: "insensitive" } },
-          { name: { equals: regionId, mode: "insensitive" } },
-          { name: { contains: regionId, mode: "insensitive" } },
-          { name: { contains: nameFromSlug, mode: "insensitive" } },
-        ],
-      },
-    });
-
-    if (region) {
-      console.log(
-        `[getLatestConditions] ✅ Region found by name: ${region.id} (${region.name})`
-      );
-    }
-  } else {
-    console.log(
-      `[getLatestConditions] ✅ Region found by ID: ${region.id} (${region.name})`
-    );
-  }
-
-  if (!region) {
-    console.error(`[getLatestConditions] ❌ Invalid region ID: ${regionId}`);
-    throw new Error(`Invalid region ID: ${regionId}`);
-  }
-
-  console.log("=== getLatestConditions ===");
-  console.log("Region:", region, "Force refresh:", forceRefresh);
-
-  const today = getTodayDate();
-
-  // Direct database query instead of API call
-  const existingForecast = await prisma.forecastA.findFirst({
-    where: {
-      date: today,
-      regionId: region.id,
-    },
-  });
-
-  if (existingForecast) {
-    console.log("Found existing forecast:", existingForecast);
-    return existingForecast;
-  }
-
-  // Only create new forecast if none exists
-  // Always use backend API for scraping - frontend should never scrape directly
-  console.log(
-    "No existing forecast found. Calling backend API for scraping..."
-  );
-
+): Promise<CoreForecastData> {
   const backendUrl =
     process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
+  const today = getTodayDate();
+
   try {
     console.log(
-      `[Frontend] Calling backend API for scraping: ${backendUrl}/api/forecast?regionId=${region.id}`
+      `[getLatestConditions] Calling backend API: ${backendUrl}/api/forecast?regionId=${regionId}&forceRefresh=${forceRefresh}`
     );
 
     const response = await fetch(
-      `${backendUrl}/api/forecast?regionId=${region.id}`,
+      `${backendUrl}/api/forecast?regionId=${regionId}${forceRefresh ? "&forceRefresh=true" : ""}`,
       {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -136,12 +65,12 @@ export async function getLatestConditions(
 
     if (!response.ok) {
       console.error(
-        `Backend API returned ${response.status}: ${response.statusText}`
+        `[getLatestConditions] Backend API returned ${response.status}: ${response.statusText}`
       );
       // Return a default forecast instead of throwing
       return {
         id: randomUUID(),
-        regionId: region.id,
+        regionId: regionId,
         date: today,
         windSpeed: 0,
         windDirection: 0,
@@ -152,80 +81,36 @@ export async function getLatestConditions(
     }
 
     const forecastData = await response.json();
-    const scrapedForecast: BaseForecastData = {
-      regionId: forecastData.regionId || region.id,
-      date: new Date(forecastData.date),
-      windSpeed: forecastData.windSpeed,
-      windDirection: forecastData.windDirection,
-      swellHeight: forecastData.swellHeight,
-      swellPeriod: forecastData.swellPeriod,
-      swellDirection: forecastData.swellDirection,
-    };
 
-    console.log("✅ Successfully fetched forecast from backend API");
-
-    // More detailed logging
-    console.log("Scraped forecast data:", scrapedForecast);
-
-    if (scrapedForecast) {
-      // Strip time from date
-      scrapedForecast.date.setUTCHours(0, 0, 0, 0);
-    }
-
-    if (!scrapedForecast) {
-      throw new Error(`Scraper returned null for ${region.id}`);
-    }
-
-    // Store raw degrees in DB
-    const storedForecast = await prisma.forecastA.upsert({
-      where: {
-        date_regionId: {
-          date: scrapedForecast.date,
-          regionId: scrapedForecast.regionId,
-        },
-      },
-      update: {
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-      },
-      create: {
-        id: randomUUID(),
-        date: scrapedForecast.date,
-        regionId: scrapedForecast.regionId,
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-      },
-      select: {
-        id: true,
-        regionId: true,
-        date: true,
-        windSpeed: true,
-        windDirection: true,
-        swellHeight: true,
-        swellPeriod: true,
-        swellDirection: true,
-      },
-    });
-
-    // Return the full CoreForecastData
+    // Ensure date is a Date object
     const forecast: CoreForecastData = {
-      ...storedForecast,
-      id: storedForecast.id,
+      id: forecastData.id || randomUUID(),
+      regionId: forecastData.regionId || regionId,
+      date: forecastData.date ? new Date(forecastData.date) : today,
+      windSpeed: forecastData.windSpeed || 0,
+      windDirection: forecastData.windDirection || 0,
+      swellHeight: forecastData.swellHeight || 0,
+      swellPeriod: forecastData.swellPeriod || 0,
+      swellDirection: forecastData.swellDirection || 0,
     };
+
+    // Normalize date to midnight UTC
+    forecast.date.setUTCHours(0, 0, 0, 0);
+
+    console.log(
+      `[getLatestConditions] ✅ Successfully fetched forecast from backend API for region: ${regionId}`
+    );
 
     return forecast;
   } catch (error) {
-    console.error(`Failed to scrape data for ${region.id}:`, error);
+    console.error(
+      `[getLatestConditions] ❌ Failed to fetch forecast for ${regionId}:`,
+      error
+    );
     // Return a default forecast instead of throwing
     return {
       id: randomUUID(),
-      regionId: region.id,
+      regionId: regionId,
       date: today,
       windSpeed: 0,
       windDirection: 0,
@@ -302,11 +187,14 @@ export async function getLatestConditions(
 //   }
 // }
 
+/**
+ * GET /api/surf-conditions?regionId=xxx
+ * This route proxies to the backend /api/filtered-beaches endpoint
+ * which handles forecast fetching, score calculation, and beach filtering
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const regionId = searchParams.get("regionId")?.toLowerCase() as NonNullable<
-    LocationFilter["regionId"]
-  >;
+  const regionId = searchParams.get("regionId");
 
   if (!regionId) {
     return NextResponse.json(
@@ -315,81 +203,39 @@ export async function GET(request: Request) {
     );
   }
 
-  // Commented out rate limit check
-  // if (
-  //   !(await checkRateLimit(regionId)) &&
-  //   process.env.NODE_ENV === "production"
-  // ) {
-  //   return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
-  // }
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
   try {
-    const targetDate = searchParams.get("date")
-      ? new Date(searchParams.get("date")!)
-      : new Date();
-    targetDate.setUTCHours(0, 0, 0, 0);
+    // Build backend URL with all query params
+    const queryString = searchParams.toString();
+    const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
 
-    // Step 1: Get or scrape forecast data FIRST
-    let forecast: ForecastA | null = null;
-    try {
-      forecast = await getLatestConditions(false, regionId);
-      console.log("Forecast fetched:", forecast ? "✓" : "✗");
-    } catch (error) {
-      console.error("Failed to fetch forecast data:", error);
-    }
+    console.log(`[surf-conditions] Proxying to backend: ${backendApiUrl}`);
 
-    // Step 2: Check if scores exist for today
-    const existingScores = await prisma.beachDailyScore.count({
-      where: {
-        regionId,
-        date: targetDate,
+    const response = await fetch(backendApiUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
       },
     });
 
-    // Step 3: Only calculate scores if they don't exist AND we have forecast data
-    if (existingScores === 0 && forecast) {
-      console.log(
-        `Calculating scores for ${regionId} on ${targetDate.toISOString().split("T")[0]}...`
-      );
-      try {
-        await ScoreService.calculateAndStoreScores(regionId, {
-          ...forecast,
-          date: targetDate,
-        });
-        console.log("✓ Scores calculated and stored");
-      } catch (error) {
-        console.error("Failed to calculate scores:", error);
-      }
-    } else {
-      console.log(
-        `✓ Using existing scores (${existingScores} beaches) for ${regionId}`
-      );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch surf conditions");
     }
 
-    // Step 4: Get beaches with their scores (no recalculation)
-    const searchQuery = searchParams.get("searchQuery") || undefined;
-    const filters = {}; // Parse any additional filters from searchParams
-
-    const result = await ScoreService.getBeachesWithScores({
-      regionId,
-      date: targetDate,
-      searchQuery,
-      filters,
-    });
-
-    // Return the complete response
-    const responseData = {
-      beaches: result.beaches,
-      scores: result.scores,
-      forecast: forecast,
-      totalCount: result.totalCount,
-    };
-
-    return NextResponse.json(responseData);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("API Error:", error);
+    console.error("[surf-conditions] Backend error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch data" },
+      {
+        error: "Failed to fetch surf conditions",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

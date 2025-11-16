@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { processUserAlerts } from "@/app/lib/services/alertProcessor";
-import { prisma } from "@/app/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 /**
  * Test endpoint to simulate alert checking for the current user
- * This will check all active alerts for the logged-in user
+ * Now calls backend API instead of using Prisma directly
  */
 export async function GET() {
   try {
@@ -22,125 +22,40 @@ export async function GET() {
 
     console.log("🧪 Testing alert flow for user:", session.user.id);
 
-    // Get today's date (midnight)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Get user's active alerts
-    const userAlerts = await prisma.alert.findMany({
-      where: {
+    // Call backend API to process alerts
+    const backendUrl = `${BACKEND_URL}/api/alerts/notify`;
+    
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward authorization if available
+        ...(session.user && {
+          Authorization: `Bearer ${session.user.id}`, // Backend should handle auth properly
+        }),
+      },
+      body: JSON.stringify({
         userId: session.user.id,
-        active: true,
-      },
-      include: {
-        logEntry: {
-          include: {
-            beach: true,
-            forecast: true,
-          },
-        },
-        beach: {
-          select: { id: true, name: true },
-        },
-        properties: true,
-      },
+      }),
     });
 
-    if (userAlerts.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "No active alerts found for your account",
-        alertsChecked: 0,
-        notificationsSent: 0,
-        alerts: [],
-      });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to process alerts");
     }
 
-    console.log(`📋 Found ${userAlerts.length} active alerts to check`);
-
-    // Log alert details for debugging
-    userAlerts.forEach((alert) => {
-      console.log(`📋 Alert: ${alert.name}`, {
-        id: alert.id,
-        alertType: alert.alertType,
-        beachId: alert.beachId,
-        beachName: alert.beach?.name,
-        starRating: alert.starRating,
-        regionId: alert.regionId,
-      });
-    });
-
-    // Process alerts for this user
-    const result = await processUserAlerts(session.user.id, today);
-
-    // Check if beach scores exist for RATING alerts
-    const ratingAlerts = userAlerts.filter(
-      (a) => a.alertType === "RATING" && a.beachId
-    );
-    if (ratingAlerts.length > 0) {
-      console.log(
-        `🔍 Checking beach scores for ${ratingAlerts.length} RATING alerts...`
-      );
-      for (const alert of ratingAlerts) {
-        if (!alert.beachId) continue; // Skip if no beachId
-
-        const beachScore = await prisma.beachDailyScore.findFirst({
-          where: {
-            beachId: alert.beachId,
-            date: {
-              gte: today,
-              lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-            },
-          },
-          select: {
-            beachId: true,
-            score: true,
-            starRating: true,
-            date: true,
-          },
-        });
-
-        if (beachScore) {
-          console.log(
-            `✅ Found beach score for ${alert.beach?.name || alert.beachId}:`,
-            beachScore
-          );
-        } else {
-          console.log(
-            `❌ No beach score found for ${alert.beach?.name || alert.beachId} (${alert.beachId}) today`
-          );
-        }
-      }
-    }
-
-    // Get alert details for response
-    const alertDetails = userAlerts.map((alert) => ({
-      id: alert.id,
-      name: alert.name,
-      regionId: alert.regionId,
-      notificationMethod: alert.notificationMethod,
-      contactInfo: alert.contactInfo,
-      alertType: alert.alertType,
-      hasLogEntry: !!alert.logEntry,
-      beachId: alert.beachId || alert.logEntry?.beach?.id || null,
-      beachName:
-        alert.beach?.name ||
-        alert.logEntry?.beach?.name ||
-        alert.logEntry?.beachName ||
-        null,
-      starRating: alert.starRating,
-      propertiesCount: alert.properties?.length || 0,
-    }));
+    const result = await response.json();
 
     return NextResponse.json({
       success: true,
       message: "Alert test completed",
-      results: {
-        alertsChecked: result.alertsChecked,
-        notificationsSent: result.notificationsSent,
-        errors: result.errors,
+      results: result.processed || {
+        alertsChecked: 0,
+        notificationsSent: 0,
+        errors: 0,
       },
-      alerts: alertDetails,
       note: "Check your email inbox for any notifications that were sent",
     });
   } catch (error) {

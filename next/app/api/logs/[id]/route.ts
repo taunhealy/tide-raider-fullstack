@@ -1,67 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/lib/authOptions";
-import { prisma } from "@/app/lib/prisma";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+/**
+ * Proxy to backend /api/logs/:id
+ * The backend handles all log entry operations
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: logEntryId } = await params;
-    const session = await getServerSession(authOptions);
+    const { id } = await params;
+    const queryString = req.nextUrl.searchParams.toString();
+    const backendUrl = `${BACKEND_URL}/api/logs/${id}${queryString ? `?${queryString}` : ""}`;
 
-    // Fetch the log entry without using include
-    const logEntry = await prisma.logEntry.findUnique({
-      where: { id: logEntryId },
-    });
+    console.log(`[logs] Proxying GET to backend: ${backendUrl}`);
 
-    if (!logEntry) {
-      return NextResponse.json(
-        { error: "Log entry not found" },
-        { status: 404 }
-      );
-    }
-
-    // Check if the log entry is private and belongs to the user
-    if (logEntry.isPrivate) {
-      if (!session?.user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Get user ID
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email! },
-        select: { id: true },
-      });
-
-      if (!user || logEntry.userId !== user.id) {
-        return NextResponse.json(
-          { error: "You don't have permission to access this log entry" },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Fetch forecast data separately if needed
-    const forecastData = await prisma.forecastA.findFirst({
-      where: {
-        regionId: logEntry.regionId || "",
-        date: logEntry.date,
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward authorization header if present
+        ...(req.headers.get("authorization") && {
+          Authorization: req.headers.get("authorization")!,
+        }),
       },
+      credentials: "include", // Include cookies for auth
     });
 
-    // Combine the data
-    const result = {
-      ...logEntry,
-      forecast: forecastData || null,
-    };
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch log");
+    }
 
-    return NextResponse.json(result);
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching log entry:", error);
+    console.error("[logs] Backend error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch log entry" },
+      {
+        error: "Failed to fetch log",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }
