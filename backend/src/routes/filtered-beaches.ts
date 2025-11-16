@@ -18,16 +18,75 @@ const router = Router();
 // GET /api/filtered-beaches?regionId=xxx&searchQuery=xxx&...
 router.get("/", optionalAuth, async (req: Request, res: Response) => {
   try {
-    const regionId = (req.query.regionId as string)?.toLowerCase();
+    const regionIdParam = (req.query.regionId as string)?.toLowerCase();
     const searchQuery = req.query.searchQuery as string | undefined;
 
     console.log(
-      `[filtered-beaches] Request received for regionId: ${regionId}`
+      `[filtered-beaches] Request received for regionId: ${regionIdParam}`
     );
 
-    if (!regionId) {
+    if (!regionIdParam) {
       return res.status(400).json({ error: "regionId is required" });
     }
+
+    // Resolve regionId to actual database region ID
+    let region = await prisma.region.findUnique({
+      where: { id: regionIdParam },
+    });
+
+    // If not found by ID, try to find by name (case-insensitive)
+    if (!region) {
+      const nameFromSlug = regionIdParam
+        .split("-")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+
+      console.log(
+        `[filtered-beaches] 🔍 Searching for region with name variations:`,
+        {
+          original: regionIdParam,
+          nameFromSlug,
+        }
+      );
+
+      region = await prisma.region.findFirst({
+        where: {
+          OR: [
+            { id: regionIdParam },
+            { name: { equals: nameFromSlug, mode: "insensitive" } },
+            { name: { equals: regionIdParam, mode: "insensitive" } },
+            { name: { contains: regionIdParam, mode: "insensitive" } },
+            { name: { contains: nameFromSlug, mode: "insensitive" } },
+          ],
+        },
+      });
+
+      if (!region) {
+        // Log available regions for debugging
+        const allRegions = await prisma.region.findMany({
+          select: { id: true, name: true },
+          take: 20,
+        });
+        console.log(
+          `[filtered-beaches] 🔍 Sample of available regions in database:`,
+          allRegions.map((r) => `${r.id} -> "${r.name}"`)
+        );
+      }
+    }
+
+    if (!region) {
+      console.log(`[filtered-beaches] ❌ Region not found: ${regionIdParam}`);
+      return res
+        .status(404)
+        .json({ error: `Region not found: ${regionIdParam}` });
+    }
+
+    const regionId = region.id; // Use resolved database region ID
+    console.log(
+      `[filtered-beaches] ✅ Region resolved: ${region.id} (name: ${region.name}, from: ${regionIdParam})`
+    );
 
     // Handle array parameters properly
     const crimeLevelParam = req.query.crimeLevel as string | undefined;
@@ -84,6 +143,9 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
     currentDate.setUTCHours(0, 0, 0, 0);
 
     // Step 1: Get or fetch forecast data
+    console.log(
+      `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${currentDate.toISOString()}`
+    );
     let forecast = await prisma.forecastA.findFirst({
       where: {
         regionId,
@@ -97,6 +159,12 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
         swellDirection: true,
         date: true,
       },
+    });
+
+    console.log(`[filtered-beaches] 📊 Forecast query result:`, {
+      found: !!forecast,
+      regionId,
+      date: currentDate.toISOString(),
     });
 
     // If no forecast exists, try to fetch it
@@ -187,6 +255,13 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
     }
 
     // Step 4: Fetch beaches with their daily scores (now guaranteed to exist)
+    console.log(
+      `[filtered-beaches] 🔍 Querying beaches for regionId: ${regionId} with filters:`,
+      {
+        searchQuery: searchQuery || "none",
+        filters: Object.keys(whereClause).filter((k) => k !== "regionId"),
+      }
+    );
     const beaches = await prisma.beach.findMany({
       where: whereClause,
       include: {
@@ -202,10 +277,13 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
       },
     });
 
-    console.log(`Fetched ${beaches.length} beaches for ${regionId}`);
-    console.log(
-      `Beaches with scores: ${beaches.filter((b) => b.beachDailyScores.length > 0).length}`
-    );
+    console.log(`[filtered-beaches] 📊 Database query successful:`, {
+      beachCount: beaches.length,
+      regionId,
+      hasScores: beaches.filter((b) => b.beachDailyScores.length > 0).length,
+      beachesWithScores: beaches.filter((b) => b.beachDailyScores.length > 0)
+        .length,
+    });
 
     // Transform scores into a flat dictionary, ensuring the full beach object is included.
     const scores = beaches.reduce(
@@ -248,7 +326,7 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
       totalCount: beaches.length,
     };
 
-    console.log(`[filtered-beaches] Response:`, {
+    console.log(`[filtered-beaches] ✅ Success - preparing response:`, {
       beachCount: responseData.beaches.length,
       scoreCount: Object.keys(responseData.scores).length,
       hasForecast: !!responseData.forecast,

@@ -18,12 +18,19 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libnspr4 \
     libnss3 \
+    libnss3-dev \
+    libnspr4-dev \
     libwayland-client0 \
     libxcomposite1 \
     libxdamage1 \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
+    libxss1 \
+    libgconf-2-4 \
+    libxtst6 \
+    libxshmfence1 \
+    libglu1-mesa \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 

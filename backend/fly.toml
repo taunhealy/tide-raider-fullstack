@@ -11,6 +11,7 @@ primary_region = "iad"
 [env]
   NODE_ENV = "production"
   PORT = "3001"
+  FLY_APP_NAME = "tide-raider-backend"
 
 [http_service]
   internal_port = 3001

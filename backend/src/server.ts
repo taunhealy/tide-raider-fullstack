@@ -29,6 +29,50 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Apply rate limiting
 app.use(rateLimiter);
 
+// Request/Response logging middleware
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  const timestamp = new Date().toISOString();
+
+  // Log incoming request
+  console.log(`[${timestamp}] ${req.method} ${req.path}`, {
+    query: Object.keys(req.query).length > 0 ? req.query : undefined,
+    body:
+      req.method !== "GET" && Object.keys(req.body || {}).length > 0
+        ? req.body
+        : undefined,
+    ip: req.ip,
+  });
+
+  // Override res.json to log response
+  const originalJson = res.json.bind(res);
+  res.json = function (body: any) {
+    const duration = Date.now() - startTime;
+    const statusCode = res.statusCode;
+    const statusEmoji =
+      statusCode >= 500 ? "❌" : statusCode >= 400 ? "⚠️" : "✅";
+
+    console.log(
+      `[${new Date().toISOString()}] ${statusEmoji} ${req.method} ${req.path} ${statusCode} (${duration}ms)`,
+      {
+        statusCode,
+        duration: `${duration}ms`,
+        responseSize: JSON.stringify(body || {}).length,
+      }
+    );
+    return originalJson(body);
+  };
+
+  // Override res.status to capture status code
+  const originalStatus = res.status.bind(res);
+  res.status = function (code: number) {
+    res.statusCode = code;
+    return originalStatus(code);
+  };
+
+  next();
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
