@@ -57,11 +57,19 @@ export async function authenticateToken(
     }
 
     let userId: string | undefined;
+    let decoded: {
+      sub?: string;
+      id?: string;
+      email?: string;
+      name?: string;
+    };
+
     try {
-      const decoded = jwt.verify(token, secret) as {
+      decoded = jwt.verify(token, secret) as {
         sub?: string;
         id?: string;
         email?: string;
+        name?: string;
       };
 
       console.log(`[auth] Token verified successfully, decoded:`, {
@@ -89,7 +97,7 @@ export async function authenticateToken(
 
     // Fetch user from database
     console.log(`[auth] 🔍 Fetching user from database for userId: ${userId}`);
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -101,8 +109,72 @@ export async function authenticateToken(
       },
     });
 
+    // If user doesn't exist, try to create them from JWT token data
     if (!user) {
-      console.log(`[auth] ❌ User not found in database for userId: ${userId}`);
+      console.log(
+        `[auth] ⚠️ User not found in database for userId: ${userId}, attempting to create...`
+      );
+
+      if (decoded.email) {
+        try {
+          // Try to create user with email and ID from token
+          user = await prisma.user.create({
+            data: {
+              id: userId,
+              email: decoded.email,
+              name: decoded.name || decoded.email.split("@")[0], // Use email prefix if no name
+            },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              subscriptionStatus: true,
+              hasActiveTrial: true,
+              trialEndDate: true,
+            },
+          });
+          console.log(
+            `[auth] ✅ Created new user in database: ${user.id}, email: ${user.email}`
+          );
+        } catch (createError: any) {
+          // If creation fails (e.g., email already exists with different ID), try to find by email
+          if (createError.code === "P2002") {
+            console.log(
+              `[auth] ⚠️ User with email ${decoded.email} exists with different ID, fetching by email...`
+            );
+            user = await prisma.user.findUnique({
+              where: { email: decoded.email },
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                subscriptionStatus: true,
+                hasActiveTrial: true,
+                trialEndDate: true,
+              },
+            });
+            if (user) {
+              console.log(
+                `[auth] ✅ Found user by email: ${user.id} (token had ${userId})`
+              );
+              // Update the user ID to match the token if needed
+              // Note: This is a workaround - ideally frontend and backend should use the same database
+            }
+          } else {
+            console.error(`[auth] ❌ Failed to create user:`, createError);
+            return res
+              .status(401)
+              .json({ error: "User not found and could not be created" });
+          }
+        }
+      } else {
+        console.log(`[auth] ❌ Cannot create user: no email in token`);
+        return res.status(401).json({ error: "User not found" });
+      }
+    }
+
+    if (!user) {
+      console.log(`[auth] ❌ User still not found after creation attempt`);
       return res.status(401).json({ error: "User not found" });
     }
 
