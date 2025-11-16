@@ -1,6 +1,7 @@
 // hooks/useBeachAttributes.ts
 import { useMemo, useCallback } from "react";
 import { Beach } from "@prisma/client";
+import api from "@/app/lib/api-client";
 
 interface RegionObject {
   name: string;
@@ -54,9 +55,7 @@ export function useBeachAttributes(initialBeaches: Beach[]) {
   // Utility function to fetch region data
   const fetchRegionData = useCallback(async (region: string) => {
     try {
-      const response = await fetch(`/api/forecast?region=${region}`);
-      const data = await response.json();
-      return data;
+      return await api.getForecast(region);
     } catch (error) {
       console.error("Error fetching forecast data:", error);
       return null;

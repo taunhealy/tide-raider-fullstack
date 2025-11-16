@@ -5,6 +5,7 @@ import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { useQuery } from "@tanstack/react-query";
+import api from "@/app/lib/api-client";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -29,11 +30,7 @@ export default function WeatherForecastWidget() {
 
   const { data: forecastData, isLoading } = useQuery({
     queryKey: ["forecast", regionId],
-    queryFn: async () => {
-      const response = await fetch(`/api/forecast?regionId=${regionId}`);
-      if (!response.ok) throw new Error("Failed to fetch forecast");
-      return response.json();
-    },
+    queryFn: () => api.getForecast(regionId!),
     enabled: !!regionId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,

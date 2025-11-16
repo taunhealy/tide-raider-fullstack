@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CoreForecastData } from "@/app/types/forecast";
+import api from "@/app/lib/api-client";
 
 export function useForecast(regionId: string, date?: Date) {
   return useQuery<CoreForecastData>({
@@ -8,17 +9,13 @@ export function useForecast(regionId: string, date?: Date) {
       if (date) {
         // Use surf-conditions endpoint when date is provided
         const dateStr = date.toISOString().split("T")[0];
-        const response = await fetch(
+        const data = await api.request<any>(
           `/api/surf-conditions?regionId=${regionId}&date=${dateStr}`
         );
-        if (!response.ok) throw new Error("Failed to fetch forecast");
-        const data = await response.json();
         return data.forecast;
       } else {
         // Use forecast endpoint when no date is provided (current forecast)
-        const response = await fetch(`/api/forecast?regionId=${regionId}`);
-        if (!response.ok) throw new Error("Failed to fetch forecast");
-        return response.json();
+        return await api.getForecast(regionId);
       }
     },
     enabled: !!regionId,

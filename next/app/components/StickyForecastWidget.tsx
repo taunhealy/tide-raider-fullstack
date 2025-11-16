@@ -11,6 +11,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import api from "@/app/lib/api-client";
 
 // Register ScrollTrigger plugin
 if (typeof window !== "undefined") {
@@ -30,11 +31,7 @@ export default function StickyForecastWidget() {
   // Replace useFilteredBeaches with direct forecast query
   const { data: forecastData, isLoading } = useQuery({
     queryKey: ["forecast", regionId],
-    queryFn: async () => {
-      const response = await fetch(`/api/forecast?regionId=${regionId}`);
-      if (!response.ok) throw new Error("Failed to fetch forecast");
-      return response.json();
-    },
+    queryFn: () => api.getForecast(regionId!),
     enabled: !!regionId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,

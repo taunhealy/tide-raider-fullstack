@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BeachInitialData } from "../types/beaches";
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
+import api from "../lib/api-client";
 
 interface UseFilteredBeachesProps {
   initialData: BeachInitialData | null;
@@ -20,24 +21,48 @@ export function useFilteredBeaches({
   return useQuery<UseFilteredBeachesResponse>({
     queryKey: ["filteredBeaches", filters], // React to filter changes
     queryFn: async () => {
-      // Convert filters to URLSearchParams
-      const params = new URLSearchParams();
+      // Convert filters to api-client params
+      const params: {
+        regionId?: string;
+        searchQuery?: string;
+        optimalTide?: string;
+        waveType?: string;
+        crimeLevel?: string;
+        bestSeasons?: string;
+        difficulty?: string;
+        hazards?: string;
+      } = {};
 
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== "") {
-          if (Array.isArray(value)) {
-            if (value.length) params.set(key, value.join(","));
-          } else {
-            params.set(key, String(value));
-          }
-        }
-      });
+      if (filters.regionId) params.regionId = filters.regionId;
+      if (filters.searchQuery) params.searchQuery = filters.searchQuery;
+      if (filters.optimalTide) {
+        params.optimalTide = Array.isArray(filters.optimalTide)
+          ? filters.optimalTide.join(",")
+          : filters.optimalTide;
+      }
+      if (filters.waveTypes) {
+        params.waveType = Array.isArray(filters.waveTypes)
+          ? filters.waveTypes.join(",")
+          : filters.waveTypes;
+      }
+      if (filters.crimeLevel) {
+        params.crimeLevel = Array.isArray(filters.crimeLevel)
+          ? filters.crimeLevel.join(",")
+          : filters.crimeLevel;
+      }
+      if (filters.bestSeasons) {
+        params.bestSeasons = Array.isArray(filters.bestSeasons)
+          ? filters.bestSeasons.join(",")
+          : filters.bestSeasons;
+      }
+      if (filters.difficulty) params.difficulty = filters.difficulty;
+      if (filters.hazards) {
+        params.hazards = Array.isArray(filters.hazards)
+          ? filters.hazards.join(",")
+          : filters.hazards;
+      }
 
-      const response = await fetch(
-        `/api/filtered-beaches?${params.toString()}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch filtered beaches");
-      return response.json(); // This needs to return BeachInitialData structure
+      return await api.getFilteredBeaches(params);
     },
     initialData: initialData || undefined,
     enabled: enabled && !!filters.regionId,

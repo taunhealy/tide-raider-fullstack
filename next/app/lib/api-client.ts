@@ -224,6 +224,90 @@ export const api = {
     return apiRequest<any[]>(`/api/raid-logs/user/${userId}`);
   },
 
+  // Forecast
+  getForecast: async (regionId: string) => {
+    return apiRequest<any>(
+      `/api/forecast?regionId=${encodeURIComponent(regionId)}`
+    );
+  },
+
+  // Filtered Beaches
+  getFilteredBeaches: async (params?: {
+    regionId?: string;
+    searchQuery?: string;
+    optimalTide?: string;
+    waveType?: string;
+    crimeLevel?: string;
+    bestSeasons?: string;
+    difficulty?: string;
+    hazards?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.regionId) queryParams.append("regionId", params.regionId);
+    if (params?.searchQuery)
+      queryParams.append("searchQuery", params.searchQuery);
+    if (params?.optimalTide)
+      queryParams.append("optimalTide", params.optimalTide);
+    if (params?.waveType) queryParams.append("waveType", params.waveType);
+    if (params?.crimeLevel) queryParams.append("crimeLevel", params.crimeLevel);
+    if (params?.bestSeasons)
+      queryParams.append("bestSeasons", params.bestSeasons);
+    if (params?.difficulty) queryParams.append("difficulty", params.difficulty);
+    if (params?.hazards) queryParams.append("hazards", params.hazards);
+    const query = queryParams.toString();
+    return apiRequest<{
+      beaches: any[];
+      scores: Record<string, { score: number; beach: any }>;
+      forecast: any;
+      totalCount: number;
+    }>(`/api/filtered-beaches${query ? `?${query}` : ""}`);
+  },
+
+  // Regions
+  getRegions: async () => {
+    return apiRequest<any[]>("/api/regions");
+  },
+
+  // User
+  getUser: async (userId: string) => {
+    return apiRequest<any>(`/api/user/${userId}`);
+  },
+
+  getCurrentUser: async () => {
+    return apiRequest<any>("/api/user/current");
+  },
+
+  // Notifications
+  getNotifications: async () => {
+    return apiRequest<any[]>("/api/notifications");
+  },
+
+  getNotificationCount: async () => {
+    return apiRequest<{ count: number }>("/api/notifications/count");
+  },
+
+  markNotificationRead: async (id: string) => {
+    return apiRequest<any>(`/api/notifications/${id}`, {
+      method: "PUT",
+    });
+  },
+
+  markAllNotificationsRead: async () => {
+    return apiRequest<any>("/api/notifications/read", {
+      method: "PUT",
+    });
+  },
+
+  // Subscriptions
+  getSubscriptionStatus: async () => {
+    return apiRequest<any>("/api/subscription/status");
+  },
+
+  // Sponsors
+  getSponsors: async () => {
+    return apiRequest<any[]>("/api/sponsors");
+  },
+
   // Health check
   health: async () => {
     return apiRequest<{ status: string; timestamp: string }>("/health");
