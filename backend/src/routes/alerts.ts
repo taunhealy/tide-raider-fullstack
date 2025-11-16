@@ -183,12 +183,9 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
       return res.json(dates as string[]);
     }
 
-    // Case 3: Fetching user's alerts - requires authentication
+    // Case 3: Fetching user's alerts - return empty array for unauthenticated users
     if (!isAuthenticated || !req.user?.id) {
-      if (isBetaMode) {
-        return res.json([]);
-      }
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.json([]);
     }
 
     const alerts = await prisma.alert.findMany({

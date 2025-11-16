@@ -48,12 +48,25 @@ async function apiRequest<T>(
   }
 }
 
-// Helper to get auth token from session
-async function getAuthToken(): Promise<string | null> {
+// Helper to get auth token from session cookies
+function getAuthToken(): string | null {
   try {
-    // In Next.js, we'll get the session token from the NextAuth session
-    // This will be handled by the frontend making requests with cookies
-    // For now, return null and rely on cookies
+    // Only works in browser environment
+    if (typeof window === "undefined" || !document.cookie) {
+      return null;
+    }
+    // Get NextAuth session token from cookies
+    // Try both regular and secure cookie names
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (
+        name === "next-auth.session-token" ||
+        name === "__Secure-next-auth.session-token"
+      ) {
+        return decodeURIComponent(value);
+      }
+    }
     return null;
   } catch {
     return null;
@@ -89,33 +102,44 @@ export const api = {
   },
 
   getAlert: async (id: string) => {
-    return apiRequest<any>(`/api/alerts/${id}`);
+    const token = getAuthToken();
+    return apiRequest<any>(`/api/alerts/${id}`, {
+      token: token || undefined,
+    });
   },
 
   createAlert: async (data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>("/api/alerts", {
       method: "POST",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
   updateAlert: async (id: string, data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>(`/api/alerts/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
   patchAlert: async (id: string, data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>(`/api/alerts/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
   deleteAlert: async (id: string) => {
+    const token = getAuthToken();
     return apiRequest<{ success: boolean }>(`/api/alerts/${id}`, {
       method: "DELETE",
+      token: token || undefined,
     });
   },
 
@@ -139,9 +163,11 @@ export const api = {
   },
 
   createLog: async (data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>("/api/logs", {
       method: "POST",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
@@ -194,23 +220,29 @@ export const api = {
   },
 
   createRaidLog: async (data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>("/api/raid-logs", {
       method: "POST",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
   updateRaidLog: async (data: any) => {
+    const token = getAuthToken();
     return apiRequest<any>("/api/raid-logs", {
       method: "PUT",
       body: JSON.stringify(data),
+      token: token || undefined,
     });
   },
 
   deleteRaidLog: async (id: string) => {
+    const token = getAuthToken();
     return apiRequest<{ message: string }>("/api/raid-logs", {
       method: "DELETE",
       body: JSON.stringify({ id }),
+      token: token || undefined,
     });
   },
 

@@ -1,14 +1,19 @@
 import { Router, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { authenticateToken, AuthRequest } from "../middleware/auth";
+import {
+  authenticateToken,
+  optionalAuth,
+  AuthRequest,
+} from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/logs - Fetch user's log entries
-router.get("/", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
+    // Return empty array for unauthenticated users
     if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.json([]);
     }
 
     const user = await prisma.user.findUnique({
@@ -123,47 +128,43 @@ router.post("/", authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/logs/:id - Get a specific log entry
-router.get(
-  "/:id",
-  authenticateToken,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      const { id: logEntryId } = req.params;
+router.get("/:id", optionalAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id: logEntryId } = req.params;
 
-      const logEntry = await prisma.logEntry.findUnique({
-        where: { id: logEntryId },
-      });
+    const logEntry = await prisma.logEntry.findUnique({
+      where: { id: logEntryId },
+    });
 
-      if (!logEntry) {
-        return res.status(404).json({ error: "Log entry not found" });
-      }
-
-      if (logEntry.isPrivate) {
-        if (!req.user?.id || logEntry.userId !== req.user.id) {
-          return res.status(403).json({
-            error: "You don't have permission to access this log entry",
-          });
-        }
-      }
-
-      const forecastData = await prisma.forecastA.findFirst({
-        where: {
-          regionId: logEntry.regionId || "",
-          date: logEntry.date,
-        },
-      });
-
-      const result = {
-        ...logEntry,
-        forecast: forecastData || null,
-      };
-
-      return res.json(result);
-    } catch (error) {
-      console.error("Error fetching log entry:", error);
-      return res.status(500).json({ error: "Failed to fetch log entry" });
+    if (!logEntry) {
+      return res.status(404).json({ error: "Log entry not found" });
     }
+
+    if (logEntry.isPrivate) {
+      if (!req.user?.id || logEntry.userId !== req.user.id) {
+        return res.status(403).json({
+          error: "You don't have permission to access this log entry",
+        });
+      }
+    }
+
+    const forecastData = await prisma.forecastA.findFirst({
+      where: {
+        regionId: logEntry.regionId || "",
+        date: logEntry.date,
+      },
+    });
+
+    const result = {
+      ...logEntry,
+      forecast: forecastData || null,
+    };
+
+    return res.json(result);
+  } catch (error) {
+    console.error("Error fetching log entry:", error);
+    return res.status(500).json({ error: "Failed to fetch log entry" });
   }
-);
+});
 
 export default router;
