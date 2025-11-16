@@ -33,6 +33,7 @@ import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { BasicSelect, BasicOption } from "@/app/components/ui/basicselect";
 import { useRouter } from "next/navigation";
+import api from "@/app/lib/api-client";
 import { AlertConfiguration } from "@/app/components/alerts/AlertConfiguration";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import { Slider } from "@/app/components/ui/slider";
@@ -969,19 +970,17 @@ function AlertFormFooter() {
                 : new Date().toISOString(),
         };
 
-        const response = await fetch("/api/alerts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiData),
-        });
-
-        if (!response.ok) {
+        try {
+          await api.createAlert(apiData);
+          toast.success("Alert saved successfully");
+          // Invalidate alerts cache to refresh the list
+          queryClient.invalidateQueries({ queryKey: ["alerts"] });
+          router.push("/alerts");
+        } catch (error: any) {
           let errorMessage = "Failed to create alert";
           let errorDetails = "";
           try {
-            const errorData = await response.json();
+            const errorData = error.response?.data || error;
             console.error("Alert creation error:", errorData);
 
             // Handle Zod validation errors
@@ -1015,13 +1014,7 @@ function AlertFormFooter() {
             console.error("Failed to parse error response:", e);
           }
           toast.error(`${errorMessage}${errorDetails}`);
-          return;
         }
-
-        toast.success("Alert saved successfully");
-        // Invalidate alerts cache to refresh the list
-        queryClient.invalidateQueries({ queryKey: ["alerts"] });
-        router.push("/alerts");
       }
     } catch (error) {
       console.error("Error saving alert:", error);

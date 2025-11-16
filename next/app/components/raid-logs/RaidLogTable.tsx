@@ -52,6 +52,7 @@ import {
 import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { MediaModal } from "@/app/components/raid-logs/MediaModal";
+import api from "@/app/lib/api-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -427,27 +428,7 @@ export default function RaidLogTable({
   // Update the delete mutation with better error handling
   const deleteMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      try {
-        const response = await fetch(`/api/raid-logs?id=${entryId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to delete log entry");
-        }
-
-        return response.json();
-      } catch (error) {
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        throw new Error("Failed to delete log entry");
-      }
+      return api.deleteRaidLog(entryId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raidLogs"] });

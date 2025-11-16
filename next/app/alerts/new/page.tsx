@@ -6,6 +6,7 @@ import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useSession } from "next-auth/react";
 import { LogEntry } from "@/app/types/raidlogs";
+import api from "@/app/lib/api-client";
 
 export default function NewAlertPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,13 +29,8 @@ export default function NewAlertPage() {
     // Fetch log entries when component mounts
     const fetchLogEntries = async () => {
       try {
-        const response = await fetch("/api/logs");
-        if (response.ok) {
-          const data = await response.json();
-          setLogEntries(data);
-        } else {
-          console.error("Failed to fetch log entries");
-        }
+        const data = await api.getLogs();
+        setLogEntries(data);
       } catch (error) {
         console.error("Error fetching log entries:", error);
       } finally {

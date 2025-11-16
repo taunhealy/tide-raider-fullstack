@@ -7,15 +7,13 @@ import { MapPin } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import type { LogEntry } from "@/app/types/raidlogs";
 import { Skeleton } from "@/app/components/ui/skeleton";
+import api from "@/app/lib/api-client";
 
 export default function RecentRaidLogs() {
   const { data, isLoading } = useQuery({
     queryKey: ["recentRaidLogs"],
     queryFn: async () => {
-      const res = await fetch(`/api/raid-logs?limit=3&page=1`);
-      if (!res.ok) throw new Error("Failed to fetch logs");
-      const data = await res.json();
-      return data;
+      return api.getRaidLogs({ limit: 3, page: 1 });
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,

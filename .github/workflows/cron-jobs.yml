@@ -1,0 +1,51 @@
+name: Daily Alert Cron Jobs
+
+on:
+  schedule:
+    # 5am UTC (covers Europe/Africa)
+    - cron: "0 5 * * *"
+    # 5am EST (10am UTC) - US East Coast
+    - cron: "0 10 * * *"
+    # 5am PST (1pm UTC) - US West Coast
+    - cron: "0 13 * * *"
+    # 5am AEST (7pm UTC previous day) - Australia
+    - cron: "0 19 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  fetch-and-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Timezone
+        id: timezone
+        run: |
+          case "${{ github.event.schedule }}" in
+            "0 5 * * *")
+              echo "timezone=UTC" >> $GITHUB_OUTPUT
+              ;;
+            "0 10 * * *")
+              echo "timezone=America/New_York" >> $GITHUB_OUTPUT
+              ;;
+            "0 13 * * *")
+              echo "timezone=America/Los_Angeles" >> $GITHUB_OUTPUT
+              ;;
+            "0 19 * * *")
+              echo "timezone=Australia/Sydney" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "timezone=UTC" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Trigger Cron Job
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL || 'https://tide-raider-backend.fly.dev' }}
+        run: |
+          echo "Triggering cron job for timezone: ${{ steps.timezone.outputs.timezone }}"
+          curl -X POST $BACKEND_URL/api/cron/fetch-and-alert \
+            -H "Content-Type: application/json" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            -d "{\"timezone\": \"${{ steps.timezone.outputs.timezone }}\"}" \
+            -w "\nHTTP Status: %{http_code}\n" \
+            --fail-with-body

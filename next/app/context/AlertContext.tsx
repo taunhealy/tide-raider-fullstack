@@ -17,6 +17,7 @@ import {
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { BeachDetails, ForecastProperty } from "../types/alerts";
+import api from "@/app/lib/api-client";
 
 // Use Prisma's type instead:
 type CreateAlertInput = Prisma.AlertCreateInput;
@@ -191,11 +192,7 @@ export function AlertProvider({
   }, [beachError]);
 
   const createAlert = useMutation({
-    mutationFn: (data: Prisma.AlertCreateInput) =>
-      fetch("/api/alerts", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }).then((r) => r.json()),
+    mutationFn: (data: Prisma.AlertCreateInput) => api.createAlert(data),
     onSuccess: () => {
       toast.success("Alert created");
       onSaved?.();
@@ -204,11 +201,10 @@ export function AlertProvider({
   });
 
   const updateAlert = useMutation({
-    mutationFn: (data: Prisma.AlertUpdateInput) =>
-      fetch(`/api/alerts/${data.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      }).then((r) => r.json()),
+    mutationFn: (data: Prisma.AlertUpdateInput) => {
+      if (!data.id) throw new Error("Alert ID is required");
+      return api.updateAlert(data.id as string, data);
+    },
   });
 
   return (

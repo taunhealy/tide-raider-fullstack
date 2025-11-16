@@ -7,27 +7,23 @@ import {
   RaidLogResponse as RaidLogsResponse,
 } from "@/app/types/raidlogs";
 
+import api from "@/app/lib/api-client";
+
 async function fetchRaidLogs(
   filters: Partial<FilterConfig>,
   isPrivate?: boolean,
   userId?: string
 ): Promise<RaidLogsResponse> {
-  const params = new URLSearchParams();
-
-  if (filters.beaches?.length)
-    params.append("beaches", filters.beaches.join(","));
-  if (filters.regions?.length)
-    params.append("regions", filters.regions.join(","));
-  if (filters.countries?.length)
-    params.append("countries", filters.countries.join(","));
-  if (filters.minRating !== null)
-    params.append("minRating", filters.minRating?.toString() || "");
-  if (isPrivate !== undefined) params.append("isPrivate", isPrivate.toString());
-  if (userId) params.append("userId", userId);
-
-  const response = await fetch(`/api/raid-logs?${params.toString()}`);
-  if (!response.ok) throw new Error("Failed to fetch raid logs");
-  return response.json();
+  return api.getRaidLogs({
+    beaches: filters.beaches as string[],
+    regions: filters.regions as string[],
+    countries: filters.countries as string[],
+    minRating: filters.minRating ?? undefined,
+    isPrivate: isPrivate,
+    userId: userId,
+    page: filters.page ?? 1,
+    limit: filters.limit ?? 50,
+  });
 }
 
 export function useRaidLogs(
@@ -79,13 +75,7 @@ export function useRaidLogs(
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/raid-logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create raid log");
-      return response.json();
+      return api.createRaidLog(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["raidLogs"] });

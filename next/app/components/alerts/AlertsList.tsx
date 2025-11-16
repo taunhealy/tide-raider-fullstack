@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import api from "@/app/lib/api-client";
 
 import { Alert, AlertProperty, NotificationMethod } from "@/app/types/alerts";
 import { AlertType } from "@prisma/client";
@@ -42,11 +43,7 @@ export function AlertsList() {
   } = useQuery<Alert[], Error>({
     queryKey: ["alerts"],
     queryFn: async () => {
-      const response = await fetch(
-        "/api/alerts?include=logEntry.forecast,logEntry.beach,beach"
-      );
-      if (!response.ok) throw new Error("Failed to fetch alerts");
-      return response.json();
+      return api.getAlerts();
     },
     staleTime: 0, // Always consider data stale to allow refetching
     refetchOnWindowFocus: true, // Refetch when window regains focus
@@ -80,14 +77,7 @@ export function AlertsList() {
     { alertId: string; active: boolean }
   >({
     mutationFn: async ({ alertId, active }) => {
-      const response = await fetch(`/api/alerts/${alertId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update alert");
-      }
+      return api.patchAlert(alertId, { active });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] });

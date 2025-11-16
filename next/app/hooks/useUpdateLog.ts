@@ -3,6 +3,7 @@ import { Beach } from "@/app/types/beaches";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import api from "@/app/lib/api-client";
 
 export function useUpdateLog() {
   const queryClient = useQueryClient();
@@ -46,20 +47,7 @@ export function useUpdateLog() {
         forecastId: data.forecastData?.id || null,
       };
 
-      const response = await fetch("/api/raid-logs", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin",
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update log entry");
-      }
-      return response.json();
+      return api.updateRaidLog(payload);
     },
     onSuccess: (_, variables) => {
       // Invalidate all log-related queries to ensure fresh data
