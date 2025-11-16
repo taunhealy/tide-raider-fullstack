@@ -18,7 +18,7 @@ export default function NotificationBadge() {
   const fetchNotificationCount = async () => {
     try {
       const data = await api.getNotificationCount();
-      setCount(data.count);
+        setCount(data.count);
     } catch (error) {
       console.error("Failed to fetch notification count:", error);
     }
