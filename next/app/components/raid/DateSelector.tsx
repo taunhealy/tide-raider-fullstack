@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/app/lib/utils";
 
 interface DateOption {
@@ -20,8 +20,16 @@ export default function DateSelector({
   onDateSelect,
   className,
 }: DateSelectorProps) {
+  const [mounted, setMounted] = useState(false);
+
   // Generate date options (Today, Tomorrow, Day After, etc.)
+  // Only calculate on client to avoid hydration mismatches
   const dateOptions = useMemo(() => {
+    if (!mounted) {
+      // Return empty array during SSR to prevent hydration mismatch
+      return [];
+    }
+
     const options: DateOption[] = [];
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
@@ -29,7 +37,7 @@ export default function DateSelector({
     // Generate up to 7 days of options
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
-      date.setDate(date.getDate() + i);
+      date.setUTCDate(today.getUTCDate() + i);
       const dateStr = date.toISOString().split("T")[0];
 
       let label: string;
@@ -39,9 +47,16 @@ export default function DateSelector({
         label = "Tomorrow";
       } else {
         // Format as "Mon, Nov 18" or "Wed, Nov 20"
-        const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
-        const monthName = date.toLocaleDateString("en-US", { month: "short" });
-        const day = date.getDate();
+        // Use UTC methods to ensure consistency
+        const dayName = date.toLocaleDateString("en-US", {
+          weekday: "short",
+          timeZone: "UTC",
+        });
+        const monthName = date.toLocaleDateString("en-US", {
+          month: "short",
+          timeZone: "UTC",
+        });
+        const day = date.getUTCDate();
         label = `${dayName}, ${monthName} ${day}`;
       }
 
@@ -53,10 +68,34 @@ export default function DateSelector({
     }
 
     return options;
+  }, [mounted]);
+
+  // Set mounted to true after client-side hydration
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Default to today if no date selected
   const activeDate = selectedDate || dateOptions[0]?.value || null;
+
+  // Show placeholder during SSR to prevent layout shift
+  if (!mounted || dateOptions.length === 0) {
+    return (
+      <div className={cn("flex flex-wrap gap-2", className)}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div
+            key={i}
+            className={cn(
+              "px-3 py-1.5 text-sm rounded-full border border-gray-200 bg-white animate-pulse",
+              i === 1 && "w-[60px]",
+              i === 2 && "w-[80px]",
+              i > 2 && "w-[100px]"
+            )}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>

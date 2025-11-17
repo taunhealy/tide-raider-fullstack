@@ -1,10 +1,11 @@
 "use client";
 
 // components/sidebar/WeatherForecastWidget.tsx
+import { useMemo, useEffect } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
 
 const LoadingState = () => (
@@ -24,23 +25,160 @@ const NoDataState = () => (
 );
 
 export default function WeatherForecastWidget() {
+  const queryClient = useQueryClient();
   const {
-    filters: { regionId },
+    filters: { regionId, forecastDate },
   } = useBeachFilters();
 
-  const { data: forecastData, isLoading } = useQuery({
-    queryKey: ["forecast", regionId],
-    queryFn: () => api.getForecast(regionId!),
-    enabled: !!regionId,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  // Normalize date - use today's date if no date is selected
+  const normalizedDate = useMemo(() => {
+    if (forecastDate) {
+      return forecastDate;
+    }
+    // Default to today's date
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    return today.toISOString().split("T")[0];
+  }, [forecastDate]);
+
+  // Debug: Log when normalizedDate changes
+  useEffect(() => {
+    console.log(
+      "[WeatherForecastWidget] normalizedDate changed:",
+      normalizedDate
+    );
+    console.log("[WeatherForecastWidget] regionId:", regionId);
+    console.log(
+      "[WeatherForecastWidget] Query enabled:",
+      !!regionId && !!normalizedDate
+    );
+  }, [normalizedDate, regionId]);
+
+  // Invalidate and refetch when date changes
+  useEffect(() => {
+    if (regionId && normalizedDate) {
+      console.log("[WeatherForecastWidget] Date changed, invalidating query:", {
+        regionId,
+        normalizedDate,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["forecast", regionId],
+      });
+    }
+  }, [regionId, normalizedDate, queryClient]);
+
+  const queryEnabled = !!regionId && !!normalizedDate;
+
+  const {
+    data: forecastData,
+    isLoading,
+    error,
+    isFetching,
+  } = useQuery({
+    queryKey: ["forecast", regionId, normalizedDate],
+    queryFn: async () => {
+      console.log(
+        "[WeatherForecastWidget] ⚡ Query function called - Fetching forecast:",
+        {
+          regionId,
+          normalizedDate,
+          url: `/api/forecast?regionId=${regionId}&forecastDate=${normalizedDate}`,
+        }
+      );
+      try {
+        const result = await api.getForecast(regionId!, normalizedDate);
+        console.log(
+          "[WeatherForecastWidget] ✅ Forecast data received:",
+          result
+        );
+        return result;
+      } catch (err) {
+        console.error(
+          "[WeatherForecastWidget] ❌ Error fetching forecast:",
+          err
+        );
+        throw err;
+      }
+    },
+    enabled: queryEnabled,
+    staleTime: 0, // Always refetch when query key changes (date change)
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Refetch when component mounts with new date
+    gcTime: 0, // Don't cache - always fetch fresh data
   });
+
+  // Debug: Log query state
+  useEffect(() => {
+    console.log("[WeatherForecastWidget] Query state:", {
+      enabled: queryEnabled,
+      isLoading,
+      isFetching,
+      hasData: !!forecastData,
+      hasError: !!error,
+      regionId,
+      normalizedDate,
+    });
+  }, [
+    queryEnabled,
+    isLoading,
+    isFetching,
+    forecastData,
+    error,
+    regionId,
+    normalizedDate,
+  ]);
+
+  // Determine the title based on selected date
+  const getForecastTitle = () => {
+    if (!forecastDate) {
+      return "TODAY'S FORECAST";
+    }
+
+    // Parse the selected date
+    const [year, month, day] = forecastDate.split("-").map(Number);
+    const selectedDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+
+    // Get today's date
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    // Get tomorrow's date
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+    // Compare dates (ignoring time)
+    const selectedTime = selectedDate.getTime();
+    const todayTime = today.getTime();
+    const tomorrowTime = tomorrow.getTime();
+
+    if (selectedTime === todayTime) {
+      return "TODAY'S FORECAST";
+    }
+
+    if (selectedTime === tomorrowTime) {
+      return "TOMORROW'S FORECAST";
+    }
+
+    // Format as "MON, NOV 18 FORECAST"
+    const dayName = selectedDate
+      .toLocaleDateString("en-US", { weekday: "short" })
+      .toUpperCase();
+    const monthName = selectedDate
+      .toLocaleDateString("en-US", { month: "short" })
+      .toUpperCase();
+    const dayNum = selectedDate.getUTCDate();
+    return `${dayName}, ${monthName} ${dayNum} FORECAST`;
+  };
 
   const getWidgetContent = () => {
     if (!regionId) {
       return "Awaiting region selection";
     }
-    if (isLoading) {
+    if (error) {
+      console.error("[WeatherForecastWidget] Error state:", error);
+      return `Error: ${error instanceof Error ? error.message : "Failed to load forecast"}`;
+    }
+    if (isLoading || isFetching) {
       return <LoadingSpinner />;
     }
     if (!forecastData) {
@@ -51,7 +189,9 @@ export default function WeatherForecastWidget() {
 
   // Fix: Only show status message if there's an error condition
   const statusMessage =
-    !regionId || isLoading || !forecastData ? getWidgetContent() : null;
+    !regionId || isLoading || isFetching || !forecastData || error
+      ? getWidgetContent()
+      : null;
 
   return (
     <div
@@ -70,7 +210,7 @@ export default function WeatherForecastWidget() {
           <h3
             className={`font-primary font-bold text-lg md:text-xl text-white tracking-wider ${isLoading ? "animate-pulse" : ""}`}
           >
-            {"TODAY'S FORECAST"}
+            {getForecastTitle()}
           </h3>
         </div>
         <div className="flex items-center justify-end">

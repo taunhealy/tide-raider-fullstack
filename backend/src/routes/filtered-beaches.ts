@@ -205,29 +205,55 @@ router.get(
         date: targetDate.toISOString(),
       });
 
-      // If no forecast exists and we're looking for today, try to fetch it
-      // For future dates, we don't scrape - just return null if not in DB
+      // If no forecast exists for the target date, try to scrape it
+      // The scraper fetches ALL available forecast days (today, tomorrow, etc.) in one run
       if (!forecast) {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
-        const isToday = targetDate.getTime() === today.getTime();
+        try {
+          console.log(
+            `[filtered-beaches] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+          );
 
-        if (isToday) {
-          try {
-            const fetchedForecast = await getLatestConditions(regionId, false);
-            if (fetchedForecast) {
-              forecast = {
-                windSpeed: fetchedForecast.windSpeed,
-                windDirection: fetchedForecast.windDirection,
-                swellHeight: fetchedForecast.swellHeight,
-                swellPeriod: fetchedForecast.swellPeriod,
-                swellDirection: fetchedForecast.swellDirection,
+          // Force a scrape - this will fetch ALL available forecast days and store them
+          // forceRefresh=true ensures we scrape even if today's data already exists
+          const scrapedForecast = await getLatestConditions(regionId, true);
+
+          if (scrapedForecast) {
+            console.log(
+              `[filtered-beaches] ✅ Scrape completed, querying for target date: ${targetDate.toISOString().split("T")[0]}`
+            );
+
+            // After scraping, query again for the target date (scraper stores all days)
+            const updatedForecast = await prisma.forecastA.findFirst({
+              where: {
+                regionId,
                 date: targetDate,
-              };
+              },
+              select: {
+                windSpeed: true,
+                windDirection: true,
+                swellHeight: true,
+                swellPeriod: true,
+                swellDirection: true,
+                date: true,
+              },
+            });
+
+            if (updatedForecast) {
+              forecast = updatedForecast;
+              console.log(
+                `[filtered-beaches] ✅ Found forecast for ${targetDate.toISOString().split("T")[0]} after scrape`
+              );
+            } else {
+              console.log(
+                `[filtered-beaches] ⚠️ Still no forecast for ${targetDate.toISOString().split("T")[0]} after scrape - may not be available on source page`
+              );
             }
-          } catch (error) {
-            console.error("Failed to fetch forecast:", error);
           }
+        } catch (error) {
+          console.error(
+            `[filtered-beaches] ❌ Failed to scrape forecast for ${targetDate.toISOString().split("T")[0]}:`,
+            error
+          );
         }
       }
 

@@ -252,10 +252,13 @@ export const api = {
   },
 
   // Forecast
-  getForecast: async (regionId: string) => {
-    return apiRequest<any>(
-      `/api/forecast?regionId=${encodeURIComponent(regionId)}`
-    );
+  getForecast: async (regionId: string, forecastDate?: string) => {
+    const params = new URLSearchParams();
+    params.append("regionId", regionId);
+    if (forecastDate) {
+      params.append("forecastDate", forecastDate);
+    }
+    return apiRequest<any>(`/api/forecast?${params.toString()}`);
   },
 
   // Filtered Beaches
