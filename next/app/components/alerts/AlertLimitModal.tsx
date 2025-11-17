@@ -27,8 +27,8 @@ export function AlertLimitModal({ isOpen, onClose }: AlertLimitModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md bg-white">
+        <DialogHeader className=" bg-white">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100">
             <svg
               className="h-6 w-6 text-yellow-600"

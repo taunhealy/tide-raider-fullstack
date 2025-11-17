@@ -1,80 +1,45 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { SubscriptionStatus } from "@/app/types/subscription";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+
+/**
+ * POST /api/webhooks/paypal
+ * Proxy PayPal webhook events to the backend
+ */
 export async function POST(request: Request) {
-  const payload = await request.json();
-  const webhookEvent = payload.event_type;
-
   try {
-    // Log all events for monitoring
-    console.log("PayPal Webhook Event:", webhookEvent, payload.resource.id);
+    const payload = await request.json();
 
-    // Handle subscription-specific events
-    if (webhookEvent.startsWith("BILLING.SUBSCRIPTION.")) {
-      const subscriptionId = payload.resource.id;
+    // Forward the webhook to the backend
+    const response = await fetch(`${BACKEND_URL}/api/paypal/webhook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-      switch (webhookEvent) {
-        case "BILLING.SUBSCRIPTION.ACTIVATED":
-        case "BILLING.SUBSCRIPTION.CREATED":
-          await handleSubscriptionActive(subscriptionId);
-          break;
-        case "BILLING.SUBSCRIPTION.CANCELLED":
-        case "BILLING.SUBSCRIPTION.EXPIRED":
-          await handleSubscriptionEnded(
-            subscriptionId,
-            webhookEvent === "BILLING.SUBSCRIPTION.EXPIRED"
-              ? SubscriptionStatus.EXPIRED
-              : SubscriptionStatus.CANCELLED
-          );
-          break;
-        case "BILLING.SUBSCRIPTION.SUSPENDED":
-          await handleSubscriptionSuspended(subscriptionId);
-          break;
-        // Log other subscription events
-        default:
-          console.log("Unhandled subscription event:", webhookEvent);
-      }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Backend webhook error:", errorData);
+      return NextResponse.json(
+        { error: "Webhook handler failed", details: errorData },
+        { status: response.status }
+      );
     }
 
-    return NextResponse.json({ received: true });
+    const result = await response.json();
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("Webhook proxy error:", error);
     return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 400 }
+      {
+        error: "Webhook handler failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
     );
   }
-}
-
-async function handleSubscriptionActive(subscriptionId: string) {
-  await prisma.user.updateMany({
-    where: { paypalSubscriptionId: subscriptionId },
-    data: {
-      subscriptionStatus: SubscriptionStatus.ACTIVE,
-      hasActiveTrial: false,
-      trialEndDate: null,
-    },
-  });
-}
-
-async function handleSubscriptionEnded(
-  subscriptionId: string,
-  status: SubscriptionStatus
-) {
-  await prisma.user.updateMany({
-    where: { paypalSubscriptionId: subscriptionId },
-    data: {
-      subscriptionStatus: status,
-    },
-  });
-}
-
-async function handleSubscriptionSuspended(subscriptionId: string) {
-  await prisma.user.updateMany({
-    where: { paypalSubscriptionId: subscriptionId },
-    data: {
-      subscriptionStatus: SubscriptionStatus.SUSPENDED,
-    },
-  });
 }

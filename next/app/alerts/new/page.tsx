@@ -39,9 +39,15 @@ export default function NewAlertPage() {
 
     const checkAlertLimit = async () => {
       try {
-        // Check if user is premium
+        // Check if user is premium - refresh auth state first if needed
         const isUserPremium =
           session?.user?.isSubscribed || session?.user?.hasActiveTrial;
+
+        console.log("[NewAlertPage] Premium check:", {
+          isSubscribed: session?.user?.isSubscribed,
+          hasActiveTrial: session?.user?.hasActiveTrial,
+          isUserPremium,
+        });
 
         if (isUserPremium) {
           setIsPremium(true);
@@ -117,7 +123,34 @@ export default function NewAlertPage() {
     return () => {
       mounted = false;
     };
-  }, [authStatus, session?.user, hasFetchedLogs, router, alertLimitReached]);
+  }, [
+    authStatus,
+    session?.user?.isSubscribed,
+    session?.user?.hasActiveTrial,
+    hasFetchedLogs,
+    router,
+  ]);
+
+  // Listen for auth refresh events (triggered after subscription sync)
+  useEffect(() => {
+    const handleAuthRefresh = () => {
+      console.log("[NewAlertPage] Auth refresh event received, refetching...");
+      // Force re-check alert limit when auth state refreshes
+      setHasFetchedLogs(false);
+    };
+
+    window.addEventListener("auth-refresh", handleAuthRefresh);
+    return () => {
+      window.removeEventListener("auth-refresh", handleAuthRefresh);
+    };
+  }, []);
+
+  // Also refetch when session subscription status changes
+  useEffect(() => {
+    if (session?.user) {
+      setHasFetchedLogs(false);
+    }
+  }, [session?.user?.isSubscribed, session?.user?.hasActiveTrial]);
 
   // Handle log entry selection from child component
   const handleLogEntrySelect = (logEntry: LogEntry | null) => {

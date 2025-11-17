@@ -4,7 +4,7 @@ import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { useHandleSubscribe } from "@/app/hooks/useHandleSubscribe";
 import { useState, useEffect, useRef, memo } from "react";
-import { InfoIcon, Eye, ChevronDown } from "lucide-react";
+import { InfoIcon, Eye, ChevronDown, Lock } from "lucide-react";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import GoogleMapsButton from "@/app/components/GoogleMapsButton";
@@ -84,9 +84,28 @@ const BeachCard = memo(function BeachCard({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isSubscribed } = useSubscription();
+  const { isSubscribed, hasActiveTrial } = useSubscription();
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
+
+  // Check if beach is 5-star (score >= 10) and user is not premium
+  // Ensure score is a number for comparison
+  const numericScore = score !== null ? Number(score) : null;
+  const isFiveStar = numericScore !== null && numericScore >= 10;
+  const isPremium = isSubscribed || hasActiveTrial;
+  const isLocked = isFiveStar && !isPremium;
+
+  // Debug logging for premium gating
+  console.log(`[BeachCard] ${beach.name} - Premium gating check:`, {
+    score,
+    numericScore,
+    scoreType: typeof score,
+    isFiveStar,
+    isSubscribed,
+    hasActiveTrial,
+    isPremium,
+    isLocked,
+  });
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -251,22 +270,37 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
-                      {beach.name}
-                      {forecastData?.windSpeed &&
-                        forecastData.windSpeed > 25 && (
-                          <span title="Strong winds">🌪️</span>
-                        )}
-                      {beach.sharkAttack?.hasAttack && (
-                        <span title="At least 1 shark attack reported">
-                          {beach.sharkAttack.incidents?.some(
-                            (incident) =>
-                              new Date(incident.date).getTime() >
-                              new Date().getTime() -
-                                5 * 365 * 24 * 60 * 60 * 1000
-                          )
-                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
-                            : "🦈"}
-                        </span>
+                      {isLocked ? (
+                        <>
+                          <Lock className="w-4 h-4 text-gray-500" />
+                          <Link
+                            href="/checkout"
+                            className="text-[var(--color-tertiary)] hover:text-[var(--color-tertiary)]/80 transition-colors font-primary text-sm font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Subscribe to Unlock
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          {beach.name}
+                          {forecastData?.windSpeed &&
+                            forecastData.windSpeed > 25 && (
+                              <span title="Strong winds">🌪️</span>
+                            )}
+                          {beach.sharkAttack?.hasAttack && (
+                            <span title="At least 1 shark attack reported">
+                              {beach.sharkAttack.incidents?.some(
+                                (incident) =>
+                                  new Date(incident.date).getTime() >
+                                  new Date().getTime() -
+                                    5 * 365 * 24 * 60 * 60 * 1000
+                              )
+                                ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                                : "🦈"}
+                            </span>
+                          )}
+                        </>
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
@@ -548,22 +582,37 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
-                      {beach.name}
-                      {forecastData?.windSpeed &&
-                        forecastData.windSpeed > 25 && (
-                          <span title="Strong winds">🌪️</span>
-                        )}
-                      {beach.sharkAttack?.hasAttack && (
-                        <span title="At least 1 shark attack reported">
-                          {beach.sharkAttack.incidents?.some(
-                            (incident) =>
-                              new Date(incident.date).getTime() >
-                              new Date().getTime() -
-                                5 * 365 * 24 * 60 * 60 * 1000
-                          )
-                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
-                            : "🦈"}
-                        </span>
+                      {isLocked ? (
+                        <>
+                          <Lock className="w-4 h-4 text-gray-500" />
+                          <Link
+                            href="/checkout"
+                            className="text-[var(--color-tertiary)] hover:text-[var(--color-tertiary)]/80 transition-colors font-primary text-sm font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Subscribe to Unlock
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          {beach.name}
+                          {forecastData?.windSpeed &&
+                            forecastData.windSpeed > 25 && (
+                              <span title="Strong winds">🌪️</span>
+                            )}
+                          {beach.sharkAttack?.hasAttack && (
+                            <span title="At least 1 shark attack reported">
+                              {beach.sharkAttack.incidents?.some(
+                                (incident) =>
+                                  new Date(incident.date).getTime() >
+                                  new Date().getTime() -
+                                    5 * 365 * 24 * 60 * 60 * 1000
+                              )
+                                ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                                : "🦈"}
+                            </span>
+                          )}
+                        </>
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">

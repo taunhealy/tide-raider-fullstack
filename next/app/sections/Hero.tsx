@@ -66,14 +66,15 @@ export default function HeroSection({ data }: HeroProps) {
     {
       id: 1,
       title: "Raid",
-      description: "Quickly reveal today's top rated surf breaks.",
+      description: "Swiftly reveal top rated surf breaks.",
       icon: "raid-icon",
       link: "/raid",
     },
     {
       id: 2,
       title: "Alerts",
-      description: "Set custom alerts to specific conditions.",
+      description:
+        "Set alerts for when it's good, or to your custom preferences.",
       icon: "alerts-icon",
       link: "/alerts",
     },
@@ -86,8 +87,9 @@ export default function HeroSection({ data }: HeroProps) {
     },
     {
       id: 4,
-      title: "Gallery",
-      description: "Explore, capture and share your magic.",
+      title: "Log Gallery",
+      description:
+        "Explore new spots, capture good memories and share your photos.",
       icon: "gallery-icon",
       link: "/raidlogs",
     },

@@ -98,15 +98,56 @@ export function useBackendAuth() {
       }
     };
 
+    // Listen for custom refresh event (triggered after subscription sync)
+    const handleRefresh = () => {
+      if (mounted) {
+        fetchUser();
+      }
+    };
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("auth-refresh", handleRefresh);
 
     return () => {
       mounted = false;
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("auth-refresh", handleRefresh);
     };
   }, []);
+
+  // Expose refetch function
+  const refetch = async () => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAuthState({
+          user: data.user,
+          loading: false,
+          error: null,
+        });
+      } else {
+        setAuthState({
+          user: null,
+          loading: false,
+          error: null,
+        });
+      }
+    } catch (error) {
+      console.error("[useBackendAuth] Refetch error:", error);
+      setAuthState({
+        user: null,
+        loading: false,
+        error: error as Error,
+      });
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -148,5 +189,6 @@ export function useBackendAuth() {
         ? "authenticated"
         : "unauthenticated",
     signOut,
+    refetch,
   };
 }

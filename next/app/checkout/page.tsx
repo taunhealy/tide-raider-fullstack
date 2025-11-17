@@ -132,27 +132,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-6 w-6 text-green-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-900 font-medium">Priority Support</p>
-                <p className="text-gray-600 text-sm">
-                  Get help when you need it most
-                </p>
-              </div>
+              <div className="flex-shrink-0"></div>
             </div>
           </div>
 

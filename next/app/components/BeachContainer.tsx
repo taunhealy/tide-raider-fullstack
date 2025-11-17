@@ -147,13 +147,17 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
                     // Check if score actually exists in the scores object, not just if it's 0
                     const hasScore = beach.id in beachScores;
-                    const scoreValue = hasScore ? score : null;
+                    const scoreValue = hasScore
+                      ? score !== null && score !== undefined
+                        ? Number(score)
+                        : null
+                      : null;
 
                     return (
                       <BeachCard
                         key={beach.id}
                         beach={beach}
-                        score={scoreValue ?? 0} // Pass null if no score exists, but default to 0 for display
+                        score={scoreValue} // Pass null if no score exists, or the numeric score
                         forecastData={beachForecastData} // Pass the regional forecast
                         isLoading={!hasScore && isLoading} // Only show loading if score doesn't exist
                       />

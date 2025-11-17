@@ -1,19 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
+  const [isSyncing, setIsSyncing] = useState(true);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Refresh user data to get updated subscription status
-    // The webhook should have updated the user's subscription
-    setTimeout(() => {
-      router.refresh();
-    }, 2000);
+    // Sync subscription status from PayPal immediately
+    const syncSubscription = async () => {
+      try {
+        setIsSyncing(true);
+        setSyncError(null);
+
+        // Call sync endpoint to check PayPal subscription status
+        const response = await fetch("/api/paypal/sync", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error || "Failed to sync subscription");
+        }
+
+        const data = await response.json();
+        console.log("[CheckoutSuccess] Subscription synced:", data);
+
+        // Force refresh auth state by triggering a custom event
+        // This will cause useBackendAuth to refetch
+        window.dispatchEvent(new Event("auth-refresh"));
+
+        // Also refresh the page data
+        router.refresh();
+
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          setIsSyncing(false);
+        }, 1000);
+      } catch (error) {
+        console.error("[CheckoutSuccess] Sync error:", error);
+        setSyncError(
+          error instanceof Error ? error.message : "Failed to sync subscription"
+        );
+        setIsSyncing(false);
+
+        // Still refresh after a delay even if sync fails
+        // The webhook might have already updated the status
+        setTimeout(() => {
+          router.refresh();
+        }, 2000);
+      }
+    };
+
+    syncSubscription();
   }, [router]);
 
   return (
@@ -37,11 +81,16 @@ export default function CheckoutSuccessPage() {
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Subscription Activated!
+            {isSyncing
+              ? "Activating Subscription..."
+              : "Subscription Activated!"}
           </h1>
           <p className="text-gray-600 mb-8">
-            Your premium subscription has been activated. You now have access to
-            unlimited alerts and all premium features.
+            {isSyncing
+              ? "Please wait while we activate your premium subscription..."
+              : syncError
+                ? `Subscription created, but sync failed: ${syncError}. The webhook will update your status shortly.`
+                : "Your premium subscription has been activated. You now have access to unlimited alerts and all premium features."}
           </p>
 
           <div className="space-y-4">
@@ -51,10 +100,7 @@ export default function CheckoutSuccessPage() {
               </Button>
             </Link>
             <Link href="/">
-              <Button
-                variant="outline"
-                className="w-full font-primary"
-              >
+              <Button variant="outline" className="w-full font-primary">
                 Back to Home
               </Button>
             </Link>
@@ -64,4 +110,3 @@ export default function CheckoutSuccessPage() {
     </div>
   );
 }
-

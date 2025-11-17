@@ -203,18 +203,18 @@ export default function WeatherForecastWidget() {
       }}
       data-forecast-widget
     >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-5 py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
+        <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)] flex-shrink min-w-0">
           <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
           <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
           <h3
-            className={`font-primary font-bold text-lg md:text-xl text-white tracking-wider ${isLoading ? "animate-pulse" : ""}`}
+            className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
           >
             {getForecastTitle()}
           </h3>
         </div>
-        <div className="flex items-center justify-end">
-          <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-4 py-1.5 rounded-[21px] text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)]">
+        <div className="flex items-center justify-end flex-shrink-0">
+          <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-3 sm:px-4 py-1.5 rounded-[21px] text-xs sm:text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)] whitespace-nowrap">
             8AM
           </div>
         </div>

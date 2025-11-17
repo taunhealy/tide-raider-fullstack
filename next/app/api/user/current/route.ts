@@ -27,8 +27,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Proxy to backend /api/auth/me which returns user data including subscription
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+    // Get user data from /api/auth/me
+    const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
         Cookie: `auth-token=${authToken}`,
@@ -37,21 +37,47 @@ export async function GET() {
       cache: "no-store",
     });
 
-    if (!response.ok) {
+    if (!userResponse.ok) {
       return NextResponse.json(
         { error: "Failed to fetch user data" },
-        { status: response.status }
+        { status: userResponse.status }
       );
     }
 
-    const data = await response.json();
+    const userData = await userResponse.json();
+
+    // Get subscription status from PayPal endpoint (more accurate)
+    const subscriptionResponse = await fetch(
+      `${BACKEND_URL}/api/paypal/subscription-status`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          Cookie: `auth-token=${authToken}`,
+        },
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
+
+    let subscriptionStatus = "INACTIVE";
+    let paypalSubscriptionId = null;
+
+    if (subscriptionResponse.ok) {
+      const subData = await subscriptionResponse.json();
+      subscriptionStatus = subData.subscriptionStatus || "INACTIVE";
+      paypalSubscriptionId = subData.paypalSubscriptionId || null;
+    } else {
+      // Fallback to isSubscribed from user data
+      subscriptionStatus = userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE";
+    }
 
     // Extract subscription-related fields from user object
     return NextResponse.json({
-      hasActiveTrial: data.user?.hasActiveTrial || false,
-      hasTrialEnded: data.user?.hasActiveTrial === false,
-      trialEndDate: data.user?.trialEndDate || null,
-      subscriptionStatus: data.user?.isSubscribed ? "ACTIVE" : "INACTIVE",
+      hasActiveTrial: userData.user?.hasActiveTrial || false,
+      hasTrialEnded: userData.user?.hasActiveTrial === false,
+      trialEndDate: userData.user?.trialEndDate || null,
+      subscriptionStatus: subscriptionStatus,
+      paypalSubscriptionId: paypalSubscriptionId,
     });
   } catch (error) {
     console.error("[user/current] Error:", error);

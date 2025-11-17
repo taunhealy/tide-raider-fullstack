@@ -83,6 +83,8 @@ export default function DashboardPage() {
     useSubscriptionDetails();
   const subscriptionData = subscriptionDetails;
   const { mutate } = useSubscriptionManagement();
+  const { refetch: refetchAuth } = useBackendAuth();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Add loading states
   const [loadingStates, setLoadingStates] = useState({
@@ -192,14 +194,83 @@ export default function DashboardPage() {
   const handleSubscriptionAction = async (
     action: "cancel" | "suspend" | "activate"
   ) => {
-    if (!subscriptionData?.id) return;
-    setLoadingStates((prev) => ({ ...prev, pause: true }));
+    setLoadingStates((prev) => ({
+      ...prev,
+      [action === "cancel" ? "unsubscribe" : "pause"]: true,
+    }));
     try {
-      await mutate({ action, subscriptionId: subscriptionData.id });
+      if (action === "cancel") {
+        const response = await fetch("/api/paypal/cancel", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to cancel subscription");
+        }
+        toast.success("Subscription cancelled successfully");
+      } else if (action === "suspend") {
+        const response = await fetch("/api/paypal/suspend", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to suspend subscription");
+        }
+        toast.success("Subscription suspended successfully");
+      }
+
+      // Refresh subscription data
+      await queryClient.invalidateQueries({
+        queryKey: ["subscriptionDetails"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["user", session?.user?.id],
+      });
+      window.dispatchEvent(new Event("auth-refresh"));
+      router.refresh();
     } catch (error) {
       console.error("Subscription action failed:", error);
+      toast.error(error instanceof Error ? error.message : "Action failed");
     } finally {
-      setLoadingStates((prev) => ({ ...prev, pause: false }));
+      setLoadingStates((prev) => ({
+        ...prev,
+        [action === "cancel" ? "unsubscribe" : "pause"]: false,
+      }));
+    }
+  };
+
+  const handleSyncSubscription = async () => {
+    setLoadingStates((prev) => ({ ...prev, subscribe: true }));
+    try {
+      const response = await fetch("/api/paypal/sync", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to sync subscription");
+      }
+
+      const data = await response.json();
+      toast.success(data.message || "Subscription synced successfully");
+
+      // Refresh subscription data and auth state
+      await queryClient.invalidateQueries({
+        queryKey: ["subscriptionDetails"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["user", session?.user?.id],
+      });
+      window.dispatchEvent(new Event("auth-refresh"));
+      router.refresh();
+    } catch (error) {
+      console.error("Sync failed:", error);
+      toast.error(error instanceof Error ? error.message : "Sync failed");
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }
   };
 
@@ -415,9 +486,20 @@ export default function DashboardPage() {
 
             {activeTab === "billing" && (
               <div className="space-y-4">
-                <h2 className="text-lg sm:text-xl font-semibold font-primary">
-                  Subscription Status
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg sm:text-xl font-semibold font-primary">
+                    Subscription Status
+                  </h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncSubscription}
+                    disabled={isSyncing}
+                    className="font-primary"
+                  >
+                    {isSyncing ? "Syncing..." : "Sync Status"}
+                  </Button>
+                </div>
                 {isLoadingDetails ? (
                   <div className="p-4 text-center font-primary">
                     Loading subscription details...
@@ -432,12 +514,15 @@ export default function DashboardPage() {
                             subscriptionData.status ===
                             SubscriptionStatus.ACTIVE
                               ? "bg-green-50 text-green-700"
-                              : subscriptionData.status === "suspended"
+                              : subscriptionData.status === "SUSPENDED"
                                 ? "bg-yellow-50 text-yellow-700"
-                                : "bg-gray-50 text-gray-700"
+                                : subscriptionData.status === "CANCELLED" ||
+                                    subscriptionData.status === "EXPIRED"
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-gray-50 text-gray-700"
                           }`}
                         >
-                          {subscriptionData.status}
+                          {subscriptionData.status || "INACTIVE"}
                         </span>
                       </div>
 
@@ -469,6 +554,29 @@ export default function DashboardPage() {
                           <Button
                             variant="outline"
                             className="w-full sm:w-auto font-primary text-[12px]"
+                            onClick={handleSyncSubscription}
+                            disabled={loadingStates.subscribe}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              />
+                            </svg>
+                            {loadingStates.subscribe
+                              ? "Syncing..."
+                              : "Sync Status"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-auto font-primary text-[12px]"
                             onClick={() => handleSubscriptionAction("suspend")}
                             disabled={loadingStates.pause}
                           >
@@ -493,12 +601,7 @@ export default function DashboardPage() {
                           <Button
                             variant="destructive"
                             className="w-full sm:w-auto font-primary text-[12px]"
-                            onClick={() =>
-                              mutate({
-                                action: "cancel",
-                                subscriptionId: subscriptionData?.id || "",
-                              })
-                            }
+                            onClick={() => handleSubscriptionAction("cancel")}
                             disabled={loadingStates.unsubscribe}
                           >
                             <svg
@@ -517,6 +620,43 @@ export default function DashboardPage() {
                             {loadingStates.unsubscribe
                               ? "Cancelling..."
                               : "Cancel Subscription"}
+                          </Button>
+                        </>
+                      ) : subscriptionData.status === "SUSPENDED" ||
+                        subscriptionData.status === "CANCELLED" ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-auto font-primary text-[12px]"
+                            onClick={handleSyncSubscription}
+                            disabled={loadingStates.subscribe}
+                          >
+                            <svg
+                              className="w-4 h-4 mr-2"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              />
+                            </svg>
+                            {loadingStates.subscribe
+                              ? "Syncing..."
+                              : "Sync Status"}
+                          </Button>
+                          <Button
+                            variant="default"
+                            className="w-full sm:w-auto font-primary"
+                            onClick={handleSubscribeWithLoading}
+                            disabled={loadingStates.subscribe}
+                          >
+                            {loadingStates.subscribe
+                              ? "Processing..."
+                              : "Resubscribe"}
                           </Button>
                         </>
                       ) : (

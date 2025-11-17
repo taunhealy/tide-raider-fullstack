@@ -13,11 +13,12 @@ export function useSubscriptionDetails() {
 
       return {
         status: data?.subscriptionStatus || SubscriptionStatus.INACTIVE,
-        id: data?.paypalSubscriptionId,
-        hasActiveTrial: data?.hasActiveTrial,
-        trialEndDate: data?.trialEndDate,
-        hasTrialEnded: data?.hasTrialEnded,
-        next_billing_time: data?.next_billing_time,
+        id: data?.paypalSubscriptionId || null,
+        paypalSubscriptionId: data?.paypalSubscriptionId || null,
+        hasActiveTrial: data?.hasActiveTrial || false,
+        trialEndDate: data?.trialEndDate || null,
+        hasTrialEnded: data?.hasTrialEnded || false,
+        next_billing_time: data?.next_billing_time || null,
       };
     },
     refetchOnWindowFocus: false,
