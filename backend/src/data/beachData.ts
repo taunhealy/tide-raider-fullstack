@@ -8681,7 +8681,7 @@ export const beachData: Beach[] = [
     continent: "Africa",
     countryId: "South Africa",
     regionId: "Western Cape",
-    location: "Overberg",
+    location: "",
     distanceFromCT: 220, // Approximate distance, please verify
     optimalWindDirections: ["W"],
     optimalSwellDirections: {
@@ -8725,7 +8725,7 @@ export const beachData: Beach[] = [
     continent: "Africa",
     countryId: "South Africa",
     regionId: "Western Cape",
-    location: "Boland and Southern Cape",
+    location: "",
     distanceFromCT: 220, // Approximate distance, please verify
     optimalWindDirections: ["WNW"],
     optimalSwellDirections: {

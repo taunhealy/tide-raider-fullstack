@@ -41,9 +41,14 @@ interface MediaGridProps {
     shapers?: { name: string; url?: string }[];
     beerSpots?: { name: string; url?: string }[];
   };
+  isLocked?: boolean; // If true, disable hover effects and hide video titles
 }
 
-function MediaGridBase({ videos = [], beach }: MediaGridProps) {
+function MediaGridBase({
+  videos = [],
+  beach,
+  isLocked = false,
+}: MediaGridProps) {
   // Fetch latest log entry for this beach
   // Only fetch if we don't have videos (to reduce unnecessary requests)
   // Use enabled flag to conditionally fetch
@@ -315,28 +320,51 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
             {beachVideos.map((video, index) => (
               <a
                 key={`video-${index}`}
-                href={video.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative aspect-video rounded-lg overflow-hidden group/card border border-[var(--color-border-light)] hover:border-[var(--color-border-medium)] transition-all duration-200"
+                href={isLocked ? undefined : video.url}
+                target={isLocked ? undefined : "_blank"}
+                rel={isLocked ? undefined : "noopener noreferrer"}
+                onClick={isLocked ? (e) => e.preventDefault() : undefined}
+                className={`relative aspect-video rounded-lg overflow-hidden border border-[var(--color-border-light)] transition-all duration-200 ${
+                  isLocked
+                    ? "cursor-not-allowed opacity-75"
+                    : "group/card hover:border-[var(--color-border-medium)] cursor-pointer"
+                }`}
               >
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition-all duration-300 group-hover/card:opacity-60 group-hover/card:blur-[1px] cursor-pointer"
+                  className={`absolute inset-0 bg-cover bg-center transition-all duration-300 ${
+                    isLocked
+                      ? ""
+                      : "group-hover/card:opacity-60 group-hover/card:blur-[1px]"
+                  }`}
                   style={{
                     backgroundImage: `url(${getVideoThumbnail(video.url, video.platform)})`,
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover/card:opacity-90" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-90 scale-95 group-hover/card:scale-100 group-hover/card:opacity-50 transition-all duration-300">
+                <div
+                  className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent ${
+                    isLocked
+                      ? "opacity-60"
+                      : "opacity-60 group-hover/card:opacity-90"
+                  }`}
+                />
+                <div
+                  className={`absolute inset-0 flex items-center justify-center ${
+                    isLocked
+                      ? "opacity-90 scale-95"
+                      : "opacity-90 scale-95 group-hover/card:scale-100 group-hover/card:opacity-50 transition-all duration-300"
+                  }`}
+                >
                   <div className="w-12 h-12 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center shadow-lg">
                     <VideoIcon className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-3.5 transform translate-y-[100%] group-hover/card:translate-y-0 transition-transform duration-300 ease-out">
-                  <h3 className="text-white text-sm font-medium font-primary line-clamp-2 drop-shadow-lg">
-                    {video.title}
-                  </h3>
-                </div>
+                {!isLocked && (
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5 transform translate-y-[100%] group-hover/card:translate-y-0 transition-transform duration-300 ease-out">
+                    <h3 className="text-white text-sm font-medium font-primary line-clamp-2 drop-shadow-lg">
+                      {video.title}
+                    </h3>
+                  </div>
+                )}
               </a>
             ))}
           </div>

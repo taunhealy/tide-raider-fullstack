@@ -1,4 +1,5 @@
 import { useSubscription } from "@/app/context/SubscriptionContext";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { getScoreDisplay } from "@/app/lib/scoreDisplay";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { getConditionReasons } from "@/app/lib/surfUtils";
@@ -84,7 +85,17 @@ const BeachCard = memo(function BeachCard({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isSubscribed, hasActiveTrial } = useSubscription();
+
+  // Use direct backend subscription check (more reliable than context)
+  const {
+    isSubscribed,
+    hasActiveTrial,
+    isPremium: directIsPremium,
+    subscriptionStatus,
+  } = useSubscriptionStatus();
+
+  // Fallback to context for session data
+  const { session } = useSubscription();
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
 
@@ -92,7 +103,7 @@ const BeachCard = memo(function BeachCard({
   // Ensure score is a number for comparison
   const numericScore = score !== null ? Number(score) : null;
   const isFiveStar = numericScore !== null && numericScore >= 10;
-  const isPremium = isSubscribed || hasActiveTrial;
+  const isPremium = directIsPremium; // Use direct backend check
   const isLocked = isFiveStar && !isPremium;
 
   // Debug logging for premium gating
@@ -105,6 +116,9 @@ const BeachCard = memo(function BeachCard({
     hasActiveTrial,
     isPremium,
     isLocked,
+    subscriptionStatus,
+    sessionUser: session?.user,
+    userId: session?.user?.id,
   });
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -272,10 +286,10 @@ const BeachCard = memo(function BeachCard({
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
                       {isLocked ? (
                         <>
-                          <Lock className="w-4 h-4 text-gray-500" />
+                          <Lock className="w-4 h-4 text-amber-700" />
                           <Link
                             href="/checkout"
-                            className="text-[var(--color-tertiary)] hover:text-[var(--color-tertiary)]/80 transition-colors font-primary text-sm font-medium"
+                            className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-sm font-medium"
                             onClick={(e) => e.stopPropagation()}
                           >
                             Subscribe to Unlock
@@ -528,6 +542,7 @@ const BeachCard = memo(function BeachCard({
                         },
                       }}
                       videos={beach.videos}
+                      isLocked={isLocked}
                     />
                   </ErrorBoundary>
                 </div>
@@ -584,10 +599,10 @@ const BeachCard = memo(function BeachCard({
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
                       {isLocked ? (
                         <>
-                          <Lock className="w-4 h-4 text-gray-500" />
+                          <Lock className="w-4 h-4 text-amber-700" />
                           <Link
                             href="/checkout"
-                            className="text-[var(--color-tertiary)] hover:text-[var(--color-tertiary)]/80 transition-colors font-primary text-sm font-medium"
+                            className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-sm font-medium"
                             onClick={(e) => e.stopPropagation()}
                           >
                             Subscribe to Unlock
@@ -874,6 +889,7 @@ const BeachCard = memo(function BeachCard({
                         },
                       }}
                       videos={beach.videos}
+                      isLocked={isLocked}
                     />
                   </ErrorBoundary>
                 </div>

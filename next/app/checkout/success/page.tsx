@@ -45,6 +45,14 @@ export default function CheckoutSuccessPage() {
         // This will cause useBackendAuth to refetch
         window.dispatchEvent(new Event("auth-refresh"));
 
+        // Also invalidate subscription status queries
+        // This will cause useSubscriptionStatus to refetch
+        // The hook will automatically refetch when the query is invalidated
+        if (typeof window !== "undefined") {
+          // Dispatch a custom event that components can listen to
+          window.dispatchEvent(new CustomEvent("subscription-status-refresh"));
+        }
+
         // Also refresh the page data
         router.refresh();
 

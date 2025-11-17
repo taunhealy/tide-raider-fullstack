@@ -72,21 +72,11 @@ export async function authenticateToken(
         name?: string;
       };
 
-      console.log(`[auth] Token verified successfully, decoded:`, {
-        sub: decoded.sub,
-        id: decoded.id,
-        email: decoded.email,
-      });
-
       userId = decoded.id || decoded.sub;
       if (!userId) {
         console.log("[auth] Token decoded but no userId found");
         return res.status(401).json({ error: "Invalid token" });
       }
-
-      console.log(
-        `[auth] ✅ Token verified successfully for userId: ${userId}, email: ${decoded.email || "N/A"}`
-      );
     } catch (error) {
       console.error(
         "[auth] Token verification failed:",

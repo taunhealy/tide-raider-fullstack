@@ -6,6 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { subDays, subYears, startOfDay, endOfDay } from "date-fns";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useRegions } from "@/app/hooks/useRegions";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
+import { Lock } from "lucide-react";
+import Link from "next/link";
 
 type TimePeriod = "today" | "week" | "year" | "3years" | "month";
 
@@ -33,6 +36,33 @@ function RegionalHighScoresContent({
   onBeachClick,
 }: RegionalHighScoresProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("today");
+  // Use the same backend subscription check as BeachCard
+  // This calls /api/paypal/subscription-status which proxies to the backend
+  const {
+    isPremium,
+    isSubscribed,
+    hasActiveTrial,
+    subscriptionStatus,
+    isLoading: isSubscriptionLoading,
+  } = useSubscriptionStatus();
+
+  // Debug logging to confirm backend subscription check
+  React.useEffect(() => {
+    if (!isSubscriptionLoading) {
+      console.log("[RegionalHighScores] Subscription status from backend:", {
+        isPremium,
+        isSubscribed,
+        hasActiveTrial,
+        subscriptionStatus,
+      });
+    }
+  }, [
+    isSubscriptionLoading,
+    isPremium,
+    isSubscribed,
+    hasActiveTrial,
+    subscriptionStatus,
+  ]);
 
   // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
   const today = new Date().toISOString().split("T")[0];
@@ -132,37 +162,72 @@ function RegionalHighScoresContent({
           <div className="space-y-0">
             {data.beaches
               .slice(0, 10)
-              .map((beach: BeachWithScore, index: number) => (
-                <div
-                  key={beach.id}
-                  className={`flex items-center gap-3 p-2 hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors ${
-                    index < 9
-                      ? "border-b border-[var(--color-border-light)]"
-                      : ""
-                  }`}
-                  onClick={() => onBeachClick?.(beach)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary">
-                      {beach.name}
-                    </h4>
-                    <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
-                      {`${Math.round(beach.totalScore)} total points${
-                        beach.appearances > 1
-                          ? ` over ${beach.appearances} days`
-                          : ""
+              .map((beach: BeachWithScore, index: number) => {
+                // Calculate display score for the badge
+                const displayScore =
+                  timePeriod === "today" ? beach.latestScore : beach.totalScore;
+                const roundedScore = Math.round(displayScore);
+
+                // Lock the first 5 items for all time periods for non-premium users
+                // This consistently locks the top locations regardless of time period
+                const isLocked =
+                  !isSubscriptionLoading && index < 5 && !isPremium;
+
+                return (
+                  <div
+                    key={beach.id}
+                    className={`flex items-center gap-3 p-2 transition-colors ${
+                      isLocked
+                        ? ""
+                        : "hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                    } ${
+                      index < 9
+                        ? "border-b border-[var(--color-border-light)]"
+                        : ""
+                    }`}
+                    onClick={isLocked ? undefined : () => onBeachClick?.(beach)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary flex items-center gap-2">
+                        {isLocked ? (
+                          <>
+                            <Lock className="w-3 h-3 text-amber-700" />
+                            <Link
+                              href="/checkout"
+                              className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-xs font-medium"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Subscribe to Unlock
+                            </Link>
+                          </>
+                        ) : (
+                          beach.name
+                        )}
+                      </h4>
+                      <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
+                        {isLocked
+                          ? "Premium content"
+                          : `${Math.round(beach.totalScore)} total points${
+                              beach.appearances > 1
+                                ? ` over ${beach.appearances} days`
+                                : ""
+                            }`}
+                      </p>
+                    </div>
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-medium text-[12px] font-primary ${
+                        isLocked ? "bg-gray-400" : "bg-[var(--color-tertiary)]"
                       }`}
-                    </p>
+                    >
+                      {isLocked ? (
+                        <Lock className="w-3 h-3 text-white" />
+                      ) : (
+                        roundedScore
+                      )}
+                    </div>
                   </div>
-                  <div className="w-7 h-7 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center text-white font-medium text-[12px] font-primary">
-                    {Math.round(
-                      timePeriod === "today"
-                        ? beach.latestScore
-                        : beach.totalScore
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         </>
       )}

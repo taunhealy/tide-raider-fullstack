@@ -244,6 +244,7 @@ export default function DashboardPage() {
   const handleSyncSubscription = async () => {
     setLoadingStates((prev) => ({ ...prev, subscribe: true }));
     try {
+      console.log("[Dashboard] Syncing subscription...");
       const response = await fetch("/api/paypal/sync", {
         method: "POST",
         credentials: "include",
@@ -255,19 +256,32 @@ export default function DashboardPage() {
       }
 
       const data = await response.json();
+      console.log("[Dashboard] Sync response:", data);
       toast.success(data.message || "Subscription synced successfully");
 
-      // Refresh subscription data and auth state
+      // Force refresh auth state by calling refetch directly
+      await refetchAuth();
+
+      // Also trigger auth refresh event for all components
+      window.dispatchEvent(new Event("auth-refresh"));
+
+      // Refresh subscription data
       await queryClient.invalidateQueries({
         queryKey: ["subscriptionDetails"],
       });
       await queryClient.invalidateQueries({
+        queryKey: ["subscriptionStatus", session?.user?.id],
+      });
+      await queryClient.invalidateQueries({
         queryKey: ["user", session?.user?.id],
       });
-      window.dispatchEvent(new Event("auth-refresh"));
+
+      // Small delay to ensure state updates
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       router.refresh();
     } catch (error) {
-      console.error("Sync failed:", error);
+      console.error("[Dashboard] Sync failed:", error);
       toast.error(error instanceof Error ? error.message : "Sync failed");
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));

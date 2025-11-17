@@ -536,13 +536,25 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    const isSubscribed = user.subscriptionStatus === "ACTIVE";
+
+    // Log subscription status for debugging
+    console.log("[auth/me] User subscription status:", {
+      userId: user.id,
+      email: user.email,
+      subscriptionStatus: user.subscriptionStatus,
+      isSubscribed,
+      hasActiveTrial: user.hasActiveTrial,
+      trialEndDate: user.trialEndDate,
+    });
+
     res.json({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         image: user.image,
-        isSubscribed: user.subscriptionStatus === "ACTIVE",
+        isSubscribed,
         hasActiveTrial: user.hasActiveTrial || false,
         trialEndDate: user.trialEndDate,
       },

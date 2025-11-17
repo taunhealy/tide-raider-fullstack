@@ -126,9 +126,10 @@ export function useBackendAuth() {
     };
   }, []);
 
-  // Expose refetch function
+  // Expose refetch function (bypasses throttle)
   const refetch = async () => {
     try {
+      console.log("[useBackendAuth] Manual refetch triggered");
       const response = await fetch("/api/auth/me", {
         credentials: "include",
         cache: "no-store",
@@ -136,12 +137,18 @@ export function useBackendAuth() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("[useBackendAuth] Refetch successful:", {
+          userId: data.user?.id,
+          isSubscribed: data.user?.isSubscribed,
+          hasActiveTrial: data.user?.hasActiveTrial,
+        });
         setAuthState({
           user: data.user,
           loading: false,
           error: null,
         });
       } else {
+        console.log("[useBackendAuth] Refetch failed:", response.status);
         setAuthState({
           user: null,
           loading: false,
