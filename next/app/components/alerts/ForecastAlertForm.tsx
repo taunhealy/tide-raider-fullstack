@@ -8,7 +8,7 @@ import {
   AlertProperty,
   CreateAlertInput,
 } from "@/app/types/alerts";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { v4 as uuidv4 } from "uuid";
 import {
   Dialog,
@@ -358,15 +358,15 @@ function AlertFormBody({
     }
   }, [logEntry, updateAlert]); // Removed alert.name from dependencies to prevent infinite loop
 
-  // Update selectedBeach when beach is set - use beachDetails if available
+  // Update selectedBeach when beach is set
+  // Note: beachDetails is a partial BeachDetails type, not a full Beach, so we don't set selectedBeach from it
+  // selectedBeach should only be set when user selects a beach from BeachSearchInput
   useEffect(() => {
     if (!alert.beach?.connect?.id) {
       setSelectedBeach(null);
-    } else if (beachDetails) {
-      // Use beachDetails if available (from API fetch)
-      setSelectedBeach(beachDetails);
     }
-  }, [alert.beach?.connect?.id, beachDetails]);
+    // Don't set selectedBeach from beachDetails - it's missing required Beach properties
+  }, [alert.beach?.connect?.id]);
 
   return (
     <div className="space-y-8">

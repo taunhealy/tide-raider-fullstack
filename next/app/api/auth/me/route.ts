@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 // Simple in-memory cache for auth responses (5 seconds)
 const authCache = new Map<string, { data: any; timestamp: number }>();
@@ -56,7 +54,18 @@ export async function GET(req: NextRequest) {
         authCache.set(cacheKey, { data, timestamp: Date.now() });
         return NextResponse.json(data, { status: 200 });
       }
-      // Don't cache errors
+      // Handle 429 gracefully - return cached data if available
+      if (response.status === 429) {
+        console.warn(
+          "[auth/me] Rate limited, returning cached data if available"
+        );
+        if (cached) {
+          return NextResponse.json(cached.data);
+        }
+        // Return null user if no cache
+        return NextResponse.json({ user: null }, { status: 200 });
+      }
+      // Don't cache other errors
       return NextResponse.json(
         { error: "Failed to fetch user" },
         { status: response.status }

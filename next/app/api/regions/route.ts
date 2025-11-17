@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 // Simple in-memory cache for regions (regions don't change often)
 let regionsCache: { data: any[]; timestamp: number } | null = null;
@@ -38,18 +36,13 @@ export async function GET(req: NextRequest) {
     });
 
     if (!response.ok) {
-      // Handle 429 gracefully - return cached data if available
+      // Handle 429 gracefully - return cached data if available, or empty array
       if (response.status === 429) {
-        console.warn(
-          "[regions] Rate limited, returning cached data if available"
-        );
         if (regionsCache) {
           return NextResponse.json(regionsCache.data);
         }
-        return NextResponse.json(
-          { error: "Too many requests, please try again later" },
-          { status: 429 }
-        );
+        // Return empty array instead of error to prevent UI crashes
+        return NextResponse.json([]);
       }
       return NextResponse.json(
         { error: "Failed to fetch regions" },

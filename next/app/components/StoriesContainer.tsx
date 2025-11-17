@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/app/lib/utils";
 import { Inter } from "next/font/google";
@@ -41,7 +41,9 @@ export default function WildStoriesContainer({
   beaches,
   userId,
 }: WildStoriesProps) {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useBackendAuth();
+  const user = session?.user;
+  const loading = status === "loading";
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -141,7 +143,7 @@ export default function WildStoriesContainer({
     }
   };
 
-  if (status === "loading") return null;
+  if (loading) return null;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-secondary)] px-2 sm:px-4 md:px-9 py-4 md:py-9">
@@ -180,7 +182,12 @@ export default function WildStoriesContainer({
                   </button>
                 ) : (
                   <button
-                    onClick={() => signIn()}
+                    onClick={() => {
+                      const BACKEND_URL =
+                        process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+                      const state = encodeURIComponent(window.location.pathname);
+                      window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
+                    }}
                     className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-white text-[var(--color-bg-tertiary)] border-2 border-[var(--color-bg-tertiary)] rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <span>Sign in to share stories</span>
@@ -274,7 +281,7 @@ export default function WildStoriesContainer({
               <PostCard
                 key={story.id}
                 story={story}
-                isAuthor={session?.user?.id === story.author.id}
+                isAuthor={user?.id === story.author.id}
                 beaches={beaches}
               />
             ))}

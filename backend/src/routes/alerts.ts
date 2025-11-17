@@ -113,12 +113,27 @@ router.post(
 );
 
 // POST /api/alerts/notify - Process alerts for a user
+// Requires authentication - users can only trigger alerts for themselves
 router.post(
   "/notify",
+  authenticateToken,
   validate({ body: notifyAlertsSchema }),
   async (req: Request, res: Response) => {
     try {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
       const { userId } = req.body;
+
+      // Security: Users can only trigger alerts for themselves
+      if (userId !== authReq.user.id) {
+        return res.status(403).json({
+          error: "Forbidden",
+          message: "You can only trigger alerts for your own account",
+        });
+      }
 
       const { processUserAlerts } = await import("../services/alertProcessor");
       const result = await processUserAlerts(userId, new Date());

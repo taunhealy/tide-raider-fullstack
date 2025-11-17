@@ -8,7 +8,9 @@ import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
 
 // Load environment variables
-dotenv.config();
+// Load .env.local first (local overrides), then .env (defaults)
+dotenv.config({ path: ".env.local" });
+dotenv.config(); // .env will override .env.local if both exist
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001", 10);

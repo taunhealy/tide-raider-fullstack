@@ -72,8 +72,6 @@ export default async function RootLayout({
       !process.env.DATABASE_URL.includes("pgbouncer")
     ) {
       beaches = await getAllBeaches();
-    } else {
-      console.log("Skipping initial beach fetch - using backend API instead");
     }
   } catch (error) {
     console.error("Error fetching beaches in layout:", error);

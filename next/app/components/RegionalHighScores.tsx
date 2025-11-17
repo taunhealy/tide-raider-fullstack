@@ -47,12 +47,31 @@ function RegionalHighScoresContent({
         `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}`
       );
 
-      if (!response.ok) throw new Error("Failed to fetch scores");
-      return response.json();
+      // Handle 429 gracefully - return empty beaches array
+      if (response.status === 429) {
+        console.warn(
+          "[RegionalHighScores] Rate limited, returning empty beaches"
+        );
+        return { beaches: [] };
+      }
+
+      if (!response.ok) {
+        // For other errors, still return empty array instead of throwing
+        console.error(
+          "[RegionalHighScores] Failed to fetch scores:",
+          response.status
+        );
+        return { beaches: [] };
+      }
+
+      const data = await response.json();
+      // Ensure we always return an object with beaches array
+      return Array.isArray(data.beaches) ? data : { beaches: [] };
     },
     staleTime: 0, // Always consider data stale - refetch on mount/window focus
     refetchOnMount: true, // Always refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window regains focus
+    retry: 0, // Don't retry on error to avoid hitting rate limits
   });
 
   // Time period tab labels

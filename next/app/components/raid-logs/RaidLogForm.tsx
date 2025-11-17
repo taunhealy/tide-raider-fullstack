@@ -8,7 +8,7 @@ import type { LogEntry } from "@/app/types/raidlogs";
 import SurfForecastWidget from "../SurfForecastWidget";
 import { Button } from "@/app/components/ui/Button";
 import { validateFile, compressImageIfNeeded } from "@/app/lib/file";
-import { useSession, signIn } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -47,8 +47,9 @@ export function RaidLogForm({
   beaches: beachesProp,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const router = useRouter();
+  const user = session?.user;
   const { data: beachesFromHook, isLoading } = useBeaches();
   // Use prop beaches if provided, otherwise use hook data
   const beaches = beachesProp || beachesFromHook;
@@ -324,7 +325,7 @@ export function RaidLogForm({
 
   // Add effect to restore form state after sign-in
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       const savedState = localStorage.getItem(FORM_STATE_KEY);
       if (savedState) {
         try {
@@ -346,7 +347,7 @@ export function RaidLogForm({
         }
       }
     }
-  }, [session]);
+  }, [user]);
 
   // Function to save form state before sign-in
   const saveFormState = () => {
@@ -367,15 +368,18 @@ export function RaidLogForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!session?.user) {
+    if (!user) {
       saveFormState();
       toast.error("Please sign in to log your session", {
         action: {
           label: "Sign In",
           onClick: () =>
-            signIn("google", {
-              callbackUrl: `${window.location.origin}/raidlogs/new`,
-            }),
+            (window.location.href = `${
+              process.env.NEXT_PUBLIC_API_URL ||
+              "https://tide-raider-backend.fly.dev"
+            }/api/auth/google?state=${encodeURIComponent(
+              `${window.location.origin}/raidlogs/new`
+            )}`),
         },
       });
       return;
@@ -507,11 +511,11 @@ export function RaidLogForm({
   useEffect(() => {
     return () => {
       // Only clean up if user is signed in (form submitted) or left the page
-      if (session?.user || !document.hidden) {
+      if (user || !document.hidden) {
         localStorage.removeItem(FORM_STATE_KEY);
       }
     };
-  }, [session?.user]);
+  }, [user]);
 
   if (!isOpen) return null;
 
@@ -839,16 +843,19 @@ export function RaidLogForm({
                 }
                 className="w-full font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 py-2 mt-4"
                 onClick={(e) => {
-                  if (!session?.user) {
+                  if (!user) {
                     e.preventDefault();
                     saveFormState();
                     toast.error("Please sign in to log your session", {
                       action: {
                         label: "Sign In",
                         onClick: () =>
-                          signIn("google", {
-                            callbackUrl: `${window.location.origin}/raidlogs/new`,
-                          }),
+                          (window.location.href = `${
+                            process.env.NEXT_PUBLIC_API_URL ||
+                            "https://tide-raider-backend.fly.dev"
+                          }/api/auth/google?state=${encodeURIComponent(
+                            `${window.location.origin}/raidlogs/new`
+                          )}`),
                       },
                     });
                     return;
@@ -857,7 +864,7 @@ export function RaidLogForm({
               >
                 {isSubmitting
                   ? "Submitting..."
-                  : !session?.user
+                  : !user
                     ? "Sign In to Log Session"
                     : entry
                       ? "Update Session"

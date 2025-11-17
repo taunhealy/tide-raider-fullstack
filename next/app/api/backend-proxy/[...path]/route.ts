@@ -16,11 +16,9 @@ import { getToken } from "next-auth/jwt";
 import jwt from "jsonwebtoken";
 import { authOptions } from "@/app/lib/authOptions";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 // Route segment config - ensure this route is dynamic
 export const dynamic = "force-dynamic";
@@ -266,6 +264,53 @@ async function handleProxy(
       headers: backendHeaders,
       body,
     });
+
+    // Handle 429 gracefully - return empty/default responses
+    if (response.status === 429) {
+      console.warn(
+        `[proxy] Rate limited for ${path}, returning empty response`
+      );
+      // Return appropriate empty response based on endpoint
+      if (path.includes("/raid-logs")) {
+        // Frontend expects { entries: [], total: 0 } structure
+        return NextResponse.json({ entries: [], total: 0 }, { status: 200 });
+      }
+      if (path.includes("/blog-posts")) {
+        return NextResponse.json(
+          { posts: [], trip: null, categories: [] },
+          { status: 200 }
+        );
+      }
+      if (path.includes("/forecast")) {
+        // Return null for forecast (frontend handles null gracefully)
+        return NextResponse.json(null, { status: 200 });
+      }
+      if (path.includes("/filtered-beaches")) {
+        // Return empty beaches structure matching BeachInitialData
+        return NextResponse.json(
+          {
+            beaches: [],
+            scores: {},
+            forecast: null,
+            totalCount: 0,
+          },
+          { status: 200 }
+        );
+      }
+      if (
+        path.includes("/beaches") &&
+        !path.includes("/filtered-beaches") &&
+        !path.includes("/beaches/search")
+      ) {
+        // Return empty beaches array for /api/beaches endpoint
+        return NextResponse.json({ beaches: [] }, { status: 200 });
+      }
+      // Default empty response
+      return NextResponse.json(
+        { error: "Too many requests, please try again later" },
+        { status: 429 }
+      );
+    }
 
     // Handle non-JSON responses
     const contentType = response.headers.get("content-type");

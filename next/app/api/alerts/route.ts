@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * Proxy to backend /api/alerts
@@ -8,6 +11,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
  */
 export async function GET(req: NextRequest) {
   try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
     const queryString = req.nextUrl.searchParams.toString();
     const backendUrl = `${BACKEND_URL}/api/alerts${queryString ? `?${queryString}` : ""}`;
 
@@ -17,10 +22,10 @@ export async function GET(req: NextRequest) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        // Forward authorization header if present
-        ...(req.headers.get("authorization") && {
-          Authorization: req.headers.get("authorization")!,
-        }),
+        // Forward auth token from cookie as Authorization header
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        // Also forward cookies
+        Cookie: cookieStore.toString(),
       },
       credentials: "include", // Include cookies for auth
     });
@@ -48,6 +53,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
     const body = await req.text();
     const backendUrl = `${BACKEND_URL}/api/alerts`;
 
@@ -57,10 +64,10 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Forward authorization header if present
-        ...(req.headers.get("authorization") && {
-          Authorization: req.headers.get("authorization")!,
-        }),
+        // Forward auth token from cookie as Authorization header
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        // Also forward cookies
+        Cookie: cookieStore.toString(),
       },
       credentials: "include", // Include cookies for auth
       body,

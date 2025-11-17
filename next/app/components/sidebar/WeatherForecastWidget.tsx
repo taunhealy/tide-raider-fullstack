@@ -36,14 +36,6 @@ export default function WeatherForecastWidget() {
     refetchOnWindowFocus: false,
   });
 
-  // Add a more specific identifier for this component
-  console.log("WeatherForecastWidget specific debug:", {
-    component: "WeatherForecastWidget",
-    regionId,
-    isDataPresent: !!forecastData,
-    isLoading,
-  });
-
   const getWidgetContent = () => {
     if (!regionId) {
       return "Awaiting region selection";

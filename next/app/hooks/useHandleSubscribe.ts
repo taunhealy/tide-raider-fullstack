@@ -1,13 +1,20 @@
-import { signIn, useSession } from "next-auth/react";
+import { useBackendAuth } from "./useBackendAuth";
 import { toast } from "sonner";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+
 export function useHandleSubscribe() {
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
+  const user = session?.user;
 
   return async () => {
     try {
-      if (!session?.user) {
-        await signIn("google");
+      if (!user) {
+        // Redirect to backend OAuth
+        const state = encodeURIComponent(window.location.pathname);
+        window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
         return;
       }
 

@@ -388,8 +388,27 @@ router.get(
 
       // Return transformed data structure
       return res.json(responseData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("API Error:", error);
+      
+      // If database is unavailable, return empty structure instead of 500
+      // This allows the frontend to gracefully handle the error
+      if (
+        error?.code === "P1001" || // Can't reach database server
+        error?.name === "PrismaClientInitializationError" ||
+        error?.message?.includes("Can't reach database server")
+      ) {
+        console.warn(
+          "[filtered-beaches] Database unavailable, returning empty structure"
+        );
+        return res.json({
+          beaches: [],
+          scores: {},
+          forecast: null,
+          totalCount: 0,
+        });
+      }
+      
       return res
         .status(500)
         .json({ error: "Failed to fetch filtered beaches" });

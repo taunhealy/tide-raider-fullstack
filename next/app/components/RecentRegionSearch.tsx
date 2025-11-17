@@ -39,7 +39,6 @@ export default function RecentRegionSearch({
         return [];
       }
       const data = await res.json();
-      console.log("[RecentRegionSearch] Fetched searches:", data);
       return Array.isArray(data) ? data : [];
     },
     staleTime: 1000 * 60 * 5,
@@ -72,9 +71,6 @@ export default function RecentRegionSearch({
     setLoadingId(search.id);
 
     try {
-      console.log("Full search object:", search);
-      console.log("Region data:", search.region);
-
       // Make sure we have all the required fields
       const selectedRegion = {
         id: search.region.id,
@@ -91,7 +87,6 @@ export default function RecentRegionSearch({
         continent: search.region.continent || "",
       };
 
-      console.log("Selecting region with data:", selectedRegion);
       await selectRegion(selectedRegion);
       await trackSearch(search.region.id.toLowerCase());
     } finally {
@@ -116,10 +111,6 @@ export default function RecentRegionSearch({
     }
   }, [recentSearches]);
 
-  // Add debug logging for filters
-  useEffect(() => {
-    console.log("Current filters:", filters);
-  }, [filters]);
 
   // Initial region selection effect
   useEffect(() => {
@@ -164,11 +155,6 @@ export default function RecentRegionSearch({
         const isSelected = filters.regionId
           ? filters.regionId.toLowerCase() === search.region.id.toLowerCase()
           : false;
-        console.log(`Region ${search.region.name} comparison:`, {
-          filterRegionId: filters.regionId,
-          searchRegionId: search.region.id,
-          isSelected,
-        });
         const isLoading = loadingId === search.id;
         const count = regionCounts?.[search.region.id] || 0;
 

@@ -32,8 +32,20 @@ router.get(
       });
 
       return res.json(regions);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching regions:", error);
+      
+      // If database is unavailable, return empty array instead of 500
+      // This allows the frontend to gracefully handle the error
+      if (
+        error?.code === "P1001" || // Can't reach database server
+        error?.name === "PrismaClientInitializationError" ||
+        error?.message?.includes("Can't reach database server")
+      ) {
+        console.warn("[regions] Database unavailable, returning empty array");
+        return res.json([]);
+      }
+      
       return res.status(500).json({ error: "Failed to fetch regions" });
     }
   }

@@ -32,6 +32,19 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
+      // Handle 429 gracefully - return empty beaches structure
+      if (response.status === 429) {
+        console.warn("[filtered-beaches] Rate limited, returning empty structure");
+        return NextResponse.json(
+          {
+            beaches: [],
+            scores: {},
+            forecast: null,
+            totalCount: 0,
+          },
+          { status: 200 }
+        );
+      }
       const error = await response.json().catch(() => ({
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));

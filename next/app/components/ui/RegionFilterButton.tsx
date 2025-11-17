@@ -16,18 +16,9 @@ export default function RegionFilterButton({
   onClick,
   count,
 }: RegionFilterButtonProps) {
-  console.log(
-    "RegionFilterButton render:",
-    region.id,
-    region.name,
-    "count:",
-    count
-  );
-
   return (
     <button
       onClick={() => {
-        console.log("Button clicked for region:", region);
         onClick(region);
       }}
       disabled={isLoading}

@@ -1,7 +1,10 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
+
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 interface LoginButtonProps {
   callbackUrl: string;
@@ -11,22 +14,18 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setIsLoading(true);
     setError("");
+    
     try {
-      const result = await signIn("google", {
-        callbackUrl,
-        redirect: true,
-      });
-
-      if (result?.error) {
-        setError("Authentication failed. Please try again.");
-      }
+      // Redirect to backend OAuth endpoint
+      // Backend will handle OAuth flow and redirect back with cookie
+      const state = encodeURIComponent(callbackUrl);
+      window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
     } catch (error) {
       console.error("Login error:", error);
       setError("An error occurred during login. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };

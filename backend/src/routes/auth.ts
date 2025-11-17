@@ -138,54 +138,73 @@ passport.deserializeUser(async (id: string, done) => {
   }
 });
 
+// Shared OAuth handler function
+const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
+  console.log("[auth] 🔐 Google OAuth route accessed");
+  console.log("[auth] Request method:", req.method);
+  console.log("[auth] Request query:", req.query);
+  console.log("[auth] Request headers:", {
+    host: req.headers.host,
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+  });
+
+  // Check if Google OAuth is configured
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.error(
+      "[auth] ❌ Google OAuth not configured - missing credentials"
+    );
+    return res.status(500).json({
+      error: "OAuth not configured",
+      message: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set",
+    });
+  }
+
+  // Log the callback URL that will be used
+  // Only use BACKEND_URL if it's a valid HTTP/HTTPS URL (not a database URL)
+  const callbackURL =
+    process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
+      ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+      : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
+        ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+        : `http://localhost:3001/api/auth/google/callback`;
+
+  console.log("[auth] 📍 Callback URL:", callbackURL);
+  console.log(
+    "[auth] 🔑 Client ID:",
+    process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "..."
+  );
+
+  next();
+};
+
 /**
  * GET /api/auth/google
  * Initiate Google OAuth flow
  */
 router.get(
   "/google",
-  (req: Request, res: Response, next: any) => {
-    console.log("[auth] 🔐 Google OAuth route accessed");
-    console.log("[auth] Request query:", req.query);
-    console.log("[auth] Request headers:", {
-      host: req.headers.host,
-      origin: req.headers.origin,
-      referer: req.headers.referer,
-    });
-
-    // Check if Google OAuth is configured
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.error(
-        "[auth] ❌ Google OAuth not configured - missing credentials"
-      );
-      return res.status(500).json({
-        error: "OAuth not configured",
-        message: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set",
-      });
-    }
-
-    // Log the callback URL that will be used
-    // Only use BACKEND_URL if it's a valid HTTP/HTTPS URL (not a database URL)
-    const callbackURL =
-      process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
-        ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-        : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
-          ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-          : `http://localhost:3001/api/auth/google/callback`;
-
-    console.log("[auth] 📍 Callback URL:", callbackURL);
-    console.log(
-      "[auth] 🔑 Client ID:",
-      process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "..."
-    );
-
-    next();
-  },
+  handleGoogleOAuth,
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account",
   })
 );
+
+/**
+ * POST /api/auth/google
+ * Handle POST requests (from NextAuth signIn) - redirect to GET handler
+ */
+router.post("/google", (req: Request, res: Response) => {
+  console.log(
+    "[auth] 📨 POST request to /api/auth/google - redirecting to GET"
+  );
+  // Extract state from query or body
+  const state =
+    (req.query.state as string) || (req.body?.state as string) || "/raid";
+  // Redirect to GET handler
+  return res.redirect(`/api/auth/google?state=${encodeURIComponent(state)}`);
+});
 
 /**
  * GET /api/auth/google/callback

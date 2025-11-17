@@ -2,23 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import api from "@/app/lib/api-client";
 
 export default function NotificationBadge() {
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
+  const user = session?.user;
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       fetchNotificationCount();
     }
-  }, [session]);
+  }, [user]);
 
   const fetchNotificationCount = async () => {
     try {
       const data = await api.getNotificationCount();
-        setCount(data.count);
+      setCount(data.count);
     } catch (error) {
       console.error("Failed to fetch notification count:", error);
     }

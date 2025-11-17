@@ -20,7 +20,7 @@ import {
   degreesToCardinal,
 } from "@/app/lib/forecastUtils";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
@@ -400,11 +400,15 @@ export default function RaidLogTable({
   const [selectedAlertForEdit, setSelectedAlertForEdit] = useState<
     string | undefined
   >();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const queryClient = useQueryClient();
   const { data: subscriptionDetails } = useSubscriptionDetails();
   // Allow all logged-in users access to logs (premium features are now free)
-  const hasAccess = !!session?.user || isSubscribed || isTrialing || subscriptionDetails?.hasActiveTrial;
+  const hasAccess =
+    !!session?.user ||
+    isSubscribed ||
+    isTrialing ||
+    subscriptionDetails?.hasActiveTrial;
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(

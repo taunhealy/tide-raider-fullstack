@@ -2,11 +2,17 @@ import rateLimit from "express-rate-limit";
 
 export const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Limit each IP to 200 requests per windowMs (increased from 100)
+  // Much higher limit in development to avoid localhost issues (all requests from same IP)
+  max: process.env.NODE_ENV === "development" ? 10000 : 200, // 10000 for dev, 200 for prod
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    // In development, skip rate limiting entirely for easier local testing
+    if (process.env.NODE_ENV === "development") {
+      return true;
+    }
+
     // Skip global rate limiter for routes that have their own rate limiters
     // These routes will use dataRateLimiter or other specific limiters
     const path = req.path;
@@ -21,6 +27,11 @@ export const rateLimiter = rateLimit({
       "/api/regions",
     ];
 
+    // Skip auth routes - they have their own rate limiter
+    if (path.startsWith("/api/auth")) {
+      return true;
+    }
+
     // Check if this path matches any data-heavy route
     return dataHeavyRoutes.some((route) => path.startsWith(route));
   },
@@ -30,12 +41,14 @@ export const rateLimiter = rateLimit({
 // This uses a separate key generator to avoid conflicts with the global rate limiter
 export const dataRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2000, // Limit each IP to 2000 requests per windowMs for data endpoints (increased from 1000)
+  // Increase limit in development to avoid issues with localhost (all requests from same IP)
+  max: process.env.NODE_ENV === "development" ? 10000 : 2000, // Much higher limit for dev
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
     // Use a different key prefix to avoid conflicts with global rate limiter
+    // In development, still track by IP but with much higher limits
     return `data-${req.ip}`;
   },
 });

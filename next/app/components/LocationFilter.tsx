@@ -36,26 +36,6 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
     },
   });
 
-  // Debug logging for URL parameters
-  useEffect(() => {
-    console.log("URL Parameters:", Object.fromEntries(searchParams.entries()));
-    console.log("Current regionId from filters:", filters.regionId);
-  }, [searchParams, filters.regionId]);
-
-  // Debug logging
-  useEffect(() => {
-    console.log("Regions data:", regions);
-    console.log("Current region ID:", filters.regionId);
-  }, [regions, filters.regionId]);
-
-  useEffect(() => {
-    console.log("regionCountsData", regionCountsData);
-    console.log(
-      "region.id",
-      regions.map((r) => r.id)
-    );
-  }, [regionCountsData, regions]);
-
   const filteredRegions = useMemo(() => {
     const query = searchQuery.toLowerCase();
     return regions.filter(
@@ -64,11 +44,6 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
         region.country?.name.toLowerCase().includes(query)
     );
   }, [regions, searchQuery]);
-
-  // More debug logging
-  useEffect(() => {
-    console.log("Filtered regions:", filteredRegions);
-  }, [filteredRegions]);
 
   // Add a fallback if no regions are available
   if (!regions || regions.length === 0) {
@@ -103,11 +78,6 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
         {filteredRegions.length > 0 ? (
           filteredRegions.map((region) => {
             const isSelected = region.id.toLowerCase() === filters.regionId;
-            console.log(
-              `Region ${region.name} isSelected:`,
-              isSelected,
-              `(${region.id.toLowerCase()} === ${filters.regionId})`
-            );
 
             return (
               <RegionFilterButton
@@ -115,10 +85,6 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
                 region={region}
                 isSelected={isSelected}
                 onClick={(region) => {
-                  console.log(
-                    "LocationFilter received click for region:",
-                    region
-                  );
                   selectRegion(region);
                   trackSearch(region.id.toLowerCase());
                 }}

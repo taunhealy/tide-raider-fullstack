@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * GET /api/forecast
@@ -18,25 +16,20 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/forecast${queryString}`,
-      {
-        headers: {
-          ...(authToken && { Authorization: `Bearer ${authToken}` }),
-          Cookie: cookieStore.toString(),
-        },
-        credentials: "include",
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/forecast${queryString}`, {
+      headers: {
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: cookieStore.toString(),
+      },
+      credentials: "include",
+      cache: "no-store",
+    });
 
     if (!response.ok) {
-      // Handle 429 gracefully
+      // Handle 429 gracefully - return null (frontend handles null gracefully)
       if (response.status === 429) {
-        return NextResponse.json(
-          { error: "Too many requests, please try again later" },
-          { status: 429 }
-        );
+        console.warn("[forecast] Rate limited, returning null");
+        return NextResponse.json(null, { status: 200 });
       }
       return NextResponse.json(
         { error: "Failed to fetch forecast data" },

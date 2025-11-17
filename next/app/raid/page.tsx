@@ -45,14 +45,12 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
     if (regionIdFromParams) {
       try {
         // Call backend API directly (server-side fetch works fine)
+        // Use NEXT_PUBLIC_API_URL if set, otherwise default to production
         const backendUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+          process.env.NEXT_PUBLIC_API_URL ||
+          "https://tide-raider-backend.fly.dev";
         const queryString = urlSearchParams.toString();
         const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
-
-        console.log(
-          `[RaidPage] Fetching initial data from backend: ${backendApiUrl}`
-        );
 
         const response = await fetch(backendApiUrl, {
           method: "GET",
@@ -65,14 +63,16 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
 
         if (response.ok) {
           initialData = await response.json();
-          console.log(
-            `[RaidPage] ✅ Fetched ${initialData.beaches?.length || 0} beaches`
-          );
-        } else {
-          console.error(
-            `[RaidPage] Backend API returned ${response.status}: ${response.statusText}`
-          );
+        } else if (response.status === 429) {
+          // Handle rate limiting gracefully - return empty structure
+          initialData = {
+            beaches: [],
+            scores: {},
+            forecast: null,
+            totalCount: 0,
+          };
         }
+        // For other errors, initialData remains null and component handles empty state
       } catch (error) {
         console.error(
           "[RaidPage] Error fetching filtered beaches from backend:",

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * Proxy to backend /api/alerts/:id
@@ -8,6 +11,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
  */
 async function handleRequest(req: NextRequest, method: string, id: string) {
   try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
     const queryString = req.nextUrl.searchParams.toString();
     const backendUrl = `${BACKEND_URL}/api/alerts/${id}${queryString ? `?${queryString}` : ""}`;
 
@@ -15,10 +20,10 @@ async function handleRequest(req: NextRequest, method: string, id: string) {
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      // Forward authorization header if present
-      ...(req.headers.get("authorization") && {
-        Authorization: req.headers.get("authorization")!,
-      }),
+      // Forward auth token from cookie as Authorization header
+      ...(authToken && { Authorization: `Bearer ${authToken}` }),
+      // Also forward cookies
+      Cookie: cookieStore.toString(),
     };
 
     const options: RequestInit = {

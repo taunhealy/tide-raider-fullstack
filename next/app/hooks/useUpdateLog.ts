@@ -2,12 +2,13 @@
 import { Beach } from "@/app/types/beaches";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "./useBackendAuth";
 import api from "@/app/lib/api-client";
 
 export function useUpdateLog() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
+  const user = session?.user;
 
   return useMutation({
     mutationFn: async (data: {
@@ -23,17 +24,17 @@ export function useUpdateLog() {
       videoUrl?: string;
       videoPlatform?: string | null;
     }) => {
-      if (!session?.user) {
+      if (!user) {
         throw new Error("You must be logged in to update a log entry");
       }
 
       const payload = {
         id: data.id,
         date: data.selectedDate,
-        surferEmail: session.user.email,
+        surferEmail: user.email,
         surferName: data.isAnonymous
           ? "Anonymous"
-          : session.user.name || "Anonymous Surfer",
+          : user.name || "Anonymous Surfer",
         beachId: data.selectedBeach.id,
         beachName: data.selectedBeach.name,
         regionId: data.selectedBeach.regionId,

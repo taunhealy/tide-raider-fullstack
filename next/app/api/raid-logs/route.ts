@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * GET /api/raid-logs
@@ -22,7 +20,7 @@ export async function GET(req: NextRequest) {
       headers: {
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
         Cookie: cookieStore.toString(),
-      },
+            },
       credentials: "include",
     });
 
@@ -32,13 +30,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           { error: "Too many requests, please try again later" },
           { status: 429 }
-        );
-      }
+          );
+        }
       return NextResponse.json(
         { error: "Failed to fetch logs" },
         { status: response.status }
       );
-    }
+      }
 
     const data = await response.json();
     return NextResponse.json(data);

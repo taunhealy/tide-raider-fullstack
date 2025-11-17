@@ -28,8 +28,6 @@ export default function LeftSidebar() {
     return <div>Error fetching regions...</div>;
   }
 
-  console.log("Regions data:", regions);
-
   return (
     <aside className="hidden lg:block lg:w-[280px] xl:w-[320px] flex-shrink-0 mt-5">
       <div className="hidden lg:block space-y-8 w-full">

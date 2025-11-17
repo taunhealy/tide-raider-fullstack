@@ -69,17 +69,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const forecast = data?.forecast ?? null; // Regional forecast
   const totalCount = data?.totalCount || 0; // Added totalCount
 
-  // Add console logs for debugging
-  useEffect(() => {
-    if (data) {
-      console.log("Data from useFilteredBeaches:", data);
-      console.log("Extracted beaches:", beaches);
-      console.log("Extracted beachScores:", beachScores);
-      console.log("Extracted regional forecast:", forecast);
-      console.log("Extracted totalCount:", totalCount);
-    }
-  }, [data, beaches, beachScores, forecast, totalCount]);
-
   const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
     updateFilter("regionId", regionId || "");
     // Reset to first page when region changes
@@ -160,14 +149,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                     const hasScore = beach.id in beachScores;
                     const scoreValue = hasScore ? score : null;
 
-                    // Add console logs for debugging each beach card's data
-                    console.log(`Rendering beach ${beach.name} with data:`, {
-                      beachId: beach.id,
-                      score: scoreValue,
-                      hasScore,
-                      forecastData: beachForecastData,
-                      isLoading: !hasScore && isLoading,
-                    });
                     return (
                       <BeachCard
                         key={beach.id}

@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * GET /api/beach-ratings/historical
@@ -30,12 +28,12 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      // Handle 429 gracefully
+      // Handle 429 gracefully - return empty beaches array (frontend expects { beaches: [] })
       if (response.status === 429) {
-        return NextResponse.json(
-          { error: "Too many requests, please try again later" },
-          { status: 429 }
+        console.warn(
+          "[beach-ratings/historical] Rate limited, returning empty beaches array"
         );
+        return NextResponse.json({ beaches: [] }, { status: 200 });
       }
       return NextResponse.json(
         { error: "Failed to fetch historical beach ratings" },
