@@ -179,6 +179,38 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       });
     }
 
+    // If still not found, try slug-to-name conversion (hyphens to spaces)
+    // This handles cases where frontend sends "pringle-bay" but DB has "Pringle Bay"
+    if (!beach && decodedName.includes("-")) {
+      const nameWithSpaces = decodedName.replace(/-/g, " ");
+      beach = await prisma.beach.findFirst({
+        where: {
+          name: {
+            equals: nameWithSpaces,
+            mode: "insensitive",
+          },
+        },
+        include: {
+          region: true,
+        },
+      });
+    }
+
+    // If still not found, try partial match (contains)
+    if (!beach) {
+      beach = await prisma.beach.findFirst({
+        where: {
+          name: {
+            contains: decodedName.replace(/-/g, " "),
+            mode: "insensitive",
+          },
+        },
+        include: {
+          region: true,
+        },
+      });
+    }
+
     if (!beach) {
       return res.status(404).json({ error: "Beach not found" });
     }

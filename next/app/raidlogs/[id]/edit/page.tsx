@@ -31,7 +31,26 @@ export default function EditRaidLogPage({
     beaches: beaches?.slice(0, 3),
   });
 
-  const isAuthor = entry?.surferEmail === session?.user?.email;
+  // Check ownership by userId (more reliable than email comparison)
+  // Also check surferEmail as fallback for older entries
+  const userIdMatch =
+    entry?.userId && session?.user?.id && entry.userId === session.user.id;
+  const emailMatch =
+    entry?.surferEmail &&
+    session?.user?.email &&
+    entry.surferEmail.toLowerCase().trim() ===
+      session.user.email.toLowerCase().trim();
+  const isAuthor = userIdMatch || emailMatch;
+
+  console.log("Authorization check:", {
+    entryUserId: entry?.userId,
+    sessionUserId: session?.user?.id,
+    userIdMatch,
+    entrySurferEmail: entry?.surferEmail,
+    sessionEmail: session?.user?.email,
+    emailMatch,
+    isAuthor,
+  });
 
   const selectedBeach = beaches?.find((beach) => beach.id === entry?.beachId);
 

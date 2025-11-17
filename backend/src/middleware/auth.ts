@@ -21,9 +21,6 @@ export async function authenticateToken(
 ) {
   const authReq = req as AuthRequest;
   try {
-    console.log(
-      `[auth] 🔒 Authentication required for ${req.method} ${req.path}`
-    );
     // Get token from Authorization header or cookie
     // Priority: 1. Authorization header, 2. auth-token cookie (our JWT), 3. NextAuth cookies (for backward compatibility)
     const authHeader = req.headers.authorization;
@@ -218,10 +215,6 @@ export async function optionalAuth(
       : req.cookies?.["auth-token"] || // Our JWT cookie
         req.cookies?.["next-auth.session-token"] ||
         req.cookies?.["__Secure-next-auth.session-token"];
-
-    console.log(
-      `[auth] 🔓 Optional auth check for ${req.method} ${req.path} - token present: ${!!token}`
-    );
 
     if (token) {
       const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
