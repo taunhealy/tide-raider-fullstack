@@ -76,8 +76,63 @@ router.get("/health", (req: Request, res: Response) => {
   res.json({
     status: "ok",
     cronEnabled: !!process.env.CRON_SECRET,
+    internalCronEnabled: process.env.ENABLE_CRON !== "false",
     timestamp: new Date().toISOString(),
   });
+});
+
+// POST /api/cron/run-now - Manually trigger cron job (for testing/admin)
+router.post("/run-now", async (req: Request, res: Response) => {
+  try {
+    // Verify cron secret to prevent unauthorized access
+    const cronSecret = req.headers["x-cron-secret"];
+    if (cronSecret !== process.env.CRON_SECRET) {
+      console.warn("Unauthorized cron run-now attempt - invalid secret");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { getCronScheduler } = await import("../services/cronScheduler");
+    const scheduler = getCronScheduler();
+    const result = await scheduler.runNow();
+
+    return res.json({
+      message: "Cron job executed successfully",
+      ...result,
+    });
+  } catch (error) {
+    console.error("❌ Error running cron job:", error);
+    return res.status(500).json({
+      error: "Failed to run cron job",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
+// GET /api/cron/test - Test endpoint (development only, no auth required)
+router.get("/test", async (req: Request, res: Response) => {
+  // Only allow in development
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      error: "Test endpoint only available in development",
+    });
+  }
+
+  try {
+    const { getCronScheduler } = await import("../services/cronScheduler");
+    const scheduler = getCronScheduler();
+    const result = await scheduler.runNow();
+
+    return res.json({
+      message: "Cron job executed successfully (test mode)",
+      ...result,
+    });
+  } catch (error) {
+    console.error("❌ Error running cron job:", error);
+    return res.status(500).json({
+      error: "Failed to run cron job",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 });
 
 export default router;

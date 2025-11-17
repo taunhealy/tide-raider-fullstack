@@ -123,6 +123,15 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`✈️  Fly.io app: ${process.env.FLY_APP_NAME}`);
     console.log(`🌍 Public URL: https://${process.env.FLY_APP_NAME}.fly.dev`);
   }
+
+  // Start cron scheduler
+  if (process.env.ENABLE_CRON !== "false") {
+    const { getCronScheduler } = require("./services/cronScheduler");
+    const scheduler = getCronScheduler();
+    scheduler.start();
+  } else {
+    console.log("⏸️  Cron scheduler disabled (ENABLE_CRON=false)");
+  }
 });
 
 // Server error handling is done via errorHandler middleware

@@ -38,24 +38,45 @@ export function useCreateLog() {
         ? data.selectedBeach.id
         : undefined;
 
-      // regionId must be a UUID (required by schema)
-      // If regionId is not a UUID, try to get it from the region object
-      let regionId = data.selectedBeach.regionId;
-      if (!isUUID(regionId) && data.selectedBeach.region?.id) {
-        regionId = data.selectedBeach.region.id;
+      // regionId can be a UUID or a slug (backend accepts both)
+      // Handle different beach data structures:
+      // 1. regionId as string (slug or UUID)
+      // 2. region object with id property
+      // 3. regionId might be the region object itself (edge case)
+      let regionId: string | undefined;
+
+      // Check if regionId is a string
+      if (typeof data.selectedBeach.regionId === "string") {
+        regionId = data.selectedBeach.regionId;
+      }
+      // If regionId is an object, try to get id from it
+      else if (
+        data.selectedBeach.regionId &&
+        typeof data.selectedBeach.regionId === "object"
+      ) {
+        regionId = (data.selectedBeach.regionId as any)?.id;
+      }
+      // Fallback to region object id
+      if (!regionId && data.selectedBeach.region?.id) {
+        regionId =
+          typeof data.selectedBeach.region.id === "string"
+            ? data.selectedBeach.region.id
+            : undefined;
       }
 
-      // Validate regionId is a UUID before sending
-      if (!isUUID(regionId)) {
-        console.error("[useCreateLog] Invalid regionId:", {
+      // Validate regionId exists and is a string (but don't require UUID format - backend accepts slugs)
+      if (!regionId || typeof regionId !== "string" || regionId.trim() === "") {
+        console.error("[useCreateLog] Missing or invalid regionId:", {
           regionId,
+          regionIdType: typeof regionId,
           beachRegionId: data.selectedBeach.regionId,
+          beachRegionIdType: typeof data.selectedBeach.regionId,
           regionObject: data.selectedBeach.region,
           beachId: data.selectedBeach.id,
           beach: data.selectedBeach,
         });
         throw new Error(
-          `Invalid region ID: ${regionId}. Region ID must be a valid UUID. Please select a beach from the search results.`
+          `Missing region ID. Please select a beach from the search results.`
         );
       }
 

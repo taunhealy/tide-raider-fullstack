@@ -26,8 +26,9 @@ export async function fetchAllRegionsData() {
       try {
         console.log(`Processing region: ${region.name} (${region.id})`);
 
-        // Fetch latest conditions (this will scrape if needed)
-        const conditions = await getLatestConditions(region.id, true);
+        // Fetch latest conditions (will use cached data if available, only scrape if missing)
+        // forceRefresh = false means: check DB first, only scrape if no data for today
+        const conditions = await getLatestConditions(region.id, false);
 
         if (!conditions) {
           console.log(

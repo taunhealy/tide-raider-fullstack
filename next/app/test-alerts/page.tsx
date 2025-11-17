@@ -168,12 +168,26 @@ export default function TestAlertsPage() {
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
             <h3 className="font-semibold text-red-800 mb-2">Error:</h3>
-            <p className="text-red-600 mb-2">{error}</p>
-            <p className="text-sm text-red-500">
-              Note: The backend validation schema has been updated locally but
-              needs to be deployed to production. The error should be resolved
-              after deployment.
-            </p>
+            <pre className="text-red-600 mb-2 whitespace-pre-wrap text-sm font-mono">
+              {error}
+            </pre>
+            {error.includes("RESEND_API_KEY") && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm text-yellow-800 font-semibold mb-1">
+                  Missing Resend API Key
+                </p>
+                <p className="text-sm text-yellow-700">
+                  The backend needs{" "}
+                  <code className="bg-yellow-100 px-1 rounded">
+                    RESEND_API_KEY
+                  </code>{" "}
+                  to be set in production. Set it using:{" "}
+                  <code className="bg-yellow-100 px-1 rounded">
+                    fly secrets set RESEND_API_KEY=re_your_key
+                  </code>
+                </p>
+              </div>
+            )}
           </div>
         )}
 
