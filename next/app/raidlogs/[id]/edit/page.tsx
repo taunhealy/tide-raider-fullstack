@@ -16,19 +16,38 @@ export default function EditRaidLogPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { data: session } = useBackendAuth();
+  const { data: session, status: authStatus } = useBackendAuth();
   const router = useRouter();
   const { data: beaches, isLoading: isLoadingBeaches } = useBeaches();
   const { data: entry, isLoading: isLoadingEntry } = useRaidLog(id);
 
-  if (isLoadingBeaches || isLoadingEntry) {
+  // Wait for all data to load before checking authorization
+  if (isLoadingBeaches || isLoadingEntry || authStatus === "loading") {
     return <RandomLoader isLoading={true} />;
+  }
+
+  // Redirect to login if not authenticated
+  if (authStatus === "unauthenticated" || !session?.user) {
+    router.push("/login");
+    return <RandomLoader isLoading={true} />;
+  }
+
+  // Show error if entry not found
+  if (!entry) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-xl font-bold mb-4">Log Entry Not Found</h2>
+        <p>The log entry you're trying to edit doesn't exist.</p>
+      </div>
+    );
   }
 
   console.log("Entry data:", {
     entry,
     beach: entry?.beach,
     beaches: beaches?.slice(0, 3),
+    entryUserId: entry?.userId,
+    entrySurferEmail: entry?.surferEmail,
   });
 
   // Check ownership by userId (more reliable than email comparison)
@@ -50,6 +69,8 @@ export default function EditRaidLogPage({
     sessionEmail: session?.user?.email,
     emailMatch,
     isAuthor,
+    fullEntry: entry,
+    fullSession: session,
   });
 
   const selectedBeach = beaches?.find((beach) => beach.id === entry?.beachId);

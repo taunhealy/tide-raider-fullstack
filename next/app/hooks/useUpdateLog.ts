@@ -28,25 +28,66 @@ export function useUpdateLog() {
         throw new Error("You must be logged in to update a log entry");
       }
 
-      const payload = {
+      // Helper to check if a string is a valid UUID
+      const isUUID = (str: string | undefined): boolean => {
+        if (!str) return false;
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(str);
+      };
+
+      // Handle regionId - can be UUID or slug
+      let regionId: string | undefined;
+      if (typeof data.selectedBeach.regionId === "string") {
+        regionId = data.selectedBeach.regionId;
+      } else if (
+        data.selectedBeach.regionId &&
+        typeof data.selectedBeach.regionId === "object"
+      ) {
+        regionId = (data.selectedBeach.regionId as any)?.id;
+      }
+      if (!regionId && data.selectedBeach.region?.id) {
+        regionId =
+          typeof data.selectedBeach.region.id === "string"
+            ? data.selectedBeach.region.id
+            : undefined;
+      }
+
+      // Only include beachId if it's a valid UUID (schema requires UUID or undefined)
+      const beachId = isUUID(data.selectedBeach.id)
+        ? data.selectedBeach.id
+        : undefined;
+
+      const payload: any = {
         id: data.id,
         date: data.selectedDate,
         surferEmail: user.email,
         surferName: data.isAnonymous
           ? "Anonymous"
           : user.name || "Anonymous Surfer",
-        beachId: data.selectedBeach.id,
         beachName: data.selectedBeach.name,
-        regionId: data.selectedBeach.regionId,
+        regionId: regionId,
         surferRating: data.surferRating,
-        comments: data.comments,
+        comments: data.comments || "",
         isPrivate: data.isPrivate,
         isAnonymous: data.isAnonymous,
-        imageUrl: data.uploadedImageUrl || null,
-        videoUrl: data.videoUrl || null,
-        videoPlatform: data.videoPlatform || null,
-        forecastId: data.forecastData?.id || null,
+        // Convert null/undefined to empty string for URL fields (schema expects valid URL string or empty string, not null)
+        // Empty string is valid, but if a value exists it must be a valid URL
+        imageUrl:
+          data.uploadedImageUrl && data.uploadedImageUrl.trim() !== ""
+            ? data.uploadedImageUrl
+            : "",
+        videoUrl:
+          data.videoUrl && data.videoUrl.trim() !== "" ? data.videoUrl : "",
+        // Convert null to undefined for optional string fields (schema doesn't accept null)
+        videoPlatform: data.videoPlatform || undefined,
+        forecastId: data.forecastData?.id || undefined,
       };
+
+      // Only include beachId if it's a valid UUID
+      if (beachId) {
+        payload.beachId = beachId;
+      }
 
       return api.updateRaidLog(payload);
     },

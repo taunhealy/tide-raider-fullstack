@@ -41,10 +41,19 @@ async function apiRequest<T>(
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
+      const errorData = await response.json().catch(() => ({
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));
-      throw new Error(error.error || "Request failed");
+
+      // If validation error, include details
+      if (errorData.error === "Validation failed" && errorData.details) {
+        const details = errorData.details
+          .map((d: any) => `${d.path}: ${d.message}`)
+          .join(", ");
+        throw new Error(`Validation failed: ${details}`);
+      }
+
+      throw new Error(errorData.error || errorData.message || "Request failed");
     }
 
     return await response.json();
@@ -178,10 +187,12 @@ export const api = {
       queryParams.append("maxRating", params.maxRating.toString());
     if (params?.startDate) queryParams.append("startDate", params.startDate);
     if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.page !== undefined && params.page > 0)
+      queryParams.append("page", params.page.toString());
+    if (params?.limit !== undefined && params.limit > 0)
+      queryParams.append("limit", params.limit.toString());
     if (params?.isPrivate !== undefined)
-      queryParams.append("isPrivate", params.isPrivate.toString());
+      queryParams.append("isPrivate", params.isPrivate ? "true" : "false");
     if (params?.userId) queryParams.append("userId", params.userId);
     if (params?.beachId) queryParams.append("beachId", params.beachId);
     const query = queryParams.toString();
@@ -209,10 +220,12 @@ export const api = {
   },
 
   deleteRaidLog: async (id: string) => {
-    return apiRequest<{ message: string }>("/api/raid-logs", {
-      method: "DELETE",
-      body: JSON.stringify({ id }),
-    });
+    return apiRequest<{ message: string }>(
+      `/api/raid-logs?id=${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      }
+    );
   },
 
   getRaidLogForecast: async (region: string, date: string) => {

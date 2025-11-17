@@ -12,13 +12,26 @@ export function useRaidLog(id: string) {
         api.getAlerts({ logEntryId: id }).catch(() => []),
       ]);
 
-      // Extract the first entry from the entries array
-      const entry =
-        logData.entries && logData.entries.length > 0
-          ? logData.entries[0]
-          : null;
+      // Backend returns entry directly when fetching by ID, or in entries array
+      let entry = null;
+
+      // Check if it's a direct entry object (when fetching by ID)
+      // Type assertion needed because backend can return either format
+      const data = logData as any;
+      if (data.id && typeof data.id === "string") {
+        entry = data;
+      }
+      // Check if it's paginated format with entries array
+      else if (
+        data.entries &&
+        Array.isArray(data.entries) &&
+        data.entries.length > 0
+      ) {
+        entry = data.entries[0];
+      }
 
       if (!entry) {
+        console.error("Log entry not found. Response data:", logData);
         throw new Error("Log entry not found");
       }
 
