@@ -1,11 +1,13 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { optionalAuth, AuthRequest } from "../middleware/auth";
+import { dataRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
 // GET /api/beaches
-router.get("/", optionalAuth, async (req: Request, res: Response) => {
+// Use dataRateLimiter for this frequently called endpoint
+router.get("/", dataRateLimiter, optionalAuth, async (req: Request, res: Response) => {
   try {
     const regionId = req.query.regionId as string | undefined;
 

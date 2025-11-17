@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -35,6 +35,30 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     enabled: true,
   });
   const queryClient = useQueryClient();
+
+  // Track region searches when regionId changes
+  const { mutate: trackSearch } = useMutation({
+    mutationFn: async (regionId: string) => {
+      const res = await fetch("/api/user-searches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ regionId }),
+      });
+      if (!res.ok) throw new Error("Failed to track search");
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate recent searches to refresh the list
+      queryClient.invalidateQueries({ queryKey: ["recentSearches"] });
+    },
+  });
+
+  // Track search when regionId changes
+  useEffect(() => {
+    if (filters.regionId) {
+      trackSearch(filters.regionId.toLowerCase());
+    }
+  }, [filters.regionId, trackSearch]);
 
   // Add pagination state
   const [currentPage, setCurrentPage] = useState(1);

@@ -262,7 +262,14 @@ export class LogService {
       });
 
       if (!entry) {
-        return { entry: null, entries: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+        return {
+          entry: null,
+          entries: [],
+          total: 0,
+          page: 1,
+          limit: 50,
+          totalPages: 0,
+        };
       }
 
       // Check privacy
@@ -285,9 +292,10 @@ export class LogService {
     // Handle regionId parameter - resolve to region list
     let regionList = regions || [];
     if (regionIdParam && regionList.length === 0) {
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        regionIdParam
-      );
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          regionIdParam
+        );
 
       if (isUUID) {
         regionList = [regionIdParam];
@@ -310,7 +318,14 @@ export class LogService {
         if (region) {
           regionList = [region.id];
         } else {
-          return { entry: null, entries: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+          return {
+            entry: null,
+            entries: [],
+            total: 0,
+            page: 1,
+            limit: 50,
+            totalPages: 0,
+          };
         }
       }
     }
@@ -353,7 +368,41 @@ export class LogService {
     }
 
     if (beachIdStr) {
-      whereClause.beachId = beachIdStr;
+      // Check if beachId is a UUID or a slug
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          beachIdStr
+        );
+
+      if (isUUID) {
+        // It's a UUID, use it directly
+        whereClause.beachId = beachIdStr;
+      } else {
+        // It's a slug, look up the beach first
+        const beach = await prisma.beach.findFirst({
+          where: {
+            OR: [
+              { id: beachIdStr },
+              { name: { contains: beachIdStr, mode: "insensitive" } },
+            ],
+          },
+          select: { id: true },
+        });
+
+        if (beach) {
+          whereClause.beachId = beach.id;
+        } else {
+          // Beach not found, return empty results
+          return {
+            entry: null,
+            entries: [],
+            total: 0,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: 0,
+          };
+        }
+      }
     } else if (beaches && beaches.length > 0) {
       whereClause.beachId = { in: beaches };
     }
@@ -368,14 +417,14 @@ export class LogService {
 
     if (maxRatingNum < 5) {
       whereClause.surferRating = {
-        ...(whereClause.surferRating as any || {}),
+        ...((whereClause.surferRating as any) || {}),
         lte: maxRatingNum,
       };
     }
 
     if (startDate) {
       whereClause.date = {
-        ...(whereClause.date as any || {}),
+        ...((whereClause.date as any) || {}),
         gte: new Date(startDate),
       };
     }
@@ -384,7 +433,7 @@ export class LogService {
       const endDateObj = new Date(endDate);
       endDateObj.setDate(endDateObj.getDate() + 1);
       whereClause.date = {
-        ...(whereClause.date as any || {}),
+        ...((whereClause.date as any) || {}),
         lt: endDateObj,
       };
     }
@@ -504,16 +553,16 @@ export class LogService {
     }
   ) {
     // Find or create beach
-    const beach = data.beachId || data.beachName
-      ? await prisma.beach.findFirst({
-          where: {
-            OR: [
-              { id: data.beachId },
-              { name: data.beachName },
-            ].filter(Boolean) as any,
-          },
-        })
-      : null;
+    const beach =
+      data.beachId || data.beachName
+        ? await prisma.beach.findFirst({
+            where: {
+              OR: [{ id: data.beachId }, { name: data.beachName }].filter(
+                Boolean
+              ) as any,
+            },
+          })
+        : null;
 
     // Verify region exists
     const region = await prisma.region.findUnique({
@@ -677,15 +726,21 @@ export class LogService {
       ...(typeof updateData.surferRating === "number" && {
         surferRating: updateData.surferRating,
       }),
-      ...(updateData.comments !== undefined && { comments: updateData.comments }),
+      ...(updateData.comments !== undefined && {
+        comments: updateData.comments,
+      }),
       ...(typeof updateData.isPrivate === "boolean" && {
         isPrivate: updateData.isPrivate,
       }),
       ...(typeof updateData.isAnonymous === "boolean" && {
         isAnonymous: updateData.isAnonymous,
       }),
-      ...(updateData.imageUrl !== undefined && { imageUrl: updateData.imageUrl }),
-      ...(updateData.videoUrl !== undefined && { videoUrl: updateData.videoUrl }),
+      ...(updateData.imageUrl !== undefined && {
+        imageUrl: updateData.imageUrl,
+      }),
+      ...(updateData.videoUrl !== undefined && {
+        videoUrl: updateData.videoUrl,
+      }),
       ...(updateData.videoPlatform !== undefined && {
         videoPlatform: updateData.videoPlatform,
       }),
@@ -781,4 +836,3 @@ export class LogService {
     });
   }
 }
-

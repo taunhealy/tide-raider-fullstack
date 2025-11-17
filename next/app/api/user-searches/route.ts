@@ -1,52 +1,79 @@
-import { prisma } from "@/app/lib/prisma";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/lib/authOptions";
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-export async function POST(request: Request) {
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://tide-raider-backend.fly.dev");
+
+/**
+ * GET /api/user-searches
+ * Proxy to backend /api/user-searches
+ */
+export async function GET(request: NextRequest) {
   try {
-    const { regionId } = await request.json();
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+    const searchParams = request.nextUrl.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : "";
 
-    const search = await prisma.userSearch.create({
-      data: {
-        regionId,
-        userId: session?.user?.id, // Will be null for non-authenticated users
-      },
-      include: {
-        region: true,
-      },
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/user-searches${queryString}`,
+      {
+        headers: {
+          ...(authToken && { Authorization: `Bearer ${authToken}` }),
+          Cookie: cookieStore.toString(),
+        },
+        credentials: "include",
+      }
+    );
 
-    return NextResponse.json(search);
+    if (!response.ok) {
+      // Return empty array instead of error - search tracking is not critical
+      return NextResponse.json([]);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    // Database not accessible - silently fail (search tracking is not critical)
-    console.error("[user-searches] Database error (POST):", error);
-    return NextResponse.json({ success: false }, { status: 200 });
+    console.error("[user-searches] Error fetching searches:", error);
+    // Return empty array instead of error
+    return NextResponse.json([]);
   }
 }
 
-export async function GET(request: Request) {
+/**
+ * POST /api/user-searches
+ * Proxy to backend /api/user-searches
+ */
+export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "5");
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+    const body = await request.json();
 
-    // Get recent searches, either for the user or globally
-    const searches = await prisma.userSearch.findMany({
-      where: session?.user?.id ? { userId: session.user.id } : {},
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      distinct: ["regionId"], // Avoid duplicates
-      include: {
-        region: true,
+    const response = await fetch(`${BACKEND_URL}/api/user-searches`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: cookieStore.toString(),
       },
+      credentials: "include",
+      body: JSON.stringify(body),
     });
 
-    return NextResponse.json(searches);
+    if (!response.ok) {
+      // Silently fail - search tracking is not critical
+      return NextResponse.json({ success: false }, { status: 200 });
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    // Database not accessible - return empty array
-    console.error("[user-searches] Database error:", error);
-    return NextResponse.json([]);
+    console.error("[user-searches] Error creating search:", error);
+    // Silently fail - search tracking is not critical
+    return NextResponse.json({ success: false }, { status: 200 });
   }
 }

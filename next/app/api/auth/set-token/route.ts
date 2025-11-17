@@ -10,8 +10,11 @@ export async function POST(req: NextRequest) {
     const { token } = await req.json();
 
     if (!token) {
+      console.error("[auth/set-token] No token provided");
       return NextResponse.json({ error: "Token is required" }, { status: 400 });
     }
+
+    console.log("[auth/set-token] Setting auth-token cookie");
 
     // Set cookie on frontend domain (same domain = can use lax)
     const isProduction = process.env.NODE_ENV === "production";
@@ -24,6 +27,8 @@ export async function POST(req: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
     });
+
+    console.log("[auth/set-token] Cookie set successfully");
 
     return response;
   } catch (error) {

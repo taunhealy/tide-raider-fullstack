@@ -121,5 +121,6 @@ export const getRaidLogsQuerySchema = z.object({
     .transform((val) => val === "true")
     .optional(),
   userId: z.string().uuid().optional(),
-  beachId: z.string().uuid().optional(),
+  // beachId can be either a UUID or a beach slug (e.g., "nusa-dua", "bingin")
+  beachId: z.string().optional(),
 });

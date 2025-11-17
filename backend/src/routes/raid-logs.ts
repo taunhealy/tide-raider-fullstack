@@ -13,12 +13,15 @@ import {
   deleteRaidLogQuerySchema,
   getRaidLogsQuerySchema,
 } from "../validators/logValidators";
+import { dataRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
 // GET /api/raid-logs - List log entries with filters
+// Use dataRateLimiter for this frequently called endpoint
 router.get(
   "/",
+  dataRateLimiter,
   optionalAuth,
   validate({ query: getRaidLogsQuerySchema }),
   async (req: Request, res: Response) => {

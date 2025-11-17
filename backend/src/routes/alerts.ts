@@ -14,12 +14,15 @@ import {
   notifyAlertsSchema,
   testForceAlertQuerySchema,
 } from "../validators/alertValidators";
+import { dataRateLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
 // GET /api/alerts - Fetch alerts, regions, or dates
+// Use dataRateLimiter for this frequently called endpoint
 router.get(
   "/",
+  dataRateLimiter,
   optionalAuth,
   validate({ query: getAlertsQuerySchema }),
   async (req: Request, res: Response) => {

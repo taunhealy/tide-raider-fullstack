@@ -28,10 +28,17 @@ export function AuthCallbackHandler() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ token }),
+        credentials: "include", // Include cookies
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Failed to set token: ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data) => {
           if (data.success) {
+            console.log("[AuthCallbackHandler] Token set successfully");
             // Remove token from URL
             window.history.replaceState(
               null,
@@ -39,13 +46,22 @@ export function AuthCallbackHandler() {
               window.location.pathname + window.location.search
             );
             setStatus("done");
-            // Refresh the page to trigger auth check
-            window.location.reload();
+            // Small delay to ensure cookie is set, then reload
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
+          } else {
+            throw new Error("Token setting failed");
           }
         })
         .catch((error) => {
-          console.error("Failed to set auth token:", error);
+          console.error(
+            "[AuthCallbackHandler] Failed to set auth token:",
+            error
+          );
           setStatus("done");
+          // Redirect to signin with error
+          window.location.href = "/auth/signin?error=TokenSetFailed";
         });
     }
   }, [status]);

@@ -12,7 +12,6 @@ import {
   Bell,
   BookOpen,
   Image as ImageIcon,
-  PenTool,
   Droplet,
   Camera,
   BookText,
@@ -92,13 +91,6 @@ export default function HeroSection({ data }: HeroProps) {
       icon: "gallery-icon",
       link: "/raidlogs",
     },
-    {
-      id: 5,
-      title: "Chronicles",
-      description: "Share your stories.",
-      icon: "chronicles-icon",
-      link: "/chronicles",
-    },
   ];
 
   // Add a function to get emoji for each feature
@@ -112,8 +104,6 @@ export default function HeroSection({ data }: HeroProps) {
         return "📓";
       case "gallery":
         return "🖼️";
-      case "chronicles":
-        return "📝";
       default:
         return "✨";
     }
@@ -381,92 +371,6 @@ export default function HeroSection({ data }: HeroProps) {
               yoyo: true,
             });
           }
-        } else if (productFeatures[currentFeature].title === "Chronicles") {
-          // Pen icon animation - writing motion
-          const penTl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
-
-          penTl
-            .to(icon, {
-              rotation: 5,
-              x: 3,
-              y: 3,
-              duration: 0.8,
-              ease: "power1.inOut",
-            })
-            .to(icon, {
-              rotation: 3,
-              x: -3,
-              y: 5,
-              duration: 0.8,
-              ease: "power1.inOut",
-            })
-            .to(icon, {
-              rotation: 6,
-              x: 4,
-              y: 2,
-              duration: 0.8,
-              ease: "power1.inOut",
-            })
-            .to(icon, {
-              rotation: 0,
-              x: 0,
-              y: 0,
-              duration: 0.8,
-              ease: "power1.inOut",
-            });
-
-          // Add a subtle ink trail effect with the glow
-          if (glowEffect) {
-            penTl
-              .to(
-                glowEffect,
-                {
-                  x: 3,
-                  y: 3,
-                  opacity: 0.5,
-                  scale: 1.1,
-                  duration: 0.8,
-                  ease: "power1.inOut",
-                },
-                0
-              )
-              .to(
-                glowEffect,
-                {
-                  x: -3,
-                  y: 5,
-                  opacity: 0.4,
-                  scale: 1.2,
-                  duration: 0.8,
-                  ease: "power1.inOut",
-                },
-                0.8
-              )
-              .to(
-                glowEffect,
-                {
-                  x: 4,
-                  y: 2,
-                  opacity: 0.5,
-                  scale: 1.1,
-                  duration: 0.8,
-                  ease: "power1.inOut",
-                },
-                1.6
-              )
-              .to(
-                glowEffect,
-                {
-                  x: 0,
-                  y: 0,
-                  opacity: 0.3,
-                  scale: 1,
-                  duration: 0.8,
-                  ease: "power1.inOut",
-                },
-                2.4
-              );
-          }
         }
 
         // Add a constant cyan glow to all icons
@@ -546,9 +450,21 @@ export default function HeroSection({ data }: HeroProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[100svh] min-h-[600px] overflow-hidden px-4 sm:px-6 md:px-8 lg:px-16"
+      className="relative w-full h-[100svh] min-h-screen overflow-hidden"
     >
-      <div className="relative w-full h-full z-99 max-w-[1440px] mx-auto">
+      {/* Background image - full screen cover */}
+      <div className="absolute inset-0 w-full h-full">
+        <Image
+          src="/images/hero-cover-surf.webp"
+          alt="Surf hero cover"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
+
+      <div className="relative w-full h-full z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16">
         {/* Neon Hearts */}
         <div className="absolute top-4 sm:top-6 md:top-8 right-4 sm:right-6 md:right-8 flex space-x-2 sm:space-x-3 md:space-x-4 z-20">
           {[1, 2, 3].map((i) => (
@@ -563,30 +479,19 @@ export default function HeroSection({ data }: HeroProps) {
           ))}
         </div>
 
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <Image
-            src="https://media.tideraider.com/Leonardo_Phoenix_10_a_beautiful_island_barelling.jpg"
-            alt="Barreling island wave"
-            title="Art Style: Studio Ghibli"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-        </div>
-
-        {/* Left sidebar text - moved closer to center */}
+        {/* Left sidebar text - Tide Raider branding */}
         <div
           ref={textRef}
-          className="absolute left-4 sm:left-8 md:left-[120px] lg:left-[180px] top-1/2 -translate-y-1/2 pr-2 sm:pr-3 md:pr-4"
+          className="absolute left-4 sm:left-6 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 pr-2 sm:pr-3 md:pr-4 z-10"
         >
-          <div className="writing-mode-vertical-rl rotate-270 space-y-1 sm:space-y-1.5 md:space-y-2"></div>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white font-primary tracking-tight">
+            Tide Raider
+          </h1>
         </div>
 
         {/* Product Feature Slider - replacing the START button */}
         <div
-          className="absolute top-[60%] sm:top-1/2 right-4 sm:right-8 md:right-[120px] lg:right-[180px] -translate-y-1/2 z-10"
+          className="absolute top-[60%] sm:top-1/2 right-4 sm:right-6 md:right-8 lg:right-12 -translate-y-1/2 z-10"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -678,14 +583,6 @@ export default function HeroSection({ data }: HeroProps) {
                         <>
                           <div className="absolute inset-0 bg-[var(--color-tertiary)]/10 rounded-xl filter blur-xl"></div>
                           <Camera className="text-[var(--color-tertiary)] w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 z-10 drop-shadow-[0_0_8px_rgba(28,217,255,0.7)]" />
-                        </>
-                      )}
-
-                      {productFeatures[currentFeature].title ===
-                        "Chronicles" && (
-                        <>
-                          <div className="absolute inset-0 bg-[var(--color-tertiary)]/10 rounded-xl filter blur-xl"></div>
-                          <PenTool className="text-[var(--color-tertiary)] w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 z-10 drop-shadow-[0_0_8px_rgba(28,217,255,0.7)]" />
                         </>
                       )}
                     </div>

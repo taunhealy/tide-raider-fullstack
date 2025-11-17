@@ -38,6 +38,7 @@ export function useBackendAuth() {
         // Use Next.js API route (same domain = cookies work)
         const response = await fetch("/api/auth/me", {
           credentials: "include", // Include cookies (auth-token)
+          cache: "no-store", // Don't cache auth requests
         });
 
         if (response.ok) {
@@ -60,6 +61,7 @@ export function useBackendAuth() {
           }
         }
       } catch (error) {
+        console.error("[useBackendAuth] Error fetching user:", error);
         if (mounted) {
           setAuthState({
             user: null,
@@ -72,8 +74,27 @@ export function useBackendAuth() {
 
     fetchUser();
 
+    // Listen for storage events (when token is set in another tab/window)
+    const handleStorageChange = () => {
+      if (mounted) {
+        fetchUser();
+      }
+    };
+
+    // Listen for focus events (user might have signed in in another tab)
+    const handleFocus = () => {
+      if (mounted) {
+        fetchUser();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", handleFocus);
+
     return () => {
       mounted = false;
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 

@@ -45,6 +45,8 @@ interface MediaGridProps {
 
 function MediaGridBase({ videos = [], beach }: MediaGridProps) {
   // Fetch latest log entry for this beach
+  // Only fetch if we don't have videos (to reduce unnecessary requests)
+  // Use enabled flag to conditionally fetch
   const {
     data: latestLogEntry,
     isLoading: isLoadingLog,
@@ -56,16 +58,29 @@ function MediaGridBase({ videos = [], beach }: MediaGridProps) {
         const response = await fetch(
           `/api/raid-logs?beachId=${beach.id}&limit=1`
         );
-        if (!response.ok) throw new Error("Failed to fetch log entry");
+        if (!response.ok) {
+          // Don't throw error for 429 or other rate limit errors - just return empty
+          if (response.status === 429) {
+            console.warn(`[MediaGrid] Rate limited for beach ${beach.name}`);
+            return [];
+          }
+          // For other errors, also return empty array instead of throwing
+          return [];
+        }
         const data = await response.json();
-        return data.entries;
+        return data.entries || [];
       } catch (err) {
-        console.error("Error fetching log entries:", err);
+        // Silently fail - log entries are optional
         return [];
       }
     },
-    retry: 1,
-    staleTime: 60000, // 1 minute
+    enabled: true, // Keep enabled but with better caching
+    retry: 0, // Don't retry to avoid hitting rate limits
+    staleTime: 1000 * 60 * 10, // 10 minutes - cache longer to reduce requests
+    gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   // Ensure videos is always an array and has the correct shape

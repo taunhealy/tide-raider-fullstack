@@ -21,18 +21,25 @@ export default function RecentRegionSearch({
   const isInitialLoadRef = useRef(true);
 
   // Enhanced caching strategy for recent searches
-  const { data: recentSearches } = useQuery({
+  const { data: recentSearches, isLoading, error } = useQuery({
     queryKey: ["recentSearches"],
     queryFn: async () => {
       const res = await fetch("/api/user-searches?limit=5");
-      if (!res.ok) throw new Error("Failed to fetch searches");
-      return res.json();
+      if (!res.ok) {
+        console.error("[RecentRegionSearch] Failed to fetch searches:", res.status, res.statusText);
+        // Return empty array instead of throwing to prevent component from breaking
+        return [];
+      }
+      const data = await res.json();
+      console.log("[RecentRegionSearch] Fetched searches:", data);
+      return Array.isArray(data) ? data : [];
     },
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    retry: 1, // Only retry once
   });
 
   // Track new searches
@@ -131,7 +138,17 @@ export default function RecentRegionSearch({
     }
   }, [recentSearches]); // Only depend on recentSearches
 
-  if (!recentSearches?.length) return null;
+  // Show component even if empty - don't hide it completely
+  // Only hide if there's an error or still loading initially
+  if (isLoading && !recentSearches) {
+    return null; // Don't show anything while loading initially
+  }
+
+  // If there are no searches, show a message or return null
+  // For now, we'll return null to keep the UI clean
+  if (!recentSearches?.length) {
+    return null;
+  }
 
   return (
     <div ref={containerRef} className={cn("flex flex-wrap gap-2", className)}>

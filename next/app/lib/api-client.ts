@@ -266,7 +266,14 @@ export const api = {
 
   // Regions
   getRegions: async () => {
-    return apiRequest<any[]>("/api/regions");
+    // Use direct route instead of proxy (route handler takes precedence)
+    const response = await fetch("/api/regions", {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await response.json();
   },
 
   // User

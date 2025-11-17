@@ -30,12 +30,21 @@ export function getVideoThumbnail(
   url: string,
   platform: "youtube" | "vimeo" = "youtube"
 ): string {
+  if (!url) return "/images/placeholder.jpg"; // Fallback to placeholder
+
   const videoId = getVideoId(url, platform);
 
-  if (!videoId) return "";
+  if (!videoId) {
+    console.warn(`[videoUtils] Could not extract video ID from URL: ${url}`);
+    return "/images/placeholder.jpg"; // Fallback to placeholder
+  }
 
   if (platform === "youtube") {
-    // YouTube thumbnail URL
+    // YouTube thumbnail URL - validate video ID format (11 characters)
+    if (videoId.length !== 11) {
+      console.warn(`[videoUtils] Invalid YouTube video ID format: ${videoId}`);
+      return "/images/placeholder.jpg";
+    }
     return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   } else if (platform === "vimeo") {
     // For Vimeo, we'd need to use their API to get thumbnails
@@ -43,5 +52,5 @@ export function getVideoThumbnail(
     return `https://vumbnail.com/${videoId}.jpg`;
   }
 
-  return "";
+  return "/images/placeholder.jpg"; // Fallback to placeholder
 }

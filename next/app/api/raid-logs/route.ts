@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
     });
 
     if (!response.ok) {
+      // Handle 429 gracefully
+      if (response.status === 429) {
+        return NextResponse.json(
+          { error: "Too many requests, please try again later" },
+          { status: 429 }
+        );
+      }
       return NextResponse.json(
         { error: "Failed to fetch logs" },
         { status: response.status }

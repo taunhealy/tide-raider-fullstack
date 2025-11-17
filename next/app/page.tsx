@@ -1,9 +1,6 @@
+import HeroSection from "./sections/Hero";
 import { client } from "./lib/sanity";
 import { homePageQuery } from "./lib/queries";
-import HeroBlogSection from "./sections/HeroBlog";
-import HeroSection from "./sections/Hero";
-import HeroImage from "./sections/HeroImage";
-import About from "./sections/About";
 
 export const revalidate = 0;
 
@@ -28,9 +25,6 @@ export default async function HomePage() {
     return (
       <main>
         <HeroSection data={content} />
-        <About data={content.about} />
-        <HeroBlogSection data={content.blog} />
-        <HeroImage data={content.heroImage} />
       </main>
     );
   } catch (error) {
