@@ -23,6 +23,18 @@ const JWT_SECRET =
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 // Configure Passport Google Strategy
+//
+// GOOGLE CLOUD CONSOLE CONFIGURATION REQUIRED:
+//
+// 1. Authorized JavaScript origins (where OAuth is initiated from):
+//    - Production: https://www.tideraider.com
+//    - Development: http://localhost:3000
+//
+// 2. Authorized redirect URIs (where Google redirects after OAuth):
+//    - Production: https://tide-raider-backend.fly.dev/api/auth/google/callback
+//    - Development: http://localhost:3001/api/auth/google/callback
+//
+// IMPORTANT: These must EXACTLY match (including protocol, no trailing slashes)
 passport.use(
   new GoogleStrategy(
     {
@@ -30,7 +42,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: process.env.BACKEND_URL
         ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-        : process.env.NODE_ENV === "production"
+        : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
           ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
           : `http://localhost:3001/api/auth/google/callback`,
     },
@@ -133,6 +145,13 @@ router.get(
   "/google",
   (req: Request, res: Response, next: any) => {
     console.log("[auth] 🔐 Google OAuth route accessed");
+    console.log("[auth] Request query:", req.query);
+    console.log("[auth] Request headers:", {
+      host: req.headers.host,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+    });
+
     // Check if Google OAuth is configured
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       console.error(
@@ -143,11 +162,27 @@ router.get(
         message: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set",
       });
     }
+
+    // Log the callback URL that will be used
+    const callbackURL = process.env.BACKEND_URL
+      ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+      : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
+        ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+        : `http://localhost:3001/api/auth/google/callback`;
+
+    console.log("[auth] 📍 Callback URL:", callbackURL);
+    console.log(
+      "[auth] 🔑 Client ID:",
+      process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "..."
+    );
+
     next();
   },
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account",
+    // Preserve state parameter through OAuth flow
+    state: true,
   })
 );
 

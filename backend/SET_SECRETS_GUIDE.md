@@ -28,6 +28,11 @@ flyctl secrets set FRONTEND_URL="https://your-frontend.vercel.app" --app tide-ra
 flyctl secrets set CRON_SECRET="your-cron-secret-key" --app tide-raider-backend
 flyctl secrets set NODE_ENV="production" --app tide-raider-backend
 
+# Google OAuth (Required for authentication)
+flyctl secrets set GOOGLE_CLIENT_ID="your-google-client-id" --app tide-raider-backend
+flyctl secrets set GOOGLE_CLIENT_SECRET="your-google-client-secret" --app tide-raider-backend
+flyctl secrets set BACKEND_URL="https://tide-raider-backend.fly.dev" --app tide-raider-backend
+
 # Optional (if using notifications)
 flyctl secrets set RESEND_API_KEY="your-resend-key" --app tide-raider-backend
 flyctl secrets set MESSAGEBIRD_API_KEY="your-messagebird-key" --app tide-raider-backend
@@ -44,6 +49,9 @@ flyctl secrets set \
   FRONTEND_URL="https://your-app.vercel.app" \
   CRON_SECRET="your-cron-secret" \
   NODE_ENV="production" \
+  GOOGLE_CLIENT_ID="your-google-client-id" \
+  GOOGLE_CLIENT_SECRET="your-google-client-secret" \
+  BACKEND_URL="https://tide-raider-backend.fly.dev" \
   --app tide-raider-backend
 ```
 
@@ -56,6 +64,9 @@ flyctl secrets set \
 | `FRONTEND_URL` | Your frontend URL for CORS | `https://your-app.vercel.app` |
 | `CRON_SECRET` | Secret for cron job authentication | `your-cron-secret-key` |
 | `NODE_ENV` | Environment (always "production") | `production` |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | From Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | From Google Cloud Console |
+| `BACKEND_URL` | Backend URL for OAuth callback | `https://tide-raider-backend.fly.dev` |
 
 ## Where to Get Values
 

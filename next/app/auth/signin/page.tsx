@@ -4,7 +4,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 // Use the same backend URL constant
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : "https://tide-raider-backend.fly.dev");
 
 function SignInSkeleton() {
   return (
@@ -66,8 +70,8 @@ function SignInContent() {
           <button
             onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-3 px-6 py-3 
-                     bg-white border border-gray-300 rounded-lg shadow-sm 
-                     hover:bg-gray-50 transition-colors duration-200 font-primary"
+                         bg-white border border-gray-300 rounded-lg shadow-sm 
+                         hover:bg-gray-50 transition-colors duration-200 font-primary"
           >
             <svg
               className="w-5 h-5"
