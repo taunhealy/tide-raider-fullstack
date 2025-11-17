@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSyncing, setIsSyncing] = useState(true);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -16,6 +17,15 @@ export default function CheckoutSuccessPage() {
       try {
         setIsSyncing(true);
         setSyncError(null);
+
+        // Extract subscription_id from URL if present
+        const subscriptionId = searchParams.get("subscription_id");
+        if (subscriptionId) {
+          console.log(
+            "[CheckoutSuccess] PayPal subscription_id:",
+            subscriptionId
+          );
+        }
 
         // Call sync endpoint to check PayPal subscription status
         const response = await fetch("/api/paypal/sync", {
@@ -58,7 +68,7 @@ export default function CheckoutSuccessPage() {
     };
 
     syncSubscription();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-secondary)] py-12 px-4 sm:px-6 lg:px-8">

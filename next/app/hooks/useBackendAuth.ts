@@ -52,6 +52,13 @@ export function useBackendAuth() {
 
         if (response.ok) {
           const data = await response.json();
+          console.log("[useBackendAuth] User data fetched:", {
+            userId: data.user?.id,
+            email: data.user?.email,
+            isSubscribed: data.user?.isSubscribed,
+            hasActiveTrial: data.user?.hasActiveTrial,
+            trialEndDate: data.user?.trialEndDate,
+          });
           if (mounted) {
             setAuthState({
               user: data.user,
@@ -101,6 +108,8 @@ export function useBackendAuth() {
     // Listen for custom refresh event (triggered after subscription sync)
     const handleRefresh = () => {
       if (mounted) {
+        // Reset lastFetchTime to bypass throttle
+        lastFetchTime = 0;
         fetchUser();
       }
     };

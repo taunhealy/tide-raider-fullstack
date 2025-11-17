@@ -3,13 +3,61 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { useSubscription } from "@/app/context/SubscriptionContext";
 import { Button } from "@/app/components/ui/Button";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session, status } = useBackendAuth();
+  const {
+    isSubscribed,
+    hasActiveTrial,
+    isLoading: subscriptionLoading,
+  } = useSubscription();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(
+    null
+  );
+
+  // Log subscription status for debugging
+  useEffect(() => {
+    console.log("[CheckoutPage] Subscription status check:", {
+      authStatus: status,
+      isSubscribed,
+      hasActiveTrial,
+      subscriptionLoading,
+      sessionUser: session?.user,
+      userId: session?.user?.id,
+      userIsSubscribed: session?.user?.isSubscribed,
+      userHasActiveTrial: session?.user?.hasActiveTrial,
+    });
+  }, [status, isSubscribed, hasActiveTrial, subscriptionLoading, session]);
+
+  // Check subscription status directly from API
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const checkSubscription = async () => {
+        try {
+          const response = await fetch("/api/paypal/subscription-status", {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setSubscriptionStatus(data.subscriptionStatus);
+            console.log("[CheckoutPage] Direct subscription check:", {
+              subscriptionStatus: data.subscriptionStatus,
+              isPremium: data.isPremium,
+              paypalSubscriptionId: data.paypalSubscriptionId,
+            });
+          }
+        } catch (error) {
+          console.error("[CheckoutPage] Error checking subscription:", error);
+        }
+      };
+      checkSubscription();
+    }
+  }, [status, session]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -17,9 +65,48 @@ export default function CheckoutPage() {
     }
   }, [status, router]);
 
+  // Redirect if already subscribed (check both context and direct API)
+  useEffect(() => {
+    const hasActiveSubscription =
+      isSubscribed || hasActiveTrial || subscriptionStatus === "ACTIVE";
+
+    console.log("[CheckoutPage] Redirect check:", {
+      hasActiveSubscription,
+      isSubscribed,
+      hasActiveTrial,
+      subscriptionStatus,
+      authStatus: status,
+    });
+
+    if (status === "authenticated" && hasActiveSubscription) {
+      console.log(
+        "[CheckoutPage] Redirecting to dashboard - user has active subscription"
+      );
+      router.push("/dashboard?tab=billing");
+    }
+  }, [status, isSubscribed, hasActiveTrial, subscriptionStatus, router]);
+
   const handleCheckout = async () => {
     if (!session?.user) {
       setError("Please sign in to continue");
+      return;
+    }
+
+    // Double-check subscription status before proceeding
+    const hasActiveSubscription =
+      isSubscribed || hasActiveTrial || subscriptionStatus === "ACTIVE";
+
+    console.log("[CheckoutPage] Pre-checkout subscription check:", {
+      isSubscribed,
+      hasActiveTrial,
+      subscriptionStatus,
+      hasActiveSubscription,
+    });
+
+    if (hasActiveSubscription) {
+      console.log("[CheckoutPage] Blocking checkout - user already subscribed");
+      setError("You already have an active subscription!");
+      router.push("/dashboard?tab=billing");
       return;
     }
 
@@ -69,6 +156,30 @@ export default function CheckoutPage() {
 
   if (status === "unauthenticated") {
     return null; // Will redirect
+  }
+
+  // Show message if already subscribed (while redirecting)
+  const hasActiveSubscription =
+    isSubscribed || hasActiveTrial || subscriptionStatus === "ACTIVE";
+
+  if (hasActiveSubscription) {
+    console.log("[CheckoutPage] Showing 'already subscribed' message");
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-900 mb-4">
+            You already have an active subscription!
+          </p>
+          <p className="text-sm text-gray-600 mb-4">
+            Status:{" "}
+            {subscriptionStatus || (isSubscribed ? "Subscribed" : "Trial")}
+          </p>
+          <Button onClick={() => router.push("/dashboard?tab=billing")}>
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (

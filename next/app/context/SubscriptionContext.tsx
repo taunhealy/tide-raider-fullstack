@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useBackendAuth } from "../hooks/useBackendAuth";
 
 interface User {
@@ -40,12 +40,37 @@ export function SubscriptionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Use useBackendAuth which already proxies to backend via /api/auth/me
-  const { data: session, status } = useBackendAuth();
+  const { data: session, status, refetch } = useBackendAuth();
+
+  // Listen for auth refresh events
+  useEffect(() => {
+    const handleAuthRefresh = () => {
+      refetch();
+    };
+
+    window.addEventListener("auth-refresh", handleAuthRefresh);
+    return () => {
+      window.removeEventListener("auth-refresh", handleAuthRefresh);
+    };
+  }, [refetch]);
 
   const isSubscribed = session?.user?.isSubscribed || false;
   const hasActiveTrial = session?.user?.hasActiveTrial || false;
   const isLoading = status === "loading";
+
+  // Log subscription context values for debugging
+  useEffect(() => {
+    console.log("[SubscriptionContext] Subscription state:", {
+      isSubscribed,
+      hasActiveTrial,
+      isLoading,
+      sessionUser: session?.user,
+      userId: session?.user?.id,
+      userIsSubscribed: session?.user?.isSubscribed,
+      userHasActiveTrial: session?.user?.hasActiveTrial,
+      trialEndDate: session?.user?.trialEndDate,
+    });
+  }, [isSubscribed, hasActiveTrial, isLoading, session]);
 
   // Determine trial status
   const trialStatus = hasActiveTrial

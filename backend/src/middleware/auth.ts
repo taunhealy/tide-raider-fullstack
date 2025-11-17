@@ -178,10 +178,6 @@ export async function authenticateToken(
       return res.status(401).json({ error: "User not found" });
     }
 
-    console.log(
-      `[auth] ✅ Authentication successful - userId: ${user.id}, email: ${user.email || "N/A"}, name: ${user.name || "N/A"}`
-    );
-
     // Attach user to request
     authReq.user = {
       id: user.id,
