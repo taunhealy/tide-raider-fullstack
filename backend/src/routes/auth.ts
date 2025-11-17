@@ -40,11 +40,12 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.BACKEND_URL
-        ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-        : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
-          ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-          : `http://localhost:3001/api/auth/google/callback`,
+      callbackURL:
+        process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
+          ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+          : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
+            ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+            : `http://localhost:3001/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -164,11 +165,13 @@ router.get(
     }
 
     // Log the callback URL that will be used
-    const callbackURL = process.env.BACKEND_URL
-      ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-      : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
-        ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-        : `http://localhost:3001/api/auth/google/callback`;
+    // Only use BACKEND_URL if it's a valid HTTP/HTTPS URL (not a database URL)
+    const callbackURL =
+      process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
+        ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+        : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
+          ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+          : `http://localhost:3001/api/auth/google/callback`;
 
     console.log("[auth] 📍 Callback URL:", callbackURL);
     console.log(
@@ -181,8 +184,6 @@ router.get(
   passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account",
-    // Preserve state parameter through OAuth flow
-    state: true,
   })
 );
 
@@ -237,9 +238,13 @@ router.get(
       );
 
       // Redirect to frontend with success
-      const redirectUrl = req.query.state
+      // Include token in URL so frontend can store it (cookie is on different domain)
+      const baseUrl = req.query.state
         ? `${FRONTEND_URL}${req.query.state}`
         : `${FRONTEND_URL}/raid`;
+      
+      // Add token to URL as hash (won't be sent to server, more secure than query param)
+      const redirectUrl = `${baseUrl}#token=${encodeURIComponent(token)}`;
 
       res.redirect(redirectUrl);
     } catch (error) {
