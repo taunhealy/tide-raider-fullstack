@@ -1,30 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
 
+/**
+ * Location/Countries API
+ * 
+ * Note: This endpoint currently returns an empty array.
+ * The frontend should not use Prisma directly - if country data is needed,
+ * it should be added to the backend API and accessed via the backend-proxy.
+ */
 export async function GET() {
-  try {
-    const countries = await prisma.country.findMany({
-      select: {
-        id: true,
-        name: true,
-        continentId: true,
-        continent: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
-    console.log("API response - countries:", countries);
-
-    return NextResponse.json(countries);
-  } catch (error) {
-    // Database not accessible - return empty array
-    console.error("[location] Database error:", error);
-    return NextResponse.json([]);
-  }
+  // Return empty array - frontend should not use Prisma directly
+  // If country data is needed, add it to the backend API
+  return NextResponse.json([]);
 }

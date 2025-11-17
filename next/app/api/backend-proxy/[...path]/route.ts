@@ -16,7 +16,11 @@ import { getToken } from "next-auth/jwt";
 import jwt from "jsonwebtoken";
 import { authOptions } from "@/app/lib/authOptions";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://tide-raider-backend.fly.dev");
 
 // Route segment config - ensure this route is dynamic
 export const dynamic = "force-dynamic";
@@ -111,13 +115,48 @@ async function handleProxy(
       allCookies.map((c) => c.name)
     );
 
-    const jwtToken = await getToken({
-      req,
-      secret: secret,
-    });
+    // First, check for backend OAuth JWT cookie (auth-token)
+    // This is set by the backend OAuth flow when user signs in
+    const authTokenCookie = req.cookies.get("auth-token")?.value;
+    let jwtToken: any = null;
+    let tokenSource = "none";
+
+    if (authTokenCookie) {
+      // Backend OAuth sets auth-token cookie - use it directly
+      console.log(`[proxy] ✅ Found auth-token cookie from backend OAuth`);
+      try {
+        // Verify the token is valid (optional - backend will verify anyway)
+        if (secret) {
+          jwtToken = jwt.verify(authTokenCookie, secret) as any;
+          tokenSource = "auth-token-cookie";
+          console.log(
+            `[proxy] ✅ Verified auth-token cookie: userId: ${jwtToken.id || jwtToken.sub}, email: ${jwtToken.email}`
+          );
+        } else {
+          // If no secret, still use the token (backend will verify)
+          tokenSource = "auth-token-cookie-unverified";
+          console.log(
+            `[proxy] ⚠️ Using auth-token cookie without verification (no secret)`
+          );
+        }
+      } catch (error) {
+        console.log(`[proxy] ⚠️ auth-token cookie verification failed:`, error);
+      }
+    }
+
+    // If no backend cookie, try NextAuth token
+    if (!jwtToken) {
+      jwtToken = await getToken({
+        req,
+        secret: secret,
+      });
+      if (jwtToken) {
+        tokenSource = "nextauth-token";
+      }
+    }
 
     console.log(
-      `[proxy] JWT token from getToken:`,
+      `[proxy] JWT token from ${tokenSource}:`,
       !!jwtToken,
       jwtToken
         ? `sub: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
@@ -161,10 +200,18 @@ async function handleProxy(
       }
     }
 
-    // jwtToken is the decoded JWT payload from NextAuth's encrypted session token
-    // We need to create a new plain JWT that the backend can verify with jwt.verify()
+    // Add Authorization header if we have a token
     if (jwtToken) {
-      if (!secret) {
+      if (
+        tokenSource === "auth-token-cookie" ||
+        tokenSource === "auth-token-cookie-unverified"
+      ) {
+        // Use the backend OAuth cookie directly
+        backendHeaders.Authorization = `Bearer ${authTokenCookie}`;
+        console.log(
+          `[proxy] 🔐 Using auth-token cookie directly for userId: ${jwtToken.id || jwtToken.sub}, email: ${jwtToken.email}`
+        );
+      } else if (!secret) {
         console.error(
           `[proxy] ❌ NEXTAUTH_SECRET or AUTH_SECRET not configured`
         );

@@ -88,7 +88,8 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // If user is provided (from signIn), use it
       if (user) {
         token.id = user.id;
         console.log(
@@ -110,13 +111,21 @@ export const authOptions: NextAuthOptions = {
           token.hasActiveTrial = dbUser?.hasActiveTrial || false;
           token.trialEndDate = dbUser?.trialEndDate || null;
         } catch (error) {
-          // Database not accessible - that's okay, backend will handle auth
+          // Database not accessible - that's okay, backend handles auth
           console.log(`[NextAuth] Database not accessible, using defaults`);
           token.isSubscribed = false;
           token.hasActiveTrial = false;
           token.trialEndDate = null;
         }
       }
+      
+      // If no user but we have a token ID, check if we need to refresh from backend cookie
+      // This handles the case where backend OAuth set auth-token cookie but NextAuth doesn't have a session
+      if (!user && !token.id && trigger === "update") {
+        // This will be called when session is updated
+        // We'll handle backend cookie sync in a separate endpoint
+      }
+      
       return token;
     },
   },

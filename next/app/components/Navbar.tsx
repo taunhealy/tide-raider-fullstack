@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "./ui/Button";
 import { useSubscription } from "../providers/SubscriptionProvider";
 import Link from "next/link";
@@ -11,6 +10,7 @@ import { useState, useEffect } from "react";
 import { handleSignIn } from "../lib/auth-utils";
 import Image from "next/image";
 import NotificationBadge from "./notifications/NotificationBadge";
+import { useBackendAuth } from "../hooks/useBackendAuth";
 
 // Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
@@ -21,7 +21,7 @@ const NAVIGATION_ITEMS = [
 ] as const;
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const { data: session, status, signOut } = useBackendAuth();
   const { isSubscribed } = useSubscription();
   const pathname = usePathname();
   const router = useRouter();
