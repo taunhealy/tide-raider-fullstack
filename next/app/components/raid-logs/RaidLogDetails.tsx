@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,7 +32,7 @@ interface RaidLogDetailsProps {
 }
 
 export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const router = useRouter();
   const isOwner = session?.user?.id === id;
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);

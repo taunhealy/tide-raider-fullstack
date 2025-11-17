@@ -7,7 +7,7 @@ import {
   Prisma,
 } from "@prisma/client";
 import { LogEntry } from "@/app/types/raidlogs";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 import {
@@ -111,7 +111,7 @@ export function AlertProvider({
   onClose,
 }: AlertProviderProps) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   // Initialize mode based on existing alert type
   const initialMode =
     existingAlert?.alertType === AlertType.RATING

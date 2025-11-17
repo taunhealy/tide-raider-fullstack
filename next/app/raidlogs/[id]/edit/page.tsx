@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 
 import { useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ export default function EditRaidLogPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const router = useRouter();
   const { data: beaches, isLoading: isLoadingBeaches } = useBeaches();
   const { data: entry, isLoading: isLoadingEntry } = useRaidLog(id);

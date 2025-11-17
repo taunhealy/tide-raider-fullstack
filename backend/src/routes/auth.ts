@@ -187,6 +187,7 @@ router.get(
   handleGoogleOAuth,
   passport.authenticate("google", {
     scope: ["profile", "email"],
+    accessType: "offline",
     prompt: "select_account",
   })
 );

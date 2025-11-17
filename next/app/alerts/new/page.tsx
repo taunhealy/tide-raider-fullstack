@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { LogEntry } from "@/app/types/raidlogs";
 import api from "@/app/lib/api-client";
 
@@ -15,7 +15,7 @@ export default function NewAlertPage() {
     null
   );
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status: authStatus } = useBackendAuth();
 
   useEffect(() => {
     // Get the selected log entry from localStorage
@@ -38,18 +38,19 @@ export default function NewAlertPage() {
       }
     };
 
-    if (status === "authenticated") {
-      fetchLogEntries();
-    } else if (status === "unauthenticated") {
-      router.push("/login");
-    } else {
-      // Simulate loading for a smoother transition
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-      return () => clearTimeout(timer);
+    if (authStatus === "loading") {
+      // Still loading auth state
+      return;
     }
-  }, [status, router]);
+
+    if (authStatus === "authenticated" && session?.user) {
+      // User is authenticated
+      fetchLogEntries();
+    } else if (authStatus === "unauthenticated") {
+      // User is not authenticated, redirect to login
+      router.push("/login");
+    }
+  }, [session, authStatus, router]);
 
   // Handle log entry selection from child component
   const handleLogEntrySelect = (logEntry: LogEntry | null) => {

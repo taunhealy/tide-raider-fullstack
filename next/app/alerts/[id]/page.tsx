@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { toast } from "sonner";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function AlertPage() {
   const router = useRouter();
   const params = useParams();
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useBackendAuth();
   const alertId = params?.id as string;
   const [isModalOpen, setIsModalOpen] = useState(true);
 
@@ -30,17 +30,17 @@ export default function AlertPage() {
       }
       return response.json();
     },
-    enabled: !!alertId && alertId !== "new" && !!session,
+    enabled: !!alertId && alertId !== "new" && !!session?.user,
   });
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (authStatus === "loading") return;
 
-    if (!session) {
+    if (!session?.user) {
       toast.error("Please log in to edit alerts");
       router.push("/");
     }
-  }, [session, status, router]);
+  }, [session, authStatus, router]);
 
   const handleClose = () => {
     setIsModalOpen(false);

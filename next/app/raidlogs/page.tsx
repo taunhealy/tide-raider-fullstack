@@ -1,15 +1,15 @@
 "use client";
 
 import { RaidLogsComponent } from "@/app/components/raid-logs/RaidLogsComponent";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useRouter } from "next/navigation";
 
 export default function RaidLogsPage() {
-  const { data: session, status } = useSession();
+  const { status: authStatus } = useBackendAuth();
   const router = useRouter();
 
-  if (status === "loading") {
+  if (authStatus === "loading") {
     return <RandomLoader isLoading={true} />;
   }
 

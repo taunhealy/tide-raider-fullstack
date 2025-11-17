@@ -2,11 +2,11 @@
 import { Beach } from "@/app/types/beaches";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 
 export function useCreateLog() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
 
   return useMutation({
     mutationFn: async (data: {

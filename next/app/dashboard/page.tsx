@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useState, useEffect } from "react";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +28,7 @@ import NotificationsContainer from "@/app/components/notifications/Notifications
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: session, update } = useSession();
+  const { data: session } = useBackendAuth();
   const { trialStatus, trialEndDate } = useSubscription();
   const [activeTab, setActiveTab] = useState<
     "account" | "billing" | "rentals" | "ads" | "alerts" | "notifications"
@@ -59,8 +59,11 @@ export default function DashboardPage() {
         queryKey: ["subscriptionDetails"],
       });
 
-      // Update the session
-      await update();
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ["user"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["subscriptionDetails"],
+      });
 
       // Refresh the page to ensure all components update
       router.refresh();
@@ -123,7 +126,7 @@ export default function DashboardPage() {
   // Add this useEffect to refresh data when subscription changes
   useEffect(() => {
     const refreshData = async () => {
-      await update(); // Update the session
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["subscriptionDetails"] });
       queryClient.invalidateQueries({ queryKey: ["user", session?.user?.id] });
       router.refresh(); // Refresh the page
@@ -134,7 +137,7 @@ export default function DashboardPage() {
     channel.onmessage = refreshData;
 
     return () => channel.close();
-  }, [update, queryClient, router, session?.user?.id]);
+  }, [queryClient, router, session?.user?.id]);
 
   const handleUsernameUpdate = async () => {
     if (!username.trim()) {
@@ -158,10 +161,9 @@ export default function DashboardPage() {
       }
 
       const data = await response.json();
-      await update();
       setUsername(data.name);
       toast.success("Username updated successfully!");
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+      queryClient.invalidateQueries({ queryKey: ["user", session?.user?.id] });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Update failed";
       setError(message);
@@ -181,7 +183,6 @@ export default function DashboardPage() {
         queryKey: ["subscriptionDetails"],
       });
       await queryClient.invalidateQueries({ queryKey: ["user"] });
-      await update();
       router.refresh();
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
@@ -341,7 +342,10 @@ export default function DashboardPage() {
             {activeTab === "account" && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium mb-2"
+                  >
                     Username
                   </label>
                   <div className="flex flex-col sm:flex-row gap-2 space-y-2 sm:space-y-0">
@@ -349,6 +353,7 @@ export default function DashboardPage() {
                       <div className="w-full h-[40px] bg-gray-200 animate-pulse rounded-md" />
                     ) : (
                       <input
+                        id="username"
                         type="text"
                         value={username}
                         onChange={(e) => {
@@ -356,6 +361,7 @@ export default function DashboardPage() {
                           setError(null);
                         }}
                         className="w-full p-2 border rounded-md"
+                        placeholder="Enter your username"
                       />
                     )}
                     <Button
@@ -368,14 +374,19 @@ export default function DashboardPage() {
                     </Button>
                   </div>
                   <div className="mt-4">
-                    <label className="block text-sm font-medium mb-2">
+                    <label
+                      htmlFor="userId"
+                      className="block text-sm font-medium mb-2"
+                    >
                       User ID
                     </label>
                     <input
+                      id="userId"
                       type="text"
                       value={session?.user?.id || ""}
                       className="w-full p-2 border rounded-md bg-gray-100"
                       disabled
+                      aria-label="User ID"
                     />
                   </div>
                   {error && (
@@ -389,10 +400,10 @@ export default function DashboardPage() {
                     initialRoles={userData?.roles || []}
                     onUpdate={async (roles) => {
                       try {
-                        await update();
                         queryClient.invalidateQueries({
                           queryKey: ["user", session?.user?.id],
                         });
+                        router.refresh();
                       } catch (error) {
                         console.error("Failed to update roles:", error);
                       }

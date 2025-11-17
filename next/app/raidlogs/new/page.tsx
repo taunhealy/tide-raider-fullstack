@@ -1,7 +1,7 @@
 "use client";
 
 import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useState, useEffect } from "react";
@@ -10,7 +10,7 @@ import { beachData } from "@/app/types/beaches";
 
 export default function NewRaidLogPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useBackendAuth();
   const [beaches, setBeaches] = useState<Beach[]>([]);
 
   useEffect(() => {
@@ -26,8 +26,8 @@ export default function NewRaidLogPage() {
     setBeaches(uniqueBeaches);
   }, []);
 
-  if (status === "loading") return <RandomLoader isLoading={true} />;
-  if (!session) return router.push("/login");
+  if (authStatus === "loading") return <RandomLoader isLoading={true} />;
+  if (!session?.user) return router.push("/login");
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
