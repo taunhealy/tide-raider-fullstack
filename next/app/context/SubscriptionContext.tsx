@@ -1,9 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { SubscriptionStatus } from "@/app/types/subscription";
+import { useBackendAuth } from "../hooks/useBackendAuth";
 
 interface User {
   id: string;
@@ -42,40 +40,29 @@ export function SubscriptionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { session, isLoading: sessionLoading } = useAuth();
+  // Use useBackendAuth which already proxies to backend via /api/auth/me
+  const { data: session, status } = useBackendAuth();
 
-  const { data, isLoading: subscriptionLoading } = useQuery({
-    queryKey: ["subscription-state"],
-    queryFn: async () => {
-      const userRes = await fetch("/api/user/current");
-      const userData = await userRes.json();
+  const isSubscribed = session?.user?.isSubscribed || false;
+  const hasActiveTrial = session?.user?.hasActiveTrial || false;
+  const isLoading = status === "loading";
 
-      return {
-        user: userData,
-      };
-    },
-    enabled: !!session?.user,
-  });
-
-  const isSubscribed =
-    data?.user?.subscriptionStatus === SubscriptionStatus.ACTIVE;
-
-  console.log("Final subscription check:", {
-    status: data?.user?.subscriptionStatus,
-    enumValue: SubscriptionStatus.ACTIVE,
-    isMatch: data?.user?.subscriptionStatus === SubscriptionStatus.ACTIVE,
-    isSubscribed,
-  });
+  // Determine trial status
+  const trialStatus = hasActiveTrial
+    ? "active"
+    : session?.user?.trialEndDate
+      ? "ended"
+      : "available";
 
   return (
     <SubscriptionContext.Provider
       value={{
         isSubscribed,
-        hasActiveTrial: Boolean(data?.user?.hasActiveTrial),
-        trialStatus: data?.user?.hasActiveTrial ? "active" : "ended",
-        isLoading: sessionLoading || subscriptionLoading,
+        hasActiveTrial,
+        trialStatus,
+        isLoading,
         session,
-        trialEndDate: data?.user?.trialEndDate,
+        trialEndDate: session?.user?.trialEndDate || null,
       }}
     >
       {children}

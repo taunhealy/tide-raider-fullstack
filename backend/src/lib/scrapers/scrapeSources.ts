@@ -5,7 +5,7 @@ interface RegionSourceConfig {
   regionId: string;
   sourceA: {
     url: string;
-    scraper: (url: string, regionId: string) => Promise<BaseForecastData>;
+    scraper: (url: string, regionId: string) => Promise<BaseForecastData[]>;
   };
 }
 

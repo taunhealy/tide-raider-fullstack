@@ -7,6 +7,9 @@ import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { LogEntry } from "@/app/types/raidlogs";
 import api from "@/app/lib/api-client";
+import { Button } from "@/app/components/ui/Button";
+import { toast } from "sonner";
+import { AlertLimitModal } from "@/app/components/alerts/AlertLimitModal";
 
 export default function NewAlertPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +18,8 @@ export default function NewAlertPage() {
     null
   );
   const [hasFetchedLogs, setHasFetchedLogs] = useState(false);
+  const [alertLimitReached, setAlertLimitReached] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
   const router = useRouter();
   const { data: session, status: authStatus } = useBackendAuth();
 
@@ -29,20 +34,58 @@ export default function NewAlertPage() {
   }, []); // Only run once on mount
 
   useEffect(() => {
-    // Fetch log entries when component mounts
+    // Check alert limit and fetch log entries when component mounts
     let mounted = true;
 
-    const fetchLogEntries = async () => {
+    const checkAlertLimit = async () => {
       try {
-        console.log("[NewAlertPage] Fetching log entries...");
-        const data = await api.getLogs();
-        console.log("[NewAlertPage] Log entries fetched:", data?.length || 0);
-        if (mounted) {
-          setLogEntries(Array.isArray(data) ? data : []);
-          setHasFetchedLogs(true);
+        // Check if user is premium
+        const isUserPremium =
+          session?.user?.isSubscribed || session?.user?.hasActiveTrial;
+
+        if (isUserPremium) {
+          setIsPremium(true);
+          setAlertLimitReached(false);
+          // Premium users can create unlimited alerts, so fetch logs
+          if (mounted) {
+            console.log("[NewAlertPage] Fetching log entries...");
+            const data = await api.getLogs();
+            console.log(
+              "[NewAlertPage] Log entries fetched:",
+              data?.length || 0
+            );
+            setLogEntries(Array.isArray(data) ? data : []);
+            setHasFetchedLogs(true);
+          }
+        } else {
+          // Check alert count for free users
+          const alerts = await api.getAlerts();
+          const activeAlerts = Array.isArray(alerts)
+            ? alerts.filter((alert: any) => alert.active !== false)
+            : [];
+
+          if (activeAlerts.length >= 1) {
+            if (mounted) {
+              setAlertLimitReached(true);
+              setIsPremium(false);
+            }
+            return;
+          }
+
+          // Limit not reached, fetch log entries
+          if (mounted) {
+            console.log("[NewAlertPage] Fetching log entries...");
+            const data = await api.getLogs();
+            console.log(
+              "[NewAlertPage] Log entries fetched:",
+              data?.length || 0
+            );
+            setLogEntries(Array.isArray(data) ? data : []);
+            setHasFetchedLogs(true);
+          }
         }
       } catch (error) {
-        console.error("[NewAlertPage] Error fetching log entries:", error);
+        console.error("[NewAlertPage] Error checking alert limit:", error);
         if (mounted) {
           setLogEntries([]);
           setHasFetchedLogs(true);
@@ -60,9 +103,9 @@ export default function NewAlertPage() {
     }
 
     if (authStatus === "authenticated" && session?.user) {
-      // User is authenticated - only fetch once
+      // User is authenticated - check limit and fetch logs
       if (!hasFetchedLogs) {
-        fetchLogEntries();
+        checkAlertLimit();
       } else {
         setIsLoading(false);
       }
@@ -74,7 +117,7 @@ export default function NewAlertPage() {
     return () => {
       mounted = false;
     };
-  }, [authStatus, session?.user?.id, hasFetchedLogs, router]); // Include hasFetchedLogs to prevent refetching
+  }, [authStatus, session?.user, hasFetchedLogs, router, alertLimitReached]);
 
   // Handle log entry selection from child component
   const handleLogEntrySelect = (logEntry: LogEntry | null) => {
@@ -95,8 +138,15 @@ export default function NewAlertPage() {
 
   return (
     <div>
+      <AlertLimitModal
+        isOpen={alertLimitReached && !isPremium}
+        onClose={() => {
+          setAlertLimitReached(false);
+          router.push("/alerts");
+        }}
+      />
       <ForecastAlertModal
-        isOpen={true}
+        isOpen={!alertLimitReached || isPremium}
         onClose={handleClose}
         logEntry={selectedLogEntry}
         existingAlert={undefined}

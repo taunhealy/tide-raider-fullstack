@@ -101,6 +101,38 @@ router.post(
         return res.status(401).json({ error: "Unauthorized" });
       }
 
+      // Check if user is premium (has active subscription)
+      const user = await prisma.user.findUnique({
+        where: { id: authReq.user.id },
+        select: {
+          subscriptionStatus: true,
+          hasActiveTrial: true,
+        },
+      });
+
+      const isPremium =
+        user?.subscriptionStatus === "ACTIVE" || user?.hasActiveTrial === true;
+
+      // Check alert limit: Free users can only have 1 alert
+      if (!isPremium) {
+        const existingAlerts = await prisma.alert.count({
+          where: {
+            userId: authReq.user.id,
+            active: true,
+          },
+        });
+
+        if (existingAlerts >= 1) {
+          return res.status(403).json({
+            error: "Alert limit reached",
+            message:
+              "Free users can only have 1 active alert. Upgrade to premium for unlimited alerts.",
+            code: "ALERT_LIMIT_REACHED",
+            requiresUpgrade: true,
+          });
+        }
+      }
+
       const alert = await AlertService.createAlert(authReq.user.id, req.body);
       return res.json(alert);
     } catch (error) {

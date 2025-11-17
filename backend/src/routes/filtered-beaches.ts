@@ -160,18 +160,34 @@ router.get(
         }),
       };
 
-      // Get current date at midnight UTC
-      const currentDate = new Date();
-      currentDate.setUTCHours(0, 0, 0, 0);
+      // Get date from query params or default to today
+      const forecastDateParam = req.query.forecastDate as string | undefined;
+      let targetDate: Date;
+
+      if (forecastDateParam) {
+        // Parse the date string (YYYY-MM-DD format) - parse manually to avoid timezone issues
+        const [year, month, day] = forecastDateParam.split("-").map(Number);
+        targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+        console.log(
+          `[filtered-beaches] 📅 Parsed forecastDate param: "${forecastDateParam}" -> ${targetDate.toISOString()}`
+        );
+      } else {
+        // Default to today
+        targetDate = new Date();
+        targetDate.setUTCHours(0, 0, 0, 0);
+        console.log(
+          `[filtered-beaches] 📅 No forecastDate param, using today: ${targetDate.toISOString()}`
+        );
+      }
 
       // Step 1: Get or fetch forecast data
       console.log(
-        `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${currentDate.toISOString()}`
+        `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${targetDate.toISOString()}`
       );
       let forecast = await prisma.forecastA.findFirst({
         where: {
           regionId,
-          date: currentDate,
+          date: targetDate,
         },
         select: {
           windSpeed: true,
@@ -186,33 +202,45 @@ router.get(
       console.log(`[filtered-beaches] 📊 Forecast query result:`, {
         found: !!forecast,
         regionId,
-        date: currentDate.toISOString(),
+        date: targetDate.toISOString(),
       });
 
-      // If no forecast exists, try to fetch it
+      // If no forecast exists and we're looking for today, try to fetch it
+      // For future dates, we don't scrape - just return null if not in DB
       if (!forecast) {
-        try {
-          const fetchedForecast = await getLatestConditions(regionId, false);
-          if (fetchedForecast) {
-            forecast = {
-              windSpeed: fetchedForecast.windSpeed,
-              windDirection: fetchedForecast.windDirection,
-              swellHeight: fetchedForecast.swellHeight,
-              swellPeriod: fetchedForecast.swellPeriod,
-              swellDirection: fetchedForecast.swellDirection,
-              date: currentDate,
-            };
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+        const isToday = targetDate.getTime() === today.getTime();
+
+        if (isToday) {
+          try {
+            const fetchedForecast = await getLatestConditions(regionId, false);
+            if (fetchedForecast) {
+              forecast = {
+                windSpeed: fetchedForecast.windSpeed,
+                windDirection: fetchedForecast.windDirection,
+                swellHeight: fetchedForecast.swellHeight,
+                swellPeriod: fetchedForecast.swellPeriod,
+                swellDirection: fetchedForecast.swellDirection,
+                date: targetDate,
+              };
+            }
+          } catch (error) {
+            console.error("Failed to fetch forecast:", error);
           }
-        } catch (error) {
-          console.error("Failed to fetch forecast:", error);
         }
       }
 
-      // Step 2: Check if scores exist for today
+      // If forecast found, ensure date matches
+      if (forecast) {
+        forecast.date = targetDate;
+      }
+
+      // Step 2: Check if scores exist for the target date
       const existingScores = await prisma.beachDailyScore.count({
         where: {
           regionId,
-          date: currentDate,
+          date: targetDate,
         },
       });
 
@@ -220,7 +248,7 @@ router.get(
       const existingScoresData = await prisma.beachDailyScore.findMany({
         where: {
           regionId,
-          date: currentDate,
+          date: targetDate,
         },
         select: {
           score: true,
@@ -236,14 +264,15 @@ router.get(
       console.log(`All scores are zero: ${allScoresZero}`);
 
       // Step 3: Calculate scores if they don't exist OR if all scores are 0 (recalculate)
+      // Only calculate scores if we have forecast data for the target date
       if ((existingScores === 0 || allScoresZero) && forecast) {
         console.log(
-          `${existingScores === 0 ? "Calculating" : "Recalculating"} scores for ${regionId} on ${currentDate.toISOString().split("T")[0]}...`
+          `${existingScores === 0 ? "Calculating" : "Recalculating"} scores for ${regionId} on ${targetDate.toISOString().split("T")[0]}...`
         );
         try {
           await ScoreService.calculateAndStoreScores(regionId, {
             ...forecast,
-            date: currentDate,
+            date: targetDate,
           });
           console.log("✓ Scores calculated and stored");
 
@@ -251,7 +280,7 @@ router.get(
           const verifyScores = await prisma.beachDailyScore.findMany({
             where: {
               regionId,
-              date: currentDate,
+              date: targetDate,
             },
             select: {
               beachId: true,
@@ -276,12 +305,13 @@ router.get(
         );
       }
 
-      // Step 4: Fetch beaches with their daily scores (now guaranteed to exist)
+      // Step 4: Fetch beaches with their daily scores for the target date
       console.log(
         `[filtered-beaches] 🔍 Querying beaches for regionId: ${regionId} with filters:`,
         {
           searchQuery: searchQuery || "none",
           filters: Object.keys(whereClause).filter((k) => k !== "regionId"),
+          targetDate: targetDate.toISOString().split("T")[0],
         }
       );
       const beaches = await prisma.beach.findMany({
@@ -289,7 +319,7 @@ router.get(
         include: {
           region: true,
           beachDailyScores: {
-            where: { date: currentDate },
+            where: { date: targetDate },
             select: {
               score: true,
               conditions: true,
@@ -390,7 +420,7 @@ router.get(
       return res.json(responseData);
     } catch (error: any) {
       console.error("API Error:", error);
-      
+
       // If database is unavailable, return empty structure instead of 500
       // This allows the frontend to gracefully handle the error
       if (
@@ -408,7 +438,7 @@ router.get(
           totalCount: 0,
         });
       }
-      
+
       return res
         .status(500)
         .json({ error: "Failed to fetch filtered beaches" });

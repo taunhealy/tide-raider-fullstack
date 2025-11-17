@@ -181,52 +181,78 @@ export async function getLatestConditions(
     console.log(
       `[getLatestConditions] 🌐 Scraping forecast for ${region.id} from ${regionConfig.sourceA.url}`
     );
-    const scrapedForecast = await scraperA(
+    const scrapedForecasts = await scraperA(
       regionConfig.sourceA.url,
       configRegionId
     );
 
-    if (!scrapedForecast) {
-      throw new Error(`Scraper returned null for ${region.id}`);
+    if (!scrapedForecasts || scrapedForecasts.length === 0) {
+      throw new Error(`Scraper returned empty array for ${region.id}`);
     }
 
-    // Strip time from date
-    scrapedForecast.date.setUTCHours(0, 0, 0, 0);
-
     console.log(
-      `[getLatestConditions] 💾 Storing forecast in database for regionId: ${region.id}`
+      `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database...`
     );
-    // Store in database using the database region.id (not the config's regionId)
-    const storedForecast = await prisma.forecastA.upsert({
-      where: {
-        date_regionId: {
+
+    // Store all scraped forecasts (today, tomorrow, and day after tomorrow)
+    let storedTodayForecast = null;
+
+    for (const scrapedForecast of scrapedForecasts) {
+      // Strip time from date
+      scrapedForecast.date.setUTCHours(0, 0, 0, 0);
+
+      console.log(
+        `[getLatestConditions] 💾 Storing forecast for ${region.id} on ${scrapedForecast.date.toISOString().split("T")[0]}`
+      );
+
+      // Store in database using the database region.id (not the config's regionId)
+      const storedForecast = await prisma.forecastA.upsert({
+        where: {
+          date_regionId: {
+            date: scrapedForecast.date,
+            regionId: region.id, // Use database region ID
+          },
+        },
+        update: {
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
+        },
+        create: {
+          id: randomUUID(),
           date: scrapedForecast.date,
           regionId: region.id, // Use database region ID
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
         },
-      },
-      update: {
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-      },
-      create: {
-        id: randomUUID(),
-        date: scrapedForecast.date,
-        regionId: region.id, // Use database region ID
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-      },
-    });
+      });
+
+      // Keep track of today's forecast to return
+      if (!storedTodayForecast) {
+        const forecastDate = new Date(storedForecast.date);
+        const todayDate = new Date(today);
+        if (
+          forecastDate.getDate() === todayDate.getDate() &&
+          forecastDate.getMonth() === todayDate.getMonth() &&
+          forecastDate.getFullYear() === todayDate.getFullYear()
+        ) {
+          storedTodayForecast = storedForecast;
+        }
+      }
+    }
+
+    // Return today's forecast for backward compatibility, or first forecast if today not found
+    const forecastToReturn = storedTodayForecast || scrapedForecasts[0];
 
     console.log(
-      `[getLatestConditions] ✅ Successfully stored forecast for ${region.id}`
+      `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id}`
     );
-    return storedForecast;
+    return forecastToReturn;
   } catch (error) {
     console.error(
       `[getLatestConditions] ❌ Error scraping/storing forecast for ${region.id}:`,

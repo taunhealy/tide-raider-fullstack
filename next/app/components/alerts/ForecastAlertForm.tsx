@@ -861,9 +861,30 @@ function AlertFormFooter() {
         } catch (error: any) {
           let errorMessage = "Failed to create alert";
           let errorDetails = "";
+          let requiresUpgrade = false;
+
           try {
             const errorData = error.response?.data || error;
             console.error("Alert creation error:", errorData);
+
+            // Check for alert limit error
+            if (
+              errorData.code === "ALERT_LIMIT_REACHED" ||
+              errorData.requiresUpgrade
+            ) {
+              requiresUpgrade = true;
+              errorMessage = errorData.message || "Alert limit reached";
+
+              // Show upgrade prompt
+              toast.error(errorMessage, {
+                action: {
+                  label: "Upgrade",
+                  onClick: () => router.push("/checkout"),
+                },
+                duration: 10000, // Show for 10 seconds
+              });
+              return; // Don't show additional error toast
+            }
 
             // Handle Zod validation errors
             if (errorData.issues && Array.isArray(errorData.issues)) {
@@ -895,7 +916,10 @@ function AlertFormFooter() {
           } catch (e) {
             console.error("Failed to parse error response:", e);
           }
-          toast.error(`${errorMessage}${errorDetails}`);
+
+          if (!requiresUpgrade) {
+            toast.error(`${errorMessage}${errorDetails}`);
+          }
         }
       }
     } catch (error) {

@@ -68,6 +68,8 @@ export const useBeachFilters = () => {
     region: searchParams.get("region") || null,
     country: searchParams.get("country") || null,
     continent: searchParams.get("continent") || null,
+    // Handle forecast date
+    forecastDate: searchParams.get("forecastDate") || null,
   };
 
   const updateFilter = useCallback(

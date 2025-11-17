@@ -103,7 +103,7 @@ async function getBrowser() {
 export async function scraperA(
   url: string,
   region: string
-): Promise<BaseForecastData> {
+): Promise<BaseForecastData[]> {
   console.log("\n=== Starting Puppeteer Scraper ===");
   console.log("Scraping URL:", url);
   console.log("Region:", region);
@@ -153,13 +153,29 @@ export async function scraperA(
 
     await page.waitForTimeout(4000);
 
-    const cleanHtml = await page.evaluate(() => {
+    // Extract forecast-day sections with their dates and rows
+    // This finds ALL forecast-day containers on the page (today, tomorrow, day after tomorrow, etc.)
+    const forecastDaysData = await page.evaluate(() => {
       // @ts-ignore - document is available in browser context
-      const table = document.querySelector(".weathertable");
-      if (!table) return null;
+      const doc = document as any;
+      // Find all forecast-day containers - each represents a different day
+      const forecastDays = Array.from(doc.querySelectorAll(".forecast-day"));
 
-      return Array.from(table.querySelectorAll(".weathertable__row")).map(
-        (row: any) => ({
+      console.log(
+        `[Browser] Found ${forecastDays.length} forecast-day container(s)`
+      );
+
+      return forecastDays.map((dayElement: any, index: number) => {
+        // Extract date from header - each forecast-day has its own header with the date
+        const header = dayElement.querySelector(".weathertable__header");
+        const headline = header?.querySelector(".weathertable__headline");
+        const dateText = headline?.textContent?.trim() || "";
+
+        // Extract all rows for THIS specific day's container
+        // Each forecast-day container has its own set of weathertable__row elements
+        const rows = Array.from(
+          dayElement.querySelectorAll(".weathertable__row")
+        ).map((row: any) => ({
           time: row.querySelector(".data-time .value")?.textContent,
           windSpeed: row.querySelector(".cell-wind-3 .units-ws")?.textContent,
           windDir: row
@@ -171,49 +187,153 @@ export async function scraperA(
           swellDir: row
             .querySelector(".cell-waves-1 .directionarrow")
             ?.getAttribute("title"),
-        })
-      );
+        }));
+
+        console.log(
+          `[Browser] Day ${index + 1}: "${dateText}" with ${rows.length} time slots`
+        );
+
+        return {
+          dateText,
+          rows,
+        };
+      });
     });
 
-    if (!cleanHtml) {
-      throw new Error("Failed to parse weather table");
+    if (!forecastDaysData || forecastDaysData.length === 0) {
+      throw new Error("Failed to parse forecast days");
     }
 
-    const today = new Date();
-    today.setUTCHours(1, 0, 0, 0);
+    console.log(
+      `✅ Found ${forecastDaysData.length} forecast day container(s) on the page`
+    );
+    console.log(
+      `📅 Dates found: ${forecastDaysData.map((d) => d.dateText).join(", ")}`
+    );
 
-    let forecast: BaseForecastData | null = null;
+    // Get current date for year determination
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
-    console.log("🔍 Parsing weather data...");
-    cleanHtml.forEach((row) => {
-      const timeStr = row.time?.toString() || "";
-      const hour = parseInt(timeStr.replace("h", ""));
-      console.log(`Found data for hour: ${hour}`);
+    const forecasts: BaseForecastData[] = [];
 
-      if (hour >= 5 && hour <= 11) {
-        console.log(`✅ Found morning forecast data for hour ${hour}`);
-        forecast = {
-          date: new Date(today),
-          regionId: region,
-          windSpeed: parseInt(row.windSpeed || "0"),
-          windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
-          swellHeight: parseFloat(row.waveHeight || "0"),
-          swellPeriod: parseInt((row.wavePeriod || "0").replace(/\s+s$/, "")),
-          swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
-        };
-        console.log("📊 Forecast data:", forecast);
-        return;
+    // Helper function to parse date from text like "Monday, Nov 17"
+    // Handles dates in current year and next year (for year rollover)
+    const parseDateFromText = (dateText: string): Date | null => {
+      try {
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const parts = dateText.split(",");
+        if (parts.length >= 2) {
+          const monthDay = parts[1].trim().split(" ");
+          const monthName = monthDay[0];
+          const day = parseInt(monthDay[1]);
+
+          const monthIndex = monthNames.indexOf(monthName);
+          if (monthIndex !== -1 && !isNaN(day)) {
+            // Determine the year - start with current year
+            let year = currentYear;
+
+            // If we're in Nov/Dec and see Jan/Feb, it's next year
+            if (
+              (currentMonth === 10 || currentMonth === 11) &&
+              monthIndex <= 1
+            ) {
+              year = currentYear + 1;
+            }
+
+            let parsedDate = new Date(year, monthIndex, day);
+
+            // If the parsed date is in the past (more than 1 day ago), it's probably next year
+            // Forecast pages typically only show future dates
+            const daysDiff = Math.floor(
+              (parsedDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (daysDiff < -1) {
+              // Date is in the past, assume it's next year
+              parsedDate = new Date(currentYear + 1, monthIndex, day);
+            }
+
+            return parsedDate;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing date:", error);
       }
-    });
+      return null;
+    };
 
-    if (!forecast) {
-      console.error("❌ No morning forecast found between 05h-11h");
+    // Process ALL forecast days found on the page
+    for (const dayData of forecastDaysData) {
+      const parsedDate = parseDateFromText(dayData.dateText);
+      if (!parsedDate) {
+        console.warn(
+          `⚠️ Could not parse date from "${dayData.dateText}", skipping...`
+        );
+        continue;
+      }
+
+      const dateStr = parsedDate.toISOString().split("T")[0];
+      console.log(
+        `🔍 Processing forecast for ${dayData.dateText} (${dateStr})...`
+      );
+
+      // Find morning forecast data (hours 5-11)
+      let morningForecast: BaseForecastData | null = null;
+
+      for (const row of dayData.rows) {
+        const timeStr = row.time?.toString() || "";
+        const hour = parseInt(timeStr.replace("h", ""));
+
+        if (hour >= 5 && hour <= 11) {
+          console.log(
+            `✅ Found morning forecast data for ${dateStr} at hour ${hour}`
+          );
+          morningForecast = {
+            date: new Date(parsedDate),
+            regionId: region,
+            windSpeed: parseInt(row.windSpeed || "0"),
+            windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
+            swellHeight: parseFloat(row.waveHeight || "0"),
+            swellPeriod: parseInt((row.wavePeriod || "0").replace(/\s+s$/, "")),
+            swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
+          };
+          console.log("📊 Forecast data:", morningForecast);
+          break; // Use first morning hour found
+        }
+      }
+
+      if (morningForecast) {
+        forecasts.push(morningForecast);
+      } else {
+        console.warn(
+          `⚠️ No morning forecast found between 05h-11h for ${dayData.dateText} (${dateStr})`
+        );
+      }
+    }
+
+    if (forecasts.length === 0) {
+      console.error("❌ No morning forecast data found for any day");
       throw new Error("No morning forecast data found between 05h-11h");
     }
 
-    console.log("✅ Successfully scraped forecast data");
-    // Proxy reporting removed - ProxyManager doesn't have these methods yet
-    return forecast;
+    console.log(
+      `✅ Successfully scraped ${forecasts.length} forecast(s): ${forecasts.map((f) => f.date.toISOString().split("T")[0]).join(", ")}`
+    );
+    return forecasts;
   } catch (error) {
     console.error("\n❌ Scraping failed:", {
       url,
@@ -221,7 +341,6 @@ export async function scraperA(
       error: (error as Error).message,
       stack: (error as Error).stack,
     });
-    // Proxy reporting removed - ProxyManager doesn't have these methods yet
     throw error;
   } finally {
     if (browser) {

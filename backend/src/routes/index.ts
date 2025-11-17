@@ -13,6 +13,7 @@ import seedRouter from "./seed";
 import authRouter from "./auth";
 import beachRatingsRouter from "./beach-ratings";
 import userSearchesRouter from "./user-searches";
+import paypalRouter from "./paypal";
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.use("/blog-posts", blogPostsRouter);
 router.use("/seed", seedRouter);
 router.use("/beach-ratings", beachRatingsRouter);
 router.use("/user-searches", userSearchesRouter);
+router.use("/paypal", paypalRouter);
 
 // TODO: Add more route handlers here as needed
 // router.use("/user", userRouter);

@@ -45,15 +45,28 @@ async function apiRequest<T>(
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));
 
+      // Create error object with full details for better error handling
+      const error = new Error(
+        errorData.error || errorData.message || "Request failed"
+      ) as Error & {
+        response?: { data?: any; status?: number };
+      };
+
+      // Attach response data for error handling in components
+      error.response = {
+        data: errorData,
+        status: response.status,
+      };
+
       // If validation error, include details
       if (errorData.error === "Validation failed" && errorData.details) {
         const details = errorData.details
           .map((d: any) => `${d.path}: ${d.message}`)
           .join(", ");
-        throw new Error(`Validation failed: ${details}`);
+        error.message = `Validation failed: ${details}`;
       }
 
-      throw new Error(errorData.error || errorData.message || "Request failed");
+      throw error;
     }
 
     return await response.json();
@@ -255,6 +268,7 @@ export const api = {
     bestSeasons?: string;
     difficulty?: string;
     hazards?: string;
+    forecastDate?: string; // ISO date string (YYYY-MM-DD)
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.regionId) queryParams.append("regionId", params.regionId);
@@ -268,6 +282,8 @@ export const api = {
       queryParams.append("bestSeasons", params.bestSeasons);
     if (params?.difficulty) queryParams.append("difficulty", params.difficulty);
     if (params?.hazards) queryParams.append("hazards", params.hazards);
+    if (params?.forecastDate)
+      queryParams.append("forecastDate", params.forecastDate);
     const query = queryParams.toString();
     return apiRequest<{
       beaches: any[];

@@ -31,6 +31,7 @@ export function useFilteredBeaches({
         bestSeasons?: string;
         difficulty?: string;
         hazards?: string;
+        forecastDate?: string;
       } = {};
 
       if (filters.regionId) params.regionId = filters.regionId;
@@ -61,6 +62,7 @@ export function useFilteredBeaches({
           ? filters.hazards.join(",")
           : filters.hazards;
       }
+      if (filters.forecastDate) params.forecastDate = filters.forecastDate;
 
       return await api.getFilteredBeaches(params);
     },

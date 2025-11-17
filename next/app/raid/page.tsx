@@ -1,4 +1,4 @@
-import BeachContainer from "@/app/components/BeachContainer";
+import BeachContainerWrapper from "@/app/components/BeachContainerWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -49,6 +49,8 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
         const backendUrl =
           process.env.NEXT_PUBLIC_API_URL ||
           "https://tide-raider-backend.fly.dev";
+
+        // Build query string with all params including forecastDate
         const queryString = urlSearchParams.toString();
         const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
 
@@ -82,10 +84,10 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
       }
     }
 
-    return <BeachContainer initialData={initialData} />;
+    return <BeachContainerWrapper initialData={initialData} />;
   } catch (error) {
     console.error("[RaidPage] Error in RaidPage:", error);
     // Return component with null data - it will handle the error state
-    return <BeachContainer initialData={null} />;
+    return <BeachContainerWrapper initialData={null} />;
   }
 }
