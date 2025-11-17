@@ -271,9 +271,18 @@ export const api = {
       credentials: "include",
     });
     if (!response.ok) {
+      // Handle 429 gracefully - return empty array instead of throwing
+      if (response.status === 429) {
+        console.warn(
+          "[api-client] Rate limited when fetching regions, returning empty array"
+        );
+        return [];
+      }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    return await response.json();
+    const data = await response.json();
+    // Ensure we return an array even if the response is malformed
+    return Array.isArray(data) ? data : [];
   },
 
   // User

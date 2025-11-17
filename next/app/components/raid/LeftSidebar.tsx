@@ -4,27 +4,14 @@ import LocationFilter from "../LocationFilter";
 import BlogPostsSidebar from "../BlogPostsSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import { useRegions } from "@/app/hooks/useRegions";
 import api from "@/app/lib/api-client";
 
 export default function LeftSidebar() {
   const { filters } = useBeachFilters();
 
-  const {
-    data: regions = [],
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["all-regions"],
-    queryFn: async () => {
-      try {
-        return await api.getRegions();
-      } catch (error) {
-        console.error("Error fetching regions:", error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-  });
+  // Use the shared useRegions hook to avoid duplicate requests
+  const { data: regions = [], isLoading, isError } = useRegions();
 
   const { data: blogPosts } = useQuery({
     queryKey: ["blog-posts"],

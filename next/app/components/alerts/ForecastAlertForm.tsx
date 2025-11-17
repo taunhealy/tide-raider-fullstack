@@ -26,8 +26,6 @@ import { Search, StarIcon, X, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/app/lib/utils";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/app/components/ui/skeleton";
-import { ScrollArea } from "@/app/components/ui/scrollarea";
 import { AlertConfig } from "@/app/types/alerts";
 import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
 import { Checkbox } from "@/app/components/ui/checkbox";
@@ -52,6 +50,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
+import type { Beach } from "@/app/types/beaches";
 
 interface ForecastAlertFormProps {
   logEntry?: LogEntry | null;
@@ -230,18 +230,12 @@ function AlertFormBody({
 }) {
   const { alert, updateAlert, mode, setMode, beachDetails } = useAlert();
   // Add state for search
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 300);
   const [logEntrySearchTerm, setLogEntrySearchTerm] = useState("");
   const debouncedLogEntrySearch = useDebounce(logEntrySearchTerm, 300);
   const [selectedLogEntryId, setSelectedLogEntryId] = useState<string | null>(
     logEntry?.id || null
   );
-  const [showBeachDropdown, setShowBeachDropdown] = useState(false);
-  const [selectedBeachName, setSelectedBeachName] = useState<string | null>(
-    null
-  );
-  const beachSearchRef = useRef<HTMLDivElement>(null);
+  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
 
   // Track which logEntry we've already processed to prevent infinite loops
   const processedLogEntryId = useRef<string | null>(null);
@@ -364,61 +358,15 @@ function AlertFormBody({
     }
   }, [logEntry, updateAlert]); // Removed alert.name from dependencies to prevent infinite loop
 
-  // Update selectedBeachName when beach is set - use beachDetails.name if available, otherwise searchTerm
+  // Update selectedBeach when beach is set - use beachDetails if available
   useEffect(() => {
     if (!alert.beach?.connect?.id) {
-      setSelectedBeachName(null);
-    } else if (beachDetails?.name) {
-      // Use beachDetails.name if available (from API fetch)
-      setSelectedBeachName(beachDetails.name);
-    } else if (alert.beach?.connect?.id && !selectedBeachName && searchTerm) {
-      // If we have a beach ID but no name, and searchTerm is set, use it
-      setSelectedBeachName(searchTerm);
+      setSelectedBeach(null);
+    } else if (beachDetails) {
+      // Use beachDetails if available (from API fetch)
+      setSelectedBeach(beachDetails);
     }
-  }, [alert.beach?.connect?.id, beachDetails?.name, searchTerm]);
-
-  // Replace the beaches query with a search query
-  const { data: beaches, isLoading } = useQuery({
-    queryKey: ["beaches-search", debouncedSearch],
-    queryFn: async () => {
-      if (!debouncedSearch || debouncedSearch.length < 2) return [];
-      const response = await fetch(
-        `/api/beaches/search?term=${encodeURIComponent(debouncedSearch)}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch beaches");
-      return response.json();
-    },
-    enabled: debouncedSearch.length >= 2,
-  });
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        beachSearchRef.current &&
-        !beachSearchRef.current.contains(event.target as Node)
-      ) {
-        setShowBeachDropdown(false);
-      }
-    };
-
-    if (showBeachDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showBeachDropdown]);
-
-  // Show dropdown when there are search results
-  useEffect(() => {
-    if (beaches && beaches.length > 0 && debouncedSearch.length >= 2) {
-      setShowBeachDropdown(true);
-    } else {
-      setShowBeachDropdown(false);
-    }
-  }, [beaches, debouncedSearch]);
+  }, [alert.beach?.connect?.id, beachDetails]);
 
   return (
     <div className="space-y-8">
@@ -676,93 +624,27 @@ function AlertFormBody({
               : "Search and select a beach to configure forecast variables"}
           </p>
 
-          {/* Show selected beach badge if a beach is selected */}
-          {selectedBeachName && alert.beach?.connect?.id && (
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-sm font-medium text-amber-900">
-                <span>{selectedBeachName}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateAlert({
-                      beach: undefined,
-                    });
-                    setSelectedBeachName(null);
-                    setSearchTerm("");
-                  }}
-                  className="ml-1 hover:bg-amber-100 rounded-full p-0.5 transition-colors"
-                  aria-label="Remove beach"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="relative" ref={beachSearchRef}>
-            <Input
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                if (e.target.value.length >= 2) {
-                  setShowBeachDropdown(true);
-                } else {
-                  setShowBeachDropdown(false);
-                }
-              }}
-              onFocus={() => {
-                if (
-                  beaches &&
-                  beaches.length > 0 &&
-                  debouncedSearch.length >= 2
-                ) {
-                  setShowBeachDropdown(true);
-                }
-              }}
-              placeholder={
-                selectedBeachName
-                  ? "Search for a different beach..."
-                  : "Search beaches..."
+          <BeachSearchInput
+            selectedBeach={selectedBeach}
+            onBeachSelect={(beach) => {
+              setSelectedBeach(beach);
+              if (beach) {
+                // Update both region and beach
+                updateAlert({
+                  region: { connect: { id: beach.regionId } },
+                  beach: { connect: { id: beach.id } },
+                });
+              } else {
+                // Clear beach selection
+                updateAlert({
+                  beach: undefined,
+                });
               }
-              className="w-full"
-            />
-            {isLoading && (
-              <div className="absolute right-3 top-2.5">
-                <Skeleton className="h-4 w-4 rounded-full" />
-              </div>
-            )}
-            {showBeachDropdown && beaches && beaches.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200">
-                <ScrollArea className="max-h-[200px]">
-                  {beaches.map(
-                    (beach: { id: string; name: string; regionId: string }) => (
-                      <button
-                        key={beach.id}
-                        type="button"
-                        className="w-full px-4 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                        onClick={() => {
-                          // Update both region and beach
-                          updateAlert({
-                            region: { connect: { id: beach.regionId } },
-                            beach: { connect: { id: beach.id } },
-                          });
-
-                          // Update the search input and selected beach name
-                          setSearchTerm(beach.name);
-                          setSelectedBeachName(beach.name);
-
-                          // Close the dropdown
-                          setShowBeachDropdown(false);
-                        }}
-                      >
-                        {beach.name}
-                      </button>
-                    )
-                  )}
-                </ScrollArea>
-              </div>
-            )}
-          </div>
+            }}
+            placeholder="Search beaches..."
+            showSelectedBadge={true}
+            minSearchLength={2}
+          />
         </div>
       )}
 

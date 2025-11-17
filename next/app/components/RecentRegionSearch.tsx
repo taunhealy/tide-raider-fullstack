@@ -21,12 +21,20 @@ export default function RecentRegionSearch({
   const isInitialLoadRef = useRef(true);
 
   // Enhanced caching strategy for recent searches
-  const { data: recentSearches, isLoading, error } = useQuery({
+  const {
+    data: recentSearches,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["recentSearches"],
     queryFn: async () => {
       const res = await fetch("/api/user-searches?limit=5");
       if (!res.ok) {
-        console.error("[RecentRegionSearch] Failed to fetch searches:", res.status, res.statusText);
+        console.error(
+          "[RecentRegionSearch] Failed to fetch searches:",
+          res.status,
+          res.statusText
+        );
         // Return empty array instead of throwing to prevent component from breaking
         return [];
       }
