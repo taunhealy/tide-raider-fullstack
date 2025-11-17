@@ -2,16 +2,29 @@
 
 import { createContext, useContext } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { Session } from "next-auth";
 import { useQuery } from "@tanstack/react-query";
 import { SubscriptionStatus } from "@/app/types/subscription";
+
+interface User {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  isSubscribed?: boolean;
+  hasActiveTrial?: boolean;
+  trialEndDate?: Date | null;
+}
+
+interface BackendSession {
+  user: User;
+}
 
 interface SubscriptionContextType {
   isSubscribed: boolean;
   hasActiveTrial: boolean;
   trialStatus: "active" | "ended" | "available";
   isLoading: boolean;
-  session: Session | null;
+  session: BackendSession | null;
   trialEndDate?: Date | null;
 }
 
