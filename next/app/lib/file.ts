@@ -1,5 +1,9 @@
-// Maximum file size (5MB)
+// Maximum file size (5MB for images, 50MB for videos)
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
+export const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB for videos
+
+// Maximum video duration (20 seconds)
+export const MAX_VIDEO_DURATION = 20; // seconds
 
 // Allowed file types
 export const ALLOWED_FILE_TYPES = [
@@ -10,10 +14,21 @@ export const ALLOWED_FILE_TYPES = [
   "image/heif",
 ];
 
+// Allowed video types
+export const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime", // .mov
+  "video/x-msvideo", // .avi
+];
+
 // Error messages
 export const FILE_ERRORS = {
   SIZE: `File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+  VIDEO_SIZE: `Video size must be less than ${MAX_VIDEO_SIZE / (1024 * 1024)}MB`,
   TYPE: `File type must be one of: ${ALLOWED_FILE_TYPES.join(", ")}`,
+  VIDEO_TYPE: `Video type must be one of: ${ALLOWED_VIDEO_TYPES.join(", ")}`,
+  DURATION: `Video duration must be ${MAX_VIDEO_DURATION} seconds or less`,
   REQUIRED: "File is required",
 } as const;
 
@@ -68,6 +83,66 @@ export function getExtensionFromMimeType(mimeType: string): string {
   };
 
   return mimeToExt[mimeType] || "";
+}
+
+// Validate video file (size and duration)
+export async function validateVideoFile(
+  file: File
+): Promise<{ valid: boolean; error?: string }> {
+  if (!file) {
+    return { valid: false, error: FILE_ERRORS.REQUIRED };
+  }
+
+  // Check file type
+  if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+    return { valid: false, error: FILE_ERRORS.VIDEO_TYPE };
+  }
+
+  // Check file size
+  if (file.size > MAX_VIDEO_SIZE) {
+    return {
+      valid: false,
+      error: FILE_ERRORS.VIDEO_SIZE,
+    };
+  }
+
+  // Check video duration
+  try {
+    const duration = await getVideoDuration(file);
+    if (duration > MAX_VIDEO_DURATION) {
+      return {
+        valid: false,
+        error: FILE_ERRORS.DURATION,
+      };
+    }
+  } catch (error) {
+    return {
+      valid: false,
+      error: "Failed to read video duration. Please try another video.",
+    };
+  }
+
+  return { valid: true };
+}
+
+// Get video duration in seconds
+export function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      resolve(video.duration);
+    };
+
+    video.onerror = () => {
+      window.URL.revokeObjectURL(video.src);
+      reject(new Error("Failed to load video metadata"));
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
 }
 
 // Compress image if needed (returns a Promise<File>)

@@ -7,7 +7,13 @@ import type { Beach } from "@/app/types/beaches";
 import type { LogEntry } from "@/app/types/raidlogs";
 import SurfForecastWidget from "../SurfForecastWidget";
 import { Button } from "@/app/components/ui/Button";
-import { validateFile, compressImageIfNeeded } from "@/app/lib/file";
+import {
+  validateFile,
+  compressImageIfNeeded,
+  validateVideoFile,
+  getVideoDuration,
+  MAX_VIDEO_DURATION,
+} from "@/app/lib/file";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -79,6 +85,10 @@ export function RaidLogForm({
   const [videoPlatform, setVideoPlatform] = useState<
     "youtube" | "vimeo" | null
   >(entry?.videoPlatform || null);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>("");
+  const [isValidatingVideo, setIsValidatingVideo] = useState(false);
 
   console.log("useForecast params:", {
     regionId: selectedBeach?.regionId || "",
@@ -213,6 +223,7 @@ export function RaidLogForm({
       isAnonymous !== entry.isAnonymous ||
       isPrivate !== entry.isPrivate ||
       selectedImage !== null ||
+      selectedVideo !== null ||
       videoUrl !== entry.videoUrl ||
       videoPlatform !== entry.videoPlatform;
 
@@ -226,6 +237,7 @@ export function RaidLogForm({
     isAnonymous,
     isPrivate,
     selectedImage,
+    selectedVideo,
     videoUrl,
     videoPlatform,
   ]);
@@ -277,6 +289,11 @@ export function RaidLogForm({
       }
       if (entry.imageUrl && !imagePreview) {
         setImagePreview(entry.imageUrl);
+      }
+      // If entry has a videoUrl but no platform, it's an uploaded video
+      if (entry.videoUrl && !entry.videoPlatform && !videoPreview) {
+        setVideoPreview(entry.videoUrl);
+        setUploadedVideoUrl(entry.videoUrl);
       }
     }
   }, [entry]);
@@ -397,6 +414,8 @@ export function RaidLogForm({
       isPrivate,
       videoUrl,
       videoPlatform,
+      selectedVideo: null, // Don't store File object
+      uploadedVideoUrl,
     };
 
     localStorage.setItem(FORM_STATE_KEY, JSON.stringify(formState));
@@ -446,10 +465,11 @@ export function RaidLogForm({
 
     try {
       // Upload image if selected
-      let uploadedUrl = null;
+      let uploadedImageUrl = null;
       if (selectedImage) {
         const formData = new FormData();
         formData.append("file", selectedImage);
+        formData.append("type", "image");
 
         const response = await fetch("/api/upload", {
           method: "POST",
@@ -461,13 +481,47 @@ export function RaidLogForm({
         }
 
         const data = await response.json();
-        uploadedUrl = data.imageUrl;
+        uploadedImageUrl = data.imageUrl;
       }
 
-      // Use existing image URL if no new image uploaded and editing
+      // Upload video if selected
+      let uploadedVideoUrlFinal = null;
+      if (selectedVideo) {
+        const formData = new FormData();
+        formData.append("file", selectedVideo);
+        formData.append("type", "video");
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to upload video");
+        }
+
+        const data = await response.json();
+        uploadedVideoUrlFinal = data.videoUrl;
+      }
+
+      // Use existing URLs if no new files uploaded and editing
       const finalImageUrl =
-        uploadedUrl ||
-        (entry?.imageUrl && !selectedImage ? entry.imageUrl : uploadedUrl);
+        uploadedImageUrl ||
+        (entry?.imageUrl && !selectedImage ? entry.imageUrl : uploadedImageUrl);
+
+      const finalVideoUrl =
+        uploadedVideoUrlFinal ||
+        (entry?.videoUrl && !selectedVideo && !videoUrl
+          ? entry.videoUrl
+          : uploadedVideoUrlFinal || videoUrl);
+
+      // If we have an uploaded video, don't use platform
+      const finalVideoPlatform =
+        uploadedVideoUrlFinal ||
+        (entry?.videoUrl && !selectedVideo && !videoUrl && entry?.videoPlatform)
+          ? null // Uploaded videos don't have a platform
+          : videoPlatform;
 
       const logData = {
         selectedBeach,
@@ -478,8 +532,8 @@ export function RaidLogForm({
         comments,
         isPrivate,
         uploadedImageUrl: finalImageUrl,
-        videoUrl,
-        videoPlatform,
+        videoUrl: finalVideoUrl,
+        videoPlatform: finalVideoPlatform,
       };
 
       // If editing, update instead of create
@@ -562,8 +616,12 @@ export function RaidLogForm({
       if (user || !document.hidden) {
         localStorage.removeItem(FORM_STATE_KEY);
       }
+      // Clean up video preview URL
+      if (videoPreview && videoPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(videoPreview);
+      }
     };
-  }, [user]);
+  }, [user, videoPreview]);
 
   if (!isOpen) return null;
 
@@ -792,19 +850,111 @@ export function RaidLogForm({
                     Add Video (Optional)
                   </h3>
                   <div className="space-y-4">
+                    {/* Video File Upload */}
+                    <div>
+                      <label className="block text-sm font-primary mb-1">
+                        Upload Video File (Max 20 seconds, 50MB)
+                      </label>
+                      <input
+                        type="file"
+                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          setIsValidatingVideo(true);
+                          const validation = await validateVideoFile(file);
+                          setIsValidatingVideo(false);
+
+                          if (!validation.valid) {
+                            toast.error(
+                              validation.error || "Invalid video file"
+                            );
+                            return;
+                          }
+
+                          setSelectedVideo(file);
+                          setVideoPreview(URL.createObjectURL(file));
+                          setVideoUrl(""); // Clear URL if file is selected
+                          setVideoPlatform(null);
+                        }}
+                        className="w-full p-2 border rounded-lg"
+                        aria-label="Upload video file"
+                      />
+                      {isValidatingVideo && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Validating video...
+                        </p>
+                      )}
+                      {selectedVideo && (
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span className="text-sm font-primary">
+                              {selectedVideo.name} (
+                              {Math.round(selectedVideo.size / 1024)}KB)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedVideo(null);
+                                setVideoPreview(null);
+                                if (videoPreview) {
+                                  URL.revokeObjectURL(videoPreview);
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-700"
+                              aria-label="Remove video"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                          {videoPreview && (
+                            <video
+                              src={videoPreview}
+                              controls
+                              preload="none"
+                              className="w-full rounded-md max-h-48"
+                            />
+                          )}
+                        </div>
+                      )}
+                      {uploadedVideoUrl && !selectedVideo && (
+                        <div className="mt-2">
+                          <video
+                            src={uploadedVideoUrl}
+                            controls
+                            preload="none"
+                            className="w-full rounded-md max-h-48"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-center text-sm text-gray-500 font-primary">
+                      OR
+                    </div>
+
+                    {/* Video URL Input (for YouTube/Vimeo) */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
                         Video Platform
                       </label>
                       <select
                         value={videoPlatform || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setVideoPlatform(
                             e.target.value
                               ? (e.target.value as "youtube" | "vimeo")
                               : null
-                          )
-                        }
+                          );
+                          if (selectedVideo) {
+                            setSelectedVideo(null);
+                            setVideoPreview(null);
+                            if (videoPreview) {
+                              URL.revokeObjectURL(videoPreview);
+                            }
+                          }
+                        }}
                         className="w-full p-2 border rounded-lg"
                         aria-label="Select video platform"
                       >
@@ -814,28 +964,30 @@ export function RaidLogForm({
                       </select>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-primary mb-1">
-                        Video URL
-                      </label>
-                      <input
-                        type="url"
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                        placeholder={`Enter ${videoPlatform === "youtube" ? "YouTube" : videoPlatform === "vimeo" ? "Vimeo" : "video"} URL`}
-                        className="w-full p-2 border rounded-lg"
-                      />
-                    </div>
-
-                    {videoUrl &&
-                      videoPlatform &&
-                      !validateVideoUrl(videoUrl, videoPlatform) && (
-                        <p className="text-red-500 text-sm">
-                          Please enter a valid{" "}
-                          {videoPlatform === "youtube" ? "YouTube" : "Vimeo"}{" "}
-                          URL
-                        </p>
-                      )}
+                    {videoPlatform && (
+                      <div>
+                        <label className="block text-sm font-primary mb-1">
+                          Video URL
+                        </label>
+                        <input
+                          type="url"
+                          value={videoUrl}
+                          onChange={(e) => setVideoUrl(e.target.value)}
+                          placeholder={`Enter ${videoPlatform === "youtube" ? "YouTube" : "Vimeo"} URL`}
+                          className="w-full p-2 border rounded-lg"
+                        />
+                        {videoUrl &&
+                          !validateVideoUrl(videoUrl, videoPlatform) && (
+                            <p className="text-red-500 text-sm mt-1">
+                              Please enter a valid{" "}
+                              {videoPlatform === "youtube"
+                                ? "YouTube"
+                                : "Vimeo"}{" "}
+                              URL
+                            </p>
+                          )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

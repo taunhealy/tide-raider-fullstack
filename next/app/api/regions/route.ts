@@ -44,6 +44,26 @@ export async function GET(req: NextRequest) {
         // Return empty array instead of error to prevent UI crashes
         return NextResponse.json([]);
       }
+
+      // Handle 404 - backend might not have regions endpoint or it's down
+      if (response.status === 404) {
+        console.warn(
+          "[regions] Backend returned 404, returning cached data or empty array"
+        );
+        if (regionsCache) {
+          return NextResponse.json(regionsCache.data);
+        }
+        return NextResponse.json([]);
+      }
+
+      // For other errors, try to return cached data first
+      if (regionsCache) {
+        console.warn(
+          `[regions] Backend error ${response.status}, returning cached data`
+        );
+        return NextResponse.json(regionsCache.data);
+      }
+
       return NextResponse.json(
         { error: "Failed to fetch regions" },
         { status: response.status }

@@ -323,27 +323,29 @@ const BeachCard = memo(function BeachCard({
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1 md:gap-2">
-                  <GoogleMapsButton
-                    coordinates={beach.coordinates}
-                    name={beach.name}
-                    region={beach.region?.name}
-                    location={beach.location}
-                    className="hidden md:flex"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenModal();
-                    }}
-                    className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="View beach details"
-                  >
-                    <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                  </button>
-                </div>
+                {/* Action Buttons - Hide when locked */}
+                {!isLocked && (
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <GoogleMapsButton
+                      coordinates={beach.coordinates}
+                      name={beach.name}
+                      region={beach.region?.name}
+                      location={beach.location}
+                      className="hidden md:flex"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenModal();
+                      }}
+                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="View beach details"
+                    >
+                      <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Suitability Rating and Conditions */}
@@ -636,27 +638,29 @@ const BeachCard = memo(function BeachCard({
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1 md:gap-2">
-                  <GoogleMapsButton
-                    coordinates={beach.coordinates}
-                    name={beach.name}
-                    region={beach.region?.name}
-                    location={beach.location}
-                    className="hidden md:flex"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenModal();
-                    }}
-                    className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="View beach details"
-                  >
-                    <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
-                  </button>
-                </div>
+                {/* Action Buttons - Hide when locked */}
+                {!isLocked && (
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <GoogleMapsButton
+                      coordinates={beach.coordinates}
+                      name={beach.name}
+                      region={beach.region?.name}
+                      location={beach.location}
+                      className="hidden md:flex"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenModal();
+                      }}
+                      className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      aria-label="View beach details"
+                    >
+                      <InfoIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Suitability Rating and Conditions */}

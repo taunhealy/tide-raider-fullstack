@@ -51,6 +51,7 @@ import {
 } from "@/app/components/ui/pagination";
 import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { VideoThumbnail } from "./VideoThumbnail";
 import { MediaModal } from "@/app/components/raid-logs/MediaModal";
 import api from "@/app/lib/api-client";
 import {
@@ -919,16 +920,13 @@ export default function RaidLogTable({
                     </p>
                   )}
 
-                  {/* Image section */}
-                  {entry.imageUrl || (entry.videoUrl && entry.videoPlatform) ? (
+                  {/* Image/Video section */}
+                  {entry.imageUrl || entry.videoUrl ? (
                     <div className="mt-auto pt-2 w-full">
-                      <div className="relative w-full aspect-video rounded-md overflow-hidden">
+                      <div className="relative w-full aspect-video rounded-md overflow-hidden group">
                         <button
                           onClick={(e) => {
-                            // This button is for image/video display, not media modal
-                            // The MediaModal component is no longer used for this.
-                            // If you need a media modal, you'll need to re-implement it.
-                            // For now, we'll just navigate to the detail page.
+                            e.stopPropagation();
                             router.push(`/raidlogs/${entry.id}`);
                           }}
                           className="relative w-full h-full block"
@@ -940,21 +938,33 @@ export default function RaidLogTable({
                               fill={true}
                               className="object-cover rounded-md hover:opacity-90 transition-opacity"
                             />
-                          ) : entry.videoUrl && entry.videoPlatform ? (
-                            <>
-                              <Image
-                                src={getVideoThumbnail(
-                                  entry.videoUrl,
-                                  entry.videoPlatform
-                                )}
-                                alt="Video thumbnail"
-                                fill={true}
-                                className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                          ) : entry.videoUrl ? (
+                            // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
+                            !entry.videoPlatform ? (
+                              // Uploaded video - use 360p thumbnail for preview to minimize server costs
+                              <VideoThumbnail
+                                videoUrl={entry.videoUrl}
+                                onPlay={() => {
+                                  router.push(`/raidlogs/${entry.id}`);
+                                }}
                               />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <VideoIcon className="w-8 h-8 text-white" />
-                              </div>
-                            </>
+                            ) : (
+                              // External video (YouTube/Vimeo) - show thumbnail
+                              <>
+                                <Image
+                                  src={getVideoThumbnail(
+                                    entry.videoUrl,
+                                    entry.videoPlatform
+                                  )}
+                                  alt="Video thumbnail"
+                                  fill={true}
+                                  className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <VideoIcon className="w-8 h-8 text-white" />
+                                </div>
+                              </>
+                            )
                           ) : null}
                         </button>
                       </div>
