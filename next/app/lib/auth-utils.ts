@@ -7,9 +7,16 @@ const BACKEND_URL =
 
 export const handleSignIn = (callbackUrl?: string) => {
   const currentPath = window.location.pathname;
+  const frontendUrl = window.location.origin;
   const redirectUrl = callbackUrl || currentPath;
 
+  // Build full callback URL with frontend origin
+  const fullCallbackUrl = redirectUrl.startsWith("http")
+    ? redirectUrl
+    : `${frontendUrl}${redirectUrl}`;
+
   // Redirect to backend OAuth endpoint
-  const state = encodeURIComponent(redirectUrl);
+  // Pass full frontend URL in state so backend knows where to redirect
+  const state = encodeURIComponent(fullCallbackUrl);
   window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
 };

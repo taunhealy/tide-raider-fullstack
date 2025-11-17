@@ -184,8 +184,11 @@ export default function WildStoriesContainer({
                   <button
                     onClick={() => {
                       const BACKEND_URL =
-                        process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
-                      const state = encodeURIComponent(window.location.pathname);
+                        process.env.NEXT_PUBLIC_API_URL ||
+                        "https://tide-raider-backend.fly.dev";
+                      const frontendUrl = window.location.origin;
+                      const fullCallbackUrl = `${frontendUrl}${window.location.pathname}`;
+                      const state = encodeURIComponent(fullCallbackUrl);
                       window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
                     }}
                     className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2 bg-white text-[var(--color-bg-tertiary)] border-2 border-[var(--color-bg-tertiary)] rounded-lg hover:bg-gray-50 transition-colors"

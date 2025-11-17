@@ -1,66 +1,67 @@
 import { NextResponse } from "next/server";
-import { searchBeaches } from "@/app/lib/beachService";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+
+/**
+ * Proxy to backend /api/beaches/search
+ * The backend handles all beach search queries
+ */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const term = searchParams.get("term");
-  const regionId = searchParams.get("regionId");
-
-  // Validate and sanitize input
-  if (!term || term.trim().length < 2) {
-    return NextResponse.json([]);
-  }
-
-  // Sanitize term to prevent injection
-  const sanitizedTerm = term.trim().slice(0, 100); // Limit length
-
   try {
-    // First search for beaches in the current region
-    let regionBeaches: any[] = [];
+    const { searchParams } = new URL(request.url);
+    const term = searchParams.get("term");
+    const regionId = searchParams.get("regionId");
+
+    console.log(
+      `[beaches/search] Search request - term: "${term}", regionId: "${regionId}"`
+    );
+
+    // Validate input
+    if (!term || term.trim().length < 2) {
+      console.log(`[beaches/search] Term too short, returning empty array`);
+      return NextResponse.json([]);
+    }
+
+    // Build backend URL with query params
+    const queryParams = new URLSearchParams();
+    queryParams.append("term", term);
     if (regionId) {
-      try {
-        regionBeaches = await searchBeaches(sanitizedTerm, {
-          regionId,
-          limit: 5,
-        });
-      } catch (regionError) {
-        console.error(
-          "[beaches/search] Error searching region beaches:",
-          regionError
-        );
-        // Continue with empty array
-      }
+      queryParams.append("regionId", regionId);
     }
 
-    // If we don't have enough results from the current region, search all regions
-    let otherBeaches: any[] = [];
-    if (regionBeaches.length < 5) {
-      try {
-        // Search all regions, excluding the current one if we already have results
-        const allBeaches = await searchBeaches(sanitizedTerm, { limit: 10 });
-        otherBeaches = allBeaches
-          .filter((beach) =>
-            regionId && regionBeaches.length > 0
-              ? beach.regionId !== regionId
-              : true
-          )
-          .slice(0, 5 - regionBeaches.length);
-      } catch (allBeachesError) {
-        console.error(
-          "[beaches/search] Error searching all beaches:",
-          allBeachesError
-        );
-        // Continue with what we have
+    const backendUrl = `${BACKEND_URL}/api/beaches/search?${queryParams.toString()}`;
+
+    console.log(`[beaches/search] Proxying to backend: ${backendUrl}`);
+
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      // Handle 429 gracefully - return empty array
+      if (response.status === 429) {
+        console.warn("[beaches/search] Rate limited, returning empty array");
+        return NextResponse.json([]);
       }
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch beaches");
     }
 
-    // Combine results, prioritizing the current region
-    const combinedResults = [...regionBeaches, ...otherBeaches];
-
-    return NextResponse.json(combinedResults);
+    const data = await response.json();
+    console.log(
+      `[beaches/search] Returning ${Array.isArray(data) ? data.length : 0} results`
+    );
+    return NextResponse.json(Array.isArray(data) ? data : []);
   } catch (error) {
-    console.error("[beaches/search] Unexpected error:", error);
-    // Return empty array instead of error to prevent UI breaking
+    console.error("[beaches/search] Backend error:", error);
+    // Return empty array on error to prevent UI breaking
     return NextResponse.json([]);
   }
 }

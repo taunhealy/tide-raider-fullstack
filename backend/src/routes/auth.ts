@@ -257,15 +257,67 @@ router.get(
         `[auth] ✅ OAuth successful, redirecting to frontend with cookie for user: ${user.id}`
       );
 
+      // Determine frontend URL from state, origin, or environment
+      let frontendUrl = FRONTEND_URL;
+      // Decode the state parameter (it's URL-encoded in the query string)
+      const rawState = req.query.state as string | undefined;
+      let state: string | undefined;
+
+      try {
+        state = rawState ? decodeURIComponent(rawState) : undefined;
+      } catch (e) {
+        console.error(`[auth] ⚠️ Error decoding state: ${rawState}`, e);
+        state = rawState; // Use raw state if decoding fails
+      }
+
+      console.log(`[auth] 📍 Raw state: ${rawState}, Decoded state: ${state}`);
+      console.log(`[auth] 📍 FRONTEND_URL env: ${FRONTEND_URL}`);
+
+      // If state contains a full URL (starts with http:// or https://), use it directly
+      if (
+        state &&
+        (state.startsWith("http://") || state.startsWith("https://"))
+      ) {
+        // State is already a full URL, use it directly (it already includes the path)
+        const redirectUrl = `${state}#token=${encodeURIComponent(token)}`;
+        console.log(
+          `[auth] 🔀 Redirecting to full URL from state: ${redirectUrl}`
+        );
+        return res.redirect(redirectUrl);
+      } else {
+        // State is a relative path, try to detect frontend URL from Origin or Referer header
+        const origin = req.headers.origin || req.headers.referer;
+        if (origin) {
+          try {
+            const originUrl = new URL(origin);
+            // Only use origin if it's localhost or tideraider.com domain
+            if (
+              originUrl.hostname === "localhost" ||
+              originUrl.hostname.includes("tideraider.com") ||
+              originUrl.hostname.includes("tide-raider")
+            ) {
+              frontendUrl = `${originUrl.protocol}//${originUrl.host}`;
+              console.log(
+                `[auth] 📍 Detected frontend URL from origin: ${frontendUrl}`
+              );
+            }
+          } catch (e) {
+            // Invalid origin, use default
+            console.log(
+              `[auth] ⚠️ Invalid origin header, using default: ${FRONTEND_URL}`
+            );
+          }
+        }
+      }
+
       // Redirect to frontend with success
       // Include token in URL so frontend can store it (cookie is on different domain)
-      const baseUrl = req.query.state
-        ? `${FRONTEND_URL}${req.query.state}`
-        : `${FRONTEND_URL}/raid`;
+      const baseUrl = state ? `${frontendUrl}${state}` : `${frontendUrl}/raid`;
 
       // Add token to URL as hash (won't be sent to server, more secure than query param)
       const redirectUrl = `${baseUrl}#token=${encodeURIComponent(token)}`;
 
+      console.log(`[auth] 🔀 Redirecting to: ${redirectUrl}`);
       res.redirect(redirectUrl);
     } catch (error) {
       console.error("[auth] ❌ OAuth callback error:", error);

@@ -1,11 +1,18 @@
-import { headers } from "next/headers";
 import LoginButton from "@/app/login/LoginButton";
 
-export const dynamic = "force-dynamic";
+type LoginPageProps = {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
-export default async function LoginPage() {
-  const headersList = await headers();
-  const callbackUrl = headersList.get("referer") || "/";
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const awaitedSearchParams = (await searchParams) || {};
+
+  // Get callback URL from query param, or default to /raid
+  const callbackUrlParam = Array.isArray(awaitedSearchParams.callbackUrl)
+    ? awaitedSearchParams.callbackUrl[0]
+    : awaitedSearchParams.callbackUrl;
+  const callbackUrl =
+    (typeof callbackUrlParam === "string" ? callbackUrlParam : null) || "/raid";
 
   return (
     <div className="mt-6">

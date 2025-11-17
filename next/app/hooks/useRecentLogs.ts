@@ -11,6 +11,10 @@ export function useRecentLogs() {
       const data = await res.json();
       return Array.isArray(data) ? data : []; // Ensure we always return an array
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: 0, // Don't retry on error
   });
   
   const latestLogs = useMemo(() => {

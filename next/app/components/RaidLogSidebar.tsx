@@ -15,6 +15,10 @@ export default function RaidLogSidebar() {
       if (!res.ok) throw new Error("Failed to fetch logs");
       return res.json();
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: 0, // Don't retry on error
   });
 
   if (isLoading) return <div>Loading...</div>;

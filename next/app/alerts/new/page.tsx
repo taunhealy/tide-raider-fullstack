@@ -14,6 +14,7 @@ export default function NewAlertPage() {
   const [selectedLogEntry, setSelectedLogEntry] = useState<LogEntry | null>(
     null
   );
+  const [hasFetchedLogs, setHasFetchedLogs] = useState(false);
   const router = useRouter();
   const { data: session, status: authStatus } = useBackendAuth();
 
@@ -25,16 +26,31 @@ export default function NewAlertPage() {
       // Clear the stored entry to prevent it from persisting
       localStorage.removeItem("selectedLogEntry");
     }
+  }, []); // Only run once on mount
 
+  useEffect(() => {
     // Fetch log entries when component mounts
+    let mounted = true;
+
     const fetchLogEntries = async () => {
       try {
+        console.log("[NewAlertPage] Fetching log entries...");
         const data = await api.getLogs();
-        setLogEntries(data);
+        console.log("[NewAlertPage] Log entries fetched:", data?.length || 0);
+        if (mounted) {
+          setLogEntries(Array.isArray(data) ? data : []);
+          setHasFetchedLogs(true);
+        }
       } catch (error) {
-        console.error("Error fetching log entries:", error);
+        console.error("[NewAlertPage] Error fetching log entries:", error);
+        if (mounted) {
+          setLogEntries([]);
+          setHasFetchedLogs(true);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -44,13 +60,21 @@ export default function NewAlertPage() {
     }
 
     if (authStatus === "authenticated" && session?.user) {
-      // User is authenticated
-      fetchLogEntries();
+      // User is authenticated - only fetch once
+      if (!hasFetchedLogs) {
+        fetchLogEntries();
+      } else {
+        setIsLoading(false);
+      }
     } else if (authStatus === "unauthenticated") {
-      // User is not authenticated, redirect to login
-      router.push("/login");
+      // User is not authenticated, redirect to login with callback URL
+      router.push(`/login?callbackUrl=${encodeURIComponent("/alerts/new")}`);
     }
-  }, [session, authStatus, router]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [authStatus, session?.user?.id, hasFetchedLogs, router]); // Include hasFetchedLogs to prevent refetching
 
   // Handle log entry selection from child component
   const handleLogEntrySelect = (logEntry: LogEntry | null) => {

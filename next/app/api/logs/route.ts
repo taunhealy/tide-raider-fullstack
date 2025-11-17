@@ -13,6 +13,9 @@ export async function GET(req: NextRequest) {
 
     console.log(`[logs] Proxying GET to backend: ${backendUrl}`);
 
+    // Get auth token from cookies
+    const cookieHeader = req.headers.get("cookie") || "";
+    
     const response = await fetch(backendUrl, {
       method: "GET",
       headers: {
@@ -21,6 +24,8 @@ export async function GET(req: NextRequest) {
         ...(req.headers.get("authorization") && {
           Authorization: req.headers.get("authorization")!,
         }),
+        // Forward cookies for auth
+        ...(cookieHeader && { Cookie: cookieHeader }),
       },
       credentials: "include", // Include cookies for auth
     });

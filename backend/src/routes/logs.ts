@@ -2,7 +2,6 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import {
   authenticateToken,
-  optionalAuth,
   AuthRequest,
 } from "../middleware/auth";
 import { LogService } from "../services/logService";
@@ -15,28 +14,52 @@ import {
 const router = Router();
 
 // GET /api/logs - Fetch user's log entries
-router.get("/", optionalAuth, async (req: Request, res: Response) => {
+// No auth required - returns empty array if not authenticated
+router.get("/", async (req: Request, res: Response) => {
   try {
-    const authReq = req as AuthRequest;
-    // Return empty array for unauthenticated users
-    if (!authReq.user?.id) {
+    // Try to get auth token, but don't require it
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ") 
+      ? authHeader.substring(7) 
+      : req.cookies?.["auth-token"];
+
+    // If no token, return empty array immediately
+    if (!token) {
       return res.json([]);
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: authReq.user.email! },
-      select: { id: true },
-    });
+    // Try to verify token, but don't fail if invalid
+    try {
+      const jwt = require("jsonwebtoken");
+      const JWT_SECRET = process.env.JWT_SECRET;
+      if (!JWT_SECRET) {
+        return res.json([]);
+      }
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      if (!decoded?.id) {
+        return res.json([]);
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true },
+      });
+
+      if (!user) {
+        return res.json([]);
+      }
+
+      const logEntries = await LogService.getUserLogs(user.id);
+      return res.json(logEntries);
+    } catch (authError) {
+      // Token invalid or expired - return empty array
+      return res.json([]);
     }
-
-    const logEntries = await LogService.getUserLogs(user.id);
-    return res.json(logEntries);
   } catch (error) {
     console.error("Error fetching log entries:", error);
-    return res.status(500).json({ error: "Failed to fetch log entries" });
+    // Return empty array on error instead of 500
+    return res.json([]);
   }
 });
 
@@ -65,18 +88,37 @@ router.post(
 );
 
 // GET /api/logs/:id - Get a specific log entry
+// No auth required for viewing - returns 404 if not found or private
 router.get(
   "/:id",
-  optionalAuth,
   validate({ params: getLogParamsSchema }),
   async (req: Request, res: Response) => {
     try {
-      const authReq = req as AuthRequest;
       const { id: logEntryId } = req.params;
+
+      // Try to get user ID from token, but don't require it
+      let userId: string | undefined;
+      try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.startsWith("Bearer ") 
+          ? authHeader.substring(7) 
+          : req.cookies?.["auth-token"];
+
+        if (token) {
+          const jwt = require("jsonwebtoken");
+          const JWT_SECRET = process.env.JWT_SECRET;
+          if (JWT_SECRET) {
+            const decoded = jwt.verify(token, JWT_SECRET) as any;
+            userId = decoded?.id;
+          }
+        }
+      } catch (authError) {
+        // Token invalid - continue without userId
+      }
 
       const result = await LogService.getLogEntryById(
         logEntryId,
-        authReq.user?.id
+        userId
       );
 
       if (!result) {

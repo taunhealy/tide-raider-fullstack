@@ -13,7 +13,9 @@ export function useHandleSubscribe() {
     try {
       if (!user) {
         // Redirect to backend OAuth
-        const state = encodeURIComponent(window.location.pathname);
+        const frontendUrl = window.location.origin;
+        const fullCallbackUrl = `${frontendUrl}${window.location.pathname}`;
+        const state = encodeURIComponent(fullCallbackUrl);
         window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
         return;
       }
