@@ -450,17 +450,17 @@ export default function HeroSection({ data }: HeroProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[100svh] min-h-screen overflow-hidden"
+      className="relative w-full h-[100svh] overflow-hidden z-[1]"
     >
-      {/* Background image - full screen cover */}
-      <div className="absolute inset-0 w-full h-full">
+      {/* Background image - full screen cover, cropped from top to show surfer */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <Image
           src="/images/hero-cover-surf.webp"
           alt="Surf hero cover"
           fill
           priority
           sizes="100vw"
-          className="object-cover"
+          className="object-cover object-[center_bottom]"
         />
       </div>
 
@@ -487,6 +487,9 @@ export default function HeroSection({ data }: HeroProps) {
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white font-primary tracking-tight">
             Tide Raider
           </h1>
+          <p className="text-xs sm:text-sm md:text-base lg:text-lg px-7 text-white/90 font-primary mt-2 sm:mt-3 md:mt-4 tracking-wide">
+            Go Further.
+          </p>
         </div>
 
         {/* Product Feature Slider - replacing the START button */}
