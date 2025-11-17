@@ -1,9 +1,6 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import {
-  authenticateToken,
-  AuthRequest,
-} from "../middleware/auth";
+import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { LogService } from "../services/logService";
 import { validate } from "../middleware/validation";
 import {
@@ -19,8 +16,8 @@ router.get("/", async (req: Request, res: Response) => {
   try {
     // Try to get auth token, but don't require it
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") 
-      ? authHeader.substring(7) 
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.substring(7)
       : req.cookies?.["auth-token"];
 
     // If no token, return empty array immediately
@@ -100,8 +97,8 @@ router.get(
       let userId: string | undefined;
       try {
         const authHeader = req.headers.authorization;
-        const token = authHeader?.startsWith("Bearer ") 
-          ? authHeader.substring(7) 
+        const token = authHeader?.startsWith("Bearer ")
+          ? authHeader.substring(7)
           : req.cookies?.["auth-token"];
 
         if (token) {
@@ -116,10 +113,7 @@ router.get(
         // Token invalid - continue without userId
       }
 
-      const result = await LogService.getLogEntryById(
-        logEntryId,
-        userId
-      );
+      const result = await LogService.getLogEntryById(logEntryId, userId);
 
       if (!result) {
         return res.status(404).json({ error: "Log entry not found" });

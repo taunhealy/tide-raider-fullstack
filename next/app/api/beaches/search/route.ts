@@ -48,10 +48,22 @@ export async function GET(request: Request) {
         console.warn("[beaches/search] Rate limited, returning empty array");
         return NextResponse.json([]);
       }
+      // Handle 404 - route might not be deployed yet, return empty array
+      if (response.status === 404) {
+        console.warn(
+          "[beaches/search] Backend route not found (404), returning empty array"
+        );
+        return NextResponse.json([]);
+      }
       const error = await response.json().catch(() => ({
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));
-      throw new Error(error.error || "Failed to fetch beaches");
+      console.error(
+        `[beaches/search] Backend error ${response.status}:`,
+        error
+      );
+      // Return empty array instead of throwing to prevent UI breaking
+      return NextResponse.json([]);
     }
 
     const data = await response.json();

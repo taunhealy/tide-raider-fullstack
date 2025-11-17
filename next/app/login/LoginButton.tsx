@@ -28,13 +28,13 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
         ? callbackUrl
         : `${frontendUrl}${callbackUrl}`;
       const state = encodeURIComponent(fullCallbackUrl);
-      
+
       console.log(`[LoginButton] Frontend URL: ${frontendUrl}`);
       console.log(`[LoginButton] Callback URL: ${callbackUrl}`);
       console.log(`[LoginButton] Full callback URL: ${fullCallbackUrl}`);
       console.log(`[LoginButton] Encoded state: ${state}`);
       console.log(`[LoginButton] Backend URL: ${BACKEND_URL}`);
-      
+
       window.location.href = `${BACKEND_URL}/api/auth/google?state=${state}`;
     } catch (error) {
       console.error("Login error:", error);

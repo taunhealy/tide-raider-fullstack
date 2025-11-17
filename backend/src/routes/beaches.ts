@@ -36,12 +36,20 @@ router.get(
 
 // GET /api/beaches/search?term=xxx&regionId=xxx
 // Search beaches by name or location
+// IMPORTANT: This route must be defined BEFORE /:name to avoid route conflicts
 router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
   try {
+    console.log(
+      "[beaches/search] Route hit - term:",
+      req.query.term,
+      "regionId:",
+      req.query.regionId
+    );
     const term = req.query.term as string | undefined;
     const regionId = req.query.regionId as string | undefined;
 
     if (!term || term.trim().length < 2) {
+      console.log("[beaches/search] Term too short, returning empty array");
       return res.json([]);
     }
 
@@ -113,6 +121,7 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
     // Combine results, prioritizing the current region
     const combinedResults = [...regionBeaches, ...otherBeaches];
 
+    console.log(`[beaches/search] Returning ${combinedResults.length} results`);
     return res.json(combinedResults);
   } catch (error) {
     console.error("[beaches/search] Unexpected error:", error);
@@ -121,16 +130,54 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/beaches/:name
+// Supports both UUID (ID) and name lookups
 router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
+    const decodedName = decodeURIComponent(name);
 
-    const beach = await prisma.beach.findFirst({
-      where: { name },
-      include: {
-        region: true,
-      },
-    });
+    // Check if it's a UUID (36 characters with dashes)
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        decodedName
+      );
+
+    let beach = null;
+
+    if (isUUID) {
+      // Try to find by ID first
+      beach = await prisma.beach.findUnique({
+        where: { id: decodedName },
+        include: {
+          region: true,
+        },
+      });
+    }
+
+    // If not found by ID, try by name
+    if (!beach) {
+      beach = await prisma.beach.findFirst({
+        where: { name: decodedName },
+        include: {
+          region: true,
+        },
+      });
+    }
+
+    // If still not found, try case-insensitive name match
+    if (!beach) {
+      beach = await prisma.beach.findFirst({
+        where: {
+          name: {
+            equals: decodedName,
+            mode: "insensitive",
+          },
+        },
+        include: {
+          region: true,
+        },
+      });
+    }
 
     if (!beach) {
       return res.status(404).json({ error: "Beach not found" });

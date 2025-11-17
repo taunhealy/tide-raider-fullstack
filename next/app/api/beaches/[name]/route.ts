@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
 
+// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+
+/**
+ * GET /api/beaches/[name]
+ * Proxy to backend /api/beaches/:name
+ * The backend handles all beach lookups by name or ID
+ */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ name: string }> }
@@ -11,133 +19,39 @@ export async function GET(
 
     console.log(`[beaches/[name]] Looking up beach: "${beachName}"`);
 
-    // First, try matching by ID (UUID format check)
-    // UUIDs are typically 36 characters with dashes: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    const isUUID =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        beachName
-      );
+    // Proxy to backend
+    const backendUrl = `${BACKEND_URL}/api/beaches/${encodeURIComponent(beachName)}`;
 
-    let beach = null;
+    console.log(`[beaches/[name]] Proxying to backend: ${backendUrl}`);
 
-    if (isUUID) {
-      console.log(`[beaches/[name]] Treating as UUID, looking up by ID`);
-      beach = await prisma.beach.findUnique({
-        where: {
-          id: beachName,
-        },
-        select: {
-          id: true,
-          name: true,
-          optimalWindDirections: true,
-          optimalSwellDirections: true,
-          swellSize: true,
-          idealSwellPeriod: true,
-          waterTemp: true,
-        },
-      });
-    }
+    const response = await fetch(backendUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    // If not found by ID, try exact name match
-    if (!beach) {
-      console.log(`[beaches/[name]] Trying exact name match`);
-      beach = await prisma.beach.findFirst({
-        where: {
-          name: beachName,
-        },
-        select: {
-          id: true,
-          name: true,
-          optimalWindDirections: true,
-          optimalSwellDirections: true,
-          swellSize: true,
-          idealSwellPeriod: true,
-          waterTemp: true,
-        },
-      });
-    }
-
-    // If not found, try case-insensitive search
-    if (!beach) {
-      console.log(`[beaches/[name]] Trying case-insensitive name match`);
-      beach = await prisma.beach.findFirst({
-        where: {
-          name: {
-            equals: beachName,
-            mode: "insensitive",
+    if (!response.ok) {
+      if (response.status === 404) {
+        const errorData = await response.json().catch(() => ({}));
+        return NextResponse.json(
+          {
+            error: "Beach not found",
+            message: errorData.message || `Could not find beach: ${beachName}`,
           },
-        },
-        select: {
-          id: true,
-          name: true,
-          optimalWindDirections: true,
-          optimalSwellDirections: true,
-          swellSize: true,
-          idealSwellPeriod: true,
-          waterTemp: true,
-        },
-      });
+          { status: 404 }
+        );
+      }
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      throw new Error(error.error || "Failed to fetch beach");
     }
 
-    // If still not found, try with spaces/hyphens normalized
-    if (!beach) {
-      const normalizedName = beachName.replace(/[-_]/g, " ").trim();
-      const hyphenatedName = beachName.replace(/\s+/g, "-");
+    const data = await response.json();
 
-      console.log(
-        `[beaches/[name]] Trying normalized: "${normalizedName}" and hyphenated: "${hyphenatedName}"`
-      );
-
-      beach = await prisma.beach.findFirst({
-        where: {
-          OR: [
-            {
-              name: {
-                equals: normalizedName,
-                mode: "insensitive",
-              },
-            },
-            {
-              name: {
-                equals: hyphenatedName,
-                mode: "insensitive",
-              },
-            },
-            // Also try the original with spaces/hyphens swapped
-            {
-              name: {
-                contains: normalizedName,
-                mode: "insensitive",
-              },
-            },
-          ],
-        },
-        select: {
-          id: true,
-          name: true,
-          optimalWindDirections: true,
-          optimalSwellDirections: true,
-          swellSize: true,
-          idealSwellPeriod: true,
-          waterTemp: true,
-        },
-      });
-    }
-
-    if (!beach) {
-      console.log(`[beaches/[name]] Beach not found: "${beachName}"`);
-      return NextResponse.json(
-        {
-          error: "Beach not found",
-          message: `Could not find beach with name or ID: ${beachName}`,
-        },
-        { status: 404 }
-      );
-    }
-
-    console.log(
-      `[beaches/[name]] Found beach: "${beach.name}" (ID: ${beach.id})`
-    );
+    // The backend returns { beach: {...} }, but we need to transform it
+    const beach = data.beach || data;
 
     // Transform the data to ensure proper typing
     const transformedBeach = {
@@ -146,22 +60,27 @@ export async function GET(
         ? beach.optimalWindDirections
         : [],
       optimalSwellDirections:
-        typeof beach.optimalSwellDirections === "object"
+        typeof beach.optimalSwellDirections === "object" &&
+        beach.optimalSwellDirections !== null
           ? beach.optimalSwellDirections
           : { min: 0, max: 0, cardinal: "N" },
       swellSize:
-        typeof beach.swellSize === "object"
+        typeof beach.swellSize === "object" && beach.swellSize !== null
           ? beach.swellSize
           : { min: 0, max: 0 },
       idealSwellPeriod:
-        typeof beach.idealSwellPeriod === "object"
+        typeof beach.idealSwellPeriod === "object" &&
+        beach.idealSwellPeriod !== null
           ? beach.idealSwellPeriod
           : { min: 0, max: 0 },
     };
 
+    console.log(
+      `[beaches/[name]] Found beach: "${transformedBeach.name}" (ID: ${transformedBeach.id})`
+    );
     return NextResponse.json(transformedBeach);
   } catch (error) {
-    console.error("Error fetching beach:", error);
+    console.error("[beaches/[name]] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch beach details" },
       { status: 500 }

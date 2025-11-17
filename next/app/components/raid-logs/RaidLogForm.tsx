@@ -39,6 +39,10 @@ type LogEntryInput = Omit<
 // Add this constant at the top of the file, outside the component
 const FORM_STATE_KEY = "raid_log_form_state";
 
+// Backend URL - use environment variable or default to production
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+
 export function RaidLogForm({
   userEmail,
   isOpen = false,
@@ -98,10 +102,13 @@ export function RaidLogForm({
       }
 
       const dateStr = new Date(selectedDate).toISOString().split("T")[0];
-      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&date=${dateStr}`;
+      // Use backend directly instead of Next.js API route
+      const url = `${BACKEND_URL}/api/filtered-beaches?regionId=${selectedBeach.regionId}&date=${dateStr}`;
 
-      console.log("Fetching forecast from:", url);
-      const response = await fetch(url);
+      console.log("Fetching forecast from backend:", url);
+      const response = await fetch(url, {
+        credentials: "include", // Include cookies for auth
+      });
 
       if (!response.ok) {
         console.error("API error:", response.status, response.statusText);
@@ -111,22 +118,35 @@ export function RaidLogForm({
       const data = await response.json();
       console.log("API response:", data);
 
-      // If data is empty or forecast is missing, try to use the full response
-      if (!data || !data.forecast) {
-        // If we have scores or other forecast data, try to use that
-        if (data.scores) {
-          // Extract first beach's forecast data if available
-          const firstBeachId = Object.keys(data.scores)[0];
-          if (firstBeachId && data.scores[firstBeachId]?.forecastData) {
-            return data.scores[firstBeachId].forecastData;
-          }
-        }
-
-        console.error("No usable forecast data in API response:", data);
-        throw new Error("No forecast data available");
+      // The /api/filtered-beaches endpoint returns: { beaches: [], scores: {}, forecast: {...} }
+      // Extract forecast from the response
+      if (data?.forecast) {
+        return data.forecast;
       }
 
-      return data.forecast;
+      // If forecast is missing, try to extract from scores (for specific beach)
+      if (data?.scores && selectedBeach?.id) {
+        const beachScore = data.scores[selectedBeach.id];
+        if (beachScore?.forecastData) {
+          return beachScore.forecastData;
+        }
+      }
+
+      // If we have scores, try to get the first beach's forecast
+      if (data?.scores) {
+        const firstBeachId = Object.keys(data.scores)[0];
+        if (firstBeachId && data.scores[firstBeachId]?.forecastData) {
+          return data.scores[firstBeachId].forecastData;
+        }
+      }
+
+      // If the entire response is a forecast object (some endpoints return it directly)
+      if (data?.id && data?.windSpeed !== undefined) {
+        return data;
+      }
+
+      console.error("No usable forecast data in API response:", data);
+      throw new Error("No forecast data available");
     },
     enabled: !!selectedBeach?.regionId && !!selectedDate,
     staleTime: 1000 * 60 * 5,
@@ -155,8 +175,12 @@ export function RaidLogForm({
     queryKey: ["beaches-search", searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
+      // Use backend directly instead of Next.js API route
       const response = await fetch(
-        `/api/beaches/search?term=${encodeURIComponent(searchTerm)}`
+        `${BACKEND_URL}/api/beaches/search?term=${encodeURIComponent(searchTerm)}`,
+        {
+          credentials: "include", // Include cookies for auth
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch beaches");
       return response.json();

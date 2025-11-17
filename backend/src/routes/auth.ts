@@ -439,12 +439,27 @@ router.post("/login", async (req: Request, res: Response) => {
  * Clear auth cookie
  */
 router.post("/logout", (req: Request, res: Response) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Clear cookie with same settings as when it was set
   res.clearCookie("auth-token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
+    // Don't set domain - let browser handle it based on where cookie was set
   });
+
+  // Also set cookie to empty with maxAge 0 to ensure it's cleared
+  res.cookie("auth-token", "", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+    maxAge: 0, // Expire immediately
+  });
+
+  console.log("[auth] ✅ Logout successful - cookie cleared");
   res.json({ success: true, message: "Logged out" });
 });
 

@@ -32,8 +32,17 @@ export function useBackendAuth() {
 
   useEffect(() => {
     let mounted = true;
+    let lastFetchTime = 0;
+    const FETCH_THROTTLE_MS = 5000; // Only fetch once every 5 seconds
 
     async function fetchUser() {
+      // Throttle requests to prevent infinite loops
+      const now = Date.now();
+      if (now - lastFetchTime < FETCH_THROTTLE_MS) {
+        return;
+      }
+      lastFetchTime = now;
+
       try {
         // Use Next.js API route (same domain = cookies work)
         const response = await fetch("/api/auth/me", {
@@ -82,6 +91,7 @@ export function useBackendAuth() {
     };
 
     // Listen for focus events (user might have signed in in another tab)
+    // Throttled to prevent excessive requests
     const handleFocus = () => {
       if (mounted) {
         fetchUser();
@@ -100,26 +110,33 @@ export function useBackendAuth() {
 
   const signOut = async () => {
     try {
-      const BACKEND_URL =
-        process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== "undefined" &&
-        window.location.hostname === "localhost"
-          ? "http://localhost:3001"
-          : "https://tide-raider-backend.fly.dev");
-
-      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+      // Use Next.js API route (same domain = cookies work properly)
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
+
+      // Clear local state immediately
       setAuthState({
         user: null,
         loading: false,
         error: null,
       });
-      // Redirect to home or signin
+
+      // Small delay to ensure cookie is cleared before redirect
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Redirect to home
       window.location.href = "/";
     } catch (error) {
       console.error("Sign out error:", error);
+      // Even if there's an error, clear local state and redirect
+      setAuthState({
+        user: null,
+        loading: false,
+        error: null,
+      });
+      window.location.href = "/";
     }
   };
 
