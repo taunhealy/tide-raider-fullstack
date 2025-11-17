@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       headers: {
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
         Cookie: cookieStore.toString(),
-            },
+      },
       credentials: "include",
     });
 
@@ -30,13 +30,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           { error: "Too many requests, please try again later" },
           { status: 429 }
-          );
-        }
+        );
+      }
       return NextResponse.json(
         { error: "Failed to fetch logs" },
         { status: response.status }
       );
-      }
+    }
 
     const data = await response.json();
     return NextResponse.json(data);
@@ -71,8 +71,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
+      // Try to get error message from backend
+      const errorData = await response.json().catch(() => ({
+        message: "Failed to create log",
+      }));
+      console.error("[raid-logs] Backend error:", errorData);
       return NextResponse.json(
-        { error: "Failed to create log" },
+        {
+          error: errorData.message || errorData.error || "Failed to create log",
+        },
         { status: response.status }
       );
     }

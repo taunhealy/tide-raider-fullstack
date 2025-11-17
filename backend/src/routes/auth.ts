@@ -194,6 +194,15 @@ router.get(
       try {
         const decoded = decodeURIComponent(state);
         console.log(`[auth] 📍 Decoded state: ${decoded}`);
+        // Store state in a cookie so we can retrieve it in the callback
+        // Google OAuth will preserve state, but we'll also store it as backup
+        res.cookie("oauth-state", state, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          maxAge: 10 * 60 * 1000, // 10 minutes
+          path: "/",
+        });
       } catch (e) {
         console.log(`[auth] ⚠️ Could not decode state: ${state}`);
       }
@@ -204,7 +213,6 @@ router.get(
     scope: ["profile", "email"],
     accessType: "offline",
     prompt: "select_account",
-    // Passport will preserve the state parameter automatically
   })
 );
 
@@ -275,18 +283,33 @@ router.get(
 
       // Determine frontend URL from state, origin, or environment
       let frontendUrl = FRONTEND_URL;
-      // Decode the state parameter (it's URL-encoded in the query string)
-      const rawState = req.query.state as string | undefined;
+      // Get state from query parameter (Google returns it) or from cookie (backup)
+      const rawState =
+        (req.query.state as string | undefined) ||
+        (req.cookies?.["oauth-state"] as string | undefined);
       let state: string | undefined;
 
       try {
         state = rawState ? decodeURIComponent(rawState) : undefined;
+        // Clear the oauth-state cookie after using it
+        if (req.cookies?.["oauth-state"]) {
+          res.clearCookie("oauth-state", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/",
+          });
+        }
       } catch (e) {
         console.error(`[auth] ⚠️ Error decoding state: ${rawState}`, e);
         state = rawState; // Use raw state if decoding fails
       }
 
-      console.log(`[auth] 📍 Raw state: ${rawState}, Decoded state: ${state}`);
+      console.log(`[auth] 📍 Raw state from query: ${req.query.state}`);
+      console.log(
+        `[auth] 📍 Raw state from cookie: ${req.cookies?.["oauth-state"]}`
+      );
+      console.log(`[auth] 📍 Final state: ${state}`);
       console.log(`[auth] 📍 FRONTEND_URL env: ${FRONTEND_URL}`);
       console.log(`[auth] 📍 Origin header: ${req.headers.origin}`);
       console.log(`[auth] 📍 Referer header: ${req.headers.referer}`);

@@ -97,7 +97,7 @@ export const getAlertsQuerySchema = z.object({
 });
 
 export const notifyAlertsSchema = z.object({
-  userId: z.string().uuid("Invalid user ID"),
+  userId: z.string().min(1, "User ID is required"),
 });
 
 export const testForceAlertQuerySchema = z.object({

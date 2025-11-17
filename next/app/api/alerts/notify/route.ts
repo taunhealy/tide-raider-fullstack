@@ -35,7 +35,13 @@ export async function POST(request: NextRequest) {
       const error = await response.json().catch(() => ({
         error: `HTTP ${response.status}: ${response.statusText}`,
       }));
-      throw new Error(error.error || "Failed to process alerts");
+      console.error("[alerts/notify] Backend validation error:", error);
+      throw new Error(
+        error.error ||
+          error.message ||
+          error.details ||
+          "Failed to process alerts"
+      );
     }
 
     const data = await response.json();
