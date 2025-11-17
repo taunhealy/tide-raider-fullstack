@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/lib/authOptions";
+import { getServerAuth } from "@/app/lib/server-auth";
 
 // GET User Profile (Public)
 export async function GET(
@@ -66,10 +65,10 @@ export async function PUT(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   const { userId } = await params;
-  const session = await getServerSession(authOptions);
+  const { user } = await getServerAuth();
 
   // Verify authentication
-  if (!session?.user?.id) {
+  if (!user?.id) {
     return NextResponse.json(
       { error: "Authentication required" },
       { status: 401 }
@@ -77,7 +76,7 @@ export async function PUT(
   }
 
   // Verify ownership
-  if (session.user.id !== userId) {
+  if (user.id !== userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
