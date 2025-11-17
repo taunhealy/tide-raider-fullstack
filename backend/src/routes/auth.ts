@@ -242,7 +242,7 @@ router.get(
       const baseUrl = req.query.state
         ? `${FRONTEND_URL}${req.query.state}`
         : `${FRONTEND_URL}/raid`;
-      
+
       // Add token to URL as hash (won't be sent to server, more secure than query param)
       const redirectUrl = `${baseUrl}#token=${encodeURIComponent(token)}`;
 

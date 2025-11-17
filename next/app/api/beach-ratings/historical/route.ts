@@ -1,92 +1,20 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { subDays, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const regionId = searchParams.get("regionId");
-  const period = searchParams.get("period") || "today";
-
-  if (!regionId) {
-    return NextResponse.json(
-      { error: "regionId is required" },
-      { status: 400 }
-    );
-  }
-
-  // Calculate date range based on period
-  const now = new Date();
-  let startDate: Date;
-  const endDate = endOfDay(now);
-
-  switch (period) {
-    case "week":
-      startDate = subDays(startOfDay(now), 7);
-      break;
-    case "month":
-      startDate = subMonths(startOfDay(now), 1);
-      break;
-    case "year":
-      startDate = subYears(startOfDay(now), 1);
-      break;
-    case "today":
-    default:
-      startDate = startOfDay(now);
-      break;
-  }
-
+/**
+ * GET /api/beach-ratings/historical
+ * Proxy to backend API
+ * Note: This endpoint should be implemented in the backend
+ */
+export async function GET(request: NextRequest) {
   try {
-    // Get beaches for the region
-    const beaches = await prisma.beach.findMany({
-      where: { regionId },
-      include: {
-        region: true,
-        beachDailyScores: {
-          where: {
-            date: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-          orderBy: {
-            date: "desc",
-          },
-        },
-      },
-    });
-
-    // Calculate total scores for the period (not average)
-    const beachesWithScores = beaches.map((beach) => {
-      const scores = beach.beachDailyScores;
-      const totalScore = scores.reduce(
-        (sum, score) => sum + (score.score || 0),
-        0
-      );
-      const appearances = scores.length;
-
-      return {
-        id: beach.id,
-        name: beach.name,
-        region: beach.region,
-        totalScore: totalScore,
-        appearances,
-        latestScore: scores[0]?.score || 0,
-      };
-    });
-
-    // Sort by total score for all periods
-    const sortedBeaches = beachesWithScores.sort((a, b) =>
-      period === "today"
-        ? b.latestScore - a.latestScore
-        : b.totalScore - a.totalScore
-    );
-
+    // For now, return empty data until backend endpoint is implemented
+    // TODO: Implement /api/beach-ratings/historical in backend
     return NextResponse.json({
-      beaches: sortedBeaches,
-      period,
+      beaches: [],
+      period: request.nextUrl.searchParams.get("period") || "today",
       dateRange: {
-        start: startDate,
-        end: endDate,
+        start: new Date(),
+        end: new Date(),
       },
     });
   } catch (error) {
