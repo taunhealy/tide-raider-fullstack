@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { useAuth } from "@/app/hooks/useAuth";
 import { LogEntry } from "@/app/types/raidlogs";
 import { Prisma } from "@prisma/client";
 
@@ -22,7 +22,7 @@ export function EditAlertPageClient({
     null
   );
   const router = useRouter();
-  const { status: authStatus } = useBackendAuth();
+  const { isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
     // If alert has a logEntry, set it as selected
@@ -50,7 +50,7 @@ export function EditAlertPageClient({
     router.push("/alerts");
   };
 
-  if (isLoading || authStatus === "loading") {
+  if (isLoading || isAuthLoading) {
     return <RandomLoader isLoading={true} />;
   }
 

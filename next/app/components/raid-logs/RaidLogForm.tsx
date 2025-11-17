@@ -39,10 +39,6 @@ type LogEntryInput = Omit<
 // Add this constant at the top of the file, outside the component
 const FORM_STATE_KEY = "raid_log_form_state";
 
-// Backend URL - use environment variable or default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
-
 export function RaidLogForm({
   userEmail,
   isOpen = false,
@@ -102,10 +98,10 @@ export function RaidLogForm({
       }
 
       const dateStr = new Date(selectedDate).toISOString().split("T")[0];
-      // Use backend directly instead of Next.js API route
-      const url = `${BACKEND_URL}/api/filtered-beaches?regionId=${selectedBeach.regionId}&date=${dateStr}`;
+      // Use Next.js API route which proxies to backend
+      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&date=${dateStr}`;
 
-      console.log("Fetching forecast from backend:", url);
+      console.log("[RaidLogForm] Fetching forecast from:", url);
       const response = await fetch(url, {
         credentials: "include", // Include cookies for auth
       });
@@ -116,11 +112,21 @@ export function RaidLogForm({
       }
 
       const data = await response.json();
-      console.log("API response:", data);
+      console.log("[RaidLogForm] API response structure:", {
+        hasForecast: !!data?.forecast,
+        hasScores: !!data?.scores,
+        forecastKeys: data?.forecast ? Object.keys(data.forecast) : [],
+        selectedBeachId: selectedBeach?.id,
+      });
 
       // The /api/filtered-beaches endpoint returns: { beaches: [], scores: {}, forecast: {...} }
       // Extract forecast from the response
       if (data?.forecast) {
+        console.log("[RaidLogForm] Using forecast from data.forecast:", {
+          hasId: !!data.forecast.id,
+          hasWindSpeed: data.forecast.windSpeed !== undefined,
+          hasSwellHeight: data.forecast.swellHeight !== undefined,
+        });
         return data.forecast;
       }
 
@@ -128,6 +134,7 @@ export function RaidLogForm({
       if (data?.scores && selectedBeach?.id) {
         const beachScore = data.scores[selectedBeach.id];
         if (beachScore?.forecastData) {
+          console.log("[RaidLogForm] Using forecast from beach score");
           return beachScore.forecastData;
         }
       }
@@ -136,16 +143,22 @@ export function RaidLogForm({
       if (data?.scores) {
         const firstBeachId = Object.keys(data.scores)[0];
         if (firstBeachId && data.scores[firstBeachId]?.forecastData) {
+          console.log("[RaidLogForm] Using forecast from first beach score");
           return data.scores[firstBeachId].forecastData;
         }
       }
 
       // If the entire response is a forecast object (some endpoints return it directly)
       if (data?.id && data?.windSpeed !== undefined) {
+        console.log("[RaidLogForm] Using entire response as forecast");
         return data;
       }
 
-      console.error("No usable forecast data in API response:", data);
+      console.error("[RaidLogForm] No usable forecast data in API response:", {
+        dataKeys: Object.keys(data || {}),
+        forecast: data?.forecast,
+        scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
+      });
       throw new Error("No forecast data available");
     },
     enabled: !!selectedBeach?.regionId && !!selectedDate,
@@ -175,9 +188,9 @@ export function RaidLogForm({
     queryKey: ["beaches-search", searchTerm],
     queryFn: async () => {
       if (!searchTerm || searchTerm.length < 2) return [];
-      // Use backend directly instead of Next.js API route
+      // Use Next.js API route which proxies to backend
       const response = await fetch(
-        `${BACKEND_URL}/api/beaches/search?term=${encodeURIComponent(searchTerm)}`,
+        `/api/beaches/search?term=${encodeURIComponent(searchTerm)}`,
         {
           credentials: "include", // Include cookies for auth
         }
@@ -415,7 +428,14 @@ export function RaidLogForm({
     }
 
     // For editing, allow using existing forecast if no new forecast data
-    if (!entry?.id && !forecastData?.id) {
+    // Check for forecast data by looking for required properties (windSpeed, swellHeight, etc.)
+    const hasForecastData =
+      forecastData &&
+      (forecastData.id ||
+        forecastData.windSpeed !== undefined ||
+        forecastData.swellHeight !== undefined);
+
+    if (!entry?.id && !hasForecastData) {
       toast.error("No forecast data available for this date");
       return;
     }

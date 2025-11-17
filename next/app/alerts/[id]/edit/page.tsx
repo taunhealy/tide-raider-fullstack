@@ -1,9 +1,8 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/lib/authOptions";
 import { prisma } from "@/app/lib/prisma";
 import { EditAlertPageClient } from "./EditAlertPageClient";
 import { Prisma, AlertType } from "@prisma/client";
+import { getServerAuth } from "@/app/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -86,14 +85,14 @@ export default async function EditAlertPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await getServerSession(authOptions);
+  const { user } = await getServerAuth();
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect("/login");
   }
 
   const { id } = await params;
-  const alert = await getAlert(id, session.user.id);
+  const alert = await getAlert(id, user.id);
 
   // If alert not found, redirect to alerts page
   if (!alert) {
@@ -103,7 +102,7 @@ export default async function EditAlertPage({
   // Fetch log entries for the edit form
   const logEntries = await prisma.logEntry.findMany({
     where: {
-      userId: session.user.id,
+      userId: user.id,
     },
     include: {
       beach: {
