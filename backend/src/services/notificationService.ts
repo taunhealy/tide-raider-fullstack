@@ -93,10 +93,18 @@ export async function sendAlertNotification(
       switch (alert.notificationMethod as NotificationMethod) {
         case "email":
           const { sendEmail } = await import("../lib/email");
+          console.log(`📧 Sending email notification for alert ${alert.id}:`, {
+            to: alert.contactInfo,
+            subject: alertMatch.alertName,
+            alertName: alert.name,
+          });
           sendSuccess = await sendEmail(
             alert.contactInfo,
             alertMatch.alertName,
             message
+          );
+          console.log(
+            `📧 Email send result for alert ${alert.id}: ${sendSuccess ? "SUCCESS" : "FAILED"}`
           );
           break;
         case "whatsapp":
@@ -161,10 +169,21 @@ export async function sendAlertNotification(
             );
           }
 
+          console.log(
+            `📧 Sending email notification (both method) for alert ${alert.id}:`,
+            {
+              to: alert.contactInfo,
+              subject: alertMatch.alertName,
+              alertName: alert.name,
+            }
+          );
           const emailSuccess = await sendEmailBoth(
             alert.contactInfo,
             alertMatch.alertName,
             message
+          );
+          console.log(
+            `📧 Email send result (both method) for alert ${alert.id}: ${emailSuccess ? "SUCCESS" : "FAILED"}`
           );
           sendSuccess = emailSuccess || whatsappSuccess; // Success if either works
           break;

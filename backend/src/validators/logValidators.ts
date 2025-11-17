@@ -35,7 +35,7 @@ export const createRaidLogSchema = z.object({
   isAnonymous: z.boolean().optional(),
   waveType: z.string().optional(),
   beachId: z.string().uuid().optional(),
-  regionId: z.string().uuid("Invalid region ID"),
+  regionId: z.string().min(1, "Region ID is required"), // Accepts UUID or slug
   forecastId: z.string().uuid().optional(),
   forecast: z
     .object({
@@ -70,7 +70,7 @@ export const updateRaidLogSchema = z.object({
   waveType: z.string().optional(),
   beachId: z.string().uuid().optional(),
   beachName: z.string().optional(),
-  regionId: z.string().uuid().optional(),
+  regionId: z.string().min(1).optional(), // Accepts UUID or slug
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

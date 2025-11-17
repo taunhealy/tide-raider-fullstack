@@ -73,12 +73,33 @@ export default function TestAlertsPage() {
           error: `HTTP ${response.status}: ${response.statusText}`,
         }));
         console.error("[test-alerts] Force test error:", errorData);
-        throw new Error(
+
+        // Build a detailed error message
+        let errorMessage =
           errorData.error ||
-            errorData.message ||
-            errorData.details ||
-            `Failed to test alert (${response.status})`
-        );
+          errorData.message ||
+          `Failed to test alert (${response.status})`;
+
+        // Add troubleshooting info if available
+        if (errorData.troubleshooting) {
+          errorMessage += "\n\nTroubleshooting:\n";
+          if (errorData.troubleshooting.checkApiKey) {
+            errorMessage += `- ${errorData.troubleshooting.checkApiKey}\n`;
+          }
+          if (errorData.troubleshooting.checkDomain) {
+            errorMessage += `- ${errorData.troubleshooting.checkDomain}\n`;
+          }
+          if (errorData.troubleshooting.checkLogs) {
+            errorMessage += `- ${errorData.troubleshooting.checkLogs}\n`;
+          }
+        }
+
+        // Add error details if available
+        if (errorData.error && errorData.error !== errorMessage) {
+          errorMessage += `\n\nDetails: ${errorData.error}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

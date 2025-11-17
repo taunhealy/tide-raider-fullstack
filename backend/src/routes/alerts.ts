@@ -15,6 +15,7 @@ import {
   testForceAlertQuerySchema,
 } from "../validators/alertValidators";
 import { dataRateLimiter } from "../middleware/rateLimiter";
+import { prisma } from "../lib/prisma";
 
 const router = Router();
 
@@ -245,11 +246,42 @@ router.get(
       const { sendAlertNotification } = await import(
         "../services/notificationService"
       );
-      const success = await sendAlertNotification(
-        mockMatch,
-        alertToTest as any,
-        beachName
-      );
+
+      let success = false;
+      let errorDetails: string | null = null;
+
+      try {
+        success = await sendAlertNotification(
+          mockMatch,
+          alertToTest as any,
+          beachName
+        );
+
+        if (!success) {
+          // Check if there's a recent notification record that might have error details
+          const recentNotification = await prisma.alertNotification.findFirst({
+            where: {
+              alertId: alertToTest.id,
+              createdAt: {
+                gte: new Date(Date.now() - 60000), // Last minute
+              },
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          });
+
+          if (recentNotification && !recentNotification.success) {
+            errorDetails = recentNotification.details || "Unknown error";
+          } else {
+            errorDetails =
+              "Email sending returned false - check RESEND_API_KEY and logs";
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error in sendAlertNotification:", error);
+        errorDetails = error instanceof Error ? error.message : "Unknown error";
+      }
 
       if (success) {
         return res.json({
@@ -268,9 +300,21 @@ router.get(
         return res.status(500).json({
           success: false,
           message: "Failed to send notification",
+          error:
+            errorDetails ||
+            "Email sending failed - check RESEND_API_KEY configuration",
           alert: {
             id: alertToTest.id,
             name: alertToTest.name,
+            notificationMethod: alertToTest.notificationMethod,
+            contactInfo: alertToTest.contactInfo,
+          },
+          troubleshooting: {
+            checkApiKey:
+              "Verify RESEND_API_KEY is set in production environment",
+            checkDomain:
+              "Verify tideraider.com domain is verified in Resend dashboard",
+            checkLogs: "Check backend logs for detailed error messages",
           },
         });
       }
