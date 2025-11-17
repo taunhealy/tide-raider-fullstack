@@ -2,9 +2,21 @@
 
 import { useState } from "react";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Use NEXT_PUBLIC_API_URL if set, otherwise detect based on environment
+const getBackendUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // In browser, detect localhost
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "localhost"
+  ) {
+    return "http://localhost:3001";
+  }
+  // Default to production
+  return "https://tide-raider-backend.fly.dev";
+};
 
 interface LoginButtonProps {
   callbackUrl: string;
@@ -28,6 +40,8 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
         ? callbackUrl
         : `${frontendUrl}${callbackUrl}`;
       const state = encodeURIComponent(fullCallbackUrl);
+
+      const BACKEND_URL = getBackendUrl();
 
       console.log(`[LoginButton] Frontend URL: ${frontendUrl}`);
       console.log(`[LoginButton] Callback URL: ${callbackUrl}`);

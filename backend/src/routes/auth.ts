@@ -181,14 +181,30 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
 /**
  * GET /api/auth/google
  * Initiate Google OAuth flow
+ * State parameter is preserved automatically by Passport
  */
 router.get(
   "/google",
   handleGoogleOAuth,
+  (req: Request, res: Response, next: any) => {
+    // Log the state parameter before Passport processes it
+    const state = req.query.state as string | undefined;
+    console.log(`[auth] 📍 State parameter received: ${state}`);
+    if (state) {
+      try {
+        const decoded = decodeURIComponent(state);
+        console.log(`[auth] 📍 Decoded state: ${decoded}`);
+      } catch (e) {
+        console.log(`[auth] ⚠️ Could not decode state: ${state}`);
+      }
+    }
+    next();
+  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
     accessType: "offline",
     prompt: "select_account",
+    // Passport will preserve the state parameter automatically
   })
 );
 
@@ -272,20 +288,27 @@ router.get(
 
       console.log(`[auth] 📍 Raw state: ${rawState}, Decoded state: ${state}`);
       console.log(`[auth] 📍 FRONTEND_URL env: ${FRONTEND_URL}`);
+      console.log(`[auth] 📍 Origin header: ${req.headers.origin}`);
+      console.log(`[auth] 📍 Referer header: ${req.headers.referer}`);
 
-      // If state contains a full URL (starts with http:// or https://), use it directly
+      // Redirect to frontend with success
+      // Include token in URL so frontend can store it (cookie is on different domain)
+      let redirectUrl: string;
+
+      // PRIORITY 1: If state contains a full URL (starts with http:// or https://), use it directly
+      // This is the most reliable way - the frontend explicitly tells us where to redirect
       if (
         state &&
         (state.startsWith("http://") || state.startsWith("https://"))
       ) {
-        // State is already a full URL, use it directly (it already includes the path)
-        const redirectUrl = `${state}#token=${encodeURIComponent(token)}`;
-        console.log(
-          `[auth] 🔀 Redirecting to full URL from state: ${redirectUrl}`
-        );
+        redirectUrl = `${state}#token=${encodeURIComponent(token)}`;
+        console.log(`[auth] 🔀 Using full URL from state: ${redirectUrl}`);
         return res.redirect(redirectUrl);
-      } else {
-        // State is a relative path, try to detect frontend URL from Origin or Referer header
+      }
+
+      // PRIORITY 2: If state is a relative path, try to detect frontend URL from Origin or Referer header
+      // This handles cases where the frontend didn't pass a full URL in state
+      if (state) {
         const origin = req.headers.origin || req.headers.referer;
         if (origin) {
           try {
@@ -308,16 +331,15 @@ router.get(
             );
           }
         }
+        redirectUrl = `${frontendUrl}${state}#token=${encodeURIComponent(token)}`;
+        console.log(`[auth] 🔀 Using relative path from state: ${redirectUrl}`);
+      } else {
+        // PRIORITY 3: No state - use default
+        redirectUrl = `${frontendUrl}/raid#token=${encodeURIComponent(token)}`;
+        console.log(`[auth] 🔀 No state, using default: ${redirectUrl}`);
       }
 
-      // Redirect to frontend with success
-      // Include token in URL so frontend can store it (cookie is on different domain)
-      const baseUrl = state ? `${frontendUrl}${state}` : `${frontendUrl}/raid`;
-
-      // Add token to URL as hash (won't be sent to server, more secure than query param)
-      const redirectUrl = `${baseUrl}#token=${encodeURIComponent(token)}`;
-
-      console.log(`[auth] 🔀 Redirecting to: ${redirectUrl}`);
+      console.log(`[auth] 🔀 Final redirect URL: ${redirectUrl}`);
       res.redirect(redirectUrl);
     } catch (error) {
       console.error("[auth] ❌ OAuth callback error:", error);

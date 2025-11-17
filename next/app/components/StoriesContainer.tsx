@@ -183,9 +183,12 @@ export default function WildStoriesContainer({
                 ) : (
                   <button
                     onClick={() => {
+                      // Detect backend URL based on environment
                       const BACKEND_URL =
                         process.env.NEXT_PUBLIC_API_URL ||
-                        "https://tide-raider-backend.fly.dev";
+                        (window.location.hostname === "localhost"
+                          ? "http://localhost:3001"
+                          : "https://tide-raider-backend.fly.dev");
                       const frontendUrl = window.location.origin;
                       const fullCallbackUrl = `${frontendUrl}${window.location.pathname}`;
                       const state = encodeURIComponent(fullCallbackUrl);

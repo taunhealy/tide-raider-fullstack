@@ -410,13 +410,17 @@ export function RaidLogForm({
       toast.error("Please sign in to log your session", {
         action: {
           label: "Sign In",
-          onClick: () =>
-            (window.location.href = `${
+          onClick: () => {
+            // Detect backend URL based on environment
+            const BACKEND_URL =
               process.env.NEXT_PUBLIC_API_URL ||
-              "https://tide-raider-backend.fly.dev"
-            }/api/auth/google?state=${encodeURIComponent(
+              (window.location.hostname === "localhost"
+                ? "http://localhost:3001"
+                : "https://tide-raider-backend.fly.dev");
+            window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
               `${window.location.origin}/raidlogs/new`
-            )}`),
+            )}`;
+          },
         },
       });
       return;
@@ -893,13 +897,17 @@ export function RaidLogForm({
                     toast.error("Please sign in to log your session", {
                       action: {
                         label: "Sign In",
-                        onClick: () =>
-                          (window.location.href = `${
+                        onClick: () => {
+                          // Detect backend URL based on environment
+                          const BACKEND_URL =
                             process.env.NEXT_PUBLIC_API_URL ||
-                            "https://tide-raider-backend.fly.dev"
-                          }/api/auth/google?state=${encodeURIComponent(
+                            (window.location.hostname === "localhost"
+                              ? "http://localhost:3001"
+                              : "https://tide-raider-backend.fly.dev");
+                          window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
                             `${window.location.origin}/raidlogs/new`
-                          )}`),
+                          )}`;
+                        },
                       },
                     });
                     return;
