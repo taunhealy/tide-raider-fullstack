@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     switch (action) {
       case "create":
-        return handleCreate(session.user.email, access_token, baseUrl);
+        return handleCreate();
       case "unsubscribe":
       case "cancel":
         const user = await prisma.user.findUnique({
@@ -132,93 +132,59 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleCreate(
-  userEmail: string,
-  accessToken: string,
-  baseUrl: string
-) {
+async function handleCreate() {
   try {
-    // Log all environment variables (redacted for security)
-    console.log("PayPal environment check:", {
-      hasClientId: !!process.env.PAYPAL_CLIENT_ID,
-      hasClientSecret: !!process.env.PAYPAL_CLIENT_SECRET,
-      hasPlanId: !!process.env.PAYPAL_PLAN_ID,
-      baseUrl: baseUrl,
-      returnUrl: process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL,
-    });
-
-    // Make sure these environment variables are set
-    if (!process.env.PAYPAL_PLAN_ID) {
-      throw new Error("Missing PAYPAL_PLAN_ID environment variable");
-    }
-
-    // Use NEXT_PUBLIC_BASE_URL as fallback for return URLs
-    const returnBaseUrl =
-      process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      "http://localhost:3000";
-
-    const payload = {
-      plan_id: process.env.PAYPAL_PLAN_ID,
-      subscriber: { email_address: userEmail },
-      application_context: {
-        brand_name: "Tide Raider",
-        user_action: "SUBSCRIBE_NOW",
-        return_url: `${returnBaseUrl}/subscription/success`,
-        cancel_url: `${returnBaseUrl}/subscription/cancel`,
-      },
+    // Proxy to backend instead of calling PayPal directly
+    // This ensures we always use the correct plan ID from backend environment
+    const getBackendUrl = () => {
+      const envUrl = process.env.NEXT_PUBLIC_API_URL;
+      // If env URL is localhost, always use production (database is live)
+      if (envUrl?.includes("localhost")) {
+        return "https://tide-raider-backend.fly.dev";
+      }
+      return envUrl || "https://tide-raider-backend.fly.dev";
     };
 
-    console.log("PayPal subscription request payload:", {
-      url: `${baseUrl}/v1/billing/subscriptions`,
-      planId: process.env.PAYPAL_PLAN_ID,
-      returnUrl: `${returnBaseUrl}/subscription/success`,
-      cancelUrl: `${returnBaseUrl}/subscription/cancel`,
-    });
+    const BACKEND_URL = getBackendUrl();
 
-    try {
-      const response = await fetch(`${baseUrl}/v1/billing/subscriptions`, {
+    // Get auth token from cookies to pass to backend
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+
+    if (!authToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Proxy to backend create-subscription endpoint
+    const response = await fetch(
+      `${BACKEND_URL}/api/paypal/create-subscription`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${authToken}`,
+          Cookie: cookieStore.toString(),
         },
-        body: JSON.stringify(payload),
-      });
-
-      const responseText = await response.text();
-      console.log("PayPal API response:", {
-        status: response.status,
-        statusText: response.statusText,
-        responseBody: responseText,
-      });
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = JSON.parse(responseText);
-        } catch (e) {
-          errorData = { raw: responseText };
-        }
-        throw new Error(`PayPal API error: ${JSON.stringify(errorData)}`);
+        credentials: "include",
       }
+    );
 
-      const subscription = JSON.parse(responseText);
-      console.log("PayPal subscription created:", subscription.id);
-
-      const approvalUrl = subscription.links.find(
-        (link: { rel: string; href: string }) => link.rel === "approve"
-      )?.href;
-
-      if (!approvalUrl) {
-        throw new Error("No approval URL found in PayPal response");
-      }
-
-      return NextResponse.json({ url: approvalUrl });
-    } catch (fetchError) {
-      console.error("PayPal API fetch error:", fetchError);
-      throw fetchError;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+      return NextResponse.json(error, { status: response.status });
     }
+
+    const data = await response.json();
+
+    // Backend returns { subscriptionId, approvalUrl, status }
+    if (data.approvalUrl) {
+      return NextResponse.json({ url: data.approvalUrl });
+    }
+
+    throw new Error("No approval URL received from backend");
   } catch (error) {
     console.error("Subscription creation error:", error);
     return NextResponse.json(
