@@ -109,16 +109,27 @@ export async function validateVideoFile(
   // Check video duration
   try {
     const duration = await getVideoDuration(file);
-    if (duration > MAX_VIDEO_DURATION) {
+    console.log("[validateVideoFile] Video duration check:", {
+      duration,
+      maxDuration: MAX_VIDEO_DURATION,
+      isValid: duration <= MAX_VIDEO_DURATION,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    
+    // Use a small tolerance for floating point comparison (0.1 seconds)
+    if (duration > MAX_VIDEO_DURATION + 0.1) {
       return {
         valid: false,
-        error: FILE_ERRORS.DURATION,
+        error: `Video duration is ${duration.toFixed(1)} seconds. Maximum allowed is ${MAX_VIDEO_DURATION} seconds.`,
       };
     }
   } catch (error) {
+    console.error("[validateVideoFile] Error reading video duration:", error);
     return {
       valid: false,
-      error: "Failed to read video duration. Please try another video.",
+      error: `Failed to read video duration: ${error instanceof Error ? error.message : "Unknown error"}. Please try another video.`,
     };
   }
 
@@ -130,18 +141,48 @@ export function getVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
+    
+    // Set a timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      window.URL.revokeObjectURL(video.src);
+      reject(new Error("Timeout while reading video metadata"));
+    }, 10000); // 10 second timeout
 
     video.onloadedmetadata = () => {
+      clearTimeout(timeout);
+      const duration = video.duration;
+      console.log("[getVideoDuration] Video metadata loaded:", {
+        duration,
+        isNaN: isNaN(duration),
+        isFinite: isFinite(duration),
+        fileName: file.name,
+      });
+      
+      // Check if duration is valid
+      if (isNaN(duration) || !isFinite(duration) || duration <= 0) {
+        window.URL.revokeObjectURL(video.src);
+        reject(new Error(`Invalid video duration: ${duration}`));
+        return;
+      }
+      
       window.URL.revokeObjectURL(video.src);
-      resolve(video.duration);
+      resolve(duration);
     };
 
-    video.onerror = () => {
+    video.onerror = (e) => {
+      clearTimeout(timeout);
       window.URL.revokeObjectURL(video.src);
-      reject(new Error("Failed to load video metadata"));
+      const errorMessage = video.error?.message || "Failed to load video metadata";
+      console.error("[getVideoDuration] Video error:", {
+        error: errorMessage,
+        errorCode: video.error?.code,
+        fileName: file.name,
+      });
+      reject(new Error(errorMessage));
     };
 
-    video.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
   });
 }
 

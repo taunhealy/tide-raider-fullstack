@@ -114,13 +114,40 @@ export function useBackendAuth() {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (reduced from 10)
 
-          const response = await fetch("/api/auth/me", {
-            credentials: "include", // Include cookies (auth-token)
-            cache: "no-store", // Don't cache auth requests
-            signal: controller.signal,
-          });
-
-          clearTimeout(timeoutId);
+          let response;
+          try {
+            response = await fetch("/api/auth/me", {
+              credentials: "include", // Include cookies (auth-token)
+              cache: "no-store", // Don't cache auth requests
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+          } catch (fetchError: any) {
+            clearTimeout(timeoutId);
+            // Handle network errors (offline, CORS, etc.)
+            if (fetchError.name === "AbortError") {
+              throw fetchError; // Re-throw abort errors to be handled below
+            }
+            // For other fetch errors (network failures), treat as unauthenticated
+            console.warn(
+              "[useBackendAuth] Network error during fetch:",
+              fetchError.message
+            );
+            const authState: AuthState = {
+              user: null,
+              loading: false,
+              error: null, // Don't show network errors as user errors
+            };
+            globalAuthCache = {
+              state: authState,
+              timestamp: Date.now(),
+              pendingPromise: null,
+            };
+            if (mounted) {
+              setAuthState(authState);
+            }
+            return authState;
+          }
 
           let authState: AuthState;
           if (response.ok) {
@@ -220,7 +247,15 @@ export function useBackendAuth() {
         if (now - globalLastFetchTime > 30000) {
           globalLastFetchTime = 0;
           fetchUser().catch((error) => {
-            console.error("[useBackendAuth] Focus fetch error:", error);
+            // Silently handle focus fetch errors - don't spam console
+            // Network errors during focus are common (offline, etc.)
+            if (error instanceof Error && error.name !== "AbortError") {
+              console.warn(
+                "[useBackendAuth] Focus fetch error (non-critical):",
+                error.message
+              );
+            }
+            // Don't update state on focus fetch errors - keep existing state
           });
         }
       }
