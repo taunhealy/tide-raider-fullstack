@@ -87,61 +87,79 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         </div>
       </div>
 
-      {/* Full-width 16:9 Media Section */}
-      {hasMedia && (
-        <div className="relative w-full aspect-video bg-gray-100">
-          {entry.imageUrl ? (
-            <Image
-              src={entry.imageUrl}
-              alt="Session photo"
-              fill
-              className="object-cover cursor-pointer hover:opacity-95 transition-opacity"
-              sizes="100vw"
-              priority
-              onClick={() => setIsMediaModalOpen(true)}
-            />
-          ) : entry.videoUrl ? (
-            // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
-            !entry.videoPlatform ? (
-              // Uploaded video - use VideoThumbnail component for hover playback
-              <div className="w-full h-full">
-                <VideoThumbnail
-                  videoUrl={entry.videoUrl}
-                  onPlay={() => setIsMediaModalOpen(true)}
-                />
-              </div>
-            ) : (
-              // External video (YouTube/Vimeo) - show thumbnail
-              <div
-                className="relative w-full h-full cursor-pointer"
-                onClick={() => setIsMediaModalOpen(true)}
-              >
-                <Image
-                  src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
-                  alt="Video thumbnail"
-                  fill
-                  className="object-cover"
-                  sizes="100vw"
-                  priority
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors">
-                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                    <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
-                  </div>
-                </div>
-              </div>
-            )
-          ) : null}
-        </div>
-      )}
-
-      {/* Main Content Card - Below media */}
+      {/* Main Content Card */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
           {/* Content Grid */}
           <div className="grid lg:grid-cols-3 gap-6 p-6 md:p-8">
-            {/* Main Content - 2/3 width on desktop */}
-            <div className="lg:col-span-2 space-y-8">
+            {/* Left Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
+            {hasMedia && (
+              <div className="lg:col-span-1">
+                <div className="sticky top-24">
+                  {entry.imageUrl ? (
+                    <div
+                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100"
+                      onClick={() => setIsMediaModalOpen(true)}
+                    >
+                      <Image
+                        src={entry.imageUrl}
+                        alt="Session photo"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 33vw"
+                        priority
+                      />
+                    </div>
+                  ) : entry.videoUrl ? (
+                    // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
+                    !entry.videoPlatform ? (
+                      // Uploaded video - use VideoThumbnail component for hover playback
+                      <div className="w-full">
+                        <VideoThumbnail
+                          videoUrl={entry.videoUrl}
+                          onPlay={() => setIsMediaModalOpen(true)}
+                        />
+                      </div>
+                    ) : (
+                      // External video (YouTube/Vimeo) - show thumbnail and link to source
+                      <a
+                        href={entry.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group"
+                      >
+                        <Image
+                          src={getVideoThumbnail(
+                            entry.videoUrl,
+                            entry.videoPlatform
+                          )}
+                          alt="Video thumbnail"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 33vw"
+                          priority
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
+                            <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary">
+                          {entry.videoPlatform === "youtube"
+                            ? "YouTube"
+                            : "Vimeo"}
+                        </div>
+                      </a>
+                    )
+                  ) : null}
+                </div>
+              </div>
+            )}
+
+            {/* Main Content - 2/3 width on desktop (or full width if no media) */}
+            <div
+              className={`${hasMedia ? "lg:col-span-2" : "lg:col-span-3"} space-y-8`}
+            >
               {/* Header with Beach and Rating */}
               <div>
                 <div className="flex flex-wrap items-start gap-2 mb-3">
@@ -256,10 +274,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Sidebar - 1/3 width on desktop */}
-            <div className="lg:col-span-1 space-y-6">
               {/* Logger Info */}
               <div className="bg-gray-50 p-5 rounded-lg">
                 <h2 className="font-primary text-lg font-medium mb-4 text-gray-800">
