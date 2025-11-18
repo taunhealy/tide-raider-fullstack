@@ -268,16 +268,49 @@ export async function getLatestConditions(
       }
     }
 
-    // Return today's forecast for backward compatibility, or first forecast if today not found
-    const forecastToReturn = storedTodayForecast || scrapedForecasts[0];
+    // Return today's forecast - must be from database to ensure it has the source field
+    if (!storedTodayForecast) {
+      // If today's forecast wasn't found in scraped data, query the database for the first stored forecast
+      // This ensures we always return a forecast with the correct source field
+      const firstStoredForecast = await prisma.forecast.findFirst({
+        where: {
+          regionId: region.id,
+          source: source,
+          date: {
+            gte: today,
+          },
+        },
+        orderBy: {
+          date: "asc",
+        },
+      });
+
+      if (firstStoredForecast) {
+        console.log(
+          `[getLatestConditions] ⚠️ Today's forecast not in scraped data, returning first available forecast (${firstStoredForecast.date.toISOString().split("T")[0]})`
+        );
+        console.log(
+          `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
+        );
+        console.log(
+          `[getLatestConditions] 📤 Returning forecast with source: ${firstStoredForecast.source}, windSpeed: ${firstStoredForecast.windSpeed}, swellHeight: ${firstStoredForecast.swellHeight}`
+        );
+        return firstStoredForecast;
+      } else {
+        console.error(
+          `[getLatestConditions] ❌ No forecasts stored in database for ${region.id} (source: ${source})`
+        );
+        return null;
+      }
+    }
 
     console.log(
       `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
     );
     console.log(
-      `[getLatestConditions] 📤 Returning forecast with source: ${forecastToReturn?.source || "unknown"}, windSpeed: ${forecastToReturn?.windSpeed}, swellHeight: ${forecastToReturn?.swellHeight}`
+      `[getLatestConditions] 📤 Returning forecast with source: ${storedTodayForecast.source}, windSpeed: ${storedTodayForecast.windSpeed}, swellHeight: ${storedTodayForecast.swellHeight}`
     );
-    return forecastToReturn;
+    return storedTodayForecast;
   } catch (error) {
     console.error(
       `[getLatestConditions] ❌ Error scraping/storing forecast for ${region.id}:`,
