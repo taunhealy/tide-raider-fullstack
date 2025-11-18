@@ -87,23 +87,31 @@ interface LogEntryDisplayProps {
       name: string;
     } | null;
     surferName?: string | null;
+    userId?: string | null;
   };
   isAnonymous: boolean;
 }
 
 function LogEntryDisplay({ entry, isAnonymous }: LogEntryDisplayProps) {
+  // Use userId from entry first, fall back to user?.id if available
+  const userId = entry.userId || entry.user?.id;
+
+  // Show Anonymous if explicitly marked as anonymous OR if there's no userId
+  // This matches the logic in RaidLogDetails.tsx
+  const shouldShowAnonymous = isAnonymous || !userId;
+
   // Prioritize the user's current name from the User relation
-  const displayName = isAnonymous
+  const displayName = shouldShowAnonymous
     ? "Anonymous"
-    : (entry.user?.name ?? entry.surferName); // Use user's profile name first, fall back to surferName
+    : (entry.user?.name ?? entry.surferName ?? "Anonymous"); // Use user's profile name first, fall back to surferName
 
   return (
     <div className="flex items-center gap-2">
       <Link
-        href={isAnonymous ? "#" : `/profile/${entry.user?.id}`}
+        href={shouldShowAnonymous ? "#" : `/profile/${userId}`}
         className={cn(
           "font-primary text-sm hover:text-brand-3 transition-colors",
-          isAnonymous ? "text-gray-900 cursor-default" : "text-gray-900"
+          shouldShowAnonymous ? "text-gray-900 cursor-default" : "text-gray-900"
         )}
       >
         {displayName}

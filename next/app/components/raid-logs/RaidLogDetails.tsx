@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
 import {
-  Star,
   Pencil,
   Video as VideoIcon,
   ChevronLeft,
@@ -16,7 +15,7 @@ import {
   Waves,
   Clock,
 } from "lucide-react";
-import { cn } from "@/app/lib/utils";
+import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import CommentThread from "@/app/components/comments/CommentThread";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
 import { Button } from "@/app/components/ui/Button";
@@ -113,73 +112,9 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {/* Content Grid */}
           <div className="grid lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6">
-            {/* Left Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
-            {hasMedia && (
-              <div className="lg:col-span-1">
-                <div className="sticky top-20">
-                  {entry.imageUrl ? (
-                    <div
-                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 shadow-sm"
-                      onClick={() => setIsMediaModalOpen(true)}
-                    >
-                      <Image
-                        src={entry.imageUrl}
-                        alt="Session photo"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                        priority
-                      />
-                    </div>
-                  ) : entry.videoUrl ? (
-                    // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
-                    !entry.videoPlatform ? (
-                      // Uploaded video - use VideoThumbnail component for hover playback
-                      <div className="w-full">
-                        <VideoThumbnail
-                          videoUrl={entry.videoUrl}
-                          onPlay={() => setIsMediaModalOpen(true)}
-                        />
-                      </div>
-                    ) : (
-                      // External video (YouTube/Vimeo) - show thumbnail and link to source
-                      <a
-                        href={entry.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group shadow-sm"
-                      >
-                        <Image
-                          src={getVideoThumbnail(
-                            entry.videoUrl,
-                            entry.videoPlatform
-                          )}
-                          alt="Video thumbnail"
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 100vw, 33vw"
-                          priority
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                            <VideoIcon className="w-6 h-6 md:w-8 md:h-8 text-[var(--color-tertiary)]" />
-                          </div>
-                        </div>
-                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary backdrop-blur-sm">
-                          {entry.videoPlatform === "youtube"
-                            ? "YouTube"
-                            : "Vimeo"}
-                        </div>
-                      </a>
-                    )
-                  ) : null}
-                </div>
-              </div>
-            )}
-
             {/* Main Content - 2/3 width on desktop (or full width if no media) */}
             <div
-              className={`${hasMedia ? "lg:col-span-2" : "lg:col-span-3"} space-y-4 md:space-y-6`}
+              className={`${hasMedia ? "lg:col-span-2 lg:order-1" : "lg:col-span-3"} space-y-4 md:space-y-6`}
             >
               {/* Header with Beach and Rating */}
               <div className="space-y-3 md:space-y-4">
@@ -204,22 +139,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3">
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                      <Star
-                        key={rating}
-                        className={cn(
-                          "w-4 h-4 md:w-5 md:h-5",
-                          rating <= (entry.surferRating || 0)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-200"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm md:text-base text-[var(--color-text-secondary)] font-primary font-medium">
-                    {entry.surferRating}/5
-                  </span>
+                  <BlueStarRating
+                    score={entry.surferRating || 0}
+                    outOfFive={true}
+                  />
                 </div>
               </div>
 
@@ -310,28 +233,108 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
               {/* Logger Info */}
               <div className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200">
-                <h2 className="font-primary text-base md:text-lg font-semibold mb-3 md:mb-4 text-[var(--color-text-primary)]">
+                <h2 className="font-primary text-xs text-[var(--color-text-secondary)] mb-2 font-medium">
                   Logger
                 </h2>
 
                 {!entry.isAnonymous && entry.userId ? (
-                  <ProfileHeader
-                    userId={entry.userId}
-                    isOwnProfile={false}
-                    nationalitySelector={null}
-                  />
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white font-medium text-lg md:text-xl shadow-sm">
-                      A
+                  <div className="space-y-2">
+                    <ProfileHeader
+                      userId={entry.userId}
+                      isOwnProfile={false}
+                      nationalitySelector={null}
+                    />
+                    <div className="pt-2">
+                      <BlueStarRating
+                        score={entry.surferRating || 0}
+                        outOfFive={true}
+                      />
                     </div>
-                    <p className="text-[var(--color-text-primary)] font-primary font-medium text-sm md:text-base">
-                      Anonymous
-                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white font-medium text-lg md:text-xl shadow-sm">
+                        A
+                      </div>
+                      <p className="text-[var(--color-text-primary)] font-primary font-medium text-sm md:text-base">
+                        Anonymous
+                      </p>
+                    </div>
+                    <div className="pt-2">
+                      <BlueStarRating
+                        score={entry.surferRating || 0}
+                        outOfFive={true}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Right Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
+            {hasMedia && (
+              <div className="lg:col-span-1 lg:order-2">
+                <div className="sticky top-20">
+                  {entry.imageUrl ? (
+                    <div
+                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 shadow-sm"
+                      onClick={() => setIsMediaModalOpen(true)}
+                    >
+                      <Image
+                        src={entry.imageUrl}
+                        alt="Session photo"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 33vw"
+                        priority
+                      />
+                    </div>
+                  ) : entry.videoUrl ? (
+                    // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
+                    !entry.videoPlatform ? (
+                      // Uploaded video - use VideoThumbnail component for hover playback
+                      <div className="w-full">
+                        <VideoThumbnail
+                          videoUrl={entry.videoUrl}
+                          onPlay={() => setIsMediaModalOpen(true)}
+                        />
+                      </div>
+                    ) : (
+                      // External video (YouTube/Vimeo) - show thumbnail and link to source
+                      <a
+                        href={entry.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group shadow-sm"
+                      >
+                        <Image
+                          src={getVideoThumbnail(
+                            entry.videoUrl,
+                            entry.videoPlatform
+                          )}
+                          alt="Video thumbnail"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 33vw"
+                          priority
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                            <VideoIcon className="w-6 h-6 md:w-8 md:h-8 text-[var(--color-tertiary)]" />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary backdrop-blur-sm">
+                          {entry.videoPlatform === "youtube"
+                            ? "YouTube"
+                            : "Vimeo"}
+                        </div>
+                      </a>
+                    )
+                  ) : null}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* User Comments Section */}
