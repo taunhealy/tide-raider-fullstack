@@ -1,5 +1,15 @@
-import { BeachDailyScore } from "@prisma/client";
 import { ForecastData } from "./forecast";
+
+// BeachDailyScore type definition (replacing Prisma import)
+export type BeachDailyScore = {
+  id: string;
+  beachId: string;
+  regionId: string;
+  date: Date;
+  score: number;
+  conditions?: any;
+  [key: string]: any;
+};
 
 export interface SharkIncident {
   hasAttack: boolean;

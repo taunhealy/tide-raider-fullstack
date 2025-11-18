@@ -1,9 +1,7 @@
 // next/app/types/forecast.ts
 
-import { Alert, LogEntry } from "@prisma/client";
 import { Beach } from "./beaches";
 import { BeachScoreMap } from "./scores";
-
 
 // Base forecast data with just the essential fields
 export interface BaseForecastData {
@@ -21,10 +19,21 @@ export interface CoreForecastData extends BaseForecastData {
   id: string;
 }
 
+// Forecast type matching the database schema (replaces Prisma Forecast)
+export interface Forecast extends CoreForecastData {
+  source: "WINDFINDER" | "WINDGURU";
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Type aliases for compatibility
+export type Alert = any; // Will be defined in alerts.ts
+export type LogEntry = any; // Will be defined in raidlogs.tsx
+
 // Remove BaseForecastData and simplify to match schema
 export interface ForecastData extends CoreForecastData {
-  alerts?: Alert[];
-  logEntries?: LogEntry[];
+  alerts?: any[];
+  logEntries?: any[];
 }
 
 // Keep only essential types, remove unused ones

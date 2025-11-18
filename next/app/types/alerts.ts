@@ -1,4 +1,4 @@
-import { Forecast, LogEntry, Alert, AlertProperty, Region, Prisma, AlertType } from "@prisma/client";
+import { Forecast } from "@/app/types/forecast";
 
 // Only keep custom types not in Prisma
 export type NotificationMethod = "email" | "whatsapp" | "app" | "both";
@@ -20,12 +20,35 @@ export interface BeachDetails {
   optimalSwellDirections: { min: number; max: number; cardinal: string };
 }
 
-// Export Prisma types directly
-export type { Alert, AlertType, AlertProperty } from "@prisma/client";
+// Type definitions (replacing Prisma imports)
+export type AlertType = "VARIABLES" | "RATING";
+export type AlertProperty = {
+  id: string;
+  property: ForecastProperty;
+  range: number;
+};
 
-// Use Prisma's types for operations
-export type AlertCreate = Prisma.AlertCreateInput;
-export type AlertUpdate = Prisma.AlertUpdateInput;
+export interface Alert {
+  id: string;
+  name: string;
+  alertType: AlertType;
+  regionId: string;
+  userId: string;
+  active: boolean;
+  starRating: number | null;
+  forecastDate: Date | null;
+  notificationMethod: NotificationMethod;
+  contactInfo: string;
+  createdAt: Date;
+  updatedAt: Date;
+  logEntryId: string | null;
+  forecastId: string | null;
+  properties?: AlertProperty[];
+}
+
+// Type aliases for operations
+export type AlertCreate = Partial<Alert>;
+export type AlertUpdate = Partial<Alert>;
 
 export type AlertStarRating = "3+" | "4+" | "5";
 

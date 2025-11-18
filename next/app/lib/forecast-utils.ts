@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import { CoreForecastData } from "@/app/types/forecast";
-import { Forecast } from "@prisma/client";
 
 function getTodayDate() {
   const date = new Date();
@@ -15,7 +14,7 @@ function getTodayDate() {
  */
 export async function getLatestConditions(
   forceRefresh = false,
-  regionId: Forecast["regionId"]
+  regionId: string
 ): Promise<CoreForecastData> {
   const backendUrl =
     process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";

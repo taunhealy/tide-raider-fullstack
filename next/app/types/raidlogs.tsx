@@ -1,6 +1,22 @@
-import { Beach, Region, User, Forecast, Alert } from "@prisma/client";
+import { Forecast } from "@/app/types/forecast";
+import { Alert } from "@/app/types/alerts";
 import React from "react";
 import { Beach as BeachType } from "@/app/types/beaches";
+
+// Type definitions (replacing Prisma imports)
+export type Beach = BeachType;
+export type Region = {
+  id: string;
+  name: string;
+  countryId?: string | null;
+  continent?: string | null;
+};
+export type User = {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+};
 
 export interface LogEntry {
   id: string;

@@ -1,7 +1,18 @@
-import type { Beach } from "@prisma/client";
 import type { BeachScoreMap } from "@/app/types/scores";
-import type { Forecast } from "@prisma/client";
-import type { Region } from "@prisma/client";
+import type { Forecast } from "@/app/types/forecast";
+
+// Type definitions (replacing Prisma imports)
+export type Beach = {
+  id: string;
+  name: string;
+  [key: string]: any;
+};
+
+export type Region = {
+  id: string;
+  name: string;
+  [key: string]: any;
+};
 
 export function calculateBeachScores({
   beaches,
