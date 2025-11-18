@@ -17,18 +17,22 @@ export async function GET(req: NextRequest) {
   try {
     // Find or create forecast
     const dateOnly = new Date(date).toISOString().split("T")[0];
-    const forecast = await prisma.forecastA.findFirst({
+    const { randomUUID } = await import("crypto");
+    const forecast = await prisma.forecast.findFirst({
       where: {
         date: new Date(dateOnly),
         regionId: region,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
     });
 
     if (!forecast) {
-      const createdForecast = await prisma.forecastA.create({
+      const createdForecast = await prisma.forecast.create({
         data: {
+          id: randomUUID(),
           date: new Date(dateOnly),
           regionId: region,
+          source: "WINDFINDER", // Default to WINDFINDER
         },
       });
       return NextResponse.json(createdForecast);

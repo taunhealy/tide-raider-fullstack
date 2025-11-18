@@ -2,7 +2,7 @@ import { prisma } from "@/app/lib/prisma";
 import { sendEmail } from "@/app/lib/email";
 import { sendWhatsAppMessage } from "@/app/lib/whatsapp";
 import { getLatestConditions } from "@/app/lib/forecast-utils";
-import { ForecastA, AlertType } from "@prisma/client";
+import { Forecast, AlertType } from "@prisma/client";
 
 // Track which regions we've already fetched today to avoid duplicate API calls
 const fetchedForecasts = new Map();
@@ -59,7 +59,7 @@ export async function processUserAlerts(userId: string, today: Date) {
 
     // 3. Process each alert that hasn't been checked today
     let currentRegion: string | null = null;
-    let currentForecast: ForecastA | null = null;
+    let currentForecast: Forecast | null = null;
 
     for (const alert of userAlerts) {
       try {
@@ -83,10 +83,11 @@ export async function processUserAlerts(userId: string, today: Date) {
             console.log(`🌊 Fetching forecast for ${currentRegion}`);
 
             // First check if we already have this forecast in the database
-            const existingForecast = await prisma.forecastA.findFirst({
+            const existingForecast = await prisma.forecast.findFirst({
               where: {
                 regionId: currentRegion,
                 date: today,
+                source: "WINDFINDER", // Prefer WINDFINDER source
               },
             });
 
@@ -110,8 +111,8 @@ export async function processUserAlerts(userId: string, today: Date) {
                 continue;
               }
 
-              // The API already returns a ForecastA object, so just use it
-              currentForecast = apiForecaseData;
+              // The API already returns a Forecast object, so just use it
+              currentForecast = apiForecaseData as Forecast;
             }
 
             // Cache the forecast

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { getLatestConditions } from "@/app/lib/forecast-utils";
-import { ForecastA } from "@prisma/client";
+import { Forecast } from "@prisma/client";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -31,17 +31,18 @@ export async function GET(request: Request) {
     }
 
     // Then get the forecast using the region name
-    let forecast = await prisma.forecastA.findFirst({
+    let forecast = await prisma.forecast.findFirst({
       where: {
         date: new Date(date),
         regionId: regionId,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
     });
 
     if (!forecast) {
       // If no forecast exists, trigger a scrape to get and store the data
       try {
-        forecast = (await getLatestConditions(true, region.name)) as ForecastA;
+        forecast = (await getLatestConditions(true, region.name)) as Forecast;
       } catch (scrapeError) {
         console.error("Failed to scrape forecast data:", scrapeError);
         return NextResponse.json(

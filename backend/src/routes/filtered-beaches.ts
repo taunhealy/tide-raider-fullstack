@@ -184,10 +184,11 @@ router.get(
       console.log(
         `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${targetDate.toISOString()}`
       );
-      let forecast = await prisma.forecastA.findFirst({
+      let forecast = await prisma.forecast.findFirst({
         where: {
           regionId,
           date: targetDate,
+          source: "WINDFINDER", // Prefer WINDFINDER source
         },
         select: {
           windSpeed: true,
@@ -223,10 +224,11 @@ router.get(
             );
 
             // After scraping, query again for the target date (scraper stores all days)
-            const updatedForecast = await prisma.forecastA.findFirst({
+            const updatedForecast = await prisma.forecast.findFirst({
               where: {
                 regionId,
                 date: targetDate,
+                source: "WINDFINDER", // Prefer WINDFINDER source
               },
               select: {
                 windSpeed: true,

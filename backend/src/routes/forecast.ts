@@ -31,10 +31,11 @@ router.get(
       // If a specific date is requested, query directly from database
       if (targetDate) {
         const { prisma } = await import("../lib/prisma");
-        let forecast = await prisma.forecastA.findFirst({
+        let forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
             date: targetDate,
+            source: "WINDFINDER", // Prefer WINDFINDER source
           },
         });
 
@@ -53,10 +54,11 @@ router.get(
             );
             
             // Query again after scraping
-            forecast = await prisma.forecastA.findFirst({
+            forecast = await prisma.forecast.findFirst({
               where: {
                 regionId,
                 date: targetDate,
+                source: "WINDFINDER", // Prefer WINDFINDER source
               },
             });
             

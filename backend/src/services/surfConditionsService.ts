@@ -122,14 +122,15 @@ export async function getLatestConditions(
 
   const today = getTodayDate();
 
-  // Check for existing forecast
+  // Check for existing forecast (prefer WINDFINDER source, fallback to any)
   console.log(
     `[getLatestConditions] 🔍 Querying forecast for regionId: ${region.id}, date: ${today.toISOString()}`
   );
-  const existingForecast = await prisma.forecastA.findFirst({
+  const existingForecast = await prisma.forecast.findFirst({
     where: {
       date: today,
       regionId: region.id,
+      source: "WINDFINDER", // Prefer WINDFINDER source
     },
   });
 
@@ -206,11 +207,12 @@ export async function getLatestConditions(
       );
 
       // Store in database using the database region.id (not the config's regionId)
-      const storedForecast = await prisma.forecastA.upsert({
+      const storedForecast = await prisma.forecast.upsert({
         where: {
-          date_regionId: {
+          date_regionId_source: {
             date: scrapedForecast.date,
             regionId: region.id, // Use database region ID
+            source: "WINDFINDER", // Source A is WINDFINDER
           },
         },
         update: {
@@ -224,6 +226,7 @@ export async function getLatestConditions(
           id: randomUUID(),
           date: scrapedForecast.date,
           regionId: region.id, // Use database region ID
+          source: "WINDFINDER", // Source A is WINDFINDER
           windSpeed: scrapedForecast.windSpeed,
           windDirection: scrapedForecast.windDirection,
           swellHeight: scrapedForecast.swellHeight,

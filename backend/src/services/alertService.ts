@@ -54,7 +54,7 @@ export class AlertService {
    * Get regions with forecasts
    */
   static async getRegionsWithForecasts() {
-    const forecasts = await prisma.forecastA.findMany({
+    const forecasts = await prisma.forecast.findMany({
       select: {
         regionId: true,
       },
@@ -68,9 +68,10 @@ export class AlertService {
    * Get available dates for a region
    */
   static async getDatesForRegion(regionId: string) {
-    const forecasts = await prisma.forecastA.findMany({
+    const forecasts = await prisma.forecast.findMany({
       where: {
         regionId,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
       select: {
         date: true,

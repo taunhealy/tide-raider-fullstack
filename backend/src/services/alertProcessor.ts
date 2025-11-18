@@ -55,9 +55,10 @@ export async function processUserAlerts(userId: string, today: Date) {
 
     // Get today's forecasts for all relevant regions
     const regions = [...new Set(userAlerts.map((alert) => alert.regionId))];
-    const todaysForecasts = await prisma.forecastA.findMany({
+    const todaysForecasts = await prisma.forecast.findMany({
       where: {
         regionId: { in: regions },
+        source: "WINDFINDER", // Prefer WINDFINDER source
         date: {
           gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
           lt: new Date(new Date(today).setHours(23, 59, 59, 999)),

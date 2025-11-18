@@ -38,6 +38,9 @@ primary_region = "iad"
 [processes]
   app = "npm start"
 
+[deploy]
+  release_command = "npx prisma migrate deploy"
+
 [[vm]]
   cpu_kind = "shared"
   cpus = 1

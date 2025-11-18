@@ -175,7 +175,7 @@ model LogEntry {
   
   beach        Beach?     @relation(fields: [beachId], references: [id])
   region       Region     @relation(fields: [regionId], references: [id])
-  forecast     ForecastA? @relation(fields: [forecastId], references: [id])
+  forecast     Forecast?  @relation(fields: [forecastId], references: [id])
   user         User?      @relation(fields: [userId], references: [id])
   alerts       Alert[]
 
@@ -362,21 +362,29 @@ model Board {
   @@index([userId])
 }
 
-model ForecastA {
-  id             String     @id @default(uuid())
-  date           DateTime   @db.Date
+enum ForecastSource {
+  WINDFINDER
+  WINDGURU
+}
+
+model Forecast {
+  id             String         @id @default(uuid())
+  date           DateTime       @db.Date
   regionId       String
-  region         Region     @relation(fields: [regionId], references: [id])
-  windSpeed      Int        @default(0)
-  windDirection  Float      @default(0)
-  swellHeight    Float      @default(0)
-  swellPeriod    Int        @default(0)
-  swellDirection Float      @default(0)
+  source         ForecastSource
+  region         Region         @relation(fields: [regionId], references: [id])
+  windSpeed      Int            @default(0)
+  windDirection  Float          @default(0)
+  swellHeight    Float          @default(0)
+  swellPeriod    Int            @default(0)
+  swellDirection Float          @default(0)
   alerts         Alert[]
   logEntries     LogEntry[]
 
-  @@unique([date, regionId])
+  @@unique([date, regionId, source])
   @@index([regionId])
+  @@index([source])
+  @@index([date, regionId])
 }
 
 model Feedback {
@@ -536,7 +544,7 @@ model Region {
   countryId  String
   continent  String?
   country    Country     @relation(fields: [countryId], references: [id])
-  forecasts  ForecastA[]
+  forecasts  Forecast[]
   ads        Ad[]
   adRequests AdRequest[]
   beaches    Beach[]
@@ -585,7 +593,7 @@ model Alert {
   starRating         Int?
   forecastDate       DateTime            @db.Date
   forecastId         String?
-  forecast           ForecastA?          @relation(fields: [forecastId], references: [id])
+  forecast           Forecast?           @relation(fields: [forecastId], references: [id])
   logEntry           LogEntry?           @relation(fields: [logEntryId], references: [id])
   user               User                @relation(fields: [userId], references: [id])
   properties         AlertProperty[]

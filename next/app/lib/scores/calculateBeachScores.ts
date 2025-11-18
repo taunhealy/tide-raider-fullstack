@@ -1,6 +1,6 @@
 import type { Beach } from "@prisma/client";
 import type { BeachScoreMap } from "@/app/types/scores";
-import type { ForecastA } from "@prisma/client";
+import type { Forecast } from "@prisma/client";
 import type { Region } from "@prisma/client";
 
 export function calculateBeachScores({
@@ -10,7 +10,7 @@ export function calculateBeachScores({
   dailyScores,
 }: {
   beaches: Beach[];
-  forecast: ForecastA;
+  forecast: Forecast;
   region: Region;
   dailyScores: Array<{ beachId: string; score: number }>;
 }): BeachScoreMap {

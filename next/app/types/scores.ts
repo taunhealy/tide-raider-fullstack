@@ -1,5 +1,5 @@
 // next/app/types/scores.ts
-import { ForecastA } from "@prisma/client";
+import { Forecast } from "@prisma/client";
 import { Beach } from "./beaches";
 
 export interface BeachScore {

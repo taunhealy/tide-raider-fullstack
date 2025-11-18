@@ -209,18 +209,22 @@ router.get("/forecast", async (req: Request, res: Response) => {
     }
 
     const dateOnly = new Date(date as string).toISOString().split("T")[0];
-    const forecast = await prisma.forecastA.findFirst({
+    const forecast = await prisma.forecast.findFirst({
       where: {
         date: new Date(dateOnly),
         regionId: region as string,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
     });
 
     if (!forecast) {
-      const createdForecast = await prisma.forecastA.create({
+      const { randomUUID } = await import("crypto");
+      const createdForecast = await prisma.forecast.create({
         data: {
+          id: randomUUID(),
           date: new Date(dateOnly),
           regionId: region as string,
+          source: "WINDFINDER", // Default to WINDFINDER
         },
       });
       return res.json(createdForecast);

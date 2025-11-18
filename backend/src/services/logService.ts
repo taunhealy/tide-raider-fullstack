@@ -79,10 +79,11 @@ export class LogService {
       }
     }
 
-    const forecastData = await prisma.forecastA.findFirst({
+    const forecastData = await prisma.forecast.findFirst({
       where: {
         regionId: logEntry.regionId || "",
         date: logEntry.date,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
     });
 
@@ -111,16 +112,20 @@ export class LogService {
     }
   ) {
     // Upsert forecast
-    const forecast = await prisma.forecastA.upsert({
+    const { randomUUID } = await import("crypto");
+    const forecast = await prisma.forecast.upsert({
       where: {
-        date_regionId: {
+        date_regionId_source: {
           date: new Date(data.date),
           regionId: data.region,
+          source: "WINDFINDER", // Default to WINDFINDER
         },
       },
       create: {
+        id: randomUUID(),
         date: new Date(data.date),
         regionId: data.region,
+        source: "WINDFINDER", // Default to WINDFINDER
         windSpeed: data.forecast.windSpeed,
         windDirection: data.forecast.windDirection,
         swellHeight: data.forecast.swellHeight,
@@ -576,12 +581,13 @@ export class LogService {
     // Find or create forecast
     let forecast = null;
     if (data.forecastId) {
-      forecast = await prisma.forecastA.findUnique({
+      forecast = await prisma.forecast.findUnique({
         where: { id: data.forecastId },
       });
     } else if (data.forecast) {
-      forecast = await prisma.forecastA.findFirst({
+      forecast = await prisma.forecast.findFirst({
         where: {
+          source: "WINDFINDER", // Prefer WINDFINDER source
           regionId: region.id,
           date: {
             gte: new Date(new Date(data.date).setHours(0, 0, 0, 0)),
@@ -702,12 +708,13 @@ export class LogService {
     // Handle forecast
     let forecast = null;
     if (updateData.forecastId) {
-      forecast = await prisma.forecastA.findUnique({
+      forecast = await prisma.forecast.findUnique({
         where: { id: updateData.forecastId },
       });
     } else if (updateData.date && region) {
-      forecast = await prisma.forecastA.findFirst({
+      forecast = await prisma.forecast.findFirst({
         where: {
+          source: "WINDFINDER", // Prefer WINDFINDER source
           regionId: region.id,
           date: {
             gte: new Date(new Date(updateData.date).setHours(0, 0, 0, 0)),

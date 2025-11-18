@@ -1,6 +1,6 @@
 import { ForecastProperty } from "@/app/types/alerts";
 import { prisma } from "./prisma";
-import { ForecastA } from "@prisma/client";
+import { Forecast } from "@prisma/client";
 
 export async function checkAlertConditions(alertId: string) {
   const alert = await prisma.alert.findUnique({
@@ -16,10 +16,11 @@ export async function checkAlertConditions(alertId: string) {
   if (!alert) return false;
 
   // Use the structured forecast data
-  const forecast = await prisma.forecastA.findFirst({
+  const forecast = await prisma.forecast.findFirst({
     where: {
       regionId: alert.regionId,
       date: alert.forecastDate,
+      source: "WINDFINDER", // Prefer WINDFINDER source
     },
   });
 
@@ -27,7 +28,7 @@ export async function checkAlertConditions(alertId: string) {
 
   // Check if all conditions are met
   return alert.properties?.every((condition) => {
-    const forecastValue = forecast[condition.property as keyof ForecastA];
+    const forecastValue = forecast[condition.property as keyof Forecast];
     return (
       typeof forecastValue === "number" && forecastValue >= condition.range
     );

@@ -1,4 +1,4 @@
-import { Beach, Region, User, ForecastA, Alert } from "@prisma/client";
+import { Beach, Region, User, Forecast, Alert } from "@prisma/client";
 import React from "react";
 import { Beach as BeachType } from "@/app/types/beaches";
 

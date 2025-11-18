@@ -1,4 +1,4 @@
-import { ForecastA, LogEntry, Alert, AlertProperty, Region, Prisma, AlertType } from "@prisma/client";
+import { Forecast, LogEntry, Alert, AlertProperty, Region, Prisma, AlertType } from "@prisma/client";
 
 // Only keep custom types not in Prisma
 export type NotificationMethod = "email" | "whatsapp" | "app" | "both";
@@ -42,7 +42,7 @@ export interface AlertWithRelations extends Alert {
   region?: Region;
   properties: AlertProperty[];
   logEntry?: LogEntry | null;
-  forecast?: ForecastA | null;
+  forecast?: Forecast | null;
 }
 
 export interface AlertConfig {
@@ -58,7 +58,7 @@ export interface AlertConfig {
   logEntryId: string | null;
   alertType: AlertType;
   starRating: number | null;
-  forecast: ForecastA | null;
+  forecast: Forecast | null;
   forecastId: string | null;
   userId: string;
 }

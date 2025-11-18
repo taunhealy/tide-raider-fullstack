@@ -1,9 +1,14 @@
 import { CoreForecastData, BaseForecastData } from "@/app/types/forecast";
 import { scraperA } from "@/app/lib/scrapers/scraperA";
+import { scraperB } from "@/app/lib/scrapers/scraperB";
 
 interface RegionSourceConfig {
   regionId: string;
   sourceA: {
+    url: string;
+    scraper: (url: string, regionId: string) => Promise<BaseForecastData>;
+  };
+  sourceB?: {
     url: string;
     scraper: (url: string, regionId: string) => Promise<BaseForecastData>;
   };
@@ -15,6 +20,10 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     sourceA: {
       url: "https://www.windfinder.com/forecast/muizenberg_beach",
       scraper: scraperA,
+    },
+    sourceB: {
+      url: "https://www.windguru.cz/131594",
+      scraper: scraperB,
     },
   },
   "eastern-cape": {

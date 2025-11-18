@@ -53,13 +53,15 @@ export default function TripDetails({ trip }: TripDetailsProps) {
 
     // Day details toggle listeners
     dayDetails.forEach((dayDetail, index) => {
-      dayDetail.addEventListener("toggle", () => {
-        gsap.to(dayArrowRefs.current[index], {
-          rotation: (dayDetail as HTMLDetailsElement).open ? 180 : 0,
-          duration: 0.5,
-          ease: "power3.inOut",
+      if (dayDetail) {
+        dayDetail.addEventListener("toggle", () => {
+          gsap.to(dayArrowRefs.current[index], {
+            rotation: (dayDetail as HTMLDetailsElement).open ? 180 : 0,
+            duration: 0.5,
+            ease: "power3.inOut",
+          });
         });
-      });
+      }
     });
   }, []);
 

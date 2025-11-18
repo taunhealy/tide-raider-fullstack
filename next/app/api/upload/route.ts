@@ -31,9 +31,23 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     // Use backend authentication
-    const { user } = await getServerAuth();
+    const authResult = await getServerAuth();
+    const { user, error: authError } = authResult;
+    
+    if (authError) {
+      console.error("[upload] Auth error:", authError);
+      return NextResponse.json(
+        { error: "Authentication failed", details: authError },
+        { status: 401 }
+      );
+    }
+    
     if (!user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[upload] No user ID found in auth result");
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in to upload files." },
+        { status: 401 }
+      );
     }
 
     const formData = await req.formData();
@@ -147,9 +161,38 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error("Error uploading file:", error);
+    
+    // Provide more detailed error information
+    let errorMessage = "Failed to upload file";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      // Check for specific error types
+      if (error.message.includes("Unauthorized") || error.message.includes("auth")) {
+        return NextResponse.json(
+          { error: "Authentication failed. Please log in again." },
+          { status: 401 }
+        );
+      }
+      if (error.message.includes("Sharp") || error.message.includes("image processing")) {
+        return NextResponse.json(
+          { error: "Image processing failed. Please try a different image format." },
+          { status: 500 }
+        );
+      }
+      if (error.message.includes("R2") || error.message.includes("S3")) {
+        return NextResponse.json(
+          { error: "Storage service error. Please try again later." },
+          { status: 500 }
+        );
+      }
+    }
+    
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to upload file",
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" 
+          ? (error instanceof Error ? error.stack : String(error))
+          : undefined,
       },
       { status: 500 }
     );

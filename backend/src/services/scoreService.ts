@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Beach, ForecastA, Prisma } from "@prisma/client";
+import type { Beach, Forecast, Prisma } from "@prisma/client";
 
 export class ScoreService {
   // Direction mapping utilities
@@ -48,7 +48,7 @@ export class ScoreService {
   static calculateScore(
     beach: Beach,
     conditions: Pick<
-      ForecastA,
+      Forecast,
       | "windSpeed"
       | "windDirection"
       | "swellHeight"
@@ -186,7 +186,7 @@ export class ScoreService {
   static async calculateAndStoreScores(
     regionId: string,
     forecastData: Pick<
-      ForecastA,
+      Forecast,
       | "windSpeed"
       | "windDirection"
       | "swellHeight"

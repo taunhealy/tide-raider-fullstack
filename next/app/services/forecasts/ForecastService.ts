@@ -9,16 +9,17 @@ export class ForecastService {
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    let forecast = await prisma.forecastA.findFirst({
+    let forecast = await prisma.forecast.findFirst({
       where: {
         date: today,
         regionId,
+        source: "WINDFINDER", // Prefer WINDFINDER source
       },
     });
 
     if (!forecast) {
       const newForecast = await getLatestConditions(true, regionId);
-      forecast = await prisma.forecastA.findFirst({
+      forecast = await prisma.forecast.findFirst({
         where: { id: newForecast.id },
       });
     }
