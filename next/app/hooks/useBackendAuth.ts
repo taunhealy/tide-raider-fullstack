@@ -100,10 +100,13 @@ export function useBackendAuth() {
       } catch (error) {
         console.error("[useBackendAuth] Error fetching user:", error);
         if (mounted) {
+          // If it's a timeout or abort, treat as unauthenticated rather than error
+          const isTimeout =
+            error instanceof Error && error.name === "AbortError";
           setAuthState({
             user: null,
             loading: false,
-            error: error as Error,
+            error: isTimeout ? null : (error as Error), // Don't show error for timeouts
           });
         }
       }
