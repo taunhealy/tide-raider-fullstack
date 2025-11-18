@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useBeaches } from "@/app/hooks/useBeaches";
 import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
 import { Beach as BeachType } from "@/app/types/beaches";
@@ -46,7 +46,7 @@ export function RaidLogsComponent({
   const [selectedBeach, setSelectedBeach] = useState<BeachType | null>(null);
 
   // Data fetching hooks
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const { data: beaches, isLoading: isBeachesLoading } = useBeaches();
 
   // Replace the direct useQuery with useRaidLogs

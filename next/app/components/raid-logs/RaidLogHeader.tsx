@@ -2,14 +2,22 @@
 
 import { Button } from "../ui/Button";
 import { LogVisibilityToggle } from "../LogVisibilityToggle";
-import { Session } from "next-auth";
+
+interface User {
+  id?: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  isSubscribed?: boolean;
+  hasActiveTrial?: boolean;
+}
 
 interface HeaderProps {
   isPrivate: boolean;
   onPrivateToggle: () => void;
   onFilterOpen: () => void;
   onModalOpen: () => void;
-  session: Session | null;
+  session: { user: User } | null;
 }
 
 export function Header({

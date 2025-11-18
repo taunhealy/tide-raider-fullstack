@@ -27,7 +27,18 @@ export default function NewRaidLogPage() {
   }, []);
 
   if (authStatus === "loading") return <RandomLoader isLoading={true} />;
-  if (!session?.user) return router.push("/login");
+  
+  // Redirect to login if not authenticated (use useEffect to avoid render issues)
+  useEffect(() => {
+    if (authStatus === "unauthenticated" || (!authStatus && !session?.user)) {
+      router.push("/login");
+    }
+  }, [authStatus, session, router]);
+
+  // Don't render form if not authenticated
+  if (!session?.user) {
+    return <RandomLoader isLoading={true} />;
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

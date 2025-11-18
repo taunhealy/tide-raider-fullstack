@@ -30,6 +30,18 @@ export default function DashboardPage() {
   const router = useRouter();
   const { data: session } = useBackendAuth();
   const { trialStatus, trialEndDate } = useSubscription();
+
+  // Debug: Log session data to help troubleshoot user ID display
+  useEffect(() => {
+    if (session?.user) {
+      console.log("[Dashboard] Session user data:", {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        fullSession: session,
+      });
+    }
+  }, [session]);
   const [activeTab, setActiveTab] = useState<
     "account" | "billing" | "rentals" | "ads" | "alerts" | "notifications"
   >("account");
@@ -479,7 +491,7 @@ export default function DashboardPage() {
                     <input
                       id="userId"
                       type="text"
-                      value={session?.user?.id || ""}
+                      value={session?.user?.id || userData?.id || ""}
                       className="w-full p-2 border rounded-md bg-gray-100"
                       disabled
                       aria-label="User ID"
