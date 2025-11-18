@@ -530,86 +530,144 @@ export function RaidLogForm({
         }
 
         try {
-          // Step 1: Get presigned URL
-          const presignedResponse = await fetch("/api/upload/presigned", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              fileName: selectedVideo.name,
-              fileType: selectedVideo.type,
-              fileSize: selectedVideo.size,
-            }),
-          });
+          // Try presigned URL approach first (for files > 4.5MB)
+          // If it fails, fall back to regular upload route
+          let usePresignedUrl = selectedVideo.size > 4.5 * 1024 * 1024; // Only use presigned for files > 4.5MB
 
-          if (!presignedResponse.ok) {
-            const errorData = await presignedResponse.json().catch(() => ({}));
-            let errorMessage =
-              errorData.error ||
-              errorData.message ||
-              "Failed to get upload URL";
+          if (usePresignedUrl) {
+            try {
+              // Step 1: Get presigned URL
+              const presignedResponse = await fetch("/api/upload/presigned", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  fileName: selectedVideo.name,
+                  fileType: selectedVideo.type,
+                  fileSize: selectedVideo.size,
+                }),
+              });
 
-            if (presignedResponse.status === 413) {
-              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
-                2
+              if (!presignedResponse.ok) {
+                throw new Error(
+                  `Presigned URL request failed: ${presignedResponse.status}`
+                );
+              }
+
+              const { presignedUrl, publicUrl } =
+                await presignedResponse.json();
+
+              if (!presignedUrl || !publicUrl) {
+                throw new Error("Invalid response from presigned URL endpoint");
+              }
+
+              console.log(
+                "[RaidLogForm] Got presigned URL, uploading video...",
+                {
+                  presignedUrlLength: presignedUrl.length,
+                  fileSize: selectedVideo.size,
+                  fileType: selectedVideo.type,
+                }
               );
-              errorMessage =
-                errorData.error ||
-                `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 20MB.`;
-            } else if (presignedResponse.status === 400) {
-              errorMessage =
-                errorData.error ||
-                "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
+
+              // Step 2: Upload directly to R2 using presigned URL
+              const uploadResponse = await fetch(presignedUrl, {
+                method: "PUT",
+                body: selectedVideo,
+                headers: {
+                  "Content-Type": selectedVideo.type,
+                },
+              });
+
+              if (!uploadResponse.ok) {
+                const errorText = await uploadResponse.text().catch(() => "");
+                console.error("[RaidLogForm] Presigned URL upload failed:", {
+                  status: uploadResponse.status,
+                  statusText: uploadResponse.statusText,
+                  error: errorText,
+                });
+                throw new Error(
+                  `Presigned upload failed: ${uploadResponse.status}`
+                );
+              }
+
+              uploadedVideoUrlFinal = publicUrl;
+              console.log(
+                "[RaidLogForm] Video uploaded successfully via presigned URL:",
+                publicUrl
+              );
+            } catch (presignedError) {
+              console.warn(
+                "[RaidLogForm] Presigned URL upload failed, falling back to regular upload:",
+                presignedError
+              );
+              // Fall through to regular upload
+              usePresignedUrl = false;
             }
-
-            console.error(
-              "[RaidLogForm] Presigned URL error:",
-              errorMessage,
-              errorData,
-              `Status: ${presignedResponse.status}`
-            );
-            toast.error(`Video upload failed: ${errorMessage}`);
-            setIsSubmitting(false);
-            return;
           }
 
-          const { presignedUrl, publicUrl } = await presignedResponse.json();
+          // Fallback to regular upload route (for smaller files or if presigned fails)
+          if (!usePresignedUrl || !uploadedVideoUrlFinal) {
+            console.log("[RaidLogForm] Using regular upload route...");
+            const formData = new FormData();
+            formData.append("file", selectedVideo);
+            formData.append("type", "video");
 
-          if (!presignedUrl || !publicUrl) {
-            throw new Error("Invalid response from presigned URL endpoint");
-          }
-
-          console.log("[RaidLogForm] Got presigned URL, uploading video...", {
-            presignedUrlLength: presignedUrl.length,
-            fileSize: selectedVideo.size,
-            fileType: selectedVideo.type,
-          });
-
-          // Step 2: Upload directly to R2 using presigned URL
-          const uploadResponse = await fetch(presignedUrl, {
-            method: "PUT",
-            body: selectedVideo,
-            headers: {
-              "Content-Type": selectedVideo.type,
-            },
-          });
-
-          if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text().catch(() => "");
-            console.error("[RaidLogForm] Upload failed:", {
-              status: uploadResponse.status,
-              statusText: uploadResponse.statusText,
-              error: errorText,
+            const response = await fetch("/api/upload", {
+              method: "POST",
+              body: formData,
             });
-            throw new Error(
-              `Upload failed with status ${uploadResponse.status}: ${uploadResponse.statusText}`
-            );
-          }
 
-          uploadedVideoUrlFinal = publicUrl;
-          console.log("[RaidLogForm] Video uploaded successfully:", publicUrl);
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              let errorMessage =
+                errorData.error ||
+                errorData.message ||
+                "Failed to upload video";
+
+              // Provide more specific error messages
+              if (response.status === 413) {
+                const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
+                  2
+                );
+                errorMessage =
+                  errorData.error ||
+                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 20MB. Files over 4.5MB may need to be compressed.`;
+              } else if (response.status === 400) {
+                errorMessage =
+                  errorData.error ||
+                  "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
+              }
+
+              console.error(
+                "[RaidLogForm] Regular upload error:",
+                errorMessage,
+                errorData,
+                `Status: ${response.status}`
+              );
+              toast.error(`Video upload failed: ${errorMessage}`);
+              setIsSubmitting(false);
+              return;
+            } else {
+              const data = await response.json();
+              uploadedVideoUrlFinal = data.videoUrl;
+              if (!uploadedVideoUrlFinal) {
+                console.warn(
+                  "[RaidLogForm] Video upload succeeded but no videoUrl returned"
+                );
+                toast.warning(
+                  "Video uploaded but URL not received. Log will be created without video."
+                );
+              } else {
+                console.log(
+                  "[RaidLogForm] Video uploaded successfully via regular route:",
+                  uploadedVideoUrlFinal
+                );
+              }
+            }
+          }
         } catch (uploadError) {
           console.error("[RaidLogForm] Video upload exception:", uploadError);
 
