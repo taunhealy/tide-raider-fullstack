@@ -11,6 +11,7 @@ const s3 = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
+  forcePathStyle: true, // Required for R2 presigned URLs
 });
 
 export const runtime = "nodejs";
@@ -61,8 +62,10 @@ export async function POST(req: NextRequest) {
     // Generate a unique filename
     const timestamp = Date.now();
     const uniqueId = Math.random().toString(36).substring(2, 15);
-    const extension = fileName.split(".").pop() || (fileType.startsWith("video/") ? "mp4" : "jpg");
-    
+    const extension =
+      fileName.split(".").pop() ||
+      (fileType.startsWith("video/") ? "mp4" : "jpg");
+
     let key: string;
     if (fileType.startsWith("video/")) {
       key = `surf-videos/${user.id}/${timestamp}-${uniqueId}.${extension}`;
@@ -98,10 +101,12 @@ export async function POST(req: NextRequest) {
     console.error("Error generating presigned URL:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to generate upload URL",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate upload URL",
       },
       { status: 500 }
     );
   }
 }
-

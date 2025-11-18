@@ -577,6 +577,16 @@ export function RaidLogForm({
 
           const { presignedUrl, publicUrl } = await presignedResponse.json();
 
+          if (!presignedUrl || !publicUrl) {
+            throw new Error("Invalid response from presigned URL endpoint");
+          }
+
+          console.log("[RaidLogForm] Got presigned URL, uploading video...", {
+            presignedUrlLength: presignedUrl.length,
+            fileSize: selectedVideo.size,
+            fileType: selectedVideo.type,
+          });
+
           // Step 2: Upload directly to R2 using presigned URL
           const uploadResponse = await fetch(presignedUrl, {
             method: "PUT",
@@ -587,8 +597,14 @@ export function RaidLogForm({
           });
 
           if (!uploadResponse.ok) {
+            const errorText = await uploadResponse.text().catch(() => "");
+            console.error("[RaidLogForm] Upload failed:", {
+              status: uploadResponse.status,
+              statusText: uploadResponse.statusText,
+              error: errorText,
+            });
             throw new Error(
-              `Upload failed with status ${uploadResponse.status}`
+              `Upload failed with status ${uploadResponse.status}: ${uploadResponse.statusText}`
             );
           }
 
@@ -596,9 +612,25 @@ export function RaidLogForm({
           console.log("[RaidLogForm] Video uploaded successfully:", publicUrl);
         } catch (uploadError) {
           console.error("[RaidLogForm] Video upload exception:", uploadError);
-          toast.error(
-            `Video upload error: ${uploadError instanceof Error ? uploadError.message : "Unknown error"}`
-          );
+
+          // Provide more specific error messages
+          let errorMessage = "Unknown error";
+          if (uploadError instanceof Error) {
+            errorMessage = uploadError.message;
+            // Check for common network errors
+            if (
+              uploadError.message.includes("Failed to fetch") ||
+              uploadError.name === "TypeError"
+            ) {
+              errorMessage =
+                "Network error: Unable to connect to upload server. Please check your internet connection and try again.";
+            } else if (uploadError.message.includes("CORS")) {
+              errorMessage =
+                "CORS error: Please contact support if this persists.";
+            }
+          }
+
+          toast.error(`Video upload error: ${errorMessage}`);
           // Stop submission if video upload fails
           setIsSubmitting(false);
           return;
