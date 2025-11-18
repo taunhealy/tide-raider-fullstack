@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { RentalItemRequest } from "@prisma/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -62,52 +61,4 @@ export async function sendTrialEndingSoonEmail(
   }
 }
 
-export async function sendRequestExpiredNotification(
-  request: RentalItemRequest & {
-    renter: { email: string };
-    rentalItem: { name: string };
-  }
-) {
-  try {
-    const { data } = await resend.emails.send({
-      from: "Tide Raider <ads@tideraider.com>",
-      to: request.renter.email,
-      subject: "Rental Request Expired",
-      html: `
-        <h1>Rental Request Expired</h1>
-        <p>Your rental request for the item "${request.rentalItem.name}" has expired.</p>
-        <p>Please submit a new request if you're still interested.</p>
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/rentals/${request.id}">View Rental</a>
-      `,
-    });
-    return { success: true, data };
-  } catch (error) {
-    console.error("Email error:", error);
-    throw error;
-  }
-}
-
-export async function sendRentalRequestEmail(
-  request: RentalItemRequest & {
-    owner: { email: string };
-    rentalItem: { name: string };
-  }
-) {
-  try {
-    const { data } = await resend.emails.send({
-      from: "Tide Raider <ads@tideraider.com>",
-      to: request.owner.email,
-      subject: "New Rental Request",
-      html: `
-        <h1>New Rental Request</h1>
-        <p>You have received a new rental request for your item "${request.rentalItem.name}".</p>
-        <p>Rental period: ${request.startDate.toLocaleDateString()} to ${request.endDate.toLocaleDateString()}</p>
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/rental-requests/${request.id}">View Request</a>
-      `,
-    });
-    return { success: true, data };
-  } catch (error) {
-    console.error("Email error:", error);
-    throw error;
-  }
-}
+// Rental-related email functions removed

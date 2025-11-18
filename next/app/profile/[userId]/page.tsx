@@ -5,11 +5,9 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { useQuery } from "@tanstack/react-query";
-import FavouriteSurfVideosSidebar from "@/app/components/FavouriteSurfVideosSidebar";
 import UserNotFound from "@/app/components/UserNotFound";
 import BioSection from "@/app/components/profile/BioSection";
 import { ClientProfileLogs } from "@/app/components/ClientProfileLogs";
-import StoriesContainer from "@/app/components/StoriesContainer";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
 import RippleLoader from "@/app/components/ui/RippleLoader";
 import Image from "next/image";
@@ -22,9 +20,7 @@ import NationalitySelector from "@/app/components/profile/NationalitySelector";
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<
-    "account" | "logs" | "chronicles" | "favourites"
-  >("account");
+  const [activeTab, setActiveTab] = useState<"account" | "logs">("account");
   const [avatarUrl, setAvatarUrl] = useState("");
 
   const {
@@ -123,25 +119,11 @@ export default function ProfilePage() {
               Profile
             </Button>
             <Button
-              variant={activeTab === "favourites" ? "default" : "outline"}
-              onClick={() => setActiveTab("favourites")}
-              className="text-sm xs:text-base px-3 py-1.5"
-            >
-              Favourites
-            </Button>
-            <Button
               variant={activeTab === "logs" ? "default" : "outline"}
               onClick={() => setActiveTab("logs")}
               className="text-sm xs:text-base px-3 py-1.5"
             >
               Logs
-            </Button>
-            <Button
-              variant={activeTab === "chronicles" ? "default" : "outline"}
-              onClick={() => setActiveTab("chronicles")}
-              className="text-sm xs:text-base px-3 py-1.5"
-            >
-              Chronicles
             </Button>
           </div>
 
@@ -156,29 +138,16 @@ export default function ProfilePage() {
               />
             )}
 
-            {activeTab === "favourites" && (
-              <FavouriteSurfVideosSidebar
-                userId={userId}
-                className="px-2 sm:px-4"
-              />
-            )}
-
             {activeTab === "logs" && (
               <div className="w-full overflow-x-auto px-2 sm:px-4">
                 <ClientProfileLogs beaches={beaches} userId={userId} />
               </div>
             )}
-
-            {activeTab === "chronicles" && (
-              <div className="w-full overflow-x-auto px-2 sm:px-4">
-                <StoriesContainer beaches={beaches} userId={userId} />
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Image Column - Only show for Profile and Favourites tabs */}
-        {["account", "favourites"].includes(activeTab) && (
+        {/* Image Column - Only show for Profile tab */}
+        {activeTab === "account" && (
           <div className="flex-none w-full xs:w-full sm:w-[400px] lg:w-[500px] relative h-[400px] xs:h-[500px] sm:h-[600px] mt-4 xs:mt-0">
             <div className="absolute inset-0 overflow-hidden rounded-lg">
               {data?.heroImage?.image ? (

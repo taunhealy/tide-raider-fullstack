@@ -43,7 +43,7 @@ export default function DashboardPage() {
     }
   }, [session]);
   const [activeTab, setActiveTab] = useState<
-    "account" | "billing" | "rentals" | "ads" | "alerts" | "notifications"
+    "account" | "billing" | "ads" | "alerts" | "notifications"
   >("account");
   const [username, setUsername] = useState<string>("");
   const queryClient = useQueryClient();
@@ -414,13 +414,6 @@ export default function DashboardPage() {
               Billing
             </Button>
             <Button
-              variant={activeTab === "rentals" ? "default" : "outline"}
-              onClick={() => setActiveTab("rentals")}
-              className="w-full sm:w-auto font-primary"
-            >
-              Rentals
-            </Button>
-            <Button
               variant={activeTab === "ads" ? "default" : "outline"}
               onClick={() => setActiveTab("ads")}
               className="w-full sm:w-auto font-primary"
@@ -721,72 +714,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {activeTab === "rentals" && (
-              <div className="space-y-4">
-                <h2 className="text-lg sm:text-xl font-semibold font-primary">
-                  My Rental Items
-                </h2>
-
-                <div className="flex flex-col gap-4">
-                  <Link
-                    href="/dashboard/rentals"
-                    className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <h3 className="font-medium">Manage Rental Items</h3>
-                      <p className="text-sm text-gray-600">
-                        View and edit your rental listings
-                      </p>
-                    </div>
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-                  </Link>
-
-                  <Link
-                    href="/rentals/requests"
-                    className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <h3 className="font-medium">Rental Requests</h3>
-                      <p className="text-sm text-gray-600">
-                        Manage incoming and outgoing rental requests
-                      </p>
-                    </div>
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-                  </Link>
-
-                  <Link
-                    href="/rentals/new"
-                    className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    <div>
-                      <h3 className="font-medium">List New Item</h3>
-                      <p className="text-sm text-gray-600">
-                        Add a new surfboard, motorbike, or scooter for rent
-                      </p>
-                    </div>
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-                  </Link>
-                </div>
-
-                {subscriptionData?.status !== SubscriptionStatus.ACTIVE && (
-                  <div className="mt-4 p-4 bg-yellow-50 rounded-md">
-                    <p className="text-sm text-yellow-800">
-                      You need an active subscription to list rental items.
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="mt-2 w-full sm:w-auto font-primary"
-                      onClick={handleSubscribeWithLoading}
-                      disabled={loadingStates.subscribe}
-                    >
-                      {loadingStates.subscribe
-                        ? "Processing..."
-                        : "Subscribe Now"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
 
             {activeTab === "ads" && (
               <div className="space-y-4">

@@ -94,7 +94,7 @@ export default async function AlertDetailPage({
             </h2>
             {alert.notifications.length > 0 ? (
               <div className="space-y-4">
-                {alert.notifications.map((notification) => (
+                {alert.notifications.map((notification: any) => (
                   <div
                     key={notification.id}
                     className="p-4 bg-gray-50 rounded-md border border-gray-200"

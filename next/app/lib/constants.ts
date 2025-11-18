@@ -38,29 +38,5 @@ export const WAVE_TYPE_ICONS = {
 
 export type WaveType = keyof typeof WAVE_TYPE_ICONS;
 
-export const STORY_CATEGORIES = [
-  "Wildlife Encounters",
-  "Hidden Gems",
-  "Rad Towns",
-  "Epic Road Trips",
-  "Coastal Adventures",
-  "Cultural Experiences",
-  "Survival Stories",
-  "Camping Adventures",
-  "Storm Stories",
-  "Environmental Impact",
-  "Seasonal Changes",
-  "Local Surfing Legends",
-  "Boat Access Spots",
-  "Weather Phenomena",
-  "Restricted Access Spots",
-  "Crime",
-  "UFO Sightings 👽🛸",
-  "Great Surf Camps",
-  "Surf Vlog",
-  "Surf Photography",
-  "Storm Alert",
-];
-
-export type StoryCategory = (typeof STORY_CATEGORIES)[number];
+// Stories removed - STORY_CATEGORIES no longer needed
 

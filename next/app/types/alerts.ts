@@ -1,4 +1,6 @@
 import { Forecast } from "@/app/types/forecast";
+import { LogEntry } from "@/app/types/raidlogs";
+import { Region } from "@/app/types/beaches";
 
 // Only keep custom types not in Prisma
 export type NotificationMethod = "email" | "whatsapp" | "app" | "both";
