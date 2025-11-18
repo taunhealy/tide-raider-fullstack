@@ -489,6 +489,7 @@ export function RaidLogForm({
       return;
     }
 
+    setIsSubmitting(true);
     try {
       // Upload image if selected
       let uploadedImageUrl = null;
@@ -513,6 +514,17 @@ export function RaidLogForm({
       // Upload video if selected
       let uploadedVideoUrlFinal = null;
       if (selectedVideo) {
+        // Re-validate video before upload to prevent submission if invalid
+        const validation = await validateVideoFile(selectedVideo);
+        if (!validation.valid) {
+          setIsSubmitting(false);
+          toast.error(
+            validation.error ||
+              "Invalid video file. Please select a different video."
+          );
+          return; // Stop submission if video is invalid
+        }
+
         try {
           const formData = new FormData();
           formData.append("file", selectedVideo);
@@ -533,8 +545,9 @@ export function RaidLogForm({
               errorData
             );
             toast.error(`Video upload failed: ${errorMessage}`);
-            // Don't throw - allow form to submit without video
-            // throw new Error(errorMessage);
+            // Stop submission if video upload fails - user should fix the issue
+            setIsSubmitting(false);
+            return;
           } else {
             const data = await response.json();
             uploadedVideoUrlFinal = data.videoUrl;
@@ -552,7 +565,9 @@ export function RaidLogForm({
           toast.error(
             `Video upload error: ${uploadError instanceof Error ? uploadError.message : "Unknown error"}`
           );
-          // Continue without video - don't block form submission
+          // Stop submission if video upload fails
+          setIsSubmitting(false);
+          return;
         }
       }
 
@@ -599,17 +614,16 @@ export function RaidLogForm({
       }
 
       // Wait a moment for query invalidation to complete
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Redirect to /raidlogs/new for new posts, /raidlogs for edits
-      if (entry?.id) {
-        router.push("/raidlogs");
-      } else {
-        router.push("/raidlogs/new");
-      }
+      // Redirect to /raidlogs to show the new log
+      // For both new posts and edits, go to the main raidlogs page
+      setIsSubmitting(false);
+      router.push("/raidlogs");
       if (onClose) onClose();
     } catch (error) {
       console.error("Form submission error:", error);
+      setIsSubmitting(false);
       toast.error("Failed to submit log entry: " + (error as Error).message);
     }
   };

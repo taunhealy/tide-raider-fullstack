@@ -128,10 +128,10 @@ export function useCreateLog() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate all log-related queries to ensure fresh data
       // Use predicate to match all queries that start with these keys
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey[0];
           return (
@@ -140,6 +140,13 @@ export function useCreateLog() {
             key === "logs" ||
             key === "questLogs"
           );
+        },
+      });
+      // Force refetch to ensure data is fresh
+      await queryClient.refetchQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === "raidLogs";
         },
       });
       toast.success("Session logged successfully!");
