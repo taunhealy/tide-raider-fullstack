@@ -115,45 +115,72 @@ export function useRaidLogs(
 
   const query = useQuery({
     queryKey,
-    queryFn: () => fetchRaidLogs(filters, isPrivate, userId),
-    select: (data: RaidLogResponse) => ({
-      entries: data.entries.map(
-        (entry): LogEntry => ({
-          ...entry,
-          region: entry.region
-            ? {
-                id: entry.region.id,
-                name: entry.region.name,
-                continent: entry.region.continent,
-                country: entry.region.country,
-              }
-            : null,
-          beach: entry.beach
-            ? {
-                id: entry.beach.id,
-                name: entry.beach.name,
-                region: entry.beach.region
-                  ? {
-                      id: entry.beach.region.id,
-                      name: entry.beach.region.name,
-                      country: entry.beach.region.country,
-                      continent: entry.beach.region.continent,
-                    }
-                  : null,
-                waveType: entry.beach.waveType,
-                difficulty: entry.beach.difficulty,
-              }
-            : null,
-          // other fields...
-        })
-      ),
-      total: data.total,
-    }),
+    queryFn: async () => {
+      try {
+        const data = await fetchRaidLogs(filters, isPrivate, userId);
+        return data;
+      } catch (error) {
+        console.error("[useRaidLogs] Error fetching logs:", error);
+        throw error;
+      }
+    },
+    select: (data: RaidLogResponse) => {
+      if (!data || !data.entries) {
+        console.warn("[useRaidLogs] Invalid data structure:", data);
+        return {
+          entries: [],
+          total: 0,
+          page: 1,
+          limit: 50,
+          totalPages: 0,
+        };
+      }
+      return {
+        entries: data.entries.map(
+          (entry): LogEntry => ({
+            ...entry,
+            region: entry.region
+              ? {
+                  id: entry.region.id,
+                  name: entry.region.name,
+                  continent: entry.region.continent,
+                  country: entry.region.country,
+                }
+              : null,
+            beach: entry.beach
+              ? {
+                  id: entry.beach.id,
+                  name: entry.beach.name,
+                  region: entry.beach.region
+                    ? {
+                        id: entry.beach.region.id,
+                        name: entry.beach.region.name,
+                        country: entry.beach.region.country,
+                        continent: entry.beach.region.continent,
+                      }
+                    : null,
+                  waveType: entry.beach.waveType,
+                  difficulty: entry.beach.difficulty,
+                }
+              : null,
+            // other fields...
+          })
+        ),
+        total: data.total || 0,
+        page: (data as any).page || 1,
+        limit: (data as any).limit || 50,
+        totalPages:
+          (data as any).totalPages ||
+          Math.ceil((data.total || 0) / ((data as any).limit || 50)),
+      };
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
     refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
     refetchOnMount: false, // Don't refetch on mount if data is fresh
     retry: 1, // Only retry once on failure
+    retryDelay: 1000, // Wait 1 second before retry
+    throwOnError: false, // Don't throw errors, return them in error state
   });
 
   const createMutation = useMutation({

@@ -16,36 +16,76 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
 
-    const response = await fetch(`${BACKEND_URL}/api/raid-logs${queryString}`, {
-      headers: {
-        ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        Cookie: cookieStore.toString(),
-      },
-      credentials: "include",
-    });
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      // Handle 429 gracefully
-      if (response.status === 429) {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/raid-logs${queryString}`,
+        {
+          headers: {
+            ...(authToken && { Authorization: `Bearer ${authToken}` }),
+            Cookie: cookieStore.toString(),
+          },
+          credentials: "include",
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        // Handle 429 gracefully
+        if (response.status === 429) {
+          return NextResponse.json(
+            { error: "Too many requests, please try again later" },
+            { status: 429 }
+          );
+        }
+        // Return empty result for errors instead of failing
+        if (response.status >= 500) {
+          console.error(`[raid-logs] Backend error ${response.status}`);
+          return NextResponse.json({
+            entries: [],
+            total: 0,
+            page: 1,
+            limit: 50,
+            totalPages: 0,
+          });
+        }
         return NextResponse.json(
-          { error: "Too many requests, please try again later" },
-          { status: 429 }
+          { error: "Failed to fetch logs" },
+          { status: response.status }
         );
       }
-      return NextResponse.json(
-        { error: "Failed to fetch logs" },
-        { status: response.status }
-      );
-    }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+      const data = await response.json();
+      return NextResponse.json(data);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === "AbortError") {
+        console.error("[raid-logs] Request timeout");
+        return NextResponse.json({
+          entries: [],
+          total: 0,
+          page: 1,
+          limit: 50,
+          totalPages: 0,
+        });
+      }
+      throw fetchError;
+    }
   } catch (error) {
     console.error("Error fetching raid logs:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch logs" },
-      { status: 500 }
-    );
+    // Return empty result instead of error to prevent UI hanging
+    return NextResponse.json({
+      entries: [],
+      total: 0,
+      page: 1,
+      limit: 50,
+      totalPages: 0,
+    });
   }
 }
 
