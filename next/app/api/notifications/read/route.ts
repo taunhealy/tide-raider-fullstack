@@ -1,25 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/lib/authOptions";
+import { backendPost } from "@/app/lib/backend-api";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const { notificationIds } = await request.json();
+    const body = await request.json();
+    const { notificationIds } = body;
 
     if (!notificationIds || !Array.isArray(notificationIds)) {
       return NextResponse.json(
@@ -28,17 +13,11 @@ export async function POST(request: Request) {
       );
     }
 
-    await prisma.notification.updateMany({
-      where: {
-        id: { in: notificationIds },
-        userId: user.id,
-      },
-      data: {
-        read: true,
-      },
+    const result = await backendPost("/api/notifications/read", {
+      notificationIds,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error marking notifications as read:", error);
     return NextResponse.json(

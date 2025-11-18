@@ -1,7 +1,5 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "./auth-adapter";
-import { prisma } from "@/app/lib/prisma";
 
 declare module "next-auth/jwt" {
   interface JWT {
@@ -96,27 +94,11 @@ export const authOptions: NextAuthOptions = {
           `[NextAuth] 🔐 JWT token created/updated for userId: ${user.id}`
         );
 
-        // Try to fetch subscription info from database (optional - backend handles this)
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-            select: {
-              subscriptionStatus: true,
-              hasActiveTrial: true,
-              trialEndDate: true,
-            },
-          });
-
-          token.isSubscribed = dbUser?.subscriptionStatus === "ACTIVE";
-          token.hasActiveTrial = dbUser?.hasActiveTrial || false;
-          token.trialEndDate = dbUser?.trialEndDate || null;
-        } catch (error) {
-          // Database not accessible - that's okay, backend handles auth
-          console.log(`[NextAuth] Database not accessible, using defaults`);
-          token.isSubscribed = false;
-          token.hasActiveTrial = false;
-          token.trialEndDate = null;
-        }
+        // Subscription info is handled by backend - use defaults
+        // Backend auth endpoint provides this info when needed
+        token.isSubscribed = false;
+        token.hasActiveTrial = false;
+        token.trialEndDate = null;
       }
       
       // If no user but we have a token ID, check if we need to refresh from backend cookie

@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { backendGet } from "@/app/lib/backend-api";
 
 export async function GET() {
   try {
-    const regions = await prisma.region.findMany({
-      select: {
-        id: true,
-        name: true,
-        country: true,
-        continent: true,
-      },
-      orderBy: [{ countryId: "asc" }, { name: "asc" }],
-    });
-
+    const regions = await backendGet("/api/regions");
     return NextResponse.json(regions);
   } catch (error) {
     console.error("Error fetching regions:", error);

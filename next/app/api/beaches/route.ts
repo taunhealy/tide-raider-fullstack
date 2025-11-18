@@ -1,24 +1,18 @@
 // app/api/beaches/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { backendGet } from "@/app/lib/backend-api";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const regionId = searchParams.get("regionId");
-
   try {
-    const beaches = await prisma.beach.findMany({
-      where: regionId
-        ? {
-            regionId: regionId,
-          }
-        : undefined,
-      include: {
-        region: true,
-      },
-    });
+    const { searchParams } = new URL(request.url);
+    const regionId = searchParams.get("regionId");
 
-    return NextResponse.json({ beaches });
+    const url = regionId 
+      ? `/api/beaches?regionId=${regionId}`
+      : "/api/beaches";
+    
+    const result = await backendGet(url);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Failed to fetch beaches:", error);
     return NextResponse.json(

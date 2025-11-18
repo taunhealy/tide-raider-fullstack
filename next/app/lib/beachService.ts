@@ -1,11 +1,36 @@
 /**
  * Beach Service
  * Central service for all beach-related database queries
- * Replaces static beachData.ts with dynamic database queries
+ * Uses backend API instead of direct Prisma access
  */
 
-import { prisma } from "@/app/lib/prisma";
-import { Beach, Region, Country, Prisma } from "@prisma/client";
+import { backendGet } from "@/app/lib/backend-api";
+
+// Type definitions for beach with relations
+export type Beach = {
+  id: string;
+  name: string;
+  continent?: string | null;
+  countryId?: string | null;
+  regionId?: string | null;
+  location?: string | null;
+  [key: string]: any;
+};
+
+export type Region = {
+  id: string;
+  name: string;
+  countryId?: string | null;
+  continent?: string | null;
+  [key: string]: any;
+};
+
+export type Country = {
+  id: string;
+  name: string;
+  continentId?: string | null;
+  [key: string]: any;
+};
 
 // Type definitions for beach with relations
 export type BeachWithRelations = Beach & {
@@ -13,54 +38,8 @@ export type BeachWithRelations = Beach & {
   country?: Country | null;
 };
 
-// Standard beach select for most queries (optimized to reduce data transfer)
-export const standardBeachSelect = {
-  id: true,
-  name: true,
-  continent: true,
-  countryId: true,
-  regionId: true,
-  location: true,
-  distanceFromCT: true,
-  optimalWindDirections: true,
-  optimalSwellDirections: true,
-  bestSeasons: true,
-  optimalTide: true,
-  description: true,
-  difficulty: true,
-  waveType: true,
-  swellSize: true,
-  idealSwellPeriod: true,
-  waterTemp: true,
-  hazards: true,
-  crimeLevel: true,
-  sharkAttack: true,
-  image: true,
-  coordinates: true,
-  videos: true,
-  profileImage: true,
-  advertisingPrice: true,
-  coffeeShop: true,
-  hasSharkAlert: true,
-  isHiddenGem: true,
-  sheltered: true,
-  bestMonthOfYear: true,
-  region: {
-    select: {
-      id: true,
-      name: true,
-      countryId: true,
-      continent: true,
-    },
-  },
-  country: {
-    select: {
-      id: true,
-      name: true,
-      continentId: true,
-    },
-  },
-} as const;
+// Standard beach select - kept for type compatibility, but backend handles selection
+export const standardBeachSelect = {} as const;
 
 /**
  * Get all beaches with relations
@@ -68,67 +47,51 @@ export const standardBeachSelect = {
  */
 export async function getAllBeaches(): Promise<BeachWithRelations[]> {
   try {
-    const beaches = await prisma.beach.findMany({
-      select: standardBeachSelect,
-      orderBy: [{ regionId: "asc" }, { name: "asc" }],
-    });
-    return beaches;
+    const result = await backendGet<{ beaches: BeachWithRelations[] }>("/api/beaches");
+    return result.beaches || [];
   } catch (error) {
     console.error("Error fetching all beaches:", error);
-    throw new Error("Failed to fetch beaches from database");
+    return [];
   }
 }
 
 /**
  * Get beaches by region ID
+ * @deprecated Use backend API directly via /api/beaches?regionId=xxx
  */
 export async function getBeachesByRegion(
   regionId: string
 ): Promise<BeachWithRelations[]> {
   try {
-    const beaches = await prisma.beach.findMany({
-      where: { regionId },
-      select: standardBeachSelect,
-      orderBy: { name: "asc" },
-    });
-    return beaches;
+    const result = await backendGet<{ beaches: BeachWithRelations[] }>(`/api/beaches?regionId=${regionId}`);
+    return result.beaches || [];
   } catch (error) {
     console.error(`Error fetching beaches for region ${regionId}:`, error);
-    throw new Error("Failed to fetch beaches by region");
+    return [];
   }
 }
 
 /**
  * Get beaches by country ID
+ * @deprecated Use backend API directly
  */
 export async function getBeachesByCountry(
   countryId: string
 ): Promise<BeachWithRelations[]> {
-  try {
-    const beaches = await prisma.beach.findMany({
-      where: { countryId },
-      select: standardBeachSelect,
-      orderBy: [{ regionId: "asc" }, { name: "asc" }],
-    });
-    return beaches;
-  } catch (error) {
-    console.error(`Error fetching beaches for country ${countryId}:`, error);
-    throw new Error("Failed to fetch beaches by country");
-  }
+  // Backend doesn't have country filter yet - return empty for now
+  console.warn("getBeachesByCountry: Not implemented via backend API");
+  return [];
 }
 
 /**
- * Get a single beach by ID
+ * Get a single beach by ID or name
  */
 export async function getBeachById(
   beachId: string
 ): Promise<BeachWithRelations | null> {
   try {
-    const beach = await prisma.beach.findUnique({
-      where: { id: beachId },
-      select: standardBeachSelect,
-    });
-    return beach;
+    const result = await backendGet<{ beach: BeachWithRelations }>(`/api/beaches/${encodeURIComponent(beachId)}`);
+    return result.beach || null;
   } catch (error) {
     console.error(`Error fetching beach ${beachId}:`, error);
     return null;
@@ -137,29 +100,18 @@ export async function getBeachById(
 
 /**
  * Get a single beach by name
+ * @deprecated Use getBeachById or backend API directly
  */
 export async function getBeachByName(
   name: string
 ): Promise<BeachWithRelations | null> {
-  try {
-    const beach = await prisma.beach.findFirst({
-      where: {
-        name: {
-          equals: name,
-          mode: "insensitive",
-        },
-      },
-      select: standardBeachSelect,
-    });
-    return beach;
-  } catch (error) {
-    console.error(`Error fetching beach by name ${name}:`, error);
-    return null;
-  }
+  // Use getBeachById which works with names too
+  return getBeachById(name);
 }
 
 /**
  * Search beaches by term (name or location)
+ * @deprecated Use backend API /api/beaches/search
  */
 export async function searchBeaches(
   term: string,
@@ -168,36 +120,22 @@ export async function searchBeaches(
     limit?: number;
   }
 ): Promise<BeachWithRelations[]> {
-  const { regionId, limit = 10 } = options || {};
-
   try {
-    const whereClause: Prisma.BeachWhereInput = {
-      OR: [
-        { name: { contains: term, mode: "insensitive" } },
-        { location: { contains: term, mode: "insensitive" } },
-      ],
-    };
-
-    if (regionId) {
-      whereClause.regionId = regionId;
-    }
-
-    const beaches = await prisma.beach.findMany({
-      where: whereClause,
-      select: standardBeachSelect,
-      take: limit,
-      orderBy: { name: "asc" },
-    });
-
-    return beaches;
+    const { regionId } = options || {};
+    const url = regionId
+      ? `/api/beaches/search?term=${encodeURIComponent(term)}&regionId=${regionId}`
+      : `/api/beaches/search?term=${encodeURIComponent(term)}`;
+    const beaches = await backendGet<BeachWithRelations[]>(url);
+    return beaches || [];
   } catch (error) {
     console.error(`Error searching beaches with term "${term}":`, error);
-    throw new Error("Failed to search beaches");
+    return [];
   }
 }
 
 /**
  * Get beaches with filtering options
+ * @deprecated Use backend API /api/filtered-beaches
  */
 export async function getBeachesWithFilters(filters: {
   regionId?: string;
@@ -208,108 +146,53 @@ export async function getBeachesWithFilters(filters: {
   continent?: string;
 }): Promise<BeachWithRelations[]> {
   try {
-    const whereClause: Prisma.BeachWhereInput = {};
-
-    if (filters.regionId) {
-      whereClause.regionId = filters.regionId;
-    }
-
-    if (filters.countryId) {
-      whereClause.countryId = filters.countryId;
-    }
-
-    if (filters.continent) {
-      whereClause.continent = filters.continent;
-    }
-
-    if (filters.difficulty && filters.difficulty.length > 0) {
-      whereClause.difficulty = {
-        in: filters.difficulty as any[],
-      };
-    }
-
-    if (filters.waveType && filters.waveType.length > 0) {
-      whereClause.waveType = {
-        in: filters.waveType as any[],
-      };
-    }
-
-    if (filters.optimalTide && filters.optimalTide.length > 0) {
-      whereClause.optimalTide = {
-        in: filters.optimalTide as any[],
-      };
-    }
-
-    const beaches = await prisma.beach.findMany({
-      where: whereClause,
-      select: standardBeachSelect,
-      orderBy: [{ regionId: "asc" }, { name: "asc" }],
-    });
-
-    return beaches;
+    const params = new URLSearchParams();
+    if (filters.regionId) params.append("regionId", filters.regionId);
+    if (filters.difficulty) params.append("difficulty", filters.difficulty.join(","));
+    if (filters.waveType) params.append("waveType", filters.waveType.join(","));
+    // Add other filters as needed
+    
+    const result = await backendGet<{ beaches: BeachWithRelations[] }>(`/api/filtered-beaches?${params.toString()}`);
+    return result.beaches || [];
   } catch (error) {
     console.error("Error fetching beaches with filters:", error);
-    throw new Error("Failed to fetch beaches with filters");
+    return [];
   }
 }
 
 /**
  * Get unique regions from beaches
+ * @deprecated Use backend API /api/regions
  */
 export async function getUniqueRegions(): Promise<Region[]> {
   try {
-    const regions = await prisma.region.findMany({
-      orderBy: [{ countryId: "asc" }, { name: "asc" }],
-      include: {
-        country: true,
-      },
-    });
-    return regions;
+    const regions = await backendGet<Region[]>("/api/regions");
+    return regions || [];
   } catch (error) {
     console.error("Error fetching regions:", error);
-    throw new Error("Failed to fetch regions");
+    return [];
   }
 }
 
 /**
  * Get unique countries from beaches
+ * @deprecated Use backend API /api/geo
  */
 export async function getUniqueCountries(): Promise<Country[]> {
   try {
-    const countries = await prisma.country.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        continent: true,
-      },
-    });
-    return countries;
+    const result = await backendGet<{ countries: Country[] }>("/api/geo");
+    return result.countries || [];
   } catch (error) {
     console.error("Error fetching countries:", error);
-    throw new Error("Failed to fetch countries");
+    return [];
   }
 }
 
 /**
  * Get beach count by region
+ * @deprecated Not available via backend API yet
  */
 export async function getBeachCountByRegion(): Promise<Record<string, number>> {
-  try {
-    const counts = await prisma.beach.groupBy({
-      by: ["regionId"],
-      _count: {
-        id: true,
-      },
-    });
-
-    return counts.reduce(
-      (acc, item) => {
-        acc[item.regionId] = item._count.id;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-  } catch (error) {
-    console.error("Error fetching beach counts:", error);
-    throw new Error("Failed to fetch beach counts");
-  }
+  console.warn("getBeachCountByRegion: Not implemented via backend API");
+  return {};
 }

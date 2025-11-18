@@ -14,6 +14,8 @@ import authRouter from "./auth";
 import beachRatingsRouter from "./beach-ratings";
 import userSearchesRouter from "./user-searches";
 import paypalRouter from "./paypal";
+import usersRouter from "./users";
+import commentsRouter from "./comments";
 
 const router = Router();
 
@@ -33,9 +35,7 @@ router.use("/seed", seedRouter);
 router.use("/beach-ratings", beachRatingsRouter);
 router.use("/user-searches", userSearchesRouter);
 router.use("/paypal", paypalRouter);
-
-// TODO: Add more route handlers here as needed
-// router.use("/user", userRouter);
-// etc.
+router.use("/users", usersRouter);
+router.use("/comments", commentsRouter);
 
 export default router;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { backendGet } from "@/app/lib/backend-api";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,23 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find the region by name
-    const region = await prisma.region.findFirst({
-      where: {
-        name: regionName,
-      },
-      select: {
-        id: true,
-        name: true,
-        country: true,
-        continent: true,
-      },
-    });
-
-    if (!region) {
-      return NextResponse.json({ error: "Region not found" }, { status: 404 });
-    }
-
+    const region = await backendGet(`/api/regions?name=${encodeURIComponent(regionName)}`);
     return NextResponse.json(region);
   } catch (error) {
     console.error("Error fetching region details:", error);

@@ -1,42 +1,23 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
+import { backendGet } from "@/app/lib/backend-api";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const region = searchParams.get("region");
-  const date = searchParams.get("date");
-
-  if (!region || !date) {
-    return NextResponse.json(
-      { error: "Missing region or date" },
-      { status: 400 }
-    );
-  }
-
   try {
-    // Find or create forecast
-    const dateOnly = new Date(date).toISOString().split("T")[0];
-    const { randomUUID } = await import("crypto");
-    const forecast = await prisma.forecast.findFirst({
-      where: {
-        date: new Date(dateOnly),
-        regionId: region,
-        source: "WINDFINDER", // Prefer WINDFINDER source
-      },
-    });
+    const { searchParams } = new URL(req.url);
+    const region = searchParams.get("region");
+    const date = searchParams.get("date");
 
-    if (!forecast) {
-      const createdForecast = await prisma.forecast.create({
-        data: {
-          id: randomUUID(),
-          date: new Date(dateOnly),
-          regionId: region,
-          source: "WINDFINDER", // Default to WINDFINDER
-        },
-      });
-      return NextResponse.json(createdForecast);
+    if (!region || !date) {
+      return NextResponse.json(
+        { error: "Missing region or date" },
+        { status: 400 }
+      );
     }
+
+    const forecast = await backendGet(
+      `/api/raid-logs/forecast?region=${region}&date=${date}`
+    );
 
     return NextResponse.json(forecast);
   } catch (error) {
