@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import CommentThread from "@/app/components/comments/CommentThread";
-import ProfileHeader from "@/app/components/profile/ProfileHeader";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
 import type { Prisma } from "@prisma/client";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
@@ -29,6 +29,54 @@ import { useRaidLog } from "@/app/hooks/useRaidLog";
 
 interface RaidLogDetailsProps {
   id: string;
+}
+
+// Instagram-style logger display component
+function LoggerDisplay({
+  userId,
+  userData: entryUserData,
+}: {
+  userId: string;
+  userData?: { id: string; name: string; nationality: string | null; image?: string | null } | null;
+}) {
+  // Use entry data directly - no need to fetch since entry already has user info
+  // The entry.user object from backend includes: id, name, nationality
+  // Image would need to be added to backend's user relation in log entries
+  const userData = entryUserData;
+  const displayName = userData?.name || "Anonymous";
+  const userImage = entryUserData?.image || null; // Image not included in entry.user yet
+  const avatarSize = 56; // 14 * 4 = 56px (w-14 h-14)
+
+  return (
+    <div className="flex items-center gap-3">
+      <Link
+        href={`/profile/${userId}`}
+        className="flex-shrink-0 hover:opacity-80 transition-opacity"
+      >
+        {userImage ? (
+          <div className="relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-200">
+            <Image
+              src={userImage}
+              alt={`${displayName}'s avatar`}
+              width={avatarSize}
+              height={avatarSize}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-semibold text-lg shadow-sm ring-2 ring-gray-200">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </Link>
+      <Link
+        href={`/profile/${userId}`}
+        className="text-[var(--color-text-primary)] font-primary font-semibold text-sm hover:text-[var(--color-tertiary)] transition-colors"
+      >
+        {displayName}
+      </Link>
+    </div>
+  );
 }
 
 export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
@@ -108,10 +156,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 md:py-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {/* Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8 p-4 md:p-6">
             {/* Main Content - 2/3 width on desktop (or full width if no media) */}
             <div
               className={`${hasMedia ? "lg:col-span-2 lg:order-1" : "lg:col-span-3"} space-y-4 md:space-y-6`}
@@ -136,6 +184,36 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
                       : "No location specified"}
                   </p>
+                </div>
+
+                {/* Logger Info - positioned below location and above stars - Instagram style */}
+                <div className="space-y-2">
+                  <h2 className="font-primary text-[12px] text-[var(--color-text-secondary)] font-medium uppercase tracking-wide">
+                    Logger
+                  </h2>
+                  {entry.isAnonymous ? (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-medium text-xl shadow-sm flex-shrink-0">
+                        A
+                      </div>
+                      <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm">
+                        Anonymous
+                      </p>
+                    </div>
+                  ) : entry.userId ? (
+                    <LoggerDisplay userId={entry.userId} userData={entry.user} />
+                  ) : entry.user?.id ? (
+                    <LoggerDisplay userId={entry.user.id} userData={entry.user} />
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-medium text-xl shadow-sm flex-shrink-0">
+                        A
+                      </div>
+                      <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm">
+                        {entry.surferName || "Anonymous"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3">
@@ -230,46 +308,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   </div>
                 </div>
               )}
-
-              {/* Logger Info */}
-              <div className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200">
-                <h2 className="font-primary text-xs text-[var(--color-text-secondary)] mb-2 font-medium">
-                  Logger
-                </h2>
-
-                {!entry.isAnonymous && entry.userId ? (
-                  <div className="space-y-2">
-                    <ProfileHeader
-                      userId={entry.userId}
-                      isOwnProfile={false}
-                      nationalitySelector={null}
-                    />
-                    <div className="pt-2">
-                      <BlueStarRating
-                        score={entry.surferRating || 0}
-                        outOfFive={true}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white font-medium text-lg md:text-xl shadow-sm">
-                        A
-                      </div>
-                      <p className="text-[var(--color-text-primary)] font-primary font-medium text-sm md:text-base">
-                        Anonymous
-                      </p>
-                    </div>
-                    <div className="pt-2">
-                      <BlueStarRating
-                        score={entry.surferRating || 0}
-                        outOfFive={true}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Right Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
