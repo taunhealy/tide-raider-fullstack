@@ -110,9 +110,10 @@ function RegionalHighScoresContent({
       return Array.isArray(data.beaches) ? data : { beaches: [] };
     },
     enabled: !!selectedRegion && !!today, // Only run query when we have region and date
-    staleTime: 0, // Always consider data stale - refetch on mount/window focus
-    refetchOnMount: true, // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
     retry: 0, // Don't retry on error to avoid hitting rate limits
   });
 
@@ -195,9 +196,23 @@ function RegionalHighScoresContent({
 
                 // Lock the first 5 items for all time periods for non-premium users
                 // This consistently locks the top locations regardless of time period
-                // During initial load, assume not locked to avoid hydration mismatch
+                // Only lock if subscription status has been loaded and user is not premium
                 const isLocked =
                   !isSubscriptionLoading && index < 5 && !isPremium && !!today;
+
+                // Debug logging for first item to verify gating
+                if (index === 0 && !isSubscriptionLoading) {
+                  console.log("[RegionalHighScores] First item gating check:", {
+                    index,
+                    isSubscriptionLoading,
+                    isPremium,
+                    isSubscribed,
+                    hasActiveTrial,
+                    subscriptionStatus,
+                    today,
+                    isLocked,
+                  });
+                }
 
                 return (
                   <div
