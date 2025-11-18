@@ -65,8 +65,12 @@ export function RaidLogForm({
       userId: user?.id,
       email: user?.email,
       authStatus,
+      sessionData: session,
     });
   }, [session, user, authStatus]);
+
+  // Wait for auth to load before checking user
+  const isAuthLoading = authStatus === "loading";
   const { data: beachesFromHook, isLoading } = useBeaches();
   // Use prop beaches if provided, otherwise use hook data
   const beaches = beachesProp || beachesFromHook;
@@ -435,6 +439,12 @@ export function RaidLogForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Wait for auth to finish loading
+    if (isAuthLoading) {
+      toast.info("Please wait while we verify your authentication...");
+      return;
+    }
+
     if (!user) {
       saveFormState();
       toast.error("Please sign in to log your session", {
@@ -586,7 +596,12 @@ export function RaidLogForm({
       // Wait a moment for query invalidation to complete
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      router.push("/raidlogs");
+      // Redirect to /raidlogs/new for new posts, /raidlogs for edits
+      if (entry?.id) {
+        router.push("/raidlogs");
+      } else {
+        router.push("/raidlogs/new");
+      }
       if (onClose) onClose();
     } catch (error) {
       console.error("Form submission error:", error);
@@ -664,6 +679,17 @@ export function RaidLogForm({
   }, [user, videoPreview]);
 
   if (!isOpen) return null;
+
+  // Show loading state while auth is being checked
+  if (isAuthLoading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white p-6 rounded-lg">
+          <p className="font-primary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -893,7 +919,7 @@ export function RaidLogForm({
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 20 seconds, 50MB)
+                        Upload Video File (Max 60 seconds, 20MB)
                       </label>
                       <input
                         type="file"
@@ -1108,11 +1134,13 @@ export function RaidLogForm({
               >
                 {isSubmitting
                   ? "Submitting..."
-                  : !user
-                    ? "Sign In to Log Session"
-                    : entry
-                      ? "Update Session"
-                      : "Log Session"}
+                  : isAuthLoading
+                    ? "Loading..."
+                    : !user
+                      ? "Sign In to Log Session"
+                      : entry
+                        ? "Update Session"
+                        : "Log Session"}
               </Button>
             </div>
           </form>

@@ -2,6 +2,7 @@
 
 import { Button } from "../ui/Button";
 import { LogVisibilityToggle } from "../LogVisibilityToggle";
+import { useRouter } from "next/navigation";
 
 interface User {
   id?: string;
@@ -16,7 +17,6 @@ interface HeaderProps {
   isPrivate: boolean;
   onPrivateToggle: () => void;
   onFilterOpen: () => void;
-  onModalOpen: () => void;
   session: { user: User } | null;
 }
 
@@ -24,9 +24,15 @@ export function Header({
   isPrivate,
   onPrivateToggle,
   onFilterOpen,
-  onModalOpen,
   session,
 }: HeaderProps) {
+  const router = useRouter();
+
+  const handlePostClick = () => {
+    // Redirect to /raidlogs/new page
+    router.push("/raidlogs/new");
+  };
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 w-full">
       <div className="w-full border-b border-gray-200 pb-3 sm:border-0 sm:pb-0">
@@ -39,7 +45,7 @@ export function Header({
         <Button
           size="sm"
           className="whitespace-nowrap hover:bg-gray-50 transition-colors"
-          onClick={onModalOpen}
+          onClick={handlePostClick}
         >
           Post
         </Button>

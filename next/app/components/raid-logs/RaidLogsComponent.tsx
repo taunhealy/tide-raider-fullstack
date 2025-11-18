@@ -6,7 +6,6 @@ import { useBeaches } from "@/app/hooks/useBeaches";
 import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
 import { Beach as BeachType } from "@/app/types/beaches";
 import { RaidLogFilter } from "@/app/components/raid-logs/RaidLogFilter";
-import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 import ActiveFilterBadges from "@/app/components/ActiveFiltersBadges";
 import { toast } from "sonner";
 import { handleSignIn } from "@/app/lib/auth-utils";
@@ -42,7 +41,6 @@ export function RaidLogsComponent({
 
   // State hooks
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBeach, setSelectedBeach] = useState<BeachType | null>(null);
 
   // Data fetching hooks
@@ -116,7 +114,6 @@ export function RaidLogsComponent({
               isPrivate={filters.isPrivate}
               onPrivateToggle={handlePrivateToggle}
               onFilterOpen={() => setIsFilterOpen(true)}
-              onModalOpen={() => setIsModalOpen(true)}
               session={session}
             />
 
@@ -155,11 +152,6 @@ export function RaidLogsComponent({
               onReset={resetFilters}
               isOpen={isFilterOpen}
               onClose={() => setIsFilterOpen(false)}
-            />
-
-            <RaidLogForm
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
             />
 
             {selectedBeach && (
