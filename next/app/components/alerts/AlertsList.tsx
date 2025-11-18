@@ -6,8 +6,12 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import api from "@/app/lib/api-client";
 
-import { Alert, AlertProperty, NotificationMethod } from "@/app/types/alerts";
-import { AlertType } from "@prisma/client";
+import {
+  Alert,
+  AlertProperty,
+  NotificationMethod,
+  AlertType,
+} from "@/app/types/alerts";
 import { AlertCard } from "./AlertCard";
 import { PropertyDisplay } from "./AlertProperties";
 import { AlertCardSkeleton } from "./AlertCardSkeleton";
@@ -129,9 +133,8 @@ export function AlertsList() {
   const filteredAlerts =
     alerts?.filter((alert) => {
       if (activeTab === "all") return true;
-      if (activeTab === "variable")
-        return alert.alertType === AlertType.VARIABLES;
-      if (activeTab === "rating") return alert.alertType === AlertType.RATING;
+      if (activeTab === "variable") return alert.alertType === "VARIABLES";
+      if (activeTab === "rating") return alert.alertType === "RATING";
       return true;
     }) ?? [];
 
@@ -162,8 +165,7 @@ export function AlertsList() {
           >
             Variable Alerts
             <span className="ml-1 sm:ml-2 text-xs bg-[var(--color-bg-secondary)] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-              {alerts?.filter((a) => a.alertType === AlertType.VARIABLES)
-                .length ?? 0}
+              {alerts?.filter((a) => a.alertType === "VARIABLES").length ?? 0}
             </span>
           </button>
           <button
@@ -176,8 +178,7 @@ export function AlertsList() {
           >
             Rating Alerts
             <span className="ml-1 sm:ml-2 text-xs bg-[var(--color-bg-secondary)] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-              {alerts?.filter((a) => a.alertType === AlertType.RATING).length ??
-                0}
+              {alerts?.filter((a) => a.alertType === "RATING").length ?? 0}
             </span>
           </button>
         </div>

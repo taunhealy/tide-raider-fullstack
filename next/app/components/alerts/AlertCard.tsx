@@ -1,5 +1,6 @@
 // AlertCard.tsx
-import { Alert as PrismaAlert, AlertType, AlertProperty } from "@prisma/client";
+import { AlertType } from "@/app/types/alerts";
+import { Alert, AlertProperty } from "@/app/types/alerts";
 import { Card, CardContent, CardHeader } from "@/app/components/ui/Card";
 import { Button } from "@/app/components/ui/Button";
 import { Switch } from "@/app/components/ui/switch";
@@ -15,8 +16,8 @@ import { AlertProperties } from "./AlertProperties";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { formatNotificationMethod } from "@/app/lib/formatters";
 
-// Create an extended type that includes the properties relation
-type Alert = PrismaAlert & {
+// Extended Alert type with optional relations
+type AlertWithRelations = Alert & {
   properties?: AlertProperty[];
   beach?: {
     id: string;
@@ -29,7 +30,7 @@ type Alert = PrismaAlert & {
 };
 
 interface AlertCardProps {
-  alert: Alert;
+  alert: AlertWithRelations;
   onToggleActive: (id: string, active: boolean) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;

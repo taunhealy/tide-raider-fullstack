@@ -16,6 +16,8 @@ router.get(
       const regionId = req.query.regionId as string;
       const forceRefresh = req.query.forceRefresh === "true";
       const forecastDateParam = req.query.forecastDate as string | undefined;
+      const sourceParam =
+        (req.query.source as "WINDFINDER" | "WINDGURU") || "WINDFINDER";
 
       if (!regionId) {
         return res.status(400).json({ error: "Region ID is required" });
@@ -35,59 +37,94 @@ router.get(
           where: {
             regionId,
             date: targetDate,
-            source: "WINDFINDER", // Prefer WINDFINDER source
+            source: sourceParam,
           },
         });
 
-        // If not found, trigger scrape to get all available forecast days
+        // If not found, trigger scrape for the requested source
         if (!forecast) {
           console.log(
-            `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+            `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), triggering scrape...`
           );
-          
-          // Force a scrape - this will fetch ALL available forecast days and store them
-          const scrapedForecast = await getLatestConditions(regionId, true);
-          
-          if (scrapedForecast) {
-            console.log(
-              `[forecast] ✅ Scrape completed, querying for target date: ${targetDate.toISOString().split("T")[0]}`
+
+          // Force a scrape for the requested source only
+          try {
+            const scrapedForecast = await getLatestConditions(
+              regionId,
+              true,
+              sourceParam
             );
-            
+            console.log(
+              `[forecast] ✅ Scrape completed for ${sourceParam}, querying for target date: ${targetDate.toISOString().split("T")[0]}`
+            );
+
             // Query again after scraping
             forecast = await prisma.forecast.findFirst({
               where: {
                 regionId,
                 date: targetDate,
-                source: "WINDFINDER", // Prefer WINDFINDER source
+                source: sourceParam,
               },
             });
-            
+
             if (forecast) {
               console.log(
-                `[forecast] ✅ Found forecast for ${targetDate.toISOString().split("T")[0]} after scrape`
+                `[forecast] ✅ Found forecast for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}) after scrape`
               );
             } else {
               console.log(
-                `[forecast] ⚠️ Still no forecast for ${targetDate.toISOString().split("T")[0]} after scrape - may not be available on source page`
+                `[forecast] ⚠️ Still no forecast for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}) after scrape - may not be available on source page`
               );
             }
+          } catch (scrapeError) {
+            console.error(
+              `[forecast] ❌ Error scraping ${sourceParam} for ${targetDate.toISOString().split("T")[0]}:`,
+              scrapeError
+            );
+            // Don't throw - let it return 404 below
           }
         }
 
         if (forecast) {
+          // Validate that the forecast has the correct source
+          const forecastSource = (forecast as any).source;
+          if (forecastSource && forecastSource !== sourceParam) {
+            console.error(
+              `[forecast] ⚠️ WARNING: Forecast source mismatch! Requested: ${sourceParam}, Got: ${forecastSource}`
+            );
+          }
+          console.log(
+            `[forecast] 📤 Returning forecast for ${targetDate.toISOString().split("T")[0]} (source: ${forecastSource || "unknown"})`
+          );
           return res.json(forecast);
         }
 
-        return res.status(404).json({ error: "No forecast data found for the requested date" });
+        return res
+          .status(404)
+          .json({ error: "No forecast data found for the requested date" });
       }
 
       // Use the existing getLatestConditions function that handles scraping and caching
-      const forecast = await getLatestConditions(regionId, forceRefresh);
+      const forecast = await getLatestConditions(
+        regionId,
+        forceRefresh,
+        sourceParam
+      );
 
       if (!forecast) {
         return res.status(404).json({ error: "No forecast data found" });
       }
 
+      // Validate that the forecast has the correct source
+      const forecastSource = (forecast as any).source;
+      if (forecastSource && forecastSource !== sourceParam) {
+        console.error(
+          `[forecast] ⚠️ WARNING: Forecast source mismatch! Requested: ${sourceParam}, Got: ${forecastSource}`
+        );
+      }
+      console.log(
+        `[forecast] 📤 Returning forecast (source: ${forecastSource || "unknown"}, windSpeed: ${forecast.windSpeed}, swellHeight: ${forecast.swellHeight})`
+      );
       return res.json(forecast);
     } catch (error) {
       console.error("Error fetching forecast data:", error);

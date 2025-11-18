@@ -252,11 +252,18 @@ export const api = {
   },
 
   // Forecast
-  getForecast: async (regionId: string, forecastDate?: string) => {
+  getForecast: async (
+    regionId: string,
+    forecastDate?: string,
+    source?: "WINDFINDER" | "WINDGURU"
+  ) => {
     const params = new URLSearchParams();
     params.append("regionId", regionId);
     if (forecastDate) {
       params.append("forecastDate", forecastDate);
+    }
+    if (source) {
+      params.append("source", source);
     }
     return apiRequest<any>(`/api/forecast?${params.toString()}`);
   },

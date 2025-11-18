@@ -22,8 +22,15 @@ export interface BeachDetails {
 
 // Type definitions (replacing Prisma imports)
 export type AlertType = "VARIABLES" | "RATING";
+
+// AlertType enum values for runtime use
+export const AlertType = {
+  VARIABLES: "VARIABLES" as const,
+  RATING: "RATING" as const,
+} as const;
 export type AlertProperty = {
   id?: string;
+  alertId?: string; // Optional, may not be present in all contexts
   property: ForecastProperty;
   range: number;
   optimalValue?: number; // Optional, used in some contexts
@@ -44,6 +51,7 @@ export interface Alert {
   updatedAt: Date;
   logEntryId: string | null;
   forecastId: string | null;
+  beachId: string | null;
   properties?: AlertProperty[];
 }
 

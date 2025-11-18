@@ -1,5 +1,5 @@
 // AlertProperties.tsx
-import { AlertProperty } from "@prisma/client";
+import { AlertProperty } from "@/app/types/alerts";
 import {
   degreesToCardinal,
   getSwellEmoji,
@@ -62,16 +62,15 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
   const isSwell = propName.includes("swell");
   const bgColor = isWind ? "bg-blue-50" : "bg-cyan-50";
   const textColor = isWind ? "text-blue-800" : "text-cyan-800";
+  const optimalValue = property.optimalValue ?? 0; // Default to 0 if undefined
 
   return (
     <div className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md`}>
       {propName === "windspeed" && (
-        <span className={textColor}>{getWindEmoji(property.optimalValue)}</span>
+        <span className={textColor}>{getWindEmoji(optimalValue)}</span>
       )}
       {propName === "swellheight" && (
-        <span className={textColor}>
-          {getSwellEmoji(property.optimalValue)}
-        </span>
+        <span className={textColor}>{getSwellEmoji(optimalValue)}</span>
       )}
       {propName === "winddirection" && <span className={textColor}>🧭</span>}
       {propName === "swellperiod" && <span className={textColor}>⏱️</span>}
@@ -82,8 +81,8 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
         </span>
         <p className={`font-medium ${textColor} font-primary text-sm`}>
           {propName.includes("direction")
-            ? `${degreesToCardinal(property.optimalValue)} (${property.optimalValue}°)`
-            : `${property.optimalValue} ${getUnit(property.property)}`}
+            ? `${degreesToCardinal(optimalValue)} (${optimalValue}°)`
+            : `${optimalValue} ${getUnit(property.property)}`}
         </p>
         <span className="text-xs text-gray-500">
           ±{property.range} {getUnit(property.property)}

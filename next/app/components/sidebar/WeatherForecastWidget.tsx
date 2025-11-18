@@ -1,12 +1,14 @@
 "use client";
 
 // components/sidebar/WeatherForecastWidget.tsx
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { degreesToCardinal } from "@/app/lib/surfUtils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
+
+type ForecastSource = "WINDFINDER" | "WINDGURU";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -29,6 +31,8 @@ export default function WeatherForecastWidget() {
   const {
     filters: { regionId, forecastDate },
   } = useBeachFilters();
+  const [selectedSource, setSelectedSource] =
+    useState<ForecastSource>("WINDFINDER");
 
   // Normalize date - use today's date if no date is selected
   const normalizedDate = useMemo(() => {
@@ -54,18 +58,22 @@ export default function WeatherForecastWidget() {
     );
   }, [normalizedDate, regionId]);
 
-  // Invalidate and refetch when date changes
+  // Invalidate and refetch when date or source changes
   useEffect(() => {
     if (regionId && normalizedDate) {
-      console.log("[WeatherForecastWidget] Date changed, invalidating query:", {
-        regionId,
-        normalizedDate,
-      });
+      console.log(
+        "[WeatherForecastWidget] Date or source changed, invalidating query:",
+        {
+          regionId,
+          normalizedDate,
+          source: selectedSource,
+        }
+      );
       queryClient.invalidateQueries({
         queryKey: ["forecast", regionId],
       });
     }
-  }, [regionId, normalizedDate, queryClient]);
+  }, [regionId, normalizedDate, selectedSource, queryClient]);
 
   const queryEnabled = !!regionId && !!normalizedDate;
 
@@ -75,18 +83,23 @@ export default function WeatherForecastWidget() {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ["forecast", regionId, normalizedDate],
+    queryKey: ["forecast", regionId, normalizedDate, selectedSource],
     queryFn: async () => {
       console.log(
         "[WeatherForecastWidget] ⚡ Query function called - Fetching forecast:",
         {
           regionId,
           normalizedDate,
-          url: `/api/forecast?regionId=${regionId}&forecastDate=${normalizedDate}`,
+          source: selectedSource,
+          url: `/api/forecast?regionId=${regionId}&forecastDate=${normalizedDate}&source=${selectedSource}`,
         }
       );
       try {
-        const result = await api.getForecast(regionId!, normalizedDate);
+        const result = await api.getForecast(
+          regionId!,
+          normalizedDate,
+          selectedSource
+        );
         console.log(
           "[WeatherForecastWidget] ✅ Forecast data received:",
           result
@@ -203,20 +216,46 @@ export default function WeatherForecastWidget() {
       }}
       data-forecast-widget
     >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
-        <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)] flex-shrink min-w-0">
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-          <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-          <h3
-            className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
-          >
-            {getForecastTitle()}
-          </h3>
-        </div>
-        <div className="flex items-center justify-end flex-shrink-0">
-          <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-3 sm:px-4 py-1.5 rounded-[21px] text-xs sm:text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)] whitespace-nowrap">
-            8AM
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)] flex-shrink min-w-0">
+            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+            <h3
+              className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
+            >
+              {getForecastTitle()}
+            </h3>
           </div>
+          <div className="flex items-center justify-end flex-shrink-0">
+            <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-3 sm:px-4 py-1.5 rounded-[21px] text-xs sm:text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)] whitespace-nowrap">
+              8AM
+            </div>
+          </div>
+        </div>
+
+        {/* Source Selection Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSelectedSource("WINDFINDER")}
+            className={`flex-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-primary transition-all duration-200 ${
+              selectedSource === "WINDFINDER"
+                ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+            }`}
+          >
+            Source A (Windfinder)
+          </button>
+          <button
+            onClick={() => setSelectedSource("WINDGURU")}
+            className={`flex-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-primary transition-all duration-200 ${
+              selectedSource === "WINDGURU"
+                ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+            }`}
+          >
+            Source B (Windguru)
+          </button>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma";
 import { randomUUID } from "crypto";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 import { scraperA } from "../lib/scrapers/scraperA";
+import { scraperB } from "../lib/scrapers/scraperB";
 
 function getTodayDate() {
   const date = new Date();
@@ -11,7 +12,8 @@ function getTodayDate() {
 
 export async function getLatestConditions(
   regionId: string,
-  forceRefresh = false
+  forceRefresh = false,
+  source: "WINDFINDER" | "WINDGURU" = "WINDFINDER"
 ) {
   // First, try to find region by ID (exact match, case-sensitive)
   console.log(
@@ -122,15 +124,15 @@ export async function getLatestConditions(
 
   const today = getTodayDate();
 
-  // Check for existing forecast (prefer WINDFINDER source, fallback to any)
+  // Check for existing forecast with the requested source
   console.log(
-    `[getLatestConditions] 🔍 Querying forecast for regionId: ${region.id}, date: ${today.toISOString()}`
+    `[getLatestConditions] 🔍 Querying forecast for regionId: ${region.id}, date: ${today.toISOString()}, source: ${source}`
   );
   const existingForecast = await prisma.forecast.findFirst({
     where: {
       date: today,
       regionId: region.id,
-      source: "WINDFINDER", // Prefer WINDFINDER source
+      source: source,
     },
   });
 
@@ -138,12 +140,14 @@ export async function getLatestConditions(
     found: !!existingForecast,
     regionId: region.id,
     date: today.toISOString(),
+    source: source,
     forceRefresh,
+    existingSource: existingForecast?.source,
   });
 
   if (existingForecast && !forceRefresh) {
     console.log(
-      `[getLatestConditions] ✅ Found existing forecast for ${region.id} (cached)`
+      `[getLatestConditions] ✅ Found existing forecast for ${region.id} (source: ${source}, cached)`
     );
     return existingForecast;
   }
@@ -178,12 +182,27 @@ export async function getLatestConditions(
   // Use the region.id from database for storing forecast, but use config's regionId for scraping
   const configRegionId = regionConfig.regionId || region.id;
 
+  // Determine which source to scrape
+  const sourceConfig =
+    source === "WINDGURU" ? regionConfig.sourceB : regionConfig.sourceA;
+
+  if (!sourceConfig) {
+    console.error(
+      `[getLatestConditions] ❌ Source ${source} not configured for region ${region.id}. Available: sourceA=${!!regionConfig.sourceA}, sourceB=${!!regionConfig.sourceB}`
+    );
+    return null;
+  }
+
+  console.log(
+    `[getLatestConditions] 🔧 Using ${source === "WINDGURU" ? "sourceB" : "sourceA"} for ${source}`
+  );
+
   try {
     console.log(
-      `[getLatestConditions] 🌐 Scraping forecast for ${region.id} from ${regionConfig.sourceA.url}`
+      `[getLatestConditions] 🌐 Scraping forecast for ${region.id} from ${sourceConfig.url} (source: ${source})`
     );
-    const scrapedForecasts = await scraperA(
-      regionConfig.sourceA.url,
+    const scrapedForecasts = await sourceConfig.scraper(
+      sourceConfig.url,
       configRegionId
     );
 
@@ -212,7 +231,7 @@ export async function getLatestConditions(
           date_regionId_source: {
             date: scrapedForecast.date,
             regionId: region.id, // Use database region ID
-            source: "WINDFINDER", // Source A is WINDFINDER
+            source: source, // Use the requested source
           },
         },
         update: {
@@ -226,7 +245,7 @@ export async function getLatestConditions(
           id: randomUUID(),
           date: scrapedForecast.date,
           regionId: region.id, // Use database region ID
-          source: "WINDFINDER", // Source A is WINDFINDER
+          source: source, // Use the requested source
           windSpeed: scrapedForecast.windSpeed,
           windDirection: scrapedForecast.windDirection,
           swellHeight: scrapedForecast.swellHeight,
@@ -253,7 +272,10 @@ export async function getLatestConditions(
     const forecastToReturn = storedTodayForecast || scrapedForecasts[0];
 
     console.log(
-      `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id}`
+      `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
+    );
+    console.log(
+      `[getLatestConditions] 📤 Returning forecast with source: ${forecastToReturn?.source || "unknown"}, windSpeed: ${forecastToReturn?.windSpeed}, swellHeight: ${forecastToReturn?.swellHeight}`
     );
     return forecastToReturn;
   } catch (error) {
