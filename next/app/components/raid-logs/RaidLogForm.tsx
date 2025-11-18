@@ -71,9 +71,14 @@ export function RaidLogForm({
 
   // Wait for auth to load before checking user
   const isAuthLoading = authStatus === "loading";
-  const { data: beachesFromHook, isLoading } = useBeaches();
+  // Only fetch beaches if not provided as prop
+  const { data: beachesFromHook, isLoading: isBeachesLoadingFromHook } =
+    useBeaches({
+      enabled: !beachesProp || beachesProp.length === 0,
+    });
   // Use prop beaches if provided, otherwise use hook data
   const beaches = beachesProp || beachesFromHook;
+  const isBeachesLoading = !beachesProp && isBeachesLoadingFromHook;
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
@@ -680,8 +685,8 @@ export function RaidLogForm({
 
   if (!isOpen) return null;
 
-  // Show loading state while auth is being checked
-  if (isAuthLoading) {
+  // Show loading state while auth or beaches are being checked
+  if (isAuthLoading || isBeachesLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white p-6 rounded-lg">
