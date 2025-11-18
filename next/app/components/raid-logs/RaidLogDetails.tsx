@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import CommentThread from "@/app/components/comments/CommentThread";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/app/components/ui/Button";
 import type { Prisma } from "@prisma/client";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
@@ -37,7 +36,12 @@ function LoggerDisplay({
   userData: entryUserData,
 }: {
   userId: string;
-  userData?: { id: string; name: string; nationality: string | null; image?: string | null } | null;
+  userData?: {
+    id: string;
+    name: string;
+    nationality: string | null;
+    image?: string | null;
+  } | null;
 }) {
   // Use entry data directly - no need to fetch since entry already has user info
   // The entry.user object from backend includes: id, name, nationality
@@ -201,9 +205,15 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       </p>
                     </div>
                   ) : entry.userId ? (
-                    <LoggerDisplay userId={entry.userId} userData={entry.user} />
+                    <LoggerDisplay
+                      userId={entry.userId}
+                      userData={entry.user}
+                    />
                   ) : entry.user?.id ? (
-                    <LoggerDisplay userId={entry.user.id} userData={entry.user} />
+                    <LoggerDisplay
+                      userId={entry.user.id}
+                      userData={entry.user}
+                    />
                   ) : (
                     <div className="flex items-center gap-3">
                       <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-medium text-xl shadow-sm flex-shrink-0">

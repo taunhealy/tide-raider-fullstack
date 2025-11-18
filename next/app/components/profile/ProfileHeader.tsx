@@ -36,9 +36,16 @@ function ProfileHeaderContent({
     queryKey: ["profileHeader", userId],
     queryFn: async () => {
       const res = await fetch(`/api/user/${userId}/profile`);
-      if (!res.ok) throw new Error("Failed to fetch profile data");
+      if (!res.ok) {
+        // If endpoint returns 501 (Not Implemented), return null to show fallback
+        if (res.status === 501) {
+          return null;
+        }
+        throw new Error("Failed to fetch profile data");
+      }
       return res.json();
     },
+    retry: false, // Don't retry on 501 errors
   });
 
   const [imageError, setImageError] = useState(false);
@@ -51,6 +58,21 @@ function ProfileHeaderContent({
           <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
           <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
           <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  // If userData is null (501 error), show fallback
+  if (!userData && !isLoading) {
+    return (
+      <div className="flex items-start gap-4 mb-6">
+        <div className="w-20 h-20 rounded-full bg-[var(--color-tertiary)] text-white flex items-center justify-center font-medium text-xl">
+          ?
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold font-primary">User</h1>
+          <p className="text-sm text-gray-500 mt-1">Profile data unavailable</p>
         </div>
       </div>
     );
