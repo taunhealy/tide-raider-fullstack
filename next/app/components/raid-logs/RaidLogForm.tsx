@@ -10,6 +10,7 @@ import { Button } from "@/app/components/ui/Button";
 import {
   validateFile,
   compressImageIfNeeded,
+  compressVideoIfNeeded,
   validateVideoFile,
   getVideoDuration,
   MAX_VIDEO_DURATION,
@@ -109,6 +110,8 @@ export function RaidLogForm({
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>("");
   const [isValidatingVideo, setIsValidatingVideo] = useState(false);
+  const [isCompressingVideo, setIsCompressingVideo] = useState(false);
+  const [videoCompressionProgress, setVideoCompressionProgress] = useState(0);
 
   console.log("useForecast params:", {
     regionId: selectedBeach?.regionId || "",
@@ -631,8 +634,8 @@ export function RaidLogForm({
                 if (selectedVideo.size > 4.5 * 1024 * 1024) {
                   setIsSubmitting(false);
                   toast.error(
-                    `Video file (${fileSizeMB}MB) cannot be uploaded directly due to CORS restrictions. Files over 4.5MB must be compressed to under 4.5MB to use the standard upload. Please compress your video and try again.`,
-                    { duration: 8000 }
+                    `Video file (${fileSizeMB}MB) cannot be uploaded directly due to CORS restrictions. Please try compressing your video using external tools, or use a YouTube/Vimeo link instead.`,
+                    { duration: 10000 }
                   );
                   return;
                 }
@@ -1158,8 +1161,54 @@ export function RaidLogForm({
                             return;
                           }
 
-                          setSelectedVideo(file);
-                          setVideoPreview(URL.createObjectURL(file));
+                          // If file is over 4.5MB, attempt compression
+                          const FILE_SIZE_THRESHOLD = 4.5 * 1024 * 1024;
+                          if (file.size > FILE_SIZE_THRESHOLD) {
+                            setIsCompressingVideo(true);
+                            setVideoCompressionProgress(0);
+                            
+                            try {
+                              const compressedFile = await compressVideoIfNeeded(
+                                file,
+                                (progress) => {
+                                  setVideoCompressionProgress(progress);
+                                }
+                              );
+
+                              if (compressedFile.size < file.size) {
+                                toast.success(
+                                  `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
+                                );
+                                setSelectedVideo(compressedFile);
+                                setVideoPreview(URL.createObjectURL(compressedFile));
+                              } else {
+                                // Compression didn't help, use original but warn user
+                                toast.warning(
+                                  `Video is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Compression didn't reduce size. Consider using a YouTube/Vimeo link for large videos.`,
+                                  { duration: 6000 }
+                                );
+                                setSelectedVideo(file);
+                                setVideoPreview(URL.createObjectURL(file));
+                              }
+                            } catch (compressionError) {
+                              console.error("Video compression failed:", compressionError);
+                              toast.warning(
+                                `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) may not upload successfully. Consider using a YouTube/Vimeo link instead.`,
+                                { duration: 8000 }
+                              );
+                              // Still allow user to try uploading
+                              setSelectedVideo(file);
+                              setVideoPreview(URL.createObjectURL(file));
+                            } finally {
+                              setIsCompressingVideo(false);
+                              setVideoCompressionProgress(0);
+                            }
+                          } else {
+                            // File is small enough, use as-is
+                            setSelectedVideo(file);
+                            setVideoPreview(URL.createObjectURL(file));
+                          }
+
                           setVideoUrl(""); // Clear URL if file is selected
                           setVideoPlatform(null);
                         }}
@@ -1167,9 +1216,22 @@ export function RaidLogForm({
                         aria-label="Upload video file"
                       />
                       {isValidatingVideo && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-1 font-primary">
                           Validating video...
                         </p>
+                      )}
+                      {isCompressingVideo && (
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500 mb-1 font-primary">
+                            Compressing video... {Math.round(videoCompressionProgress)}%
+                          </p>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-[var(--color-tertiary)] h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${videoCompressionProgress}%` }}
+                            />
+                          </div>
+                        </div>
                       )}
                       {selectedVideo && (
                         <div className="mt-2 space-y-2">

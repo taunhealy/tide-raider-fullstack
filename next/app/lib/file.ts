@@ -117,7 +117,7 @@ export async function validateVideoFile(
       fileSize: file.size,
       fileType: file.type,
     });
-    
+
     // Use a small tolerance for floating point comparison (0.1 seconds)
     if (duration > MAX_VIDEO_DURATION + 0.1) {
       return {
@@ -141,7 +141,7 @@ export function getVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "metadata";
-    
+
     // Set a timeout to prevent hanging
     const timeout = setTimeout(() => {
       window.URL.revokeObjectURL(video.src);
@@ -157,14 +157,14 @@ export function getVideoDuration(file: File): Promise<number> {
         isFinite: isFinite(duration),
         fileName: file.name,
       });
-      
+
       // Check if duration is valid
       if (isNaN(duration) || !isFinite(duration) || duration <= 0) {
         window.URL.revokeObjectURL(video.src);
         reject(new Error(`Invalid video duration: ${duration}`));
         return;
       }
-      
+
       window.URL.revokeObjectURL(video.src);
       resolve(duration);
     };
@@ -172,7 +172,8 @@ export function getVideoDuration(file: File): Promise<number> {
     video.onerror = (e) => {
       clearTimeout(timeout);
       window.URL.revokeObjectURL(video.src);
-      const errorMessage = video.error?.message || "Failed to load video metadata";
+      const errorMessage =
+        video.error?.message || "Failed to load video metadata";
       console.error("[getVideoDuration] Video error:", {
         error: errorMessage,
         errorCode: video.error?.code,
@@ -243,5 +244,258 @@ export async function compressImageIfNeeded(file: File): Promise<File> {
     };
 
     img.src = URL.createObjectURL(file);
+  });
+}
+
+// Threshold for when to use presigned URLs (4.5MB)
+const PRESIGNED_UPLOAD_THRESHOLD = 4.5 * 1024 * 1024;
+
+// Compress video if needed (returns a Promise<File>)
+// This function attempts to compress videos over 4.5MB to avoid CORS issues with presigned URLs
+// Note: Client-side video compression is limited. For best results, users should compress videos
+// before uploading or use YouTube/Vimeo links for large videos.
+export async function compressVideoIfNeeded(
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<File> {
+  // Only compress if file is over the threshold
+  if (file.size <= PRESIGNED_UPLOAD_THRESHOLD) {
+    return file;
+  }
+
+  // Check if MediaRecorder is available
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) {
+    console.warn(
+      "[compressVideoIfNeeded] MediaRecorder not available, returning original file"
+    );
+    return file;
+  }
+
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true; // Required for autoplay in most browsers
+    video.playsInline = true;
+    const objectUrl = URL.createObjectURL(file);
+
+    let mediaRecorder: MediaRecorder | null = null;
+    const chunks: Blob[] = [];
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl);
+      if (video.src) {
+        video.src = "";
+      }
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        try {
+          mediaRecorder.stop();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+
+    video.onloadedmetadata = async () => {
+      try {
+        // Calculate target dimensions (max 1280px width/height to reduce file size)
+        let { videoWidth, videoHeight } = video;
+        const maxDimension = 1280;
+        let targetWidth = videoWidth;
+        let targetHeight = videoHeight;
+
+        if (videoWidth > maxDimension || videoHeight > maxDimension) {
+          if (videoWidth > videoHeight) {
+            targetWidth = maxDimension;
+            targetHeight = Math.round(
+              (videoHeight / videoWidth) * maxDimension
+            );
+          } else {
+            targetHeight = maxDimension;
+            targetWidth = Math.round((videoWidth / videoHeight) * maxDimension);
+          }
+        }
+
+        // Create canvas for video processing
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d", { willReadFrequently: false });
+
+        if (!ctx) {
+          cleanup();
+          reject(new Error("Failed to get canvas context"));
+          return;
+        }
+
+        // Find a supported codec
+        const codecs = [
+          "video/webm;codecs=vp9",
+          "video/webm;codecs=vp8",
+          "video/webm",
+        ];
+
+        let selectedCodec = "";
+        for (const codec of codecs) {
+          if (MediaRecorder.isTypeSupported(codec)) {
+            selectedCodec = codec;
+            break;
+          }
+        }
+
+        if (!selectedCodec) {
+          cleanup();
+          console.warn(
+            "[compressVideoIfNeeded] No supported codec found, returning original file"
+          );
+          resolve(file);
+          return;
+        }
+
+        // Create a stream from the canvas
+        const stream = canvas.captureStream(30); // 30 fps
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: selectedCodec,
+          videoBitsPerSecond: 2000000, // 2 Mbps - lower bitrate for smaller files
+        });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          cleanup();
+          const blob = new Blob(chunks, { type: selectedCodec.split(";")[0] });
+          const compressedFile = new File(
+            [blob],
+            file.name.replace(/\.[^/.]+$/, ".webm"),
+            {
+              type: selectedCodec.split(";")[0],
+              lastModified: Date.now(),
+            }
+          );
+
+          // Check if compression actually reduced size
+          if (compressedFile.size < file.size && compressedFile.size > 0) {
+            console.log(
+              `[compressVideoIfNeeded] Compression successful: ${(file.size / (1024 * 1024)).toFixed(2)}MB -> ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
+            );
+            resolve(compressedFile);
+          } else {
+            console.warn(
+              "[compressVideoIfNeeded] Compression did not reduce size or resulted in empty file, returning original"
+            );
+            resolve(file);
+          }
+        };
+
+        mediaRecorder.onerror = (event) => {
+          cleanup();
+          console.error("[compressVideoIfNeeded] MediaRecorder error:", event);
+          reject(new Error("Video compression failed"));
+        };
+
+        // Draw video frames to canvas and record
+        let lastTime = 0;
+        const duration = video.duration;
+        let animationFrameId: number;
+
+        const drawFrame = (currentTime: number) => {
+          if (video.ended) {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+              mediaRecorder.stop();
+            }
+            if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+            }
+            return;
+          }
+
+          ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+
+          // Update progress
+          if (onProgress && duration > 0) {
+            const progress = (video.currentTime / duration) * 100;
+            onProgress(Math.min(progress, 100));
+          }
+
+          animationFrameId = requestAnimationFrame(drawFrame);
+        };
+
+        video.onplay = () => {
+          if (mediaRecorder && mediaRecorder.state === "inactive") {
+            mediaRecorder.start(100); // Collect data every 100ms
+          }
+          animationFrameId = requestAnimationFrame(drawFrame);
+        };
+
+        video.onended = () => {
+          if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+          }
+          if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+          }
+        };
+
+        // Set video dimensions and start
+        video.width = targetWidth;
+        video.height = targetHeight;
+        video.currentTime = 0;
+
+        // Start playing (muted for autoplay)
+        video.play().catch((error) => {
+          cleanup();
+          console.error("[compressVideoIfNeeded] Error playing video:", error);
+          reject(new Error("Failed to play video for compression"));
+        });
+
+        // Set a timeout to prevent hanging
+        let timeout: NodeJS.Timeout | null = setTimeout(
+          () => {
+            cleanup();
+            if (animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+            }
+            reject(new Error("Video compression timed out"));
+          },
+          (duration + 10) * 1000
+        ); // Add 10 seconds buffer
+
+        // Clear timeout when done
+        const originalOnStop = mediaRecorder.onstop;
+        mediaRecorder.onstop = (event) => {
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
+          if (originalOnStop && mediaRecorder) {
+            originalOnStop.call(mediaRecorder, event);
+          }
+        };
+      } catch (error) {
+        cleanup();
+        console.error(
+          "[compressVideoIfNeeded] Error setting up compression:",
+          error
+        );
+        reject(
+          new Error(
+            `Video compression failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          )
+        );
+      }
+    };
+
+    video.onerror = (e) => {
+      cleanup();
+      const errorMessage =
+        video.error?.message || "Failed to load video for compression";
+      console.error("[compressVideoIfNeeded] Video load error:", errorMessage);
+      reject(new Error(errorMessage));
+    };
+
+    video.src = objectUrl;
   });
 }
