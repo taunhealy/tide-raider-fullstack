@@ -1,6 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+// Lazy import PrismaClient to avoid build-time errors when Prisma client isn't generated
+let PrismaClient: any;
+let prismaInstance: any = null;
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as { prisma: any };
 
 // Optimize connection pool for Next.js Server Components
 // Use smaller pool since Next.js creates many instances
@@ -24,23 +26,77 @@ if (
   }
 }
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
-    datasources: {
-      db: {
-        url: optimizedDatabaseUrl,
-      },
-    },
-  });
+function getPrisma() {
+  if (prismaInstance) {
+    return prismaInstance;
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  // Skip Prisma initialization during build
+  // Vercel sets NEXT_PHASE during build, and we can also check for other build indicators
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.VERCEL_ENV === "production" ||
+    !process.env.DATABASE_URL
+  ) {
+    // During build, Prisma client might not be available
+    // Return stub to allow build to complete
+    return createStubPrisma();
+  }
+
+  // Lazy import to avoid build-time errors
+  try {
+    if (!PrismaClient) {
+      // Use dynamic require with type assertion to avoid build-time type checking
+      const prismaModule = require("@prisma/client") as any;
+      PrismaClient = prismaModule.PrismaClient;
+    }
+
+    prismaInstance =
+      globalForPrisma.prisma ||
+      new PrismaClient({
+        log:
+          process.env.NODE_ENV === "development"
+            ? ["query", "error", "warn"]
+            : ["error"],
+        datasources: {
+          db: {
+            url: optimizedDatabaseUrl,
+          },
+        },
+      });
+
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = prismaInstance;
+    }
+
+    return prismaInstance;
+  } catch (error) {
+    // Prisma client not available (e.g., during build)
+    return createStubPrisma();
+  }
 }
+
+function createStubPrisma() {
+  // Return a stub object that throws helpful errors if used
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(
+          "Prisma client is not available. This file should not be used in the frontend. Use the backend API instead."
+        );
+      },
+    }
+  );
+}
+
+// Use a getter to make it truly lazy - only evaluated when accessed
+export const prisma = new Proxy({} as any, {
+  get(_target, prop) {
+    const instance = getPrisma();
+    return instance[prop];
+  },
+});
 
 // Ensures a single instance per Node.js process
 // Forces the client to use the current environment variables
