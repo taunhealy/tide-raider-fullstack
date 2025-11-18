@@ -530,56 +530,70 @@ export function RaidLogForm({
         }
 
         try {
-          const formData = new FormData();
-          formData.append("file", selectedVideo);
-          formData.append("type", "video");
-
-          const response = await fetch("/api/upload", {
+          // Step 1: Get presigned URL
+          const presignedResponse = await fetch("/api/upload/presigned", {
             method: "POST",
-            body: formData,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              fileName: selectedVideo.name,
+              fileType: selectedVideo.type,
+              fileSize: selectedVideo.size,
+            }),
           });
 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
+          if (!presignedResponse.ok) {
+            const errorData = await presignedResponse.json().catch(() => ({}));
             let errorMessage =
-              errorData.error || errorData.message || "Failed to upload video";
+              errorData.error ||
+              errorData.message ||
+              "Failed to get upload URL";
 
-            // Provide more specific error messages
-            if (response.status === 413) {
+            if (presignedResponse.status === 413) {
               const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
                 2
               );
               errorMessage =
                 errorData.error ||
-                `Video file is too large (${fileSizeMB}MB). The platform limit is 4.5MB. Please compress your video to under 4.5MB or use a shorter video. Maximum allowed size is 20MB, but files over 4.5MB must be compressed first.`;
-            } else if (response.status === 400) {
+                `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 20MB.`;
+            } else if (presignedResponse.status === 400) {
               errorMessage =
                 errorData.error ||
                 "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
             }
 
             console.error(
-              "[RaidLogForm] Video upload error:",
+              "[RaidLogForm] Presigned URL error:",
               errorMessage,
               errorData,
-              `Status: ${response.status}`
+              `Status: ${presignedResponse.status}`
             );
             toast.error(`Video upload failed: ${errorMessage}`);
-            // Stop submission if video upload fails - user should fix the issue
             setIsSubmitting(false);
             return;
-          } else {
-            const data = await response.json();
-            uploadedVideoUrlFinal = data.videoUrl;
-            if (!uploadedVideoUrlFinal) {
-              console.warn(
-                "[RaidLogForm] Video upload succeeded but no videoUrl returned"
-              );
-              toast.warning(
-                "Video uploaded but URL not received. Log will be created without video."
-              );
-            }
           }
+
+          const { presignedUrl, publicUrl } = await presignedResponse.json();
+
+          // Step 2: Upload directly to R2 using presigned URL
+          const uploadResponse = await fetch(presignedUrl, {
+            method: "PUT",
+            body: selectedVideo,
+            headers: {
+              "Content-Type": selectedVideo.type,
+            },
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error(
+              `Upload failed with status ${uploadResponse.status}`
+            );
+          }
+
+          uploadedVideoUrlFinal = publicUrl;
+          console.log("[RaidLogForm] Video uploaded successfully:", publicUrl);
         } catch (uploadError) {
           console.error("[RaidLogForm] Video upload exception:", uploadError);
           toast.error(
@@ -991,10 +1005,6 @@ export function RaidLogForm({
                     <div>
                       <label className="block text-sm font-primary mb-1">
                         Upload Video File (Max 60 seconds, 20MB)
-                        <span className="text-xs text-gray-500 block mt-1">
-                          Note: Files over 4.5MB must be compressed first due to
-                          platform limits
-                        </span>
                       </label>
                       <input
                         type="file"
