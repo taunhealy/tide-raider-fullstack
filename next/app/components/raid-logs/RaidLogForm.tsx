@@ -573,13 +573,29 @@ export function RaidLogForm({
               );
 
               // Step 2: Upload directly to R2 using presigned URL
-              const uploadResponse = await fetch(presignedUrl, {
-                method: "PUT",
-                body: selectedVideo,
-                headers: {
-                  "Content-Type": selectedVideo.type,
-                },
-              });
+              let uploadResponse;
+              try {
+                uploadResponse = await fetch(presignedUrl, {
+                  method: "PUT",
+                  body: selectedVideo,
+                  headers: {
+                    "Content-Type": selectedVideo.type,
+                  },
+                });
+              } catch (fetchError: any) {
+                // CORS errors typically result in a failed fetch with status 0
+                if (
+                  fetchError.name === "TypeError" ||
+                  fetchError.message?.includes("CORS") ||
+                  fetchError.message?.includes("Failed to fetch")
+                ) {
+                  console.error(
+                    "[RaidLogForm] CORS error detected during presigned URL upload"
+                  );
+                  throw new Error("CORS_ERROR");
+                }
+                throw fetchError;
+              }
 
               if (!uploadResponse.ok) {
                 const errorText = await uploadResponse.text().catch(() => "");
@@ -603,6 +619,25 @@ export function RaidLogForm({
                 "[RaidLogForm] Presigned URL upload failed, falling back to regular upload:",
                 presignedError
               );
+
+              // If it's a CORS error and file is > 4.5MB, we can't use regular upload either
+              if (
+                presignedError instanceof Error &&
+                presignedError.message === "CORS_ERROR"
+              ) {
+                const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
+                  2
+                );
+                if (selectedVideo.size > 4.5 * 1024 * 1024) {
+                  setIsSubmitting(false);
+                  toast.error(
+                    `Video file (${fileSizeMB}MB) cannot be uploaded directly due to CORS restrictions. Files over 4.5MB must be compressed to under 4.5MB to use the standard upload. Please compress your video and try again.`,
+                    { duration: 8000 }
+                  );
+                  return;
+                }
+              }
+
               // Fall through to regular upload
               usePresignedUrl = false;
             }
@@ -634,7 +669,7 @@ export function RaidLogForm({
                 );
                 errorMessage =
                   errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 20MB. Files over 4.5MB may need to be compressed.`;
+                  `Video file is too large (${fileSizeMB}MB). Files over 4.5MB must be compressed to under 4.5MB due to platform upload limits. Maximum allowed size is 20MB, but files over 4.5MB need compression.`;
               } else if (response.status === 400) {
                 errorMessage =
                   errorData.error ||
@@ -675,20 +710,29 @@ export function RaidLogForm({
           let errorMessage = "Unknown error";
           if (uploadError instanceof Error) {
             errorMessage = uploadError.message;
-            // Check for common network errors
+            // Check for CORS errors specifically
             if (
+              uploadError.message.includes("CORS") ||
+              uploadError.message.includes("Access-Control-Allow-Origin") ||
+              (uploadError.message.includes("Failed to fetch") &&
+                selectedVideo.size > 4.5 * 1024 * 1024)
+            ) {
+              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
+                2
+              );
+              errorMessage = `Video upload failed due to CORS configuration. Your video (${fileSizeMB}MB) exceeds the 4.5MB limit for direct uploads. Please compress your video to under 4.5MB or contact support to enable large file uploads.`;
+            } else if (
               uploadError.message.includes("Failed to fetch") ||
               uploadError.name === "TypeError"
             ) {
               errorMessage =
                 "Network error: Unable to connect to upload server. Please check your internet connection and try again.";
-            } else if (uploadError.message.includes("CORS")) {
-              errorMessage =
-                "CORS error: Please contact support if this persists.";
             }
           }
 
-          toast.error(`Video upload error: ${errorMessage}`);
+          toast.error(`Video upload error: ${errorMessage}`, {
+            duration: 8000, // Show longer for important errors
+          });
           // Stop submission if video upload fails
           setIsSubmitting(false);
           return;

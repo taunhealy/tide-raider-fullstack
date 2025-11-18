@@ -35,17 +35,39 @@ interface RaidLogDetailsProps {
 export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const { data: session } = useBackendAuth();
   const router = useRouter();
-  const isOwner = session?.user?.id === id;
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
 
   const { data: entry, isLoading, error } = useRaidLog(id);
 
+  const isOwner = session?.user?.id === entry?.userId;
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[var(--color-tertiary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-primary">Loading session...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error || !entry) {
-    return <div>Failed to load raid log</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <p className="text-red-600 font-primary mb-4">
+            Failed to load raid log
+          </p>
+          <Link
+            href="/raidlogs"
+            className="text-[var(--color-primary)] hover:text-[var(--color-tertiary-dark)] transition-colors inline-flex items-center gap-2 font-primary"
+          >
+            <ChevronLeft className="w-4 h-4" /> Back to log book
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   // Handle forecast data properly - it might be an array or a single object
@@ -54,51 +76,50 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       ? entry.forecast[0]
       : entry.forecast;
 
-  console.log("Debug - RaidLogDetails:", {
-    entry,
-    hasForecast: !!entry.forecast,
-    forecastData,
-  });
-
   // Check if media is available (including uploaded videos without platform)
   const hasMedia = entry.imageUrl || entry.videoUrl;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[var(--color-bg-primary)]">
       {/* Navigation and Actions Bar - Fixed at top */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 md:px-6 py-4">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link
             href="/raidlogs"
-            className="text-[var(--color-primary)] hover:text-[var(--color-tertiary-dark)] transition-colors inline-flex items-center gap-2 font-primary"
+            className="text-[var(--color-text-primary)] hover:text-[var(--color-tertiary)] transition-colors inline-flex items-center gap-2 font-primary text-sm md:text-base"
           >
-            <ChevronLeft className="w-5 h-5" /> Back to log book
+            <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+            <span className="hidden sm:inline">Back to log book</span>
+            <span className="sm:hidden">Back</span>
           </Link>
 
           {isOwner && (
             <Button
               onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
-              className="flex items-center gap-2 bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary-dark)] transition-colors"
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 font-primary text-sm"
             >
               <Pencil className="w-4 h-4" />
-              Edit Log
+              <span className="hidden sm:inline">Edit Log</span>
+              <span className="sm:hidden">Edit</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main Content Card */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           {/* Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-6 p-6 md:p-8">
+          <div className="grid lg:grid-cols-3 gap-4 md:gap-6 p-4 md:p-6">
             {/* Left Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
             {hasMedia && (
               <div className="lg:col-span-1">
-                <div className="sticky top-24">
+                <div className="sticky top-20">
                   {entry.imageUrl ? (
                     <div
-                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100"
+                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 shadow-sm"
                       onClick={() => setIsMediaModalOpen(true)}
                     >
                       <Image
@@ -126,7 +147,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         href={entry.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group"
+                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group shadow-sm"
                       >
                         <Image
                           src={getVideoThumbnail(
@@ -140,11 +161,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                           priority
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                            <VideoIcon className="w-8 h-8 text-[var(--color-tertiary)]" />
+                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                            <VideoIcon className="w-6 h-6 md:w-8 md:h-8 text-[var(--color-tertiary)]" />
                           </div>
                         </div>
-                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary">
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary backdrop-blur-sm">
                           {entry.videoPlatform === "youtube"
                             ? "YouTube"
                             : "Vimeo"}
@@ -158,37 +179,37 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
             {/* Main Content - 2/3 width on desktop (or full width if no media) */}
             <div
-              className={`${hasMedia ? "lg:col-span-2" : "lg:col-span-3"} space-y-8`}
+              className={`${hasMedia ? "lg:col-span-2" : "lg:col-span-3"} space-y-4 md:space-y-6`}
             >
               {/* Header with Beach and Rating */}
-              <div>
-                <div className="flex flex-wrap items-start gap-2 mb-3">
-                  <h1 className="text-2xl md:text-3xl font-primary font-semibold text-[var(--color-text-primary)]">
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex flex-wrap items-start gap-2 md:gap-3">
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-primary font-semibold text-[var(--color-text-primary)]">
                     {entry.beach?.name || entry.beachName || "Unnamed Beach"}
                   </h1>
                   {Number(entry.surferRating) > 3 && (
-                    <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full font-primary">
+                    <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full font-primary font-medium">
                       Top Rated
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 text-gray-600 font-primary mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <p>
+                <div className="flex items-center gap-2 text-[var(--color-text-secondary)] font-primary text-sm md:text-base">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <p className="truncate">
                     {entry.region?.name
                       ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
                       : "No location specified"}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((rating) => (
                       <Star
                         key={rating}
                         className={cn(
-                          "w-5 h-5",
+                          "w-4 h-4 md:w-5 md:h-5",
                           rating <= (entry.surferRating || 0)
                             ? "text-yellow-400 fill-current"
                             : "text-gray-200"
@@ -196,20 +217,22 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 font-primary">
+                  <span className="text-sm md:text-base text-[var(--color-text-secondary)] font-primary font-medium">
                     {entry.surferRating}/5
                   </span>
                 </div>
               </div>
 
               {/* Session Date */}
-              <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-[var(--color-tertiary)]" />
+              <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex items-center gap-3 border border-gray-200">
+                <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 md:w-6 md:h-6 text-[var(--color-tertiary)]" />
+                </div>
                 <div>
-                  <h2 className="font-primary text-sm font-medium text-gray-500 mb-1">
+                  <h2 className="font-primary text-xs md:text-sm font-medium text-[var(--color-text-secondary)] mb-0.5">
                     Session Date
                   </h2>
-                  <p className="text-gray-800 font-primary font-medium">
+                  <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
                     {format(new Date(entry.date), "MMMM d, yyyy")}
                   </p>
                 </div>
@@ -217,42 +240,52 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
               {/* Conditions Section */}
               {forecastData && (
-                <div className="space-y-4">
-                  <h2 className="font-primary text-xl font-medium text-gray-800">
+                <div className="space-y-3 md:space-y-4">
+                  <h2 className="font-primary text-lg md:text-xl font-semibold text-[var(--color-text-primary)]">
                     Surf Conditions
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
-                      <Wind className="w-5 h-5 text-[var(--color-tertiary)]" />
-                      <div>
-                        <p className="text-sm text-gray-500 font-primary">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                    <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                        <Wind className="w-5 h-5 text-[var(--color-tertiary)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
                           Wind
                         </p>
-                        <p className="text-gray-800 font-primary font-medium">
+                        <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
                           {forecastData.windSpeed}kts{" "}
-                          {forecastData.windDirection}°
+                          <span className="text-[var(--color-text-secondary)] font-normal">
+                            {forecastData.windDirection}°
+                          </span>
                         </p>
                       </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
-                      <Waves className="w-5 h-5 text-[var(--color-tertiary)]" />
-                      <div>
-                        <p className="text-sm text-gray-500 font-primary">
+                    <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                        <Waves className="w-5 h-5 text-[var(--color-tertiary)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
                           Swell
                         </p>
-                        <p className="text-gray-800 font-primary font-medium">
+                        <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
                           {forecastData.swellHeight}m{" "}
-                          {forecastData.swellDirection}°
+                          <span className="text-[var(--color-text-secondary)] font-normal">
+                            {forecastData.swellDirection}°
+                          </span>
                         </p>
                       </div>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg flex gap-3 items-center">
-                      <Clock className="w-5 h-5 text-[var(--color-tertiary)]" />
-                      <div>
-                        <p className="text-sm text-gray-500 font-primary">
+                    <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-[var(--color-tertiary)]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
                           Period
                         </p>
-                        <p className="text-gray-800 font-primary font-medium">
+                        <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
                           {forecastData.swellPeriod}s
                         </p>
                       </div>
@@ -263,12 +296,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
               {/* Comments Section */}
               {entry.comments && (
-                <div className="space-y-4">
-                  <h2 className="font-primary text-xl font-medium text-gray-800">
+                <div className="space-y-3 md:space-y-4">
+                  <h2 className="font-primary text-lg md:text-xl font-semibold text-[var(--color-text-primary)]">
                     Logger Comments
                   </h2>
-                  <div className="bg-gray-50 p-5 rounded-lg border-l-4 border-[var(--color-tertiary)]">
-                    <p className="text-gray-700 font-primary whitespace-pre-wrap">
+                  <div className="bg-gray-50 rounded-lg p-4 md:p-5 border-l-4 border-[var(--color-tertiary)] border border-gray-200">
+                    <p className="text-[var(--color-text-primary)] font-primary text-sm md:text-base leading-relaxed whitespace-pre-wrap">
                       {entry.comments}
                     </p>
                   </div>
@@ -276,8 +309,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               )}
 
               {/* Logger Info */}
-              <div className="bg-gray-50 p-5 rounded-lg">
-                <h2 className="font-primary text-lg font-medium mb-4 text-gray-800">
+              <div className="bg-gray-50 rounded-lg p-4 md:p-5 border border-gray-200">
+                <h2 className="font-primary text-base md:text-lg font-semibold mb-3 md:mb-4 text-[var(--color-text-primary)]">
                   Logger
                 </h2>
 
@@ -289,10 +322,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   />
                 ) : (
                   <div className="flex items-center gap-3">
-                    <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 flex items-center justify-center text-white font-medium text-lg">
+                    <div className="bg-[var(--color-tertiary)] rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-white font-medium text-lg md:text-xl shadow-sm">
                       A
                     </div>
-                    <p className="text-gray-800 font-primary font-medium">
+                    <p className="text-[var(--color-text-primary)] font-primary font-medium text-sm md:text-base">
                       Anonymous
                     </p>
                   </div>
@@ -302,8 +335,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           </div>
 
           {/* User Comments Section */}
-          <div className="border-t border-gray-200 p-6 md:p-8">
-            <h2 className="font-primary text-xl font-medium mb-6 text-gray-800">
+          <div className="border-t border-gray-200 p-4 md:p-6 lg:p-8 bg-gray-50/50">
+            <h2 className="font-primary text-lg md:text-xl font-semibold mb-4 md:mb-6 text-[var(--color-text-primary)]">
               Discussion
             </h2>
             <CommentThread logEntryId={entry.id} />
