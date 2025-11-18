@@ -10,5 +10,10 @@ export function useBeaches() {
       const data = await api.getBeaches();
       return data.beaches;
     },
+    staleTime: 10 * 60 * 1000, // 10 minutes - beaches don't change often
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    retry: 1, // Only retry once on failure
   });
 }

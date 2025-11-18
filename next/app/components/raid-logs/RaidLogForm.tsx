@@ -53,9 +53,20 @@ export function RaidLogForm({
   beaches: beachesProp,
 }: RaidLogFormProps) {
   const queryClient = useQueryClient();
-  const { data: session } = useBackendAuth();
+  const { data: session, status: authStatus } = useBackendAuth();
   const router = useRouter();
   const user = session?.user;
+
+  // Debug: Log auth state to help troubleshoot
+  useEffect(() => {
+    console.log("[RaidLogForm] Auth state:", {
+      hasSession: !!session,
+      hasUser: !!user,
+      userId: user?.id,
+      email: user?.email,
+      authStatus,
+    });
+  }, [session, user, authStatus]);
   const { data: beachesFromHook, isLoading } = useBeaches();
   // Use prop beaches if provided, otherwise use hook data
   const beaches = beachesProp || beachesFromHook;

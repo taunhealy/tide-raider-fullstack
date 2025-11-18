@@ -1,4 +1,5 @@
 // app/hooks/useRaidLogs.ts
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FilterConfig,
@@ -26,6 +27,36 @@ async function fetchRaidLogs(
   });
 }
 
+// Helper to create a stable query key from filters
+function createStableQueryKey(
+  filters: Partial<FilterConfig>,
+  isPrivate: boolean,
+  userId?: string
+) {
+  return [
+    "raidLogs",
+    {
+      beaches: Array.isArray(filters.beaches)
+        ? filters.beaches
+            .map((b) => (typeof b === "string" ? b : b.id))
+            .sort()
+            .join(",")
+        : "",
+      regions: Array.isArray(filters.regions)
+        ? filters.regions.sort().join(",")
+        : "",
+      countries: Array.isArray(filters.countries)
+        ? filters.countries.sort().join(",")
+        : "",
+      minRating: filters.minRating ?? null,
+      page: filters.page ?? 1,
+      limit: filters.limit ?? 50,
+      isPrivate,
+      userId: userId ?? null,
+    },
+  ];
+}
+
 export function useRaidLogs(
   filters: Partial<FilterConfig>,
   isPrivate: boolean,
@@ -33,8 +64,57 @@ export function useRaidLogs(
 ) {
   const queryClient = useQueryClient();
 
+  // Create a stable query key that won't change on every render
+  // Serialize arrays to strings for stable comparison
+  const queryKey = useMemo(() => {
+    const beachesStr = Array.isArray(filters.beaches)
+      ? filters.beaches
+          .map((b) => (typeof b === "string" ? b : b.id))
+          .sort()
+          .join(",")
+      : "";
+    const regionsStr = Array.isArray(filters.regions)
+      ? filters.regions.sort().join(",")
+      : "";
+    const countriesStr = Array.isArray(filters.countries)
+      ? filters.countries.sort().join(",")
+      : "";
+
+    return [
+      "raidLogs",
+      {
+        beaches: beachesStr,
+        regions: regionsStr,
+        countries: countriesStr,
+        minRating: filters.minRating ?? null,
+        page: filters.page ?? 1,
+        limit: filters.limit ?? 50,
+        isPrivate,
+        userId: userId ?? null,
+      },
+    ];
+  }, [
+    // Use JSON.stringify for arrays to ensure stable comparison
+    JSON.stringify(
+      Array.isArray(filters.beaches)
+        ? filters.beaches.map((b) => (typeof b === "string" ? b : b.id)).sort()
+        : []
+    ),
+    JSON.stringify(
+      Array.isArray(filters.regions) ? filters.regions.sort() : []
+    ),
+    JSON.stringify(
+      Array.isArray(filters.countries) ? filters.countries.sort() : []
+    ),
+    filters.minRating,
+    filters.page,
+    filters.limit,
+    isPrivate,
+    userId,
+  ]);
+
   const query = useQuery({
-    queryKey: ["raidLogs", filters, isPrivate, userId],
+    queryKey,
     queryFn: () => fetchRaidLogs(filters, isPrivate, userId),
     select: (data: RaidLogResponse) => ({
       entries: data.entries.map(
@@ -69,8 +149,11 @@ export function useRaidLogs(
       ),
       total: data.total,
     }),
-    staleTime: 1000 * 60, // 1 minute - shorter stale time for more fresh data
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
+    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
+    retry: 1, // Only retry once on failure
   });
 
   const createMutation = useMutation({
