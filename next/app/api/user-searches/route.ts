@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+// Always use production backend if env URL is localhost (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  // If env URL is localhost, always use production
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * GET /api/user-searches
@@ -18,16 +24,29 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/user-searches${queryString}`,
-      {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let response;
+    try {
+      response = await fetch(`${BACKEND_URL}/api/user-searches${queryString}`, {
         headers: {
           ...(authToken && { Authorization: `Bearer ${authToken}` }),
           Cookie: cookieStore.toString(),
         },
         credentials: "include",
+        signal: controller.signal,
+      });
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+        // Return empty array on timeout/connection error
+        return NextResponse.json([]);
       }
-    );
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       // Return empty array instead of error - search tracking is not critical
@@ -53,16 +72,32 @@ export async function POST(request: NextRequest) {
     const authToken = cookieStore.get("auth-token")?.value;
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/user-searches`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        Cookie: cookieStore.toString(),
-      },
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let response;
+    try {
+      response = await fetch(`${BACKEND_URL}/api/user-searches`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken && { Authorization: `Bearer ${authToken}` }),
+          Cookie: cookieStore.toString(),
+        },
+        credentials: "include",
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+        // Silently fail - search tracking is not critical
+        return NextResponse.json({ success: false }, { status: 200 });
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       // Silently fail - search tracking is not critical

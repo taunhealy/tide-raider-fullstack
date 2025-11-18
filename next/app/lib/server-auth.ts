@@ -2,8 +2,20 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always ignore localhost URLs and use production backend (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // If env URL is localhost, always use production (database is live, not local)
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+
+  // Use env URL if set and not localhost, otherwise use production
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 export interface ServerAuthUser {
   id: string;
@@ -49,15 +61,41 @@ export async function getServerAuth(): Promise<{
     }
 
     // Call backend to get full user data
-    const cookieHeader = cookieStore.toString();
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        Cookie: cookieHeader,
-      },
-      credentials: "include",
-      cache: "no-store",
-    });
+    // Add timeout to prevent hanging when backend is not available
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let response;
+    try {
+      const cookieHeader = cookieStore.toString();
+      response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          Cookie: cookieHeader,
+        },
+        credentials: "include",
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      // Handle connection errors gracefully
+      const isConnectionError =
+        fetchError.name === "AbortError" ||
+        fetchError.code === "ECONNREFUSED" ||
+        (fetchError.cause && fetchError.cause.code === "ECONNREFUSED") ||
+        fetchError.message?.includes("ECONNREFUSED") ||
+        fetchError.message?.includes("fetch failed");
+
+      if (isConnectionError) {
+        console.warn(
+          "[server-auth] Backend not available, returning null user"
+        );
+        return { user: null };
+      }
+      throw fetchError; // Re-throw other errors
+    }
 
     if (!response.ok) {
       return { user: null };

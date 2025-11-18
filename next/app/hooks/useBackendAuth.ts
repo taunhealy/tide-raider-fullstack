@@ -18,9 +18,22 @@ interface AuthState {
   error: Error | null;
 }
 
-// Shared throttle across all hook instances to prevent multiple simultaneous requests
+// Shared state across all hook instances to prevent multiple simultaneous requests
 let globalLastFetchTime = 0;
 const FETCH_THROTTLE_MS = 10000; // Only fetch once every 10 seconds globally
+
+// Shared cache for auth state across all components
+let globalAuthCache: {
+  state: AuthState | null;
+  timestamp: number;
+  pendingPromise: Promise<AuthState> | null;
+} = {
+  state: null,
+  timestamp: 0,
+  pendingPromise: null,
+};
+
+const CACHE_DURATION_MS = 30000; // Cache auth state for 30 seconds
 
 /**
  * Hook to get authentication state from backend
@@ -40,91 +53,161 @@ export function useBackendAuth() {
   useEffect(() => {
     let mounted = true;
 
-    async function fetchUser(bypassThrottle = false) {
+    async function fetchUser(bypassThrottle = false): Promise<AuthState> {
+      const now = Date.now();
+
+      // Check cache first (if valid and not bypassing)
+      if (
+        !bypassThrottle &&
+        globalAuthCache.state &&
+        now - globalAuthCache.timestamp < CACHE_DURATION_MS
+      ) {
+        console.log("[useBackendAuth] Using cached auth state");
+        if (mounted) {
+          setAuthState(globalAuthCache.state);
+        }
+        return globalAuthCache.state;
+      }
+
+      // If there's a pending fetch, wait for it instead of starting a new one
+      if (globalAuthCache.pendingPromise) {
+        console.log("[useBackendAuth] Waiting for pending auth fetch");
+        try {
+          const cachedState = await globalAuthCache.pendingPromise;
+          if (mounted) {
+            setAuthState(cachedState);
+          }
+          return cachedState;
+        } catch (error) {
+          // If pending fetch fails, continue to fetch ourselves
+          console.warn(
+            "[useBackendAuth] Pending fetch failed, fetching ourselves"
+          );
+        }
+      }
+
       // Global throttle to prevent multiple instances from fetching simultaneously
       // But allow initial fetch to bypass throttle
-      const now = Date.now();
       if (!bypassThrottle && now - globalLastFetchTime < FETCH_THROTTLE_MS) {
-        // If throttled, check if we have cached data from another instance
-        // If not, we still need to fetch, so set loading to false and let user proceed
+        // If throttled, use cached state if available, otherwise stop loading
+        if (globalAuthCache.state) {
+          if (mounted) {
+            setAuthState(globalAuthCache.state);
+          }
+          return globalAuthCache.state;
+        }
         if (mounted) {
           setAuthState((prev) => ({
             ...prev,
             loading: false, // Stop loading even if throttled
           }));
         }
-        return;
+        return { user: null, loading: false, error: null };
       }
       globalLastFetchTime = now;
 
-      try {
-        // Use Next.js API route (same domain = cookies work)
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Create a shared promise for this fetch
+      const fetchPromise = (async (): Promise<AuthState> => {
+        try {
+          // Use Next.js API route (same domain = cookies work)
+          // Add timeout to prevent hanging
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (reduced from 10)
 
-        const response = await fetch("/api/auth/me", {
-          credentials: "include", // Include cookies (auth-token)
-          cache: "no-store", // Don't cache auth requests
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log("[useBackendAuth] User data fetched:", {
-            userId: data.user?.id,
-            email: data.user?.email,
-            isSubscribed: data.user?.isSubscribed,
-            hasActiveTrial: data.user?.hasActiveTrial,
-            trialEndDate: data.user?.trialEndDate,
+          const response = await fetch("/api/auth/me", {
+            credentials: "include", // Include cookies (auth-token)
+            cache: "no-store", // Don't cache auth requests
+            signal: controller.signal,
           });
-          if (mounted) {
-            setAuthState({
+
+          clearTimeout(timeoutId);
+
+          let authState: AuthState;
+          if (response.ok) {
+            const data = await response.json();
+            console.log("[useBackendAuth] User data fetched:", {
+              userId: data.user?.id,
+              email: data.user?.email,
+              isSubscribed: data.user?.isSubscribed,
+              hasActiveTrial: data.user?.hasActiveTrial,
+              trialEndDate: data.user?.trialEndDate,
+            });
+            authState = {
               user: data.user,
               loading: false,
               error: null,
-            });
-          }
-        } else {
-          // Not authenticated
-          if (mounted) {
-            setAuthState({
+            };
+          } else {
+            // Not authenticated
+            authState = {
               user: null,
               loading: false,
               error: null,
-            });
+            };
           }
-        }
-      } catch (error) {
-        console.error("[useBackendAuth] Error fetching user:", error);
-        if (mounted) {
+
+          // Update global cache
+          globalAuthCache = {
+            state: authState,
+            timestamp: Date.now(),
+            pendingPromise: null,
+          };
+
+          if (mounted) {
+            setAuthState(authState);
+          }
+
+          return authState;
+        } catch (error) {
+          console.error("[useBackendAuth] Error fetching user:", error);
           // If it's a timeout or abort, treat as unauthenticated rather than error
           const isTimeout =
             error instanceof Error && error.name === "AbortError";
-          setAuthState({
+          const authState: AuthState = {
             user: null,
             loading: false,
             error: isTimeout ? null : (error as Error), // Don't show error for timeouts
-          });
+          };
+
+          // Update global cache (even on error, cache the unauthenticated state briefly)
+          globalAuthCache = {
+            state: authState,
+            timestamp: Date.now(),
+            pendingPromise: null,
+          };
+
+          if (mounted) {
+            setAuthState(authState);
+          }
+
+          return authState;
         }
-      }
+      })();
+
+      // Set pending promise so other components can wait for this fetch
+      globalAuthCache.pendingPromise = fetchPromise;
+
+      return fetchPromise;
     }
 
     // Only do initial fetch once per component mount
     // Bypass throttle for initial fetch to ensure it always runs
     if (!hasInitialFetch.current) {
-      fetchUser(true); // Bypass throttle for initial fetch
+      fetchUser(true).catch((error) => {
+        console.error("[useBackendAuth] Initial fetch error:", error);
+      }); // Bypass throttle for initial fetch
       hasInitialFetch.current = true;
     }
 
     // Listen for storage events (when token is set in another tab/window)
     const handleStorageChange = () => {
       if (mounted) {
-        // Reset throttle for storage events (user might have signed in elsewhere)
+        // Clear cache and reset throttle for storage events (user might have signed in elsewhere)
+        globalAuthCache = { state: null, timestamp: 0, pendingPromise: null };
         globalLastFetchTime = 0;
-        fetchUser();
+        fetchUser(true).catch((error) => {
+          console.error("[useBackendAuth] Storage change fetch error:", error);
+        });
       }
     };
 
@@ -136,7 +219,9 @@ export function useBackendAuth() {
         // Only fetch on focus if it's been more than 30 seconds since last fetch
         if (now - globalLastFetchTime > 30000) {
           globalLastFetchTime = 0;
-          fetchUser();
+          fetchUser().catch((error) => {
+            console.error("[useBackendAuth] Focus fetch error:", error);
+          });
         }
       }
     };
@@ -144,9 +229,12 @@ export function useBackendAuth() {
     // Listen for custom refresh event (triggered after subscription sync)
     const handleRefresh = () => {
       if (mounted) {
-        // Reset throttle to bypass for manual refresh events
+        // Clear cache and reset throttle to bypass for manual refresh events
+        globalAuthCache = { state: null, timestamp: 0, pendingPromise: null };
         globalLastFetchTime = 0;
-        fetchUser();
+        fetchUser(true).catch((error) => {
+          console.error("[useBackendAuth] Refresh fetch error:", error);
+        });
       }
     };
 

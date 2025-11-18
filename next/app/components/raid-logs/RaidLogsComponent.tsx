@@ -66,7 +66,7 @@ export function RaidLogsComponent({
     if (isBeachesLoading || isLogsLoading) {
       const timer = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 30000); // 30 second timeout
+      }, 15000); // 15 second timeout (reduced from 30)
       return () => clearTimeout(timer);
     } else {
       setLoadingTimeout(false);

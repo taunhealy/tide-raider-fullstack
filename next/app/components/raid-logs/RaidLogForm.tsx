@@ -456,12 +456,16 @@ export function RaidLogForm({
         action: {
           label: "Sign In",
           onClick: () => {
-            // Detect backend URL based on environment
-            const BACKEND_URL =
-              process.env.NEXT_PUBLIC_API_URL ||
-              (window.location.hostname === "localhost"
-                ? "http://localhost:3001"
-                : "https://tide-raider-backend.fly.dev");
+            // Always use production backend for OAuth (since database is live)
+            const getBackendUrl = () => {
+              const envUrl = process.env.NEXT_PUBLIC_API_URL;
+              // If env URL is localhost, always use production
+              if (envUrl?.includes("localhost")) {
+                return "https://tide-raider-backend.fly.dev";
+              }
+              return envUrl || "https://tide-raider-backend.fly.dev";
+            };
+            const BACKEND_URL = getBackendUrl();
             window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
               `${window.location.origin}/raidlogs/new`
             )}`;
@@ -537,12 +541,28 @@ export function RaidLogForm({
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const errorMessage =
+            let errorMessage =
               errorData.error || errorData.message || "Failed to upload video";
+
+            // Provide more specific error messages
+            if (response.status === 413) {
+              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
+                2
+              );
+              errorMessage =
+                errorData.error ||
+                `Video file is too large (${fileSizeMB}MB). The platform limit is 4.5MB. Please compress your video to under 4.5MB or use a shorter video. Maximum allowed size is 20MB, but files over 4.5MB must be compressed first.`;
+            } else if (response.status === 400) {
+              errorMessage =
+                errorData.error ||
+                "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
+            }
+
             console.error(
               "[RaidLogForm] Video upload error:",
               errorMessage,
-              errorData
+              errorData,
+              `Status: ${response.status}`
             );
             toast.error(`Video upload failed: ${errorMessage}`);
             // Stop submission if video upload fails - user should fix the issue
@@ -971,6 +991,10 @@ export function RaidLogForm({
                     <div>
                       <label className="block text-sm font-primary mb-1">
                         Upload Video File (Max 60 seconds, 20MB)
+                        <span className="text-xs text-gray-500 block mt-1">
+                          Note: Files over 4.5MB must be compressed first due to
+                          platform limits
+                        </span>
                       </label>
                       <input
                         type="file"
@@ -1167,12 +1191,18 @@ export function RaidLogForm({
                       action: {
                         label: "Sign In",
                         onClick: () => {
-                          // Detect backend URL based on environment
-                          const BACKEND_URL =
-                            process.env.NEXT_PUBLIC_API_URL ||
-                            (window.location.hostname === "localhost"
-                              ? "http://localhost:3001"
-                              : "https://tide-raider-backend.fly.dev");
+                          // Always use production backend for OAuth (since database is live)
+                          const getBackendUrl = () => {
+                            const envUrl = process.env.NEXT_PUBLIC_API_URL;
+                            // If env URL is localhost, always use production
+                            if (envUrl?.includes("localhost")) {
+                              return "https://tide-raider-backend.fly.dev";
+                            }
+                            return (
+                              envUrl || "https://tide-raider-backend.fly.dev"
+                            );
+                          };
+                          const BACKEND_URL = getBackendUrl();
                           window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
                             `${window.location.origin}/raidlogs/new`
                           )}`;

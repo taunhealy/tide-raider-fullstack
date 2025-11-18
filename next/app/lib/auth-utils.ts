@@ -1,9 +1,21 @@
 // Redirect to backend OAuth instead of NextAuth
+// Always ignore localhost URLs and use production backend (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // If env URL is localhost, always use production (database is live, not local)
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+
+  // Use env URL if set and not localhost, otherwise use production
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : "https://tide-raider-backend.fly.dev");
+  typeof window !== "undefined"
+    ? getBackendUrl()
+    : "https://tide-raider-backend.fly.dev";
 
 export const handleSignIn = (callbackUrl?: string) => {
   const currentPath = window.location.pathname;

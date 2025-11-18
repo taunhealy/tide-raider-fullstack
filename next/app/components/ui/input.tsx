@@ -8,6 +8,10 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
+    // Remove browser extension attributes that cause hydration mismatches
+    const sanitizedProps = { ...props };
+    delete (sanitizedProps as any).fdprocessedid;
+    
     return (
       <input
         type={type}
@@ -20,7 +24,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
         ref={ref}
-        {...props}
+        {...sanitizedProps}
+        suppressHydrationWarning
       />
     );
   }

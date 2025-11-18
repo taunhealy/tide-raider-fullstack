@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "./Button";
+import { Input } from "./input";
 
 interface FilterHeaderProps {
   title: string;
@@ -25,7 +26,7 @@ export function FilterHeader({
       </h4>
 
       <div className="space-y-2">
-        <input
+        <Input
           type="text"
           placeholder={placeholder}
           value={searchQuery}

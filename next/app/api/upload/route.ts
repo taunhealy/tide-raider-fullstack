@@ -44,6 +44,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Validate file size based on type
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
+    const MAX_VIDEO_SIZE = 20 * 1024 * 1024; // 20MB for videos
+
+    if (file.type.startsWith("video/") || fileType === "video") {
+      if (file.size > MAX_VIDEO_SIZE) {
+        return NextResponse.json(
+          {
+            error: `Video file is too large. Maximum size is ${MAX_VIDEO_SIZE / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+          },
+          { status: 413 }
+        );
+      }
+    } else if (file.type.startsWith("image/")) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        return NextResponse.json(
+          {
+            error: `Image file is too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+          },
+          { status: 413 }
+        );
+      }
+    }
+
     // Convert File to Buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 

@@ -45,23 +45,48 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
     if (regionIdFromParams) {
       try {
         // Call backend API directly (server-side fetch works fine)
-        // Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-        const backendUrl =
-          process.env.NEXT_PUBLIC_API_URL ||
-          "https://tide-raider-backend.fly.dev";
+        // Always use production backend if env URL is localhost (since database is live)
+        const getBackendUrl = () => {
+          const envUrl = process.env.NEXT_PUBLIC_API_URL;
+          // If env URL is localhost, always use production
+          if (envUrl?.includes("localhost")) {
+            return "https://tide-raider-backend.fly.dev";
+          }
+          return envUrl || "https://tide-raider-backend.fly.dev";
+        };
+        const backendUrl = getBackendUrl();
 
         // Build query string with all params including forecastDate
         const queryString = urlSearchParams.toString();
         const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
 
-        const response = await fetch(backendApiUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // Server-side fetch doesn't need credentials, but we can add auth headers if needed
-          cache: "no-store", // Always fetch fresh data for SSR
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        let response;
+        try {
+          response = await fetch(backendApiUrl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // Server-side fetch doesn't need credentials, but we can add auth headers if needed
+            cache: "no-store", // Always fetch fresh data for SSR
+            signal: controller.signal,
+          });
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+            console.warn(
+              "[RaidPage] Backend connection failed, using empty data"
+            );
+            initialData = null; // Will use empty state
+            return; // Exit early, will use null initialData
+          }
+          throw error;
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (response.ok) {
           initialData = await response.json();

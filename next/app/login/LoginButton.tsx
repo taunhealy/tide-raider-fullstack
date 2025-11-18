@@ -2,20 +2,17 @@
 
 import { useState } from "react";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise detect based on environment
+// Always ignore localhost URLs and use production backend (since database is live)
 const getBackendUrl = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // If env URL is localhost, always use production (database is live, not local)
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
   }
-  // In browser, detect localhost
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname === "localhost"
-  ) {
-    return "http://localhost:3001";
-  }
-  // Default to production
-  return "https://tide-raider-backend.fly.dev";
+  
+  // Use env URL if set and not localhost, otherwise use production
+  return envUrl || "https://tide-raider-backend.fly.dev";
 };
 
 interface LoginButtonProps {

@@ -121,7 +121,14 @@ export function useRaidLogs(
         return data;
       } catch (error) {
         console.error("[useRaidLogs] Error fetching logs:", error);
-        throw error;
+        // Return empty data structure instead of throwing to prevent loading state from persisting
+        return {
+          entries: [],
+          total: 0,
+          page: 1,
+          limit: 50,
+          totalPages: 0,
+        };
       }
     },
     select: (data: RaidLogResponse) => {
@@ -178,9 +185,11 @@ export function useRaidLogs(
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
     refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
     refetchOnMount: false, // Don't refetch on mount if data is fresh
-    retry: 1, // Only retry once on failure
-    retryDelay: 1000, // Wait 1 second before retry
+    retry: 0, // Don't retry on failure to prevent long loading states
+    retryDelay: 1000, // Wait 1 second before retry (not used if retry: 0)
     throwOnError: false, // Don't throw errors, return them in error state
+    // Add timeout to prevent queries from hanging indefinitely
+    networkMode: "online", // Only run query when online
   });
 
   const createMutation = useMutation({

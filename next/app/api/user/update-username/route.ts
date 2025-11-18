@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/app/lib/server-auth";
 import { cookies } from "next/headers";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-// For local development, set NEXT_PUBLIC_API_URL=http://localhost:3001 in .env.local
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always use production backend if env URL is localhost (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  // If env URL is localhost, always use production
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * POST /api/user/update-username

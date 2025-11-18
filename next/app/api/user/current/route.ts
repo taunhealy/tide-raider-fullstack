@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerAuth } from "@/app/lib/server-auth";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always use production backend if env URL is localhost (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  // If env URL is localhost, always use production
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * GET /api/user/current
@@ -28,14 +36,37 @@ export async function GET() {
     }
 
     // Get user data from /api/auth/me
-    const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        Cookie: `auth-token=${authToken}`,
-      },
-      credentials: "include",
-      cache: "no-store",
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let userResponse;
+    try {
+      userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          Cookie: `auth-token=${authToken}`,
+        },
+        credentials: "include",
+        cache: "no-store",
+        signal: controller.signal,
+      });
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      // Handle connection errors gracefully
+      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+        console.error(
+          "[user/current] Backend connection failed:",
+          error.message
+        );
+        return NextResponse.json(
+          { error: "Backend unavailable" },
+          { status: 503 }
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!userResponse.ok) {
       return NextResponse.json(
@@ -47,22 +78,42 @@ export async function GET() {
     const userData = await userResponse.json();
 
     // Get subscription status from PayPal endpoint (more accurate)
-    const subscriptionResponse = await fetch(
-      `${BACKEND_URL}/api/paypal/subscription-status`,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          Cookie: `auth-token=${authToken}`,
-        },
-        credentials: "include",
-        cache: "no-store",
+    const subController = new AbortController();
+    const subTimeoutId = setTimeout(() => subController.abort(), 5000); // 5 second timeout
+
+    let subscriptionResponse;
+    try {
+      subscriptionResponse = await fetch(
+        `${BACKEND_URL}/api/paypal/subscription-status`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            Cookie: `auth-token=${authToken}`,
+          },
+          credentials: "include",
+          cache: "no-store",
+          signal: subController.signal,
+        }
+      );
+    } catch (error: any) {
+      clearTimeout(subTimeoutId);
+      // Handle connection errors gracefully - fallback to user data
+      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+        console.warn(
+          "[user/current] Subscription check failed, using fallback"
+        );
+        subscriptionResponse = null; // Will use fallback below
+      } else {
+        throw error;
       }
-    );
+    } finally {
+      clearTimeout(subTimeoutId);
+    }
 
     let subscriptionStatus = "INACTIVE";
     let paypalSubscriptionId = null;
 
-    if (subscriptionResponse.ok) {
+    if (subscriptionResponse && subscriptionResponse.ok) {
       const subData = await subscriptionResponse.json();
       subscriptionStatus = subData.subscriptionStatus || "INACTIVE";
       paypalSubscriptionId = subData.paypalSubscriptionId || null;

@@ -8,6 +8,7 @@ import { Inter } from "next/font/google";
 import { Plus, Filter } from "lucide-react";
 import { CreatePostModal } from "./CreatePostModal";
 import { PostCard } from "./StoriesCard";
+import { Input } from "./ui/input";
 import { Story, StoryBeach } from "@/app/types/stories";
 import { STORY_CATEGORIES, type StoryCategory } from "@/app/lib/constants";
 import { RandomLoader } from "@/app/components/ui/random-loader";
@@ -164,7 +165,7 @@ export default function WildStoriesContainer({
             {/* Search Bar, Share Story Button, and Filter Toggle */}
             <div className="flex flex-col xs:flex-row items-center gap-3">
               <div className="flex w-full xs:w-auto gap-3">
-                <input
+                <Input
                   type="text"
                   placeholder="Search stories..."
                   value={searchQuery}
@@ -183,12 +184,16 @@ export default function WildStoriesContainer({
                 ) : (
                   <button
                     onClick={() => {
-                      // Detect backend URL based on environment
-                      const BACKEND_URL =
-                        process.env.NEXT_PUBLIC_API_URL ||
-                        (window.location.hostname === "localhost"
-                          ? "http://localhost:3001"
-                          : "https://tide-raider-backend.fly.dev");
+                      // Always use production backend for OAuth (since database is live)
+                      const getBackendUrl = () => {
+                        const envUrl = process.env.NEXT_PUBLIC_API_URL;
+                        // If env URL is localhost, always use production
+                        if (envUrl?.includes("localhost")) {
+                          return "https://tide-raider-backend.fly.dev";
+                        }
+                        return envUrl || "https://tide-raider-backend.fly.dev";
+                      };
+                      const BACKEND_URL = getBackendUrl();
                       const frontendUrl = window.location.origin;
                       const fullCallbackUrl = `${frontendUrl}${window.location.pathname}`;
                       const state = encodeURIComponent(fullCallbackUrl);

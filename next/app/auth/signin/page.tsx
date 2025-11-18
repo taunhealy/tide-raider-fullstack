@@ -3,9 +3,20 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always ignore localhost URLs and use production backend (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // If env URL is localhost, always use production (database is live, not local)
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+  
+  // Use env URL if set and not localhost, otherwise use production
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 function SignInSkeleton() {
   return (

@@ -2,8 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always ignore localhost URLs and use production backend (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // If env URL is localhost, always use production (database is live, not local)
+  if (envUrl?.includes("localhost")) {
+    console.warn(
+      "[auth/me] Ignoring localhost URL, using production backend (database is live)"
+    );
+    return "https://tide-raider-backend.fly.dev";
+  }
+
+  // Use env URL if set and not localhost, otherwise use production
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 // Simple in-memory cache for auth responses (5 seconds)
 const authCache = new Map<string, { data: any; timestamp: number }>();
@@ -38,15 +53,44 @@ export async function GET(req: NextRequest) {
       : cookieStore.toString();
 
     // Forward request to backend with cookies
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      headers: {
-        ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        ...(cookieHeader && { Cookie: cookieHeader }),
-      },
-      credentials: "include",
-      // Add cache control to prevent Next.js from caching
-      cache: "no-store",
-    });
+    // Add timeout to prevent hanging when backend is not available
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let response;
+    try {
+      response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        headers: {
+          ...(authToken && { Authorization: `Bearer ${authToken}` }),
+          ...(cookieHeader && { Cookie: cookieHeader }),
+        },
+        credentials: "include",
+        // Add cache control to prevent Next.js from caching
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      // Handle connection errors (backend not running, network issues, etc.)
+      const isConnectionError =
+        fetchError.name === "AbortError" ||
+        fetchError.code === "ECONNREFUSED" ||
+        (fetchError.cause && fetchError.cause.code === "ECONNREFUSED") ||
+        fetchError.message?.includes("ECONNREFUSED") ||
+        fetchError.message?.includes("fetch failed");
+
+      if (isConnectionError) {
+        console.warn("[auth/me] Backend not available, returning null user", {
+          error: fetchError.message,
+          code: fetchError.code || fetchError.cause?.code,
+        });
+        const data = { user: null };
+        authCache.set(cacheKey, { data, timestamp: Date.now() });
+        return NextResponse.json(data, { status: 200 });
+      }
+      throw fetchError; // Re-throw other errors
+    }
 
     if (!response.ok) {
       if (response.status === 401) {

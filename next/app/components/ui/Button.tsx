@@ -50,17 +50,17 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, isLoading, asChild = false, ...props }, ref) => {
-    // Remove any browser-generated IDs during SSR
+    // Remove any browser-generated IDs to prevent hydration mismatches
     const sanitizedProps = { ...props };
-    if (typeof window === "undefined") {
-      delete (sanitizedProps as any).fdprocessedid;
-    }
+    // Remove fdprocessedid on both server and client to prevent hydration errors
+    delete (sanitizedProps as any).fdprocessedid;
 
     return (
       <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...sanitizedProps}
+        suppressHydrationWarning
       >
         {isLoading ? (
           <div className="flex items-center">

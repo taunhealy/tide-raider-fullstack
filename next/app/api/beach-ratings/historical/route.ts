@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Always use production backend if env URL is localhost (since database is live)
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  // If env URL is localhost, always use production
+  if (envUrl?.includes("localhost")) {
+    return "https://tide-raider-backend.fly.dev";
+  }
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * GET /api/beach-ratings/historical
@@ -16,16 +24,32 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/beach-ratings/historical${queryString}`,
-      {
-        headers: {
-          ...(authToken && { Authorization: `Bearer ${authToken}` }),
-          Cookie: cookieStore.toString(),
-        },
-        credentials: "include",
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    let response;
+    try {
+      response = await fetch(
+        `${BACKEND_URL}/api/beach-ratings/historical${queryString}`,
+        {
+          headers: {
+            ...(authToken && { Authorization: `Bearer ${authToken}` }),
+            Cookie: cookieStore.toString(),
+          },
+          credentials: "include",
+          signal: controller.signal,
+        }
+      );
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+        console.warn("[beach-ratings/historical] Backend connection failed, returning empty beaches");
+        return NextResponse.json({ beaches: [] }, { status: 200 });
       }
-    );
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       // Handle 429 gracefully - return empty beaches array (frontend expects { beaches: [] })
