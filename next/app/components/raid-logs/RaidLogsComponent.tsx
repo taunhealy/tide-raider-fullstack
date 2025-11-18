@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useBeaches } from "@/app/hooks/useBeaches";
 import { FilterConfig, LogEntry } from "@/app/types/raidlogs";
@@ -60,6 +60,19 @@ export function RaidLogsComponent({
 
   const router = useRouter();
 
+  // Add timeout for loading states
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  useEffect(() => {
+    if (isBeachesLoading || isLogsLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 30000); // 30 second timeout
+      return () => clearTimeout(timer);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [isBeachesLoading, isLogsLoading]);
+
   // Callbacks
   const handleFilterChange = useCallback(
     (newFilters: Partial<FilterConfig>) => {
@@ -98,8 +111,22 @@ export function RaidLogsComponent({
   return (
     <div className="bg-[var(--color-bg-secondary)] p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative">
       <div className="max-w-[1800px] mx-auto px-0 md:px-4">
-        {(isBeachesLoading || isLogsLoading) && (
+        {(isBeachesLoading || isLogsLoading) && !loadingTimeout && (
           <RandomLoader isLoading={isBeachesLoading || isLogsLoading} />
+        )}
+
+        {(isBeachesLoading || isLogsLoading) && loadingTimeout && (
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">
+              Loading is taking longer than expected.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[var(--color-tertiary)] text-white rounded"
+            >
+              Reload Page
+            </button>
+          </div>
         )}
 
         {error && !isLogsLoading && (

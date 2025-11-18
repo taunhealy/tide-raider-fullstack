@@ -40,20 +40,36 @@ export function useBackendAuth() {
   useEffect(() => {
     let mounted = true;
 
-    async function fetchUser() {
+    async function fetchUser(bypassThrottle = false) {
       // Global throttle to prevent multiple instances from fetching simultaneously
+      // But allow initial fetch to bypass throttle
       const now = Date.now();
-      if (now - globalLastFetchTime < FETCH_THROTTLE_MS) {
+      if (!bypassThrottle && now - globalLastFetchTime < FETCH_THROTTLE_MS) {
+        // If throttled, check if we have cached data from another instance
+        // If not, we still need to fetch, so set loading to false and let user proceed
+        if (mounted) {
+          setAuthState((prev) => ({
+            ...prev,
+            loading: false, // Stop loading even if throttled
+          }));
+        }
         return;
       }
       globalLastFetchTime = now;
 
       try {
         // Use Next.js API route (same domain = cookies work)
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch("/api/auth/me", {
           credentials: "include", // Include cookies (auth-token)
           cache: "no-store", // Don't cache auth requests
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -94,8 +110,9 @@ export function useBackendAuth() {
     }
 
     // Only do initial fetch once per component mount
+    // Bypass throttle for initial fetch to ensure it always runs
     if (!hasInitialFetch.current) {
-      fetchUser();
+      fetchUser(true); // Bypass throttle for initial fetch
       hasInitialFetch.current = true;
     }
 
