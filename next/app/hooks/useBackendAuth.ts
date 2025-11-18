@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface User {
   id: string;
@@ -18,6 +18,10 @@ interface AuthState {
   error: Error | null;
 }
 
+// Shared throttle across all hook instances to prevent multiple simultaneous requests
+let globalLastFetchTime = 0;
+const FETCH_THROTTLE_MS = 10000; // Only fetch once every 10 seconds globally
+
 /**
  * Hook to get authentication state from backend
  * Replaces NextAuth's useSession
@@ -30,18 +34,19 @@ export function useBackendAuth() {
     error: null,
   });
 
+  // Use ref to track if we've done initial fetch
+  const hasInitialFetch = useRef(false);
+
   useEffect(() => {
     let mounted = true;
-    let lastFetchTime = 0;
-    const FETCH_THROTTLE_MS = 5000; // Only fetch once every 5 seconds
 
     async function fetchUser() {
-      // Throttle requests to prevent infinite loops
+      // Global throttle to prevent multiple instances from fetching simultaneously
       const now = Date.now();
-      if (now - lastFetchTime < FETCH_THROTTLE_MS) {
+      if (now - globalLastFetchTime < FETCH_THROTTLE_MS) {
         return;
       }
-      lastFetchTime = now;
+      globalLastFetchTime = now;
 
       try {
         // Use Next.js API route (same domain = cookies work)
@@ -88,41 +93,59 @@ export function useBackendAuth() {
       }
     }
 
-    fetchUser();
+    // Only do initial fetch once per component mount
+    if (!hasInitialFetch.current) {
+      fetchUser();
+      hasInitialFetch.current = true;
+    }
 
     // Listen for storage events (when token is set in another tab/window)
     const handleStorageChange = () => {
       if (mounted) {
+        // Reset throttle for storage events (user might have signed in elsewhere)
+        globalLastFetchTime = 0;
         fetchUser();
       }
     };
 
     // Listen for focus events (user might have signed in in another tab)
-    // Throttled to prevent excessive requests
+    // Only trigger if enough time has passed since last fetch
     const handleFocus = () => {
       if (mounted) {
-        fetchUser();
+        const now = Date.now();
+        // Only fetch on focus if it's been more than 30 seconds since last fetch
+        if (now - globalLastFetchTime > 30000) {
+          globalLastFetchTime = 0;
+          fetchUser();
+        }
       }
     };
 
     // Listen for custom refresh event (triggered after subscription sync)
     const handleRefresh = () => {
       if (mounted) {
-        // Reset lastFetchTime to bypass throttle
-        lastFetchTime = 0;
+        // Reset throttle to bypass for manual refresh events
+        globalLastFetchTime = 0;
         fetchUser();
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("auth-refresh", handleRefresh);
+    // Use a single global listener to prevent multiple listeners
+    // Only add listeners if this is the first instance
+    if (
+      typeof window !== "undefined" &&
+      !(window as any).__authListenersAdded
+    ) {
+      window.addEventListener("storage", handleStorageChange);
+      window.addEventListener("focus", handleFocus);
+      window.addEventListener("auth-refresh", handleRefresh);
+      (window as any).__authListenersAdded = true;
+    }
 
     return () => {
       mounted = false;
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("auth-refresh", handleRefresh);
+      // Don't remove listeners as other components might still need them
+      // They'll be cleaned up when the page unloads
     };
   }, []);
 

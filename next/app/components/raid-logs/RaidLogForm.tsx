@@ -487,22 +487,47 @@ export function RaidLogForm({
       // Upload video if selected
       let uploadedVideoUrlFinal = null;
       if (selectedVideo) {
-        const formData = new FormData();
-        formData.append("file", selectedVideo);
-        formData.append("type", "video");
+        try {
+          const formData = new FormData();
+          formData.append("file", selectedVideo);
+          formData.append("type", "video");
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Failed to upload video");
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage =
+              errorData.error || errorData.message || "Failed to upload video";
+            console.error(
+              "[RaidLogForm] Video upload error:",
+              errorMessage,
+              errorData
+            );
+            toast.error(`Video upload failed: ${errorMessage}`);
+            // Don't throw - allow form to submit without video
+            // throw new Error(errorMessage);
+          } else {
+            const data = await response.json();
+            uploadedVideoUrlFinal = data.videoUrl;
+            if (!uploadedVideoUrlFinal) {
+              console.warn(
+                "[RaidLogForm] Video upload succeeded but no videoUrl returned"
+              );
+              toast.warning(
+                "Video uploaded but URL not received. Log will be created without video."
+              );
+            }
+          }
+        } catch (uploadError) {
+          console.error("[RaidLogForm] Video upload exception:", uploadError);
+          toast.error(
+            `Video upload error: ${uploadError instanceof Error ? uploadError.message : "Unknown error"}`
+          );
+          // Continue without video - don't block form submission
         }
-
-        const data = await response.json();
-        uploadedVideoUrlFinal = data.videoUrl;
       }
 
       // Use existing URLs if no new files uploaded and editing
@@ -537,14 +562,18 @@ export function RaidLogForm({
       };
 
       // If editing, update instead of create
+      let createdEntry;
       if (entry?.id) {
-        await updateLog({
+        createdEntry = await updateLog({
           id: entry.id,
           ...logData,
         });
       } else {
-        await createLog(logData);
+        createdEntry = await createLog(logData);
       }
+
+      // Wait a moment for query invalidation to complete
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       router.push("/raidlogs");
       if (onClose) onClose();

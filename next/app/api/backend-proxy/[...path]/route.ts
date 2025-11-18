@@ -74,6 +74,9 @@ async function handleProxy(
   try {
     console.log(`[proxy] ${method} request received for path:`, pathSegments);
 
+    // Check if this is a forecast endpoint (which uses optionalAuth on backend)
+    const isForecastEndpoint = pathSegments.join("/").includes("forecast");
+
     // Get session from NextAuth - need to pass headers for App Router
     // Create headers object from request for getServerSession
     const headers = new Headers();
@@ -82,8 +85,28 @@ async function handleProxy(
     });
 
     // Get session to verify user is authenticated
-    const session = await getServerSession(authOptions);
-    console.log(`[proxy] Session found:`, !!session, session?.user?.id);
+    // For forecast endpoints, this is optional (backend uses optionalAuth)
+    let session = null;
+    try {
+      session = await getServerSession(authOptions);
+      console.log(`[proxy] Session found:`, !!session, session?.user?.id);
+    } catch (sessionError) {
+      // If session retrieval fails, continue without session (especially for forecast endpoints)
+      if (isForecastEndpoint) {
+        console.log(
+          `[proxy] Session retrieval failed for forecast endpoint, continuing without auth`
+        );
+      } else {
+        console.warn(`[proxy] Session retrieval failed:`, sessionError);
+      }
+    }
+
+    // For forecast endpoints without session, skip auth and proceed directly
+    if (isForecastEndpoint && !session) {
+      console.log(
+        `[proxy] Forecast endpoint without session - proceeding without authentication`
+      );
+    }
 
     // Reconstruct the backend path
     const path = `/${pathSegments.join("/")}`;
@@ -115,11 +138,17 @@ async function handleProxy(
 
     // First, check for backend OAuth JWT cookie (auth-token)
     // This is set by the backend OAuth flow when user signs in
+    // For forecast endpoints without session, skip token retrieval
     const authTokenCookie = req.cookies.get("auth-token")?.value;
     let jwtToken: any = null;
     let tokenSource = "none";
 
-    if (authTokenCookie) {
+    // Skip token retrieval for forecast endpoints if no session (backend uses optionalAuth)
+    if (isForecastEndpoint && !session && !authTokenCookie) {
+      console.log(
+        `[proxy] Forecast endpoint - skipping token retrieval, proceeding without auth`
+      );
+    } else if (authTokenCookie) {
       // Backend OAuth sets auth-token cookie - use it directly
       console.log(`[proxy] ✅ Found auth-token cookie from backend OAuth`);
       try {
@@ -143,13 +172,25 @@ async function handleProxy(
     }
 
     // If no backend cookie, try NextAuth token
-    if (!jwtToken) {
-      jwtToken = await getToken({
-        req,
-        secret: secret,
-      });
-      if (jwtToken) {
-        tokenSource = "nextauth-token";
+    // Skip for forecast endpoints if no session (backend uses optionalAuth)
+    if (!jwtToken && (!isForecastEndpoint || session)) {
+      try {
+        jwtToken = await getToken({
+          req,
+          secret: secret,
+        });
+        if (jwtToken) {
+          tokenSource = "nextauth-token";
+        }
+      } catch (tokenError) {
+        // If token retrieval fails for forecast endpoint, continue without auth
+        if (isForecastEndpoint) {
+          console.log(
+            `[proxy] Token retrieval failed for forecast endpoint, continuing without auth`
+          );
+        } else {
+          console.warn(`[proxy] Token retrieval failed:`, tokenError);
+        }
       }
     }
 
@@ -170,7 +211,8 @@ async function handleProxy(
       );
 
       // Fallback: If getToken() fails but we have a session, create JWT from session
-      if (session?.user?.id && secret) {
+      // Skip for forecast endpoints if no session (backend uses optionalAuth)
+      if (session?.user?.id && secret && (!isForecastEndpoint || session)) {
         console.log(`[proxy] Creating JWT from session data as fallback`);
         const payload: Record<string, any> = {
           sub: session.user.id,
@@ -195,6 +237,10 @@ async function handleProxy(
         );
       } else if (session?.user?.id && !secret) {
         console.error(`[proxy] ❌ Cannot create JWT: secret not configured`);
+      } else if (isForecastEndpoint && !session) {
+        console.log(
+          `[proxy] Forecast endpoint - proceeding without authentication`
+        );
       }
     }
 
@@ -312,6 +358,18 @@ async function handleProxy(
       );
     }
 
+    // Handle 404 and 500 errors for forecast endpoints gracefully
+    // Frontend expects null when forecast data is unavailable
+    if (
+      path.includes("/forecast") &&
+      (response.status === 404 || response.status === 500)
+    ) {
+      console.warn(
+        `[proxy] Forecast endpoint returned ${response.status} for ${path}, returning null`
+      );
+      return NextResponse.json(null, { status: 200 });
+    }
+
     // Handle non-JSON responses
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
@@ -328,6 +386,16 @@ async function handleProxy(
     }
   } catch (error) {
     console.error("Proxy error:", error);
+
+    // For forecast endpoints, return null instead of error (frontend handles null gracefully)
+    if (pathSegments.join("/").includes("forecast")) {
+      console.warn(
+        `[proxy] Forecast endpoint error, returning null:`,
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      return NextResponse.json(null, { status: 200 });
+    }
+
     return NextResponse.json(
       {
         error: "Proxy request failed",

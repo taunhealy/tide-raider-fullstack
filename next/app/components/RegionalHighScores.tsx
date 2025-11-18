@@ -1,5 +1,7 @@
+"use client";
+
 import * as React from "react";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -65,13 +67,22 @@ function RegionalHighScoresContent({
   ]);
 
   // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
-  const today = new Date().toISOString().split("T")[0];
+  // Use useState to ensure consistent date during hydration (only set on client)
+  const [today] = useState(() => {
+    // Only calculate on client to avoid hydration mismatch
+    if (typeof window !== "undefined") {
+      return new Date().toISOString().split("T")[0];
+    }
+    // Server-side: return empty string, will be set on client
+    return "";
+  });
 
   // Use the new endpoint
+  // Only enable query when we have a date (client-side) and region
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["regionalHighScores", selectedRegion, timePeriod, today],
     queryFn: async () => {
-      if (!selectedRegion) return { beaches: [] };
+      if (!selectedRegion || !today) return { beaches: [] };
 
       const response = await fetch(
         `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}`
@@ -98,6 +109,7 @@ function RegionalHighScoresContent({
       // Ensure we always return an object with beaches array
       return Array.isArray(data.beaches) ? data : { beaches: [] };
     },
+    enabled: !!selectedRegion && !!today, // Only run query when we have region and date
     staleTime: 0, // Always consider data stale - refetch on mount/window focus
     refetchOnMount: true, // Always refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window regains focus
@@ -113,8 +125,21 @@ function RegionalHighScoresContent({
     "3years": "3 Years",
   };
 
-  if (!data) {
-    return <RandomLoader isLoading={true} />;
+  // Handle initial loading state - show skeleton while data is being fetched
+  if (isLoading && !data) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 p-2">
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+            </div>
+            <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -170,8 +195,9 @@ function RegionalHighScoresContent({
 
                 // Lock the first 5 items for all time periods for non-premium users
                 // This consistently locks the top locations regardless of time period
+                // During initial load, assume not locked to avoid hydration mismatch
                 const isLocked =
-                  !isSubscriptionLoading && index < 5 && !isPremium;
+                  !isSubscriptionLoading && index < 5 && !isPremium && !!today;
 
                 return (
                   <div

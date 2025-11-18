@@ -130,10 +130,18 @@ export function useCreateLog() {
     },
     onSuccess: () => {
       // Invalidate all log-related queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["recentLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["logs"] });
-      queryClient.invalidateQueries({ queryKey: ["questLogs"] });
+      // Use predicate to match all queries that start with these keys
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return (
+            key === "raidLogs" ||
+            key === "recentLogs" ||
+            key === "logs" ||
+            key === "questLogs"
+          );
+        },
+      });
       toast.success("Session logged successfully!");
     },
     onError: (error) => {

@@ -165,7 +165,18 @@ export default function DashboardPage() {
       const data = await response.json();
       setUsername(data.name);
       toast.success("Username updated successfully!");
-      queryClient.invalidateQueries({ queryKey: ["user", session?.user?.id] });
+
+      // Invalidate user queries
+      await queryClient.invalidateQueries({
+        queryKey: ["user", session?.user?.id],
+      });
+
+      // Refresh auth state to update session with new name
+      await refetchAuth();
+      window.dispatchEvent(new Event("auth-refresh"));
+
+      // Refresh the page data
+      router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Update failed";
       setError(message);

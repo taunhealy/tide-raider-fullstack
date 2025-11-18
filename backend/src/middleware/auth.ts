@@ -35,10 +35,6 @@ export async function authenticateToken(
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    console.log(
-      `[auth] Token received (length: ${token.length}, first 20: ${token.substring(0, 20)}...)`
-    );
-
     // Verify JWT token (NextAuth uses NEXTAUTH_SECRET or AUTH_SECRET)
     // Support both variable names for compatibility
     const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
@@ -47,9 +43,6 @@ export async function authenticateToken(
       throw new Error("NEXTAUTH_SECRET or AUTH_SECRET is not configured");
     }
 
-    console.log(
-      `[auth] Secret configured: ${secret ? "YES" : "NO"} (length: ${secret?.length || 0})`
-    );
     if (secret) {
       console.log(
         `[auth] 🔑 Using secret to verify JWT (first 10 chars: ${secret.substring(0, 10)}...)`
@@ -86,7 +79,7 @@ export async function authenticateToken(
     }
 
     // Fetch user from database
-    console.log(`[auth] 🔍 Fetching user from database for userId: ${userId}`);
+
     let user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -231,9 +224,6 @@ export async function optionalAuth(
                 isSubscribed: user.subscriptionStatus === "ACTIVE",
                 hasActiveTrial: user.hasActiveTrial || false,
               };
-              console.log(
-                `[auth] ✅ Optional auth successful - userId: ${user.id}, email: ${user.email || "N/A"}`
-              );
             }
           }
         } catch (error) {

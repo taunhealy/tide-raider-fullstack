@@ -565,4 +565,39 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * PUT /api/auth/me
+ * Update current user's profile (name)
+ */
+router.put("/me", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { name } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "Name cannot be empty" });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: authReq.user.id },
+      data: { name: name.trim() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+      },
+    });
+
+    res.json({ name: updatedUser.name });
+  } catch (error) {
+    console.error("[auth] ❌ Update user error:", error);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
 export default router;
