@@ -685,12 +685,44 @@ export function RaidLogForm({
 
   if (!isOpen) return null;
 
+  // Add timeout for loading states
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  useEffect(() => {
+    if (isAuthLoading || isBeachesLoading) {
+      const timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 15000); // 15 second timeout
+      return () => clearTimeout(timer);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [isAuthLoading, isBeachesLoading]);
+
   // Show loading state while auth or beaches are being checked
-  if (isAuthLoading || isBeachesLoading) {
+  if ((isAuthLoading || isBeachesLoading) && !loadingTimeout) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white p-6 rounded-lg">
           <p className="font-primary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if loading timed out
+  if ((isAuthLoading || isBeachesLoading) && loadingTimeout) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="bg-white p-6 rounded-lg max-w-md">
+          <p className="font-primary text-red-600 mb-4">
+            Loading is taking longer than expected.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[var(--color-tertiary)] text-white rounded"
+          >
+            Reload Page
+          </button>
         </div>
       </div>
     );

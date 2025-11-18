@@ -34,15 +34,20 @@ export default function CheckoutPage() {
     });
   }, [status, isSubscribed, hasActiveTrial, subscriptionLoading, session]);
 
-  // Check subscription status directly from API
+  // Check subscription status directly from API with timeout
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
+      let cancelled = false;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const checkSubscription = async () => {
         try {
           const response = await fetch("/api/paypal/subscription-status", {
             credentials: "include",
+            signal: controller.signal,
           });
-          if (response.ok) {
+          if (!cancelled && response.ok) {
             const data = await response.json();
             setSubscriptionStatus(data.subscriptionStatus);
             console.log("[CheckoutPage] Direct subscription check:", {
@@ -51,11 +56,23 @@ export default function CheckoutPage() {
               paypalSubscriptionId: data.paypalSubscriptionId,
             });
           }
-        } catch (error) {
-          console.error("[CheckoutPage] Error checking subscription:", error);
+        } catch (error: any) {
+          if (!cancelled && error.name !== "AbortError") {
+            console.error("[CheckoutPage] Error checking subscription:", error);
+            // Set to null on error so page can still render
+            setSubscriptionStatus(null);
+          }
+        } finally {
+          clearTimeout(timeoutId);
         }
       };
       checkSubscription();
+
+      return () => {
+        cancelled = true;
+        controller.abort();
+        clearTimeout(timeoutId);
+      };
     }
   }, [status, session]);
 
@@ -66,7 +83,10 @@ export default function CheckoutPage() {
   }, [status, router]);
 
   // Redirect if already subscribed (check both context and direct API)
+  // Only redirect if we have definitive subscription status (not null/undefined)
   useEffect(() => {
+    // Don't redirect if subscriptionStatus is still being checked (null)
+    // Only redirect if we have a definitive "ACTIVE" status
     const hasActiveSubscription =
       isSubscribed || hasActiveTrial || subscriptionStatus === "ACTIVE";
 
@@ -78,7 +98,12 @@ export default function CheckoutPage() {
       authStatus: status,
     });
 
-    if (status === "authenticated" && hasActiveSubscription) {
+    // Only redirect if authenticated and we have a definitive subscription status
+    if (
+      status === "authenticated" &&
+      hasActiveSubscription &&
+      (subscriptionStatus === "ACTIVE" || isSubscribed || hasActiveTrial)
+    ) {
       console.log(
         "[CheckoutPage] Redirecting to dashboard - user has active subscription"
       );
@@ -143,12 +168,38 @@ export default function CheckoutPage() {
     }
   };
 
-  if (status === "loading") {
+  // Show loading only for a reasonable time, then show error
+  const [authTimeout, setAuthTimeout] = useState(false);
+  useEffect(() => {
+    if (status === "loading") {
+      const timer = setTimeout(() => {
+        setAuthTimeout(true);
+      }, 10000); // 10 second timeout
+      return () => clearTimeout(timer);
+    } else {
+      setAuthTimeout(false);
+    }
+  }, [status]);
+
+  if (status === "loading" && !authTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "loading" && authTimeout) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">
+            Authentication is taking longer than expected.
+          </p>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
         </div>
       </div>
     );
