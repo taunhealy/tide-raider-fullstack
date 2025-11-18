@@ -6,10 +6,10 @@ import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useAuth } from "@/app/hooks/useAuth";
 import { LogEntry } from "@/app/types/raidlogs";
-import { Prisma } from "@prisma/client";
+// Removed Prisma import - using local types
 
 interface EditAlertPageClientProps {
-  alert: Prisma.AlertCreateInput;
+  alert: any; // Alert data from backend
   logEntries: any[]; // LogEntry with relations
 }
 
@@ -26,9 +26,9 @@ export function EditAlertPageClient({
 
   useEffect(() => {
     // If alert has a logEntry, set it as selected
-    if (alert.logEntry?.connect?.id && logEntries.length > 0) {
+    if (alert.logEntryId && logEntries.length > 0) {
       const logEntry = logEntries.find(
-        (entry) => entry.id === alert.logEntry?.connect?.id
+        (entry) => entry.id === alert.logEntryId
       );
       if (logEntry) {
         setSelectedLogEntry(logEntry as LogEntry);

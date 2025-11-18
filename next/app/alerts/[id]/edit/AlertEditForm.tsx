@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
 import { StarRatingSelector } from "@/app/components/alerts/starRatingSelector";
 import { AlertConfiguration } from "@/app/components/alerts/AlertConfiguration";
 import { AlertProvider, useAlert } from "@/app/context/AlertContext";
-import { Prisma, AlertType } from "@prisma/client";
+import { AlertType } from "@/app/types/alerts";
 
 interface AlertEditFormProps {
   initialAlert: AlertConfig;
@@ -27,8 +27,8 @@ export function AlertEditForm({ initialAlert }: AlertEditFormProps) {
   );
   const [starRating, setStarRating] = useState(initialAlert.starRating || 3);
 
-  // Transform AlertConfig to Prisma AlertCreateInput format
-  const prismaAlert = useMemo<Prisma.AlertCreateInput>(() => {
+  // Transform AlertConfig to format expected by AlertProvider
+  const alertForProvider = useMemo(() => {
     return {
       name: initialAlert.name,
       notificationMethod: initialAlert.notificationMethod,
@@ -37,29 +37,17 @@ export function AlertEditForm({ initialAlert }: AlertEditFormProps) {
       alertType: initialAlert.alertType as AlertType,
       starRating: initialAlert.starRating,
       forecastDate: initialAlert.forecastDate,
-      region: {
-        connect: { id: initialAlert.regionId },
-      },
-      user: {
-        connect: { id: initialAlert.userId },
-      },
-      properties: {
-        create: initialAlert.properties.map((prop) => ({
-          property: prop.property,
+      regionId: initialAlert.regionId,
+      userId: initialAlert.userId,
+      properties: initialAlert.properties.map((prop) => ({
+        property: prop.property,
+        range: prop.range,
+        ...(prop.optimalValue !== undefined && {
           optimalValue: prop.optimalValue,
-          range: prop.range,
-        })),
-      },
-      ...(initialAlert.logEntryId && {
-        logEntry: {
-          connect: { id: initialAlert.logEntryId },
-        },
-      }),
-      ...(initialAlert.forecastId && {
-        forecast: {
-          connect: { id: initialAlert.forecastId },
-        },
-      }),
+        }),
+      })),
+      ...(initialAlert.logEntryId && { logEntryId: initialAlert.logEntryId }),
+      ...(initialAlert.forecastId && { forecastId: initialAlert.forecastId }),
     };
   }, [initialAlert]);
 
@@ -74,8 +62,10 @@ export function AlertEditForm({ initialAlert }: AlertEditFormProps) {
         forecastDate: alertConfig.forecastDate,
         properties: alertConfig.properties.map((prop) => ({
           property: prop.property,
-          optimalValue: prop.optimalValue,
           range: prop.range,
+          ...(prop.optimalValue !== undefined && {
+            optimalValue: prop.optimalValue,
+          }),
         })),
         notificationMethod: alertConfig.notificationMethod,
         contactInfo: alertConfig.contactInfo,
@@ -117,7 +107,7 @@ export function AlertEditForm({ initialAlert }: AlertEditFormProps) {
 
   return (
     <AlertProvider
-      existingAlert={prismaAlert}
+      existingAlert={alertForProvider as any}
       logEntry={logEntry}
       onClose={() => {}}
     >

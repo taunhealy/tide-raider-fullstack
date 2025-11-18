@@ -23,9 +23,10 @@ export interface BeachDetails {
 // Type definitions (replacing Prisma imports)
 export type AlertType = "VARIABLES" | "RATING";
 export type AlertProperty = {
-  id: string;
+  id?: string;
   property: ForecastProperty;
   range: number;
+  optimalValue?: number; // Optional, used in some contexts
 };
 
 export interface Alert {
@@ -58,7 +59,7 @@ export type CreateAlertInput = Omit<Alert, "id"> & {
 };
 
 // For creating new properties, use:
-type AlertPropertyCreateInput = Prisma.AlertPropertyCreateInput;
+export type AlertPropertyCreateInput = Omit<AlertProperty, "id">;
 
 // Extended Alert type with populated relations (for display purposes)
 export interface AlertWithRelations extends Alert {

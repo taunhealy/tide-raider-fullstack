@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { EditAlertPageClient } from "./EditAlertPageClient";
-import { Prisma, AlertType } from "@prisma/client";
+import { AlertType } from "@/app/types/alerts";
 import { getServerAuth } from "@/app/lib/server-auth";
 import { cookies } from "next/headers";
 
@@ -10,10 +10,7 @@ export const dynamic = "force-dynamic";
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
-async function getAlert(
-  id: string,
-  userId: string
-): Promise<Prisma.AlertCreateInput | null> {
+async function getAlert(id: string, userId: string): Promise<any | null> {
   try {
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
@@ -43,7 +40,7 @@ async function getAlert(
       return null;
     }
 
-    // Transform backend alert format to Prisma AlertCreateInput format (same as create form)
+    // Transform backend alert format to format expected by edit form
     return {
       id: alert.id,
       name: alert.name,
@@ -53,34 +50,19 @@ async function getAlert(
       alertType: alert.alertType as AlertType,
       starRating: alert.starRating,
       forecastDate: alert.forecastDate,
-      region: {
-        connect: { id: alert.regionId },
-      },
-      user: {
-        connect: { id: alert.userId },
-      },
-      properties: {
-        create: (alert.properties || []).map((prop: any) => ({
-          property: prop.property,
+      regionId: alert.regionId,
+      userId: alert.userId,
+      properties: (alert.properties || []).map((prop: any) => ({
+        property: prop.property,
+        range: prop.range,
+        ...(prop.optimalValue !== undefined && {
           optimalValue: prop.optimalValue,
-          range: prop.range,
-        })),
-      },
-      ...(alert.logEntryId && {
-        logEntry: {
-          connect: { id: alert.logEntryId },
-        },
-      }),
-      ...(alert.beachId && {
-        beach: {
-          connect: { id: alert.beachId },
-        },
-      }),
-      ...(alert.forecastId && {
-        forecast: {
-          connect: { id: alert.forecastId },
-        },
-      }),
+        }),
+      })),
+      ...(alert.logEntryId && { logEntryId: alert.logEntryId }),
+      ...(alert.beachId && { beachId: alert.beachId }),
+      ...(alert.forecastId && { forecastId: alert.forecastId }),
+      ...(alert.logEntry && { logEntry: alert.logEntry }),
     };
   } catch (error) {
     console.error("Error fetching alert:", error);
