@@ -110,6 +110,7 @@ export function RaidLogForm({
   const [isValidatingVideo, setIsValidatingVideo] = useState(false);
   const [isCompressingVideo, setIsCompressingVideo] = useState(false);
   const [videoCompressionProgress, setVideoCompressionProgress] = useState(0);
+  const [compressionFailed, setCompressionFailed] = useState(false);
 
   console.log("useForecast params:", {
     regionId: selectedBeach?.regionId || "",
@@ -451,6 +452,21 @@ export function RaidLogForm({
       return;
     }
 
+    // Prevent submission if compression is in progress or failed
+    if (isCompressingVideo) {
+      toast.warning(
+        "Please wait for video compression to complete before submitting."
+      );
+      return;
+    }
+
+    if (compressionFailed) {
+      toast.error(
+        "Video compression failed. Please remove the video or use a YouTube/Vimeo link instead."
+      );
+      return;
+    }
+
     if (!user) {
       saveFormState();
       toast.error("Please sign in to log your session", {
@@ -623,11 +639,24 @@ export function RaidLogForm({
         uploadedImageUrl ||
         (entry?.imageUrl && !selectedImage ? entry.imageUrl : uploadedImageUrl);
 
-      const finalVideoUrl =
-        uploadedVideoUrlFinal ||
-        (entry?.videoUrl && !selectedVideo && !videoUrl
-          ? entry.videoUrl
-          : uploadedVideoUrlFinal || videoUrl);
+      // Determine final video URL
+      // Priority: uploaded video > existing entry video > video URL input
+      // Only use existing entry video if we're editing AND no new video was selected
+      let finalVideoUrl: string | undefined = undefined;
+
+      if (uploadedVideoUrlFinal) {
+        // New video was uploaded successfully
+        finalVideoUrl = uploadedVideoUrlFinal;
+      } else if (entry?.videoUrl && !selectedVideo && !videoUrl) {
+        // Editing existing entry, no new video selected, use existing
+        finalVideoUrl = entry.videoUrl;
+      } else if (videoUrl && videoUrl.trim() !== "") {
+        // Video URL was provided (YouTube/Vimeo)
+        finalVideoUrl = videoUrl;
+      } else {
+        // No video - set to empty string (schema expects string, not null/undefined)
+        finalVideoUrl = "";
+      }
 
       // If we have an uploaded video, don't use platform
       const finalVideoPlatform =
@@ -1061,6 +1090,7 @@ export function RaidLogForm({
                                 setVideoPreview(
                                   URL.createObjectURL(compressedFile)
                                 );
+                                setCompressionFailed(false); // Reset failure flag on success
                               } else if (compressedFile.size < file.size) {
                                 // Compression helped but still over limit
                                 toast.warning(
@@ -1071,6 +1101,7 @@ export function RaidLogForm({
                                 setVideoPreview(
                                   URL.createObjectURL(compressedFile)
                                 );
+                                setCompressionFailed(false); // Reset failure flag - user can still try
                               } else {
                                 // Compression didn't help
                                 toast.error(
@@ -1080,6 +1111,7 @@ export function RaidLogForm({
                                 // Clear the selection since it won't work
                                 setSelectedVideo(null);
                                 setVideoPreview(null);
+                                setCompressionFailed(true);
                                 return;
                               }
                             } catch (compressionError) {
@@ -1094,6 +1126,7 @@ export function RaidLogForm({
                               // Clear the selection since it won't work
                               setSelectedVideo(null);
                               setVideoPreview(null);
+                              setCompressionFailed(true);
                               return;
                             } finally {
                               setIsCompressingVideo(false);
@@ -1103,6 +1136,7 @@ export function RaidLogForm({
                             // File is small enough, use as-is
                             setSelectedVideo(file);
                             setVideoPreview(URL.createObjectURL(file));
+                            setCompressionFailed(false); // Reset failure flag if new file is valid
                           }
 
                           setVideoUrl(""); // Clear URL if file is selected
@@ -1216,7 +1250,13 @@ export function RaidLogForm({
                         <input
                           type="url"
                           value={videoUrl}
-                          onChange={(e) => setVideoUrl(e.target.value)}
+                          onChange={(e) => {
+                            setVideoUrl(e.target.value);
+                            // Reset compression failure flag when user provides a URL
+                            if (e.target.value.trim() !== "") {
+                              setCompressionFailed(false);
+                            }
+                          }}
                           placeholder={`Enter ${videoPlatform === "youtube" ? "YouTube" : "Vimeo"} URL`}
                           className="w-full p-2 border rounded-lg"
                         />
@@ -1283,7 +1323,9 @@ export function RaidLogForm({
                   (!forecastData && !entry?.forecast) ||
                   !selectedBeach ||
                   !selectedDate ||
-                  isSubmitting
+                  isSubmitting ||
+                  isCompressingVideo ||
+                  compressionFailed
                 }
                 className="w-full font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 py-2 mt-4"
                 onClick={(e) => {

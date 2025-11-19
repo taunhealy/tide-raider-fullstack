@@ -46,7 +46,7 @@ NODE_ENV=development
 ### Production (Fly Postgres)
 
 ```env
-DATABASE_URL="postgresql://fly-user:password@pgbouncer.vmkq6098l4pr35ln.flympg.net/fly-db"
+DATABASE_URL="postgresql://fly-user:YOUR_PASSWORD@pgbouncer.YOUR_HOST.flympg.net/fly-db"
 NODE_ENV=production
 ```
 

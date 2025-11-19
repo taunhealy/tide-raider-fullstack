@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
+    platform: linux/amd64
     container_name: tide-raider-postgres
     restart: unless-stopped
     environment:
@@ -8,7 +9,7 @@ services:
       POSTGRES_PASSWORD: tide_raider_dev
       POSTGRES_DB: tide_raider_dev
     ports:
-      - "5433:5432"  # Using 5433 to avoid conflict with existing PostgreSQL
+      - "5433:5432" # Using 5433 to avoid conflict with existing PostgreSQL
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,4 +21,3 @@ services:
 volumes:
   postgres_data:
     driver: local
-

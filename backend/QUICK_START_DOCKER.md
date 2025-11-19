@@ -2,7 +2,7 @@
 
 ## Step 1: Start Docker Desktop
 
-**Make sure Docker Desktop is running!** 
+**Make sure Docker Desktop is running!**
 
 - Open Docker Desktop application
 - Wait for it to fully start (whale icon in system tray)
@@ -19,11 +19,13 @@ cd backend
 **OR manually edit `backend/.env`:**
 
 Change this line:
+
 ```env
-DATABASE_URL="postgresql://fly-user:CgTmIxiwjbinc22DO8GYUAV5@pgbouncer.vmkq6098l4pr35ln.flympg.net/fly-db"
+DATABASE_URL="postgresql://fly-user:YOUR_PASSWORD@pgbouncer.YOUR_HOST.flympg.net/fly-db"
 ```
 
 To this:
+
 ```env
 DATABASE_URL="postgresql://tide_raider:tide_raider_dev@localhost:5432/tide_raider_dev?schema=public"
 ```
@@ -57,17 +59,19 @@ npm run dev
 ## Troubleshooting
 
 ### "Docker Desktop is not running"
+
 - Open Docker Desktop
 - Wait for it to fully start
 - Try again
 
 ### "Port 5432 already in use"
+
 - Another PostgreSQL instance might be running
 - Check: `netstat -ano | findstr :5432`
 - Stop the other service or change the port in `docker-compose.yml`
 
 ### "Can't reach database server"
+
 - Make sure Docker container is running: `docker ps`
 - Check logs: `npm run db:logs`
 - Restart: `npm run db:restart`
-

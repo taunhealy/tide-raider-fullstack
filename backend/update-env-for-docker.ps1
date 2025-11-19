@@ -3,7 +3,7 @@
 
 $envFile = ".env"
 $localDbUrl = 'DATABASE_URL="postgresql://tide_raider:tide_raider_dev@localhost:5432/tide_raider_dev?schema=public"'
-$productionDbUrl = 'DATABASE_URL="postgresql://fly-user:CgTmIxiwjbinc22DO8GYUAV5@pgbouncer.vmkq6098l4pr35ln.flympg.net/fly-db"'
+$productionDbUrl = 'DATABASE_URL="postgresql://fly-user:YOUR_PASSWORD_HERE@pgbouncer.YOUR_HOST.flympg.net/fly-db"'
 
 if (Test-Path $envFile) {
     Write-Host "Updating $envFile..." -ForegroundColor Yellow
