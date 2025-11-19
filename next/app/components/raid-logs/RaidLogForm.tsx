@@ -12,8 +12,6 @@ import {
   compressImageIfNeeded,
   compressVideoIfNeeded,
   validateVideoFile,
-  getVideoDuration,
-  MAX_VIDEO_DURATION,
 } from "@/app/lib/file";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
@@ -1141,7 +1139,7 @@ export function RaidLogForm({
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 60 seconds, 55MB)
+                        Upload Video File (Max 55MB)
                       </label>
                       <input
                         type="file"

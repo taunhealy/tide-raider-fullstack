@@ -28,7 +28,6 @@ export const FILE_ERRORS = {
   VIDEO_SIZE: `Video size must be less than ${MAX_VIDEO_SIZE / (1024 * 1024)}MB`,
   TYPE: `File type must be one of: ${ALLOWED_FILE_TYPES.join(", ")}`,
   VIDEO_TYPE: `Video type must be one of: ${ALLOWED_VIDEO_TYPES.join(", ")}`,
-  DURATION: `Video duration must be ${MAX_VIDEO_DURATION} seconds or less`,
   REQUIRED: "File is required",
 } as const;
 
@@ -85,7 +84,7 @@ export function getExtensionFromMimeType(mimeType: string): string {
   return mimeToExt[mimeType] || "";
 }
 
-// Validate video file (size and duration)
+// Validate video file (size only)
 export async function validateVideoFile(
   file: File
 ): Promise<{ valid: boolean; error?: string }> {
@@ -103,33 +102,6 @@ export async function validateVideoFile(
     return {
       valid: false,
       error: FILE_ERRORS.VIDEO_SIZE,
-    };
-  }
-
-  // Check video duration
-  try {
-    const duration = await getVideoDuration(file);
-    console.log("[validateVideoFile] Video duration check:", {
-      duration,
-      maxDuration: MAX_VIDEO_DURATION,
-      isValid: duration <= MAX_VIDEO_DURATION,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-    });
-
-    // Use a small tolerance for floating point comparison (0.1 seconds)
-    if (duration > MAX_VIDEO_DURATION + 0.1) {
-      return {
-        valid: false,
-        error: `Video duration is ${duration.toFixed(1)} seconds. Maximum allowed is ${MAX_VIDEO_DURATION} seconds.`,
-      };
-    }
-  } catch (error) {
-    console.error("[validateVideoFile] Error reading video duration:", error);
-    return {
-      valid: false,
-      error: `Failed to read video duration: ${error instanceof Error ? error.message : "Unknown error"}. Please try another video.`,
     };
   }
 

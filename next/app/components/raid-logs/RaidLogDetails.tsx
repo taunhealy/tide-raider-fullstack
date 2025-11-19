@@ -128,7 +128,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       : entry.forecast;
 
   // Check if media is available (including uploaded videos without platform)
-  const hasMedia = entry.imageUrl || entry.videoUrl;
+  // Validate that videoUrl is not empty string
+  const hasMedia = entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)]">
@@ -338,7 +339,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         priority
                       />
                     </div>
-                  ) : entry.videoUrl ? (
+                  ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
                     // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
                     !entry.videoPlatform ? (
                       // Uploaded video - use VideoThumbnail component for hover playback

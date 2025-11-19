@@ -79,7 +79,18 @@ export function MediaModal({
               className="w-full h-full border-0"
               title="Video player"
             />
-          ) : videoUrl && videoPlatform ? (
+          ) : videoUrl && videoUrl.trim() !== "" && !videoPlatform ? (
+            // Uploaded video (no platform) - show video player
+            <video
+              src={videoUrl}
+              controls
+              autoPlay
+              className="w-full h-full object-contain"
+              crossOrigin="anonymous"
+            >
+              Your browser does not support the video tag.
+            </video>
+          ) : videoUrl && videoUrl.trim() !== "" && videoPlatform ? (
             <div className="flex items-center justify-center h-full">
               <a
                 href={videoUrl}

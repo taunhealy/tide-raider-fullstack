@@ -83,7 +83,7 @@ export function VideoThumbnail({
 
   // Generate thumbnail from video
   useEffect(() => {
-    if (!thumbnailVideoRef.current || !canvasRef.current || !videoUrl) return;
+    if (!thumbnailVideoRef.current || !canvasRef.current || !videoUrl || videoUrl.trim() === "") return;
 
     const video = thumbnailVideoRef.current;
     const canvas = canvasRef.current;
@@ -215,6 +215,18 @@ export function VideoThumbnail({
 
   // Determine if video should be visible (hover for desktop, inView for mobile)
   const shouldShowVideo = isMobile ? isInView : isHovered;
+
+  // Early return if videoUrl is empty
+  if (!videoUrl || videoUrl.trim() === "") {
+    return (
+      <div
+        className={`relative w-full aspect-video bg-gray-900 rounded-md flex items-center justify-center ${className}`}
+      >
+        <Play className="w-12 h-12 text-white opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-md" />
+      </div>
+    );
+  }
 
   return (
     <div

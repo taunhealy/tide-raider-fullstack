@@ -929,7 +929,7 @@ export default function RaidLogTable({
                   )}
 
                   {/* Image/Video section */}
-                  {entry.imageUrl || entry.videoUrl ? (
+                  {entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "") ? (
                     <div className="mt-auto pt-2 w-full">
                       <div className="relative w-full aspect-video rounded-md overflow-hidden group">
                         <button
@@ -946,7 +946,7 @@ export default function RaidLogTable({
                               fill={true}
                               className="object-cover rounded-md hover:opacity-90 transition-opacity"
                             />
-                          ) : entry.videoUrl ? (
+                          ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
                             // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
                             !entry.videoPlatform ? (
                               // Uploaded video - use 360p thumbnail for preview to minimize server costs
