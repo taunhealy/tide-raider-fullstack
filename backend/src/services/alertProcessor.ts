@@ -54,17 +54,65 @@ export async function processUserAlerts(userId: string, today: Date) {
     });
 
     // Get today's forecasts for all relevant regions
+    // Try WINDFINDER first, then fall back to any available source
     const regions = [...new Set(userAlerts.map((alert) => alert.regionId))];
-    const todaysForecasts = await prisma.forecast.findMany({
+
+    // First, try to get WINDFINDER forecasts
+    let todaysForecasts = await prisma.forecast.findMany({
       where: {
         regionId: { in: regions },
-        source: "WINDFINDER", // Prefer WINDFINDER source
+        source: "WINDFINDER",
         date: {
           gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
           lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
         },
       },
     });
+
+    // For regions without WINDFINDER forecasts, try to get any available source
+    const regionsWithForecasts = new Set(
+      todaysForecasts.map((f) => f.regionId)
+    );
+    const regionsWithoutForecasts = regions.filter(
+      (r) => !regionsWithForecasts.has(r)
+    );
+
+    if (regionsWithoutForecasts.length > 0) {
+      // Get all available forecasts for regions without WINDFINDER data
+      const allFallbackForecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: { in: regionsWithoutForecasts },
+          date: {
+            gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
+            lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
+          },
+        },
+        orderBy: [
+          { source: "asc" }, // WINDFINDER comes before WINDGURU alphabetically
+          { date: "asc" },
+        ],
+      });
+
+      // Deduplicate: keep only the first forecast per region (prefer WINDFINDER if both exist)
+      const regionForecastMap = new Map<
+        string,
+        (typeof allFallbackForecasts)[0]
+      >();
+      for (const forecast of allFallbackForecasts) {
+        if (!regionForecastMap.has(forecast.regionId)) {
+          regionForecastMap.set(forecast.regionId, forecast);
+        }
+      }
+
+      const newForecasts = Array.from(regionForecastMap.values());
+      todaysForecasts = [...todaysForecasts, ...newForecasts];
+
+      if (newForecasts.length > 0) {
+        console.log(
+          `[Alert Processor] Using fallback forecasts for ${newForecasts.length} region(s): ${newForecasts.map((f) => `${f.regionId} (${f.source})`).join(", ")}`
+        );
+      }
+    }
 
     // Get beach IDs from alerts (both from logEntry and direct beachId)
     const beachIds = userAlerts
@@ -176,9 +224,13 @@ export async function processUserAlerts(userId: string, today: Date) {
         }
 
         if ((alert.alertType as any) === AlertType.RATING && !todaysForecast) {
-          console.log(
-            `No forecast found for region ${alert.regionId} today - continuing for RATING alert (forecast not required)`
-          );
+          // This is expected for RATING alerts - they only need beach ratings, not forecasts
+          // Log at debug level to reduce noise in production logs
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `[Alert Processor] No forecast found for region ${alert.regionId} today - continuing for RATING alert (forecast not required)`
+            );
+          }
         }
 
         // Check if alert conditions are met
