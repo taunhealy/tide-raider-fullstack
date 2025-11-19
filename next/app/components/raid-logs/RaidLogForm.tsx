@@ -531,177 +531,60 @@ export function RaidLogForm({
         }
 
         try {
-          // Try presigned URL approach first (for files > 4.5MB)
-          // If it fails, fall back to regular upload route
-          let usePresignedUrl = selectedVideo.size > 4.5 * 1024 * 1024; // Only use presigned for files > 4.5MB
+          // Always use regular upload route (avoids CORS issues with presigned URLs)
+          console.log("[RaidLogForm] Uploading video via regular route...");
+          const formData = new FormData();
+          formData.append("file", selectedVideo);
+          formData.append("type", "video");
 
-          if (usePresignedUrl) {
-            try {
-              // Step 1: Get presigned URL
-              const presignedResponse = await fetch("/api/upload/presigned", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                  fileName: selectedVideo.name,
-                  fileType: selectedVideo.type,
-                  fileSize: selectedVideo.size,
-                }),
-              });
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-              if (!presignedResponse.ok) {
-                throw new Error(
-                  `Presigned URL request failed: ${presignedResponse.status}`
-                );
-              }
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            let errorMessage =
+              errorData.error || errorData.message || "Failed to upload video";
 
-              const { presignedUrl, publicUrl } =
-                await presignedResponse.json();
-
-              if (!presignedUrl || !publicUrl) {
-                throw new Error("Invalid response from presigned URL endpoint");
-              }
-
-              console.log(
-                "[RaidLogForm] Got presigned URL, uploading video...",
-                {
-                  presignedUrlLength: presignedUrl.length,
-                  fileSize: selectedVideo.size,
-                  fileType: selectedVideo.type,
-                }
+            // Provide more specific error messages
+            if (response.status === 413) {
+              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
+                2
               );
-
-              // Step 2: Upload directly to R2 using presigned URL
-              let uploadResponse;
-              try {
-                uploadResponse = await fetch(presignedUrl, {
-                  method: "PUT",
-                  body: selectedVideo,
-                  headers: {
-                    "Content-Type": selectedVideo.type,
-                  },
-                });
-              } catch (fetchError: any) {
-                // CORS errors typically result in a failed fetch with status 0
-                if (
-                  fetchError.name === "TypeError" ||
-                  fetchError.message?.includes("CORS") ||
-                  fetchError.message?.includes("Failed to fetch")
-                ) {
-                  console.error(
-                    "[RaidLogForm] CORS error detected during presigned URL upload"
-                  );
-                  throw new Error("CORS_ERROR");
-                }
-                throw fetchError;
-              }
-
-              if (!uploadResponse.ok) {
-                const errorText = await uploadResponse.text().catch(() => "");
-                console.error("[RaidLogForm] Presigned URL upload failed:", {
-                  status: uploadResponse.status,
-                  statusText: uploadResponse.statusText,
-                  error: errorText,
-                });
-                throw new Error(
-                  `Presigned upload failed: ${uploadResponse.status}`
-                );
-              }
-
-              uploadedVideoUrlFinal = publicUrl;
-              console.log(
-                "[RaidLogForm] Video uploaded successfully via presigned URL:",
-                publicUrl
-              );
-            } catch (presignedError) {
-              console.warn(
-                "[RaidLogForm] Presigned URL upload failed, falling back to regular upload:",
-                presignedError
-              );
-
-              // If it's a CORS error and file is > 4.5MB, we can't use regular upload either
-              if (
-                presignedError instanceof Error &&
-                presignedError.message === "CORS_ERROR"
-              ) {
-                const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
-                  2
-                );
-                if (selectedVideo.size > 4.5 * 1024 * 1024) {
-                  setIsSubmitting(false);
-                  toast.error(
-                    `Video file (${fileSizeMB}MB) cannot be uploaded directly due to CORS restrictions. Please try compressing your video using external tools, or use a YouTube/Vimeo link instead.`,
-                    { duration: 10000 }
-                  );
-                  return;
-                }
-              }
-
-              // Fall through to regular upload
-              usePresignedUrl = false;
-            }
-          }
-
-          // Fallback to regular upload route (for smaller files or if presigned fails)
-          if (!usePresignedUrl || !uploadedVideoUrlFinal) {
-            console.log("[RaidLogForm] Using regular upload route...");
-            const formData = new FormData();
-            formData.append("file", selectedVideo);
-            formData.append("type", "video");
-
-            const response = await fetch("/api/upload", {
-              method: "POST",
-              body: formData,
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              let errorMessage =
+              errorMessage =
                 errorData.error ||
-                errorData.message ||
-                "Failed to upload video";
+                `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 55MB.`;
+            } else if (response.status === 400) {
+              errorMessage =
+                errorData.error ||
+                "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
+            }
 
-              // Provide more specific error messages
-              if (response.status === 413) {
-                const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
-                  2
-                );
-                errorMessage =
-                  errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Files over 4.5MB must be compressed to under 4.5MB due to platform upload limits. Maximum allowed size is 55MB, but files over 4.5MB need compression.`;
-              } else if (response.status === 400) {
-                errorMessage =
-                  errorData.error ||
-                  "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
-              }
-
-              console.error(
-                "[RaidLogForm] Regular upload error:",
-                errorMessage,
-                errorData,
-                `Status: ${response.status}`
+            console.error(
+              "[RaidLogForm] Upload error:",
+              errorMessage,
+              errorData,
+              `Status: ${response.status}`
+            );
+            toast.error(`Video upload failed: ${errorMessage}`);
+            setIsSubmitting(false);
+            return;
+          } else {
+            const data = await response.json();
+            uploadedVideoUrlFinal = data.videoUrl;
+            if (!uploadedVideoUrlFinal) {
+              console.warn(
+                "[RaidLogForm] Video upload succeeded but no videoUrl returned"
               );
-              toast.error(`Video upload failed: ${errorMessage}`);
-              setIsSubmitting(false);
-              return;
+              toast.warning(
+                "Video uploaded but URL not received. Log will be created without video."
+              );
             } else {
-              const data = await response.json();
-              uploadedVideoUrlFinal = data.videoUrl;
-              if (!uploadedVideoUrlFinal) {
-                console.warn(
-                  "[RaidLogForm] Video upload succeeded but no videoUrl returned"
-                );
-                toast.warning(
-                  "Video uploaded but URL not received. Log will be created without video."
-                );
-              } else {
-                console.log(
-                  "[RaidLogForm] Video uploaded successfully via regular route:",
-                  uploadedVideoUrlFinal
-                );
-              }
+              console.log(
+                "[RaidLogForm] Video uploaded successfully:",
+                uploadedVideoUrlFinal
+              );
             }
           }
         } catch (uploadError) {
@@ -711,18 +594,7 @@ export function RaidLogForm({
           let errorMessage = "Unknown error";
           if (uploadError instanceof Error) {
             errorMessage = uploadError.message;
-            // Check for CORS errors specifically
             if (
-              uploadError.message.includes("CORS") ||
-              uploadError.message.includes("Access-Control-Allow-Origin") ||
-              (uploadError.message.includes("Failed to fetch") &&
-                selectedVideo.size > 4.5 * 1024 * 1024)
-            ) {
-              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
-                2
-              );
-              errorMessage = `Video upload failed due to CORS configuration. Your video (${fileSizeMB}MB) exceeds the 4.5MB limit for direct uploads. Please compress your video to under 4.5MB or contact support to enable large file uploads.`;
-            } else if (
               uploadError.message.includes("Failed to fetch") ||
               uploadError.name === "TypeError"
             ) {
@@ -1164,21 +1036,24 @@ export function RaidLogForm({
                           if (file.size > FILE_SIZE_THRESHOLD) {
                             setIsCompressingVideo(true);
                             setVideoCompressionProgress(0);
-                            
+
                             try {
-                              const compressedFile = await compressVideoIfNeeded(
-                                file,
-                                (progress) => {
-                                  setVideoCompressionProgress(progress);
-                                }
-                              );
+                              const compressedFile =
+                                await compressVideoIfNeeded(
+                                  file,
+                                  (progress) => {
+                                    setVideoCompressionProgress(progress);
+                                  }
+                                );
 
                               if (compressedFile.size < file.size) {
                                 toast.success(
                                   `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
                                 );
                                 setSelectedVideo(compressedFile);
-                                setVideoPreview(URL.createObjectURL(compressedFile));
+                                setVideoPreview(
+                                  URL.createObjectURL(compressedFile)
+                                );
                               } else {
                                 // Compression didn't help, use original but warn user
                                 toast.warning(
@@ -1189,7 +1064,10 @@ export function RaidLogForm({
                                 setVideoPreview(URL.createObjectURL(file));
                               }
                             } catch (compressionError) {
-                              console.error("Video compression failed:", compressionError);
+                              console.error(
+                                "Video compression failed:",
+                                compressionError
+                              );
                               toast.warning(
                                 `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) may not upload successfully. Consider using a YouTube/Vimeo link instead.`,
                                 { duration: 8000 }
@@ -1221,7 +1099,8 @@ export function RaidLogForm({
                       {isCompressingVideo && (
                         <div className="mt-2">
                           <p className="text-sm text-gray-500 mb-1 font-primary">
-                            Compressing video... {Math.round(videoCompressionProgress)}%
+                            Compressing video...{" "}
+                            {Math.round(videoCompressionProgress)}%
                           </p>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div

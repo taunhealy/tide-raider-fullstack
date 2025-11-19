@@ -252,8 +252,19 @@ export async function compressVideoIfNeeded(
 
     let mediaRecorder: MediaRecorder | null = null;
     const chunks: Blob[] = [];
+    let isResolved = false; // Flag to prevent multiple resolve/reject calls
+    let animationFrameId: number | null = null;
+    let timeout: NodeJS.Timeout | null = null;
 
     const cleanup = () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
       URL.revokeObjectURL(objectUrl);
       if (video.src) {
         video.src = "";
@@ -265,9 +276,15 @@ export async function compressVideoIfNeeded(
           // Ignore errors during cleanup
         }
       }
+      // Remove all event listeners to prevent infinite loops
+      video.onloadedmetadata = null;
+      video.onerror = null;
+      video.onplay = null;
+      video.onended = null;
     };
 
     video.onloadedmetadata = async () => {
+      if (isResolved) return; // Prevent multiple calls
       try {
         // Calculate target dimensions (max 1280px width/height to reduce file size)
         let { videoWidth, videoHeight } = video;
@@ -337,6 +354,8 @@ export async function compressVideoIfNeeded(
         };
 
         mediaRecorder.onstop = () => {
+          if (isResolved) return;
+          isResolved = true;
           cleanup();
           const blob = new Blob(chunks, { type: selectedCodec.split(";")[0] });
           const compressedFile = new File(
@@ -363,23 +382,24 @@ export async function compressVideoIfNeeded(
         };
 
         mediaRecorder.onerror = (event) => {
+          if (isResolved) return;
+          isResolved = true;
           cleanup();
           console.error("[compressVideoIfNeeded] MediaRecorder error:", event);
           reject(new Error("Video compression failed"));
         };
 
         // Draw video frames to canvas and record
-        let lastTime = 0;
         const duration = video.duration;
-        let animationFrameId: number;
 
-        const drawFrame = (currentTime: number) => {
-          if (video.ended) {
+        const drawFrame = () => {
+          if (isResolved || video.ended || !mediaRecorder) {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
               mediaRecorder.stop();
             }
-            if (animationFrameId) {
+            if (animationFrameId !== null) {
               cancelAnimationFrame(animationFrameId);
+              animationFrameId = null;
             }
             return;
           }
@@ -396,6 +416,7 @@ export async function compressVideoIfNeeded(
         };
 
         video.onplay = () => {
+          if (isResolved) return;
           if (mediaRecorder && mediaRecorder.state === "inactive") {
             mediaRecorder.start(100); // Collect data every 100ms
           }
@@ -403,11 +424,13 @@ export async function compressVideoIfNeeded(
         };
 
         video.onended = () => {
+          if (isResolved) return;
           if (mediaRecorder && mediaRecorder.state !== "inactive") {
             mediaRecorder.stop();
           }
-          if (animationFrameId) {
+          if (animationFrameId !== null) {
             cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
           }
         };
 
@@ -424,29 +447,18 @@ export async function compressVideoIfNeeded(
         });
 
         // Set a timeout to prevent hanging
-        let timeout: NodeJS.Timeout | null = setTimeout(
+        timeout = setTimeout(
           () => {
+            if (isResolved) return;
+            isResolved = true;
             cleanup();
-            if (animationFrameId) {
-              cancelAnimationFrame(animationFrameId);
-            }
             reject(new Error("Video compression timed out"));
           },
           (duration + 10) * 1000
         ); // Add 10 seconds buffer
-
-        // Clear timeout when done
-        const originalOnStop = mediaRecorder.onstop;
-        mediaRecorder.onstop = (event) => {
-          if (timeout) {
-            clearTimeout(timeout);
-            timeout = null;
-          }
-          if (originalOnStop && mediaRecorder) {
-            originalOnStop.call(mediaRecorder, event);
-          }
-        };
       } catch (error) {
+        if (isResolved) return;
+        isResolved = true;
         cleanup();
         console.error(
           "[compressVideoIfNeeded] Error setting up compression:",
@@ -461,6 +473,8 @@ export async function compressVideoIfNeeded(
     };
 
     video.onerror = (e) => {
+      if (isResolved) return;
+      isResolved = true;
       cleanup();
       const errorMessage =
         video.error?.message || "Failed to load video for compression";
