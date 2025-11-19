@@ -53,7 +53,14 @@ RUN npx prisma generate
 # Build TypeScript
 RUN npm run build
 
+# Copy JavaScript eval files to dist (they're not compiled by TypeScript)
+# These files are loaded at runtime and must be present in dist
+RUN mkdir -p dist/lib/scrapers && \
+    cp src/lib/scrapers/windy-eval.js dist/lib/scrapers/windy-eval.js && \
+    cp src/lib/scrapers/windguru-eval.js dist/lib/scrapers/windguru-eval.js
+
 # Remove dev dependencies to reduce image size
+# Note: We keep src/ folder for reference, but only dist/ is used at runtime
 RUN npm prune --production
 
 # Expose port (can be overridden via PORT env var)

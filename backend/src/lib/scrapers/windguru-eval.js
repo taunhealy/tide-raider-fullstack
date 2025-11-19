@@ -188,18 +188,38 @@ function extractWindguruData() {
           }
           // Try to extract from src (sometimes direction is encoded in filename)
           if (imgSrc) {
-            const dirMatch = imgSrc.match(/([NSEW]+|\d+)/);
+            // Match cardinal directions (N, NE, NNE, etc.)
+            const cardinalMatch = imgSrc.match(/([NSEW]+)/);
+            if (cardinalMatch) {
+              return cardinalMatch[1];
+            }
+            // Match degrees (0-360) - validate that numeric value is within valid range
+            const dirMatch = imgSrc.match(/(\d+(?:\.\d+)?)/);
             if (dirMatch) {
-              return dirMatch[1];
+              const degrees = parseFloat(dirMatch[1]);
+              // Only accept values that are valid degrees (0-360)
+              if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+                return dirMatch[1];
+              }
             }
           }
         }
         
         // Check for title attribute on cell (often contains direction info)
         if (title && title.length > 0) {
-          const titleDirMatch = title.match(/([NSEW]+|\d+)/);
-          if (titleDirMatch) {
-            return titleDirMatch[1];
+          // Match cardinal directions (N, NE, NNE, etc.)
+          const cardinalMatch = title.match(/[NSEW]+/);
+          if (cardinalMatch) {
+            return cardinalMatch[0];
+          }
+          // Match degrees (0-360) - validate that numeric value is within valid range
+          const dirExtract = title.match(/(\d+(?:\.\d+)?)/);
+          if (dirExtract) {
+            const degrees = parseFloat(dirExtract[1]);
+            // Only accept values that are valid degrees (0-360)
+            if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+              return dirExtract[1];
+            }
           }
         }
       }
@@ -207,17 +227,37 @@ function extractWindguruData() {
       // Priority 3: Use text content (most reliable for Windguru)
       const content = innerText || text;
       if (content && content.length > 0) {
-        // For directions (wind/wave direction), return as-is if it's a cardinal direction or degrees
+        // For directions (wind/wave direction), return as-is if it's a cardinal direction or degrees (0-360)
         if (isDirectionParam) {
-          // Match cardinal directions (N, NE, NNE, etc.) or degrees (0-360)
-          const dirMatch = content.match(/^([NSEW]+|\d+)$/);
-          if (dirMatch) {
-            return dirMatch[1];
+          // Match cardinal directions (N, NE, NNE, etc.)
+          const cardinalMatch = content.match(/^[NSEW]+$/);
+          if (cardinalMatch) {
+            return cardinalMatch[0];
+          }
+          // Match degrees (0-360) - validate that numeric value is within valid range
+          const degreesMatch = content.match(/^(\d+(?:\.\d+)?)$/);
+          if (degreesMatch) {
+            const degrees = parseFloat(degreesMatch[1]);
+            // Only accept values that are valid degrees (0-360)
+            if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+              return degreesMatch[1];
+            }
           }
           // Try to extract from text like "N 10" or "270°"
-          const dirExtract = content.match(/([NSEW]+|\d+)/);
+          const dirExtract = content.match(/([NSEW]+|\d+(?:\.\d+)?)/);
           if (dirExtract) {
-            return dirExtract[1];
+            const extracted = dirExtract[1];
+            // If it's numeric, validate it's a valid degree (0-360)
+            const numericValue = parseFloat(extracted);
+            if (!isNaN(numericValue)) {
+              if (numericValue >= 0 && numericValue <= 360) {
+                return extracted;
+              }
+              // Invalid numeric value (like a timestamp), skip it
+            } else {
+              // Cardinal direction, return it
+              return extracted;
+            }
           }
         }
         // For numeric values, clean and return
@@ -243,8 +283,34 @@ function extractWindguruData() {
         
         if (nestedText && nestedText.length > 0) {
           if (isDirectionParam) {
-            const dirMatch = nestedText.match(/^([NSEW]+|\d+)$/);
-            if (dirMatch) return dirMatch[1];
+            // Match cardinal directions (N, NE, NNE, etc.)
+            const cardinalMatch = nestedText.match(/^[NSEW]+$/);
+            if (cardinalMatch) return cardinalMatch[0];
+            // Match degrees (0-360) - validate that numeric value is within valid range
+            const degreesMatch = nestedText.match(/^(\d+(?:\.\d+)?)$/);
+            if (degreesMatch) {
+              const degrees = parseFloat(degreesMatch[1]);
+              // Only accept values that are valid degrees (0-360)
+              if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+                return degreesMatch[1];
+              }
+            }
+            // Try to extract from text
+            const dirExtract = nestedText.match(/([NSEW]+|\d+(?:\.\d+)?)/);
+            if (dirExtract) {
+              const extracted = dirExtract[1];
+              // If it's numeric, validate it's a valid degree (0-360)
+              const numericValue = parseFloat(extracted);
+              if (!isNaN(numericValue)) {
+                if (numericValue >= 0 && numericValue <= 360) {
+                  return extracted;
+                }
+                // Invalid numeric value (like a timestamp), skip it
+              } else {
+                // Cardinal direction, return it
+                return extracted;
+              }
+            }
           }
           const numericMatch = nestedText.match(/[\d.]+/);
           if (numericMatch) return numericMatch[0];
@@ -254,8 +320,18 @@ function extractWindguruData() {
           return nestedDataValue;
         }
         if (nestedTitle && isDirectionParam) {
-          const dirMatch = nestedTitle.match(/([NSEW]+|\d+)/);
-          if (dirMatch) return dirMatch[1];
+          // Match cardinal directions (N, NE, NNE, etc.)
+          const cardinalMatch = nestedTitle.match(/[NSEW]+/);
+          if (cardinalMatch) return cardinalMatch[0];
+          // Match degrees (0-360) - validate that numeric value is within valid range
+          const dirExtract = nestedTitle.match(/(\d+(?:\.\d+)?)/);
+          if (dirExtract) {
+            const degrees = parseFloat(dirExtract[1]);
+            // Only accept values that are valid degrees (0-360)
+            if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+              return dirExtract[1];
+            }
+          }
         }
       }
 

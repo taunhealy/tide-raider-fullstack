@@ -27,7 +27,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/131594",
+      url: "https://www.windguru.cz/95115",
       scraper: scraperB,
     },
     sourceC: {
@@ -42,11 +42,11 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/580008", // TODO: Find Windguru spot ID for Jeffreys Bay
+      url: "https://www.windguru.cz/68531", // TODO: Find Windguru spot ID for Jeffreys Bay
       scraper: scraperB,
     },
     sourceC: {
-      url: "https://windy.app/forecast2/spot/578263/Supertubes+-Jbay",
+      url: "https://windy.app/forecast2/spot/200805/Jeffreys+Bay+South+Africa",
       scraper: scraperC,
     },
   },
