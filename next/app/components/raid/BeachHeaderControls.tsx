@@ -47,8 +47,10 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
             />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
-              <div className="flex flex-col w-full sm:w-auto flex-1 gap-3">
-                <SearchBar />
+              <div className="flex flex-col w-full sm:w-auto flex-1 gap-3 min-w-0">
+                <div className="w-full overflow-visible">
+                  <SearchBar />
+                </div>
                 <RecentRegionSearch regionCounts={regionCountsData} />
               </div>
             </div>

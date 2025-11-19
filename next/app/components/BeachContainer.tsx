@@ -133,7 +133,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
         </Suspense>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] flex-1 overflow-hidden">
-          <main className="min-w-0 overflow-y-auto">
+          <main className="min-w-0 overflow-y-auto overflow-x-visible">
             <BeachHeaderControls
               onSearch={(value) => updateFilter("searchQuery", value)}
               onRegionSelect={handleRegionSelect}

@@ -159,7 +159,7 @@ export function BeachSearchInput({
       )}
 
       {/* Search Input */}
-      <div className="relative">
+      <div className="relative overflow-visible">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
@@ -180,7 +180,8 @@ export function BeachSearchInput({
           className={cn(
             "w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg",
             "focus:outline-none focus:ring-1 focus:ring-[var(--color-bg-tertiary)] focus:border-transparent",
-            "placeholder-gray-400 transition-all font-primary"
+            "placeholder-gray-400 transition-all font-primary",
+            "focus-visible:ring-offset-0"
           )}
         />
         {isLoading && (
