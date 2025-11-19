@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tide-raider-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tide_raider
+      POSTGRES_PASSWORD: tide_raider_dev
+      POSTGRES_DB: tide_raider_dev
+    ports:
+      - "5433:5432"  # Using 5433 to avoid conflict with existing PostgreSQL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tide_raider"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+

@@ -11,6 +11,11 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:restart": "docker-compose restart",
+    "db:logs": "docker-compose logs -f postgres",
+    "db:reset": "prisma migrate reset --force",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "fly:migrate": "fly ssh console -C 'cd /app && npx prisma migrate deploy' --app tide-raider-backend"

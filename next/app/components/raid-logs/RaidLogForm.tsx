@@ -672,7 +672,7 @@ export function RaidLogForm({
                 );
                 errorMessage =
                   errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Files over 4.5MB must be compressed to under 4.5MB due to platform upload limits. Maximum allowed size is 20MB, but files over 4.5MB need compression.`;
+                  `Video file is too large (${fileSizeMB}MB). Files over 4.5MB must be compressed to under 4.5MB due to platform upload limits. Maximum allowed size is 55MB, but files over 4.5MB need compression.`;
               } else if (response.status === 400) {
                 errorMessage =
                   errorData.error ||
@@ -1141,7 +1141,7 @@ export function RaidLogForm({
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 60 seconds, 20MB)
+                        Upload Video File (Max 60 seconds, 55MB)
                       </label>
                       <input
                         type="file"
