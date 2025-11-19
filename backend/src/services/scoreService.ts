@@ -126,7 +126,7 @@ export class ScoreService {
         } else if (heightDiff <= 1) {
           score -= 1;
         } else {
-          score -= 2;
+          score -= 3;
         }
       }
 

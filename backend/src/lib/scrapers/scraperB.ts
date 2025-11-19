@@ -46,13 +46,8 @@ const knotsToMs = (knots: number): number => {
 const parseWindDirection = (value: string | null): number => {
   if (!value) return 0;
 
-  const numericValue = value.replace(/[^\d.]/g, "");
-  const degrees = parseFloat(numericValue);
-
-  if (!isNaN(degrees)) {
-    return degrees;
-  }
-
+  // Check if it's a cardinal direction first
+  const upperValue = value.trim().toUpperCase();
   const cardinalMap: { [key: string]: number } = {
     N: 0,
     NNE: 22.5,
@@ -72,8 +67,25 @@ const parseWindDirection = (value: string | null): number => {
     NNW: 337.5,
   };
 
-  const upperValue = value.trim().toUpperCase();
-  return cardinalMap[upperValue] || 0;
+  if (cardinalMap[upperValue]) {
+    return cardinalMap[upperValue];
+  }
+
+  // Parse numeric value
+  const numericValue = value.replace(/[^\d.]/g, "");
+  const degrees = parseFloat(numericValue);
+
+  // CRITICAL: Only accept values that are valid degrees (0-360)
+  // Reject timestamps or other large numbers
+  if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+    return degrees;
+  }
+
+  // Invalid value (timestamp, etc.) - return 0 to indicate missing data
+  console.warn(
+    `[scraperB] Invalid direction value: ${value} (parsed as ${degrees}) - rejecting`
+  );
+  return 0;
 };
 
 // Parse wave direction (similar to wind direction)

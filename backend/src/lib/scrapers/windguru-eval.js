@@ -140,8 +140,7 @@ function extractWindguruData() {
 
       // Log first few cells for debugging
       if (cellIndex < 3) {
-        const html =
-          (cell.innerHTML && cell.innerHTML.substring(0, 200)) || "";
+        const html = (cell.innerHTML && cell.innerHTML.substring(0, 200)) || "";
         console.log(
           `[scraperB] [page.evaluate] Cell ${cellIndex} for ${paramId}:`,
           {
@@ -156,31 +155,108 @@ function extractWindguruData() {
       }
 
       // Priority 1: Use data-value if it exists and is not JSON metadata
+      // For direction parameters, validate that it's a valid degree (0-360) or cardinal direction
       if (dataValue && !dataValue.startsWith("{")) {
-        return dataValue;
+        const isDirectionParam =
+          paramId === "SMER" ||
+          paramId === "DIRPW" ||
+          paramId === "WINDDIR" ||
+          paramId === "WAVEDIR" ||
+          paramId === "WDIR" ||
+          paramId === "WAVE_DIR" ||
+          paramId === "DIR" ||
+          paramId === "SWDIR";
+
+        if (isDirectionParam) {
+          // Check if it's a cardinal direction
+          const cardinalMatch = dataValue.match(/^[NSEW]+$/);
+          if (cardinalMatch) {
+            return cardinalMatch[0];
+          }
+          // Check if it's a valid degree (0-360)
+          const degreesMatch = dataValue.match(/^(\d+(?:\.\d+)?)$/);
+          if (degreesMatch) {
+            const degrees = parseFloat(degreesMatch[1]);
+            // Only accept values that are valid degrees (0-360)
+            if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+              return degreesMatch[1];
+            }
+            // Invalid numeric value (timestamp, etc.) - skip it
+            if (cellIndex < 3) {
+              console.log(
+                `[scraperB] [page.evaluate] ⚠️ data-value "${dataValue}" is not a valid direction (parsed as ${degrees}), skipping`
+              );
+            }
+            // Fall through to try other extraction methods
+          } else {
+            // Not a cardinal or numeric, skip it
+            if (cellIndex < 3) {
+              console.log(
+                `[scraperB] [page.evaluate] ⚠️ data-value "${dataValue}" is not a valid direction format, skipping`
+              );
+            }
+            // Fall through to try other extraction methods
+          }
+        } else {
+          // Not a direction parameter, return as-is
+          return dataValue;
+        }
       }
 
       // Priority 2: Check for direction data in images (alt text, title, or data attributes)
-      const isDirectionParam = paramId === "SMER" || paramId === "DIRPW" || paramId === "WINDDIR" || paramId === "WAVEDIR" || paramId === "WDIR" || paramId === "WAVE_DIR" || paramId === "DIR" || paramId === "SWDIR";
+      const isDirectionParam =
+        paramId === "SMER" ||
+        paramId === "DIRPW" ||
+        paramId === "WINDDIR" ||
+        paramId === "WAVEDIR" ||
+        paramId === "WDIR" ||
+        paramId === "WAVE_DIR" ||
+        paramId === "DIR" ||
+        paramId === "SWDIR";
       if (isDirectionParam) {
         // Check for images with direction data
         const img = cell.querySelector("img");
         if (img) {
-          const imgAlt = (img.getAttribute("alt") && img.getAttribute("alt").trim()) || "";
-          const imgTitle = (img.getAttribute("title") && img.getAttribute("title").trim()) || "";
-          const imgSrc = (img.getAttribute("src") && img.getAttribute("src")) || "";
+          const imgAlt =
+            (img.getAttribute("alt") && img.getAttribute("alt").trim()) || "";
+          const imgTitle =
+            (img.getAttribute("title") && img.getAttribute("title").trim()) ||
+            "";
+          const imgSrc =
+            (img.getAttribute("src") && img.getAttribute("src")) || "";
           const imgDataDir = img.getAttribute("data-dir");
-          
+
           // Try to extract direction from image attributes
           if (imgAlt && imgAlt.length > 0) {
-            // Check if it's a cardinal direction or degrees
-            if (/^[NSEW]+$/.test(imgAlt) || /^\d+$/.test(imgAlt)) {
-              return imgAlt;
+            // Check if it's a cardinal direction
+            const cardinalMatch = imgAlt.match(/^[NSEW]+$/);
+            if (cardinalMatch) {
+              return cardinalMatch[0];
+            }
+            // Check if it's a valid degree (0-360)
+            const degreesMatch = imgAlt.match(/^(\d+(?:\.\d+)?)$/);
+            if (degreesMatch) {
+              const degrees = parseFloat(degreesMatch[1]);
+              // Only accept values that are valid degrees (0-360)
+              if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+                return degreesMatch[1];
+              }
             }
           }
           if (imgTitle && imgTitle.length > 0) {
-            if (/^[NSEW]+$/.test(imgTitle) || /^\d+$/.test(imgTitle)) {
-              return imgTitle;
+            // Check if it's a cardinal direction
+            const cardinalMatch = imgTitle.match(/^[NSEW]+$/);
+            if (cardinalMatch) {
+              return cardinalMatch[0];
+            }
+            // Check if it's a valid degree (0-360)
+            const degreesMatch = imgTitle.match(/^(\d+(?:\.\d+)?)$/);
+            if (degreesMatch) {
+              const degrees = parseFloat(degreesMatch[1]);
+              // Only accept values that are valid degrees (0-360)
+              if (!isNaN(degrees) && degrees >= 0 && degrees <= 360) {
+                return degreesMatch[1];
+              }
             }
           }
           if (imgDataDir) {
@@ -204,7 +280,7 @@ function extractWindguruData() {
             }
           }
         }
-        
+
         // Check for title attribute on cell (often contains direction info)
         if (title && title.length > 0) {
           // Match cardinal directions (N, NE, NNE, etc.)
@@ -280,7 +356,7 @@ function extractWindguruData() {
           "";
         const nestedDataValue = valueElement.getAttribute("data-value");
         const nestedTitle = valueElement.getAttribute("title");
-        
+
         if (nestedText && nestedText.length > 0) {
           if (isDirectionParam) {
             // Match cardinal directions (N, NE, NNE, etc.)
@@ -357,7 +433,7 @@ function extractWindguruData() {
       windSpeedRow.slice(0, 5)
     );
   }
-  
+
   let windDirRow = getParamRow("SMER");
   console.log(
     `[scraperB] [page.evaluate] SMER row:`,
@@ -369,12 +445,25 @@ function extractWindguruData() {
       windDirRow.slice(0, 5)
     );
   }
-  
+
   // Try alternative parameter IDs for wind direction
-  if (!windDirRow || windDirRow.every(function(v) { return !v || v === ""; })) {
-    console.log("[scraperB] [page.evaluate] SMER row empty, trying alternative: WINDDIR");
+  if (
+    !windDirRow ||
+    windDirRow.every(function (v) {
+      return !v || v === "";
+    })
+  ) {
+    console.log(
+      "[scraperB] [page.evaluate] SMER row empty, trying alternative: WINDDIR"
+    );
     const windDirRowAlt = getParamRow("WINDDIR");
-    if (windDirRowAlt && windDirRowAlt.length > 0 && windDirRowAlt.some(function(v) { return v && v !== ""; })) {
+    if (
+      windDirRowAlt &&
+      windDirRowAlt.length > 0 &&
+      windDirRowAlt.some(function (v) {
+        return v && v !== "";
+      })
+    ) {
       console.log("[scraperB] [page.evaluate] ✅ Found WINDDIR row with data");
       windDirRow = windDirRowAlt;
     } else {
@@ -382,15 +471,23 @@ function extractWindguruData() {
       const altIds = ["WDIR", "WIND_DIR", "DIR"];
       for (let i = 0; i < altIds.length; i++) {
         const altRow = getParamRow(altIds[i]);
-        if (altRow && altRow.length > 0 && altRow.some(function(v) { return v && v !== ""; })) {
-          console.log(`[scraperB] [page.evaluate] ✅ Found ${altIds[i]} row with data`);
+        if (
+          altRow &&
+          altRow.length > 0 &&
+          altRow.some(function (v) {
+            return v && v !== "";
+          })
+        ) {
+          console.log(
+            `[scraperB] [page.evaluate] ✅ Found ${altIds[i]} row with data`
+          );
           windDirRow = altRow;
           break;
         }
       }
     }
   }
-  
+
   const waveHeightRow = getParamRow("HTSGW");
   console.log(
     `[scraperB] [page.evaluate] HTSGW row:`,
@@ -402,7 +499,7 @@ function extractWindguruData() {
       waveHeightRow.slice(0, 5)
     );
   }
-  
+
   const wavePeriodRow = getParamRow("PERPW");
   console.log(
     `[scraperB] [page.evaluate] PERPW row:`,
@@ -414,7 +511,7 @@ function extractWindguruData() {
       wavePeriodRow.slice(0, 5)
     );
   }
-  
+
   let waveDirRow = getParamRow("DIRPW");
   console.log(
     `[scraperB] [page.evaluate] DIRPW row:`,
@@ -426,12 +523,25 @@ function extractWindguruData() {
       waveDirRow.slice(0, 5)
     );
   }
-  
+
   // Try alternative parameter IDs for wave direction
-  if (!waveDirRow || waveDirRow.every(function(v) { return !v || v === ""; })) {
-    console.log("[scraperB] [page.evaluate] DIRPW row empty, trying alternative: WAVEDIR");
+  if (
+    !waveDirRow ||
+    waveDirRow.every(function (v) {
+      return !v || v === "";
+    })
+  ) {
+    console.log(
+      "[scraperB] [page.evaluate] DIRPW row empty, trying alternative: WAVEDIR"
+    );
     const waveDirRowAlt = getParamRow("WAVEDIR");
-    if (waveDirRowAlt && waveDirRowAlt.length > 0 && waveDirRowAlt.some(function(v) { return v && v !== ""; })) {
+    if (
+      waveDirRowAlt &&
+      waveDirRowAlt.length > 0 &&
+      waveDirRowAlt.some(function (v) {
+        return v && v !== "";
+      })
+    ) {
       console.log("[scraperB] [page.evaluate] ✅ Found WAVEDIR row with data");
       waveDirRow = waveDirRowAlt;
     } else {
@@ -439,8 +549,16 @@ function extractWindguruData() {
       const altIds = ["WDIR", "WAVE_DIR", "SWDIR"];
       for (let i = 0; i < altIds.length; i++) {
         const altRow = getParamRow(altIds[i]);
-        if (altRow && altRow.length > 0 && altRow.some(function(v) { return v && v !== ""; })) {
-          console.log(`[scraperB] [page.evaluate] ✅ Found ${altIds[i]} row with data`);
+        if (
+          altRow &&
+          altRow.length > 0 &&
+          altRow.some(function (v) {
+            return v && v !== "";
+          })
+        ) {
+          console.log(
+            `[scraperB] [page.evaluate] ✅ Found ${altIds[i]} row with data`
+          );
           waveDirRow = altRow;
           break;
         }
@@ -517,4 +635,3 @@ function extractWindguruData() {
   );
   return result;
 }
-
