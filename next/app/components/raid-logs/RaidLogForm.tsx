@@ -552,9 +552,15 @@ export function RaidLogForm({
               const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
                 2
               );
-              errorMessage =
-                errorData.error ||
-                `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 55MB.`;
+              if (selectedVideo.size > 4.5 * 1024 * 1024) {
+                errorMessage =
+                  errorData.error ||
+                  `Video file (${fileSizeMB}MB) exceeds the 4.5MB upload limit. Please compress your video using external tools or use a YouTube/Vimeo link instead.`;
+              } else {
+                errorMessage =
+                  errorData.error ||
+                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 55MB.`;
+              }
             } else if (response.status === 400) {
               errorMessage =
                 errorData.error ||
@@ -1031,7 +1037,7 @@ export function RaidLogForm({
                             return;
                           }
 
-                          // If file is over 4.5MB, attempt compression
+                          // If file is over 4.5MB, compression is REQUIRED (Vercel body size limit)
                           const FILE_SIZE_THRESHOLD = 4.5 * 1024 * 1024;
                           if (file.size > FILE_SIZE_THRESHOLD) {
                             setIsCompressingVideo(true);
@@ -1046,7 +1052,8 @@ export function RaidLogForm({
                                   }
                                 );
 
-                              if (compressedFile.size < file.size) {
+                              if (compressedFile.size < FILE_SIZE_THRESHOLD) {
+                                // Compression successful - file is now under limit
                                 toast.success(
                                   `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
                                 );
@@ -1054,27 +1061,40 @@ export function RaidLogForm({
                                 setVideoPreview(
                                   URL.createObjectURL(compressedFile)
                                 );
-                              } else {
-                                // Compression didn't help, use original but warn user
+                              } else if (compressedFile.size < file.size) {
+                                // Compression helped but still over limit
                                 toast.warning(
-                                  `Video is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Compression didn't reduce size. Consider using a YouTube/Vimeo link for large videos.`,
-                                  { duration: 6000 }
+                                  `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB, but still over 4.5MB limit. Upload may fail. Consider using a YouTube/Vimeo link instead.`,
+                                  { duration: 10000 }
                                 );
-                                setSelectedVideo(file);
-                                setVideoPreview(URL.createObjectURL(file));
+                                setSelectedVideo(compressedFile);
+                                setVideoPreview(
+                                  URL.createObjectURL(compressedFile)
+                                );
+                              } else {
+                                // Compression didn't help
+                                toast.error(
+                                  `Video compression failed to reduce size. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
+                                  { duration: 10000 }
+                                );
+                                // Clear the selection since it won't work
+                                setSelectedVideo(null);
+                                setVideoPreview(null);
+                                return;
                               }
                             } catch (compressionError) {
                               console.error(
                                 "Video compression failed:",
                                 compressionError
                               );
-                              toast.warning(
-                                `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) may not upload successfully. Consider using a YouTube/Vimeo link instead.`,
-                                { duration: 8000 }
+                              toast.error(
+                                `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
+                                { duration: 10000 }
                               );
-                              // Still allow user to try uploading
-                              setSelectedVideo(file);
-                              setVideoPreview(URL.createObjectURL(file));
+                              // Clear the selection since it won't work
+                              setSelectedVideo(null);
+                              setVideoPreview(null);
+                              return;
                             } finally {
                               setIsCompressingVideo(false);
                               setVideoCompressionProgress(0);

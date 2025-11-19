@@ -219,19 +219,19 @@ export async function compressImageIfNeeded(file: File): Promise<File> {
   });
 }
 
-// Threshold for when to use presigned URLs (4.5MB)
-const PRESIGNED_UPLOAD_THRESHOLD = 4.5 * 1024 * 1024;
+// Threshold for when compression is required (4.5MB - Vercel/Next.js body size limit)
+const COMPRESSION_THRESHOLD = 4.5 * 1024 * 1024;
 
 // Compress video if needed (returns a Promise<File>)
-// This function attempts to compress videos over 4.5MB to avoid CORS issues with presigned URLs
+// This function attempts to compress videos over 4.5MB to fit within Vercel/Next.js API route body size limits
 // Note: Client-side video compression is limited. For best results, users should compress videos
 // before uploading or use YouTube/Vimeo links for large videos.
 export async function compressVideoIfNeeded(
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<File> {
-  // Only compress if file is over the threshold
-  if (file.size <= PRESIGNED_UPLOAD_THRESHOLD) {
+  // Only compress if file is over the threshold (required for Vercel's 4.5MB body limit)
+  if (file.size <= COMPRESSION_THRESHOLD) {
     return file;
   }
 
@@ -446,16 +446,19 @@ export async function compressVideoIfNeeded(
           reject(new Error("Failed to play video for compression"));
         });
 
-        // Set a timeout to prevent hanging
-        timeout = setTimeout(
-          () => {
-            if (isResolved) return;
-            isResolved = true;
-            cleanup();
-            reject(new Error("Video compression timed out"));
-          },
-          (duration + 10) * 1000
-        ); // Add 10 seconds buffer
+        // Set a timeout to prevent hanging - use longer timeout for large videos
+        // Base timeout: duration * 3 (compression takes time) + 60 seconds buffer
+        // Minimum 2 minutes, maximum 10 minutes
+        const baseTimeout = Math.max(
+          120000,
+          Math.min(600000, duration * 3000 + 60000)
+        );
+        timeout = setTimeout(() => {
+          if (isResolved) return;
+          isResolved = true;
+          cleanup();
+          reject(new Error("Video compression timed out"));
+        }, baseTimeout);
       } catch (error) {
         if (isResolved) return;
         isResolved = true;
