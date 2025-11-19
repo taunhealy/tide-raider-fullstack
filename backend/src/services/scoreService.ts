@@ -91,7 +91,7 @@ export class ScoreService {
         );
 
         if (minAngleDiff <= 22.5) {
-          score += 0.5;
+          score -= 0.5; // Fixed: was adding 0.5, should subtract
         } else if (minAngleDiff <= 45) {
           score -= 1;
         } else if (minAngleDiff <= 90) {
@@ -137,13 +137,17 @@ export class ScoreService {
           conditions.swellDirection <= parsedBeach.optimalSwellDirections.max
         )
       ) {
+        // Calculate minimum angle difference considering wrap-around (0° = 360°)
         const minDiff = Math.abs(
           conditions.swellDirection - parsedBeach.optimalSwellDirections.min
         );
         const maxDiff = Math.abs(
           conditions.swellDirection - parsedBeach.optimalSwellDirections.max
         );
-        const swellDirDiff = Math.min(minDiff, maxDiff);
+        // Consider wrap-around for both differences
+        const minDiffWrapped = Math.min(minDiff, 360 - minDiff);
+        const maxDiffWrapped = Math.min(maxDiff, 360 - maxDiff);
+        const swellDirDiff = Math.min(minDiffWrapped, maxDiffWrapped);
 
         if (swellDirDiff <= 20) {
           score -= 1;

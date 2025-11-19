@@ -17,7 +17,7 @@ router.get(
       const forceRefresh = req.query.forceRefresh === "true";
       const forecastDateParam = req.query.forecastDate as string | undefined;
       const sourceParam =
-        (req.query.source as "WINDFINDER" | "WINDGURU") || "WINDFINDER";
+        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") || "WINDFINDER";
 
       if (!regionId) {
         return res.status(400).json({ error: "Region ID is required" });
@@ -41,11 +41,21 @@ router.get(
           },
         });
 
-        // If not found, trigger scrape for the requested source
+        // Check if forecast has missing direction data (0 values indicate missing data)
+        const hasMissingDirectionData = forecast && 
+          (forecast.windDirection === 0 || forecast.swellDirection === 0);
+
+        // If not found OR has missing direction data, trigger scrape for the requested source
+        if (!forecast || hasMissingDirectionData) {
         if (!forecast) {
           console.log(
             `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), triggering scrape...`
           );
+          } else {
+            console.log(
+              `[forecast] ⚠️ Forecast found but has missing direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), re-scraping...`
+            );
+          }
 
           // Force a scrape for the requested source only
           try {

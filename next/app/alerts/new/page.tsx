@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
@@ -21,17 +21,70 @@ export default function NewAlertPage() {
   const [alertLimitReached, setAlertLimitReached] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status: authStatus } = useBackendAuth();
 
+  // Debug logging for localhost
   useEffect(() => {
-    // Get the selected log entry from localStorage
-    const storedLogEntry = localStorage.getItem("selectedLogEntry");
-    if (storedLogEntry) {
-      setSelectedLogEntry(JSON.parse(storedLogEntry));
-      // Clear the stored entry to prevent it from persisting
-      localStorage.removeItem("selectedLogEntry");
+    if (
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1")
+    ) {
+      console.log("[NewAlertPage] Auth state:", {
+        authStatus,
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        isLoading,
+        hasFetchedLogs,
+      });
     }
-  }, []); // Only run once on mount
+  }, [authStatus, session, isLoading, hasFetchedLogs]);
+
+  // Fetch log entry by ID from URL query parameter
+  useEffect(() => {
+    const logId = searchParams.get("logId");
+    if (logId && session?.user) {
+      console.log("[NewAlertPage] Fetching log entry by ID:", logId);
+
+      // Don't set isLoading - let the page render immediately
+      // The log entry will populate when fetch completes
+
+      // Set a timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        console.warn("[NewAlertPage] Log entry fetch timeout after 10 seconds");
+        toast.error(
+          "Log entry fetch timed out. You can still create an alert manually."
+        );
+      }, 10000); // 10 second timeout
+
+      api
+        .getLog(logId)
+        .then((logEntry) => {
+          clearTimeout(timeoutId);
+          console.log("[NewAlertPage] Log entry fetched:", logEntry);
+          setSelectedLogEntry(logEntry);
+          // Don't set isLoading here - page should already be rendered
+        })
+        .catch((error) => {
+          clearTimeout(timeoutId);
+          console.error("[NewAlertPage] Error fetching log entry:", error);
+          console.error("[NewAlertPage] Error details:", {
+            message: error.message,
+            response: (error as any).response,
+          });
+          toast.error(
+            "Failed to load log entry. You can still create an alert manually."
+          );
+          // Don't block page loading if log fetch fails
+        });
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [searchParams, session?.user]);
 
   useEffect(() => {
     // Check alert limit and fetch log entries when component mounts
@@ -55,12 +108,19 @@ export default function NewAlertPage() {
           // Premium users can create unlimited alerts, so fetch logs
           if (mounted) {
             console.log("[NewAlertPage] Fetching log entries...");
-            const data = await api.getLogs();
-            console.log(
-              "[NewAlertPage] Log entries fetched:",
-              data?.length || 0
-            );
-            setLogEntries(Array.isArray(data) ? data : []);
+            try {
+              const data = await api.getLogs();
+              console.log(
+                "[NewAlertPage] Log entries fetched:",
+                data?.length || 0,
+                "entries"
+              );
+              console.log("[NewAlertPage] First log entry sample:", data?.[0]);
+              setLogEntries(Array.isArray(data) ? data : []);
+            } catch (error) {
+              console.error("[NewAlertPage] Error fetching logs:", error);
+              setLogEntries([]);
+            }
             setHasFetchedLogs(true);
           }
         } else {
@@ -81,12 +141,19 @@ export default function NewAlertPage() {
           // Limit not reached, fetch log entries
           if (mounted) {
             console.log("[NewAlertPage] Fetching log entries...");
-            const data = await api.getLogs();
-            console.log(
-              "[NewAlertPage] Log entries fetched:",
-              data?.length || 0
-            );
-            setLogEntries(Array.isArray(data) ? data : []);
+            try {
+              const data = await api.getLogs();
+              console.log(
+                "[NewAlertPage] Log entries fetched:",
+                data?.length || 0,
+                "entries"
+              );
+              console.log("[NewAlertPage] First log entry sample:", data?.[0]);
+              setLogEntries(Array.isArray(data) ? data : []);
+            } catch (error) {
+              console.error("[NewAlertPage] Error fetching logs:", error);
+              setLogEntries([]);
+            }
             setHasFetchedLogs(true);
           }
         }
@@ -98,26 +165,49 @@ export default function NewAlertPage() {
         }
       } finally {
         if (mounted) {
+          // Ensure loading is set to false even if there were errors
           setIsLoading(false);
         }
       }
     };
 
-    if (authStatus === "loading") {
-      // Still loading auth state
-      return;
-    }
-
-    if (authStatus === "authenticated" && session?.user) {
+    // If we have session data, proceed immediately (don't wait for status to update)
+    if (session?.user) {
       // User is authenticated - check limit and fetch logs
       if (!hasFetchedLogs) {
+        // Set loading to false immediately so page can render
+        // checkAlertLimit will run in background
+        setIsLoading(false);
         checkAlertLimit();
       } else {
         setIsLoading(false);
       }
-    } else if (authStatus === "unauthenticated") {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    // If auth is still loading and we don't have session data, show loader
+    if (authStatus === "loading" && !session?.user) {
+      // Still loading auth state - keep showing loader
+      return;
+    }
+
+    // Auth finished loading but no user - redirect to login
+    if (
+      authStatus === "unauthenticated" ||
+      (!session?.user && authStatus !== "loading")
+    ) {
       // User is not authenticated, redirect to login with callback URL
+      setIsLoading(false); // Set loading to false before redirect
       router.push(`/login?callbackUrl=${encodeURIComponent("/alerts/new")}`);
+      return;
+    }
+
+    // If we reach here and don't have session, set loading to false
+    // This handles edge cases where auth status is undefined or in an unexpected state
+    if (!session?.user && authStatus !== "loading") {
+      setIsLoading(false);
     }
 
     return () => {
@@ -125,6 +215,7 @@ export default function NewAlertPage() {
     };
   }, [
     authStatus,
+    session?.user,
     session?.user?.isSubscribed,
     session?.user?.hasActiveTrial,
     hasFetchedLogs,
@@ -165,7 +256,19 @@ export default function NewAlertPage() {
     router.push("/dashboard/alerts");
   };
 
-  if (isLoading) {
+  // If we have session data, proceed immediately (don't wait for isLoading to be false)
+  // This prevents the page from being stuck in loading state
+  if (session?.user) {
+    // User is authenticated - show the form even if still loading logs
+    // The log entry will populate when fetch completes
+  } else if (isLoading || (authStatus === "loading" && !session?.user)) {
+    // Show loader while loading and we don't have session data yet
+    return <RandomLoader isLoading={true} />;
+  } else if (
+    authStatus === "unauthenticated" ||
+    (!session?.user && authStatus !== "loading")
+  ) {
+    // Auth finished but no user - redirect will happen in useEffect
     return <RandomLoader isLoading={true} />;
   }
 

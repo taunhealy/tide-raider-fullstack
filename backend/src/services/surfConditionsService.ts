@@ -13,7 +13,7 @@ function getTodayDate() {
 export async function getLatestConditions(
   regionId: string,
   forceRefresh = false,
-  source: "WINDFINDER" | "WINDGURU" = "WINDFINDER"
+  source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER"
 ) {
   // First, try to find region by ID (exact match, case-sensitive)
   console.log(
@@ -143,13 +143,26 @@ export async function getLatestConditions(
     source: source,
     forceRefresh,
     existingSource: existingForecast?.source,
+    windDirection: existingForecast?.windDirection,
+    swellDirection: existingForecast?.swellDirection,
   });
 
-  if (existingForecast && !forceRefresh) {
+  // Check if forecast has missing direction data (0 values indicate missing data)
+  const hasMissingDirectionData = existingForecast && 
+    (existingForecast.windDirection === 0 || existingForecast.swellDirection === 0);
+
+  if (existingForecast && !forceRefresh && !hasMissingDirectionData) {
     console.log(
       `[getLatestConditions] ✅ Found existing forecast for ${region.id} (source: ${source}, cached)`
     );
     return existingForecast;
+  }
+
+  // If forecast exists but has missing direction data, re-scrape
+  if (hasMissingDirectionData) {
+    console.log(
+      `[getLatestConditions] ⚠️ Found existing forecast with missing direction data (windDirection: ${existingForecast.windDirection}, swellDirection: ${existingForecast.swellDirection}), re-scraping...`
+    );
   }
 
   // Scrape new forecast
@@ -183,18 +196,28 @@ export async function getLatestConditions(
   const configRegionId = regionConfig.regionId || region.id;
 
   // Determine which source to scrape
-  const sourceConfig =
-    source === "WINDGURU" ? regionConfig.sourceB : regionConfig.sourceA;
+  let sourceConfig;
+  let sourceName;
+  if (source === "WINDGURU") {
+    sourceConfig = regionConfig.sourceB;
+    sourceName = "sourceB";
+  } else if (source === "WINDY") {
+    sourceConfig = regionConfig.sourceC;
+    sourceName = "sourceC";
+  } else {
+    sourceConfig = regionConfig.sourceA;
+    sourceName = "sourceA";
+  }
 
   if (!sourceConfig) {
     console.error(
-      `[getLatestConditions] ❌ Source ${source} not configured for region ${region.id}. Available: sourceA=${!!regionConfig.sourceA}, sourceB=${!!regionConfig.sourceB}`
+      `[getLatestConditions] ❌ Source ${source} not configured for region ${region.id}. Available: sourceA=${!!regionConfig.sourceA}, sourceB=${!!regionConfig.sourceB}, sourceC=${!!regionConfig.sourceC}`
     );
     return null;
   }
 
   console.log(
-    `[getLatestConditions] 🔧 Using ${source === "WINDGURU" ? "sourceB" : "sourceA"} for ${source}`
+    `[getLatestConditions] 🔧 Using ${sourceName} for ${source}`
   );
 
   try {

@@ -16,20 +16,17 @@ import { getToken } from "next-auth/jwt";
 import jwt from "jsonwebtoken";
 import { authOptions } from "@/app/lib/authOptions";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-// Always ignore localhost URLs and use production backend (since database is live)
+// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
 
-  // If env URL is localhost, always use production (database is live, not local)
-  if (envUrl?.includes("localhost")) {
-    console.warn(
-      "[backend-proxy] Ignoring localhost URL, using production backend (database is live)"
-    );
-    return "https://tide-raider-backend.fly.dev";
+  // In development, use localhost backend (connects to Docker postgres)
+  if (isDevelopment) {
+    return envUrl || "http://localhost:4001";
   }
 
-  // Use env URL if set and not localhost, otherwise use production
+  // In production, use production backend (connects to Fly.io postgres)
   return envUrl || "https://tide-raider-backend.fly.dev";
 };
 

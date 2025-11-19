@@ -255,7 +255,7 @@ export const api = {
   getForecast: async (
     regionId: string,
     forecastDate?: string,
-    source?: "WINDFINDER" | "WINDGURU"
+    source?: "WINDFINDER" | "WINDGURU" | "WINDY"
   ) => {
     const params = new URLSearchParams();
     params.append("regionId", regionId);
@@ -279,6 +279,7 @@ export const api = {
     difficulty?: string;
     hazards?: string;
     forecastDate?: string; // ISO date string (YYYY-MM-DD)
+    source?: "WINDFINDER" | "WINDGURU" | "WINDY";
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.regionId) queryParams.append("regionId", params.regionId);
@@ -294,6 +295,7 @@ export const api = {
     if (params?.hazards) queryParams.append("hazards", params.hazards);
     if (params?.forecastDate)
       queryParams.append("forecastDate", params.forecastDate);
+    if (params?.source) queryParams.append("source", params.source);
     const query = queryParams.toString();
     return apiRequest<{
       beaches: any[];

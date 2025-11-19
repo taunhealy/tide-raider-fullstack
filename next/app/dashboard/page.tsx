@@ -202,13 +202,18 @@ export default function DashboardPage() {
   const handleSubscribeWithLoading = async () => {
     setLoadingStates((prev) => ({ ...prev, subscribe: true }));
     try {
-      await handleSubscribe();
-      // After successful subscription
-      await queryClient.invalidateQueries({
-        queryKey: ["subscriptionDetails"],
-      });
-      await queryClient.invalidateQueries({ queryKey: ["user"] });
-      router.refresh();
+      // Check if user is logged in first
+      if (!session?.user) {
+        // Redirect to OAuth if not logged in
+        await handleSubscribe();
+        return;
+      }
+
+      // User is logged in, go directly to checkout
+      router.push("/checkout");
+    } catch (error) {
+      console.error("Subscribe error:", error);
+      toast.error("Failed to start subscription. Please try again.");
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }
@@ -713,7 +718,6 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
-
 
             {activeTab === "ads" && (
               <div className="space-y-4">

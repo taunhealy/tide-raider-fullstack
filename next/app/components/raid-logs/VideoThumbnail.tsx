@@ -83,7 +83,13 @@ export function VideoThumbnail({
 
   // Generate thumbnail from video
   useEffect(() => {
-    if (!thumbnailVideoRef.current || !canvasRef.current || !videoUrl || videoUrl.trim() === "") return;
+    if (
+      !thumbnailVideoRef.current ||
+      !canvasRef.current ||
+      !videoUrl ||
+      videoUrl.trim() === ""
+    )
+      return;
 
     const video = thumbnailVideoRef.current;
     const canvas = canvasRef.current;
@@ -187,6 +193,9 @@ export function VideoThumbnail({
     if (isMobile) return; // Ignore hover on mobile
     setIsHovered(true);
     if (playbackVideoRef.current) {
+      // Enable volume on hover (set to 0.4 for comfortable playback)
+      playbackVideoRef.current.volume = 0.4;
+      playbackVideoRef.current.muted = false;
       playbackVideoRef.current.play().catch((error) => {
         console.error("[VideoThumbnail] Error playing video on hover:", error);
       });
@@ -199,6 +208,8 @@ export function VideoThumbnail({
     if (playbackVideoRef.current) {
       playbackVideoRef.current.pause();
       playbackVideoRef.current.currentTime = 0; // Reset to start
+      // Mute again when hover ends
+      playbackVideoRef.current.muted = true;
     }
   };
 
@@ -258,13 +269,19 @@ export function VideoThumbnail({
         ref={playbackVideoRef}
         src={videoUrl}
         preload="none"
-        muted
+        muted={!isHovered} // Unmute on hover (desktop only)
         loop
         playsInline
         className={`absolute inset-0 w-full h-full object-cover rounded-md transition-opacity ${
           shouldShowVideo ? "opacity-100 z-10" : "opacity-0 z-0"
         }`}
         crossOrigin="anonymous"
+        onLoadedMetadata={() => {
+          // Set volume to 40% when video metadata loads
+          if (playbackVideoRef.current) {
+            playbackVideoRef.current.volume = 0.4;
+          }
+        }}
       />
 
       {/* Display thumbnail or loading state */}

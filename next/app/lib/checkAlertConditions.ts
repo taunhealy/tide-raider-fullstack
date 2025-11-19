@@ -3,7 +3,7 @@ import { CoreForecastData } from "@/app/types/forecast";
 
 // Forecast type matching the database schema
 type Forecast = CoreForecastData & {
-  source?: "WINDFINDER" | "WINDGURU";
+  source?: "WINDFINDER" | "WINDGURU" | "WINDY";
   [key: string]: any;
 };
 

@@ -8,7 +8,7 @@ import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
 
-type ForecastSource = "WINDFINDER" | "WINDGURU";
+type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -62,7 +62,7 @@ export default function WeatherForecastWidget() {
   useEffect(() => {
     if (regionId && normalizedDate) {
       console.log(
-        "[WeatherForecastWidget] Date or source changed, invalidating query:",
+        "[WeatherForecastWidget] Date or source changed, invalidating queries:",
         {
           regionId,
           normalizedDate,
@@ -71,6 +71,10 @@ export default function WeatherForecastWidget() {
       );
       queryClient.invalidateQueries({
         queryKey: ["forecast", regionId],
+      });
+      // Also invalidate filtered-beaches query so scores are recalculated with new source
+      queryClient.invalidateQueries({
+        queryKey: ["filteredBeaches"],
       });
     }
   }, [regionId, normalizedDate, selectedSource, queryClient]);
@@ -144,7 +148,7 @@ export default function WeatherForecastWidget() {
   // Determine the title based on selected date
   const getForecastTitle = () => {
     if (!forecastDate) {
-      return "TODAY'S FORECAST";
+      return "TODAY";
     }
 
     // Parse the selected date
@@ -165,14 +169,14 @@ export default function WeatherForecastWidget() {
     const tomorrowTime = tomorrow.getTime();
 
     if (selectedTime === todayTime) {
-      return "TODAY'S FORECAST";
+      return "TODAY";
     }
 
     if (selectedTime === tomorrowTime) {
-      return "TOMORROW'S FORECAST";
+      return "TOMORROW";
     }
 
-    // Format as "MON, NOV 18 FORECAST"
+    // Format as "MON, NOV 18"
     const dayName = selectedDate
       .toLocaleDateString("en-US", { weekday: "short" })
       .toUpperCase();
@@ -180,7 +184,7 @@ export default function WeatherForecastWidget() {
       .toLocaleDateString("en-US", { month: "short" })
       .toUpperCase();
     const dayNum = selectedDate.getUTCDate();
-    return `${dayName}, ${monthName} ${dayNum} FORECAST`;
+    return `${dayName}, ${monthName} ${dayNum}`;
   };
 
   const getWidgetContent = () => {
@@ -234,28 +238,43 @@ export default function WeatherForecastWidget() {
           </div>
         </div>
 
-        {/* Source Selection Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSelectedSource("WINDFINDER")}
-            className={`flex-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-primary transition-all duration-200 ${
-              selectedSource === "WINDFINDER"
-                ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
-                : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-            }`}
-          >
-            Source A (Windfinder)
-          </button>
-          <button
-            onClick={() => setSelectedSource("WINDGURU")}
-            className={`flex-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-primary transition-all duration-200 ${
-              selectedSource === "WINDGURU"
-                ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
-                : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-            }`}
-          >
-            Source B (Windguru)
-          </button>
+        {/* Source Selection */}
+        <div className="flex flex-col gap-1.5">
+          <h4 className="text-xs text-gray-400 font-primary uppercase tracking-wide">
+            Sources
+          </h4>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedSource("WINDFINDER")}
+              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                selectedSource === "WINDFINDER"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+              }`}
+            >
+              A
+            </button>
+            <button
+              onClick={() => setSelectedSource("WINDGURU")}
+              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                selectedSource === "WINDGURU"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+              }`}
+            >
+              B
+            </button>
+            <button
+              onClick={() => setSelectedSource("WINDY")}
+              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                selectedSource === "WINDY"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+              }`}
+            >
+              C
+            </button>
+          </div>
         </div>
       </div>
 

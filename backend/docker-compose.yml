@@ -18,6 +18,26 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tide-raider-backend
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_URL=postgresql://tide_raider:tide_raider_dev@postgres:5432/tide_raider_dev?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro # Mount source for potential hot-reload (read-only)
+    stdin_open: true
+    tty: true
+
 volumes:
   postgres_data:
     driver: local

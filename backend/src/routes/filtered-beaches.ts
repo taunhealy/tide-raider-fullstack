@@ -25,10 +25,15 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const regionIdParam = (req.query.regionId as string)?.toLowerCase();
-      const searchQuery = req.query.searchQuery as string | undefined;
+      const searchQuery = req.query.searchQuery
+        ? (req.query.searchQuery as string).trim()
+        : undefined;
+      const sourceParam =
+        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") ||
+        "WINDFINDER";
 
       console.log(
-        `[filtered-beaches] Request received for regionId: ${regionIdParam}`
+        `[filtered-beaches] Request received for regionId: ${regionIdParam}, source: ${sourceParam}`
       );
 
       if (!regionIdParam) {
@@ -180,15 +185,15 @@ router.get(
         );
       }
 
-      // Step 1: Get or fetch forecast data
+      // Step 1: Get or fetch forecast data for the requested source
       console.log(
-        `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${targetDate.toISOString()}`
+        `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${targetDate.toISOString()}, source: ${sourceParam}`
       );
       let forecast = await prisma.forecast.findFirst({
         where: {
           regionId,
           date: targetDate,
-          source: "WINDFINDER", // Prefer WINDFINDER source
+          source: sourceParam, // Use the requested source
         },
         select: {
           windSpeed: true,
@@ -214,9 +219,13 @@ router.get(
             `[filtered-beaches] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
           );
 
-          // Force a scrape - this will fetch ALL available forecast days and store them
+          // Force a scrape for the requested source - this will fetch ALL available forecast days and store them
           // forceRefresh=true ensures we scrape even if today's data already exists
-          const scrapedForecast = await getLatestConditions(regionId, true);
+          const scrapedForecast = await getLatestConditions(
+            regionId,
+            true,
+            sourceParam
+          );
 
           if (scrapedForecast) {
             console.log(
@@ -228,7 +237,7 @@ router.get(
               where: {
                 regionId,
                 date: targetDate,
-                source: "WINDFINDER", // Prefer WINDFINDER source
+                source: sourceParam, // Use the requested source
               },
               select: {
                 windSpeed: true,
@@ -264,7 +273,7 @@ router.get(
         forecast.date = targetDate;
       }
 
-      // Step 2: Check if scores exist for the target date
+      // Step 2: Check if scores exist for the target date and if they match the requested source
       const existingScores = await prisma.beachDailyScore.count({
         where: {
           regionId,
@@ -272,7 +281,8 @@ router.get(
         },
       });
 
-      // Also check if all existing scores are 0 (which might indicate they need recalculation)
+      // Check if existing scores were calculated with a different source
+      // We store the source in the conditions JSON, so we can check it
       const existingScoresData = await prisma.beachDailyScore.findMany({
         where: {
           regionId,
@@ -281,6 +291,7 @@ router.get(
         select: {
           score: true,
           beachId: true,
+          conditions: true,
         },
         take: 5, // Sample first 5
       });
@@ -288,12 +299,20 @@ router.get(
       const allScoresZero =
         existingScoresData.length > 0 &&
         existingScoresData.every((s) => s.score === 0);
+
+      // Always recalculate scores when forecast exists to ensure they match the requested source
+      // Since scores are stored per beach/date (not per source), we need to recalculate
+      // whenever a different source is selected to get accurate scores
+      const needsRecalculation =
+        forecast && (existingScores === 0 || allScoresZero || true); // Always recalculate when forecast exists to ensure scores match the selected source
+
       console.log(`Existing scores sample:`, existingScoresData);
       console.log(`All scores are zero: ${allScoresZero}`);
+      console.log(`Needs recalculation: ${needsRecalculation}`);
 
-      // Step 3: Calculate scores if they don't exist OR if all scores are 0 (recalculate)
+      // Step 3: Calculate scores if they don't exist OR if source changed
       // Only calculate scores if we have forecast data for the target date
-      if ((existingScores === 0 || allScoresZero) && forecast) {
+      if (needsRecalculation && forecast) {
         console.log(
           `${existingScores === 0 ? "Calculating" : "Recalculating"} scores for ${regionId} on ${targetDate.toISOString().split("T")[0]}...`
         );

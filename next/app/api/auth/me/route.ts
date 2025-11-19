@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-// Always ignore localhost URLs and use production backend (since database is live)
+// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
 
-  // If env URL is localhost, always use production (database is live, not local)
-  if (envUrl?.includes("localhost")) {
-    console.warn(
-      "[auth/me] Ignoring localhost URL, using production backend (database is live)"
-    );
-    return "https://tide-raider-backend.fly.dev";
+  // In development, use localhost backend (connects to Docker postgres)
+  if (isDevelopment) {
+    return envUrl || "http://localhost:4001";
   }
 
-  // Use env URL if set and not localhost, otherwise use production
+  // In production, use production backend (connects to Fly.io postgres)
   return envUrl || "https://tide-raider-backend.fly.dev";
 };
 
@@ -38,6 +35,12 @@ export async function GET(req: NextRequest) {
     // Log for debugging (only in development)
     if (process.env.NODE_ENV === "development") {
       console.log("[auth/me] Auth token present:", !!authToken);
+      console.log("[auth/me] Backend URL:", BACKEND_URL);
+      console.log("[auth/me] NODE_ENV:", process.env.NODE_ENV);
+      console.log(
+        "[auth/me] NEXT_PUBLIC_API_URL:",
+        process.env.NEXT_PUBLIC_API_URL
+      );
     }
 
     // Check cache first
@@ -54,12 +57,17 @@ export async function GET(req: NextRequest) {
 
     // Forward request to backend with cookies
     // Add timeout to prevent hanging when backend is not available
+    // Increased timeout to 15 seconds to account for slow backend responses
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
     let response;
     try {
-      response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      const backendUrl = `${BACKEND_URL}/api/auth/me`;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[auth/me] Fetching from backend:", backendUrl);
+      }
+      response = await fetch(backendUrl, {
         headers: {
           ...(authToken && { Authorization: `Bearer ${authToken}` }),
           ...(cookieHeader && { Cookie: cookieHeader }),
@@ -70,6 +78,9 @@ export async function GET(req: NextRequest) {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      if (process.env.NODE_ENV === "development") {
+        console.log("[auth/me] Backend response status:", response.status);
+      }
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
       // Handle connection errors (backend not running, network issues, etc.)

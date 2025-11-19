@@ -1,6 +1,7 @@
 import { BaseForecastData } from "../types";
 import { scraperA } from "./scraperA";
 import { scraperB } from "./scraperB";
+import { scraperC } from "./scraperC";
 
 interface RegionSourceConfig {
   regionId: string;
@@ -9,6 +10,10 @@ interface RegionSourceConfig {
     scraper: (url: string, regionId: string) => Promise<BaseForecastData[]>;
   };
   sourceB?: {
+    url: string;
+    scraper: (url: string, regionId: string) => Promise<BaseForecastData[]>;
+  };
+  sourceC?: {
     url: string;
     scraper: (url: string, regionId: string) => Promise<BaseForecastData[]>;
   };
@@ -25,6 +30,10 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       url: "https://www.windguru.cz/131594",
       scraper: scraperB,
     },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/89110/Muizenberg+South+Africa",
+      scraper: scraperC,
+    },
   },
   "eastern-cape": {
     regionId: "eastern-cape",
@@ -35,6 +44,10 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     sourceB: {
       url: "https://www.windguru.cz/580008", // TODO: Find Windguru spot ID for Jeffreys Bay
       scraper: scraperB,
+    },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/578263/Supertubes+-Jbay",
+      scraper: scraperC,
     },
   },
   "kwazulu-natal": {
@@ -198,8 +211,12 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Bali Uluwatu
+      url: "https://www.windguru.cz/185336", // TODO: Find Windguru spot ID for Bali Uluwatu
       scraper: scraperB,
+    },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/63559/Uluwatu+Beach+Indonesia+Pantai+Uluwatu",
+      scraper: scraperC,
     },
   },
   "puntarenas-province": {

@@ -89,13 +89,13 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
               key={comment.id}
               className="flex space-x-3 p-3 bg-gray-50 rounded-lg"
             >
-              <Avatar.Root className="h-10 w-10 rounded-full overflow-hidden">
+              <Avatar.Root className="h-10 w-10 rounded-full overflow-hidden border border-gray-300">
                 <Avatar.Image
                   src={comment.user.image || ""}
                   alt={comment.user.name}
                   className="h-full w-full object-cover rounded-full"
                 />
-                <Avatar.Fallback className="h-full w-full flex items-center justify-center rounded-full bg-gray-100">
+                <Avatar.Fallback className="h-full w-full flex items-center justify-center rounded-full bg-gray-100 border border-gray-300">
                   {comment.user.name
                     ?.split(" ")
                     .map((n) => n[0])

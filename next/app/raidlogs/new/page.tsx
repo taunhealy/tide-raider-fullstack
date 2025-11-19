@@ -11,59 +11,63 @@ export default function NewRaidLogPage() {
   const { data: session, status: authStatus } = useBackendAuth();
   const [authTimeout, setAuthTimeout] = useState(false);
 
-  // Handle auth timeout
+  // Debug logging for localhost
   useEffect(() => {
-    if (authStatus === "loading") {
-      const timer = setTimeout(() => {
-        setAuthTimeout(true);
-      }, 10000); // 10 second timeout
-      return () => clearTimeout(timer);
-    } else {
+    if (
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1")
+    ) {
+      console.log("[NewRaidLogPage] Auth state:", {
+        authStatus,
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+      });
+    }
+  }, [authStatus, session]);
+
+  // Remove artificial timeout - let the fetch timeout handle it
+  // The fetch already has a 20-second timeout, so we don't need an additional UI timeout
+  useEffect(() => {
+    // Reset timeout state when auth completes
+    if (authStatus !== "loading") {
       setAuthTimeout(false);
     }
   }, [authStatus]);
 
   // Redirect to login if not authenticated (use useEffect to avoid render issues)
   useEffect(() => {
-    if (authStatus === "unauthenticated" || (!authStatus && !session?.user)) {
+    if (
+      authStatus === "unauthenticated" ||
+      (!session?.user && authStatus !== "loading")
+    ) {
       router.push("/login");
     }
   }, [authStatus, session, router]);
 
-  if (authStatus === "loading" && !authTimeout) {
-    return <RandomLoader isLoading={true} />;
-  }
+  // Removed timeout error - let the fetch handle timeouts naturally
+  // If fetch fails, it will set status to "unauthenticated" and redirect to login
 
-  if (authStatus === "loading" && authTimeout) {
+  // If we have session data, proceed immediately (don't wait for status to update)
+  if (session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">
-            Authentication is taking longer than expected.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[var(--color-tertiary)] text-white rounded"
-          >
-            Reload Page
-          </button>
-        </div>
+      <div className="p-6 max-w-4xl mx-auto">
+        <RaidLogForm
+          isOpen={true}
+          onClose={() => router.push("/raidlogs")}
+          userEmail={session.user.email || ""}
+        />
       </div>
     );
   }
 
-  // Don't render form if not authenticated
-  if (!session?.user) {
+  // Show loader while auth is loading
+  if (authStatus === "loading") {
     return <RandomLoader isLoading={true} />;
   }
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <RaidLogForm
-        isOpen={true}
-        onClose={() => router.push("/raidlogs")}
-        userEmail={session.user?.email || ""}
-      />
-    </div>
-  );
+  // Don't render form if not authenticated (redirect will happen via useEffect)
+  // This should not be reached if session?.user exists (checked above)
+  return <RandomLoader isLoading={true} />;
 }

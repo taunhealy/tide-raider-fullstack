@@ -110,9 +110,9 @@ export function useBackendAuth() {
       const fetchPromise = (async (): Promise<AuthState> => {
         try {
           // Use Next.js API route (same domain = cookies work)
-          // Add timeout to prevent hanging
+          // Add timeout to prevent hanging - increased to 20 seconds for slow backend responses
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (reduced from 10)
+          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
           let response;
           try {
@@ -158,14 +158,20 @@ export function useBackendAuth() {
               isSubscribed: data.user?.isSubscribed,
               hasActiveTrial: data.user?.hasActiveTrial,
               trialEndDate: data.user?.trialEndDate,
+              hasUser: !!data.user,
             });
             authState = {
-              user: data.user,
+              user: data.user || null,
               loading: false,
               error: null,
             };
           } else {
             // Not authenticated
+            console.log(
+              "[useBackendAuth] Response not OK:",
+              response.status,
+              response.statusText
+            );
             authState = {
               user: null,
               loading: false,

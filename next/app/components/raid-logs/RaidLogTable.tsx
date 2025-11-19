@@ -150,8 +150,8 @@ function ForecastInfo({
       return;
     }
 
-    localStorage.setItem("selectedLogEntry", JSON.stringify(entry));
-    router.push("/alerts/new");
+    // Pass log ID as query parameter instead of localStorage
+    router.push(`/alerts/new?logId=${entry.id}`);
   };
 
   const getBellTooltipText = () => {
@@ -485,9 +485,8 @@ export default function RaidLogTable({
       }
       router.push(`/alerts/${entry.alertId}`);
     } else {
-      // Store the selected log entry in localStorage before redirecting
-      localStorage.setItem("selectedLogEntry", JSON.stringify(entry));
-      router.push("/alerts/new");
+      // Pass log ID as query parameter
+      router.push(`/alerts/new?logId=${entry.id}`);
     }
   };
 
@@ -792,13 +791,14 @@ export default function RaidLogTable({
                                 handleAlertClick(entry);
                               }}
                               className={cn(
+                                "p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors",
                                 "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
                               )}
-                              aria-label="Create alert for these conditions"
+                              aria-label="Set alert for this log entry"
                             >
                               <Bell
                                 className={cn(
-                                  "w-4 h-4 cursor-pointer",
+                                  "w-5 h-5 cursor-pointer",
                                   entry.hasAlert
                                     ? entry.isMyAlert
                                       ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
@@ -811,7 +811,13 @@ export default function RaidLogTable({
                           <TooltipContent>
                             <p className="text-sm">
                               {getGatedTooltip(
-                                getBellTooltipText(entry, hasAccess)
+                                getBellTooltipText(
+                                  entry,
+                                  hasAccess,
+                                  isSubscribed ||
+                                    subscriptionDetails?.hasActiveTrial,
+                                  subscriptionDetails?.hasActiveTrial
+                                )
                               )}
                             </p>
                           </TooltipContent>
@@ -929,7 +935,8 @@ export default function RaidLogTable({
                   )}
 
                   {/* Image/Video section */}
-                  {entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "") ? (
+                  {entry.imageUrl ||
+                  (entry.videoUrl && entry.videoUrl.trim() !== "") ? (
                     <div className="mt-auto pt-2 w-full">
                       <div className="relative w-full aspect-video rounded-md overflow-hidden group">
                         <button
@@ -1172,13 +1179,14 @@ export default function RaidLogTable({
                                         handleAlertClick(entry);
                                       }}
                                       className={cn(
+                                        "p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors",
                                         "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
                                       )}
-                                      aria-label="Create alert for these conditions"
+                                      aria-label="Set alert for this log entry"
                                     >
                                       <Bell
                                         className={cn(
-                                          "w-4 h-4 cursor-pointer",
+                                          "w-5 h-5 cursor-pointer",
                                           entry.hasAlert
                                             ? entry.isMyAlert
                                               ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
@@ -1191,7 +1199,13 @@ export default function RaidLogTable({
                                   <TooltipContent>
                                     <p className="text-sm">
                                       {getGatedTooltip(
-                                        getBellTooltipText(entry, hasAccess)
+                                        getBellTooltipText(
+                                          entry,
+                                          hasAccess,
+                                          isSubscribed ||
+                                            subscriptionDetails?.hasActiveTrial,
+                                          subscriptionDetails?.hasActiveTrial
+                                        )
                                       )}
                                     </p>
                                   </TooltipContent>
@@ -1249,12 +1263,23 @@ export default function RaidLogTable({
 }
 
 // Extract getBellTooltipText as a standalone function
-function getBellTooltipText(entry: LogEntry, hasAccess: boolean) {
-  if (!hasAccess) return "Subscribe to create alerts";
+function getBellTooltipText(
+  entry: LogEntry,
+  hasAccess: boolean,
+  isSubscribed?: boolean,
+  hasActiveTrial?: boolean
+) {
+  // If user is not subscribed and doesn't have active trial, show subscribe CTA
+  const userIsSubscribed = isSubscribed || hasActiveTrial;
+  if (!hasAccess || !userIsSubscribed) {
+    return "Subscribe to create alerts";
+  }
+  // User has alert already
   if (entry.hasAlert) {
     return entry.isMyAlert
       ? "You have an active alert for these conditions"
       : "Another user has an alert for these conditions";
   }
-  return "Create alert for these conditions";
+  // User is subscribed - show "Set alert for this log entry"
+  return "Set alert for this log entry";
 }

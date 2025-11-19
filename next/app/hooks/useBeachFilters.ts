@@ -70,6 +70,8 @@ export const useBeachFilters = () => {
     continent: searchParams.get("continent") || null,
     // Handle forecast date
     forecastDate: searchParams.get("forecastDate") || null,
+    // Handle search query
+    searchQuery: searchParams.get("searchQuery") || null,
   };
 
   const updateFilter = useCallback(

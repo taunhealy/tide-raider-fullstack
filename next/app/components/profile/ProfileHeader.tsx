@@ -81,14 +81,14 @@ function ProfileHeaderContent({
   const displayName = userData?.name || "Anonymous";
 
   const avatarFallback = (
-    <div className="w-20 h-20 rounded-full bg-[var(--color-tertiary)] text-white flex items-center justify-center font-medium text-xl">
+    <div className="w-20 h-20 rounded-full bg-[var(--color-tertiary)] text-white flex items-center justify-center font-medium text-xl border border-gray-300">
       {displayName.charAt(0).toUpperCase()}
     </div>
   );
 
   return (
     <div className="flex items-start gap-4 mb-6">
-      <div className="w-20 h-20 relative rounded-full overflow-hidden">
+      <div className="w-20 h-20 relative rounded-full overflow-hidden border border-gray-300">
         {userData?.image && !imageError ? (
           <Image
             src={userData.image}

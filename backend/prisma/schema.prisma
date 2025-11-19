@@ -365,6 +365,7 @@ model Board {
 enum ForecastSource {
   WINDFINDER
   WINDGURU
+  WINDY
 }
 
 model Forecast {

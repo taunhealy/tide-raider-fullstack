@@ -2,7 +2,21 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
+
+  // In development, use localhost backend (connects to Docker postgres)
+  if (isDevelopment) {
+    return envUrl || "http://localhost:4001";
+  }
+
+  // In production, use production backend (connects to Fly.io postgres)
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * Test endpoint to simulate alert checking for the current user

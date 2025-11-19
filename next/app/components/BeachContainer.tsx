@@ -82,6 +82,14 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       beaches?.sort((a: Beach, b: Beach) => {
         const scoreA = beachScores[a.id]?.score ?? 0;
         const scoreB = beachScores[b.id]?.score ?? 0;
+        const hasScoreA = a.id in beachScores;
+        const hasScoreB = b.id in beachScores;
+
+        // Beaches with scores come before beaches without scores
+        if (hasScoreA && !hasScoreB) return -1;
+        if (!hasScoreA && hasScoreB) return 1;
+
+        // Both have scores or both don't - sort by score descending
         return scoreB - scoreA;
       }) ?? []
     );

@@ -13,7 +13,7 @@ dotenv.config({ path: ".env.local" });
 dotenv.config(); // .env will override .env.local if both exist
 
 const app = express();
-const PORT = parseInt(process.env.PORT || "3001", 10);
+const PORT = parseInt(process.env.PORT || "4001", 10);
 
 // Trust proxy (required for Fly.io and rate limiting)
 // Trust only the first proxy hop (Fly.io's proxy)
@@ -113,11 +113,13 @@ app.use("/api", apiRouter);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, "0.0.0.0", () => {
+// Use 127.0.0.1 for local dev (avoids IPv6 issues), 0.0.0.0 for production (Fly.io)
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1";
+app.listen(PORT, HOST, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(
-    `🌐 Listening on 0.0.0.0:${PORT} (accessible from all network interfaces)`
+    `🌐 Listening on ${HOST}:${PORT}${HOST === "0.0.0.0" ? " (accessible from all network interfaces)" : " (localhost only)"}`
   );
   if (process.env.FLY_APP_NAME) {
     console.log(`✈️  Fly.io app: ${process.env.FLY_APP_NAME}`);

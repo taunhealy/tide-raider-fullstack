@@ -58,7 +58,7 @@ function LoggerDisplay({
         className="flex-shrink-0 hover:opacity-80 transition-opacity"
       >
         {userImage ? (
-          <div className="relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-200">
+          <div className="relative w-14 h-14 rounded-full overflow-hidden border border-gray-300">
             <Image
               src={userImage}
               alt={`${displayName}'s avatar`}
@@ -68,7 +68,7 @@ function LoggerDisplay({
             />
           </div>
         ) : (
-          <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-semibold text-lg shadow-sm ring-2 ring-gray-200">
+          <div className="bg-[var(--color-tertiary)] rounded-full w-14 h-14 flex items-center justify-center text-white font-semibold text-lg shadow-sm border border-gray-300">
             {displayName.charAt(0).toUpperCase()}
           </div>
         )}

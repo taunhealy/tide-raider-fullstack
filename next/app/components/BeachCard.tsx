@@ -92,6 +92,7 @@ const BeachCard = memo(function BeachCard({
     hasActiveTrial,
     isPremium: directIsPremium,
     subscriptionStatus,
+    isLoading: isSubscriptionLoading,
   } = useSubscriptionStatus();
 
   // Fallback to context for session data
@@ -104,7 +105,9 @@ const BeachCard = memo(function BeachCard({
   const numericScore = score !== null ? Number(score) : null;
   const isFiveStar = numericScore !== null && numericScore >= 10;
   const isPremium = directIsPremium; // Use direct backend check
-  const isLocked = isFiveStar && !isPremium;
+  // If user is premium (subscribed or has trial), NO gates at all
+  // Only gate 5-star beaches if user is NOT premium AND subscription status has loaded
+  const isLocked = isPremium ? false : isFiveStar && !isSubscriptionLoading;
 
   // Debug logging for premium gating
   console.log(`[BeachCard] ${beach.name} - Premium gating check:`, {

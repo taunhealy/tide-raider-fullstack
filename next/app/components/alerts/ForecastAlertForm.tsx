@@ -240,6 +240,17 @@ function AlertFormBody({
   // Track which logEntry we've already processed to prevent infinite loops
   const processedLogEntryId = useRef<string | null>(null);
 
+  // Debug logging for log entries
+  useEffect(() => {
+    console.log("[ForecastAlertForm] Log entries state:", {
+      logEntriesCount: logEntries.length,
+      mode,
+      hasLogEntry: !!logEntry,
+      logEntryId: logEntry?.id,
+      firstLogEntry: logEntries[0],
+    });
+  }, [logEntries, mode, logEntry]);
+
   // Auto-set mode to "logEntry" when a logEntry is provided
   useEffect(() => {
     if (logEntry && mode !== "logEntry") {
@@ -346,9 +357,10 @@ function AlertFormBody({
       }
     }
 
-    // Set alert name from log entry if not already set
-    if (!alert.name && logEntry.beach?.name) {
-      updates.name = `Alert for ${logEntry.beach.name}`;
+    // Set alert name from log entry beach name (always populate to assist user)
+    if (logEntry.beach?.name || logEntry.beachName) {
+      const beachName = logEntry.beach?.name || logEntry.beachName;
+      updates.name = `Alert for ${beachName}`;
     }
 
     // Apply all updates in a single call
@@ -401,6 +413,10 @@ function AlertFormBody({
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-md">
         <button
           onClick={() => {
+            console.log(
+              "[ForecastAlertForm] From Log Entry clicked, logEntries:",
+              logEntries.length
+            );
             setMode("logEntry");
             updateAlert({ alertType: AlertType.VARIABLES });
           }}
@@ -443,109 +459,133 @@ function AlertFormBody({
       </div>
 
       {/* Show log entry selector when in logEntry mode but no logEntry selected */}
-      {mode === "logEntry" && !logEntry && logEntries.length > 0 && (
-        <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-          <Label>Select Log Entry</Label>
-          <p className="text-sm text-gray-600 mb-4">
-            Search and filter log entries by beach to create an alert from their
-            forecast conditions.
-          </p>
-
-          {/* Search Bar */}
-          <div className="space-y-2">
-            <Label className="text-sm">Search By Beach</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Search by beach name..."
-                value={logEntrySearchTerm}
-                onChange={(e) => setLogEntrySearchTerm(e.target.value)}
-                className="font-primary pl-10"
-              />
+      {mode === "logEntry" && !logEntry && (
+        <>
+          {logEntries.length === 0 ? (
+            <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+              <Label>Select Log Entry</Label>
+              <p className="text-sm text-gray-600">
+                No log entries found. Create a log entry first to create an
+                alert from it.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+              <Label>Select Log Entry</Label>
+              <p className="text-sm text-gray-600 mb-4">
+                Search and filter log entries by beach to create an alert from
+                their forecast conditions.
+              </p>
 
-          {/* Filtered and Sorted Log Entries List */}
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {logEntries
-              .filter((entry) => {
-                // Filter by beach name search term only
-                if (debouncedLogEntrySearch) {
-                  const searchLower = debouncedLogEntrySearch.toLowerCase();
-                  const beachName = (
-                    entry.beach?.name ||
-                    entry.beachName ||
-                    ""
-                  ).toLowerCase();
+              {/* Search Bar */}
+              <div className="space-y-2">
+                <Label className="text-sm">Search By Beach</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Search by beach name..."
+                    value={logEntrySearchTerm}
+                    onChange={(e) => setLogEntrySearchTerm(e.target.value)}
+                    className="font-primary pl-10"
+                  />
+                </div>
+              </div>
 
-                  if (!beachName.includes(searchLower)) {
-                    return false;
-                  }
-                }
+              {/* Filtered and Sorted Log Entries List */}
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {logEntries
+                  .filter((entry) => {
+                    // Filter by beach name search term only
+                    if (debouncedLogEntrySearch) {
+                      const searchLower = debouncedLogEntrySearch.toLowerCase();
+                      const beachName = (
+                        entry.beach?.name ||
+                        entry.beachName ||
+                        ""
+                      ).toLowerCase();
 
-                return true;
-              })
-              .sort((a, b) => {
-                // Sort by date, most recent first
-                const dateA = a.date ? new Date(a.date).getTime() : 0;
-                const dateB = b.date ? new Date(b.date).getTime() : 0;
-                return dateB - dateA;
-              })
-              .map((entry) => (
-                <div
-                  key={entry.id}
-                  onClick={() => {
-                    setSelectedLogEntryId(entry.id);
-                    // Notify parent component to update logEntry prop
-                    if (onLogEntrySelect) {
-                      onLogEntrySelect(entry);
+                      if (!beachName.includes(searchLower)) {
+                        return false;
+                      }
                     }
-                  }}
-                  className={cn(
-                    "p-3 rounded-md border cursor-pointer transition-colors",
-                    selectedLogEntryId === entry.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                  )}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">
-                        {entry.beach?.name ||
-                          entry.beachName ||
-                          "Unknown Beach"}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {entry.region?.name ||
-                          (entry as any).region?.name ||
-                          "Unknown Region"}
-                        {entry.date &&
-                          ` • ${format(new Date(entry.date), "MMM d, yyyy")}`}
-                      </div>
-                      {entry.forecast && (
-                        <div className="text-xs text-gray-600 mt-2 space-y-1">
-                          {entry.forecast.swellHeight !== undefined && (
-                            <span>Swell: {entry.forecast.swellHeight}m</span>
-                          )}
-                          {entry.forecast.windSpeed !== undefined && (
-                            <span className="ml-2">
-                              Wind: {entry.forecast.windSpeed}kts
-                            </span>
+
+                    return true;
+                  })
+                  .sort((a, b) => {
+                    // Sort by date, most recent first
+                    const dateA = a.date ? new Date(a.date).getTime() : 0;
+                    const dateB = b.date ? new Date(b.date).getTime() : 0;
+                    return dateB - dateA;
+                  })
+                  .map((entry) => (
+                    <div
+                      key={entry.id}
+                      onClick={() => {
+                        setSelectedLogEntryId(entry.id);
+                        // Notify parent component to update logEntry prop
+                        if (onLogEntrySelect) {
+                          onLogEntrySelect(entry);
+                        }
+                      }}
+                      className={cn(
+                        "p-3 rounded-md border cursor-pointer transition-colors",
+                        selectedLogEntryId === entry.id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">
+                            {entry.beach?.name ||
+                              entry.beachName ||
+                              "Unknown Beach"}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {entry.region?.name ||
+                              (entry as any).region?.name ||
+                              "Unknown Region"}
+                            {entry.date &&
+                              ` • ${format(new Date(entry.date), "MMM d, yyyy")}`}
+                          </div>
+                          {entry.forecast && (
+                            <div className="text-xs text-gray-600 mt-2 space-y-1">
+                              {entry.forecast.swellHeight !== undefined && (
+                                <span>
+                                  Swell: {entry.forecast.swellHeight}m
+                                </span>
+                              )}
+                              {entry.forecast.windSpeed !== undefined && (
+                                <span className="ml-2">
+                                  Wind: {entry.forecast.windSpeed}kts
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                    {entry.surferRating > 0 && (
-                      <div className="flex items-center gap-1 ml-2">
-                        <StarIcon className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-xs">{entry.surferRating}</span>
+                        {entry.surferRating > 0 && (
+                          <div className="flex items-center gap-1 ml-2">
+                            <StarIcon className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                            <span className="text-xs">
+                              {entry.surferRating}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-          </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === "development" && mode === "logEntry" && (
+        <div className="text-xs text-gray-400 p-2 bg-gray-100 rounded">
+          Debug: mode={mode}, logEntry={logEntry ? "set" : "null"},
+          logEntries.length={logEntries.length}
         </div>
       )}
 

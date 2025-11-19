@@ -77,10 +77,11 @@ export default function CheckoutPage() {
   }, [status, session]);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    // Only redirect if truly unauthenticated (not just loading)
+    if (status === "unauthenticated" && !session?.user) {
       router.push("/login?redirect=/checkout");
     }
-  }, [status, router]);
+  }, [status, session?.user, router]);
 
   // Redirect if already subscribed (check both context and direct API)
   // Only redirect if we have definitive subscription status (not null/undefined)
@@ -168,20 +169,9 @@ export default function CheckoutPage() {
     }
   };
 
-  // Show loading only for a reasonable time, then show error
-  const [authTimeout, setAuthTimeout] = useState(false);
-  useEffect(() => {
-    if (status === "loading") {
-      const timer = setTimeout(() => {
-        setAuthTimeout(true);
-      }, 10000); // 10 second timeout
-      return () => clearTimeout(timer);
-    } else {
-      setAuthTimeout(false);
-    }
-  }, [status]);
-
-  if (status === "loading" && !authTimeout) {
+  // Show loading only if we don't have session data yet
+  // If we have session data, proceed immediately (don't wait for status to update)
+  if (status === "loading" && !session?.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -192,20 +182,8 @@ export default function CheckoutPage() {
     );
   }
 
-  if (status === "loading" && authTimeout) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">
-            Authentication is taking longer than expected.
-          </p>
-          <Button onClick={() => window.location.reload()}>Reload Page</Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "unauthenticated") {
+  // Only redirect if truly unauthenticated (not just loading)
+  if (status === "unauthenticated" && !session?.user) {
     return null; // Will redirect
   }
 

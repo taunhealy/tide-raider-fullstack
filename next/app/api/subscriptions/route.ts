@@ -138,10 +138,14 @@ async function handleCreate() {
     // This ensures we always use the correct plan ID from backend environment
     const getBackendUrl = () => {
       const envUrl = process.env.NEXT_PUBLIC_API_URL;
-      // If env URL is localhost, always use production (database is live)
-      if (envUrl?.includes("localhost")) {
-        return "https://tide-raider-backend.fly.dev";
+      const isDevelopment = process.env.NODE_ENV === "development";
+
+      // In development, use localhost backend (connects to Docker postgres)
+      if (isDevelopment) {
+        return envUrl || "http://localhost:4001";
       }
+
+      // In production, use production backend (connects to Fly.io postgres)
       return envUrl || "https://tide-raider-backend.fly.dev";
     };
 

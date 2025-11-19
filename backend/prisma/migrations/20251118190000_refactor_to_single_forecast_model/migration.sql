@@ -31,26 +31,45 @@ CREATE INDEX "Forecast_date_regionId_idx" ON "Forecast"("date", "regionId");
 -- AddForeignKey
 ALTER TABLE "Forecast" ADD CONSTRAINT "Forecast_regionId_fkey" FOREIGN KEY ("regionId") REFERENCES "Region"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Migrate existing ForecastA data to Forecast with WINDFINDER source
-INSERT INTO "Forecast" ("id", "date", "regionId", "source", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection")
-SELECT "id", "date", "regionId", 'WINDFINDER'::"ForecastSource", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection"
-FROM "ForecastA";
+-- Migrate existing ForecastA data to Forecast with WINDFINDER source (if table exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ForecastA') THEN
+        INSERT INTO "Forecast" ("id", "date", "regionId", "source", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection")
+        SELECT "id", "date", "regionId", 'WINDFINDER'::"ForecastSource", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection"
+        FROM "ForecastA"
+        ON CONFLICT ("date", "regionId", "source") DO NOTHING;
+    END IF;
+END $$;
 
--- Migrate existing ForecastB data to Forecast with WINDGURU source (if any exists)
-INSERT INTO "Forecast" ("id", "date", "regionId", "source", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection")
-SELECT gen_random_uuid()::text, "date", "regionId", 'WINDGURU'::"ForecastSource", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection"
-FROM "ForecastB"
-ON CONFLICT ("date", "regionId", "source") DO NOTHING;
+-- Migrate existing ForecastB data to Forecast with WINDGURU source (if table exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ForecastB') THEN
+        INSERT INTO "Forecast" ("id", "date", "regionId", "source", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection")
+        SELECT gen_random_uuid()::text, "date", "regionId", 'WINDGURU'::"ForecastSource", "windSpeed", "windDirection", "swellHeight", "swellPeriod", "swellDirection"
+        FROM "ForecastB"
+        ON CONFLICT ("date", "regionId", "source") DO NOTHING;
+    END IF;
+END $$;
 
 -- Drop foreign key constraints that reference ForecastA/ForecastB
 ALTER TABLE "Alert" DROP CONSTRAINT IF EXISTS "Alert_forecastId_fkey";
 ALTER TABLE "LogEntry" DROP CONSTRAINT IF EXISTS "LogEntry_forecastId_fkey";
-ALTER TABLE "ForecastA" DROP CONSTRAINT IF EXISTS "ForecastA_regionId_fkey";
-ALTER TABLE "ForecastB" DROP CONSTRAINT IF EXISTS "ForecastB_regionId_fkey";
 
--- Drop the old tables
-DROP TABLE IF EXISTS "ForecastA";
-DROP TABLE IF EXISTS "ForecastB";
+-- Drop constraints and tables conditionally
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ForecastA') THEN
+        ALTER TABLE "ForecastA" DROP CONSTRAINT IF EXISTS "ForecastA_regionId_fkey";
+        DROP TABLE "ForecastA";
+    END IF;
+    
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'ForecastB') THEN
+        ALTER TABLE "ForecastB" DROP CONSTRAINT IF EXISTS "ForecastB_regionId_fkey";
+        DROP TABLE "ForecastB";
+    END IF;
+END $$;
 
 -- Recreate foreign key constraints pointing to the new Forecast table
 ALTER TABLE "Alert" ADD CONSTRAINT "Alert_forecastId_fkey" FOREIGN KEY ("forecastId") REFERENCES "Forecast"("id") ON DELETE SET NULL ON UPDATE CASCADE;

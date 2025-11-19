@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
+
+  // In development, use localhost backend (connects to Docker postgres)
+  if (isDevelopment) {
+    return envUrl || "http://localhost:4001";
+  }
+
+  // In production, use production backend (connects to Fly.io postgres)
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * GET /api/raid-logs

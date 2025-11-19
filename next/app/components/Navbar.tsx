@@ -49,7 +49,7 @@ export default function Navbar() {
         alt="Profile"
         width={32}
         height={32}
-        className="rounded-full"
+        className="rounded-full border border-gray-300"
       />
     );
   };

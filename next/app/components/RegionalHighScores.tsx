@@ -197,8 +197,10 @@ function RegionalHighScoresContent({
                 // Lock the first 5 items for all time periods for non-premium users
                 // This consistently locks the top locations regardless of time period
                 // Only lock if subscription status has been loaded and user is not premium
-                const isLocked =
-                  !isSubscriptionLoading && index < 5 && !isPremium && !!today;
+                // If user is premium (subscribed or has trial), NO gates at all
+                const isLocked = isPremium
+                  ? false
+                  : !isSubscriptionLoading && index < 5 && !!today;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {

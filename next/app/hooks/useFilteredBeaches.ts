@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BeachInitialData } from "../types/beaches";
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
@@ -17,9 +17,33 @@ export function useFilteredBeaches({
   enabled = true,
 }: UseFilteredBeachesProps) {
   const { filters } = useBeachFilters();
+  const queryClient = useQueryClient();
+
+  // Get the selected source from the forecast query cache
+  // The forecast query key is ["forecast", regionId, normalizedDate, selectedSource]
+  const normalizedDate =
+    filters.forecastDate || new Date().toISOString().split("T")[0];
+
+  // Try to find the source from the query cache
+  let selectedSource: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER";
+  const queryCache = queryClient.getQueryCache();
+  const forecastQueries = queryCache.findAll({
+    queryKey: ["forecast", filters.regionId],
+  });
+  if (forecastQueries.length > 0) {
+    // Get the most recent forecast query and extract source from its key
+    const latestQuery = forecastQueries[forecastQueries.length - 1];
+    const queryKey = latestQuery.queryKey;
+    if (queryKey.length >= 4 && typeof queryKey[3] === "string") {
+      const source = queryKey[3] as "WINDFINDER" | "WINDGURU" | "WINDY";
+      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(source)) {
+        selectedSource = source;
+      }
+    }
+  }
 
   return useQuery<UseFilteredBeachesResponse>({
-    queryKey: ["filteredBeaches", filters], // React to filter changes
+    queryKey: ["filteredBeaches", filters, selectedSource], // Include source in query key
     queryFn: async () => {
       // Convert filters to api-client params
       const params: {
@@ -32,10 +56,13 @@ export function useFilteredBeaches({
         difficulty?: string;
         hazards?: string;
         forecastDate?: string;
+        source?: "WINDFINDER" | "WINDGURU" | "WINDY";
       } = {};
 
       if (filters.regionId) params.regionId = filters.regionId;
-      if (filters.searchQuery) params.searchQuery = filters.searchQuery;
+      if (filters.searchQuery && filters.searchQuery.trim()) {
+        params.searchQuery = filters.searchQuery.trim();
+      }
       if (filters.optimalTide) {
         params.optimalTide = Array.isArray(filters.optimalTide)
           ? filters.optimalTide.join(",")
@@ -63,6 +90,7 @@ export function useFilteredBeaches({
           : filters.hazards;
       }
       if (filters.forecastDate) params.forecastDate = filters.forecastDate;
+      params.source = selectedSource; // Pass the selected source
 
       return await api.getFilteredBeaches(params);
     },
