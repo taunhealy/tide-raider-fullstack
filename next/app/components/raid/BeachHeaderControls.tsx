@@ -53,7 +53,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                   <SearchBar />
                 </div>
                 <RecentRegionSearch regionCounts={regionCountsData} />
-                
+
                 {/* Mobile Forecast Widget - Below Region Selection */}
                 <div className="lg:hidden">
                   <WeatherForecastWidget />

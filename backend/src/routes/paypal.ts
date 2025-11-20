@@ -249,18 +249,14 @@ router.post("/sync", authenticateToken, async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-      return res.status(500).json({
-        error: "PayPal configuration missing",
-      });
-    }
-
-    // Get user's PayPal subscription ID
+    // Get user's PayPal subscription ID and subscription status
     const user = await prisma.user.findUnique({
       where: { id: authReq.user.id },
       select: {
         paypalSubscriptionId: true,
         subscriptionStatus: true,
+        hasActiveTrial: true,
+        trialEndDate: true,
       },
     });
 
@@ -268,11 +264,32 @@ router.post("/sync", authenticateToken, async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // If user doesn't have a PayPal subscription ID, they might be on a trial
     if (!user.paypalSubscriptionId) {
+      // Check if they're on a trial
+      if (user.hasActiveTrial || user.subscriptionStatus === "TRIAL") {
+        return res.json({
+          message: "You are on a free trial. No PayPal subscription to sync.",
+          subscriptionStatus: user.subscriptionStatus,
+          hasActiveTrial: user.hasActiveTrial,
+          trialEndDate: user.trialEndDate,
+          synced: false,
+        });
+      }
+
+      // No PayPal subscription and not on trial
       return res.json({
         message: "No PayPal subscription found",
         subscriptionStatus: user.subscriptionStatus,
         synced: false,
+      });
+    }
+
+    // User has a PayPal subscription ID, so we need PayPal configuration
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+      return res.status(500).json({
+        error: "PayPal configuration missing",
+        message: "PayPal credentials are required to sync subscription status",
       });
     }
 

@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+const getBackendUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
+  
+  // In development, use localhost backend (connects to Docker postgres)
+  if (isDevelopment) {
+    return envUrl || "http://localhost:4001";
+  }
+  
+  // In production, use production backend (connects to Fly.io postgres)
+  return envUrl || "https://tide-raider-backend.fly.dev";
+};
+
+const BACKEND_URL = getBackendUrl();
 
 /**
  * POST /api/paypal/sync
@@ -28,20 +40,40 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      }));
-      return NextResponse.json(error, { status: response.status });
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = {
+          error: `HTTP ${response.status}: ${response.statusText}`,
+          message: errorText || "Unknown error",
+        };
+      }
+      console.error("[paypal/sync] Backend error:", {
+        status: response.status,
+        error: errorData,
+        backendUrl: BACKEND_URL,
+      });
+      return NextResponse.json(
+        {
+          error: errorData.error || "Failed to sync subscription",
+          message: errorData.message || errorData.error || "Unknown error",
+        },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("[paypal/sync] Error:", error);
+    console.error("[paypal/sync] Backend URL:", BACKEND_URL);
     return NextResponse.json(
       {
         error: "Failed to sync subscription",
-        details: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        details: `Could not connect to backend at ${BACKEND_URL}`,
       },
       { status: 500 }
     );

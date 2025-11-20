@@ -16,53 +16,93 @@ export default function TripDetails({ trip }: TripDetailsProps) {
   const dayArrowRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
+    // Ensure we're in the browser and refs are available
+    if (typeof window === "undefined" || !contentRef.current) return;
+
     // Set initial states
     gsap.set(contentRef.current, { height: 0, opacity: 0 });
 
-    const details = document.querySelector("details");
-    const dayDetails = document.querySelectorAll(".day-details");
+    // Use a more specific selector to avoid conflicts with other details elements
+    const details =
+      contentRef.current?.closest("details") ||
+      document.querySelector("details");
+    const dayDetails =
+      contentRef.current?.querySelectorAll(".day-details") ||
+      document.querySelectorAll(".day-details");
+
+    const cleanupFunctions: (() => void)[] = [];
 
     // Main details toggle listener
-    details?.addEventListener("toggle", () => {
-      if (details.open) {
-        gsap.to(contentRef.current, {
-          height: "auto",
-          opacity: 1,
-          duration: 0.8,
-          ease: "power4.out",
-        });
-        gsap.to(arrowRef.current, {
-          rotation: 180,
-          duration: 0.5,
-          ease: "power3.out",
-        });
-      } else {
-        gsap.to(contentRef.current, {
-          height: 0,
-          opacity: 0,
-          duration: 0.6,
-          ease: "power4.inOut",
-        });
-        gsap.to(arrowRef.current, {
-          rotation: 0,
-          duration: 0.5,
-          ease: "power3.inOut",
-        });
-      }
-    });
+    if (details) {
+      const toggleHandler = () => {
+        if (details.open) {
+          if (contentRef.current) {
+            gsap.to(contentRef.current, {
+              height: "auto",
+              opacity: 1,
+              duration: 0.8,
+              ease: "power4.out",
+            });
+          }
+          if (arrowRef.current) {
+            gsap.to(arrowRef.current, {
+              rotation: 180,
+              duration: 0.5,
+              ease: "power3.out",
+            });
+          }
+        } else {
+          if (contentRef.current) {
+            gsap.to(contentRef.current, {
+              height: 0,
+              opacity: 0,
+              duration: 0.6,
+              ease: "power4.inOut",
+            });
+          }
+          if (arrowRef.current) {
+            gsap.to(arrowRef.current, {
+              rotation: 0,
+              duration: 0.5,
+              ease: "power3.inOut",
+            });
+          }
+        }
+      };
+
+      details.addEventListener("toggle", toggleHandler);
+      cleanupFunctions.push(() => {
+        if (details) {
+          details.removeEventListener("toggle", toggleHandler);
+        }
+      });
+    }
 
     // Day details toggle listeners
     dayDetails.forEach((dayDetail, index) => {
       if (dayDetail) {
-        dayDetail.addEventListener("toggle", () => {
-          gsap.to(dayArrowRefs.current[index], {
-            rotation: (dayDetail as HTMLDetailsElement).open ? 180 : 0,
-            duration: 0.5,
-            ease: "power3.inOut",
-          });
+        const toggleHandler = () => {
+          if (dayArrowRefs.current[index]) {
+            gsap.to(dayArrowRefs.current[index], {
+              rotation: (dayDetail as HTMLDetailsElement).open ? 180 : 0,
+              duration: 0.5,
+              ease: "power3.inOut",
+            });
+          }
+        };
+        dayDetail.addEventListener("toggle", toggleHandler);
+        cleanupFunctions.push(() => {
+          if (dayDetail) {
+            dayDetail.removeEventListener("toggle", toggleHandler);
+          }
         });
       }
     });
+
+    // Cleanup function
+    return () => {
+      cleanupFunctions.forEach((cleanup) => cleanup());
+    };
   }, []);
 
   return (

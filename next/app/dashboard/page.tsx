@@ -362,21 +362,31 @@ export default function DashboardPage() {
       return (
         <div className="mb-4">
           <p className="font-primary">Ready to start your free trial?</p>
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto font-primary mt-4"
-            onClick={() => handleTrial()}
-            disabled={isTrialLoading}
-          >
-            {isTrialLoading ? (
-              <div className="flex items-center gap-2">
-                <span className="animate-spin">⏳</span>
-                Starting Trial...
-              </div>
-            ) : (
-              "Start 7-Day Free Trial"
-            )}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto font-primary"
+              onClick={() => handleTrial()}
+              disabled={isTrialLoading}
+            >
+              {isTrialLoading ? (
+                <div className="flex items-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Starting Trial...
+                </div>
+              ) : (
+                "Start 7-Day Free Trial"
+              )}
+            </Button>
+            <Button
+              variant="default"
+              className="w-full sm:w-auto font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
+              onClick={handleSubscribeWithLoading}
+              disabled={loadingStates.subscribe}
+            >
+              {loadingStates.subscribe ? "Processing..." : "Subscribe Now"}
+            </Button>
+          </div>
         </div>
       );
     }

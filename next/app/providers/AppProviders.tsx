@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { BeachProvider } from "@/app/context/BeachContext";
 
 import { SubscriptionProvider } from "./SubscriptionProvider";
+import GlobalErrorHandler from "@/app/components/GlobalErrorHandler";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ export default function AppProviders({
       <SessionProvider session={session} refetchInterval={0}>
         <SubscriptionProvider>
           <BeachProvider initialBeaches={initialBeaches}>
+            <GlobalErrorHandler />
             {children}
             <Toaster position="top-right" />
             <ReactQueryDevtools initialIsOpen={false} />
