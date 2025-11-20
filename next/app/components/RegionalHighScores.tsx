@@ -107,7 +107,7 @@ function RegionalHighScoresContent({
 
       const data = await response.json();
       // Ensure we always return an object with beaches array
-      return Array.isArray(data.beaches) ? data : { beaches: [] };
+      return Array.isArray(data?.beaches) ? data : { beaches: [] };
     },
     enabled: !!selectedRegion && !!today, // Only run query when we have region and date
     staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
@@ -115,6 +115,8 @@ function RegionalHighScoresContent({
     refetchOnMount: false, // Don't refetch on mount if data is fresh
     refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
     retry: 0, // Don't retry on error to avoid hitting rate limits
+    // Provide default value to prevent undefined access during SSR
+    initialData: { beaches: [] },
   });
 
   // Time period tab labels
@@ -125,6 +127,10 @@ function RegionalHighScoresContent({
     year: "Year",
     "3years": "3 Years",
   };
+
+  // Safely access beaches from API response with fallback to empty array
+  // Type assertion needed because the API returns BeachWithScore[]
+  const apiBeaches = (data?.beaches || []) as BeachWithScore[];
 
   // Handle initial loading state - show skeleton while data is being fetched
   if (isLoading && !data) {
@@ -179,14 +185,14 @@ function RegionalHighScoresContent({
         <p className="text-gray-600 text-sm font-primary">
           Error loading surf breaks. Please try again.
         </p>
-      ) : data.beaches.length === 0 ? (
+      ) : apiBeaches.length === 0 ? (
         <p className="text-gray-600 text-sm font-primary">
           No good surf breaks found for this time period in {selectedRegion}.
         </p>
       ) : (
         <>
           <div className="space-y-0">
-            {data.beaches
+            {apiBeaches
               .slice(0, 10)
               .map((beach: BeachWithScore, index: number) => {
                 // Calculate display score for the badge

@@ -30,6 +30,11 @@ services:
       - NODE_ENV=production
       - PORT=4001
       - DATABASE_URL=postgresql://tide_raider:tide_raider_dev@postgres:5432/tide_raider_dev?schema=public
+      - BACKEND_URL=https://unelective-michael-hipshot.ngrok-free.dev
+      - GOOGLE_CLIENT_ID=82632174665-tlmshrjeeahbb3giec045o009u8ag67j.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - JWT_SECRET=your-secret-key-change-in-production
+      - NEXTAUTH_SECRET=your-secret-key-change-in-production
     depends_on:
       postgres:
         condition: service_healthy

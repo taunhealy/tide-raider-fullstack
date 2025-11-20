@@ -31,8 +31,27 @@ export default function WeatherForecastWidget() {
   const {
     filters: { regionId, forecastDate },
   } = useBeachFilters();
-  const [selectedSource, setSelectedSource] =
-    useState<ForecastSource>("WINDFINDER");
+  // Store selected source in localStorage so it's shared across components
+  const [selectedSource, setSelectedSource] = useState<ForecastSource>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
+        return stored as ForecastSource;
+      }
+    }
+    return "WINDFINDER";
+  });
+
+  // Update localStorage when source changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("forecastSource", selectedSource);
+      // Dispatch custom event so other components can listen
+      window.dispatchEvent(
+        new CustomEvent("forecastSourceChanged", { detail: selectedSource })
+      );
+    }
+  }, [selectedSource]);
 
   // Normalize date - use today's date if no date is selected
   const normalizedDate = useMemo(() => {
@@ -73,7 +92,12 @@ export default function WeatherForecastWidget() {
         queryKey: ["forecast", regionId],
       });
       // Also invalidate filtered-beaches query so scores are recalculated with new source
+      // This forces useFilteredBeaches to refetch with the new source
       queryClient.invalidateQueries({
+        queryKey: ["filteredBeaches"],
+      });
+      // Force refetch to ensure the new source is used immediately
+      queryClient.refetchQueries({
         queryKey: ["filteredBeaches"],
       });
     }

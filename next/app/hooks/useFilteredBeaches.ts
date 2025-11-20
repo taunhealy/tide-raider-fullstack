@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useEffect, useState } from "react";
 import { BeachInitialData } from "../types/beaches";
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
@@ -24,23 +25,48 @@ export function useFilteredBeaches({
   const normalizedDate =
     filters.forecastDate || new Date().toISOString().split("T")[0];
 
-  // Try to find the source from the query cache
-  let selectedSource: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER";
-  const queryCache = queryClient.getQueryCache();
-  const forecastQueries = queryCache.findAll({
-    queryKey: ["forecast", filters.regionId],
-  });
-  if (forecastQueries.length > 0) {
-    // Get the most recent forecast query and extract source from its key
-    const latestQuery = forecastQueries[forecastQueries.length - 1];
-    const queryKey = latestQuery.queryKey;
-    if (queryKey.length >= 4 && typeof queryKey[3] === "string") {
-      const source = queryKey[3] as "WINDFINDER" | "WINDGURU" | "WINDY";
-      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(source)) {
-        selectedSource = source;
+  // Get selected source from localStorage (shared with WeatherForecastWidget)
+  const [selectedSource, setSelectedSource] = useState<
+    "WINDFINDER" | "WINDGURU" | "WINDY"
+  >(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
+        return stored as "WINDFINDER" | "WINDGURU" | "WINDY";
       }
     }
-  }
+    return "WINDFINDER";
+  });
+
+  // Listen for source changes from WeatherForecastWidget
+  useEffect(() => {
+    const handleSourceChange = (event: CustomEvent) => {
+      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY";
+      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(newSource)) {
+        setSelectedSource(newSource);
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "[useFilteredBeaches] Source changed via event:",
+            newSource
+          );
+        }
+      }
+    };
+
+    window.addEventListener(
+      "forecastSourceChanged",
+      handleSourceChange as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "forecastSourceChanged",
+        handleSourceChange as EventListener
+      );
+    };
+  }, []);
+
+  // Source is now managed via localStorage and events from WeatherForecastWidget
+  // No need for complex query cache detection
 
   return useQuery<UseFilteredBeachesResponse>({
     queryKey: ["filteredBeaches", filters, selectedSource], // Include source in query key
@@ -91,6 +117,14 @@ export function useFilteredBeaches({
       }
       if (filters.forecastDate) params.forecastDate = filters.forecastDate;
       params.source = selectedSource; // Pass the selected source
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "[useFilteredBeaches] Fetching with source:",
+          selectedSource,
+          params
+        );
+      }
 
       return await api.getFilteredBeaches(params);
     },

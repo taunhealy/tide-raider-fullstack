@@ -35,12 +35,19 @@ export async function authenticateToken(
       return res.status(401).json({ error: "Authentication required" });
     }
 
-    // Verify JWT token (NextAuth uses NEXTAUTH_SECRET or AUTH_SECRET)
-    // Support both variable names for compatibility
-    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+    // Verify JWT token
+    // Support multiple secret names for compatibility: JWT_SECRET (our backend), NEXTAUTH_SECRET, AUTH_SECRET
+    const secret =
+      process.env.JWT_SECRET ||
+      process.env.NEXTAUTH_SECRET ||
+      process.env.AUTH_SECRET;
     if (!secret) {
-      console.error("[auth] NEXTAUTH_SECRET or AUTH_SECRET is not configured");
-      throw new Error("NEXTAUTH_SECRET or AUTH_SECRET is not configured");
+      console.error(
+        "[auth] JWT_SECRET, NEXTAUTH_SECRET, or AUTH_SECRET is not configured"
+      );
+      throw new Error(
+        "JWT_SECRET, NEXTAUTH_SECRET, or AUTH_SECRET is not configured"
+      );
     }
 
     if (secret) {
@@ -196,7 +203,10 @@ export async function optionalAuth(
         req.cookies?.["__Secure-next-auth.session-token"];
 
     if (token) {
-      const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+      const secret =
+        process.env.JWT_SECRET ||
+        process.env.NEXTAUTH_SECRET ||
+        process.env.AUTH_SECRET;
       if (secret) {
         try {
           const decoded = jwt.verify(token, secret) as {

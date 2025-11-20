@@ -425,116 +425,193 @@ function createNotificationMessage(
     })
     .join(", ");
 
-  // Create HTML email template
+  // Create HTML email template matching Tide Raider design system
   const htmlMessage = `
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+          line-height: 1.5;
+          color: #1a1a1a;
+          background-color: #ffffff;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+        .email-container {
           max-width: 600px;
           margin: 0 auto;
-          padding: 20px;
+          background-color: #ffffff;
         }
         .header {
-          background: linear-gradient(135deg, #1c3a5e 0%, #2a5f8f 100%);
-          color: white;
-          padding: 20px;
-          border-radius: 8px 8px 0 0;
-          text-align: center;
+          background-color: #ffffff;
+          padding: 32px 24px 24px;
+          text-align: left;
+          border-bottom: 1px solid #e5e7eb;
         }
-        .header h1 {
-          margin: 0;
+        .header-logo {
+          font-size: 20px;
+          font-weight: 600;
+          color: #000000;
+          letter-spacing: -0.02em;
+          margin-bottom: 8px;
+        }
+        .header-title {
           font-size: 24px;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-top: 16px;
+          line-height: 1.2;
         }
         .content {
-          background: #f9f9f9;
-          padding: 20px;
-          border-radius: 0 0 8px 8px;
-          border: 1px solid #ddd;
+          background-color: #f7f7f7;
+          padding: 24px;
         }
         .info-section {
-          background: white;
-          padding: 15px;
-          margin-bottom: 15px;
-          border-radius: 5px;
-          border-left: 4px solid #2a5f8f;
+          background-color: #ffffff;
+          padding: 20px;
+          margin-bottom: 16px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
         }
         .info-section h2 {
-          margin: 0 0 10px 0;
-          color: #2a5f8f;
-          font-size: 18px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin: 0 0 16px 0;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          font-size: 12px;
         }
         .info-row {
           display: flex;
-          margin: 8px 0;
+          margin: 12px 0;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #f7f7f7;
+        }
+        .info-row:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+          margin-bottom: 0;
         }
         .info-label {
-          font-weight: bold;
-          min-width: 120px;
-          color: #555;
+          font-weight: 400;
+          min-width: 100px;
+          color: #4b5563;
+          font-size: 14px;
         }
         .info-value {
-          color: #333;
+          color: #1a1a1a;
+          font-weight: 500;
+          font-size: 14px;
         }
         .conditions {
-          background: #e8f5e9;
-          padding: 15px;
-          border-radius: 5px;
-          border-left: 4px solid #4caf50;
-          margin-top: 15px;
+          background-color: #ffffff;
+          padding: 20px;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          border-left: 4px solid #1cd9ff;
+          margin-top: 16px;
         }
         .conditions h3 {
-          margin: 0 0 10px 0;
-          color: #2e7d32;
+          font-size: 16px;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin: 0 0 12px 0;
+        }
+        .conditions p {
+          font-size: 14px;
+          color: #1a1a1a;
+          line-height: 1.6;
+          margin: 8px 0;
+        }
+        .conditions strong {
+          color: #1a1a1a;
+          font-weight: 600;
         }
         .footer {
+          background-color: #ffffff;
           text-align: center;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid #ddd;
-          color: #777;
+          padding: 24px;
+          border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
           font-size: 12px;
+          color: #4b5563;
+          margin: 4px 0;
+          line-height: 1.5;
+        }
+        .footer a {
+          color: #1cd9ff;
+          text-decoration: none;
+          font-weight: 500;
+        }
+        .footer a:hover {
+          text-decoration: underline;
+        }
+        .divider {
+          height: 1px;
+          background-color: #e5e7eb;
+          margin: 24px 0;
+        }
+        @media only screen and (max-width: 600px) {
+          .email-container {
+            width: 100% !important;
+          }
+          .content {
+            padding: 16px !important;
+          }
+          .info-section, .conditions {
+            padding: 16px !important;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>🌊 Alert Triggered!</h1>
-      </div>
-      <div class="content">
-        <div class="info-section">
-          <h2>Location Details</h2>
-          <div class="info-row">
-            <span class="info-label">Beach:</span>
-            <span class="info-value">${beachName}</span>
+      <div class="email-container">
+        <div class="header">
+          <div class="header-logo">Tide Raider</div>
+          <div class="header-title">🌊 Alert Triggered!</div>
+        </div>
+        <div class="content">
+          <div class="info-section">
+            <h2>Location Details</h2>
+            <div class="info-row">
+              <span class="info-label">Beach:</span>
+              <span class="info-value">${beachName}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Region:</span>
+              <span class="info-value">${regionName}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Day:</span>
+              <span class="info-value">${dayName}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Date:</span>
+              <span class="info-value">${dateString}</span>
+            </div>
           </div>
-          <div class="info-row">
-            <span class="info-label">Region:</span>
-            <span class="info-value">${regionName}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Day:</span>
-            <span class="info-value">${dayName}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span class="info-value">${dateString}</span>
+          
+          <div class="conditions">
+            <h3>✅ Conditions Met</h3>
+            <p>Surf conditions at <strong>${beachName}</strong> have met your alert criteria:</p>
+            <p><strong>${details}</strong></p>
           </div>
         </div>
-        
-        <div class="conditions">
-          <h3>✅ Conditions Met</h3>
-          <p>Surf conditions at <strong>${beachName}</strong> have met your alert criteria:</p>
-          <p><strong>${details}</strong></p>
+        <div class="footer">
+          <p>This is an automated alert from Tide Raider</p>
+          <p>Visit <a href="https://www.tideraider.com">tideraider.com</a> to manage your alerts</p>
         </div>
-      </div>
-      <div class="footer">
-        <p>This is an automated alert from Tide Raider</p>
-        <p>Visit <a href="https://www.tideraider.com">tideraider.com</a> to manage your alerts</p>
       </div>
     </body>
     </html>

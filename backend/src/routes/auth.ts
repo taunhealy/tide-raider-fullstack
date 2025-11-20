@@ -35,94 +35,108 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 //    - Development: http://localhost:4001/api/auth/google/callback
 //
 // IMPORTANT: These must EXACTLY match (including protocol, no trailing slashes)
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL:
-        process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
-          ? `${process.env.BACKEND_URL}/api/auth/google/callback`
-          : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
-            ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-            : `http://localhost:4001/api/auth/google/callback`,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-        const name = profile.displayName;
-        const picture = profile.photos?.[0]?.value;
-        const googleId = profile.id;
+// Only initialize Google OAuth strategy if credentials are available
+// This allows the server to start in Docker without OAuth credentials (for local dev)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL:
+          process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
+            ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+            : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
+              ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
+              : `http://localhost:4001/api/auth/google/callback`,
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails?.[0]?.value;
+          const name = profile.displayName;
+          const picture = profile.photos?.[0]?.value;
+          const googleId = profile.id;
 
-        if (!email) {
-          return done(new Error("No email found in Google profile"), undefined);
-        }
-
-        // Find or create user
-        let user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              email,
-              name: name || email.split("@")[0],
-              image: picture || null,
-              hasActiveTrial: false,
-              subscriptionStatus: null,
-              subscriptionEndsAt: null,
-            },
-          });
-          console.log(`[auth] ✅ Created new user: ${user.id}`);
-        } else {
-          // Update user info if needed
-          if (name && name !== user.name) {
-            user = await prisma.user.update({
-              where: { id: user.id },
-              data: { name, image: picture || user.image },
-            });
+          if (!email) {
+            return done(
+              new Error("No email found in Google profile"),
+              undefined
+            );
           }
-          console.log(`[auth] ✅ Found existing user: ${user.id}`);
-        }
 
-        // Link Google account if not already linked
-        const existingAccount = await prisma.account.findUnique({
-          where: {
-            provider_providerAccountId: {
-              provider: "google",
-              providerAccountId: googleId,
-            },
-          },
-        });
+          // Find or create user
+          let user = await prisma.user.findUnique({
+            where: { email },
+          });
 
-        if (!existingAccount) {
-          await prisma.account.upsert({
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                email,
+                name: name || email.split("@")[0],
+                image: picture || null,
+                hasActiveTrial: false,
+                subscriptionStatus: null,
+                subscriptionEndsAt: null,
+              },
+            });
+            console.log(`[auth] ✅ Created new user: ${user.id}`);
+          } else {
+            // Update user info if needed
+            if (name && name !== user.name) {
+              user = await prisma.user.update({
+                where: { id: user.id },
+                data: { name, image: picture || user.image },
+              });
+            }
+            console.log(`[auth] ✅ Found existing user: ${user.id}`);
+          }
+
+          // Link Google account if not already linked
+          const existingAccount = await prisma.account.findUnique({
             where: {
               provider_providerAccountId: {
                 provider: "google",
                 providerAccountId: googleId,
               },
             },
-            update: {},
-            create: {
-              userId: user.id,
-              type: "oauth",
-              provider: "google",
-              providerAccountId: googleId,
-            },
           });
-          console.log(`[auth] ✅ Linked Google account for user: ${user.id}`);
-        }
 
-        return done(null, user);
-      } catch (error) {
-        console.error("[auth] ❌ OAuth callback error:", error);
-        return done(error, undefined);
+          if (!existingAccount) {
+            await prisma.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: "google",
+                  providerAccountId: googleId,
+                },
+              },
+              update: {},
+              create: {
+                userId: user.id,
+                type: "oauth",
+                provider: "google",
+                providerAccountId: googleId,
+              },
+            });
+            console.log(`[auth] ✅ Linked Google account for user: ${user.id}`);
+          }
+
+          return done(null, user);
+        } catch (error) {
+          console.error("[auth] ❌ OAuth callback error:", error);
+          return done(error, undefined);
+        }
       }
-    }
-  )
-);
+    )
+  );
+} else {
+  console.warn(
+    "[auth] ⚠️ Google OAuth credentials not found. OAuth routes will not be available."
+  );
+  console.warn(
+    "[auth] Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable OAuth."
+  );
+}
 
 // Serialize user for session (we use JWT, so minimal)
 passport.serializeUser((user: any, done) => {
@@ -151,12 +165,11 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
 
   // Check if Google OAuth is configured
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.error(
-      "[auth] ❌ Google OAuth not configured - missing credentials"
-    );
-    return res.status(500).json({
+    console.warn("[auth] ⚠️ Google OAuth not configured - missing credentials");
+    return res.status(503).json({
       error: "OAuth not configured",
-      message: "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set",
+      message:
+        "OAuth is not available. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
     });
   }
 
@@ -185,7 +198,23 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
  */
 router.get(
   "/google",
-  handleGoogleOAuth,
+  (req: Request, res: Response, next: any) => {
+    // Check if OAuth is configured first - if not, return error immediately
+    // This prevents passport.authenticate from being called when strategy isn't registered
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.warn(
+        "[auth] ⚠️ Google OAuth not configured - missing credentials"
+      );
+      return res.status(503).json({
+        error: "OAuth not configured",
+        message:
+          "OAuth is not available. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+      });
+    }
+
+    // OAuth is configured, proceed with normal flow
+    handleGoogleOAuth(req, res, next);
+  },
   (req: Request, res: Response, next: any) => {
     // Log the state parameter before Passport processes it
     const state = req.query.state as string | undefined;
@@ -238,10 +267,22 @@ router.post("/google", (req: Request, res: Response) => {
  */
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${FRONTEND_URL}/auth/signin?error=Callback`,
-  }),
+  (req: Request, res: Response, next: any) => {
+    // Check if OAuth is configured first
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.warn(
+        "[auth] ⚠️ Google OAuth callback called but OAuth not configured"
+      );
+      return res.redirect(
+        `${FRONTEND_URL}/auth/signin?error=OAuthNotConfigured`
+      );
+    }
+    // OAuth is configured, proceed with authentication
+    passport.authenticate("google", {
+      session: false,
+      failureRedirect: `${FRONTEND_URL}/auth/signin?error=Callback`,
+    })(req, res, next);
+  },
   async (req: Request, res: Response) => {
     try {
       const user = req.user as any;
