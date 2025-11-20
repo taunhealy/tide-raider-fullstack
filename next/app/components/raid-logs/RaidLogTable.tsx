@@ -77,6 +77,19 @@ interface QuestTableProps {
   onFilterChange?: () => void;
   onBeachClick: (beachName: string) => void;
   nationality?: string;
+  session?:
+    | {
+        user: {
+          id?: string;
+          email?: string | null;
+          name?: string | null;
+          image?: string | null;
+          isSubscribed?: boolean;
+          hasActiveTrial?: boolean;
+        } | null;
+      }
+    | null
+    | undefined;
 }
 
 interface LogEntryDisplayProps {
@@ -550,7 +563,10 @@ export default function RaidLogTable({
     accessor: "actions",
     cell: ({ row }: { row: any }) => {
       const entry = row.original;
-      const isOwner = session?.user?.email === entry.surferEmail;
+      // Check ownership using userId (more reliable than email)
+      // entry.userId is the Prisma user ID, session.user.id is the authenticated user's ID
+      const isOwner =
+        session?.user?.id && entry.userId && session.user.id === entry.userId;
 
       return (
         <div className="flex gap-2">
@@ -823,35 +839,37 @@ export default function RaidLogTable({
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
-                      {session?.user?.email === entry.surferEmail && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(entry);
-                            }}
-                            className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                            aria-label="Edit raid log"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(entry);
-                            }}
-                            className="text-gray-500 hover:text-red-600"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <span className="loading-spinner" />
-                            ) : (
-                              <X className="w-4 h-4" />
-                            )}
-                          </button>
-                        </>
-                      )}
+                      {session?.user?.id &&
+                        entry.userId &&
+                        session.user.id === entry.userId && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(entry);
+                              }}
+                              className="text-gray-500 hover:text-[var(--color-text-primary)]"
+                              aria-label="Edit raid log"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(entry);
+                              }}
+                              className="text-gray-500 hover:text-red-600"
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? (
+                                <span className="loading-spinner" />
+                              ) : (
+                                <X className="w-4 h-4" />
+                              )}
+                            </button>
+                          </>
+                        )}
                     </div>
                   </div>
 
@@ -1211,24 +1229,26 @@ export default function RaidLogTable({
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              {session?.user?.email === entry.surferEmail && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(entry);
-                                    }}
-                                    className="text-gray-500 hover:text-red-600"
-                                    disabled={deleteMutation.isPending}
-                                  >
-                                    {deleteMutation.isPending ? (
-                                      <span className="loading-spinner" />
-                                    ) : (
-                                      <X className="w-4 h-4" />
-                                    )}
-                                  </button>
-                                </>
-                              )}
+                              {session?.user?.id &&
+                                entry.userId &&
+                                session.user.id === entry.userId && (
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(entry);
+                                      }}
+                                      className="text-gray-500 hover:text-red-600"
+                                      disabled={deleteMutation.isPending}
+                                    >
+                                      {deleteMutation.isPending ? (
+                                        <span className="loading-spinner" />
+                                      ) : (
+                                        <X className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </>
+                                )}
                             </div>
                           </td>
                         </tr>

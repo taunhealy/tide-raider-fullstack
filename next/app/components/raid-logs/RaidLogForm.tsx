@@ -21,6 +21,8 @@ import Image from "next/image";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
 import { useUpdateLog } from "@/app/hooks/useUpdateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
+import { BeachContext } from "@/app/context/BeachContext";
+import { useContext } from "react";
 import {
   BlueStarRating,
   InteractiveBlueStarRating,
@@ -70,14 +72,26 @@ export function RaidLogForm({
 
   // Wait for auth to load before checking user
   const isAuthLoading = authStatus === "loading";
-  // Only fetch beaches if not provided as prop
+
+  // Get beaches from context (provided by BeachProvider from layout)
+  // Use useContext directly - it returns undefined if not in provider (safe)
+  const beachContext = useContext(BeachContext);
+  const beachesFromContext = beachContext?.beaches || [];
+
+  // Only fetch beaches via hook if:
+  // 1. Not provided as prop
+  // 2. Not available from context (or context is empty)
+  const needsHookFetch =
+    !beachesProp && (!beachesFromContext || beachesFromContext.length === 0);
+
   const { data: beachesFromHook, isLoading: isBeachesLoadingFromHook } =
     useBeaches({
-      enabled: !beachesProp || beachesProp.length === 0,
+      enabled: needsHookFetch,
     });
-  // Use prop beaches if provided, otherwise use hook data
-  const beaches = beachesProp || beachesFromHook;
-  const isBeachesLoading = !beachesProp && isBeachesLoadingFromHook;
+
+  // Priority: prop > context > hook
+  const beaches = beachesProp || beachesFromContext || beachesFromHook || [];
+  const isBeachesLoading = needsHookFetch && isBeachesLoadingFromHook;
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
@@ -610,7 +624,7 @@ export function RaidLogForm({
               } else {
                 errorMessage =
                   errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 55MB.`;
+                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 100MB.`;
               }
             } else if (response.status === 400) {
               errorMessage =
@@ -1053,7 +1067,7 @@ export function RaidLogForm({
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 55MB)
+                        Upload Video File (Max 100MB)
                       </label>
                       <input
                         type="file"

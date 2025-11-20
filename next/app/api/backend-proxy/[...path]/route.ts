@@ -1,20 +1,19 @@
 /**
  * Next.js API Proxy Route
  *
- * This proxy handles cross-domain authentication:
+ * This proxy handles cross-domain authentication using centralized backend OAuth:
  * 1. Frontend calls Next.js API route (same domain = cookies work)
- * 2. Next.js API route gets session token from NextAuth
+ * 2. Next.js API route gets auth-token cookie from backend OAuth (Passport)
  * 3. Next.js API route forwards request to backend with token in header
- * 4. No cookie parsing needed, no cross-domain issues
+ * 4. All authentication is centralized through backend Passport/OAuth
+ * 5. No NextAuth - backend is the single source of truth for auth
  *
  * Usage: /api/backend-proxy/api/alerts -> proxies to BACKEND_URL/api/alerts
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { getToken } from "next-auth/jwt";
-import jwt from "jsonwebtoken";
-import { authOptions } from "@/app/lib/authOptions";
+// Centralized authentication: Only using backend OAuth (auth-token cookie from Passport)
+// No NextAuth - all auth flows through backend Passport/OAuth system
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
@@ -89,36 +88,8 @@ async function handleProxy(
     // Check if this is a forecast endpoint (which uses optionalAuth on backend)
     const isForecastEndpoint = pathSegments.join("/").includes("forecast");
 
-    // Get session from NextAuth - need to pass headers for App Router
-    // Create headers object from request for getServerSession
-    const headers = new Headers();
-    req.headers.forEach((value, key) => {
-      headers.set(key, value);
-    });
-
-    // Get session to verify user is authenticated
-    // For forecast endpoints, this is optional (backend uses optionalAuth)
-    let session = null;
-    try {
-      session = await getServerSession(authOptions);
-      console.log(`[proxy] Session found:`, !!session, session?.user?.id);
-    } catch (sessionError) {
-      // If session retrieval fails, continue without session (especially for forecast endpoints)
-      if (isForecastEndpoint) {
-        console.log(
-          `[proxy] Session retrieval failed for forecast endpoint, continuing without auth`
-        );
-      } else {
-        console.warn(`[proxy] Session retrieval failed:`, sessionError);
-      }
-    }
-
-    // For forecast endpoints without session, skip auth and proceed directly
-    if (isForecastEndpoint && !session) {
-      console.log(
-        `[proxy] Forecast endpoint without session - proceeding without authentication`
-      );
-    }
+    // Centralized authentication: Only use backend OAuth token (auth-token cookie)
+    // No NextAuth - all auth goes through backend Passport/OAuth
 
     // Reconstruct the backend path
     const path = `/${pathSegments.join("/")}`;
@@ -131,15 +102,12 @@ async function handleProxy(
       "Content-Type": "application/json",
     };
 
-    // Get the actual JWT token from NextAuth
-    // getToken() extracts and decodes the JWT from the encrypted session token
-    // This is what the backend expects - a plain JWT that can be verified
-    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-    console.log(
-      `[proxy] Secret available:`,
-      !!secret,
-      secret ? `(length: ${secret.length})` : ""
-    );
+    // Centralized authentication: Only use backend OAuth token (auth-token cookie)
+    // This is set by the backend OAuth flow when user signs in via Passport
+    // IMPORTANT: Don't verify this token - it was signed by the backend with JWT_SECRET
+    // The backend will verify it. We just pass it through.
+    const authTokenCookie = req.cookies.get("auth-token")?.value;
+    let tokenSource = "none";
 
     // Log all cookies for debugging
     const allCookies = req.cookies.getAll();
@@ -148,159 +116,52 @@ async function handleProxy(
       allCookies.map((c) => c.name)
     );
 
-    // First, check for backend OAuth JWT cookie (auth-token)
-    // This is set by the backend OAuth flow when user signs in
-    // IMPORTANT: Don't verify this token - it was signed by the backend with JWT_SECRET
-    // The backend will verify it. We just pass it through.
-    const authTokenCookie = req.cookies.get("auth-token")?.value;
-    let jwtToken: any = null;
-    let tokenSource = "none";
-
-    // Skip token retrieval for forecast endpoints if no session (backend uses optionalAuth)
-    if (isForecastEndpoint && !session && !authTokenCookie) {
-      console.log(
-        `[proxy] Forecast endpoint - skipping token retrieval, proceeding without auth`
-      );
-    } else if (authTokenCookie) {
+    // Only use backend OAuth token - no NextAuth fallback
+    if (authTokenCookie) {
       // Backend OAuth sets auth-token cookie - use it directly
-      // Don't verify it here - backend signed it with JWT_SECRET, not NEXTAUTH_SECRET
-      // Just pass it through and let the backend verify it
-      console.log(`[proxy] ✅ Found auth-token cookie from backend OAuth`);
       tokenSource = "auth-token-cookie";
-      // Store the raw token value - we'll send it as-is to the backend
-      jwtToken = { raw: authTokenCookie };
+      console.log(`[proxy] ✅ Found auth-token cookie from backend OAuth`);
       console.log(
         `[proxy] ✅ Using auth-token cookie (backend will verify with JWT_SECRET)`
       );
-    }
-
-    // If no backend cookie, try NextAuth token
-    // Skip for forecast endpoints if no session (backend uses optionalAuth)
-    if (!jwtToken && (!isForecastEndpoint || session)) {
-      try {
-        jwtToken = await getToken({
-          req,
-          secret: secret,
-        });
-        if (jwtToken) {
-          tokenSource = "nextauth-token";
-        }
-      } catch (tokenError) {
-        // If token retrieval fails for forecast endpoint, continue without auth
-        if (isForecastEndpoint) {
-          console.log(
-            `[proxy] Token retrieval failed for forecast endpoint, continuing without auth`
-          );
-        } else {
-          console.warn(`[proxy] Token retrieval failed:`, tokenError);
-        }
+    } else {
+      // No token - proceed without auth (backend will handle it with optionalAuth for public endpoints)
+      if (!isForecastEndpoint) {
+        console.log(
+          `[proxy] ⚠️ No auth-token cookie found - proceeding without auth`
+        );
+      } else {
+        console.log(
+          `[proxy] Forecast endpoint without auth-token - proceeding without auth (backend uses optionalAuth)`
+        );
       }
     }
 
     console.log(
       `[proxy] JWT token from ${tokenSource}:`,
-      !!jwtToken,
-      jwtToken && jwtToken.raw
-        ? "raw token (backend will verify)"
-        : jwtToken
-          ? `sub: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
-          : "null"
+      !!authTokenCookie,
+      authTokenCookie ? "raw token (backend will verify)" : "null"
     );
 
-    if (!jwtToken) {
-      console.log(`[proxy] ⚠️ getToken() returned null - checking session...`);
+    // Add Authorization header if we have the backend OAuth token
+    // Only use backend OAuth token - no NextAuth fallback
+    if (authTokenCookie) {
+      // Use the backend OAuth cookie directly (don't verify - backend will verify with JWT_SECRET)
+      backendHeaders.Authorization = `Bearer ${authTokenCookie}`;
       console.log(
-        `[proxy] Session user:`,
-        session?.user?.id,
-        session?.user?.email
-      );
-
-      // Fallback: If getToken() fails but we have a session, create JWT from session
-      // Skip for forecast endpoints if no session (backend uses optionalAuth)
-      if (session?.user?.id && secret && (!isForecastEndpoint || session)) {
-        console.log(`[proxy] Creating JWT from session data as fallback`);
-        const payload: Record<string, any> = {
-          sub: session.user.id,
-          id: session.user.id,
-          email: session.user.email || undefined,
-        };
-
-        console.log(
-          `[proxy] 🔑 Using secret to sign JWT (fallback) (length: ${secret.length}, first 10 chars: ${secret.substring(0, 10)}...)`
-        );
-        const newJWT = jwt.sign(payload, secret, {
-          expiresIn: "7d",
-          algorithm: "HS256",
-        });
-
-        backendHeaders.Authorization = `Bearer ${newJWT}`;
-        console.log(
-          `[proxy] ✅ Created JWT from session for ${path} (length: ${newJWT.length})`
-        );
-        console.log(
-          `[proxy] 🔐 Auth token created (fallback) for userId: ${session.user.id}, email: ${session.user.email}`
-        );
-      } else if (session?.user?.id && !secret) {
-        console.error(`[proxy] ❌ Cannot create JWT: secret not configured`);
-      } else if (isForecastEndpoint && !session) {
-        console.log(
-          `[proxy] Forecast endpoint - proceeding without authentication`
-        );
-      }
-    }
-
-    // Add Authorization header if we have a token
-    if (jwtToken) {
-      if (
-        tokenSource === "auth-token-cookie" ||
-        tokenSource === "auth-token-cookie-unverified"
-      ) {
-        // Use the backend OAuth cookie directly (don't verify - backend will verify with JWT_SECRET)
-        backendHeaders.Authorization = `Bearer ${authTokenCookie}`;
-        console.log(
-          `[proxy] 🔐 Using auth-token cookie directly (backend will verify with JWT_SECRET)`
-        );
-      } else if (!secret) {
-        console.error(
-          `[proxy] ❌ NEXTAUTH_SECRET or AUTH_SECRET not configured`
-        );
-      } else {
-        // Create a new plain JWT from the decoded token payload
-        // This JWT can be verified by the backend using jwt.verify()
-        const payload: Record<string, any> = {
-          sub: jwtToken.sub || jwtToken.id,
-          id: jwtToken.id || jwtToken.sub,
-          email: jwtToken.email,
-        };
-
-        // Include exp and iat if they exist
-        if (jwtToken.exp) payload.exp = jwtToken.exp;
-        if (jwtToken.iat) payload.iat = jwtToken.iat;
-
-        console.log(
-          `[proxy] 🔑 Using secret to sign JWT (length: ${secret.length}, first 10 chars: ${secret.substring(0, 10)}...)`
-        );
-        const newJWT = jwt.sign(payload, secret, {
-          expiresIn: "7d", // Match NextAuth's default
-          algorithm: "HS256", // Use HS256 like NextAuth
-        });
-
-        backendHeaders.Authorization = `Bearer ${newJWT}`;
-        console.log(
-          `[proxy] ✅ Created new JWT from token object for ${path} (length: ${newJWT.length})`
-        );
-        console.log(
-          `[proxy] 🔐 Auth token created for userId: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
-        );
-      }
-    } else if (session) {
-      console.log(
-        `[proxy] ⚠️ WARNING: Session exists but getToken() returned null`
+        `[proxy] 🔐 Using auth-token cookie directly (backend will verify with JWT_SECRET)`
       );
     } else {
-      console.log(
-        `[proxy] ❌ No session or token for ${path} - proceeding without auth`
-      );
+      // No token - proceed without auth (backend will handle with optionalAuth for public endpoints)
+      if (!isForecastEndpoint) {
+        console.log(
+          `[proxy] ⚠️ No auth-token cookie found for ${path} - proceeding without auth`
+        );
+      } else {
+        console.log(
+          `[proxy] Forecast endpoint without auth-token - proceeding without auth (backend uses optionalAuth)`
+        );
+      }
     }
 
     console.log(`[proxy] Forwarding ${method} request to: ${backendUrl}`);

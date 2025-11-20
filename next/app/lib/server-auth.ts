@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
@@ -43,22 +42,8 @@ export async function getServerAuth(): Promise<{
       return { user: null };
     }
 
-    // Verify the JWT token
-    const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-    if (!secret) {
-      console.error(
-        "[server-auth] NEXTAUTH_SECRET or AUTH_SECRET not configured"
-      );
-      return { user: null, error: "Auth secret not configured" };
-    }
-
-    let decoded: any;
-    try {
-      decoded = jwt.verify(authToken, secret);
-    } catch (error) {
-      // Token invalid or expired
-      return { user: null };
-    }
+    // Don't verify the token here - the backend signed it with JWT_SECRET, not NEXTAUTH_SECRET
+    // Just pass it through and let the backend verify it (same approach as the proxy route)
 
     // Call backend to get full user data
     // Add timeout to prevent hanging when backend is not available
@@ -67,11 +52,10 @@ export async function getServerAuth(): Promise<{
 
     let response;
     try {
-      const cookieHeader = cookieStore.toString();
       response = await fetch(`${BACKEND_URL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
-          Cookie: cookieHeader,
+          Cookie: `auth-token=${authToken}`,
         },
         credentials: "include",
         cache: "no-store",
@@ -98,6 +82,9 @@ export async function getServerAuth(): Promise<{
     }
 
     if (!response.ok) {
+      console.warn(
+        `[server-auth] Backend auth failed: ${response.status} ${response.statusText}`
+      );
       return { user: null };
     }
 
@@ -105,6 +92,9 @@ export async function getServerAuth(): Promise<{
     return { user: data.user || null };
   } catch (error) {
     console.error("[server-auth] Error:", error);
-    return { user: null };
+    return {
+      user: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }

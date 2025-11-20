@@ -108,12 +108,14 @@ export function useBackendAuth() {
 
       // Create a shared promise for this fetch
       const fetchPromise = (async (): Promise<AuthState> => {
+        const fetchStartTime = Date.now();
         try {
           // Use Next.js API route (same domain = cookies work)
           // Add timeout to prevent hanging - reduced to 10 seconds for faster feedback
           const controller = new AbortController();
           const timeoutId = setTimeout(() => {
-            console.warn("[useBackendAuth] Fetch timeout after 10 seconds");
+            const elapsed = Date.now() - fetchStartTime;
+            console.warn(`[useBackendAuth] Fetch timeout after ${elapsed}ms - aborting`);
             controller.abort();
           }, 10000); // 10 second timeout
 
@@ -238,13 +240,19 @@ export function useBackendAuth() {
 
           return authState;
         } catch (error) {
-          console.error("[useBackendAuth] Error fetching user:", error);
+          const elapsed = Date.now() - fetchStartTime;
+          console.error(`[useBackendAuth] Error fetching user after ${elapsed}ms:`, error);
           // If it's a timeout or abort, treat as unauthenticated rather than error
           const isTimeout =
-            error instanceof Error && error.name === "AbortError";
+            error instanceof Error && 
+            (error.name === "AbortError" || 
+             error.message?.includes("timeout") ||
+             error.message?.includes("abort"));
+          
+          // Always clear loading state on error
           const authState: AuthState = {
             user: null,
-            loading: false,
+            loading: false, // CRITICAL: Always set loading to false
             error: isTimeout ? null : (error as Error), // Don't show error for timeouts
           };
 
@@ -256,15 +264,52 @@ export function useBackendAuth() {
           };
 
           if (mounted) {
+            console.log(`[useBackendAuth] Setting auth state after error:`, {
+              loading: authState.loading,
+              hasUser: !!authState.user,
+              error: authState.error?.message,
+            });
             setAuthState(authState);
           }
 
           return authState;
+        } finally {
+          // Ensure pending promise is cleared even if something goes wrong
+          const elapsed = Date.now() - fetchStartTime;
+          console.log(`[useBackendAuth] Fetch promise completed after ${elapsed}ms`);
+          globalAuthCache.pendingPromise = null;
         }
       })();
 
       // Set pending promise so other components can wait for this fetch
       globalAuthCache.pendingPromise = fetchPromise;
+      
+      // Add a safety timeout to ensure loading state is cleared even if promise hangs
+      const safetyTimeout = setTimeout(() => {
+        if (globalAuthCache.pendingPromise === fetchPromise) {
+          console.warn("[useBackendAuth] Safety timeout - clearing pending promise after 15 seconds");
+          globalAuthCache.pendingPromise = null;
+          // Force update to clear loading state
+          if (mounted) {
+            setAuthState((prev) => {
+              if (prev.loading) {
+                console.warn("[useBackendAuth] Safety timeout - forcing loading to false");
+                return {
+                  ...prev,
+                  loading: false,
+                  user: prev.user || null, // Keep user if already set
+                };
+              }
+              return prev;
+            });
+          }
+        }
+      }, 15000); // 15 second safety timeout
+      
+      // Clear safety timeout when promise resolves
+      fetchPromise.finally(() => {
+        clearTimeout(safetyTimeout);
+      });
 
       return fetchPromise;
     }
@@ -272,9 +317,25 @@ export function useBackendAuth() {
     // Only do initial fetch once per component mount
     // Bypass throttle for initial fetch to ensure it always runs
     if (!hasInitialFetch.current) {
-      fetchUser(true).catch((error) => {
-        console.error("[useBackendAuth] Initial fetch error:", error);
-      }); // Bypass throttle for initial fetch
+      console.log("[useBackendAuth] Starting initial fetch (bypassing throttle)");
+      fetchUser(true)
+        .then((result) => {
+          console.log("[useBackendAuth] Initial fetch completed:", {
+            hasUser: !!result.user,
+            loading: result.loading,
+          });
+        })
+        .catch((error) => {
+          console.error("[useBackendAuth] Initial fetch error:", error);
+          // Ensure loading state is cleared even on error
+          if (mounted) {
+            setAuthState({
+              user: null,
+              loading: false,
+              error: error instanceof Error ? error : null,
+            });
+          }
+        });
       hasInitialFetch.current = true;
     }
 

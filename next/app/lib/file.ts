@@ -1,6 +1,6 @@
-// Maximum file size (5MB for images, 55MB for videos)
+// Maximum file size (5MB for images, 100MB for videos)
 export const MAX_FILE_SIZE = 5 * 1024 * 1024;
-export const MAX_VIDEO_SIZE = 55 * 1024 * 1024; // 55MB for videos
+export const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
 // Maximum video duration (60 seconds)
 export const MAX_VIDEO_DURATION = 60; // seconds

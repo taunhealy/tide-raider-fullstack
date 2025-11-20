@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     // Validate file size based on type
     const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
-    const MAX_VIDEO_SIZE = 55 * 1024 * 1024; // 55MB for videos
+    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
     if (fileType.startsWith("video/")) {
       if (fileSize > MAX_VIDEO_SIZE) {

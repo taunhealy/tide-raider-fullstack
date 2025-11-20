@@ -23,6 +23,7 @@ import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { useState } from "react";
 import { MediaModal } from "./MediaModal";
 import { VideoThumbnail } from "./VideoThumbnail";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import type { VideoPlatform } from "@/app/types/raidlogs";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
 
@@ -129,7 +130,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   // Check if media is available (including uploaded videos without platform)
   // Validate that videoUrl is not empty string
-  const hasMedia = entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "");
+  const hasMedia =
+    entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)]">
@@ -163,11 +165,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 md:py-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          {/* Content Grid */}
+          {/* Content Grid - Make video player bigger (2/3 width) */}
           <div className="grid lg:grid-cols-3 gap-6 md:gap-8 p-4 md:p-6">
-            {/* Main Content - 2/3 width on desktop (or full width if no media) */}
+            {/* Main Content - 1/3 width if video exists, full width otherwise */}
             <div
-              className={`${hasMedia ? "lg:col-span-2 lg:order-1" : "lg:col-span-3"} space-y-4 md:space-y-6`}
+              className={`${hasMedia && entry.videoUrl && !entry.videoPlatform ? "lg:col-span-1 lg:order-2" : hasMedia ? "lg:col-span-2 lg:order-1" : "lg:col-span-3"} space-y-4 md:space-y-6`}
             >
               {/* Header with Beach and Rating */}
               <div className="space-y-3 md:space-y-4">
@@ -321,10 +323,22 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               )}
             </div>
 
-            {/* Right Sidebar - Video/Image Thumbnail - 1/3 width on desktop */}
+            {/* Left Sidebar - Video Player - 2/3 width on desktop for uploaded videos */}
             {hasMedia && (
-              <div className="lg:col-span-1 lg:order-2">
-                <div className="sticky top-20">
+              <div
+                className={
+                  entry.videoUrl && !entry.videoPlatform
+                    ? "lg:col-span-2 lg:order-1"
+                    : "lg:col-span-1 lg:order-2"
+                }
+              >
+                <div
+                  className={
+                    entry.videoUrl && !entry.videoPlatform
+                      ? "sticky top-20"
+                      : "sticky top-20"
+                  }
+                >
                   {entry.imageUrl ? (
                     <div
                       className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 shadow-sm"
@@ -342,11 +356,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
                     // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
                     !entry.videoPlatform ? (
-                      // Uploaded video - use VideoThumbnail component for hover playback
-                      <div className="w-full">
-                        <VideoThumbnail
+                      // Uploaded video - use CustomVideoPlayer with full controls, make it bigger (2/3 width)
+                      <div className="w-full rounded-lg overflow-hidden shadow-xl border-2 border-[var(--color-tertiary)]/30 max-h-[80vh]">
+                        <CustomVideoPlayer
                           videoUrl={entry.videoUrl}
-                          onPlay={() => setIsMediaModalOpen(true)}
+                          className="w-full min-h-[400px] lg:min-h-[500px] max-h-[80vh]"
                         />
                       </div>
                     ) : (

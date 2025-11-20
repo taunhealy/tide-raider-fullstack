@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Video as VideoIcon, X } from "lucide-react";
 import Image from "next/image";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { CustomVideoPlayer } from "./CustomVideoPlayer";
 
 interface MediaModalProps {
   isOpen: boolean;
@@ -49,17 +50,24 @@ export function MediaModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-0 overflow-hidden relative bg-gray-900">
-        {/* Close Button - Made more visible */}
+      <DialogContent className="sm:max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] p-0 overflow-hidden relative bg-black border-2 border-[var(--color-tertiary)]/30">
+        {/* Close Button - Tide Raider Branded */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 bg-white hover:bg-gray-100 rounded-full p-2 transition-all duration-200 shadow-md"
+          className="absolute top-4 right-4 z-30 bg-black/80 hover:bg-[var(--color-tertiary)]/20 border border-[var(--color-tertiary)]/50 hover:border-[var(--color-tertiary)] rounded-full p-2 transition-all duration-200 shadow-lg backdrop-blur-sm"
           aria-label="Close modal"
         >
-          <X className="w-5 h-5 text-gray-800" />
+          <X className="w-5 h-5 text-white hover:text-[var(--color-tertiary)] transition-colors" />
         </button>
 
-        <div className="relative w-full aspect-video">
+        {/* Tide Raider Logo/Branding */}
+        <div className="absolute top-4 left-4 z-30 px-3 py-1.5 bg-black/80 border border-[var(--color-tertiary)]/50 rounded-md backdrop-blur-sm">
+          <span className="text-white font-primary font-bold text-sm tracking-wide">
+            TIDE <span className="text-[var(--color-tertiary)]">RAIDER</span>
+          </span>
+        </div>
+
+        <div className="relative w-full aspect-video min-h-[60vh] lg:min-h-[70vh]">
           {imageUrl ? (
             <div className="w-full h-full flex items-center justify-center">
               <Image
@@ -80,16 +88,8 @@ export function MediaModal({
               title="Video player"
             />
           ) : videoUrl && videoUrl.trim() !== "" && !videoPlatform ? (
-            // Uploaded video (no platform) - show video player
-            <video
-              src={videoUrl}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
-              crossOrigin="anonymous"
-            >
-              Your browser does not support the video tag.
-            </video>
+            // Uploaded video (no platform) - show custom video player with full controls
+            <CustomVideoPlayer videoUrl={videoUrl} className="w-full h-full" />
           ) : videoUrl && videoUrl.trim() !== "" && videoPlatform ? (
             <div className="flex items-center justify-center h-full">
               <a

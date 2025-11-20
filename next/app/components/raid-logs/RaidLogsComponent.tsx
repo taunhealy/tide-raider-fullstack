@@ -29,11 +29,22 @@ interface RaidLogsResponse {
 interface RaidLogsComponentProps {
   userId?: string;
   initialFilters?: Partial<FilterConfig>;
+  session?: {
+    user: {
+      id?: string;
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+      isSubscribed?: boolean;
+      hasActiveTrial?: boolean;
+    } | null;
+  } | null;
 }
 
 export function RaidLogsComponent({
   userId,
   initialFilters,
+  session: sessionProp,
 }: RaidLogsComponentProps) {
   const { filters, updateFilters, resetFilters } = useRaidLogFilters({
     initialFilters,
@@ -44,7 +55,15 @@ export function RaidLogsComponent({
   const [selectedBeach, setSelectedBeach] = useState<BeachType | null>(null);
 
   // Data fetching hooks
-  const { data: session } = useBackendAuth();
+  // Use session from props (fetched at page level) as primary source
+  // Fall back to hook if not provided (for backwards compatibility)
+  const { data: sessionFromHook } = useBackendAuth();
+  // Normalize session type to match Header component expectation
+  const session = sessionProp
+    ? { user: sessionProp.user || null }
+    : sessionFromHook
+      ? { user: sessionFromHook.user || null }
+      : null;
   const { data: beaches, isLoading: isBeachesLoading } = useBeaches();
 
   // Replace the direct useQuery with useRaidLogs
@@ -163,10 +182,11 @@ export function RaidLogsComponent({
               <div className="overflow-x-auto">
                 <RaidLogTable
                   entries={raidLogsData.entries}
-                  isSubscribed={false}
+                  isSubscribed={!!session?.user?.isSubscribed}
                   isLoading={isLogsLoading}
                   showPrivateOnly={filters.isPrivate}
                   onBeachClick={handleBeachClick}
+                  session={session}
                 />
               </div>
             )}

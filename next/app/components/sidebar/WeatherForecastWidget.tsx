@@ -31,38 +31,54 @@ export default function WeatherForecastWidget() {
   const {
     filters: { regionId, forecastDate },
   } = useBeachFilters();
+
+  // Track if component is mounted to prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
+
   // Store selected source in localStorage so it's shared across components
-  const [selectedSource, setSelectedSource] = useState<ForecastSource>(() => {
+  // Initialize to default to ensure server and client render the same
+  const [selectedSource, setSelectedSource] =
+    useState<ForecastSource>("WINDFINDER");
+
+  // Load from localStorage only after mount (client-side only)
+  useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
       if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
-        return stored as ForecastSource;
+        setSelectedSource(stored as ForecastSource);
       }
     }
-    return "WINDFINDER";
-  });
+  }, []);
 
-  // Update localStorage when source changes
+  // Update localStorage when source changes (only after mount to prevent hydration issues)
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (mounted && typeof window !== "undefined") {
       localStorage.setItem("forecastSource", selectedSource);
       // Dispatch custom event so other components can listen
       window.dispatchEvent(
         new CustomEvent("forecastSourceChanged", { detail: selectedSource })
       );
     }
-  }, [selectedSource]);
+  }, [selectedSource, mounted]);
 
   // Normalize date - use today's date if no date is selected
+  // Use mounted state to ensure consistent date calculation between server and client
   const normalizedDate = useMemo(() => {
     if (forecastDate) {
       return forecastDate;
     }
-    // Default to today's date
+    // Only calculate today's date after mount to prevent hydration mismatch
+    // On server, return a placeholder that will be updated on client
+    if (!mounted) {
+      // Return a consistent placeholder for SSR - will be updated after mount
+      return new Date().toISOString().split("T")[0];
+    }
+    // Default to today's date (only on client after mount)
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     return today.toISOString().split("T")[0];
-  }, [forecastDate]);
+  }, [forecastDate, mounted]);
 
   // Debug: Log when normalizedDate changes
   useEffect(() => {
@@ -107,7 +123,8 @@ export default function WeatherForecastWidget() {
     }
   }, [regionId, normalizedDate, selectedSource, queryClient]);
 
-  const queryEnabled = !!regionId && !!normalizedDate;
+  // Only enable query after mount to prevent hydration issues
+  const queryEnabled = mounted && !!regionId && !!normalizedDate;
 
   const {
     data: forecastData,
@@ -174,9 +191,15 @@ export default function WeatherForecastWidget() {
   ]);
 
   // Determine the title based on selected date
-  const getForecastTitle = () => {
+  // Use useMemo to ensure consistent calculation and prevent hydration issues
+  const forecastTitle = useMemo(() => {
     if (!forecastDate) {
       return "TODAY";
+    }
+
+    // Only calculate date comparisons after mount to prevent hydration mismatch
+    if (!mounted) {
+      return "TODAY"; // Return consistent default for SSR
     }
 
     // Parse the selected date
@@ -213,7 +236,7 @@ export default function WeatherForecastWidget() {
       .toUpperCase();
     const dayNum = selectedDate.getUTCDate();
     return `${dayName}, ${monthName} ${dayNum}`;
-  };
+  }, [forecastDate, mounted]);
 
   const getWidgetContent = () => {
     if (!regionId) {
@@ -310,7 +333,8 @@ export default function WeatherForecastWidget() {
                 Wind:
               </span>
               <span className="text-xs font-semibold text-white font-primary whitespace-nowrap">
-                {degreesToCardinal(forecastData?.windDirection)} {forecastData?.windSpeed}kts
+                {degreesToCardinal(forecastData?.windDirection)}{" "}
+                {forecastData?.windSpeed}kts
               </span>
             </div>
 
@@ -352,7 +376,9 @@ export default function WeatherForecastWidget() {
             borderColor: "rgba(28, 217, 255, 0.4)",
           }}
         >
-          <span className="text-xs text-gray-400 font-primary">Loading forecast...</span>
+          <span className="text-xs text-gray-400 font-primary">
+            Loading forecast...
+          </span>
         </div>
       ) : regionId && error ? (
         <div
@@ -361,7 +387,9 @@ export default function WeatherForecastWidget() {
             borderColor: "rgba(28, 217, 255, 0.4)",
           }}
         >
-          <span className="text-xs text-gray-400 font-primary">No forecast data</span>
+          <span className="text-xs text-gray-400 font-primary">
+            No forecast data
+          </span>
         </div>
       ) : null}
 
@@ -383,7 +411,7 @@ export default function WeatherForecastWidget() {
               <h3
                 className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
               >
-                {getForecastTitle()}
+                {forecastTitle}
               </h3>
             </div>
             <div className="flex items-center justify-end flex-shrink-0">

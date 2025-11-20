@@ -17,7 +17,7 @@ interface HeaderProps {
   isPrivate: boolean;
   onPrivateToggle: () => void;
   onFilterOpen: () => void;
-  session: { user: User } | null;
+  session: { user: User | null } | null;
 }
 
 export function Header({

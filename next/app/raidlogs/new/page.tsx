@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useEffect, useState } from "react";
 import { Button } from "@/app/components/ui/Button";
+import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
 export default function NewRaidLogPage() {
   const router = useRouter();
@@ -13,6 +14,22 @@ export default function NewRaidLogPage() {
   const [authTimeout, setAuthTimeout] = useState(false);
   const [backendUnavailable, setBackendUnavailable] = useState(false);
   const [isProcessingToken, setIsProcessingToken] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [showRetrySuggestion, setShowRetrySuggestion] = useState(false);
+
+  // Normal loading state with timeout indicator
+  // If loading for more than 10 seconds, show a message suggesting retry
+  useEffect(() => {
+    if (authStatus === "loading" && !isProcessingToken) {
+      const retryTimeout = setTimeout(() => {
+        setShowRetrySuggestion(true);
+      }, 10000); // Show retry suggestion after 10 seconds
+
+      return () => clearTimeout(retryTimeout);
+    } else {
+      setShowRetrySuggestion(false);
+    }
+  }, [authStatus, isProcessingToken]);
 
   // Check if there's a token in the URL hash (OAuth callback)
   useEffect(() => {
@@ -52,37 +69,112 @@ export default function NewRaidLogPage() {
     }
   }, [authStatus, session, isProcessingToken]);
 
+  // Handle auth errors - only set error for actual failures, not normal unauthenticated state
+  useEffect(() => {
+    // Normal unauthenticated state (user not logged in) - not an error, clear any error flags
+    if (authStatus === "unauthenticated") {
+      setHasError(false);
+      setBackendUnavailable(false);
+      setAuthTimeout(false);
+      return;
+    }
+
+    // If we have a session, clear any error flags
+    if (session?.user) {
+      setHasError(false);
+      setBackendUnavailable(false);
+      setAuthTimeout(false);
+      return;
+    }
+
+    // Only set error if we're not in a normal loading or unauthenticated state
+    // This indicates something went wrong (backend issue, network problem, etc.)
+    if (
+      authStatus !== "loading" &&
+      authStatus !== "unauthenticated" &&
+      !session?.user
+    ) {
+      // This could be an error state (backend issue, etc.)
+      console.warn("[NewRaidLogPage] Unexpected auth state:", {
+        authStatus,
+        hasSession: !!session,
+        hasUser: !!session?.user,
+      });
+      // Don't automatically set error here - let the timeout logic handle it
+    }
+  }, [authStatus, session]);
+
   // Detect if backend is unavailable (after a reasonable timeout)
   // But don't show error if we're processing a token from OAuth callback
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
       // Set a timeout to detect if backend is unavailable
-      // Reduced to 12 seconds to match useBackendAuth's 10s timeout + buffer
+      // Increased to 20 seconds to account for slow network/backend responses
+      // useBackendAuth has a 10s timeout, /api/auth/me has 15s, so wait 20s total to be safe
       const timeoutId = setTimeout(() => {
-        // If still loading after 12 seconds, likely backend is down
-        // useBackendAuth has a 10s timeout, so this gives it time plus buffer
-        console.warn("[NewRaidLogPage] Auth loading timeout after 12 seconds");
-        setBackendUnavailable(true);
+        // Check current state - don't rely on closure value
+        // If we have a session, auth completed successfully
+        if (session?.user) {
+          // Auth completed - clear any error flags
+          setBackendUnavailable(false);
+          setAuthTimeout(false);
+          setHasError(false);
+          return;
+        }
+        
+        // If still loading after timeout, backend may be unavailable
+        // But only set error if we're still actually loading (check current state)
+        console.warn(
+          "[NewRaidLogPage] Auth loading timeout after 20 seconds - checking if backend is unavailable"
+        );
+        // Don't set error immediately - let the next render check the actual state
         setAuthTimeout(true);
-      }, 12000); // 12 second timeout (longer than useBackendAuth's 10s)
+      }, 20000); // 20 second timeout (longer than /api/auth/me timeout to account for slow responses)
 
       return () => clearTimeout(timeoutId);
     } else {
-      // Reset when auth completes
-      setAuthTimeout(false);
-      setBackendUnavailable(false);
+      // Reset when auth completes (either successfully or with unauthenticated state)
+      if (authStatus !== "loading") {
+        setAuthTimeout(false);
+        // Always reset backendUnavailable and hasError when auth completes
+        // Backend is available if we got any response (even 401)
+        setBackendUnavailable(false);
+        setHasError(false);
+      }
     }
-  }, [authStatus, isProcessingToken]);
+  }, [authStatus, isProcessingToken, session]);
 
   // Redirect to login if not authenticated (use useEffect to avoid render issues)
   useEffect(() => {
+    // Redirect if definitely unauthenticated and not in error/timeout state
+    // Don't redirect if we're showing an error message (backend unavailable)
     if (
-      authStatus === "unauthenticated" ||
-      (!session?.user && authStatus !== "loading")
+      authStatus === "unauthenticated" &&
+      !hasError &&
+      !authTimeout &&
+      !backendUnavailable
     ) {
-      router.push("/login");
+      const redirectTimer = setTimeout(() => {
+        router.push("/login");
+      }, 300);
+      return () => clearTimeout(redirectTimer);
     }
-  }, [authStatus, session, router]);
+
+    // Also redirect if loading completes with no session (but not if there's an error)
+    if (
+      authStatus !== "loading" &&
+      !session?.user &&
+      authStatus !== "authenticated" &&
+      !hasError &&
+      !authTimeout &&
+      !backendUnavailable
+    ) {
+      const redirectTimer = setTimeout(() => {
+        router.push("/login");
+      }, 300);
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [authStatus, session, router, hasError, authTimeout, backendUnavailable]);
 
   // Removed timeout error - let the fetch handle timeouts naturally
   // If fetch fails, it will set status to "unauthenticated" and redirect to login
@@ -90,13 +182,15 @@ export default function NewRaidLogPage() {
   // If we have session data, proceed immediately (don't wait for status to update)
   if (session?.user) {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <RaidLogForm
-          isOpen={true}
-          onClose={() => router.push("/raidlogs")}
-          userEmail={session.user.email || ""}
-        />
-      </div>
+      <ErrorBoundary>
+        <div className="p-6 max-w-4xl mx-auto">
+          <RaidLogForm
+            isOpen={true}
+            onClose={() => router.push("/raidlogs")}
+            userEmail={session.user.email || ""}
+          />
+        </div>
+      </ErrorBoundary>
     );
   }
 
@@ -116,8 +210,16 @@ export default function NewRaidLogPage() {
       );
     }
 
-    // If backend appears unavailable, show helpful message
-    if (backendUnavailable || authTimeout) {
+    // Only show "Backend Not Available" if auth is STILL loading after timeout AND we don't have a session
+    // This means the backend truly isn't responding (not even with 401)
+    // If backend responded (even with 401), authStatus would be "unauthenticated" not "loading"
+    // If we have a session, backend is clearly available
+    if (authStatus === "loading" && (backendUnavailable || authTimeout) && !session?.user) {
+      const isProduction =
+        typeof window !== "undefined" &&
+        !window.location.hostname.includes("localhost") &&
+        !window.location.hostname.includes("127.0.0.1");
+
       return (
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="text-center max-w-md">
@@ -125,14 +227,83 @@ export default function NewRaidLogPage() {
               Backend Not Available
             </h2>
             <p className="text-gray-600 mb-4 font-primary">
-              The backend server at{" "}
-              <code className="bg-gray-100 px-2 py-1 rounded">
-                localhost:4001
-              </code>{" "}
-              appears to be not running or not responding.
+              {isProduction ? (
+                <>
+                  Unable to connect to the authentication service.
+                  <br />
+                  <span className="text-sm text-gray-500 mt-2 block">
+                    This may be a temporary issue. Please try again in a moment.
+                  </span>
+                </>
+              ) : (
+                <>
+                  The backend server at{" "}
+                  <code className="bg-gray-100 px-2 py-1 rounded">
+                    localhost:4001
+                  </code>{" "}
+                  appears to be not running or not responding.
+                  <br />
+                  <span className="text-sm text-gray-500 mt-2 block">
+                    Please ensure the backend is running:{" "}
+                    <code className="bg-gray-100 px-1 rounded text-xs">
+                      cd backend && npm run dev
+                    </code>
+                  </span>
+                </>
+              )}
             </p>
-            <p className="text-sm text-gray-500 mb-6 font-primary">
-              Please start the backend server and try again.
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button
+                onClick={() => router.push("/raidlogs")}
+                variant="ghost"
+                className="font-primary"
+              >
+                Go Back
+              </Button>
+              <Button
+                onClick={() => {
+                  // Clear any cached auth state and reload
+                  if (typeof window !== "undefined") {
+                    window.localStorage.removeItem("auth-state");
+                  }
+                  window.location.reload();
+                }}
+                variant="default"
+                className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
+              >
+                Retry
+              </Button>
+              <Button
+                onClick={() => router.push("/login")}
+                variant="outline"
+                className="font-primary"
+              >
+                Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Show error message for actual authentication errors (not just unauthenticated)
+    if (
+      hasError &&
+      authStatus !== "loading" &&
+      authStatus !== "unauthenticated"
+    ) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-bold mb-4 font-primary text-[var(--color-primary)]">
+              Authentication Error
+            </h2>
+            <p className="text-gray-600 mb-4 font-primary">
+              There was an error checking your authentication status.
+              <br />
+              <span className="text-sm text-gray-500 mt-2 block">
+                Please try signing in again.
+              </span>
             </p>
             <div className="flex gap-3 justify-center">
               <Button
@@ -143,11 +314,11 @@ export default function NewRaidLogPage() {
                 Go Back
               </Button>
               <Button
-                onClick={() => window.location.reload()}
+                onClick={() => router.push("/login")}
                 variant="default"
                 className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
               >
-                Retry
+                Sign In
               </Button>
             </div>
           </div>
@@ -156,19 +327,7 @@ export default function NewRaidLogPage() {
     }
 
     // Normal loading state with timeout indicator
-    // If loading for more than 10 seconds, show a message suggesting retry
-    const [showRetrySuggestion, setShowRetrySuggestion] = useState(false);
-    useEffect(() => {
-      if (authStatus === "loading" && !isProcessingToken) {
-        const retryTimeout = setTimeout(() => {
-          setShowRetrySuggestion(true);
-        }, 10000); // Show retry suggestion after 10 seconds
-
-        return () => clearTimeout(retryTimeout);
-      } else {
-        setShowRetrySuggestion(false);
-      }
-    }, [authStatus, isProcessingToken]);
+    // showRetrySuggestion state is already declared at the top
 
     return (
       <div className="min-h-screen flex items-center justify-center">
