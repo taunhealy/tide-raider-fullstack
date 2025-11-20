@@ -96,6 +96,10 @@ export default function WeatherForecastWidget() {
       queryClient.invalidateQueries({
         queryKey: ["filteredBeaches"],
       });
+      // Remove all cached filteredBeaches queries to force fresh fetch
+      queryClient.removeQueries({
+        queryKey: ["filteredBeaches"],
+      });
       // Force refetch to ensure the new source is used immediately
       queryClient.refetchQueries({
         queryKey: ["filteredBeaches"],
