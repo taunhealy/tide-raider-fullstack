@@ -111,6 +111,7 @@ export function RaidLogForm({
   const [isCompressingVideo, setIsCompressingVideo] = useState(false);
   const [videoCompressionProgress, setVideoCompressionProgress] = useState(0);
   const [compressionFailed, setCompressionFailed] = useState(false);
+  const [email, setEmail] = useState<string>("");
 
   console.log("useForecast params:", {
     regionId: selectedBeach?.regionId || "",
@@ -247,7 +248,8 @@ export function RaidLogForm({
       selectedImage !== null ||
       selectedVideo !== null ||
       videoUrl !== entry.videoUrl ||
-      videoPlatform !== entry.videoPlatform;
+      videoPlatform !== entry.videoPlatform ||
+      email !== ((entry as any).email || user?.email || userEmail || "");
 
     setHasUnsavedChanges(hasChanges);
   }, [
@@ -262,6 +264,9 @@ export function RaidLogForm({
     selectedVideo,
     videoUrl,
     videoPlatform,
+    email,
+    user?.email,
+    userEmail,
   ]);
 
   const handleClose = () => {
@@ -308,6 +313,14 @@ export function RaidLogForm({
       }
       if (entry.videoPlatform !== undefined && entry.videoPlatform !== null) {
         setVideoPlatform(entry.videoPlatform as "youtube" | "vimeo" | null);
+      }
+      // Populate email from entry or user profile
+      if ((entry as any).email) {
+        setEmail((entry as any).email);
+      } else if (user?.email) {
+        setEmail(user.email);
+      } else if (userEmail) {
+        setEmail(userEmail);
       }
       if (entry.imageUrl && !imagePreview) {
         setImagePreview(entry.imageUrl);
@@ -399,6 +412,17 @@ export function RaidLogForm({
   const { mutate: createLog } = useCreateLog();
   const { mutate: updateLog } = useUpdateLog();
 
+  // Populate email from user profile on load
+  useEffect(() => {
+    if (user?.email) {
+      // Use email from session/user profile
+      setEmail(user.email);
+    } else if (userEmail) {
+      // Fallback to userEmail prop if provided
+      setEmail(userEmail);
+    }
+  }, [user?.email, userEmail]);
+
   // Add effect to restore form state after sign-in
   useEffect(() => {
     if (user) {
@@ -414,6 +438,13 @@ export function RaidLogForm({
           setIsPrivate(state.isPrivate || false);
           setVideoUrl(state.videoUrl || "");
           setVideoPlatform(state.videoPlatform || null);
+          // Restore email if it was saved
+          if (state.email) {
+            setEmail(state.email);
+          } else {
+            // Otherwise use user's profile email
+            setEmail(user.email || userEmail || "");
+          }
 
           // Clean up
           localStorage.removeItem(FORM_STATE_KEY);
@@ -421,9 +452,12 @@ export function RaidLogForm({
           console.error("Error restoring form state:", error);
           localStorage.removeItem(FORM_STATE_KEY);
         }
+      } else {
+        // No saved state, populate email from user profile
+        setEmail(user.email || userEmail || "");
       }
     }
-  }, [user]);
+  }, [user, userEmail]);
 
   // Function to save form state before sign-in
   const saveFormState = () => {
@@ -438,6 +472,7 @@ export function RaidLogForm({
       videoPlatform,
       selectedVideo: null, // Don't store File object
       uploadedVideoUrl,
+      email, // Save email state
     };
 
     localStorage.setItem(FORM_STATE_KEY, JSON.stringify(formState));
@@ -676,6 +711,7 @@ export function RaidLogForm({
         uploadedImageUrl: finalImageUrl,
         videoUrl: finalVideoUrl,
         videoPlatform: finalVideoPlatform,
+        email: email.trim() || user?.email || userEmail || "", // Use provided email or fallback to user's email
       };
 
       // If editing, update instead of create
@@ -1273,6 +1309,26 @@ export function RaidLogForm({
                   Additional Options
                 </h3>
                 <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-primary mb-1"
+                    >
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      className="w-full p-2 border rounded-lg font-primary text-sm"
+                      aria-label="Email address"
+                    />
+                    <p className="text-xs text-gray-500 mt-1 font-primary">
+                      Leave empty to use your account email
+                    </p>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"

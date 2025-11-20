@@ -150,7 +150,8 @@ async function handleProxy(
 
     // First, check for backend OAuth JWT cookie (auth-token)
     // This is set by the backend OAuth flow when user signs in
-    // For forecast endpoints without session, skip token retrieval
+    // IMPORTANT: Don't verify this token - it was signed by the backend with JWT_SECRET
+    // The backend will verify it. We just pass it through.
     const authTokenCookie = req.cookies.get("auth-token")?.value;
     let jwtToken: any = null;
     let tokenSource = "none";
@@ -162,25 +163,15 @@ async function handleProxy(
       );
     } else if (authTokenCookie) {
       // Backend OAuth sets auth-token cookie - use it directly
+      // Don't verify it here - backend signed it with JWT_SECRET, not NEXTAUTH_SECRET
+      // Just pass it through and let the backend verify it
       console.log(`[proxy] ✅ Found auth-token cookie from backend OAuth`);
-      try {
-        // Verify the token is valid (optional - backend will verify anyway)
-        if (secret) {
-          jwtToken = jwt.verify(authTokenCookie, secret) as any;
-          tokenSource = "auth-token-cookie";
-          console.log(
-            `[proxy] ✅ Verified auth-token cookie: userId: ${jwtToken.id || jwtToken.sub}, email: ${jwtToken.email}`
-          );
-        } else {
-          // If no secret, still use the token (backend will verify)
-          tokenSource = "auth-token-cookie-unverified";
-          console.log(
-            `[proxy] ⚠️ Using auth-token cookie without verification (no secret)`
-          );
-        }
-      } catch (error) {
-        console.log(`[proxy] ⚠️ auth-token cookie verification failed:`, error);
-      }
+      tokenSource = "auth-token-cookie";
+      // Store the raw token value - we'll send it as-is to the backend
+      jwtToken = { raw: authTokenCookie };
+      console.log(
+        `[proxy] ✅ Using auth-token cookie (backend will verify with JWT_SECRET)`
+      );
     }
 
     // If no backend cookie, try NextAuth token
@@ -209,9 +200,11 @@ async function handleProxy(
     console.log(
       `[proxy] JWT token from ${tokenSource}:`,
       !!jwtToken,
-      jwtToken
-        ? `sub: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
-        : "null"
+      jwtToken && jwtToken.raw
+        ? "raw token (backend will verify)"
+        : jwtToken
+          ? `sub: ${jwtToken.sub || jwtToken.id}, email: ${jwtToken.email}`
+          : "null"
     );
 
     if (!jwtToken) {
@@ -262,10 +255,10 @@ async function handleProxy(
         tokenSource === "auth-token-cookie" ||
         tokenSource === "auth-token-cookie-unverified"
       ) {
-        // Use the backend OAuth cookie directly
+        // Use the backend OAuth cookie directly (don't verify - backend will verify with JWT_SECRET)
         backendHeaders.Authorization = `Bearer ${authTokenCookie}`;
         console.log(
-          `[proxy] 🔐 Using auth-token cookie directly for userId: ${jwtToken.id || jwtToken.sub}, email: ${jwtToken.email}`
+          `[proxy] 🔐 Using auth-token cookie directly (backend will verify with JWT_SECRET)`
         );
       } else if (!secret) {
         console.error(

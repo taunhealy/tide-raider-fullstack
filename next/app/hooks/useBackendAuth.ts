@@ -110,17 +110,23 @@ export function useBackendAuth() {
       const fetchPromise = (async (): Promise<AuthState> => {
         try {
           // Use Next.js API route (same domain = cookies work)
-          // Add timeout to prevent hanging - increased to 20 seconds for slow backend responses
+          // Add timeout to prevent hanging - reduced to 10 seconds for faster feedback
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+          const timeoutId = setTimeout(() => {
+            console.warn("[useBackendAuth] Fetch timeout after 10 seconds");
+            controller.abort();
+          }, 10000); // 10 second timeout
 
           let response;
           try {
+            const startTime = Date.now();
             response = await fetch("/api/auth/me", {
               credentials: "include", // Include cookies (auth-token)
               cache: "no-store", // Don't cache auth requests
               signal: controller.signal,
             });
+            const duration = Date.now() - startTime;
+            console.log(`[useBackendAuth] Fetch completed in ${duration}ms`);
             clearTimeout(timeoutId);
           } catch (fetchError: any) {
             clearTimeout(timeoutId);
@@ -151,15 +157,55 @@ export function useBackendAuth() {
 
           let authState: AuthState;
           if (response.ok) {
-            const data = await response.json();
-            console.log("[useBackendAuth] User data fetched:", {
-              userId: data.user?.id,
-              email: data.user?.email,
-              isSubscribed: data.user?.isSubscribed,
-              hasActiveTrial: data.user?.hasActiveTrial,
-              trialEndDate: data.user?.trialEndDate,
-              hasUser: !!data.user,
-            });
+            // Add timeout for JSON parsing in case response hangs
+            const parseController = new AbortController();
+            const parseTimeout = setTimeout(
+              () => parseController.abort(),
+              5000
+            ); // 5s timeout for parsing
+
+            let data;
+            try {
+              // Try to parse response with timeout
+              const jsonPromise = response.json();
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("JSON parse timeout")), 5000)
+              );
+              data = await Promise.race([jsonPromise, timeoutPromise]);
+              clearTimeout(parseTimeout);
+
+              console.log("[useBackendAuth] User data fetched:", {
+                userId: data.user?.id,
+                email: data.user?.email,
+                isSubscribed: data.user?.isSubscribed,
+                hasActiveTrial: data.user?.hasActiveTrial,
+                trialEndDate: data.user?.trialEndDate,
+                hasUser: !!data.user,
+              });
+            } catch (parseError) {
+              clearTimeout(parseTimeout);
+              console.error(
+                "[useBackendAuth] Failed to parse response:",
+                parseError
+              );
+              // If parsing fails, treat as unauthenticated
+              authState = {
+                user: null,
+                loading: false,
+                error: null,
+              };
+              // Update cache and return early
+              globalAuthCache = {
+                state: authState,
+                timestamp: Date.now(),
+                pendingPromise: null,
+              };
+              if (mounted) {
+                setAuthState(authState);
+              }
+              return authState;
+            }
+
             authState = {
               user: data.user || null,
               loading: false,

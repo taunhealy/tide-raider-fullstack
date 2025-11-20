@@ -310,6 +310,7 @@ export class AlertService {
 
   /**
    * Delete an alert
+   * Deletes all related records (properties, notifications, checks) first to avoid foreign key constraint errors
    */
   static async deleteAlert(alertId: string, userId: string) {
     // Verify ownership
@@ -326,8 +327,28 @@ export class AlertService {
       throw new Error("Unauthorized to delete this alert");
     }
 
-    await prisma.alert.delete({
-      where: { id: alertId },
+    // Delete all related records first to avoid foreign key constraint errors
+    // Use a transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+      // Delete alert properties
+      await tx.alertProperty.deleteMany({
+        where: { alertId },
+      });
+
+      // Delete alert notifications
+      await tx.alertNotification.deleteMany({
+        where: { alertId },
+      });
+
+      // Delete alert checks
+      await tx.alertCheck.deleteMany({
+        where: { alertId },
+      });
+
+      // Finally, delete the alert itself
+      await tx.alert.delete({
+        where: { id: alertId },
+      });
     });
 
     return { success: true };

@@ -147,7 +147,10 @@ export default function RightSidebar() {
 
   return (
     <aside className="space-y-8 lg:w-[250px] xl:w-[300px]">
-      <WeatherForecastWidget />
+      {/* Desktop Forecast Widget - Hidden on mobile (shown in BeachHeaderControls) */}
+      <div className="hidden lg:block">
+        <WeatherForecastWidget />
+      </div>
       {filters.regionId && (
         <RegionalHighScores
           beaches={data?.beaches || []}

@@ -16,6 +16,7 @@ import userSearchesRouter from "./user-searches";
 import paypalRouter from "./paypal";
 import usersRouter from "./users";
 import commentsRouter from "./comments";
+import subscriptionsRouter from "./subscriptions";
 
 const router = Router();
 
@@ -37,5 +38,6 @@ router.use("/user-searches", userSearchesRouter);
 router.use("/paypal", paypalRouter);
 router.use("/users", usersRouter);
 router.use("/comments", commentsRouter);
+router.use("/subscriptions", subscriptionsRouter);
 
 export default router;

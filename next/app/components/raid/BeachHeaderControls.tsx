@@ -6,6 +6,7 @@ import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
 import DateSelector from "./DateSelector";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 
 import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
@@ -52,6 +53,11 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                   <SearchBar />
                 </div>
                 <RecentRegionSearch regionCounts={regionCountsData} />
+                
+                {/* Mobile Forecast Widget - Below Region Selection */}
+                <div className="lg:hidden">
+                  <WeatherForecastWidget />
+                </div>
               </div>
             </div>
           </div>

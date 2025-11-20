@@ -238,43 +238,30 @@ export default function WeatherForecastWidget() {
       ? getWidgetContent()
       : null;
 
-  return (
-    <div
-      className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
-      style={{
-        borderColor: "rgba(28, 217, 255, 0.4)",
-        boxShadow:
-          "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
-      }}
-      data-forecast-widget
-    >
-      <div className="flex flex-col gap-3 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)] flex-shrink min-w-0">
-            <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
-            <h3
-              className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
-            >
-              {getForecastTitle()}
-            </h3>
-          </div>
-          <div className="flex items-center justify-end flex-shrink-0">
-            <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-3 sm:px-4 py-1.5 rounded-[21px] text-xs sm:text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)] whitespace-nowrap">
-              8AM
-            </div>
-          </div>
-        </div>
+  // Mobile compact bar version
+  const mobileBarHeight = "h-12"; // Same height for both bars
 
-        {/* Source Selection */}
-        <div className="flex flex-col gap-1.5">
-          <h4 className="text-xs text-gray-400 font-primary uppercase tracking-wide">
-            Sources
-          </h4>
-          <div className="flex items-center gap-2">
+  return (
+    <>
+      {/* Mobile Compact Bar Version - Show below region selection on mobile only */}
+      <div
+        className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight}`}
+        style={{
+          borderColor: "rgba(28, 217, 255, 0.4)",
+          boxShadow:
+            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+        }}
+        data-forecast-widget-mobile
+      >
+        {/* Sources Bar */}
+        <div className="flex items-center h-full px-3 gap-2">
+          <span className="text-xs text-gray-400 font-primary uppercase tracking-wide whitespace-nowrap">
+            Sources:
+          </span>
+          <div className="flex items-center gap-2 flex-1">
             <button
               onClick={() => setSelectedSource("WINDFINDER")}
-              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -284,7 +271,7 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDGURU")}
-              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -294,7 +281,7 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDY")}
-              className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -306,98 +293,239 @@ export default function WeatherForecastWidget() {
         </div>
       </div>
 
-      {statusMessage ? (
-        <div className="grid place-items-center h-[120px]">
-          <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-4 rounded-lg border border-gray-700 shadow-md">
-            <div className="flex items-center space-x-3">
-              <svg
-                className="w-5 h-5 text-[var(--color-tertiary)]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="text-gray-300 font-primary">
-                {statusMessage}
+      {/* Forecast Conditions Bar - Below Sources Bar */}
+      {regionId && forecastData && !isLoading && !error ? (
+        <div
+          className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2`}
+          style={{
+            borderColor: "rgba(28, 217, 255, 0.4)",
+            boxShadow:
+              "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+          }}
+        >
+          <div className="flex items-center h-full px-3 gap-3 overflow-x-auto">
+            {/* Wind */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-[var(--color-tertiary)] font-primary uppercase tracking-wide whitespace-nowrap">
+                Wind:
+              </span>
+              <span className="text-xs font-semibold text-white font-primary whitespace-nowrap">
+                {degreesToCardinal(forecastData?.windDirection)} {forecastData?.windSpeed}kts
               </span>
             </div>
-          </div>
-        </div>
-      ) : (
-        // Grid Layout
-        <div className="grid grid-cols-2 gap-4">
-          {/* Wind Direction */}
-          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-              Wind
-            </label>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="space-y-2 text-center">
-                <span className="text-2xl font-semibold text-white font-primary">
-                  {degreesToCardinal(forecastData?.windDirection)}
-                </span>
-                <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData?.windDirection?.toFixed(1)}°
-                </span>
-                <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData?.windSpeed} kts
-                </span>
-              </div>
-            </div>
-          </div>
 
-          {/* Swell Height */}
-          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-              Swell Height
-            </label>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <span className="text-2xl font-semibold text-white font-primary">
+            {/* Swell Height */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-[var(--color-tertiary)] font-primary uppercase tracking-wide whitespace-nowrap">
+                Swell:
+              </span>
+              <span className="text-xs font-semibold text-white font-primary whitespace-nowrap">
                 {forecastData?.swellHeight}m
               </span>
             </div>
-          </div>
 
-          {/* Swell Period */}
-          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-              Swell Period
-            </label>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <span className="text-2xl font-semibold text-white font-primary">
+            {/* Swell Period */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-[var(--color-tertiary)] font-primary uppercase tracking-wide whitespace-nowrap">
+                Period:
+              </span>
+              <span className="text-xs font-semibold text-white font-primary whitespace-nowrap">
                 {forecastData?.swellPeriod}s
               </span>
             </div>
+
+            {/* Swell Direction */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-[var(--color-tertiary)] font-primary uppercase tracking-wide whitespace-nowrap">
+                Dir:
+              </span>
+              <span className="text-xs font-semibold text-white font-primary whitespace-nowrap">
+                {degreesToCardinal(forecastData?.swellDirection)}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : regionId && (isLoading || isFetching) ? (
+        <div
+          className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2 flex items-center justify-center`}
+          style={{
+            borderColor: "rgba(28, 217, 255, 0.4)",
+          }}
+        >
+          <span className="text-xs text-gray-400 font-primary">Loading forecast...</span>
+        </div>
+      ) : regionId && error ? (
+        <div
+          className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2 flex items-center justify-center`}
+          style={{
+            borderColor: "rgba(28, 217, 255, 0.4)",
+          }}
+        >
+          <span className="text-xs text-gray-400 font-primary">No forecast data</span>
+        </div>
+      ) : null}
+
+      {/* Desktop Full Widget Version */}
+      <div
+        className="hidden lg:block bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-6"
+        style={{
+          borderColor: "rgba(28, 217, 255, 0.4)",
+          boxShadow:
+            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+        }}
+        data-forecast-widget
+      >
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 inline-block relative border-l-2 border-r-2 border-[var(--color-tertiary)] flex-shrink min-w-0">
+              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-[var(--color-tertiary)] rounded-full"></div>
+              <h3
+                className={`font-primary font-bold text-sm sm:text-base md:text-lg text-white tracking-wide sm:tracking-wider truncate ${isLoading ? "animate-pulse" : ""}`}
+              >
+                {getForecastTitle()}
+              </h3>
+            </div>
+            <div className="flex items-center justify-end flex-shrink-0">
+              <div className="font-primary text-[var(--color-tertiary)] bg-gray-800/80 px-3 sm:px-4 py-1.5 rounded-[21px] text-xs sm:text-sm border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.2)] whitespace-nowrap">
+                8AM
+              </div>
+            </div>
           </div>
 
-          {/* Swell Direction */}
-          <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
-            <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
-              Swell Direction
-            </label>
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="space-y-2 text-center">
-                <span className="text-2xl font-semibold text-white font-primary">
-                  {degreesToCardinal(forecastData?.swellDirection)}
-                </span>
-                <span className="block text-sm text-gray-300 font-primary">
-                  {forecastData?.swellDirection}°
+          {/* Source Selection */}
+          <div className="flex flex-col gap-1.5">
+            <h4 className="text-xs text-gray-400 font-primary uppercase tracking-wide">
+              Sources
+            </h4>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedSource("WINDFINDER")}
+                className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                  selectedSource === "WINDFINDER"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                A
+              </button>
+              <button
+                onClick={() => setSelectedSource("WINDGURU")}
+                className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                  selectedSource === "WINDGURU"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                B
+              </button>
+              <button
+                onClick={() => setSelectedSource("WINDY")}
+                className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                  selectedSource === "WINDY"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                C
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {statusMessage ? (
+          <div className="grid place-items-center h-[120px]">
+            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-4 rounded-lg border border-gray-700 shadow-md">
+              <div className="flex items-center space-x-3">
+                <svg
+                  className="w-5 h-5 text-[var(--color-tertiary)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-gray-300 font-primary">
+                  {statusMessage}
                 </span>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          // Grid Layout
+          <div className="grid grid-cols-2 gap-4">
+            {/* Wind Direction */}
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+                Wind
+              </label>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="space-y-2 text-center">
+                  <span className="text-2xl font-semibold text-white font-primary">
+                    {degreesToCardinal(forecastData?.windDirection)}
+                  </span>
+                  <span className="block text-sm text-gray-300 font-primary">
+                    {forecastData?.windDirection?.toFixed(1)}°
+                  </span>
+                  <span className="block text-sm text-gray-300 font-primary">
+                    {forecastData?.windSpeed} kts
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Swell Height */}
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+                Swell Height
+              </label>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {forecastData?.swellHeight}m
+                </span>
+              </div>
+            </div>
+
+            {/* Swell Period */}
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+                Swell Period
+              </label>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {forecastData?.swellPeriod}s
+                </span>
+              </div>
+            </div>
+
+            {/* Swell Direction */}
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+                Swell Direction
+              </label>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="space-y-2 text-center">
+                  <span className="text-2xl font-semibold text-white font-primary">
+                    {degreesToCardinal(forecastData?.swellDirection)}
+                  </span>
+                  <span className="block text-sm text-gray-300 font-primary">
+                    {forecastData?.swellDirection}°
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

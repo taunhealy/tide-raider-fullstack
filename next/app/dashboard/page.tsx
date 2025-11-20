@@ -58,10 +58,18 @@ export default function DashboardPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to start trial");
+        const error = await response.json().catch(() => ({
+          error: `HTTP ${response.status}: ${response.statusText}`,
+          message: "Failed to start trial",
+        }));
+        console.error("[Dashboard] Start trial error:", error);
+        throw new Error(
+          error.message || error.error || "Failed to start trial"
+        );
       }
-      return response.json();
+      const data = await response.json();
+      console.log("[Dashboard] Trial started successfully:", data);
+      return data;
     },
     onSuccess: async () => {
       // Invalidate all relevant queries

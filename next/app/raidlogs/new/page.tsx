@@ -57,12 +57,14 @@ export default function NewRaidLogPage() {
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
       // Set a timeout to detect if backend is unavailable
+      // Reduced to 12 seconds to match useBackendAuth's 10s timeout + buffer
       const timeoutId = setTimeout(() => {
-        // If still loading after 15 seconds, likely backend is down
-        // Increased from 10 to 15 seconds to account for slow backend startup
+        // If still loading after 12 seconds, likely backend is down
+        // useBackendAuth has a 10s timeout, so this gives it time plus buffer
+        console.warn("[NewRaidLogPage] Auth loading timeout after 12 seconds");
         setBackendUnavailable(true);
         setAuthTimeout(true);
-      }, 15000); // 15 second timeout
+      }, 12000); // 12 second timeout (longer than useBackendAuth's 10s)
 
       return () => clearTimeout(timeoutId);
     } else {
@@ -153,7 +155,21 @@ export default function NewRaidLogPage() {
       );
     }
 
-    // Normal loading state
+    // Normal loading state with timeout indicator
+    // If loading for more than 10 seconds, show a message suggesting retry
+    const [showRetrySuggestion, setShowRetrySuggestion] = useState(false);
+    useEffect(() => {
+      if (authStatus === "loading" && !isProcessingToken) {
+        const retryTimeout = setTimeout(() => {
+          setShowRetrySuggestion(true);
+        }, 10000); // Show retry suggestion after 10 seconds
+
+        return () => clearTimeout(retryTimeout);
+      } else {
+        setShowRetrySuggestion(false);
+      }
+    }, [authStatus, isProcessingToken]);
+
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -161,6 +177,21 @@ export default function NewRaidLogPage() {
           <p className="mt-4 text-gray-600 font-primary">
             Checking authentication...
           </p>
+          {showRetrySuggestion && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-3 font-primary">
+                Taking longer than expected...
+              </p>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                size="sm"
+                className="font-primary"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );

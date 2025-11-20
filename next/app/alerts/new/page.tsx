@@ -59,19 +59,24 @@ export default function NewAlertPage() {
         );
       }, 10000); // 10 second timeout
 
-      api
-        .getLog(logId)
+      // Add timeout to the API call itself
+      const fetchPromise = api.getLog(logId);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 10000)
+      );
+
+      Promise.race([fetchPromise, timeoutPromise])
         .then((logEntry) => {
           clearTimeout(timeoutId);
           console.log("[NewAlertPage] Log entry fetched:", logEntry);
-          setSelectedLogEntry(logEntry);
+          setSelectedLogEntry(logEntry as LogEntry);
           // Don't set isLoading here - page should already be rendered
         })
         .catch((error) => {
           clearTimeout(timeoutId);
           console.error("[NewAlertPage] Error fetching log entry:", error);
           console.error("[NewAlertPage] Error details:", {
-            message: error.message,
+            message: error instanceof Error ? error.message : String(error),
             response: (error as any).response,
           });
           toast.error(
@@ -109,7 +114,14 @@ export default function NewAlertPage() {
           if (mounted) {
             console.log("[NewAlertPage] Fetching log entries...");
             try {
-              const data = await api.getLogs();
+              // Add timeout to prevent hanging
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Request timeout")), 10000)
+              );
+              const data = (await Promise.race([
+                api.getLogs(),
+                timeoutPromise,
+              ])) as any[];
               console.log(
                 "[NewAlertPage] Log entries fetched:",
                 data?.length || 0,
@@ -125,24 +137,43 @@ export default function NewAlertPage() {
           }
         } else {
           // Check alert count for free users
-          const alerts = await api.getAlerts();
-          const activeAlerts = Array.isArray(alerts)
-            ? alerts.filter((alert: any) => alert.active !== false)
-            : [];
+          try {
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Request timeout")), 10000)
+            );
+            const alerts = (await Promise.race([
+              api.getAlerts(),
+              timeoutPromise,
+            ])) as any[];
+            const activeAlerts = Array.isArray(alerts)
+              ? alerts.filter((alert: any) => alert.active !== false)
+              : [];
 
-          if (activeAlerts.length >= 1) {
-            if (mounted) {
-              setAlertLimitReached(true);
-              setIsPremium(false);
+            if (activeAlerts.length >= 1) {
+              if (mounted) {
+                setAlertLimitReached(true);
+                setIsPremium(false);
+              }
+              return;
             }
-            return;
+          } catch (error) {
+            console.error("[NewAlertPage] Error checking alerts:", error);
+            // Continue to fetch logs even if alert check fails
           }
 
           // Limit not reached, fetch log entries
           if (mounted) {
             console.log("[NewAlertPage] Fetching log entries...");
             try {
-              const data = await api.getLogs();
+              // Add timeout to prevent hanging
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Request timeout")), 10000)
+              );
+              const data = (await Promise.race([
+                api.getLogs(),
+                timeoutPromise,
+              ])) as any[];
               console.log(
                 "[NewAlertPage] Log entries fetched:",
                 data?.length || 0,
@@ -261,17 +292,43 @@ export default function NewAlertPage() {
   if (session?.user) {
     // User is authenticated - show the form even if still loading logs
     // The log entry will populate when fetch completes
-  } else if (isLoading || (authStatus === "loading" && !session?.user)) {
-    // Show loader while loading and we don't have session data yet
-    return <RandomLoader isLoading={true} />;
-  } else if (
-    authStatus === "unauthenticated" ||
-    (!session?.user && authStatus !== "loading")
-  ) {
-    // Auth finished but no user - redirect will happen in useEffect
+    return (
+      <div>
+        <AlertLimitModal
+          isOpen={alertLimitReached && !isPremium}
+          onClose={() => {
+            setAlertLimitReached(false);
+            router.push("/alerts");
+          }}
+        />
+        <ForecastAlertModal
+          isOpen={!alertLimitReached || isPremium}
+          onClose={handleClose}
+          logEntry={selectedLogEntry}
+          existingAlert={undefined}
+          onSaved={handleAlertSaved}
+          isNew={true}
+          logEntries={logEntries}
+          onLogEntrySelect={handleLogEntrySelect}
+        />
+      </div>
+    );
+  }
+
+  // Show loader while loading and we don't have session data yet
+  if (isLoading || (authStatus === "loading" && !session?.user)) {
     return <RandomLoader isLoading={true} />;
   }
 
+  // Auth finished but no user - redirect will happen in useEffect
+  if (
+    authStatus === "unauthenticated" ||
+    (!session?.user && authStatus !== "loading")
+  ) {
+    return <RandomLoader isLoading={true} />;
+  }
+
+  // Fallback - should not reach here, but render form anyway
   return (
     <div>
       <AlertLimitModal

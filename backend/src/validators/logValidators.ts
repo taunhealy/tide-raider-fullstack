@@ -120,7 +120,8 @@ export const getRaidLogsQuerySchema = z.object({
     .enum(["true", "false"])
     .transform((val) => val === "true")
     .optional(),
-  userId: z.string().uuid().optional(),
+  // userId can be either a UUID or a Prisma ID (alphanumeric string)
+  userId: z.string().min(1).optional(),
   // beachId can be either a UUID or a beach slug (e.g., "nusa-dua", "bingin")
   beachId: z.string().optional(),
 });

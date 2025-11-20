@@ -38,35 +38,89 @@ export async function POST(request: Request) {
 
     // Handle trial start FIRST, before any PayPal logic
     if (action === "start-trial") {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-      });
+      // Proxy to backend instead of using Prisma directly
+      // Frontend doesn't have database access in development
+      const getBackendUrl = () => {
+        const envUrl = process.env.NEXT_PUBLIC_API_URL;
+        const isDevelopment = process.env.NODE_ENV === "development";
 
-      if (!user) {
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+        // In development, use localhost backend (connects to Docker postgres)
+        if (isDevelopment) {
+          return envUrl || "http://localhost:4001";
+        }
+
+        // In production, use production backend (connects to Fly.io postgres)
+        return envUrl || "https://tide-raider-backend.fly.dev";
+      };
+
+      const BACKEND_URL = getBackendUrl();
+
+      // Get auth token from cookies to pass to backend
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      const authToken = cookieStore.get("auth-token")?.value;
+
+      if (!authToken) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      if (user.hasActiveTrial || user.hasTrialEnded) {
+      // Proxy to backend start-trial endpoint
+      // Note: Backend expects user ID in JWT token, not email
+      console.log(
+        `[subscriptions] Proxying start-trial to: ${BACKEND_URL}/api/subscriptions/start-trial`
+      );
+
+      let response;
+      try {
+        response = await fetch(`${BACKEND_URL}/api/subscriptions/start-trial`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          credentials: "include",
+        });
+      } catch (fetchError) {
+        console.error("[subscriptions] Fetch error:", fetchError);
         return NextResponse.json(
-          { error: "Trial already used" },
-          { status: 400 }
+          {
+            error: "Failed to connect to backend",
+            message:
+              fetchError instanceof Error
+                ? fetchError.message
+                : "Network error",
+          },
+          { status: 503 }
         );
       }
 
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = {
+            error: `HTTP ${response.status}: ${response.statusText}`,
+            message: errorText || "Unknown error",
+          };
+        }
+        console.error("[subscriptions] Backend error:", {
+          status: response.status,
+          error: errorData,
+        });
+        return NextResponse.json(
+          {
+            error: errorData.error || "Failed to start trial",
+            message: errorData.message || errorData.error || "Unknown error",
+          },
+          { status: response.status }
+        );
+      }
 
-      await prisma.user.update({
-        where: { email: session.user.email },
-        data: {
-          hasActiveTrial: true,
-          trialStartDate: new Date(),
-          trialEndDate: trialEndDate,
-          subscriptionStatus: "TRIAL",
-        },
-      });
-
-      return NextResponse.json({ success: true });
+      const data = await response.json();
+      console.log("[subscriptions] Trial started successfully:", data);
+      return NextResponse.json(data);
     }
 
     // Only proceed with PayPal logic for non-trial actions
