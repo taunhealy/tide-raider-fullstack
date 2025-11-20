@@ -115,7 +115,9 @@ export function useBackendAuth() {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => {
             const elapsed = Date.now() - fetchStartTime;
-            console.warn(`[useBackendAuth] Fetch timeout after ${elapsed}ms - aborting`);
+            console.warn(
+              `[useBackendAuth] Fetch timeout after ${elapsed}ms - aborting`
+            );
             controller.abort();
           }, 10000); // 10 second timeout
 
@@ -241,14 +243,17 @@ export function useBackendAuth() {
           return authState;
         } catch (error) {
           const elapsed = Date.now() - fetchStartTime;
-          console.error(`[useBackendAuth] Error fetching user after ${elapsed}ms:`, error);
+          console.error(
+            `[useBackendAuth] Error fetching user after ${elapsed}ms:`,
+            error
+          );
           // If it's a timeout or abort, treat as unauthenticated rather than error
           const isTimeout =
-            error instanceof Error && 
-            (error.name === "AbortError" || 
-             error.message?.includes("timeout") ||
-             error.message?.includes("abort"));
-          
+            error instanceof Error &&
+            (error.name === "AbortError" ||
+              error.message?.includes("timeout") ||
+              error.message?.includes("abort"));
+
           // Always clear loading state on error
           const authState: AuthState = {
             user: null,
@@ -276,24 +281,30 @@ export function useBackendAuth() {
         } finally {
           // Ensure pending promise is cleared even if something goes wrong
           const elapsed = Date.now() - fetchStartTime;
-          console.log(`[useBackendAuth] Fetch promise completed after ${elapsed}ms`);
+          console.log(
+            `[useBackendAuth] Fetch promise completed after ${elapsed}ms`
+          );
           globalAuthCache.pendingPromise = null;
         }
       })();
 
       // Set pending promise so other components can wait for this fetch
       globalAuthCache.pendingPromise = fetchPromise;
-      
+
       // Add a safety timeout to ensure loading state is cleared even if promise hangs
       const safetyTimeout = setTimeout(() => {
         if (globalAuthCache.pendingPromise === fetchPromise) {
-          console.warn("[useBackendAuth] Safety timeout - clearing pending promise after 15 seconds");
+          console.warn(
+            "[useBackendAuth] Safety timeout - clearing pending promise after 15 seconds"
+          );
           globalAuthCache.pendingPromise = null;
           // Force update to clear loading state
           if (mounted) {
             setAuthState((prev) => {
               if (prev.loading) {
-                console.warn("[useBackendAuth] Safety timeout - forcing loading to false");
+                console.warn(
+                  "[useBackendAuth] Safety timeout - forcing loading to false"
+                );
                 return {
                   ...prev,
                   loading: false,
@@ -305,7 +316,7 @@ export function useBackendAuth() {
           }
         }
       }, 15000); // 15 second safety timeout
-      
+
       // Clear safety timeout when promise resolves
       fetchPromise.finally(() => {
         clearTimeout(safetyTimeout);
@@ -317,7 +328,9 @@ export function useBackendAuth() {
     // Only do initial fetch once per component mount
     // Bypass throttle for initial fetch to ensure it always runs
     if (!hasInitialFetch.current) {
-      console.log("[useBackendAuth] Starting initial fetch (bypassing throttle)");
+      console.log(
+        "[useBackendAuth] Starting initial fetch (bypassing throttle)"
+      );
       fetchUser(true)
         .then((result) => {
           console.log("[useBackendAuth] Initial fetch completed:", {

@@ -79,8 +79,17 @@ export default function NewRaidLogPage() {
       return;
     }
 
-    // If we have a session, clear any error flags
+    // If we have a session, clear any error flags (backend is clearly available)
     if (session?.user) {
+      if (
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1")
+      ) {
+        console.log(
+          "[NewRaidLogPage] ✅ Session exists - clearing error flags"
+        );
+      }
       setHasError(false);
       setBackendUnavailable(false);
       setAuthTimeout(false);
@@ -112,22 +121,13 @@ export default function NewRaidLogPage() {
       // Increased to 20 seconds to account for slow network/backend responses
       // useBackendAuth has a 10s timeout, /api/auth/me has 15s, so wait 20s total to be safe
       const timeoutId = setTimeout(() => {
-        // Check current state - don't rely on closure value
-        // If we have a session, auth completed successfully
-        if (session?.user) {
-          // Auth completed - clear any error flags
-          setBackendUnavailable(false);
-          setAuthTimeout(false);
-          setHasError(false);
-          return;
-        }
-        
-        // If still loading after timeout, backend may be unavailable
-        // But only set error if we're still actually loading (check current state)
+        // Check if we have a session - if so, backend is available and auth completed
+        // Only set timeout error if we still don't have a session after 20 seconds
         console.warn(
-          "[NewRaidLogPage] Auth loading timeout after 20 seconds - checking if backend is unavailable"
+          "[NewRaidLogPage] Auth loading timeout after 20 seconds - checking current state"
         );
-        // Don't set error immediately - let the next render check the actual state
+        // Set timeout flag - the render logic will check if we have a session
+        // If we have a session, it won't show the error
         setAuthTimeout(true);
       }, 20000); // 20 second timeout (longer than /api/auth/me timeout to account for slow responses)
 
@@ -135,11 +135,12 @@ export default function NewRaidLogPage() {
     } else {
       // Reset when auth completes (either successfully or with unauthenticated state)
       if (authStatus !== "loading") {
+        // Always clear timeout flags when auth completes
+        // Backend is available if we got any response (even 401 means backend is running)
         setAuthTimeout(false);
-        // Always reset backendUnavailable and hasError when auth completes
-        // Backend is available if we got any response (even 401)
         setBackendUnavailable(false);
         setHasError(false);
+        return; // Exit early when auth completes
       }
     }
   }, [authStatus, isProcessingToken, session]);
@@ -176,22 +177,84 @@ export default function NewRaidLogPage() {
     }
   }, [authStatus, session, router, hasError, authTimeout, backendUnavailable]);
 
+  // Clear error flags when we have a valid session (backend is clearly available)
+  // This ensures we don't show "Backend Not Available" when backend is working
+  useEffect(() => {
+    if (session?.user) {
+      // Debug log to confirm session exists
+      if (
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1")
+      ) {
+        console.log(
+          "[NewRaidLogPage] ✅ Session exists - clearing error flags"
+        );
+      }
+
+      // Clear any error flags since we have a valid session (backend is clearly available)
+      if (authTimeout) {
+        console.log("[NewRaidLogPage] Clearing authTimeout flag");
+        setAuthTimeout(false);
+      }
+      if (backendUnavailable) {
+        console.log("[NewRaidLogPage] Clearing backendUnavailable flag");
+        setBackendUnavailable(false);
+      }
+      if (hasError) {
+        console.log("[NewRaidLogPage] Clearing hasError flag");
+        setHasError(false);
+      }
+    }
+  }, [session?.user, authTimeout, backendUnavailable, hasError]);
+
   // Removed timeout error - let the fetch handle timeouts naturally
   // If fetch fails, it will set status to "unauthenticated" and redirect to login
 
-  // If we have session data, proceed immediately (don't wait for status to update)
-  if (session?.user) {
-    return (
-      <ErrorBoundary>
-        <div className="p-6 max-w-4xl mx-auto">
-          <RaidLogForm
-            isOpen={true}
-            onClose={() => router.push("/raidlogs")}
-            userEmail={session.user.email || ""}
-          />
+  // CRITICAL: If we have session data, proceed immediately (don't wait for status to update)
+  // This check MUST come before any loading/error checks to prevent false errors
+  // This prevents showing "Backend Not Available" when backend is clearly working
+  // Add comprehensive null checks to prevent client-side exceptions
+  const hasValidSession = session?.user && typeof session.user === "object";
+  if (hasValidSession) {
+    // Safely extract user email with null checks to prevent client-side exceptions
+    const userEmailValue = session?.user?.email || "";
+
+    try {
+      return (
+        <ErrorBoundary>
+          <div className="p-6 max-w-4xl mx-auto">
+            <RaidLogForm
+              isOpen={true}
+              onClose={() => router.push("/raidlogs")}
+              userEmail={userEmailValue}
+            />
+          </div>
+        </ErrorBoundary>
+      );
+    } catch (error) {
+      console.error("[NewRaidLogPage] Error rendering form:", error);
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-bold mb-4 font-primary text-red-600">
+              Error Loading Form
+            </h2>
+            <p className="text-gray-600 mb-4 font-primary">
+              There was an error loading the raid log form. Please try
+              refreshing the page.
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="default"
+              className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
+            >
+              Refresh Page
+            </Button>
+          </div>
         </div>
-      </ErrorBoundary>
-    );
+      );
+    }
   }
 
   // Show loader while processing OAuth token or auth is loading
@@ -210,11 +273,19 @@ export default function NewRaidLogPage() {
       );
     }
 
-    // Only show "Backend Not Available" if auth is STILL loading after timeout AND we don't have a session
-    // This means the backend truly isn't responding (not even with 401)
+    // Only show "Backend Not Available" if:
+    // 1. Auth is STILL loading (hasn't completed)
+    // 2. We've hit the timeout (backend took too long to respond)
+    // 3. We DON'T have a session (no successful auth yet)
+    // 4. We're not processing an OAuth token
     // If backend responded (even with 401), authStatus would be "unauthenticated" not "loading"
-    // If we have a session, backend is clearly available
-    if (authStatus === "loading" && (backendUnavailable || authTimeout) && !session?.user) {
+    // If we have a session, backend is clearly available - don't show error
+    if (
+      authStatus === "loading" &&
+      authTimeout &&
+      !session?.user &&
+      !isProcessingToken
+    ) {
       const isProduction =
         typeof window !== "undefined" &&
         !window.location.hostname.includes("localhost") &&
