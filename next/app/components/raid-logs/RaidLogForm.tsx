@@ -1090,10 +1090,28 @@ export function RaidLogForm({
                                 "Video compression failed:",
                                 compressionError
                               );
-                              toast.error(
-                                `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
-                                { duration: 10000 }
-                              );
+
+                              // Provide more helpful error messages based on error type
+                              let errorMessage = `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit.`;
+
+                              if (compressionError instanceof Error) {
+                                if (
+                                  compressionError.message.includes("timed out")
+                                ) {
+                                  errorMessage = compressionError.message;
+                                } else if (
+                                  compressionError.message.includes("stuck")
+                                ) {
+                                  errorMessage = compressionError.message;
+                                } else {
+                                  errorMessage += ` ${compressionError.message}`;
+                                }
+                              }
+
+                              errorMessage +=
+                                " Please try using a YouTube/Vimeo link instead, or compress the video using external tools.";
+
+                              toast.error(errorMessage, { duration: 12000 });
                               // Clear the selection since it won't work
                               setSelectedVideo(null);
                               setVideoPreview(null);

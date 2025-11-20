@@ -147,19 +147,43 @@ export async function getLatestConditions(
     swellDirection: existingForecast?.swellDirection,
   });
 
-  // Check if forecast has missing direction data (0 values indicate missing data)
-  const hasMissingDirectionData = existingForecast && 
-    (existingForecast.windDirection === 0 || existingForecast.swellDirection === 0);
+  // Check if forecast has missing or invalid direction data
+  // 0 values indicate missing data, values > 360 indicate corrupted data (timestamps)
+  const hasMissingDirectionData =
+    existingForecast &&
+    (existingForecast.windDirection === 0 ||
+      existingForecast.swellDirection === 0);
+  const hasInvalidDirectionData =
+    existingForecast &&
+    (existingForecast.windDirection > 360 ||
+      existingForecast.swellDirection > 360);
 
-  if (existingForecast && !forceRefresh && !hasMissingDirectionData) {
+  if (
+    existingForecast &&
+    !forceRefresh &&
+    !hasMissingDirectionData &&
+    !hasInvalidDirectionData
+  ) {
     console.log(
       `[getLatestConditions] ✅ Found existing forecast for ${region.id} (source: ${source}, cached)`
     );
     return existingForecast;
   }
 
-  // If forecast exists but has missing direction data, re-scrape
-  if (hasMissingDirectionData) {
+  // If forecast exists but has missing or invalid direction data, re-scrape
+  if (hasInvalidDirectionData) {
+    console.log(
+      `[getLatestConditions] ⚠️ Found existing forecast with invalid direction data (windDirection: ${existingForecast.windDirection}, swellDirection: ${existingForecast.swellDirection}), deleting and re-scraping...`
+    );
+    // Delete the invalid forecast so it gets replaced
+    await prisma.forecast.deleteMany({
+      where: {
+        date: today,
+        regionId: region.id,
+        source: source,
+      },
+    });
+  } else if (hasMissingDirectionData) {
     console.log(
       `[getLatestConditions] ⚠️ Found existing forecast with missing direction data (windDirection: ${existingForecast.windDirection}, swellDirection: ${existingForecast.swellDirection}), re-scraping...`
     );
@@ -216,9 +240,7 @@ export async function getLatestConditions(
     return null;
   }
 
-  console.log(
-    `[getLatestConditions] 🔧 Using ${sourceName} for ${source}`
-  );
+  console.log(`[getLatestConditions] 🔧 Using ${sourceName} for ${source}`);
 
   try {
     console.log(

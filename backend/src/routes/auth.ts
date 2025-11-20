@@ -32,7 +32,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 //
 // 2. Authorized redirect URIs (where Google redirects after OAuth):
 //    - Production: https://tide-raider-backend.fly.dev/api/auth/google/callback
-//    - Development: http://localhost:3001/api/auth/google/callback
+//    - Development: http://localhost:4001/api/auth/google/callback
 //
 // IMPORTANT: These must EXACTLY match (including protocol, no trailing slashes)
 passport.use(
@@ -45,7 +45,7 @@ passport.use(
           ? `${process.env.BACKEND_URL}/api/auth/google/callback`
           : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
             ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-            : `http://localhost:3001/api/auth/google/callback`,
+            : `http://localhost:4001/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -167,7 +167,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.FLY_APP_NAME || process.env.NODE_ENV === "production"
         ? `https://tide-raider-backend.fly.dev/api/auth/google/callback`
-        : `http://localhost:3001/api/auth/google/callback`;
+        : `http://localhost:4001/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
   console.log(

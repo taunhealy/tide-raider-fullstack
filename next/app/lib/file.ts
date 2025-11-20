@@ -256,6 +256,8 @@ export async function compressVideoIfNeeded(
     let animationFrameId: number | null = null;
     let timeout: NodeJS.Timeout | null = null;
 
+    let progressStallTimeout: NodeJS.Timeout | null = null;
+
     const cleanup = () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
@@ -264,6 +266,10 @@ export async function compressVideoIfNeeded(
       if (timeout) {
         clearTimeout(timeout);
         timeout = null;
+      }
+      if (progressStallTimeout) {
+        clearTimeout(progressStallTimeout);
+        progressStallTimeout = null;
       }
       URL.revokeObjectURL(objectUrl);
       if (video.src) {
@@ -391,6 +397,51 @@ export async function compressVideoIfNeeded(
 
         // Draw video frames to canvas and record
         const duration = video.duration;
+        let lastProgressTime = Date.now();
+        let lastProgressValue = 0;
+        const PROGRESS_STALL_TIMEOUT = 30000; // 30 seconds without progress = stuck
+
+        // Function to check if compression has stalled
+        const checkProgressStall = () => {
+          if (isResolved) return;
+
+          const currentTime = Date.now();
+          const currentProgress =
+            duration > 0 && !isNaN(duration) && isFinite(duration)
+              ? (video.currentTime / duration) * 100
+              : 0;
+
+          // Check if progress has stalled (no change in 30 seconds)
+          if (
+            Math.abs(currentProgress - lastProgressValue) < 1 &&
+            currentTime - lastProgressTime > PROGRESS_STALL_TIMEOUT
+          ) {
+            if (isResolved) return;
+            isResolved = true;
+            cleanup();
+            console.error(
+              "[compressVideoIfNeeded] Video compression stalled - no progress detected"
+            );
+            reject(
+              new Error(
+                "Video compression appears to be stuck. The video may be too large or complex. " +
+                  "Please try using a YouTube/Vimeo link instead, or compress the video using external tools."
+              )
+            );
+            return;
+          }
+
+          // Update progress tracking
+          if (Math.abs(currentProgress - lastProgressValue) >= 1) {
+            lastProgressTime = currentTime;
+            lastProgressValue = currentProgress;
+          }
+
+          // Schedule next check
+          if (!isResolved && progressStallTimeout === null) {
+            progressStallTimeout = setTimeout(checkProgressStall, 5000); // Check every 5 seconds
+          }
+        };
 
         const drawFrame = () => {
           if (isResolved || video.ended || !mediaRecorder) {
@@ -401,13 +452,22 @@ export async function compressVideoIfNeeded(
               cancelAnimationFrame(animationFrameId);
               animationFrameId = null;
             }
+            if (progressStallTimeout) {
+              clearTimeout(progressStallTimeout);
+              progressStallTimeout = null;
+            }
             return;
           }
 
           ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
 
           // Update progress
-          if (onProgress && duration > 0) {
+          if (
+            onProgress &&
+            duration > 0 &&
+            !isNaN(duration) &&
+            isFinite(duration)
+          ) {
             const progress = (video.currentTime / duration) * 100;
             onProgress(Math.min(progress, 100));
           }
@@ -421,6 +481,11 @@ export async function compressVideoIfNeeded(
             mediaRecorder.start(100); // Collect data every 100ms
           }
           animationFrameId = requestAnimationFrame(drawFrame);
+
+          // Start progress stall checking once video starts playing
+          if (progressStallTimeout === null && !isResolved) {
+            progressStallTimeout = setTimeout(checkProgressStall, 5000);
+          }
         };
 
         video.onended = () => {
@@ -440,24 +505,63 @@ export async function compressVideoIfNeeded(
         video.currentTime = 0;
 
         // Start playing (muted for autoplay)
+        // Note: Browser autoplay policies may block this, but since the user
+        // has already interacted with the page (file selection), it should work
         video.play().catch((error) => {
+          // Check if it's an autoplay policy error
+          const errorName =
+            error?.name ||
+            (error instanceof Error ? error.constructor.name : "");
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+
+          if (
+            errorName === "NotAllowedError" ||
+            errorMessage.includes("user didn't interact") ||
+            errorMessage.includes("autoplay") ||
+            errorMessage.includes("play() failed")
+          ) {
+            // Autoplay blocked by browser policy - return original file as fallback
+            // This can happen if the video element was created after the user interaction
+            cleanup();
+            console.warn(
+              "[compressVideoIfNeeded] Autoplay blocked by browser policy, returning original file",
+              { errorName, errorMessage }
+            );
+            resolve(file);
+            return;
+          }
+
+          // Other playback errors
           cleanup();
           console.error("[compressVideoIfNeeded] Error playing video:", error);
           reject(new Error("Failed to play video for compression"));
         });
 
         // Set a timeout to prevent hanging - use longer timeout for large videos
-        // Base timeout: duration * 3 (compression takes time) + 60 seconds buffer
-        // Minimum 2 minutes, maximum 10 minutes
+        // Base timeout: duration * 6 (compression takes time) + 120 seconds buffer
+        // Minimum 3 minutes, maximum 15 minutes
+        // Compression can take 4-6x the video duration, so we use a more generous timeout
         const baseTimeout = Math.max(
-          120000,
-          Math.min(600000, duration * 3000 + 60000)
+          180000, // 3 minutes minimum
+          Math.min(900000, duration * 6000 + 120000) // duration * 6 + 2 minutes buffer, max 15 minutes
         );
+
+        console.log(
+          `[compressVideoIfNeeded] Setting timeout: ${(baseTimeout / 1000).toFixed(0)}s for video duration: ${duration.toFixed(2)}s`
+        );
+
         timeout = setTimeout(() => {
           if (isResolved) return;
           isResolved = true;
           cleanup();
-          reject(new Error("Video compression timed out"));
+          const timeoutMinutes = Math.ceil(baseTimeout / 60000);
+          reject(
+            new Error(
+              `Video compression timed out after ${timeoutMinutes} minute${timeoutMinutes > 1 ? "s" : ""}. ` +
+                `The video may be too large or complex. Please try using a YouTube/Vimeo link instead, or compress the video using external tools.`
+            )
+          );
         }, baseTimeout);
       } catch (error) {
         if (isResolved) return;

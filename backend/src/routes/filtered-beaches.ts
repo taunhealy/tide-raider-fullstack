@@ -211,13 +211,32 @@ router.get(
         date: targetDate.toISOString(),
       });
 
-      // If no forecast exists for the target date, try to scrape it
+      // Check if forecast has invalid direction data (values > 360 indicate corrupted data like timestamps)
+      const hasInvalidDirectionData =
+        forecast !== null &&
+        (forecast.windDirection > 360 || forecast.swellDirection > 360);
+
+      // If no forecast exists OR has invalid direction data, try to scrape it
       // The scraper fetches ALL available forecast days (today, tomorrow, etc.) in one run
-      if (!forecast) {
+      if (!forecast || hasInvalidDirectionData) {
         try {
-          console.log(
-            `[filtered-beaches] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
-          );
+          if (hasInvalidDirectionData && forecast) {
+            console.log(
+              `[filtered-beaches] ⚠️ Forecast found but has invalid direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]}, deleting and re-scraping...`
+            );
+            // Delete the invalid forecast so it gets replaced
+            await prisma.forecast.deleteMany({
+              where: {
+                regionId,
+                date: targetDate,
+                source: sourceParam,
+              },
+            });
+          } else {
+            console.log(
+              `[filtered-beaches] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+            );
+          }
 
           // Force a scrape for the requested source - this will fetch ALL available forecast days and store them
           // forceRefresh=true ensures we scrape even if today's data already exists

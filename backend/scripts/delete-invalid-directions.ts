@@ -4,19 +4,20 @@ const prisma = new PrismaClient();
 
 async function deleteInvalidDirections() {
   try {
-    console.log("🗑️  Deleting forecasts with invalid directions (> 360 degrees)...");
+    console.log(
+      "🗑️  Deleting forecasts with invalid directions (> 360 degrees)..."
+    );
 
     // Delete forecasts with invalid directions (> 360 degrees)
     const deletedForecasts = await prisma.forecast.deleteMany({
       where: {
-        OR: [
-          { windDirection: { gt: 360 } },
-          { swellDirection: { gt: 360 } },
-        ],
+        OR: [{ windDirection: { gt: 360 } }, { swellDirection: { gt: 360 } }],
       },
     });
 
-    console.log(`✅ Deleted ${deletedForecasts.count} forecast(s) with invalid directions`);
+    console.log(
+      `✅ Deleted ${deletedForecasts.count} forecast(s) with invalid directions`
+    );
 
     // Delete scores that have invalid directions in their conditions JSON
     // We need to find scores where conditions.windDirection > 360 or conditions.swellDirection > 360
@@ -35,8 +36,14 @@ async function deleteInvalidDirections() {
     for (const score of allScores) {
       const conditions = score.conditions as any;
       if (conditions) {
-        const windDir = typeof conditions.windDirection === "number" ? conditions.windDirection : parseFloat(conditions.windDirection) || 0;
-        const swellDir = typeof conditions.swellDirection === "number" ? conditions.swellDirection : parseFloat(conditions.swellDirection) || 0;
+        const windDir =
+          typeof conditions.windDirection === "number"
+            ? conditions.windDirection
+            : parseFloat(conditions.windDirection) || 0;
+        const swellDir =
+          typeof conditions.swellDirection === "number"
+            ? conditions.swellDirection
+            : parseFloat(conditions.swellDirection) || 0;
 
         if (windDir > 360 || swellDir > 360) {
           invalidScoreIds.push(score.id);
@@ -50,7 +57,9 @@ async function deleteInvalidDirections() {
           id: { in: invalidScoreIds },
         },
       });
-      console.log(`✅ Deleted ${deletedScores.count} score(s) with invalid directions in conditions`);
+      console.log(
+        `✅ Deleted ${deletedScores.count} score(s) with invalid directions in conditions`
+      );
     } else {
       console.log("✅ No scores with invalid directions found");
     }
@@ -75,4 +84,3 @@ deleteInvalidDirections()
     console.error(error);
     process.exit(1);
   });
-

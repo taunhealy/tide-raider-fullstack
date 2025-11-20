@@ -17,7 +17,8 @@ router.get(
       const forceRefresh = req.query.forceRefresh === "true";
       const forecastDateParam = req.query.forecastDate as string | undefined;
       const sourceParam =
-        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") || "WINDFINDER";
+        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") ||
+        "WINDFINDER";
 
       if (!regionId) {
         return res.status(400).json({ error: "Region ID is required" });
@@ -41,16 +42,33 @@ router.get(
           },
         });
 
-        // Check if forecast has missing direction data (0 values indicate missing data)
-        const hasMissingDirectionData = forecast && 
+        // Check if forecast has missing or invalid direction data
+        // 0 values indicate missing data, values > 360 indicate corrupted data (timestamps)
+        const hasMissingDirectionData =
+          forecast &&
           (forecast.windDirection === 0 || forecast.swellDirection === 0);
+        const hasInvalidDirectionData =
+          forecast &&
+          (forecast.windDirection > 360 || forecast.swellDirection > 360);
 
-        // If not found OR has missing direction data, trigger scrape for the requested source
-        if (!forecast || hasMissingDirectionData) {
-        if (!forecast) {
-          console.log(
-            `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), triggering scrape...`
-          );
+        // If not found OR has missing/invalid direction data, trigger scrape for the requested source
+        if (!forecast || hasMissingDirectionData || hasInvalidDirectionData) {
+          if (!forecast) {
+            console.log(
+              `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), triggering scrape...`
+            );
+          } else if (hasInvalidDirectionData) {
+            console.log(
+              `[forecast] ⚠️ Forecast found but has invalid direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), re-scraping...`
+            );
+            // Delete the invalid forecast so it gets replaced
+            await prisma.forecast.deleteMany({
+              where: {
+                regionId,
+                date: targetDate,
+                source: sourceParam,
+              },
+            });
           } else {
             console.log(
               `[forecast] ⚠️ Forecast found but has missing direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), re-scraping...`
