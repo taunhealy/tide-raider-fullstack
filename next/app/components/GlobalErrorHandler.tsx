@@ -13,45 +13,53 @@ export default function GlobalErrorHandler() {
     const handleError = (event: ErrorEvent) => {
       // Check if it's an error from an external script or unknown source
       const errorSource = event.filename || event.message || "";
-      const isExternalScript =
+      const errorMessage = event.message || "";
+
+      // Check for share-modal.js errors specifically
+      const isShareModalError =
         errorSource.includes("share-modal") ||
-        errorSource.includes("widget") ||
-        errorSource.includes("third-party") ||
-        (!errorSource.includes(window.location.origin) &&
+        errorMessage.includes("share-modal") ||
+        (errorSource.includes(".js") &&
+          !errorSource.includes(window.location.origin) &&
           !errorSource.includes("localhost"));
 
-      if (isExternalScript) {
+      // Check for null reference errors with addEventListener
+      const isNullAddEventListenerError =
+        errorMessage.includes("Cannot read properties of null") &&
+        errorMessage.includes("addEventListener");
+
+      if (isShareModalError || isNullAddEventListenerError) {
         // Log the error but don't let it crash the app
         console.warn(
           "[GlobalErrorHandler] Caught external script error:",
-          event.message,
+          errorMessage,
           "Source:",
           errorSource
         );
         // Prevent the error from propagating
         event.preventDefault();
+        event.stopPropagation();
         return false;
       }
 
-      // For other errors, check if it's a null reference error
-      if (
-        event.message?.includes("Cannot read properties of null") ||
-        event.message?.includes("addEventListener")
-      ) {
-        const isNullReference = event.message?.includes(
-          "Cannot read properties of null"
+      // For other external script errors
+      const isExternalScript =
+        !errorSource.includes(window.location.origin) &&
+        !errorSource.includes("localhost") &&
+        !errorSource.startsWith("blob:") &&
+        !errorSource.startsWith("data:") &&
+        errorSource !== "";
+
+      if (isExternalScript && errorMessage.includes("Cannot read properties")) {
+        console.warn(
+          "[GlobalErrorHandler] Caught external script null reference error:",
+          errorMessage,
+          "Source:",
+          errorSource
         );
-        if (isNullReference) {
-          console.warn(
-            "[GlobalErrorHandler] Caught null reference error:",
-            event.message,
-            "Source:",
-            errorSource
-          );
-          // Prevent the error from propagating
-          event.preventDefault();
-          return false;
-        }
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
       }
     };
 

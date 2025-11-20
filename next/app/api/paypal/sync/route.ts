@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDevelopment = process.env.NODE_ENV === "development";
-  
-  // In development, use localhost backend (connects to Docker postgres)
-  if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
-  }
-  
-  // In production, use production backend (connects to Fly.io postgres)
-  return envUrl || "https://tide-raider-backend.fly.dev";
-};
-
-const BACKEND_URL = getBackendUrl();
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
 
 /**
  * POST /api/paypal/sync
@@ -40,40 +28,62 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = {
-          error: `HTTP ${response.status}: ${response.statusText}`,
-          message: errorText || "Unknown error",
-        };
+      const error = await response.json().catch(() => ({
+        error: `HTTP ${response.status}: ${response.statusText}`,
+      }));
+
+      // If backend returns 500 with PayPal configuration error, check if it's a trial user
+      // and return a more informative message
+      if (
+        response.status === 500 &&
+        error.error?.includes("PayPal configuration missing")
+      ) {
+        // Try to get user info to check if they're on a trial
+        try {
+          const userResponse = await fetch(
+            `${BACKEND_URL}/api/paypal/subscription-status`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+                Cookie: `auth-token=${authToken}`,
+              },
+              credentials: "include",
+            }
+          );
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (
+              userData.hasActiveTrial ||
+              userData.subscriptionStatus === "TRIAL"
+            ) {
+              return NextResponse.json({
+                message:
+                  "You are on a free trial. No PayPal subscription to sync.",
+                subscriptionStatus: userData.subscriptionStatus,
+                hasActiveTrial: userData.hasActiveTrial,
+                synced: false,
+              });
+            }
+          }
+        } catch (e) {
+          // If we can't check user status, just return the original error
+        }
       }
-      console.error("[paypal/sync] Backend error:", {
-        status: response.status,
-        error: errorData,
-        backendUrl: BACKEND_URL,
-      });
-      return NextResponse.json(
-        {
-          error: errorData.error || "Failed to sync subscription",
-          message: errorData.message || errorData.error || "Unknown error",
-        },
-        { status: response.status }
-      );
+
+      return NextResponse.json(error, { status: response.status });
     }
 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("[paypal/sync] Error:", error);
-    console.error("[paypal/sync] Backend URL:", BACKEND_URL);
     return NextResponse.json(
       {
         error: "Failed to sync subscription",
-        message: error instanceof Error ? error.message : "Unknown error",
-        details: `Could not connect to backend at ${BACKEND_URL}`,
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

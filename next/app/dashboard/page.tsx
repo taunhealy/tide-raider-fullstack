@@ -286,12 +286,45 @@ export default function DashboardPage() {
         credentials: "include",
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to sync subscription");
+      const data = await response.json();
+
+      // Check if the response indicates a trial user or no PayPal subscription
+      // These are successful responses, not errors
+      if (
+        data.message &&
+        (data.message.includes("trial") ||
+          data.message.includes("No PayPal subscription"))
+      ) {
+        console.log("[Dashboard] Sync response (trial/no subscription):", data);
+        toast.success(data.message || "Subscription status updated");
+
+        // Refresh subscription data even if no sync was needed
+        await queryClient.invalidateQueries({
+          queryKey: ["subscriptionDetails"],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["subscriptionStatus", session?.user?.id],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ["user", session?.user?.id],
+        });
+
+        router.refresh();
+        return;
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        const error = data.error || "Failed to sync subscription";
+        // If it's a PayPal configuration error, provide a user-friendly message
+        if (error.includes("PayPal configuration missing")) {
+          toast.info(
+            "You are on a free trial. No PayPal subscription to sync."
+          );
+          return;
+        }
+        throw new Error(error);
+      }
+
       console.log("[Dashboard] Sync response:", data);
       toast.success(data.message || "Subscription synced successfully");
 
