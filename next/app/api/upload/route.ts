@@ -22,6 +22,7 @@ const s3 = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
+  forcePathStyle: true, // Required for R2 to generate correct signatures
 });
 
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Use backend authentication
     const authResult = await getServerAuth();
     const { user, error: authError } = authResult;
-    
+
     if (authError) {
       console.error("[upload] Auth error:", authError);
       return NextResponse.json(
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-    
+
     if (!user?.id) {
       console.warn("[upload] No user ID found in auth result");
       return NextResponse.json(
@@ -133,12 +134,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to R2 with cache headers
+    // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       Body: body,
       ContentType: contentType,
-      ACL: "public-read",
+      // Remove ACL - R2 doesn't support it, use bucket policy for public access instead
       // Add cache headers to reduce server load
       CacheControl: "public, max-age=31536000, immutable", // Cache for 1 year
       Metadata: {
@@ -161,21 +163,30 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error("Error uploading file:", error);
-    
+
     // Provide more detailed error information
     let errorMessage = "Failed to upload file";
     if (error instanceof Error) {
       errorMessage = error.message;
       // Check for specific error types
-      if (error.message.includes("Unauthorized") || error.message.includes("auth")) {
+      if (
+        error.message.includes("Unauthorized") ||
+        error.message.includes("auth")
+      ) {
         return NextResponse.json(
           { error: "Authentication failed. Please log in again." },
           { status: 401 }
         );
       }
-      if (error.message.includes("Sharp") || error.message.includes("image processing")) {
+      if (
+        error.message.includes("Sharp") ||
+        error.message.includes("image processing")
+      ) {
         return NextResponse.json(
-          { error: "Image processing failed. Please try a different image format." },
+          {
+            error:
+              "Image processing failed. Please try a different image format.",
+          },
           { status: 500 }
         );
       }
@@ -186,13 +197,16 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    
+
     return NextResponse.json(
       {
         error: errorMessage,
-        details: process.env.NODE_ENV === "development" 
-          ? (error instanceof Error ? error.stack : String(error))
-          : undefined,
+        details:
+          process.env.NODE_ENV === "development"
+            ? error instanceof Error
+              ? error.stack
+              : String(error)
+            : undefined,
       },
       { status: 500 }
     );
