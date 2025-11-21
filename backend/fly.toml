@@ -41,6 +41,11 @@ primary_region = "iad"
 [deploy]
   release_command = "npx prisma migrate deploy"
 
+[[restart]]
+  policy = "on-failure"
+  retries = 50
+  processes = ["app"]
+
 [[vm]]
   cpu_kind = "shared"
   cpus = 1

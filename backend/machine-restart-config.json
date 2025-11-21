@@ -1,0 +1,7 @@
+{
+  "restart": {
+    "policy": "on-failure",
+    "max_retries": 50
+  }
+}
+
