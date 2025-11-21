@@ -20,6 +20,8 @@ if (
       url.searchParams.set("connection_limit", "10");
       url.searchParams.set("pool_timeout", "10");
       optimizedDatabaseUrl = url.toString();
+      // Update the environment variable so Prisma can read it
+      process.env.DATABASE_URL = optimizedDatabaseUrl;
     }
   } catch (e) {
     // URL parsing failed, use original
@@ -28,23 +30,16 @@ if (
 }
 
 // Prisma Client configuration
-// Build config conditionally to avoid TypeScript errors with optional datasources
+// Don't pass datasources - let Prisma read DATABASE_URL from environment automatically
 const prismaConfig = {
   log:
     process.env.NODE_ENV === "development"
       ? (["query", "error", "warn"] as ("query" | "error" | "warn")[])
-      : (["error"] as ("error")[]),
-  ...(optimizedDatabaseUrl && {
-    datasources: {
-      db: {
-        url: optimizedDatabaseUrl,
-      },
-    },
-  }),
+      : (["error"] as "error"[]),
 };
 
 export const prisma =
-  globalForPrisma.prisma || new PrismaClient(prismaConfig as any);
+  globalForPrisma.prisma || new PrismaClient(prismaConfig);
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
