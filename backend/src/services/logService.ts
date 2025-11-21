@@ -583,21 +583,79 @@ export class LogService {
 
     // Find or create forecast
     let forecast = null;
+
+    // Log forecast lookup attempt
+    console.log("[createRaidLogEntry] Forecast lookup:", {
+      hasForecastId: !!data.forecastId,
+      forecastId: data.forecastId,
+      hasForecast: !!data.forecast,
+      date: data.date,
+      regionId: region.id,
+    });
+
     if (data.forecastId) {
       forecast = await prisma.forecast.findUnique({
         where: { id: data.forecastId },
       });
-    } else if (data.forecast) {
+      console.log("[createRaidLogEntry] Forecast lookup by ID:", {
+        forecastId: data.forecastId,
+        found: !!forecast,
+      });
+    }
+
+    // If not found by ID, try date/region lookup
+    if (!forecast) {
+      const logDate = new Date(data.date);
+      logDate.setUTCHours(0, 0, 0, 0);
+
+      // Try WINDFINDER first (most common)
       forecast = await prisma.forecast.findFirst({
         where: {
-          source: "WINDFINDER", // Prefer WINDFINDER source
           regionId: region.id,
-          date: {
-            gte: new Date(new Date(data.date).setHours(0, 0, 0, 0)),
-            lt: new Date(new Date(data.date).setHours(23, 59, 59, 999)),
-          },
+          date: logDate,
+          source: "WINDFINDER",
         },
       });
+
+      if (forecast) {
+        console.log(
+          "[createRaidLogEntry] Forecast found by date/region (WINDFINDER):",
+          {
+            forecastId: forecast.id,
+            date: forecast.date,
+          }
+        );
+      } else {
+        // Try other sources
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+          },
+          orderBy: {
+            source: "asc", // Prefer WINDFINDER, then WINDGURU, then WINDY
+          },
+        });
+
+        if (forecast) {
+          console.log(
+            "[createRaidLogEntry] Forecast found by date/region (any source):",
+            {
+              forecastId: forecast.id,
+              source: forecast.source,
+              date: forecast.date,
+            }
+          );
+        } else {
+          console.warn(
+            "[createRaidLogEntry] No forecast found for date/region:",
+            {
+              date: logDate.toISOString(),
+              regionId: region.id,
+            }
+          );
+        }
+      }
     }
 
     // Create log entry
@@ -717,21 +775,76 @@ export class LogService {
 
     // Handle forecast
     let forecast = null;
+
+    console.log("[updateLogEntry] Forecast lookup:", {
+      hasForecastId: !!updateData.forecastId,
+      forecastId: updateData.forecastId,
+      hasDate: !!updateData.date,
+      hasRegion: !!region,
+      date: updateData.date,
+      regionId: region?.id,
+    });
+
     if (updateData.forecastId) {
       forecast = await prisma.forecast.findUnique({
         where: { id: updateData.forecastId },
       });
-    } else if (updateData.date && region) {
+      console.log("[updateLogEntry] Forecast lookup by ID:", {
+        forecastId: updateData.forecastId,
+        found: !!forecast,
+      });
+    }
+
+    // If not found by ID, try date/region lookup
+    if (!forecast && updateData.date && region) {
+      const logDate = new Date(updateData.date);
+      logDate.setUTCHours(0, 0, 0, 0);
+
+      // Try WINDFINDER first (most common)
       forecast = await prisma.forecast.findFirst({
         where: {
-          source: "WINDFINDER", // Prefer WINDFINDER source
           regionId: region.id,
-          date: {
-            gte: new Date(new Date(updateData.date).setHours(0, 0, 0, 0)),
-            lt: new Date(new Date(updateData.date).setHours(23, 59, 59, 999)),
-          },
+          date: logDate,
+          source: "WINDFINDER",
         },
       });
+
+      if (forecast) {
+        console.log(
+          "[updateLogEntry] Forecast found by date/region (WINDFINDER):",
+          {
+            forecastId: forecast.id,
+            date: forecast.date,
+          }
+        );
+      } else {
+        // Try any source
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+          },
+          orderBy: {
+            source: "asc",
+          },
+        });
+
+        if (forecast) {
+          console.log(
+            "[updateLogEntry] Forecast found by date/region (any source):",
+            {
+              forecastId: forecast.id,
+              source: forecast.source,
+              date: forecast.date,
+            }
+          );
+        } else {
+          console.warn("[updateLogEntry] No forecast found for date/region:", {
+            date: logDate.toISOString(),
+            regionId: region.id,
+          });
+        }
+      }
     }
 
     // Build update payload

@@ -101,12 +101,32 @@ export function useUpdateLog() {
         payload.beachId = beachId;
       }
 
+      // Extract forecast ID - handle different forecast data structures
+      let extractedForecastId: string | undefined = undefined;
+      if (data.forecastData) {
+        if (typeof data.forecastData === "string") {
+          extractedForecastId = data.forecastData;
+        } else if (data.forecastData.id) {
+          extractedForecastId = data.forecastData.id;
+        }
+      }
+
+      // Update payload with extracted forecast ID
+      if (extractedForecastId) {
+        payload.forecastId = extractedForecastId;
+      }
+
       // Debug: Log forecast data
       console.log("[useUpdateLog] Forecast data:", {
         hasForecastData: !!data.forecastData,
         forecastDataType: typeof data.forecastData,
         forecastId: data.forecastData?.id,
+        extractedForecastId,
         payloadForecastId: payload.forecastId,
+        forecastDataKeys:
+          data.forecastData && typeof data.forecastData === "object"
+            ? Object.keys(data.forecastData)
+            : [],
       });
 
       return api.updateRaidLog(payload);

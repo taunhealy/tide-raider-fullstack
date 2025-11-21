@@ -88,6 +88,28 @@ export function useCreateLog() {
         hasRegion: !!data.selectedBeach.region,
       });
 
+      // Extract forecast ID - handle different forecast data structures
+      let forecastId: string | undefined = undefined;
+      if (data.forecastData) {
+        if (typeof data.forecastData === "string") {
+          // If forecastData is already an ID string
+          forecastId = data.forecastData;
+        } else if (data.forecastData.id) {
+          // If forecastData is an object with id
+          forecastId = data.forecastData.id;
+        }
+      }
+
+      console.log("[useCreateLog] Forecast data:", {
+        hasForecastData: !!data.forecastData,
+        forecastDataType: typeof data.forecastData,
+        forecastId,
+        forecastDataKeys:
+          data.forecastData && typeof data.forecastData === "object"
+            ? Object.keys(data.forecastData)
+            : [],
+      });
+
       const payload = {
         date: data.selectedDate,
         surferEmail: session.user.email || "",
@@ -102,14 +124,20 @@ export function useCreateLog() {
         isAnonymous: data.isAnonymous || false,
         // Schema expects URL string or empty string, not null
         // Use first image from imageUrls array if provided, otherwise use uploadedImageUrl
-        imageUrl: data.imageUrls && data.imageUrls.length > 0 
-          ? data.imageUrls[0] 
-          : (data.uploadedImageUrl || ""),
+        imageUrl:
+          data.imageUrls && data.imageUrls.length > 0
+            ? data.imageUrls[0]
+            : data.uploadedImageUrl || "",
         // Include imageUrls array if provided (for multiple images support)
-        ...(data.imageUrls && data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
+        ...(data.imageUrls &&
+          data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
         videoUrl: data.videoUrl || "",
         videoPlatform: data.videoPlatform || undefined,
-        forecastId: data.forecastData?.id || undefined,
+        forecastId: forecastId,
+        // Also send forecast object for fallback lookup
+        ...(data.forecastData &&
+          typeof data.forecastData === "object" &&
+          !data.forecastData.id && { forecast: data.forecastData }),
         // Only include beachId if it's a valid UUID
         ...(beachId && { beachId }),
       };
