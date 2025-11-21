@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { prisma } from "@/app/lib/prisma";
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
@@ -16,6 +17,39 @@ const getBackendUrl = () => {
 };
 
 const BACKEND_URL = getBackendUrl();
+
+/**
+ * Get authenticated user from backend auth token
+ */
+async function getAuthenticatedUser() {
+  try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+
+    if (!authToken) {
+      return null;
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        Cookie: cookieStore.toString(),
+      },
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    console.error("[getAuthenticatedUser] Error:", error);
+    return null;
+  }
+}
 
 /**
  * GET /api/raid-logs
@@ -103,141 +137,152 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/raid-logs
- * Proxy to backend /api/raid-logs
+ * Create log entry directly using Prisma
  */
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+    // Get authenticated user
+    const user = await getAuthenticatedUser();
+    if (!user || !user.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
+    const {
+      date,
+      surferEmail,
+      surferName,
+      beachName,
+      regionId,
+      surferRating,
+      comments,
+      isPrivate,
+      isAnonymous,
+      imageUrl,
+      imageUrls,
+      videoUrl,
+      videoPlatform,
+      forecastId,
+      forecast,
+      beachId,
+    } = body;
 
-    // CRITICAL: Strip legacy forecast fields before sending to backend
-    // Production backend still validates these fields and will fail
-    let cleanedBody = { ...body };
+    // Validate required fields
+    if (!date || !regionId) {
+      return NextResponse.json(
+        { error: "Missing required fields: date and regionId are required" },
+        { status: 400 }
+      );
+    }
 
-    // Log original body for debugging
-    if (cleanedBody.forecast) {
-      console.log("[raid-logs] Original forecast in body:", {
-        hasForecastId: !!cleanedBody.forecastId,
-        forecastKeys: Object.keys(cleanedBody.forecast),
-        hasWind: cleanedBody.forecast.wind !== undefined,
-        hasSwell: cleanedBody.forecast.swell !== undefined,
-        hasTimestamp: cleanedBody.forecast.timestamp !== undefined,
+    // Handle forecast: create if provided, or use existing forecastId
+    let finalForecastId: string | undefined = forecastId;
+
+    if (!finalForecastId && forecast && typeof forecast === "object") {
+      // Create new forecast if forecast data is provided
+      const forecastDate = forecast.date
+        ? new Date(forecast.date)
+        : new Date(date);
+
+      // Check if forecast already exists for this date/region
+      const existingForecast = await prisma.forecastA.findUnique({
+        where: {
+          date_regionId: {
+            date: forecastDate,
+            regionId: regionId,
+          },
+        },
+      });
+
+      if (existingForecast) {
+        finalForecastId = existingForecast.id;
+      } else {
+        // Create new forecast
+        const newForecast = await prisma.forecastA.create({
+          data: {
+            date: forecastDate,
+            regionId: regionId,
+            windSpeed: forecast.windSpeed ?? 0,
+            windDirection: forecast.windDirection ?? 0,
+            swellHeight: forecast.swellHeight ?? 0,
+            swellPeriod: forecast.swellPeriod ?? 0,
+            swellDirection: forecast.swellDirection ?? 0,
+          },
+        });
+        finalForecastId = newForecast.id;
+      }
+    }
+
+    // Get or create user in database
+    let dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+    });
+
+    if (!dbUser) {
+      // Create user if doesn't exist
+      dbUser = await prisma.user.create({
+        data: {
+          email: user.email,
+          name: user.name || surferName || "Anonymous Surfer",
+          image: user.image,
+        },
       });
     }
 
-    if (cleanedBody.forecast && typeof cleanedBody.forecast === "object") {
-      // Remove legacy fields that cause validation errors
-      const { wind, swell, timestamp, ...cleanForecast } = cleanedBody.forecast;
-
-      // Only keep new-format fields
-      const allowedFields = [
-        "id",
-        "date",
-        "windSpeed",
-        "windDirection",
-        "swellHeight",
-        "swellPeriod",
-        "swellDirection",
-      ];
-
-      const finalForecast: any = {};
-      for (const key of allowedFields) {
-        if (cleanForecast[key] !== undefined) {
-          finalForecast[key] = cleanForecast[key];
-        }
-      }
-
-      // If we have forecastId, don't send forecast object at all
-      if (cleanedBody.forecastId) {
-        console.log(
-          "[raid-logs] Removing forecast object because forecastId exists"
-        );
-        delete cleanedBody.forecast;
-      } else if (Object.keys(finalForecast).length > 0) {
-        cleanedBody.forecast = finalForecast;
-        console.log(
-          "[raid-logs] Cleaned forecast:",
-          Object.keys(finalForecast)
-        );
-      } else {
-        delete cleanedBody.forecast;
-      }
-
-      // Log if we removed legacy fields
-      if (
-        wind !== undefined ||
-        swell !== undefined ||
-        timestamp !== undefined
-      ) {
-        console.warn("[raid-logs] ⚠️ Removed legacy forecast fields:", {
-          hadWind: wind !== undefined,
-          hadSwell: swell !== undefined,
-          hadTimestamp: timestamp !== undefined,
-        });
-      }
-    }
-
-    // Final safety check: Remove forecast if forecastId exists
-    if (cleanedBody.forecastId && cleanedBody.forecast) {
-      console.warn(
-        "[raid-logs] ⚠️ Removing forecast object because forecastId exists"
-      );
-      delete cleanedBody.forecast;
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/raid-logs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        Cookie: cookieStore.toString(),
+    // Create log entry
+    const logEntry = await prisma.logEntry.create({
+      data: {
+        date: new Date(date),
+        surferEmail: surferEmail || user.email,
+        surferName: isAnonymous
+          ? "Anonymous"
+          : surferName || user.name || "Anonymous Surfer",
+        beachName: beachName || undefined,
+        surferRating: surferRating ?? 0,
+        comments: comments || undefined,
+        isPrivate: isPrivate ?? false,
+        isAnonymous: isAnonymous ?? false,
+        imageUrl: imageUrl || undefined,
+        imageUrls: imageUrls && imageUrls.length > 0 ? imageUrls : undefined,
+        videoUrl: videoUrl || undefined,
+        videoPlatform: videoPlatform || undefined,
+        regionId: regionId,
+        beachId: beachId || undefined,
+        forecastId: finalForecastId || undefined,
+        userId: dbUser.id,
       },
-      credentials: "include",
-      body: JSON.stringify(cleanedBody),
+      include: {
+        beach: true,
+        region: true,
+        forecast: true,
+      },
     });
 
-    if (!response.ok) {
-      // Try to get error message from backend
-      const errorData = await response.json().catch(() => ({
-        message: "Failed to create log",
-      }));
-      console.error("[raid-logs] Backend error:", errorData);
+    return NextResponse.json(logEntry);
+  } catch (error: any) {
+    console.error("Error creating raid log:", error);
 
-      // Extract validation errors if present
-      let errorMessage =
-        errorData.message || errorData.error || "Failed to create log";
-
-      // If it's a validation error, try to extract more details
-      if (response.status === 400 && errorData.details) {
-        // Validation middleware returns details array with path and message
-        const validationErrors = errorData.details
-          .map((detail: any) => {
-            const path = detail.path || "field";
-            return `${path}: ${detail.message}`;
-          })
-          .join(", ");
-        errorMessage = `Validation failed: ${validationErrors}`;
-      } else if (response.status === 400 && errorData.error) {
-        // Other validation errors
-        errorMessage = errorData.error;
-      }
-
+    // Handle Prisma unique constraint errors
+    if (error.code === "P2002") {
       return NextResponse.json(
-        {
-          error: errorMessage,
-          details: errorData.issues || errorData.details,
-        },
-        { status: response.status }
+        { error: "A log entry with these details already exists" },
+        { status: 409 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error creating raid log:", error);
+    // Handle Prisma foreign key errors
+    if (error.code === "P2003") {
+      return NextResponse.json(
+        { error: "Invalid reference (beach, region, or forecast not found)" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to create log" },
+      {
+        error: "Failed to create log",
+        message: error.message,
+      },
       { status: 500 }
     );
   }

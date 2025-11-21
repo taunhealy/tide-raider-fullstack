@@ -48,7 +48,7 @@ export const createRaidLogSchema = z.object({
       swellPeriod: z.number().optional(),
       swellDirection: z.number().optional(),
       // Legacy format support (for backwards compatibility) - use passthrough to ignore if present
-    })
+        })
     .passthrough()
     .optional(),
   continent: z.string().optional(),

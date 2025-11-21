@@ -42,7 +42,7 @@ export async function GET(
     if (process.env.NODE_ENV === "development" && BACKEND_URL.includes("localhost")) {
       console.log(
         `[NextAuth Route] ⚠️ Make sure backend is running at ${BACKEND_URL}`
-      );
+    );
     }
     
     // Redirect to backend OAuth
