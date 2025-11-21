@@ -178,26 +178,57 @@ function ForecastInfo({
     return "Create alert for these conditions";
   };
 
+  // Only show if forecast exists and has at least one valid value
+  if (!forecast) {
+    return <span className="text-gray-400 text-xs">No conditions</span>;
+  }
+
+  const hasWind = typeof forecast.windSpeed === "number";
+  const hasWindDirection = typeof forecast.windDirection === "number";
+  const hasSwell = typeof forecast.swellHeight === "number";
+  const hasSwellPeriod = typeof forecast.swellPeriod === "number";
+  const hasSwellDirection = typeof forecast.swellDirection === "number";
+
+  if (!hasWind && !hasSwell && !hasSwellPeriod) {
+    return <span className="text-gray-400 text-xs">No conditions</span>;
+  }
+
   return (
-    <div className="space-y-1 text-xs">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p>
-            {getWindEmoji(forecast?.windSpeed ?? 0)} {forecast?.windSpeed ?? 0}
-            kts{" "}
-            {forecast?.windDirection &&
-              degreesToCardinal(forecast.windDirection)}
-          </p>
-          <p>
-            {getSwellEmoji(forecast?.swellHeight ?? 0)} {forecast?.swellHeight}m
-            @ {forecast?.swellPeriod}s
-          </p>
-          <p>
-            {forecast?.swellDirection &&
-              degreesToCardinal(forecast.swellDirection)}
-          </p>
-        </div>
-      </div>
+    <div className="space-y-1 text-xs font-primary">
+      {(hasWind || hasWindDirection) && (
+        <p className="text-gray-700">
+          {hasWind && forecast.windSpeed !== undefined && (
+            <>
+              {getWindEmoji(forecast.windSpeed)} {forecast.windSpeed}kts
+            </>
+          )}
+          {hasWindDirection && forecast.windDirection !== undefined && (
+            <span className="ml-1 text-gray-600">
+              {degreesToCardinal(forecast.windDirection)}
+            </span>
+          )}
+        </p>
+      )}
+      {(hasSwell || hasSwellPeriod || hasSwellDirection) && (
+        <p className="text-gray-700">
+          {hasSwell && forecast.swellHeight !== undefined && (
+            <>
+              {getSwellEmoji(forecast.swellHeight)} {forecast.swellHeight}m
+            </>
+          )}
+          {hasSwellPeriod && forecast.swellPeriod !== undefined && (
+            <span className="ml-1 text-gray-600">
+              {hasSwell ? " @ " : ""}
+              {forecast.swellPeriod}s
+            </span>
+          )}
+          {hasSwellDirection && forecast.swellDirection !== undefined && (
+            <span className="ml-1 text-gray-600">
+              {degreesToCardinal(forecast.swellDirection)}
+            </span>
+          )}
+        </p>
+      )}
     </div>
   );
 }

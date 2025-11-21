@@ -90,6 +90,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const { data: session } = useBackendAuth();
   const router = useRouter();
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { data: entry, isLoading, error } = useRaidLog(id);
 
@@ -416,7 +417,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               </h2>
               <ImageGallery
                 images={imageUrls}
-                onImageClick={(index) => setIsMediaModalOpen(true)}
+                onImageClick={(index) => {
+                  setSelectedImageIndex(index);
+                  setIsMediaModalOpen(true);
+                }}
                 className="cursor-pointer"
               />
             </div>
@@ -440,6 +444,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         imageUrls={imageUrls}
         videoUrl={entry.videoUrl}
         videoPlatform={entry.videoPlatform as VideoPlatform}
+        initialImageIndex={selectedImageIndex}
       />
     </div>
   );

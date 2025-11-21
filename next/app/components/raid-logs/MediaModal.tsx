@@ -15,6 +15,7 @@ interface MediaModalProps {
   imageUrls?: string[];
   videoUrl?: string | null;
   videoPlatform?: "youtube" | "vimeo" | null;
+  initialImageIndex?: number;
 }
 
 export function MediaModal({
@@ -24,10 +25,18 @@ export function MediaModal({
   imageUrls,
   videoUrl,
   videoPlatform,
+  initialImageIndex = 0,
 }: MediaModalProps) {
   // Support both single imageUrl and imageUrls array
   const images = imageUrls || (imageUrl ? [imageUrl] : []);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(initialImageIndex);
+
+  // Update current image index when modal opens with a new initial index
+  useEffect(() => {
+    if (isOpen && typeof initialImageIndex === "number") {
+      setCurrentImageIndex(initialImageIndex);
+    }
+  }, [isOpen, initialImageIndex]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
