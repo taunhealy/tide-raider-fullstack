@@ -201,23 +201,39 @@ export async function POST(req: NextRequest) {
       endpoint: r2Endpoint,
       hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
       hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+      accountId: process.env.R2_ACCOUNT_ID,
     });
 
     try {
+      console.log("[upload] Sending PutObjectCommand to R2...");
       await s3.send(command);
       console.log("[upload] ✅ Upload successful:", key);
     } catch (uploadError) {
-      console.error("[upload] ❌ Upload failed:", {
+      // Log comprehensive error information
+      const errorInfo: any = {
         error:
           uploadError instanceof Error
             ? uploadError.message
             : String(uploadError),
         name: uploadError instanceof Error ? uploadError.name : undefined,
-        stack: uploadError instanceof Error ? uploadError.stack : undefined,
         bucket: process.env.R2_BUCKET_NAME,
         key,
         endpoint: r2Endpoint,
-      });
+      };
+
+      // Add AWS SDK specific error properties
+      if (uploadError && typeof uploadError === "object") {
+        errorInfo.code = (uploadError as any).Code || (uploadError as any).code;
+        errorInfo.requestId = (uploadError as any).requestId;
+        errorInfo.metadata = (uploadError as any).$metadata;
+        errorInfo.cause = (uploadError as any).cause;
+      }
+
+      if (uploadError instanceof Error) {
+        errorInfo.stack = uploadError.stack;
+      }
+
+      console.error("[upload] ❌ Upload failed:", errorInfo);
       throw uploadError;
     }
 
@@ -275,67 +291,77 @@ export async function POST(req: NextRequest) {
         );
       }
       // Check for AWS SDK errors (they have a specific structure)
+      // AWS SDK errors can have different formats, so check multiple properties
+      const awsErrorCode = (error as any).Code || (error as any).code;
+      const awsErrorName = error.name || (error as any).name;
+      const errorMessageLower = error.message.toLowerCase();
+
       const isAwsError =
-        error.name === "SignatureDoesNotMatch" ||
-        error.name === "InvalidAccessKeyId" ||
-        error.name === "AccessDenied" ||
-        error.name === "NoSuchBucket" ||
-        error.message.includes("R2") ||
-        error.message.includes("S3") ||
-        error.message.includes("signature") ||
-        error.message.includes("Signature") ||
-        error.message.includes("InvalidAccessKeyId") ||
-        error.message.includes("SignatureDoesNotMatch") ||
-        error.message.includes("AccessDenied");
+        awsErrorName === "SignatureDoesNotMatch" ||
+        awsErrorName === "InvalidAccessKeyId" ||
+        awsErrorName === "AccessDenied" ||
+        awsErrorName === "NoSuchBucket" ||
+        awsErrorName === "CredentialsProviderError" ||
+        awsErrorCode === "SignatureDoesNotMatch" ||
+        awsErrorCode === "InvalidAccessKeyId" ||
+        awsErrorCode === "AccessDenied" ||
+        awsErrorCode === "NoSuchBucket" ||
+        errorMessageLower.includes("r2") ||
+        errorMessageLower.includes("s3") ||
+        errorMessageLower.includes("signature") ||
+        errorMessageLower.includes("invalidaccesskeyid") ||
+        errorMessageLower.includes("signaturedoesnotmatch") ||
+        errorMessageLower.includes("accessdenied") ||
+        errorMessageLower.includes("credentials") ||
+        (error as any).$metadata !== undefined; // AWS SDK errors have $metadata
 
       if (isAwsError) {
-        // Return more detailed error in development
-        const isDev = process.env.NODE_ENV === "development";
-        console.error("[upload] AWS/R2 error:", {
+        // Log detailed error information
+        const errorDetails = {
           name: error.name,
           message: error.message,
           code: (error as any).Code,
           requestId: (error as any).requestId,
+          $metadata: (error as any).$metadata,
           endpoint: r2Endpoint,
           bucket: process.env.R2_BUCKET_NAME,
           hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
           hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
           accountId: process.env.R2_ACCOUNT_ID ? "set" : "missing",
-        });
+        };
+        console.error("[upload] AWS/R2 error:", errorDetails);
 
+        // Temporarily return detailed error for debugging
+        // TODO: Remove detailed error in production once issue is resolved
         return NextResponse.json(
           {
-            error: isDev
-              ? `Storage error: ${error.name || error.message}`
-              : "Storage service error. Please try again later.",
-            details: isDev
-              ? {
-                  name: error.name,
-                  message: error.message,
-                  code: (error as any).Code,
-                  endpoint: r2Endpoint,
-                  bucket: process.env.R2_BUCKET_NAME,
-                }
-              : undefined,
+            error: `Storage error: ${error.name || error.message}`,
+            details: {
+              name: error.name,
+              message: error.message,
+              code: (error as any).Code,
+              endpoint: r2Endpoint,
+              bucket: process.env.R2_BUCKET_NAME,
+            },
           },
           { status: 500 }
         );
       }
     }
 
+    // Return error with details for debugging
+    // TODO: Remove detailed error in production once issue is resolved
     return NextResponse.json(
       {
         error: errorMessage,
         details:
-          process.env.NODE_ENV === "development"
-            ? error instanceof Error
-              ? {
-                  message: error.message,
-                  name: error.name,
-                  stack: error.stack,
-                }
-              : String(error)
-            : undefined,
+          error instanceof Error
+            ? {
+                message: error.message,
+                name: error.name,
+                stack: error.stack?.split("\n").slice(0, 5).join("\n"), // Limit stack trace
+              }
+            : String(error),
       },
       { status: statusCode }
     );
