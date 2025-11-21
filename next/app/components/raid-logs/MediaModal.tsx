@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import { Video as VideoIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -28,6 +28,21 @@ export function MediaModal({
   // Support both single imageUrl and imageUrls array
   const images = imageUrls || (imageUrl ? [imageUrl] : []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      // Scroll to top when modal opens
+      window.scrollTo(0, 0);
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const handleEmbedVideo = () => {
     if (!videoUrl || !videoPlatform) return null;
 
@@ -57,7 +72,7 @@ export function MediaModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] p-0 overflow-hidden relative bg-black border-2 border-[var(--color-tertiary)]/30 z-[100]">
+      <DialogContent className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[100] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0">
         {/* Close Button - Tide Raider Branded */}
         <button
           onClick={onClose}
@@ -74,7 +89,7 @@ export function MediaModal({
           </span>
         </div>
 
-        <div className="relative w-full aspect-video min-h-[60vh] lg:min-h-[70vh]">
+        <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
           {images.length > 0 ? (
             <div className="relative w-full h-full flex items-center justify-center">
               <Image
@@ -82,7 +97,7 @@ export function MediaModal({
                 alt={`Session photo ${currentImageIndex + 1} of ${images.length}`}
                 fill
                 className="object-contain"
-                sizes="90vw"
+                sizes="100vw"
                 priority
               />
               {images.length > 1 && (
