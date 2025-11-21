@@ -111,6 +111,81 @@ export async function POST(req: NextRequest) {
     const authToken = cookieStore.get("auth-token")?.value;
     const body = await req.json();
 
+    // CRITICAL: Strip legacy forecast fields before sending to backend
+    // Production backend still validates these fields and will fail
+    let cleanedBody = { ...body };
+
+    // Log original body for debugging
+    if (cleanedBody.forecast) {
+      console.log("[raid-logs] Original forecast in body:", {
+        hasForecastId: !!cleanedBody.forecastId,
+        forecastKeys: Object.keys(cleanedBody.forecast),
+        hasWind: cleanedBody.forecast.wind !== undefined,
+        hasSwell: cleanedBody.forecast.swell !== undefined,
+        hasTimestamp: cleanedBody.forecast.timestamp !== undefined,
+      });
+    }
+
+    if (cleanedBody.forecast && typeof cleanedBody.forecast === "object") {
+      // Remove legacy fields that cause validation errors
+      const { wind, swell, timestamp, ...cleanForecast } = cleanedBody.forecast;
+
+      // Only keep new-format fields
+      const allowedFields = [
+        "id",
+        "date",
+        "windSpeed",
+        "windDirection",
+        "swellHeight",
+        "swellPeriod",
+        "swellDirection",
+      ];
+
+      const finalForecast: any = {};
+      for (const key of allowedFields) {
+        if (cleanForecast[key] !== undefined) {
+          finalForecast[key] = cleanForecast[key];
+        }
+      }
+
+      // If we have forecastId, don't send forecast object at all
+      if (cleanedBody.forecastId) {
+        console.log(
+          "[raid-logs] Removing forecast object because forecastId exists"
+        );
+        delete cleanedBody.forecast;
+      } else if (Object.keys(finalForecast).length > 0) {
+        cleanedBody.forecast = finalForecast;
+        console.log(
+          "[raid-logs] Cleaned forecast:",
+          Object.keys(finalForecast)
+        );
+      } else {
+        delete cleanedBody.forecast;
+      }
+
+      // Log if we removed legacy fields
+      if (
+        wind !== undefined ||
+        swell !== undefined ||
+        timestamp !== undefined
+      ) {
+        console.warn("[raid-logs] ⚠️ Removed legacy forecast fields:", {
+          hadWind: wind !== undefined,
+          hadSwell: swell !== undefined,
+          hadTimestamp: timestamp !== undefined,
+        });
+      }
+    }
+
+    // Final safety check: Remove forecast if forecastId exists
+    if (cleanedBody.forecastId && cleanedBody.forecast) {
+      console.warn(
+        "[raid-logs] ⚠️ Removing forecast object because forecastId exists"
+      );
+      delete cleanedBody.forecast;
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/raid-logs`, {
       method: "POST",
       headers: {
@@ -119,7 +194,7 @@ export async function POST(req: NextRequest) {
         Cookie: cookieStore.toString(),
       },
       credentials: "include",
-      body: JSON.stringify(body),
+      body: JSON.stringify(cleanedBody),
     });
 
     if (!response.ok) {
@@ -128,10 +203,11 @@ export async function POST(req: NextRequest) {
         message: "Failed to create log",
       }));
       console.error("[raid-logs] Backend error:", errorData);
-      
+
       // Extract validation errors if present
-      let errorMessage = errorData.message || errorData.error || "Failed to create log";
-      
+      let errorMessage =
+        errorData.message || errorData.error || "Failed to create log";
+
       // If it's a validation error, try to extract more details
       if (response.status === 400 && errorData.details) {
         // Validation middleware returns details array with path and message
@@ -146,7 +222,7 @@ export async function POST(req: NextRequest) {
         // Other validation errors
         errorMessage = errorData.error;
       }
-      
+
       return NextResponse.json(
         {
           error: errorMessage,
