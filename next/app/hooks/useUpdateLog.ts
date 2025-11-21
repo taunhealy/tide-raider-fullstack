@@ -78,16 +78,22 @@ export function useUpdateLog() {
         imageUrl:
           data.imageUrls && data.imageUrls.length > 0
             ? data.imageUrls[0]
-            : (data.uploadedImageUrl && data.uploadedImageUrl.trim() !== ""
+            : data.uploadedImageUrl && data.uploadedImageUrl.trim() !== ""
               ? data.uploadedImageUrl
-              : ""),
+              : "",
         // Include imageUrls array if provided (for multiple images support)
-        ...(data.imageUrls && data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
+        ...(data.imageUrls &&
+          data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
         videoUrl:
           data.videoUrl && data.videoUrl.trim() !== "" ? data.videoUrl : "",
         // Convert null to undefined for optional string fields (schema doesn't accept null)
         videoPlatform: data.videoPlatform || undefined,
-        forecastId: data.forecastData?.id || undefined,
+        // Handle forecastId - can come from forecastData.id or forecastData itself if it's already an ID string
+        forecastId:
+          data.forecastData?.id ||
+          (typeof data.forecastData === "string"
+            ? data.forecastData
+            : undefined),
       };
 
       // Only include beachId if it's a valid UUID
@@ -95,15 +101,39 @@ export function useUpdateLog() {
         payload.beachId = beachId;
       }
 
+      // Debug: Log forecast data
+      console.log("[useUpdateLog] Forecast data:", {
+        hasForecastData: !!data.forecastData,
+        forecastDataType: typeof data.forecastData,
+        forecastId: data.forecastData?.id,
+        payloadForecastId: payload.forecastId,
+      });
+
       return api.updateRaidLog(payload);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       // Invalidate all log-related queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["recentLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["logs"] });
-      queryClient.invalidateQueries({ queryKey: ["questLogs"] });
-      queryClient.invalidateQueries({ queryKey: ["raidLog", variables.id] });
+      await queryClient.invalidateQueries({ queryKey: ["raidLogs"] });
+      await queryClient.invalidateQueries({ queryKey: ["recentLogs"] });
+      await queryClient.invalidateQueries({ queryKey: ["logs"] });
+      await queryClient.invalidateQueries({ queryKey: ["questLogs"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["raidLog", variables.id],
+      });
+
+      // Force refetch to ensure data is fresh (since refetchOnMount is false)
+      await queryClient.refetchQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return (
+            key === "raidLogs" ||
+            key === "recentLogs" ||
+            key === "logs" ||
+            key === "questLogs"
+          );
+        },
+      });
+
       toast.success("Session updated successfully!");
     },
     onError: (error) => {

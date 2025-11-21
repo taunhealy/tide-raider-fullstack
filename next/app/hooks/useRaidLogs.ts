@@ -142,6 +142,15 @@ export function useRaidLogs(
           totalPages: 0,
         };
       }
+
+      // Debug: Log forecast data in first entry
+      if (data.entries.length > 0 && data.entries[0].forecast) {
+        console.log("[useRaidLogs] First entry forecast:", {
+          entryId: data.entries[0].id,
+          forecast: data.entries[0].forecast,
+        });
+      }
+
       return {
         entries: data.entries.map(
           (entry): LogEntry => ({
@@ -170,7 +179,22 @@ export function useRaidLogs(
                   difficulty: entry.beach.difficulty,
                 }
               : null,
-            // other fields...
+            forecast: entry.forecast
+              ? {
+                  id: entry.forecast.id,
+                  date:
+                    typeof entry.forecast.date === "string"
+                      ? entry.forecast.date
+                      : entry.forecast.date instanceof Date
+                        ? entry.forecast.date.toISOString().split("T")[0]
+                        : String(entry.forecast.date),
+                  windSpeed: entry.forecast.windSpeed ?? 0,
+                  windDirection: entry.forecast.windDirection ?? 0,
+                  swellHeight: entry.forecast.swellHeight ?? 0,
+                  swellPeriod: entry.forecast.swellPeriod ?? 0,
+                  swellDirection: entry.forecast.swellDirection ?? 0,
+                }
+              : null,
           })
         ),
         total: data.total || 0,
@@ -181,14 +205,14 @@ export function useRaidLogs(
           Math.ceil((data.total || 0) / ((data as any).limit || 50)),
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
-    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
-    refetchOnMount: false, // Don't refetch on mount if data is fresh
-    retry: 0, // Don't retry on failure to prevent long loading states
-    retryDelay: 1000, // Wait 1 second before retry (not used if retry: 0)
+    staleTime: 0, // Data is immediately stale - always refetch for dynamic logs
+    gcTime: 0, // Don't cache - logs are dynamic and frequently updated
+    refetchOnWindowFocus: true, // Refetch when window regains focus to get latest data
+    refetchOnMount: true, // Always refetch on mount to ensure fresh data
+    refetchOnReconnect: true, // Refetch when network reconnects
+    retry: 1, // Retry once on failure
+    retryDelay: 1000, // Wait 1 second before retry
     throwOnError: false, // Don't throw errors, return them in error state
-    // Add timeout to prevent queries from hanging indefinitely
     networkMode: "online", // Only run query when online
   });
 
