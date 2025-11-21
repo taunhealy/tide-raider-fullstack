@@ -48,6 +48,8 @@ RUN npm ci
 COPY . .
 
 # Generate Prisma Client
+# Set a dummy DATABASE_URL for Prisma client generation (not used at runtime)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # Build TypeScript

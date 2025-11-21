@@ -38,7 +38,17 @@ export const createRaidLogSchema = z.object({
   beachId: z.string().uuid().optional(),
   regionId: z.string().min(1, "Region ID is required"), // Accepts UUID or slug
   forecastId: z.string().uuid().optional(),
-  forecast: z.any().optional(), // Completely remove validation - accept any format
+  forecast: z
+    .object({
+      date: z.union([z.string(), z.date()]).optional(),
+      windSpeed: z.number().optional(),
+      windDirection: z.number().optional(),
+      swellHeight: z.number().optional(),
+      swellPeriod: z.number().optional(),
+      swellDirection: z.number().optional(),
+    })
+    .passthrough()
+    .optional(),
   continent: z.string().optional(),
   country: z.string().optional(),
 });
