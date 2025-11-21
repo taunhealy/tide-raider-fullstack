@@ -158,39 +158,55 @@ export function useCreateLog() {
           data.forecastData.swellDirection !== undefined;
 
         if (hasNewFormatData && !forecastId) {
-          // Build forecast object with ONLY new format fields
-          // Explicitly exclude legacy fields (wind, swell, timestamp)
-          cleanedForecast = {};
+          // Build forecast object from scratch with ONLY new format fields
+          // Do NOT use spread operator or copy from source - build explicitly
+          // This ensures legacy fields (wind, swell, timestamp) are NEVER included
+          const newForecast: any = {};
 
-          if (data.forecastData.date) {
-            cleanedForecast.date = data.forecastData.date;
+          // Only include new-format fields explicitly
+          if (
+            data.forecastData.date !== undefined &&
+            data.forecastData.date !== null
+          ) {
+            newForecast.date = data.forecastData.date;
           }
-          if (data.forecastData.windSpeed !== undefined) {
-            cleanedForecast.windSpeed = data.forecastData.windSpeed;
+          if (
+            data.forecastData.windSpeed !== undefined &&
+            data.forecastData.windSpeed !== null
+          ) {
+            newForecast.windSpeed = data.forecastData.windSpeed;
           }
-          if (data.forecastData.windDirection !== undefined) {
-            cleanedForecast.windDirection = data.forecastData.windDirection;
+          if (
+            data.forecastData.windDirection !== undefined &&
+            data.forecastData.windDirection !== null
+          ) {
+            newForecast.windDirection = data.forecastData.windDirection;
           }
-          if (data.forecastData.swellHeight !== undefined) {
-            cleanedForecast.swellHeight = data.forecastData.swellHeight;
+          if (
+            data.forecastData.swellHeight !== undefined &&
+            data.forecastData.swellHeight !== null
+          ) {
+            newForecast.swellHeight = data.forecastData.swellHeight;
           }
-          if (data.forecastData.swellPeriod !== undefined) {
-            cleanedForecast.swellPeriod = data.forecastData.swellPeriod;
+          if (
+            data.forecastData.swellPeriod !== undefined &&
+            data.forecastData.swellPeriod !== null
+          ) {
+            newForecast.swellPeriod = data.forecastData.swellPeriod;
           }
-          if (data.forecastData.swellDirection !== undefined) {
-            cleanedForecast.swellDirection = data.forecastData.swellDirection;
+          if (
+            data.forecastData.swellDirection !== undefined &&
+            data.forecastData.swellDirection !== null
+          ) {
+            newForecast.swellDirection = data.forecastData.swellDirection;
           }
 
-          // Ensure legacy fields are NOT included (even if they exist in source data)
-          // This prevents validation errors
-          delete cleanedForecast.wind;
-          delete cleanedForecast.swell;
-          delete cleanedForecast.timestamp;
+          // CRITICAL: Do NOT include wind, swell, or timestamp - even if they exist in source
+          // Zod will validate them if present, causing "Required" errors
 
-          // Only include if we have at least one valid field
-          if (Object.keys(cleanedForecast).length === 0) {
-            cleanedForecast = undefined;
-          }
+          // Only use if we have at least one valid field
+          cleanedForecast =
+            Object.keys(newForecast).length > 0 ? newForecast : undefined;
         }
       }
 
@@ -200,7 +216,71 @@ export function useCreateLog() {
         cleanedForecast = undefined;
       }
 
-      const payload = {
+      // Final safety check: Rebuild forecast object to ensure no legacy fields
+      // This is a critical double-check - Zod validates nested objects if present
+      if (cleanedForecast) {
+        // Rebuild from scratch - only copy allowed fields
+        const finalForecast: any = {};
+
+        // Only include explicitly allowed fields
+        if (
+          cleanedForecast.date !== undefined &&
+          cleanedForecast.date !== null
+        ) {
+          finalForecast.date = cleanedForecast.date;
+        }
+        if (
+          cleanedForecast.windSpeed !== undefined &&
+          cleanedForecast.windSpeed !== null
+        ) {
+          finalForecast.windSpeed = cleanedForecast.windSpeed;
+        }
+        if (
+          cleanedForecast.windDirection !== undefined &&
+          cleanedForecast.windDirection !== null
+        ) {
+          finalForecast.windDirection = cleanedForecast.windDirection;
+        }
+        if (
+          cleanedForecast.swellHeight !== undefined &&
+          cleanedForecast.swellHeight !== null
+        ) {
+          finalForecast.swellHeight = cleanedForecast.swellHeight;
+        }
+        if (
+          cleanedForecast.swellPeriod !== undefined &&
+          cleanedForecast.swellPeriod !== null
+        ) {
+          finalForecast.swellPeriod = cleanedForecast.swellPeriod;
+        }
+        if (
+          cleanedForecast.swellDirection !== undefined &&
+          cleanedForecast.swellDirection !== null
+        ) {
+          finalForecast.swellDirection = cleanedForecast.swellDirection;
+        }
+
+        // Verify no legacy fields exist (should never happen, but safety check)
+        if (
+          finalForecast.wind ||
+          finalForecast.swell ||
+          finalForecast.timestamp !== undefined
+        ) {
+          console.error(
+            "[useCreateLog] CRITICAL: Legacy fields detected after cleaning!",
+            finalForecast
+          );
+          // Emergency cleanup
+          delete finalForecast.wind;
+          delete finalForecast.swell;
+          delete finalForecast.timestamp;
+        }
+
+        cleanedForecast =
+          Object.keys(finalForecast).length > 0 ? finalForecast : undefined;
+      }
+
+      let payload = {
         date: data.selectedDate,
         surferEmail: session.user.email || "",
         surferName: data.isAnonymous
@@ -224,6 +304,50 @@ export function useCreateLog() {
         // Only include beachId if it's a valid UUID
         ...(beachId && { beachId }),
       };
+
+      // Debug: Log payload to verify no legacy fields are included
+      if (
+        process.env.NODE_ENV === "development" ||
+        typeof window !== "undefined"
+      ) {
+        console.log("[useCreateLog] Payload being sent:", {
+          hasForecast: !!payload.forecast,
+          forecastKeys: payload.forecast ? Object.keys(payload.forecast) : [],
+          hasLegacyFields: payload.forecast
+            ? payload.forecast.wind !== undefined ||
+              payload.forecast.swell !== undefined ||
+              payload.forecast.timestamp !== undefined
+            : false,
+          forecastId: payload.forecastId,
+          forecastPreview: payload.forecast
+            ? JSON.stringify(payload.forecast).substring(0, 200)
+            : null,
+        });
+      }
+
+      // Final verification: Check payload JSON string for legacy fields before sending
+      const payloadString = JSON.stringify(payload);
+      if (
+        payloadString.includes('"wind"') ||
+        payloadString.includes('"swell"') ||
+        payloadString.includes('"timestamp"')
+      ) {
+        console.error(
+          "[useCreateLog] CRITICAL ERROR: Legacy fields detected in payload JSON!",
+          {
+            hasWind: payloadString.includes('"wind"'),
+            hasSwell: payloadString.includes('"swell"'),
+            hasTimestamp: payloadString.includes('"timestamp"'),
+          }
+        );
+        // Remove forecast from payload as emergency measure - backend will use forecastId if available
+        const safePayload = { ...payload };
+        delete safePayload.forecast;
+        console.warn(
+          "[useCreateLog] Removed forecast from payload due to legacy fields"
+        );
+        payload = safePayload;
+      }
 
       const response = await fetch("/api/raid-logs", {
         method: "POST",
