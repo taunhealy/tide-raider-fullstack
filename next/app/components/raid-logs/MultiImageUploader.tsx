@@ -41,49 +41,32 @@ export function MultiImageUploader({
         files.map((file) => convertImageToWebP(file))
       );
 
-      // Upload all images using presigned URLs (better for R2)
+      // Upload all images using server-side upload (avoids CORS issues)
+      // The direct upload route has been fixed to work with R2 by removing ContentType
       const uploadPromises = convertedFiles.map(async (file) => {
-        // Step 1: Get presigned URL from server
-        const presignedResponse = await fetch("/api/upload/presigned", {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", "image");
+
+        const response = await fetch("/api/upload", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-          }),
+          body: formData,
           credentials: "include",
         });
 
-        if (!presignedResponse.ok) {
-          const errorData = await presignedResponse.json().catch(() => ({}));
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
           const errorMessage =
-            errorData.error || errorData.message || "Failed to get upload URL";
-          throw new Error(errorMessage);
+            errorData.error || errorData.message || "Failed to upload image";
+          // Include details if available (for debugging)
+          const fullError = errorData.details
+            ? `${errorMessage} (${JSON.stringify(errorData.details)})`
+            : errorMessage;
+          throw new Error(fullError);
         }
 
-        const { presignedUrl, publicUrl, contentType } =
-          await presignedResponse.json();
-
-        // Step 2: Upload file directly to R2 using presigned URL
-        const uploadResponse = await fetch(presignedUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": contentType, // Must match exactly
-          },
-          body: file, // Send file directly, not FormData
-        });
-
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse
-            .text()
-            .catch(() => "Upload failed");
-          throw new Error(`Failed to upload to R2: ${errorText}`);
-        }
-
-        return publicUrl;
+        const data = await response.json();
+        return data.imageUrl;
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
