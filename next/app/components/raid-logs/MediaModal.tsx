@@ -72,14 +72,18 @@ export function MediaModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[100] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0">
-        {/* Close Button - Tide Raider Branded */}
+      <DialogContent
+        className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[100] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0"
+        onPointerDownOutside={onClose}
+        onEscapeKeyDown={onClose}
+      >
+        {/* Close Button - Video Player Style (Black/Cyan) */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-30 bg-black/80 hover:bg-[var(--color-tertiary)]/20 border border-[var(--color-tertiary)]/50 hover:border-[var(--color-tertiary)] rounded-full p-2 transition-all duration-200 shadow-lg backdrop-blur-sm"
+          className="absolute top-4 right-4 z-30 p-2 text-white hover:text-[var(--color-tertiary)] transition-colors"
           aria-label="Close modal"
         >
-          <X className="w-5 h-5 text-white hover:text-[var(--color-tertiary)] transition-colors" />
+          <X className="w-6 h-6 md:w-7 md:h-7" />
         </button>
 
         {/* Tide Raider Logo/Branding */}
