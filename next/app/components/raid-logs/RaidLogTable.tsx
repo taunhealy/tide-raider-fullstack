@@ -954,62 +954,92 @@ export default function RaidLogTable({
                   )}
 
                   {/* Image/Video section */}
-                  {entry.imageUrl ||
-                  (entry.videoUrl && entry.videoUrl.trim() !== "") ? (
-                    <div className="mt-auto pt-2 w-full">
-                      <div className="relative w-full aspect-video rounded-md overflow-hidden group">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/raidlogs/${entry.id}`);
-                          }}
-                          className="relative w-full h-full block"
-                        >
-                          {entry.imageUrl ? (
-                            <Image
-                              src={entry.imageUrl}
-                              alt="Session photo"
-                              fill={true}
-                              className="object-cover rounded-md hover:opacity-90 transition-opacity"
-                            />
-                          ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
-                            // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
-                            !entry.videoPlatform ? (
-                              // Uploaded video - use 360p thumbnail for preview to minimize server costs
-                              <VideoThumbnail
-                                videoUrl={entry.videoUrl}
-                                onPlay={() => {
-                                  router.push(`/raidlogs/${entry.id}`);
-                                }}
-                              />
-                            ) : (
-                              // External video (YouTube/Vimeo) - show thumbnail
+                  {(() => {
+                    // Get imageUrls array or fallback to single imageUrl
+                    const entryImageUrls = (entry as any).imageUrls;
+                    const imageUrls =
+                      entryImageUrls &&
+                      Array.isArray(entryImageUrls) &&
+                      entryImageUrls.length > 0
+                        ? entryImageUrls
+                        : entry.imageUrl
+                          ? [entry.imageUrl]
+                          : [];
+                    const hasImages = imageUrls.length > 0;
+                    const hasVideo =
+                      entry.videoUrl && entry.videoUrl.trim() !== "";
+
+                    if (!hasImages && !hasVideo) {
+                      return (
+                        <div className="mt-auto pt-2 w-full">
+                          <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
+                            <ImageIcon className="w-8 h-8 text-gray-300" />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="mt-auto pt-2 w-full">
+                        <div className="relative w-full aspect-video rounded-md overflow-hidden group">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/raidlogs/${entry.id}`);
+                            }}
+                            className="relative w-full h-full block"
+                          >
+                            {hasImages ? (
                               <>
                                 <Image
-                                  src={getVideoThumbnail(
-                                    entry.videoUrl,
-                                    entry.videoPlatform
-                                  )}
-                                  alt="Video thumbnail"
+                                  src={imageUrls[0]}
+                                  alt="Session photo"
                                   fill={true}
                                   className="object-cover rounded-md hover:opacity-90 transition-opacity"
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <VideoIcon className="w-8 h-8 text-white" />
-                                </div>
+                                {/* Image count badge - Tide Raider design */}
+                                {imageUrls.length > 1 && (
+                                  <div className="absolute top-2 right-2 bg-[var(--color-tertiary)]/90 backdrop-blur-sm text-white rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-lg border border-white/20 z-10">
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-primary font-semibold">
+                                      {imageUrls.length}
+                                    </span>
+                                  </div>
+                                )}
                               </>
-                            )
-                          ) : null}
-                        </button>
+                            ) : hasVideo && entry.videoUrl ? (
+                              // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
+                              !entry.videoPlatform ? (
+                                // Uploaded video - use 360p thumbnail for preview to minimize server costs
+                                <VideoThumbnail
+                                  videoUrl={entry.videoUrl}
+                                  onPlay={() => {
+                                    router.push(`/raidlogs/${entry.id}`);
+                                  }}
+                                />
+                              ) : (
+                                // External video (YouTube/Vimeo) - show thumbnail
+                                <>
+                                  <Image
+                                    src={getVideoThumbnail(
+                                      entry.videoUrl,
+                                      entry.videoPlatform
+                                    )}
+                                    alt="Video thumbnail"
+                                    fill={true}
+                                    className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <VideoIcon className="w-8 h-8 text-white" />
+                                  </div>
+                                </>
+                              )
+                            ) : null}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="mt-auto pt-2 w-full">
-                      <div className="relative w-full aspect-video bg-gray-100 rounded-md flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-gray-300" />
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               ))}
             </div>

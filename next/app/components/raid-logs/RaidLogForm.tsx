@@ -99,9 +99,25 @@ export function RaidLogForm({
     entry?.isAnonymous || false
   );
   // Multiple images support
-  const [imageUrls, setImageUrls] = useState<string[]>(
-    entry?.imageUrl ? [entry.imageUrl] : []
-  );
+  // Initialize imageUrls from entry - prefer imageUrls array, fallback to imageUrl
+  const [imageUrls, setImageUrls] = useState<string[]>(() => {
+    if (entry) {
+      // Check for imageUrls array first (new format)
+      const entryImageUrls = (entry as any).imageUrls;
+      if (
+        entryImageUrls &&
+        Array.isArray(entryImageUrls) &&
+        entryImageUrls.length > 0
+      ) {
+        return entryImageUrls;
+      }
+      // Fallback to single imageUrl (old format)
+      if (entry.imageUrl) {
+        return [entry.imageUrl];
+      }
+    }
+    return [];
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -332,7 +348,17 @@ export function RaidLogForm({
       } else if (userEmail) {
         setEmail(userEmail);
       }
-      if (entry.imageUrl && imageUrls.length === 0) {
+      // Populate images - prefer imageUrls array, fallback to imageUrl
+      const entryImageUrls = (entry as any).imageUrls;
+      if (
+        entryImageUrls &&
+        Array.isArray(entryImageUrls) &&
+        entryImageUrls.length > 0
+      ) {
+        // Use imageUrls array if available
+        setImageUrls(entryImageUrls);
+      } else if (entry.imageUrl && imageUrls.length === 0) {
+        // Fallback to single imageUrl if no array
         setImageUrls([entry.imageUrl]);
       }
       // If entry has a videoUrl but no platform, it's an uploaded video

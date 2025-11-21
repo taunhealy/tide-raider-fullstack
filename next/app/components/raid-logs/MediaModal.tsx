@@ -57,7 +57,7 @@ export function MediaModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] p-0 overflow-hidden relative bg-black border-2 border-[var(--color-tertiary)]/30">
+      <DialogContent className="sm:max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] p-0 overflow-hidden relative bg-black border-2 border-[var(--color-tertiary)]/30 z-[100]">
         {/* Close Button - Tide Raider Branded */}
         <button
           onClick={onClose}

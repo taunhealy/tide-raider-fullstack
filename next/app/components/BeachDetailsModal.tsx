@@ -237,6 +237,7 @@ export default function BeachDetailsModal({
                     <button
                       className="bg-black/50 hover:bg-black/70 transition-colors p-3 rounded-full"
                       onClick={() => window.open(video.url, "_blank")}
+                      title="video title"
                     >
                       <svg
                         className="w-6 h-6 text-white"

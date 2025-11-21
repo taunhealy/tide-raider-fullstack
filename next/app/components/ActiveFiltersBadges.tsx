@@ -78,6 +78,7 @@ export default function ActiveFiltersBadges({
             <button
               onClick={() => removeBeachFilter(beachId)}
               className={buttonClassName}
+              title="Beach"
             >
               <X className="h-3 w-3" />
             </button>
@@ -94,6 +95,7 @@ export default function ActiveFiltersBadges({
             </span>
           )}
           <button
+            title="Region"
             onClick={() => removeRegionFilter(region)}
             className={buttonClassName}
           >
@@ -106,6 +108,7 @@ export default function ActiveFiltersBadges({
           <span className="mr-1">Country:</span>
           {country}
           <button
+            title="Country"
             onClick={() => removeCountryFilter(country)}
             className={buttonClassName}
           >
@@ -117,7 +120,11 @@ export default function ActiveFiltersBadges({
         <div className={badgeClassName}>
           <span className="mr-1">Rating:</span>
           {filters.minRating}+
-          <button onClick={removeRatingFilter} className={buttonClassName}>
+          <button
+            onClick={removeRatingFilter}
+            title="Rating"
+            className={buttonClassName}
+          >
             <X className="h-3 w-3" />
           </button>
         </div>
