@@ -343,13 +343,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       : "sticky top-20"
                   }
                 >
-                  {imageUrls.length > 0 ? (
-                    <ImageGallery
-                      images={imageUrls}
-                      onImageClick={() => setIsMediaModalOpen(true)}
-                      className="cursor-pointer"
-                    />
-                  ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
+                  {entry.videoUrl && entry.videoUrl.trim() !== "" ? (
                     // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
                     !entry.videoPlatform ? (
                       // Uploaded video - use CustomVideoPlayer with full controls, make it bigger (2/3 width)
@@ -395,6 +389,20 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               </div>
             )}
           </div>
+
+          {/* Image Gallery Section - Below Details */}
+          {imageUrls.length > 0 && (
+            <div className="border-t border-gray-200 p-4 md:p-6 lg:p-8 bg-white">
+              <h2 className="font-primary text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-[var(--color-text-primary)]">
+                Session Photos
+              </h2>
+              <ImageGallery
+                images={imageUrls}
+                onImageClick={(index) => setIsMediaModalOpen(true)}
+                className="cursor-pointer"
+              />
+            </div>
+          )}
 
           {/* User Comments Section */}
           <div className="border-t border-gray-200 p-4 md:p-6 lg:p-8 bg-gray-50/50">
