@@ -28,28 +28,20 @@ if (
 }
 
 // Prisma Client configuration
-const prismaConfig: {
-  log: ("query" | "error" | "warn")[];
-  datasources?: {
-    db: {
-      url: string;
-    };
-  };
-} = {
+// Build config conditionally to avoid TypeScript errors with optional datasources
+const prismaConfig = {
   log:
     process.env.NODE_ENV === "development"
-      ? ["query", "error", "warn"]
-      : ["error"],
-};
-
-// Only set datasources if we have a URL (for build-time compatibility)
-if (optimizedDatabaseUrl) {
-  prismaConfig.datasources = {
-    db: {
-      url: optimizedDatabaseUrl,
+      ? (["query", "error", "warn"] as const)
+      : (["error"] as const),
+  ...(optimizedDatabaseUrl && {
+    datasources: {
+      db: {
+        url: optimizedDatabaseUrl,
+      },
     },
-  };
-}
+  }),
+};
 
 export const prisma = globalForPrisma.prisma || new PrismaClient(prismaConfig);
 
