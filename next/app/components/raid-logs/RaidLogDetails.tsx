@@ -24,6 +24,7 @@ import { useState } from "react";
 import { MediaModal } from "./MediaModal";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
+import { ImageGallery } from "./ImageGallery";
 import type { VideoPlatform } from "@/app/types/raidlogs";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
 
