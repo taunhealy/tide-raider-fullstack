@@ -36,54 +36,18 @@ if (
 }
 
 // Initialize S3 client for Cloudflare R2
-// Ensure endpoint doesn't have trailing slash and credentials are properly set
+// Simplified to match old working pattern - removed middleware and forcePathStyle
 const r2Endpoint = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 const s3 = new S3Client({
-  region: "auto", // R2 requires "auto" as the region
+  region: "auto",
   endpoint: r2Endpoint,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
-  forcePathStyle: true, // Required for R2 - uses path-style URLs (bucket/key format)
-  // R2 uses a modified version of S3's signature algorithm
-  // Ensure we're using the correct signing configuration
+  // Removed forcePathStyle - old code didn't have it
+  // Removed middleware - simplifying to match old working pattern
 });
-
-// Add middleware to remove content-type header that causes signature mismatches with R2
-// The SDK automatically adds this header, but R2's signature calculation doesn't expect it
-// Try multiple middleware steps to ensure we catch it
-s3.middlewareStack.add(
-  (next, context) => async (args: any) => {
-    // Remove content-type header from the request to avoid signature mismatch
-    // Check multiple possible locations where headers might be stored
-    if (args.request) {
-      const hadContentType =
-        args.request.headers?.["content-type"] ||
-        args.request.headers?.["Content-Type"] ||
-        args.request.headers?.["Content-type"];
-
-      if (args.request.headers && typeof args.request.headers === "object") {
-        delete args.request.headers["content-type"];
-        delete args.request.headers["Content-Type"];
-        delete args.request.headers["Content-type"];
-      }
-
-      if (hadContentType) {
-        console.log(
-          "[upload] Middleware removed content-type header:",
-          hadContentType
-        );
-      }
-    }
-    return next(args);
-  },
-  {
-    step: "finalizeRequest", // Run right before request is finalized and signed
-    name: "removeContentTypeHeader",
-    priority: "high",
-  }
-);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -217,18 +181,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload to R2
-    // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
-    // For R2, we need to minimize parameters to avoid signature mismatches
-    // ContentType is NOT included in the command - R2 will infer it from the file extension
-    // This matches the approach used in the presigned URL route
-    // Ensure Body is a Buffer/Uint8Array (not a stream) for proper signing
+    // Simplified command - match old working pattern
+    // Old code had ContentType, but R2 might need it for proper signature calculation
+    // Try including ContentType like the old code did
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
-      Body: body instanceof Buffer ? body : Buffer.from(body),
-      // Do NOT include ContentType - R2 signature calculation is sensitive to this
-      // The ContentType will be inferred from the file extension (.webp, .mp4, etc.)
-      // Removed CacheControl and Metadata to avoid signature issues
+      Body: body,
+      ContentType: contentType, // Include ContentType like old code
+      // Removed ACL - R2 doesn't support it (old code had it but it was wrong)
     });
 
     // Log upload attempt for debugging
@@ -277,8 +238,13 @@ export async function POST(req: NextRequest) {
         hasCredentials: !!(
           process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
         ),
-        accessKeyPrefix: process.env.R2_ACCESS_KEY_ID?.substring(0, 8) + "...",
+        accessKeyId: process.env.R2_ACCESS_KEY_ID?.substring(0, 12) + "...",
+        secretKeyLength: process.env.R2_SECRET_ACCESS_KEY?.length || 0,
+        accountId: process.env.R2_ACCOUNT_ID,
       });
+      console.log(
+        "[upload] Middleware should remove content-type header before signing"
+      );
 
       await s3.send(command);
       console.log("[upload] ✅ Upload successful:", key);
