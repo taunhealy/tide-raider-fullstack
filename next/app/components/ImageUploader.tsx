@@ -31,18 +31,38 @@ export function ImageUploader({
       const uploadPromises = files.map(async (file) => {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("type", "image"); // Specify file type
 
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
+          credentials: "include", // Include cookies for authentication
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Upload error:", errorData);
-          throw new Error(
-            `Failed to upload image: ${errorData.error || "Unknown error"}`
+          const errorData = await response.json().catch(() => ({}));
+          let errorMessage =
+            errorData.error || errorData.message || "Unknown error";
+
+          // Provide more specific error messages
+          if (response.status === 401) {
+            errorMessage =
+              "Authentication failed. Please log in again to upload images.";
+          } else if (response.status === 413) {
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            errorMessage = `Image file is too large (${fileSizeMB}MB). Maximum allowed size is 30MB.`;
+          } else if (response.status === 400) {
+            errorMessage =
+              errorData.error ||
+              "Invalid image file. Please select a valid image file.";
+          }
+
+          console.error(
+            "Upload error:",
+            errorData,
+            `Status: ${response.status}`
           );
+          throw new Error(`Failed to upload image: ${errorMessage}`);
         }
 
         const data = await response.json();
@@ -121,6 +141,8 @@ export function ImageUploader({
                 type="button"
                 onClick={() => removeImage(index)}
                 className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md opacity-70 hover:opacity-100 transition-opacity"
+                aria-label={`Remove image ${index + 1}`}
+                title={`Remove image ${index + 1}`}
               >
                 <XMarkIcon className="h-4 w-4 text-gray-700" />
               </button>

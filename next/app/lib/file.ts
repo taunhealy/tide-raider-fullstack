@@ -1,5 +1,5 @@
-// Maximum file size (5MB for images, 100MB for videos)
-export const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Maximum file size (30MB for images, 100MB for videos)
+export const MAX_FILE_SIZE = 30 * 1024 * 1024;
 export const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
 // Maximum video duration (60 seconds)
@@ -159,12 +159,9 @@ export function getVideoDuration(file: File): Promise<number> {
   });
 }
 
-// Compress image if needed (returns a Promise<File>)
-export async function compressImageIfNeeded(file: File): Promise<File> {
-  if (file.size <= MAX_FILE_SIZE) {
-    return file;
-  }
-
+// Convert image to WebP format (returns a Promise<File>)
+// This function converts any image format to WebP for better compression
+export async function convertImageToWebP(file: File): Promise<File> {
   // Use browser's built-in compression via canvas
   const img = new Image();
   const canvas = document.createElement("canvas");
@@ -191,32 +188,42 @@ export async function compressImageIfNeeded(file: File): Promise<File> {
 
       ctx?.drawImage(img, 0, 0, width, height);
 
-      // Convert to blob with quality adjustment
+      // Convert to WebP blob with quality adjustment
       canvas.toBlob(
         (blob) => {
           if (!blob) {
-            reject(new Error("Failed to compress image"));
+            reject(new Error("Failed to convert image to WebP"));
             return;
           }
 
-          const compressedFile = new File([blob], file.name, {
-            type: "image/jpeg",
+          // Generate new filename with .webp extension
+          const originalName = file.name.replace(/\.[^/.]+$/, "");
+          const compressedFile = new File([blob], `${originalName}.webp`, {
+            type: "image/webp",
             lastModified: Date.now(),
           });
 
           resolve(compressedFile);
         },
-        "image/jpeg",
-        0.8 // Quality setting (0.8 = 80% quality)
+        "image/webp",
+        0.85 // Quality setting (0.85 = 85% quality - good balance for WebP)
       );
     };
 
     img.onerror = () => {
-      reject(new Error("Failed to load image for compression"));
+      reject(new Error("Failed to load image for conversion"));
     };
 
     img.src = URL.createObjectURL(file);
   });
+}
+
+// Compress image if needed (returns a Promise<File>)
+// Now converts to WebP format for better compression
+export async function compressImageIfNeeded(file: File): Promise<File> {
+  // Always convert to WebP for better compression, regardless of size
+  // This ensures consistent format and smaller file sizes
+  return convertImageToWebP(file);
 }
 
 // Threshold for when compression is required (4.5MB - Vercel/Next.js body size limit)

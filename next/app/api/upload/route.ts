@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file size based on type
-    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
+    const MAX_IMAGE_SIZE = 30 * 1024 * 1024; // 30MB for images
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
 
     if (file.type.startsWith("video/") || fileType === "video") {
@@ -160,15 +160,15 @@ export async function POST(req: NextRequest) {
       contentType = file.type;
       body = buffer; // Upload video as-is (no compression)
     } else if (file.type.startsWith("image/")) {
-      // Handle image upload (existing logic)
-      // Compress and resize image
+      // Handle image upload - convert to WebP for better compression
+      // Resize and convert to WebP format
       const optimizedBuffer = await Sharp(buffer)
-        .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 80 })
+        .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 85, effort: 6 }) // Quality 85%, effort 6 (good balance of quality vs compression time)
         .toBuffer();
 
-      key = `surf-images/${userId}/${timestamp}-${uniqueId}.jpg`;
-      contentType = "image/jpeg";
+      key = `surf-images/${userId}/${timestamp}-${uniqueId}.webp`;
+      contentType = "image/webp";
       body = optimizedBuffer;
     } else {
       return NextResponse.json(

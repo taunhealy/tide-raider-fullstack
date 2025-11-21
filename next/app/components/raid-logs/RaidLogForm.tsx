@@ -588,7 +588,7 @@ export function RaidLogForm({
             const fileSizeMB = (selectedImage.size / (1024 * 1024)).toFixed(2);
             errorMessage =
               errorData.error ||
-              `Image file is too large (${fileSizeMB}MB). Maximum allowed size is 5MB.`;
+              `Image file is too large (${fileSizeMB}MB). Maximum allowed size is 30MB.`;
           } else if (response.status === 400) {
             errorMessage =
               errorData.error ||
