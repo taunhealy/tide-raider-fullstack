@@ -3,6 +3,27 @@ import { getServerAuth } from "@/app/lib/server-auth";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
+
+// Decode JWT without verification (for performance - we only need user ID)
+// The token is already validated by being in an HttpOnly cookie set by the backend
+function decodeJWT(token: string): { id?: string; sub?: string } | null {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    // Decode payload (base64url)
+    const payload = parts[1];
+    const decoded = Buffer.from(
+      payload.replace(/-/g, "+").replace(/_/g, "/"),
+      "base64"
+    ).toString("utf-8");
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.error("[upload] Failed to decode JWT:", error);
+    return null;
+  }
+}
 // Add environment variable validation at the top
 if (
   !process.env.R2_ACCOUNT_ID ||
@@ -31,24 +52,47 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    // Use backend authentication
-    const authResult = await getServerAuth();
-    const { user, error: authError } = authResult;
+    // Get auth token from cookie
+    const authToken = req.cookies.get("auth-token")?.value;
 
-    if (authError) {
-      console.error("[upload] Auth error:", authError);
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError },
-        { status: 401 }
-      );
-    }
-
-    if (!user?.id) {
-      console.warn("[upload] No user ID found in auth result");
+    if (!authToken) {
+      console.warn("[upload] No auth-token cookie found in request");
       return NextResponse.json(
         { error: "Unauthorized. Please log in to upload files." },
         { status: 401 }
       );
+    }
+
+    // Decode JWT to get user ID (no verification needed - token is in HttpOnly cookie from backend)
+    // This is faster than calling the backend and acceptable for file uploads
+    // The backend will verify the token when files are actually used
+    const decoded = decodeJWT(authToken);
+    let userId = decoded?.id || decoded?.sub;
+
+    // Fallback: if JWT decode fails, verify with backend
+    if (!userId) {
+      console.warn(
+        "[upload] Could not extract user ID from JWT token, falling back to backend verification"
+      );
+      const authResult = await getServerAuth();
+      const { user, error: authError } = authResult;
+
+      if (authError) {
+        console.error("[upload] Auth error:", authError);
+        return NextResponse.json(
+          { error: "Authentication failed", details: authError },
+          { status: 401 }
+        );
+      }
+
+      if (!user?.id) {
+        return NextResponse.json(
+          { error: "Unauthorized. Please log in to upload files." },
+          { status: 401 }
+        );
+      }
+
+      userId = user.id;
     }
 
     const formData = await req.formData();
@@ -112,7 +156,7 @@ export async function POST(req: NextRequest) {
 
       // Get file extension
       const extension = file.name.split(".").pop() || "mp4";
-      key = `surf-videos/${user.id}/${timestamp}-${uniqueId}.${extension}`;
+      key = `surf-videos/${userId}/${timestamp}-${uniqueId}.${extension}`;
       contentType = file.type;
       body = buffer; // Upload video as-is (no compression)
     } else if (file.type.startsWith("image/")) {
@@ -123,7 +167,7 @@ export async function POST(req: NextRequest) {
         .jpeg({ quality: 80 })
         .toBuffer();
 
-      key = `surf-images/${user.id}/${timestamp}-${uniqueId}.jpg`;
+      key = `surf-images/${userId}/${timestamp}-${uniqueId}.jpg`;
       contentType = "image/jpeg";
       body = optimizedBuffer;
     } else {

@@ -292,9 +292,15 @@ export async function compressVideoIfNeeded(
     video.onloadedmetadata = async () => {
       if (isResolved) return; // Prevent multiple calls
       try {
-        // Calculate target dimensions (max 1280px width/height to reduce file size)
+        // Determine target fps based on video duration (earlier = faster compression)
+        // Shorter videos can use higher fps, longer videos use lower fps for speed
+        const duration = video.duration;
+        const targetFps = duration > 60 ? 15 : 20; // Lower fps for longer videos
+
+        // Calculate target dimensions (max 1080px width/height for faster compression)
+        // Lower resolution = faster compression while still maintaining good quality
         let { videoWidth, videoHeight } = video;
-        const maxDimension = 1280;
+        const maxDimension = 1080; // Reduced from 1280 for faster compression
         let targetWidth = videoWidth;
         let targetHeight = videoHeight;
 
@@ -347,10 +353,12 @@ export async function compressVideoIfNeeded(
         }
 
         // Create a stream from the canvas
-        const stream = canvas.captureStream(30); // 30 fps
+        // Using adaptive fps based on video duration (calculated earlier)
+        // Reduced from 30 fps to 15-20 fps for faster compression
+        const stream = canvas.captureStream(targetFps);
         mediaRecorder = new MediaRecorder(stream, {
           mimeType: selectedCodec,
-          videoBitsPerSecond: 2000000, // 2 Mbps - lower bitrate for smaller files
+          videoBitsPerSecond: 1500000, // Reduced from 2 Mbps to 1.5 Mbps for faster compression
         });
 
         mediaRecorder.ondataavailable = (event) => {
@@ -396,10 +404,15 @@ export async function compressVideoIfNeeded(
         };
 
         // Draw video frames to canvas and record
-        const duration = video.duration;
+        // Note: duration is already available from earlier calculation
         let lastProgressTime = Date.now();
         let lastProgressValue = 0;
         const PROGRESS_STALL_TIMEOUT = 30000; // 30 seconds without progress = stuck
+
+        // Frame skipping for faster compression
+        // Only draw every Nth frame to speed up compression significantly
+        let frameSkipCounter = 0;
+        const frameSkipRate = targetFps <= 15 ? 1 : 2; // Skip every 2nd frame if fps > 15
 
         // Function to check if compression has stalled
         const checkProgressStall = () => {
@@ -459,9 +472,15 @@ export async function compressVideoIfNeeded(
             return;
           }
 
-          ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+          // Frame skipping for faster compression
+          // Only draw every Nth frame (skip intermediate frames)
+          // This significantly speeds up compression while maintaining acceptable quality
+          frameSkipCounter++;
+          if (frameSkipCounter % frameSkipRate === 0) {
+            ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+          }
 
-          // Update progress
+          // Update progress (check every frame for smoother progress updates)
           if (
             onProgress &&
             duration > 0 &&

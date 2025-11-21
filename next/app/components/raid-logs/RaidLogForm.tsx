@@ -571,14 +571,51 @@ export function RaidLogForm({
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
+          credentials: "include", // Include cookies for authentication
         });
 
         if (!response.ok) {
-          throw new Error("Failed to upload image");
+          const errorData = await response.json().catch(() => ({}));
+          let errorMessage =
+            errorData.error || errorData.message || "Failed to upload image";
+
+          // Provide more specific error messages
+          if (response.status === 401) {
+            errorMessage =
+              errorData.error ||
+              "Authentication failed. Please log in again to upload images.";
+          } else if (response.status === 413) {
+            const fileSizeMB = (selectedImage.size / (1024 * 1024)).toFixed(2);
+            errorMessage =
+              errorData.error ||
+              `Image file is too large (${fileSizeMB}MB). Maximum allowed size is 5MB.`;
+          } else if (response.status === 400) {
+            errorMessage =
+              errorData.error ||
+              "Invalid image file. Please select a valid image file.";
+          }
+
+          console.error(
+            "[RaidLogForm] Image upload error:",
+            errorMessage,
+            errorData,
+            `Status: ${response.status}`
+          );
+          toast.error(`Image upload failed: ${errorMessage}`);
+          setIsSubmitting(false);
+          return;
         }
 
         const data = await response.json();
         uploadedImageUrl = data.imageUrl;
+        if (!uploadedImageUrl) {
+          console.warn(
+            "[RaidLogForm] Image upload succeeded but no imageUrl returned"
+          );
+          toast.warning(
+            "Image uploaded but URL not received. Log will be created without image."
+          );
+        }
       }
 
       // Upload video if selected
@@ -605,6 +642,7 @@ export function RaidLogForm({
           const response = await fetch("/api/upload", {
             method: "POST",
             body: formData,
+            credentials: "include", // Include cookies for authentication
           });
 
           if (!response.ok) {
