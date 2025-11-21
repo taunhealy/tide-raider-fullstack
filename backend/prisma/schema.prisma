@@ -4,9 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
-
 
 model AdRequest {
   id                    String         @id
@@ -155,29 +153,30 @@ model Event {
 }
 
 model LogEntry {
-  id           String     @id @default(uuid())
-  date         DateTime   @db.Date
-  surferName   String?
-  surferEmail  String?
-  beachName    String?
-  surferRating Int        @default(0)
-  comments     String?
-  imageUrl     String?
-  videoUrl     String?
+  id            String   @id @default(uuid())
+  date          DateTime @db.Date
+  surferName    String?
+  surferEmail   String?
+  beachName     String?
+  surferRating  Int      @default(0)
+  comments      String?
+  imageUrl      String?
+  imageUrls     Json? // Array of image URLs for multiple images support
+  videoUrl      String?
   videoPlatform String?
-  isPrivate    Boolean    @default(false)
-  isAnonymous  Boolean    @default(false)
-  waveType     String?
-  beachId      String?
-  userId       String?    @map("user_id")
-  regionId     String
-  forecastId   String?
-  
-  beach        Beach?     @relation(fields: [beachId], references: [id])
-  region       Region     @relation(fields: [regionId], references: [id])
-  forecast     Forecast?  @relation(fields: [forecastId], references: [id])
-  user         User?      @relation(fields: [userId], references: [id])
-  alerts       Alert[]
+  isPrivate     Boolean  @default(false)
+  isAnonymous   Boolean  @default(false)
+  waveType      String?
+  beachId       String?
+  userId        String?  @map("user_id")
+  regionId      String
+  forecastId    String?
+
+  beach    Beach?    @relation(fields: [beachId], references: [id])
+  region   Region    @relation(fields: [regionId], references: [id])
+  forecast Forecast? @relation(fields: [forecastId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id])
+  alerts   Alert[]
 
   @@index([regionId])
   @@index([beachId])
@@ -249,17 +248,17 @@ model BeachDailyScore {
   regionId   String
   region     Region   @relation(fields: [regionId], references: [id])
   score      Int      @default(0)
-  starRating Int?     // Star rating 1-5, calculated from score (score / 2, clamped to 1-5)
-  conditions Json     
+  starRating Int? // Star rating 1-5, calculated from score (score / 2, clamped to 1-5)
+  conditions Json
   date       DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   beach      Beach    @relation(fields: [beachId], references: [id])
 
+  @@unique([beachId, date])
   @@index([regionId])
   @@index([beachId, date])
   @@index([starRating])
-  @@unique([beachId, date])
 }
 
 model Beach {
@@ -540,21 +539,21 @@ model RentalChatMessage {
 }
 
 model Region {
-  id         String      @id
-  name       String
-  countryId  String
-  continent  String?
-  country    Country     @relation(fields: [countryId], references: [id])
-  forecasts  Forecast[]
-  ads        Ad[]
-  adRequests AdRequest[]
-  beaches    Beach[]
-  events     Event[]
-  stories    Story[]
-  alerts     Alert[]
+  id               String            @id
+  name             String
+  countryId        String
+  continent        String?
+  country          Country           @relation(fields: [countryId], references: [id])
+  forecasts        Forecast[]
+  ads              Ad[]
+  adRequests       AdRequest[]
+  beaches          Beach[]
+  events           Event[]
+  stories          Story[]
+  alerts           Alert[]
   beachDailyScores BeachDailyScore[]
-  logEntries LogEntry[]
-  searches   UserSearch[]
+  logEntries       LogEntry[]
+  searches         UserSearch[]
 }
 
 model Comment {
@@ -581,7 +580,7 @@ model AdClick {
 model Alert {
   id                 String              @id @default(uuid())
   name               String
-  beachId            String?             
+  beachId            String?
   beach              Beach?              @relation(fields: [beachId], references: [id])
   regionId           String
   region             Region              @relation(fields: [regionId], references: [id])
@@ -630,7 +629,7 @@ model AlertNotification {
   beachId       String?
   beachName     String?
   region        String?
-  alert         Alert    @relation("AlertNotifications", fields: [alertId], references: [id], onDelete: Cascade)
+  alert         Alert          @relation("AlertNotifications", fields: [alertId], references: [id], onDelete: Cascade)
   notifications Notification[]
 
   @@index([alertId])
@@ -666,8 +665,8 @@ model Notification {
 }
 
 model Continent {
-  id       String    @id
-  name     String
+  id        String    @id
+  name      String
   countries Country[]
 }
 
@@ -681,14 +680,14 @@ model Country {
 }
 
 model SponsorGlobal {
-  id          String   @id @default(cuid())
-  name        String
-  logo        String   // URL to logo image
-  link        String   // URL to sponsor's website
-  isActive    Boolean  @default(true)
-  order       Int      // For controlling display order
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  logo      String // URL to logo image
+  link      String // URL to sponsor's website
+  isActive  Boolean  @default(true)
+  order     Int // For controlling display order
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum SkillLevel {
@@ -751,12 +750,12 @@ enum RequestStatus {
 }
 
 model AlertProperty {
-  id           String   @id @default(uuid())
+  id           String @id @default(uuid())
   alertId      String
-  property     String   // e.g. "windSpeed", "swellHeight"
+  property     String // e.g. "windSpeed", "swellHeight"
   optimalValue Float
   range        Float
-  alert        Alert    @relation(fields: [alertId], references: [id])
+  alert        Alert  @relation(fields: [alertId], references: [id])
 
   @@index([alertId])
 }
@@ -768,11 +767,11 @@ enum AlertType {
 
 model UserSearch {
   id        String   @id @default(cuid())
-  userId    String?  // Optional, for when we have authenticated users
+  userId    String? // Optional, for when we have authenticated users
   regionId  String
   region    Region   @relation(fields: [regionId], references: [id])
   createdAt DateTime @default(now())
-  
+
   @@index([userId])
   @@index([createdAt])
 }

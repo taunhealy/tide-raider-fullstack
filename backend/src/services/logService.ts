@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class LogService {
   /**
@@ -209,6 +209,7 @@ export class LogService {
           isAnonymous: true,
           waveType: true,
           imageUrl: true,
+          imageUrls: true, // Include imageUrls array for multiple images
           videoUrl: true,
           videoPlatform: true,
           userId: true,
@@ -460,6 +461,7 @@ export class LogService {
           isAnonymous: true,
           waveType: true,
           imageUrl: true,
+          imageUrls: true, // Include imageUrls array for multiple images
           videoUrl: true,
           videoPlatform: true,
           userId: true,
@@ -546,6 +548,7 @@ export class LogService {
       surferRating: number;
       comments?: string;
       imageUrl?: string;
+      imageUrls?: string[]; // Array of image URLs
       videoUrl?: string;
       videoPlatform?: string;
       isPrivate?: boolean;
@@ -609,6 +612,12 @@ export class LogService {
         isPrivate: data.isPrivate ?? false,
         isAnonymous: data.isAnonymous ?? false,
         imageUrl: data.imageUrl,
+        imageUrls:
+          data.imageUrls && data.imageUrls.length > 0
+            ? Array.isArray(data.imageUrls)
+              ? data.imageUrls
+              : [data.imageUrls]
+            : undefined,
         videoUrl: data.videoUrl,
         videoPlatform: data.videoPlatform,
         waveType: data.waveType,
@@ -661,6 +670,7 @@ export class LogService {
       isPrivate?: boolean;
       isAnonymous?: boolean;
       imageUrl?: string;
+      imageUrls?: string[]; // Array of image URLs
       videoUrl?: string;
       videoPlatform?: string;
       waveType?: string;
@@ -744,6 +754,14 @@ export class LogService {
       }),
       ...(updateData.imageUrl !== undefined && {
         imageUrl: updateData.imageUrl,
+      }),
+      ...(updateData.imageUrls !== undefined && {
+        imageUrls:
+          updateData.imageUrls && updateData.imageUrls.length > 0
+            ? Array.isArray(updateData.imageUrls)
+              ? updateData.imageUrls
+              : [updateData.imageUrls]
+            : Prisma.JsonNull,
       }),
       ...(updateData.videoUrl !== undefined && {
         videoUrl: updateData.videoUrl,

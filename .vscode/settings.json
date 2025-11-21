@@ -1,0 +1,13 @@
+{
+  "prisma.schema.validate": false,
+  "prisma.fileWatcher": false,
+  "prisma.prismaFmt": {
+    "path": "node_modules/prisma/prisma-fmt"
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "files.associations": {
+    "*.prisma": "prisma"
+  }
+}
