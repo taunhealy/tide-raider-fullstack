@@ -19,6 +19,48 @@ const getBackendUrl = () => {
 const BACKEND_URL = getBackendUrl();
 
 /**
+ * Proxy request to backend (fallback when Prisma not available)
+ */
+async function proxyToBackend(req: NextRequest, method: string, body?: any) {
+  try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+
+    // If body not provided, read from request
+    const requestBody =
+      body ||
+      (method === "POST" || method === "PUT" ? await req.json() : undefined);
+
+    const response = await fetch(`${BACKEND_URL}/api/raid-logs`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: cookieStore.toString(),
+      },
+      credentials: "include",
+      ...(requestBody && { body: JSON.stringify(requestBody) }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        error: "Failed to create log",
+      }));
+      return NextResponse.json(errorData, { status: response.status });
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error proxying to backend:", error);
+    return NextResponse.json(
+      { error: "Failed to create log" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * Get authenticated user from backend auth token
  */
 async function getAuthenticatedUser() {
@@ -137,17 +179,28 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/raid-logs
- * Create log entry directly using Prisma
+ * Create log entry directly using Prisma (if DATABASE_URL is set)
+ * Otherwise, fall back to proxying to backend
  */
 export async function POST(req: NextRequest) {
   try {
+    // Read body once (can only be read once)
+    const body = await req.json();
+
+    // Check if we can use Prisma directly (DATABASE_URL must be set)
+    const canUsePrisma = !!process.env.DATABASE_URL;
+
+    if (!canUsePrisma) {
+      // Fall back to proxying to backend
+      console.log("[raid-logs] DATABASE_URL not set, proxying to backend");
+      return proxyToBackend(req, "POST", body);
+    }
+
     // Get authenticated user
     const user = await getAuthenticatedUser();
     if (!user || !user.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const body = await req.json();
     const {
       date,
       surferEmail,

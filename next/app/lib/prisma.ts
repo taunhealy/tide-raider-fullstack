@@ -33,14 +33,18 @@ function getPrisma() {
 
   // Skip Prisma initialization during build
   // Vercel sets NEXT_PHASE during build, and we can also check for other build indicators
-  if (
-    process.env.NEXT_PHASE === "phase-production-build" ||
-    process.env.VERCEL_ENV === "production" ||
-    !process.env.DATABASE_URL
-  ) {
+  if (process.env.NEXT_PHASE === "phase-production-build") {
     // During build, Prisma client might not be available
     // Return stub to allow build to complete
     return createStubPrisma();
+  }
+
+  // Check if DATABASE_URL is set (but don't fail if it's not - might be using backend)
+  if (!process.env.DATABASE_URL) {
+    console.warn(
+      "[prisma] DATABASE_URL not set. Prisma operations will fail. Make sure DATABASE_URL is configured."
+    );
+    // Don't return stub here - let it try to initialize and fail with a better error
   }
 
   // Lazy import to avoid build-time errors
@@ -48,6 +52,11 @@ function getPrisma() {
     if (!PrismaClient) {
       // Use dynamic require with type assertion to avoid build-time type checking
       const prismaModule = require("@prisma/client") as any;
+      if (!prismaModule || !prismaModule.PrismaClient) {
+        throw new Error(
+          "Prisma client not generated. Run: npm run prisma:generate"
+        );
+      }
       PrismaClient = prismaModule.PrismaClient;
     }
 
@@ -70,9 +79,20 @@ function getPrisma() {
     }
 
     return prismaInstance;
-  } catch (error) {
-    // Prisma client not available (e.g., during build)
-    return createStubPrisma();
+  } catch (error: any) {
+    // Log the actual error for debugging
+    console.error("[prisma] Failed to initialize Prisma client:", error);
+    console.error("[prisma] Error details:", {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      nodeEnv: process.env.NODE_ENV,
+    });
+    // Prisma client not available (e.g., during build or not generated)
+    throw new Error(
+      `Prisma client initialization failed: ${error?.message || "Unknown error"}. Make sure DATABASE_URL is set and Prisma client is generated (npm run prisma:generate).`
+    );
   }
 }
 
@@ -83,7 +103,7 @@ function createStubPrisma() {
     {
       get() {
         throw new Error(
-          "Prisma client is not available. This file should not be used in the frontend. Use the backend API instead."
+          "Prisma client is not available during build. This should only happen during Next.js build phase."
         );
       },
     }
