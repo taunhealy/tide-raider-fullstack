@@ -47,23 +47,9 @@ export const createRaidLogSchema = z.object({
       swellHeight: z.number().optional(),
       swellPeriod: z.number().optional(),
       swellDirection: z.number().optional(),
-      // Legacy format support (for backwards compatibility)
-      wind: z
-        .object({
-          speed: z.number(),
-          direction: z.string(),
-        })
-        .optional(),
-      swell: z
-        .object({
-          height: z.number(),
-          period: z.number(),
-          direction: z.string(),
-          cardinalDirection: z.string().optional(),
-        })
-        .optional(),
-      timestamp: z.number().optional(),
+      // Legacy format support (for backwards compatibility) - use passthrough to ignore if present
     })
+    .passthrough()
     .optional(),
   continent: z.string().optional(),
   country: z.string().optional(),
