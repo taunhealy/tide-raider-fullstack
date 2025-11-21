@@ -78,16 +78,14 @@ export async function POST(req: NextRequest) {
 
     // Create PutObject command
     // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
+    // Only include essential parameters in presigned URL to avoid signature mismatches
+    // Metadata and CacheControl can cause issues if client doesn't send them exactly
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
       ContentType: contentType,
-      // Remove ACL - R2 doesn't support it, use bucket policy for public access instead
-      CacheControl: "public, max-age=31536000, immutable",
-      Metadata: {
-        "upload-timestamp": timestamp.toString(),
-        "file-type": fileType.startsWith("video/") ? "video" : "image",
-      },
+      // Removed CacheControl and Metadata from presigned URL to prevent signature mismatches
+      // These can be set via a separate API call if needed, or rely on bucket defaults
     });
 
     // Generate presigned URL (valid for 5 minutes)
