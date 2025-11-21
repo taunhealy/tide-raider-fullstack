@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { prisma } from "@/app/lib/prisma";
 
 // Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
@@ -17,81 +16,6 @@ const getBackendUrl = () => {
 };
 
 const BACKEND_URL = getBackendUrl();
-
-/**
- * Proxy request to backend (fallback when Prisma not available)
- */
-async function proxyToBackend(req: NextRequest, method: string, body?: any) {
-  try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
-
-    // If body not provided, read from request
-    const requestBody =
-      body ||
-      (method === "POST" || method === "PUT" ? await req.json() : undefined);
-
-    const response = await fetch(`${BACKEND_URL}/api/raid-logs`, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        Cookie: cookieStore.toString(),
-      },
-      credentials: "include",
-      ...(requestBody && { body: JSON.stringify(requestBody) }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        error: "Failed to create log",
-      }));
-      return NextResponse.json(errorData, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error proxying to backend:", error);
-    return NextResponse.json(
-      { error: "Failed to create log" },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * Get authenticated user from backend auth token
- */
-async function getAuthenticatedUser() {
-  try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
-
-    if (!authToken) {
-      return null;
-    }
-
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-        Cookie: cookieStore.toString(),
-      },
-      credentials: "include",
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.user;
-  } catch (error) {
-    console.error("[getAuthenticatedUser] Error:", error);
-    return null;
-  }
-}
 
 /**
  * GET /api/raid-logs
@@ -179,163 +103,106 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/raid-logs
- * Create log entry directly using Prisma (if DATABASE_URL is set)
- * Otherwise, fall back to proxying to backend
+ * Proxy to backend /api/raid-logs
  */
 export async function POST(req: NextRequest) {
   try {
-    // Read body once (can only be read once)
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
     const body = await req.json();
 
-    // Check if we can use Prisma directly (DATABASE_URL must be set)
-    const canUsePrisma = !!process.env.DATABASE_URL;
+    // Clean forecast data - remove legacy fields that cause validation errors
+    let cleanedBody = { ...body };
 
-    if (!canUsePrisma) {
-      // Fall back to proxying to backend
-      console.log("[raid-logs] DATABASE_URL not set, proxying to backend");
-      return proxyToBackend(req, "POST", body);
-    }
+    if (cleanedBody.forecast && typeof cleanedBody.forecast === "object") {
+      // Remove legacy fields that cause validation errors
+      const { wind, swell, timestamp, ...cleanForecast } = cleanedBody.forecast;
 
-    // Get authenticated user
-    const user = await getAuthenticatedUser();
-    if (!user || !user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const {
-      date,
-      surferEmail,
-      surferName,
-      beachName,
-      regionId,
-      surferRating,
-      comments,
-      isPrivate,
-      isAnonymous,
-      imageUrl,
-      imageUrls,
-      videoUrl,
-      videoPlatform,
-      forecastId,
-      forecast,
-      beachId,
-    } = body;
+      // Only keep new-format fields
+      const allowedFields = [
+        "id",
+        "date",
+        "windSpeed",
+        "windDirection",
+        "swellHeight",
+        "swellPeriod",
+        "swellDirection",
+      ];
 
-    // Validate required fields
-    if (!date || !regionId) {
-      return NextResponse.json(
-        { error: "Missing required fields: date and regionId are required" },
-        { status: 400 }
-      );
-    }
+      const finalForecast: any = {};
+      for (const key of allowedFields) {
+        if (cleanForecast[key] !== undefined) {
+          finalForecast[key] = cleanForecast[key];
+        }
+      }
 
-    // Handle forecast: create if provided, or use existing forecastId
-    let finalForecastId: string | undefined = forecastId;
-
-    if (!finalForecastId && forecast && typeof forecast === "object") {
-      // Create new forecast if forecast data is provided
-      const forecastDate = forecast.date
-        ? new Date(forecast.date)
-        : new Date(date);
-
-      // Check if forecast already exists for this date/region
-      const existingForecast = await prisma.forecastA.findUnique({
-        where: {
-          date_regionId: {
-            date: forecastDate,
-            regionId: regionId,
-          },
-        },
-      });
-
-      if (existingForecast) {
-        finalForecastId = existingForecast.id;
+      // If we have forecastId, don't send forecast object at all
+      if (cleanedBody.forecastId) {
+        delete cleanedBody.forecast;
+      } else if (Object.keys(finalForecast).length > 0) {
+        cleanedBody.forecast = finalForecast;
       } else {
-        // Create new forecast
-        const newForecast = await prisma.forecastA.create({
-          data: {
-            date: forecastDate,
-            regionId: regionId,
-            windSpeed: forecast.windSpeed ?? 0,
-            windDirection: forecast.windDirection ?? 0,
-            swellHeight: forecast.swellHeight ?? 0,
-            swellPeriod: forecast.swellPeriod ?? 0,
-            swellDirection: forecast.swellDirection ?? 0,
-          },
-        });
-        finalForecastId = newForecast.id;
+        delete cleanedBody.forecast;
       }
     }
 
-    // Get or create user in database
-    let dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
+    // Final safety check: Remove forecast if forecastId exists
+    if (cleanedBody.forecastId && cleanedBody.forecast) {
+      delete cleanedBody.forecast;
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/raid-logs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: cookieStore.toString(),
+      },
+      credentials: "include",
+      body: JSON.stringify(cleanedBody),
     });
 
-    if (!dbUser) {
-      // Create user if doesn't exist
-      dbUser = await prisma.user.create({
-        data: {
-          email: user.email,
-          name: user.name || surferName || "Anonymous Surfer",
-          image: user.image,
+    if (!response.ok) {
+      // Try to get error message from backend
+      const errorData = await response.json().catch(() => ({
+        message: "Failed to create log",
+      }));
+      console.error("[raid-logs] Backend error:", errorData);
+
+      // Extract validation errors if present
+      let errorMessage =
+        errorData.message || errorData.error || "Failed to create log";
+
+      // If it's a validation error, try to extract more details
+      if (response.status === 400 && errorData.details) {
+        // Validation middleware returns details array with path and message
+        const validationErrors = errorData.details
+          .map((detail: any) => {
+            const path = detail.path || "field";
+            return `${path}: ${detail.message}`;
+          })
+          .join(", ");
+        errorMessage = `Validation failed: ${validationErrors}`;
+      } else if (response.status === 400 && errorData.error) {
+        // Other validation errors
+        errorMessage = errorData.error;
+      }
+
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          details: errorData.issues || errorData.details,
         },
-      });
+        { status: response.status }
+      );
     }
 
-    // Create log entry
-    const logEntry = await prisma.logEntry.create({
-      data: {
-        date: new Date(date),
-        surferEmail: surferEmail || user.email,
-        surferName: isAnonymous
-          ? "Anonymous"
-          : surferName || user.name || "Anonymous Surfer",
-        beachName: beachName || undefined,
-        surferRating: surferRating ?? 0,
-        comments: comments || undefined,
-        isPrivate: isPrivate ?? false,
-        isAnonymous: isAnonymous ?? false,
-        imageUrl: imageUrl || undefined,
-        imageUrls: imageUrls && imageUrls.length > 0 ? imageUrls : undefined,
-        videoUrl: videoUrl || undefined,
-        videoPlatform: videoPlatform || undefined,
-        regionId: regionId,
-        beachId: beachId || undefined,
-        forecastId: finalForecastId || undefined,
-        userId: dbUser.id,
-      },
-      include: {
-        beach: true,
-        region: true,
-        forecast: true,
-      },
-    });
-
-    return NextResponse.json(logEntry);
-  } catch (error: any) {
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
     console.error("Error creating raid log:", error);
-
-    // Handle Prisma unique constraint errors
-    if (error.code === "P2002") {
-      return NextResponse.json(
-        { error: "A log entry with these details already exists" },
-        { status: 409 }
-      );
-    }
-
-    // Handle Prisma foreign key errors
-    if (error.code === "P2003") {
-      return NextResponse.json(
-        { error: "Invalid reference (beach, region, or forecast not found)" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      {
-        error: "Failed to create log",
-        message: error.message,
-      },
+      { error: "Failed to create log" },
       { status: 500 }
     );
   }
