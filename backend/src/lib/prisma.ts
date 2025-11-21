@@ -32,8 +32,8 @@ if (
 const prismaConfig = {
   log:
     process.env.NODE_ENV === "development"
-      ? ["query", "error", "warn"]
-      : ["error"],
+      ? (["query", "error", "warn"] as ("query" | "error" | "warn")[])
+      : (["error"] as ("error")[]),
   ...(optimizedDatabaseUrl && {
     datasources: {
       db: {
@@ -43,7 +43,8 @@ const prismaConfig = {
   }),
 };
 
-export const prisma = globalForPrisma.prisma || new PrismaClient(prismaConfig as any);
+export const prisma =
+  globalForPrisma.prisma || new PrismaClient(prismaConfig as any);
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
