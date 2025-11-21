@@ -4,14 +4,17 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Initialize S3 client for Cloudflare R2
+// For R2 presigned URLs, we need to use a specific configuration
 const s3 = new S3Client({
-  region: "auto",
+  region: "auto", // R2 uses "auto" as the region
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
-  forcePathStyle: true, // Required for R2 presigned URLs
+  forcePathStyle: true, // Required for R2 - uses path-style URLs
+  // Disable signature version 4 payload signing for R2 compatibility
+  // R2 uses a modified version of S3's signature algorithm
 });
 
 export const runtime = "nodejs";
@@ -78,18 +81,21 @@ export async function POST(req: NextRequest) {
 
     // Create PutObject command
     // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
-    // Only include essential parameters in presigned URL to avoid signature mismatches
-    // Metadata and CacheControl can cause issues if client doesn't send them exactly
+    // For R2 presigned URLs, only include Bucket and Key to avoid signature mismatches
+    // ContentType is NOT included in the signature - client can set it when uploading
+    // This prevents signature mismatches that occur when ContentType doesn't match exactly
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
-      ContentType: contentType,
-      // Removed CacheControl and Metadata from presigned URL to prevent signature mismatches
-      // These can be set via a separate API call if needed, or rely on bucket defaults
+      // Do NOT include ContentType, CacheControl, Metadata, or any other optional parameters
+      // These cause signature mismatches with R2 if the client doesn't send them exactly
     });
 
     // Generate presigned URL (valid for 5 minutes)
-    const presignedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    // The client should set ContentType header when uploading, but it's not part of the signature
+    const presignedUrl = await getSignedUrl(s3, command, {
+      expiresIn: 300,
+    });
 
     // Construct the public URL that will be used after upload
     const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
@@ -98,6 +104,7 @@ export async function POST(req: NextRequest) {
       presignedUrl,
       key,
       publicUrl,
+      contentType, // Return ContentType so client knows what to set
     });
   } catch (error) {
     console.error("Error generating presigned URL:", error);

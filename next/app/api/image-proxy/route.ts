@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const response = await s3.send(command);
     const buffer = await response.Body?.transformToByteArray();
 
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer ? Buffer.from(buffer) : null, {
       headers: {
         "Content-Type": response.ContentType || "image/jpeg",
         "Cache-Control": "public, max-age=31536000, immutable",
