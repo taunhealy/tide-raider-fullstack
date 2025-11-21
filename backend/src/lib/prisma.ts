@@ -7,8 +7,15 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 // Prisma default: connection_limit = num_physical_cpus * 2 + 1
 // For serverless/edge: use smaller pool
 let optimizedDatabaseUrl = process.env.DATABASE_URL;
+
+// Validate DATABASE_URL is present
+if (!optimizedDatabaseUrl) {
+  console.error("❌ DATABASE_URL environment variable is not set!");
+  throw new Error("DATABASE_URL is required but was not provided");
+}
+
 if (
-  optimizedDatabaseUrl &&
+  typeof optimizedDatabaseUrl === "string" &&
   !optimizedDatabaseUrl.includes("?connection_limit")
 ) {
   try {
@@ -25,21 +32,24 @@ if (
     }
   } catch (e) {
     // URL parsing failed, use original
-    console.warn("Could not parse DATABASE_URL for connection optimization");
+    console.warn(
+      "Could not parse DATABASE_URL for connection optimization:",
+      e
+    );
   }
 }
 
 // Prisma Client configuration
-// Don't pass datasources - let Prisma read DATABASE_URL from environment automatically
-const prismaConfig = {
-  log:
-    process.env.NODE_ENV === "development"
-      ? (["query", "error", "warn"] as ("query" | "error" | "warn")[])
-      : (["error"] as "error"[]),
-};
-
+// Initialize with minimal config to avoid path resolution issues
+// Prisma will read DATABASE_URL from environment automatically
 export const prisma =
-  globalForPrisma.prisma || new PrismaClient(prismaConfig);
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
