@@ -881,6 +881,57 @@ export default function RaidLogTable({
                     />
                   </div>
 
+                  {/* Conditions - Right under star rating */}
+                  {entry.forecast && (
+                    <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5">
+                      <div className="flex flex-wrap gap-1.5">
+                        {typeof entry.forecast.windSpeed === "number" && (
+                          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                            <span className="mr-1">
+                              {getGatedEmoji(
+                                getWindEmoji(entry.forecast.windSpeed)
+                              )}
+                            </span>
+                            <span>{entry.forecast.windSpeed}kts</span>
+                          </div>
+                        )}
+
+                        {typeof entry.forecast.windDirection === "number" && (
+                          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                            <span>
+                              {degreesToCardinal(entry.forecast.windDirection)}
+                            </span>
+                          </div>
+                        )}
+
+                        {typeof entry.forecast.swellHeight === "number" && (
+                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                            <span className="mr-1">
+                              {getGatedEmoji(
+                                getSwellEmoji(entry.forecast.swellHeight)
+                              )}
+                            </span>
+                            <span>{entry.forecast.swellHeight}m</span>
+                          </div>
+                        )}
+
+                        {typeof entry.forecast.swellPeriod === "number" && (
+                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                            <span>{entry.forecast.swellPeriod}s</span>
+                          </div>
+                        )}
+
+                        {typeof entry.forecast.swellDirection === "number" && (
+                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+                            <span>
+                              {degreesToCardinal(entry.forecast.swellDirection)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-sm font-primary">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-gray-600">Logger:</span>
@@ -889,61 +940,6 @@ export default function RaidLogTable({
                         isAnonymous={entry.isAnonymous ?? false}
                       />
                     </div>
-
-                    {/* Forecast info with badges */}
-                    {entry.forecast && (
-                      <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5 inline-block">
-                        <div className="flex flex-wrap gap-1.5">
-                          {entry.forecast.windSpeed != null && (
-                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span className="mr-1">
-                                {getGatedEmoji(
-                                  getWindEmoji(entry.forecast.windSpeed)
-                                )}
-                              </span>
-                              <span>{entry.forecast.windSpeed}kts</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.windDirection != null && (
-                            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>
-                                {degreesToCardinal(
-                                  entry.forecast.windDirection
-                                )}
-                              </span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellHeight != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span className="mr-1">
-                                {getGatedEmoji(
-                                  getSwellEmoji(entry.forecast.swellHeight)
-                                )}
-                              </span>
-                              <span>{entry.forecast.swellHeight}m</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellPeriod != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>{entry.forecast.swellPeriod}s</span>
-                            </div>
-                          )}
-
-                          {entry.forecast.swellDirection != null && (
-                            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                              <span>
-                                {degreesToCardinal(
-                                  entry.forecast.swellDirection
-                                )}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {entry.comments && (
