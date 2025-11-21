@@ -157,17 +157,23 @@ function ForecastInfo({
 }) {
   const router = useRouter();
 
-  // Debug logging in development
-  if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
-    console.log(`[ForecastInfo] Entry ${entry.id}:`, {
-      forecast,
-      hasForecast: !!forecast,
-      windSpeed: forecast?.windSpeed,
-      windSpeedType: typeof forecast?.windSpeed,
-      swellHeight: forecast?.swellHeight,
-      swellHeightType: typeof forecast?.swellHeight,
-    });
-  }
+  // Debug logging - always log to help diagnose
+  useEffect(() => {
+    console.log(
+      `[ForecastInfo] Entry ${entry.id} (${entry.beachName || "Unknown"}):`,
+      {
+        forecast,
+        hasForecast: !!forecast,
+        windSpeed: forecast?.windSpeed,
+        windSpeedType: typeof forecast?.windSpeed,
+        windDirection: forecast?.windDirection,
+        swellHeight: forecast?.swellHeight,
+        swellHeightType: typeof forecast?.swellHeight,
+        swellPeriod: forecast?.swellPeriod,
+        swellDirection: forecast?.swellDirection,
+      }
+    );
+  }, [entry.id, forecast, entry.beachName]);
 
   const handleAlertClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
