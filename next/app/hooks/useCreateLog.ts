@@ -139,8 +139,8 @@ export function useCreateLog() {
       const finalVideoUrl =
         data.videoUrl && isValidUrl(data.videoUrl) ? data.videoUrl : "";
 
-      // Simple forecast handling: If we have forecastId, don't send forecast object
-      // Otherwise, only include new-format fields (never legacy wind/swell/timestamp)
+      // Simple rule: If forecastId exists, NEVER send forecast object (backend looks it up by ID)
+      // If no forecastId, only send new-format fields (windSpeed, swellHeight, etc.)
       let forecast: any = undefined;
 
       if (
@@ -149,7 +149,7 @@ export function useCreateLog() {
         typeof data.forecastData === "object" &&
         !data.forecastData.id
       ) {
-        // Only include new-format fields
+        // Build forecast with ONLY new-format fields
         forecast = {};
         if (data.forecastData.date) forecast.date = data.forecastData.date;
         if (data.forecastData.windSpeed !== undefined)
@@ -167,7 +167,7 @@ export function useCreateLog() {
         if (Object.keys(forecast).length === 0) forecast = undefined;
       }
 
-      let payload = {
+      const payload = {
         date: data.selectedDate,
         surferEmail: session.user.email || "",
         surferName: data.isAnonymous
@@ -179,15 +179,13 @@ export function useCreateLog() {
         comments: data.comments || "",
         isPrivate: data.isPrivate || false,
         isAnonymous: data.isAnonymous || false,
-        // Schema expects URL string or empty string, not null
         imageUrl: primaryImageUrl,
-        // Include imageUrls array only if it has valid URLs
         ...(validImageUrls.length > 0 && { imageUrls: validImageUrls }),
         videoUrl: finalVideoUrl,
         videoPlatform: data.videoPlatform || undefined,
         forecastId: forecastId,
-        ...(forecast && { forecast }),
-        // Only include beachId if it's a valid UUID
+        // Only include forecast if we don't have forecastId (forecastId takes precedence)
+        ...(!forecastId && forecast && { forecast }),
         ...(beachId && { beachId }),
       };
 
