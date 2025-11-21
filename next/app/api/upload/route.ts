@@ -50,6 +50,24 @@ const s3 = new S3Client({
   // Ensure we're using the correct signing configuration
 });
 
+// Add middleware to remove content-type header that causes signature mismatches with R2
+// The SDK automatically adds this header, but R2's signature calculation doesn't expect it
+s3.middlewareStack.add(
+  (next, context) => async (args: any) => {
+    // Remove content-type header from the request to avoid signature mismatch
+    if (args.request?.headers && typeof args.request.headers === "object") {
+      delete args.request.headers["content-type"];
+      delete args.request.headers["Content-Type"];
+    }
+    return next(args);
+  },
+  {
+    step: "build",
+    name: "removeContentTypeHeader",
+    priority: "high",
+  }
+);
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -186,10 +204,11 @@ export async function POST(req: NextRequest) {
     // For R2, we need to minimize parameters to avoid signature mismatches
     // ContentType is NOT included in the command - R2 will infer it from the file extension
     // This matches the approach used in the presigned URL route
+    // Ensure Body is a Buffer/Uint8Array (not a stream) for proper signing
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
-      Body: body,
+      Body: body instanceof Buffer ? body : Buffer.from(body),
       // Do NOT include ContentType - R2 signature calculation is sensitive to this
       // The ContentType will be inferred from the file extension (.webp, .mp4, etc.)
       // Removed CacheControl and Metadata to avoid signature issues
@@ -232,6 +251,18 @@ export async function POST(req: NextRequest) {
 
     try {
       console.log("[upload] Sending PutObjectCommand to R2...");
+      console.log("[upload] Command details:", {
+        bucket: process.env.R2_BUCKET_NAME,
+        key,
+        bodyType: body.constructor.name,
+        bodyLength: body.length,
+        endpoint: r2Endpoint,
+        hasCredentials: !!(
+          process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
+        ),
+        accessKeyPrefix: process.env.R2_ACCESS_KEY_ID?.substring(0, 8) + "...",
+      });
+
       await s3.send(command);
       console.log("[upload] ✅ Upload successful:", key);
     } catch (uploadError) {
