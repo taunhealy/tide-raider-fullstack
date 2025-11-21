@@ -157,6 +157,18 @@ function ForecastInfo({
 }) {
   const router = useRouter();
 
+  // Debug logging in development
+  if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+    console.log(`[ForecastInfo] Entry ${entry.id}:`, {
+      forecast,
+      hasForecast: !!forecast,
+      windSpeed: forecast?.windSpeed,
+      windSpeedType: typeof forecast?.windSpeed,
+      swellHeight: forecast?.swellHeight,
+      swellHeightType: typeof forecast?.swellHeight,
+    });
+  }
+
   const handleAlertClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!hasAccess) {
@@ -183,13 +195,28 @@ function ForecastInfo({
     return <span className="text-gray-400 text-xs">No conditions</span>;
   }
 
-  const hasWind = typeof forecast.windSpeed === "number";
-  const hasWindDirection = typeof forecast.windDirection === "number";
-  const hasSwell = typeof forecast.swellHeight === "number";
-  const hasSwellPeriod = typeof forecast.swellPeriod === "number";
-  const hasSwellDirection = typeof forecast.swellDirection === "number";
+  // Check if forecast has any valid numeric values (including 0)
+  const hasWind =
+    typeof forecast.windSpeed === "number" && forecast.windSpeed !== null;
+  const hasWindDirection =
+    typeof forecast.windDirection === "number" &&
+    forecast.windDirection !== null;
+  const hasSwell =
+    typeof forecast.swellHeight === "number" && forecast.swellHeight !== null;
+  const hasSwellPeriod =
+    typeof forecast.swellPeriod === "number" && forecast.swellPeriod !== null;
+  const hasSwellDirection =
+    typeof forecast.swellDirection === "number" &&
+    forecast.swellDirection !== null;
 
-  if (!hasWind && !hasSwell && !hasSwellPeriod) {
+  // If no valid values exist, show "No conditions"
+  if (
+    !hasWind &&
+    !hasWindDirection &&
+    !hasSwell &&
+    !hasSwellPeriod &&
+    !hasSwellDirection
+  ) {
     return <span className="text-gray-400 text-xs">No conditions</span>;
   }
 
