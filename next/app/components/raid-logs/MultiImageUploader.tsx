@@ -29,7 +29,9 @@ export function MultiImageUploader({
 
     const remainingSlots = maxImages - images.length;
     if (files.length > remainingSlots) {
-      alert(`You can only upload ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"}`);
+      alert(
+        `You can only upload ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"}`
+      );
       return;
     }
 
@@ -39,30 +41,49 @@ export function MultiImageUploader({
         files.map((file) => convertImageToWebP(file))
       );
 
-      // Upload all images
+      // Upload all images using presigned URLs (better for R2)
       const uploadPromises = convertedFiles.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "image");
-
-        const response = await fetch("/api/upload", {
+        // Step 1: Get presigned URL from server
+        const presignedResponse = await fetch("/api/upload/presigned", {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          }),
           credentials: "include",
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || errorData.message || "Failed to upload image";
-          // Include details if available (for debugging)
-          const fullError = errorData.details 
-            ? `${errorMessage} (${JSON.stringify(errorData.details)})`
-            : errorMessage;
-          throw new Error(fullError);
+        if (!presignedResponse.ok) {
+          const errorData = await presignedResponse.json().catch(() => ({}));
+          const errorMessage =
+            errorData.error || errorData.message || "Failed to get upload URL";
+          throw new Error(errorMessage);
         }
 
-        const data = await response.json();
-        return data.imageUrl;
+        const { presignedUrl, publicUrl, contentType } =
+          await presignedResponse.json();
+
+        // Step 2: Upload file directly to R2 using presigned URL
+        const uploadResponse = await fetch(presignedUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": contentType, // Must match exactly
+          },
+          body: file, // Send file directly, not FormData
+        });
+
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse
+            .text()
+            .catch(() => "Upload failed");
+          throw new Error(`Failed to upload to R2: ${errorText}`);
+        }
+
+        return publicUrl;
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
@@ -153,7 +174,8 @@ export function MultiImageUploader({
               className={cn(
                 "relative group aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 transition-all",
                 draggedIndex === index && "opacity-50 scale-95",
-                dragOverIndex === index && "border-[var(--color-tertiary)] scale-105"
+                dragOverIndex === index &&
+                  "border-[var(--color-tertiary)] scale-105"
               )}
             >
               <Image
@@ -197,4 +219,3 @@ export function MultiImageUploader({
     </div>
   );
 }
-
