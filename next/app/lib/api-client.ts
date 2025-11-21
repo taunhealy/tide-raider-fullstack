@@ -319,7 +319,27 @@ export const api = {
         );
         return [];
       }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // Handle 404 - backend route might not exist or backend not running
+      if (response.status === 404) {
+        console.error(
+          "[api-client] Regions endpoint returned 404 - backend might not be running or route not registered"
+        );
+        // Return empty array instead of throwing to prevent UI crashes
+        return [];
+      }
+      // For other errors, try to get error message
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // Ignore JSON parse errors
+      }
+      console.error("[api-client] Error fetching regions:", errorMessage);
+      // Return empty array instead of throwing to prevent UI crashes
+      return [];
     }
     const data = await response.json();
     // Ensure we return an array even if the response is malformed

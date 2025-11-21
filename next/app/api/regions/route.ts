@@ -44,7 +44,12 @@ export async function GET(req: NextRequest) {
 
     let response;
     try {
-      response = await fetch(`${BACKEND_URL}/api/regions${queryString}`, {
+      const backendUrl = `${BACKEND_URL}/api/regions${queryString}`;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[regions] Fetching from backend:", backendUrl);
+        console.log("[regions] BACKEND_URL:", BACKEND_URL);
+      }
+      response = await fetch(backendUrl, {
         headers: {
           ...(authToken && { Authorization: `Bearer ${authToken}` }),
           Cookie: cookieStore.toString(),
@@ -54,6 +59,9 @@ export async function GET(req: NextRequest) {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      if (process.env.NODE_ENV === "development") {
+        console.log("[regions] Backend response status:", response.status);
+      }
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
       // Handle connection errors (backend not running, network issues, etc.)
@@ -88,9 +96,19 @@ export async function GET(req: NextRequest) {
 
       // Handle 404 - backend might not have regions endpoint or it's down
       if (response.status === 404) {
-        console.warn(
-          "[regions] Backend returned 404, returning cached data or empty array"
+        console.error(
+          `[regions] Backend returned 404 for ${BACKEND_URL}/api/regions`
         );
+        console.error(
+          "[regions] This usually means: 1) Backend route not registered, 2) Backend not running, or 3) Wrong BACKEND_URL"
+        );
+        // Try to get error details from response
+        try {
+          const errorData = await response.json();
+          console.error("[regions] Backend error details:", errorData);
+        } catch (e) {
+          // Ignore JSON parse errors
+        }
         if (regionsCache) {
           return NextResponse.json(regionsCache.data);
         }

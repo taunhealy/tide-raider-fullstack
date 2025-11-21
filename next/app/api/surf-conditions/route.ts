@@ -41,6 +41,19 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
+
+    // Log forecast data for debugging
+    if (process.env.NODE_ENV === "development") {
+      console.log("[surf-conditions] Backend response:", {
+        hasForecast: !!data?.forecast,
+        forecastId: data?.forecast?.id,
+        forecastDate: data?.forecast?.date,
+        hasScores: !!data?.scores,
+        scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
+        queryParams: queryString,
+      });
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("[surf-conditions] Backend error:", error);

@@ -139,6 +139,67 @@ export function useCreateLog() {
       const finalVideoUrl =
         data.videoUrl && isValidUrl(data.videoUrl) ? data.videoUrl : "";
 
+      // Clean forecast object - remove ALL legacy fields to avoid validation errors
+      // Only send forecast if we have a forecastId OR if we have valid new-format data
+      // NEVER send legacy format (wind/swell/timestamp objects) - they cause validation errors
+      let cleanedForecast: any = undefined;
+      if (
+        data.forecastData &&
+        typeof data.forecastData === "object" &&
+        !data.forecastData.id
+      ) {
+        // Only include forecast if we don't have a forecastId (forecastId takes precedence)
+        // And only if we have valid new-format forecast data
+        const hasNewFormatData =
+          data.forecastData.windSpeed !== undefined ||
+          data.forecastData.windDirection !== undefined ||
+          data.forecastData.swellHeight !== undefined ||
+          data.forecastData.swellPeriod !== undefined ||
+          data.forecastData.swellDirection !== undefined;
+
+        if (hasNewFormatData && !forecastId) {
+          // Build forecast object with ONLY new format fields
+          // Explicitly exclude legacy fields (wind, swell, timestamp)
+          cleanedForecast = {};
+
+          if (data.forecastData.date) {
+            cleanedForecast.date = data.forecastData.date;
+          }
+          if (data.forecastData.windSpeed !== undefined) {
+            cleanedForecast.windSpeed = data.forecastData.windSpeed;
+          }
+          if (data.forecastData.windDirection !== undefined) {
+            cleanedForecast.windDirection = data.forecastData.windDirection;
+          }
+          if (data.forecastData.swellHeight !== undefined) {
+            cleanedForecast.swellHeight = data.forecastData.swellHeight;
+          }
+          if (data.forecastData.swellPeriod !== undefined) {
+            cleanedForecast.swellPeriod = data.forecastData.swellPeriod;
+          }
+          if (data.forecastData.swellDirection !== undefined) {
+            cleanedForecast.swellDirection = data.forecastData.swellDirection;
+          }
+
+          // Ensure legacy fields are NOT included (even if they exist in source data)
+          // This prevents validation errors
+          delete cleanedForecast.wind;
+          delete cleanedForecast.swell;
+          delete cleanedForecast.timestamp;
+
+          // Only include if we have at least one valid field
+          if (Object.keys(cleanedForecast).length === 0) {
+            cleanedForecast = undefined;
+          }
+        }
+      }
+
+      // If we have a forecastId, don't send forecast object at all
+      // The backend will use forecastId to look up the forecast
+      if (forecastId) {
+        cleanedForecast = undefined;
+      }
+
       const payload = {
         date: data.selectedDate,
         surferEmail: session.user.email || "",
@@ -158,10 +219,8 @@ export function useCreateLog() {
         videoUrl: finalVideoUrl,
         videoPlatform: data.videoPlatform || undefined,
         forecastId: forecastId,
-        // Also send forecast object for fallback lookup
-        ...(data.forecastData &&
-          typeof data.forecastData === "object" &&
-          !data.forecastData.id && { forecast: data.forecastData }),
+        // Send cleaned forecast object for fallback lookup (only if it has valid data)
+        ...(cleanedForecast && { forecast: cleanedForecast }),
         // Only include beachId if it's a valid UUID
         ...(beachId && { beachId }),
       };

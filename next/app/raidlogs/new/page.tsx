@@ -4,7 +4,7 @@ import { RaidLogForm } from "@/app/components/raid-logs/RaidLogForm";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
@@ -16,20 +16,43 @@ export default function NewRaidLogPage() {
   const [isProcessingToken, setIsProcessingToken] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [showRetrySuggestion, setShowRetrySuggestion] = useState(false);
+  const [backendHealth, setBackendHealth] = useState<{
+    available: boolean;
+    backendUrl?: string;
+    error?: string;
+  } | null>(null);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const loadingStartTimeRef = useRef<number | null>(null);
+
+  // Track when loading started
+  useEffect(() => {
+    if (authStatus === "loading" && !isProcessingToken) {
+      if (!loadingStartTimeRef.current) {
+        loadingStartTimeRef.current = Date.now();
+      }
+    } else {
+      loadingStartTimeRef.current = null;
+    }
+  }, [authStatus, isProcessingToken]);
 
   // Normal loading state with timeout indicator
-  // If loading for more than 10 seconds, show a message suggesting retry
+  // If loading for more than 7 seconds, show a message suggesting retry
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
       const retryTimeout = setTimeout(() => {
         setShowRetrySuggestion(true);
-      }, 10000); // Show retry suggestion after 10 seconds
+        // Also trigger timeout if it hasn't already
+        if (!authTimeout) {
+          setAuthTimeout(true);
+          checkBackendHealth();
+        }
+      }, 7000); // Show retry suggestion after 7 seconds
 
       return () => clearTimeout(retryTimeout);
     } else {
       setShowRetrySuggestion(false);
     }
-  }, [authStatus, isProcessingToken]);
+  }, [authStatus, isProcessingToken, authTimeout]);
 
   // Check if there's a token in the URL hash (OAuth callback)
   useEffect(() => {
@@ -113,23 +136,36 @@ export default function NewRaidLogPage() {
     }
   }, [authStatus, session]);
 
+  // Check backend health when auth times out
+  const checkBackendHealth = async () => {
+    setIsCheckingHealth(true);
+    try {
+      const response = await fetch("/api/backend-health");
+      const data = await response.json();
+      setBackendHealth(data);
+    } catch (error) {
+      setBackendHealth({
+        available: false,
+        error: "Failed to check backend health",
+      });
+    } finally {
+      setIsCheckingHealth(false);
+    }
+  };
+
   // Detect if backend is unavailable (after a reasonable timeout)
   // But don't show error if we're processing a token from OAuth callback
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
-      // Set a timeout to detect if backend is unavailable
-      // Increased to 20 seconds to account for slow network/backend responses
-      // useBackendAuth has a 10s timeout, /api/auth/me has 15s, so wait 20s total to be safe
+      // Reduced timeout to 6 seconds for faster feedback (auth/me has 5s timeout in dev)
       const timeoutId = setTimeout(() => {
-        // Check if we have a session - if so, backend is available and auth completed
-        // Only set timeout error if we still don't have a session after 20 seconds
         console.warn(
-          "[NewRaidLogPage] Auth loading timeout after 20 seconds - checking current state"
+          "[NewRaidLogPage] Auth loading timeout after 6 seconds - checking backend health"
         );
-        // Set timeout flag - the render logic will check if we have a session
-        // If we have a session, it won't show the error
         setAuthTimeout(true);
-      }, 20000); // 20 second timeout (longer than /api/auth/me timeout to account for slow responses)
+        // Check backend health when timeout occurs
+        checkBackendHealth();
+      }, 6000); // 6 second timeout (slightly longer than auth/me 5s timeout in dev)
 
       return () => clearTimeout(timeoutId);
     } else {
@@ -140,6 +176,7 @@ export default function NewRaidLogPage() {
         setAuthTimeout(false);
         setBackendUnavailable(false);
         setHasError(false);
+        setBackendHealth(null);
         return; // Exit early when auth completes
       }
     }
@@ -273,19 +310,21 @@ export default function NewRaidLogPage() {
       );
     }
 
-    // Only show "Backend Not Available" if:
-    // 1. Auth is STILL loading (hasn't completed)
-    // 2. We've hit the timeout (backend took too long to respond)
-    // 3. We DON'T have a session (no successful auth yet)
-    // 4. We're not processing an OAuth token
-    // If backend responded (even with 401), authStatus would be "unauthenticated" not "loading"
-    // If we have a session, backend is clearly available - don't show error
-    if (
+    // Show error UI if timeout has occurred OR if we've been loading for too long
+    // This prevents infinite loading states
+    // Also add a safety check: if we've been loading for more than 10 seconds, show error regardless
+    const loadingDuration = loadingStartTimeRef.current
+      ? Date.now() - loadingStartTimeRef.current
+      : 0;
+    const hasBeenLoadingTooLong = loadingDuration > 10000; // 10 seconds
+
+    const shouldShowError =
       authStatus === "loading" &&
-      authTimeout &&
+      (authTimeout || showRetrySuggestion || hasBeenLoadingTooLong) &&
       !session?.user &&
-      !isProcessingToken
-    ) {
+      !isProcessingToken;
+
+    if (shouldShowError) {
       const isProduction =
         typeof window !== "undefined" &&
         !window.location.hostname.includes("localhost") &&
@@ -308,11 +347,44 @@ export default function NewRaidLogPage() {
                 </>
               ) : (
                 <>
-                  The backend server at{" "}
-                  <code className="bg-gray-100 px-2 py-1 rounded">
-                    localhost:4001
-                  </code>{" "}
-                  appears to be not running or not responding.
+                  {backendHealth ? (
+                    <>
+                      {backendHealth.available ? (
+                        <>
+                          Backend is running at{" "}
+                          <code className="bg-gray-100 px-2 py-1 rounded">
+                            {backendHealth.backendUrl}
+                          </code>
+                          , but authentication is failing.
+                          <br />
+                          <span className="text-sm text-gray-500 mt-2 block">
+                            Your session may have expired. Please sign in again.
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          The backend server at{" "}
+                          <code className="bg-gray-100 px-2 py-1 rounded">
+                            {backendHealth.backendUrl || "localhost:4001"}
+                          </code>{" "}
+                          is not running or not reachable.
+                          {backendHealth.error && (
+                            <span className="text-sm text-red-500 mt-2 block">
+                              Error: {backendHealth.error}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      The backend server at{" "}
+                      <code className="bg-gray-100 px-2 py-1 rounded">
+                        localhost:4001
+                      </code>{" "}
+                      appears to be not running or not responding.
+                    </>
+                  )}
                   <br />
                   <span className="text-sm text-gray-500 mt-2 block">
                     Please ensure the backend is running:{" "}
@@ -323,34 +395,116 @@ export default function NewRaidLogPage() {
                 </>
               )}
             </p>
-            <div className="flex gap-3 justify-center flex-wrap">
+            <div className="mt-6 space-y-3">
               <Button
-                onClick={() => router.push("/raidlogs")}
-                variant="ghost"
-                className="font-primary"
-              >
-                Go Back
-              </Button>
-              <Button
-                onClick={() => {
-                  // Clear any cached auth state and reload
-                  if (typeof window !== "undefined") {
-                    window.localStorage.removeItem("auth-state");
-                  }
-                  window.location.reload();
-                }}
-                variant="default"
-                className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
-              >
-                Retry
-              </Button>
-              <Button
-                onClick={() => router.push("/login")}
+                onClick={checkBackendHealth}
+                disabled={isCheckingHealth}
+                className="w-full"
                 variant="outline"
-                className="font-primary"
               >
-                Sign In
+                {isCheckingHealth
+                  ? "Checking..."
+                  : backendHealth
+                    ? "Check Connection Again"
+                    : "Test Backend Connection"}
               </Button>
+              {backendHealth && !backendHealth.available && (
+                <div className="text-sm text-left bg-gray-50 p-3 rounded">
+                  <p className="font-semibold mb-1">Quick Fix:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-gray-700">
+                    <li>
+                      Open a terminal in the{" "}
+                      <code className="bg-gray-200 px-1 rounded">backend</code>{" "}
+                      folder
+                    </li>
+                    <li>
+                      Run:{" "}
+                      <code className="bg-gray-200 px-1 rounded">
+                        npm run dev
+                      </code>
+                    </li>
+                    <li>
+                      Wait for:{" "}
+                      <code className="bg-gray-200 px-1 rounded">
+                        🚀 Backend server running on port 4001
+                      </code>
+                    </li>
+                    <li>Click "Check Connection Again" above</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 justify-center flex-wrap mt-4">
+              {backendHealth?.available ? (
+                <>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        // Call logout API to properly clear backend cookie
+                        await fetch("/api/auth/logout", {
+                          method: "POST",
+                          credentials: "include",
+                        });
+                      } catch (error) {
+                        console.warn("Error calling logout:", error);
+                      }
+
+                      // Clear any cached auth state
+                      if (typeof window !== "undefined") {
+                        window.localStorage.removeItem("auth-state");
+                        // Also try to clear cookie client-side (backup)
+                        document.cookie =
+                          "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                      }
+
+                      // Redirect to sign in page
+                      window.location.href =
+                        "/auth/signin?callbackUrl=/raidlogs/new";
+                    }}
+                    variant="default"
+                    className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
+                  >
+                    Sign In Again
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/raidlogs")}
+                    variant="ghost"
+                    className="font-primary"
+                  >
+                    Go Back
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => router.push("/raidlogs")}
+                    variant="ghost"
+                    className="font-primary"
+                  >
+                    Go Back
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Clear any cached auth state and reload
+                      if (typeof window !== "undefined") {
+                        window.localStorage.removeItem("auth-state");
+                      }
+                      window.location.reload();
+                    }}
+                    variant="default"
+                    className="font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
+                  >
+                    Retry
+                  </Button>
+                  <Button
+                    onClick={() => router.push("/login")}
+                    variant="outline"
+                    className="font-primary"
+                  >
+                    Sign In
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -57,9 +57,10 @@ export async function GET(req: NextRequest) {
 
     // Forward request to backend with cookies
     // Add timeout to prevent hanging when backend is not available
-    // Increased timeout to 15 seconds to account for slow backend responses
+    // Reduced to 5 seconds for faster feedback in development
+    const timeoutMs = process.env.NODE_ENV === "development" ? 5000 : 15000;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     let response;
     try {

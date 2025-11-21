@@ -176,6 +176,11 @@ export function RaidLogForm({
         hasScores: !!data?.scores,
         forecastKeys: data?.forecast ? Object.keys(data.forecast) : [],
         selectedBeachId: selectedBeach?.id,
+        forecastId: data?.forecast?.id,
+        forecastDate: data?.forecast?.date,
+        forecastWindSpeed: data?.forecast?.windSpeed,
+        forecastSwellHeight: data?.forecast?.swellHeight,
+        fullResponse: data, // Log full response for debugging
       });
 
       // The /api/filtered-beaches endpoint returns: { beaches: [], scores: {}, forecast: {...} }
