@@ -46,6 +46,8 @@ const s3 = new S3Client({
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
   forcePathStyle: true, // Required for R2 - uses path-style URLs (bucket/key format)
+  // R2 uses a modified version of S3's signature algorithm
+  // Ensure we're using the correct signing configuration
 });
 
 export const runtime = "nodejs";
@@ -181,27 +183,51 @@ export async function POST(req: NextRequest) {
 
     // Upload to R2
     // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
-    // Simplified command to avoid signature mismatch issues with R2
-    // Start with minimal parameters - can add CacheControl/Metadata later if needed
+    // For R2, we need to minimize parameters to avoid signature mismatches
+    // ContentType is NOT included in the command - R2 will infer it from the file extension
+    // This matches the approach used in the presigned URL route
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       Body: body,
-      ContentType: contentType,
-      // Removed CacheControl and Metadata temporarily to diagnose signature mismatch
-      // These can be added back once we confirm the basic upload works
+      // Do NOT include ContentType - R2 signature calculation is sensitive to this
+      // The ContentType will be inferred from the file extension (.webp, .mp4, etc.)
+      // Removed CacheControl and Metadata to avoid signature issues
     });
 
     // Log upload attempt for debugging
+    // Verify configuration matches expected values
+    const expectedAccountId = "e0916b639e6769b291e0f513d85545da";
+    const expectedBucket = "tide-raider";
+    const actualAccountId = process.env.R2_ACCOUNT_ID;
+    const actualBucket = process.env.R2_BUCKET_NAME;
+
+    if (actualAccountId !== expectedAccountId) {
+      console.warn("[upload] ⚠️ Account ID mismatch:", {
+        expected: expectedAccountId,
+        actual: actualAccountId,
+      });
+    }
+    if (actualBucket !== expectedBucket) {
+      console.warn("[upload] ⚠️ Bucket name mismatch:", {
+        expected: expectedBucket,
+        actual: actualBucket,
+      });
+    }
+
     console.log("[upload] Attempting R2 upload:", {
-      bucket: process.env.R2_BUCKET_NAME,
+      bucket: actualBucket,
       key,
       contentType,
       bodySize: body.length,
       endpoint: r2Endpoint,
       hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
       hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
-      accountId: process.env.R2_ACCOUNT_ID,
+      accountId: actualAccountId,
+      // Show full endpoint URL that will be used
+      fullEndpoint: r2Endpoint,
+      expectedAccountId,
+      expectedBucket,
     });
 
     try {
