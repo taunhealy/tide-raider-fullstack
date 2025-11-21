@@ -185,8 +185,12 @@ export function useRaidLogs(
                   date:
                     typeof entry.forecast.date === "string"
                       ? entry.forecast.date
-                      : entry.forecast.date instanceof Date
-                        ? entry.forecast.date.toISOString().split("T")[0]
+                      : typeof entry.forecast.date === "object" &&
+                          entry.forecast.date !== null &&
+                          "toISOString" in entry.forecast.date
+                        ? (entry.forecast.date as Date)
+                            .toISOString()
+                            .split("T")[0]
                         : String(entry.forecast.date),
                   windSpeed: entry.forecast.windSpeed ?? 0,
                   windDirection: entry.forecast.windDirection ?? 0,
