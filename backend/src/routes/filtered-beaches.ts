@@ -196,12 +196,15 @@ router.get(
           source: sourceParam, // Use the requested source
         },
         select: {
+          id: true, // Include ID so RaidLogForm can link it
           windSpeed: true,
           windDirection: true,
           swellHeight: true,
           swellPeriod: true,
           swellDirection: true,
           date: true,
+          regionId: true,
+          source: true,
         },
       });
 
@@ -259,12 +262,15 @@ router.get(
                 source: sourceParam, // Use the requested source
               },
               select: {
+                id: true, // Include ID so RaidLogForm can link it
                 windSpeed: true,
                 windDirection: true,
                 swellHeight: true,
                 swellPeriod: true,
                 swellDirection: true,
                 date: true,
+                regionId: true,
+                source: true,
               },
             });
 

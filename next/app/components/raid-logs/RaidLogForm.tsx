@@ -157,7 +157,8 @@ export function RaidLogForm({
 
       const dateStr = new Date(selectedDate).toISOString().split("T")[0];
       // Use Next.js API route which proxies to backend
-      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&date=${dateStr}`;
+      // Backend expects 'forecastDate' parameter, not 'date'
+      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&forecastDate=${dateStr}`;
 
       console.log("[RaidLogForm] Fetching forecast from:", url);
       const response = await fetch(url, {
@@ -181,9 +182,14 @@ export function RaidLogForm({
       // Extract forecast from the response
       if (data?.forecast) {
         console.log("[RaidLogForm] Using forecast from data.forecast:", {
+          forecastId: data.forecast.id,
+          date: data.forecast.date,
+          selectedDate: dateStr,
           hasId: !!data.forecast.id,
           hasWindSpeed: data.forecast.windSpeed !== undefined,
           hasSwellHeight: data.forecast.swellHeight !== undefined,
+          windSpeed: data.forecast.windSpeed,
+          swellHeight: data.forecast.swellHeight,
         });
         return data.forecast;
       }
