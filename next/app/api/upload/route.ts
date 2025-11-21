@@ -36,14 +36,16 @@ if (
 }
 
 // Initialize S3 client for Cloudflare R2
+// Ensure endpoint doesn't have trailing slash and credentials are properly set
+const r2Endpoint = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
 const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  region: "auto", // R2 requires "auto" as the region
+  endpoint: r2Endpoint,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
-  forcePathStyle: true, // Required for R2 to generate correct signatures
+  forcePathStyle: true, // Required for R2 - uses path-style URLs (bucket/key format)
 });
 
 export const runtime = "nodejs";
@@ -177,24 +179,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload to R2 with cache headers
+    // Upload to R2
     // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
+    // Simplified command to avoid signature mismatch issues with R2
+    // Start with minimal parameters - can add CacheControl/Metadata later if needed
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       Body: body,
       ContentType: contentType,
-      // Remove ACL - R2 doesn't support it, use bucket policy for public access instead
-      // Add cache headers to reduce server load
-      CacheControl: "public, max-age=31536000, immutable", // Cache for 1 year
-      Metadata: {
-        "upload-timestamp": timestamp.toString(),
-        "file-type":
-          fileType || (file.type.startsWith("video/") ? "video" : "image"),
-      },
+      // Removed CacheControl and Metadata temporarily to diagnose signature mismatch
+      // These can be added back once we confirm the basic upload works
     });
 
-    await s3.send(command);
+    // Log upload attempt for debugging
+    console.log("[upload] Attempting R2 upload:", {
+      bucket: process.env.R2_BUCKET_NAME,
+      key,
+      contentType,
+      bodySize: body.length,
+      endpoint: r2Endpoint,
+      hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+      hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+    });
+
+    try {
+      await s3.send(command);
+      console.log("[upload] ✅ Upload successful:", key);
+    } catch (uploadError) {
+      console.error("[upload] ❌ Upload failed:", {
+        error:
+          uploadError instanceof Error
+            ? uploadError.message
+            : String(uploadError),
+        name: uploadError instanceof Error ? uploadError.name : undefined,
+        stack: uploadError instanceof Error ? uploadError.stack : undefined,
+        bucket: process.env.R2_BUCKET_NAME,
+        key,
+        endpoint: r2Endpoint,
+      });
+      throw uploadError;
+    }
 
     // Construct the public URL
     const fileUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
@@ -234,9 +259,28 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-      if (error.message.includes("R2") || error.message.includes("S3")) {
+      if (
+        error.message.includes("R2") ||
+        error.message.includes("S3") ||
+        error.message.includes("signature") ||
+        error.message.includes("Signature")
+      ) {
+        console.error("[upload] R2/S3 signature error details:", {
+          message: error.message,
+          endpoint: r2Endpoint,
+          hasCredentials: !!(
+            process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
+          ),
+          bucket: process.env.R2_BUCKET_NAME,
+        });
         return NextResponse.json(
-          { error: "Storage service error. Please try again later." },
+          {
+            error: "Storage service error. Please try again later.",
+            details:
+              process.env.NODE_ENV === "development"
+                ? error.message
+                : undefined,
+          },
           { status: 500 }
         );
       }
