@@ -1,195 +1,186 @@
-# Postman - Check Forecast Table
+# Postman - Check Forecast Table Data
 
-## Method 1: Get Forecast for Specific Date/Region
+## Method 1: Check Forecast for Specific Date (Recommended)
 
-### Request Details
+### Request
 
 **Method:** `GET`
 
 **URL:**
+
 ```
 https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20
 ```
 
-**Or via Next.js proxy:**
+**Or via Next.js:**
+
 ```
 https://www.tideraider.com/api/forecast?regionId=western-cape&forecastDate=2025-11-20
 ```
 
 **Query Parameters:**
+
 - `regionId` (required): `western-cape`
 - `forecastDate` (optional): `2025-11-20` (YYYY-MM-DD format)
 - `source` (optional): `WINDFINDER`, `WINDGURU`, or `WINDY` (default: WINDFINDER)
-- `forceRefresh` (optional): `true` to force re-scrape
 
-**Headers:**
-- Optional: `Authorization: Bearer YOUR_TOKEN`
-- Or: `Cookie: auth-token=YOUR_TOKEN`
+**Response:**
 
-### Example URLs
-
-**Check forecast for Nov 20, 2025:**
-```
-GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20
-```
-
-**Check today's forecast:**
-```
-GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape
-```
-
-**Force refresh and scrape:**
-```
-GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20&forceRefresh=true
-```
-
-### Expected Response
-
-**✅ Forecast Found:**
 ```json
 {
-  "id": "forecast-uuid",
+  "id": "1c30a6b0-d427-413e-a813-879b8ac1e01d",
   "date": "2025-11-20T00:00:00.000Z",
   "regionId": "western-cape",
   "source": "WINDFINDER",
-  "windSpeed": 16,
-  "windDirection": 147.71,
-  "swellHeight": 2.8,
+  "windSpeed": 18,
+  "windDirection": 151.03,
+  "swellHeight": 2.4,
   "swellPeriod": 15,
-  "swellDirection": 218.88
+  "swellDirection": 224.5
 }
 ```
 
-**❌ No Forecast:**
-```json
-{
-  "error": "No forecast data found for the requested date"
-}
+### Test Multiple Dates
+
+**Today:**
+
+```
+GET /api/forecast?regionId=western-cape
 ```
 
-## Method 2: Check Forecast via Filtered Beaches Endpoint
+**Yesterday:**
 
-This endpoint also returns forecast data along with beach scores:
+```
+GET /api/forecast?regionId=western-cape&forecastDate=2025-11-20
+```
+
+**Tomorrow:**
+
+```
+GET /api/forecast?regionId=western-cape&forecastDate=2025-11-22
+```
+
+**Day After Tomorrow:**
+
+```
+GET /api/forecast?regionId=western-cape&forecastDate=2025-11-23
+```
+
+## Method 2: Check Forecast via Filtered Beaches (Shows Forecast + Beach Scores)
+
+### Request
+
+**Method:** `GET`
 
 **URL:**
+
 ```
-GET https://tide-raider-backend.fly.dev/api/filtered-beaches?regionId=western-cape&date=2025-11-20
+https://tide-raider-backend.fly.dev/api/filtered-beaches?regionId=western-cape&forecastDate=2025-11-20
 ```
 
 **Response includes:**
+
 ```json
 {
   "beaches": [...],
   "scores": {...},
   "forecast": {
-    "windSpeed": 16,
-    "swellHeight": 2.8,
+    "id": "1c30a6b0-d427-413e-a813-879b8ac1e01d",
+    "date": "2025-11-20T00:00:00.000Z",
+    "windSpeed": 18,
+    "swellHeight": 2.4,
     ...
   }
 }
 ```
 
-## Method 3: Check Forecast via Log Entry
+## Method 3: Check Forecasts for Multiple Dates (Compare Data)
 
-Check if a specific log entry has a forecast linked:
+### Test Sequence
 
-**URL:**
+1. **Check Nov 20:**
+
+   ```
+   GET /api/forecast?regionId=western-cape&forecastDate=2025-11-20
+   ```
+
+2. **Check Nov 21:**
+
+   ```
+   GET /api/forecast?regionId=western-cape&forecastDate=2025-11-21
+   ```
+
+3. **Check Nov 22:**
+   ```
+   GET /api/forecast?regionId=western-cape&forecastDate=2025-11-22
+   ```
+
+**Expected:** Each date should return different forecast values if data exists.
+
+## What to Check
+
+### ✅ Forecasts Are Being Saved Correctly
+
+- Different dates return different values
+- Each forecast has a unique `id`
+- `date` field matches the requested date
+- `windSpeed`, `swellHeight`, etc. have valid values
+
+### ❌ Forecasts Are NOT Being Saved Correctly
+
+- Same values for all dates (indicates date filtering not working)
+- Missing `id` field
+- `date` field doesn't match requested date
+- All values are 0 or null
+
+## Quick Postman Collection
+
+### Request 1: Today's Forecast
+
 ```
-GET https://tide-raider-backend.fly.dev/api/raid-logs?id=f669700e-0b6f-4447-80ab-6003c3635e17
+GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape
 ```
 
-**Check response for:**
-```json
-{
-  "forecastId": "...",
-  "forecast": {
-    "windSpeed": 16,
-    ...
-  }
-}
+### Request 2: Specific Date
+
+```
+GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20
 ```
 
-## Step-by-Step Postman Setup
+### Request 3: Different Date
 
-### 1. Create New Request
-- Click **"New"** → **"HTTP Request"**
-
-### 2. Set Method
-- Select **GET**
-
-### 3. Enter URL
 ```
-https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20
+GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-21
 ```
 
-### 4. Add Query Parameters (Alternative Method)
-- Click **"Params"** tab
-- Add parameter:
-  - Key: `regionId`, Value: `western-cape`
-- Add parameter:
-  - Key: `forecastDate`, Value: `2025-11-20`
+### Request 4: Force Refresh (Trigger Scrape)
 
-### 5. Add Authentication (Optional)
-- **Headers** tab → Add:
-  - Key: `Cookie`, Value: `auth-token=YOUR_TOKEN`
-- Or **Authorization** tab → Bearer Token
-
-### 6. Send Request
-- Click **"Send"**
-
-## Testing Different Scenarios
-
-### Test 1: Check if forecast exists for log entry date
 ```
-GET /api/forecast?regionId=western-cape&forecastDate=2025-11-20
+GET https://tide-raider-backend.fly.dev/api/forecast?regionId=western-cape&forecastDate=2025-11-20&forceRefresh=true
 ```
-**Expected:** Should return forecast data if it exists in database
 
-### Test 2: Check today's forecast
-```
-GET /api/forecast?regionId=western-cape
-```
-**Expected:** Returns today's forecast (if scraped)
+## Note: Direct Database Access
 
-### Test 3: Force scrape if missing
-```
-GET /api/forecast?regionId=western-cape&forecastDate=2025-11-20&forceRefresh=true
-```
-**Expected:** Scrapes and saves forecast, then returns it
+**There is NO API endpoint to query the Forecast table directly** (like `GET /api/forecasts`).
 
-## What to Look For
+To see all forecasts in the database, you need:
 
-### ✅ Forecasts Are Being Saved
-- Response returns forecast data with `windSpeed`, `swellHeight`, etc.
-- Multiple dates return different forecasts
-- `id` field exists (means it's in database)
+- **Prisma Studio:** `cd backend && npx prisma studio`
+- **SQL Query:** Direct database access
+- **Use the forecast endpoint** with different dates to check individual records
 
-### ❌ Forecasts Are NOT Being Saved
-- Always returns 404 "No forecast data found"
-- Even with `forceRefresh=true`, no data appears
-- Check backend logs for scraping errors
+## Expected Database Structure
 
-## Quick Test Checklist
+Based on Prisma schema, forecasts are stored with:
 
-1. ✅ Check forecast for Nov 20, 2025 (log entry date)
-2. ✅ Check forecast for today
-3. ✅ Check forecast for yesterday
-4. ✅ Try force refresh to trigger scrape
-5. ✅ Check if forecast is linked to log entry
+- `id`: UUID (primary key)
+- `date`: Date (YYYY-MM-DD)
+- `regionId`: String (e.g., "western-cape")
+- `source`: Enum (WINDFINDER, WINDGURU, WINDY)
+- `windSpeed`: Int
+- `windDirection`: Float
+- `swellHeight`: Float
+- `swellPeriod`: Int
+- `swellDirection`: Float
 
-## Troubleshooting
-
-### Always Getting 404
-- Forecast might not be scraped for that date
-- Try `forceRefresh=true` to trigger scrape
-- Check backend logs for scraping errors
-
-### Getting Forecast But Not Linked to Log
-- Forecast exists but `forecastId` not set on log entry
-- Use PUT request to update log entry with `forecastId`
-
-### No Forecast Data in Response
-- Check if scraping is working
-- Verify region ID is correct
-- Check database connection
-
+**Unique constraint:** `[date, regionId, source]` - One forecast per date/region/source combination
