@@ -231,12 +231,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ imageUrl: fileUrl });
     }
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error("[upload] Error uploading file:", error);
 
     // Provide more detailed error information
     let errorMessage = "Failed to upload file";
+    let statusCode = 500;
+
     if (error instanceof Error) {
       errorMessage = error.message;
+
+      // Log full error details for debugging
+      console.error("[upload] Full error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        endpoint: r2Endpoint,
+        bucket: process.env.R2_BUCKET_NAME,
+        hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+        hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+        accountId: process.env.R2_ACCOUNT_ID ? "set" : "missing",
+      });
+
       // Check for specific error types
       if (
         error.message.includes("Unauthorized") ||
@@ -259,27 +274,49 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-      if (
+      // Check for AWS SDK errors (they have a specific structure)
+      const isAwsError =
+        error.name === "SignatureDoesNotMatch" ||
+        error.name === "InvalidAccessKeyId" ||
+        error.name === "AccessDenied" ||
+        error.name === "NoSuchBucket" ||
         error.message.includes("R2") ||
         error.message.includes("S3") ||
         error.message.includes("signature") ||
-        error.message.includes("Signature")
-      ) {
-        console.error("[upload] R2/S3 signature error details:", {
+        error.message.includes("Signature") ||
+        error.message.includes("InvalidAccessKeyId") ||
+        error.message.includes("SignatureDoesNotMatch") ||
+        error.message.includes("AccessDenied");
+
+      if (isAwsError) {
+        // Return more detailed error in development
+        const isDev = process.env.NODE_ENV === "development";
+        console.error("[upload] AWS/R2 error:", {
+          name: error.name,
           message: error.message,
+          code: (error as any).Code,
+          requestId: (error as any).requestId,
           endpoint: r2Endpoint,
-          hasCredentials: !!(
-            process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
-          ),
           bucket: process.env.R2_BUCKET_NAME,
+          hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+          hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+          accountId: process.env.R2_ACCOUNT_ID ? "set" : "missing",
         });
+
         return NextResponse.json(
           {
-            error: "Storage service error. Please try again later.",
-            details:
-              process.env.NODE_ENV === "development"
-                ? error.message
-                : undefined,
+            error: isDev
+              ? `Storage error: ${error.name || error.message}`
+              : "Storage service error. Please try again later.",
+            details: isDev
+              ? {
+                  name: error.name,
+                  message: error.message,
+                  code: (error as any).Code,
+                  endpoint: r2Endpoint,
+                  bucket: process.env.R2_BUCKET_NAME,
+                }
+              : undefined,
           },
           { status: 500 }
         );
@@ -292,11 +329,15 @@ export async function POST(req: NextRequest) {
         details:
           process.env.NODE_ENV === "development"
             ? error instanceof Error
-              ? error.stack
+              ? {
+                  message: error.message,
+                  name: error.name,
+                  stack: error.stack,
+                }
               : String(error)
             : undefined,
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

@@ -53,7 +53,12 @@ export function MultiImageUploader({
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Failed to upload image");
+          const errorMessage = errorData.error || errorData.message || "Failed to upload image";
+          // Include details if available (for debugging)
+          const fullError = errorData.details 
+            ? `${errorMessage} (${JSON.stringify(errorData.details)})`
+            : errorMessage;
+          throw new Error(fullError);
         }
 
         const data = await response.json();
