@@ -62,23 +62,27 @@ export async function POST(req: NextRequest) {
     // Generate a unique filename
     const timestamp = Date.now();
     const uniqueId = Math.random().toString(36).substring(2, 15);
-    const extension =
-      fileName.split(".").pop() ||
-      (fileType.startsWith("video/") ? "mp4" : "jpg");
 
     let key: string;
+    let contentType: string = fileType;
+
     if (fileType.startsWith("video/")) {
+      const extension = fileName.split(".").pop() || "mp4";
       key = `surf-videos/${user.id}/${timestamp}-${uniqueId}.${extension}`;
     } else {
-      key = `surf-images/${user.id}/${timestamp}-${uniqueId}.${extension}`;
+      // Images are converted to WebP, so always use .webp extension
+      key = `surf-images/${user.id}/${timestamp}-${uniqueId}.webp`;
+      // Update ContentType to WebP for images
+      contentType = "image/webp";
     }
 
     // Create PutObject command
+    // Note: R2 doesn't support ACL parameter - files are made public via bucket policy
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
-      ContentType: fileType,
-      ACL: "public-read",
+      ContentType: contentType,
+      // Remove ACL - R2 doesn't support it, use bucket policy for public access instead
       CacheControl: "public, max-age=31536000, immutable",
       Metadata: {
         "upload-timestamp": timestamp.toString(),

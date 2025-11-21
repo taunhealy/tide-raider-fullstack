@@ -130,8 +130,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   // Check if media is available (including uploaded videos without platform)
   // Validate that videoUrl is not empty string
+  // Support both single imageUrl and imageUrls array
+  const imageUrls =
+    (entry as any).imageUrls || (entry.imageUrl ? [entry.imageUrl] : []);
   const hasMedia =
-    entry.imageUrl || (entry.videoUrl && entry.videoUrl.trim() !== "");
+    imageUrls.length > 0 || (entry.videoUrl && entry.videoUrl.trim() !== "");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)]">
@@ -339,20 +342,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       : "sticky top-20"
                   }
                 >
-                  {entry.imageUrl ? (
-                    <div
-                      className="relative w-full aspect-video rounded-lg overflow-hidden cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 shadow-sm"
-                      onClick={() => setIsMediaModalOpen(true)}
-                    >
-                      <Image
-                        src={entry.imageUrl}
-                        alt="Session photo"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                        priority
-                      />
-                    </div>
+                  {imageUrls.length > 0 ? (
+                    <ImageGallery
+                      images={imageUrls}
+                      onImageClick={() => setIsMediaModalOpen(true)}
+                      className="cursor-pointer"
+                    />
                   ) : entry.videoUrl && entry.videoUrl.trim() !== "" ? (
                     // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
                     !entry.videoPlatform ? (
@@ -415,6 +410,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         isOpen={isMediaModalOpen}
         onClose={() => setIsMediaModalOpen(false)}
         imageUrl={entry.imageUrl}
+        imageUrls={imageUrls}
         videoUrl={entry.videoUrl}
         videoPlatform={entry.videoPlatform as VideoPlatform}
       />

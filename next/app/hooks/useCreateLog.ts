@@ -18,6 +18,7 @@ export function useCreateLog() {
       comments: string;
       isPrivate: boolean;
       uploadedImageUrl?: string;
+      imageUrls?: string[];
       videoUrl?: string;
       videoPlatform?: string | null;
     }) => {
@@ -100,7 +101,12 @@ export function useCreateLog() {
         isPrivate: data.isPrivate || false,
         isAnonymous: data.isAnonymous || false,
         // Schema expects URL string or empty string, not null
-        imageUrl: data.uploadedImageUrl || "",
+        // Use first image from imageUrls array if provided, otherwise use uploadedImageUrl
+        imageUrl: data.imageUrls && data.imageUrls.length > 0 
+          ? data.imageUrls[0] 
+          : (data.uploadedImageUrl || ""),
+        // Include imageUrls array if provided (for multiple images support)
+        ...(data.imageUrls && data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
         videoUrl: data.videoUrl || "",
         videoPlatform: data.videoPlatform || undefined,
         forecastId: data.forecastData?.id || undefined,

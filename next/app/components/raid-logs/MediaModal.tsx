@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
-import { Video as VideoIcon, X } from "lucide-react";
+import { Video as VideoIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
+import { cn } from "@/app/lib/utils";
 
 interface MediaModalProps {
   isOpen: boolean;
   onClose: () => void;
   imageUrl?: string | null;
+  imageUrls?: string[];
   videoUrl?: string | null;
   videoPlatform?: "youtube" | "vimeo" | null;
 }
@@ -18,9 +21,13 @@ export function MediaModal({
   isOpen,
   onClose,
   imageUrl,
+  imageUrls,
   videoUrl,
   videoPlatform,
 }: MediaModalProps) {
+  // Support both single imageUrl and imageUrls array
+  const images = imageUrls || (imageUrl ? [imageUrl] : []);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const handleEmbedVideo = () => {
     if (!videoUrl || !videoPlatform) return null;
 
@@ -68,16 +75,60 @@ export function MediaModal({
         </div>
 
         <div className="relative w-full aspect-video min-h-[60vh] lg:min-h-[70vh]">
-          {imageUrl ? (
-            <div className="w-full h-full flex items-center justify-center">
+          {images.length > 0 ? (
+            <div className="relative w-full h-full flex items-center justify-center">
               <Image
-                src={imageUrl}
-                alt="Session photo"
+                src={images[currentImageIndex]}
+                alt={`Session photo ${currentImageIndex + 1} of ${images.length}`}
                 fill
                 className="object-contain"
                 sizes="90vw"
                 priority
               />
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setCurrentImageIndex((prev) =>
+                        prev === 0 ? images.length - 1 : prev - 1
+                      )
+                    }
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-colors z-10"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentImageIndex((prev) =>
+                        prev === images.length - 1 ? 0 : prev + 1
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-colors z-10"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                    {images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={cn(
+                          "w-2 h-2 rounded-full transition-all",
+                          index === currentImageIndex
+                            ? "bg-white w-8"
+                            : "bg-white/50 hover:bg-white/75"
+                        )}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="absolute top-4 right-16 bg-black/70 text-white text-sm px-3 py-1.5 rounded z-10 font-primary">
+                    {currentImageIndex + 1} / {images.length}
+                  </div>
+                </>
+              )}
             </div>
           ) : embedUrl ? (
             <iframe

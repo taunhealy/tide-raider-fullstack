@@ -53,6 +53,7 @@ import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { MediaModal } from "@/app/components/raid-logs/MediaModal";
+import { ImageGallery } from "@/app/components/raid-logs/ImageGallery";
 import api from "@/app/lib/api-client";
 import {
   AlertDialog,
@@ -1162,7 +1163,15 @@ export default function RaidLogTable({
                                 href={`/raidlogs/${entry.id}`}
                                 className="relative w-full h-full block"
                               >
-                                {entry.imageUrl ? (
+                                {(entry as any).imageUrls &&
+                                (entry as any).imageUrls.length > 0 ? (
+                                  <Image
+                                    src={(entry as any).imageUrls[0]}
+                                    alt="Session photo"
+                                    fill
+                                    className="object-cover transition-transform hover:scale-105 duration-300"
+                                  />
+                                ) : entry.imageUrl ? (
                                   <Image
                                     src={entry.imageUrl}
                                     alt="Session photo"

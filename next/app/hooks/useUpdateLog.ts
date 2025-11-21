@@ -21,6 +21,7 @@ export function useUpdateLog() {
       comments: string;
       isPrivate: boolean;
       uploadedImageUrl?: string;
+      imageUrls?: string[];
       videoUrl?: string;
       videoPlatform?: string | null;
     }) => {
@@ -73,10 +74,15 @@ export function useUpdateLog() {
         isAnonymous: data.isAnonymous,
         // Convert null/undefined to empty string for URL fields (schema expects valid URL string or empty string, not null)
         // Empty string is valid, but if a value exists it must be a valid URL
+        // Use first image from imageUrls array if provided, otherwise use uploadedImageUrl
         imageUrl:
-          data.uploadedImageUrl && data.uploadedImageUrl.trim() !== ""
-            ? data.uploadedImageUrl
-            : "",
+          data.imageUrls && data.imageUrls.length > 0
+            ? data.imageUrls[0]
+            : (data.uploadedImageUrl && data.uploadedImageUrl.trim() !== ""
+              ? data.uploadedImageUrl
+              : ""),
+        // Include imageUrls array if provided (for multiple images support)
+        ...(data.imageUrls && data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
         videoUrl:
           data.videoUrl && data.videoUrl.trim() !== "" ? data.videoUrl : "",
         // Convert null to undefined for optional string fields (schema doesn't accept null)

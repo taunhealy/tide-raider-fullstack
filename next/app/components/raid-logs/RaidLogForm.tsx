@@ -7,12 +7,7 @@ import type { Beach } from "@/app/types/beaches";
 import type { LogEntry } from "@/app/types/raidlogs";
 import SurfForecastWidget from "../SurfForecastWidget";
 import { Button } from "@/app/components/ui/Button";
-import {
-  validateFile,
-  compressImageIfNeeded,
-  compressVideoIfNeeded,
-  validateVideoFile,
-} from "@/app/lib/file";
+import { compressVideoIfNeeded, validateVideoFile } from "@/app/lib/file";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -28,6 +23,7 @@ import {
   InteractiveBlueStarRating,
 } from "@/app/lib/scoreDisplayBlueStars";
 import { getVideoId } from "@/app/lib/videoUtils";
+import { MultiImageUploader } from "./MultiImageUploader";
 
 interface RaidLogFormProps {
   userEmail?: string;
@@ -102,13 +98,12 @@ export function RaidLogForm({
   const [isAnonymous, setIsAnonymous] = useState<boolean>(
     entry?.isAnonymous || false
   );
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    entry?.imageUrl || null
+  // Multiple images support
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    entry?.imageUrl ? [entry.imageUrl] : []
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [isHovered, setIsHovered] = useState(false);
   const [isPrivate, setIsPrivate] = useState<boolean>(
     entry?.isPrivate || false
@@ -259,7 +254,8 @@ export function RaidLogForm({
       comments !== entry.comments ||
       isAnonymous !== entry.isAnonymous ||
       isPrivate !== entry.isPrivate ||
-      selectedImage !== null ||
+      JSON.stringify(imageUrls) !==
+        JSON.stringify(entry?.imageUrl ? [entry.imageUrl] : []) ||
       selectedVideo !== null ||
       videoUrl !== entry.videoUrl ||
       videoPlatform !== entry.videoPlatform ||
@@ -274,7 +270,7 @@ export function RaidLogForm({
     comments,
     isAnonymous,
     isPrivate,
-    selectedImage,
+    imageUrls,
     selectedVideo,
     videoUrl,
     videoPlatform,
@@ -336,8 +332,8 @@ export function RaidLogForm({
       } else if (userEmail) {
         setEmail(userEmail);
       }
-      if (entry.imageUrl && !imagePreview) {
-        setImagePreview(entry.imageUrl);
+      if (entry.imageUrl && imageUrls.length === 0) {
+        setImageUrls([entry.imageUrl]);
       }
       // If entry has a videoUrl but no platform, it's an uploaded video
       if (entry.videoUrl && !entry.videoPlatform && !videoPreview) {
@@ -561,62 +557,9 @@ export function RaidLogForm({
 
     setIsSubmitting(true);
     try {
-      // Upload image if selected
-      let uploadedImageUrl = null;
-      if (selectedImage) {
-        const formData = new FormData();
-        formData.append("file", selectedImage);
-        formData.append("type", "image");
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "include", // Include cookies for authentication
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          let errorMessage =
-            errorData.error || errorData.message || "Failed to upload image";
-
-          // Provide more specific error messages
-          if (response.status === 401) {
-            errorMessage =
-              errorData.error ||
-              "Authentication failed. Please log in again to upload images.";
-          } else if (response.status === 413) {
-            const fileSizeMB = (selectedImage.size / (1024 * 1024)).toFixed(2);
-            errorMessage =
-              errorData.error ||
-              `Image file is too large (${fileSizeMB}MB). Maximum allowed size is 30MB.`;
-          } else if (response.status === 400) {
-            errorMessage =
-              errorData.error ||
-              "Invalid image file. Please select a valid image file.";
-          }
-
-          console.error(
-            "[RaidLogForm] Image upload error:",
-            errorMessage,
-            errorData,
-            `Status: ${response.status}`
-          );
-          toast.error(`Image upload failed: ${errorMessage}`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        const data = await response.json();
-        uploadedImageUrl = data.imageUrl;
-        if (!uploadedImageUrl) {
-          console.warn(
-            "[RaidLogForm] Image upload succeeded but no imageUrl returned"
-          );
-          toast.warning(
-            "Image uploaded but URL not received. Log will be created without image."
-          );
-        }
-      }
+      // Images are already uploaded via MultiImageUploader component
+      // Just use the imageUrls state
+      const finalImageUrls = imageUrls.length > 0 ? imageUrls : [];
 
       // Upload video if selected
       let uploadedVideoUrlFinal = null;
@@ -721,10 +664,9 @@ export function RaidLogForm({
         }
       }
 
-      // Use existing URLs if no new files uploaded and editing
+      // Use imageUrls array - first image is the primary imageUrl for backward compatibility
       const finalImageUrl =
-        uploadedImageUrl ||
-        (entry?.imageUrl && !selectedImage ? entry.imageUrl : uploadedImageUrl);
+        finalImageUrls.length > 0 ? finalImageUrls[0] : undefined;
 
       // Determine final video URL
       // Priority: uploaded video > existing entry video > video URL input
@@ -761,6 +703,7 @@ export function RaidLogForm({
         comments,
         isPrivate,
         uploadedImageUrl: finalImageUrl,
+        imageUrls: finalImageUrls, // Send all images
         videoUrl: finalVideoUrl,
         videoPlatform: finalVideoPlatform,
         email: email.trim() || user?.email || userEmail || "", // Use provided email or fallback to user's email
@@ -797,25 +740,7 @@ export function RaidLogForm({
     setSearchTerm("");
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      alert(validation.error);
-      return;
-    }
-
-    try {
-      const processedFile = await compressImageIfNeeded(file);
-      setSelectedImage(processedFile);
-      setImagePreview(URL.createObjectURL(processedFile));
-    } catch (error) {
-      console.error("Error processing image:", error);
-      alert("Failed to process image");
-    }
-  };
+  // Removed handleFileChange - now handled by MultiImageUploader component
 
   const safeParseFloat = (value: any): number => {
     if (value === undefined || value === null) return 0;
@@ -1058,38 +983,13 @@ export function RaidLogForm({
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
                       6
                     </span>
-                    Add Photo (Optional)
+                    Add Photos (Optional)
                   </h3>
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full"
-                      aria-label="Upload image"
-                    />
-                    {imagePreview && (
-                      <div className="relative w-32 h-32">
-                        <Image
-                          src={imagePreview}
-                          alt="Preview"
-                          fill
-                          className="object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImagePreview(null);
-                            setSelectedImage(null);
-                          }}
-                          className="absolute -top-2 -right-2 bg-white rounded-full p-1"
-                          aria-label="Remove image"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <MultiImageUploader
+                    images={imageUrls}
+                    onImagesChange={setImageUrls}
+                    maxImages={10}
+                  />
                 </div>
               )}
 
