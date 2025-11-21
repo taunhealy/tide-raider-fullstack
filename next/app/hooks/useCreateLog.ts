@@ -110,6 +110,35 @@ export function useCreateLog() {
             : [],
       });
 
+      // Helper to validate URL
+      const isValidUrl = (url: string): boolean => {
+        if (!url || url.trim() === "") return false;
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      // Filter out invalid URLs from imageUrls array
+      const validImageUrls =
+        data.imageUrls && data.imageUrls.length > 0
+          ? data.imageUrls.filter((url) => isValidUrl(url))
+          : [];
+
+      // Determine primary imageUrl - must be valid URL or empty string
+      const primaryImageUrl =
+        validImageUrls.length > 0
+          ? validImageUrls[0]
+          : data.uploadedImageUrl && isValidUrl(data.uploadedImageUrl)
+            ? data.uploadedImageUrl
+            : "";
+
+      // Validate videoUrl
+      const finalVideoUrl =
+        data.videoUrl && isValidUrl(data.videoUrl) ? data.videoUrl : "";
+
       const payload = {
         date: data.selectedDate,
         surferEmail: session.user.email || "",
@@ -123,15 +152,10 @@ export function useCreateLog() {
         isPrivate: data.isPrivate || false,
         isAnonymous: data.isAnonymous || false,
         // Schema expects URL string or empty string, not null
-        // Use first image from imageUrls array if provided, otherwise use uploadedImageUrl
-        imageUrl:
-          data.imageUrls && data.imageUrls.length > 0
-            ? data.imageUrls[0]
-            : data.uploadedImageUrl || "",
-        // Include imageUrls array if provided (for multiple images support)
-        ...(data.imageUrls &&
-          data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
-        videoUrl: data.videoUrl || "",
+        imageUrl: primaryImageUrl,
+        // Include imageUrls array only if it has valid URLs
+        ...(validImageUrls.length > 0 && { imageUrls: validImageUrls }),
+        videoUrl: finalVideoUrl,
         videoPlatform: data.videoPlatform || undefined,
         forecastId: forecastId,
         // Also send forecast object for fallback lookup
@@ -156,9 +180,24 @@ export function useCreateLog() {
           error: "Failed to create log entry",
         }));
         console.error("[useCreateLog] Backend error:", error);
-        throw new Error(
-          error.message || error.error || "Failed to create log entry"
-        );
+
+        // Extract detailed error message
+        let errorMessage =
+          error.error || error.message || "Failed to create log entry";
+
+        // If validation error with details, include them
+        // Backend validation middleware returns details as array with path (string) and message
+        if (error.details && Array.isArray(error.details)) {
+          const validationDetails = error.details
+            .map((detail: any) => {
+              const path = detail.path || "field";
+              return `${path}: ${detail.message}`;
+            })
+            .join(", ");
+          errorMessage = `Validation failed: ${validationDetails}`;
+        }
+
+        throw new Error(errorMessage);
       }
       return response.json();
     },

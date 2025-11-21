@@ -35,8 +35,16 @@ export async function GET(
     const state = searchParams.get("state") || encodeURIComponent("/raid");
 
     console.log(
-      `[NextAuth Route] Redirecting direct Google OAuth to backend: ${path}`
+      `[NextAuth Route] Redirecting direct Google OAuth to backend: ${BACKEND_URL}/api/auth/google`
     );
+    
+    // In development, check if backend URL is localhost and log a helpful message
+    if (process.env.NODE_ENV === "development" && BACKEND_URL.includes("localhost")) {
+      console.log(
+        `[NextAuth Route] ⚠️ Make sure backend is running at ${BACKEND_URL}`
+      );
+    }
+    
     // Redirect to backend OAuth
     return NextResponse.redirect(
       `${BACKEND_URL}/api/auth/google?state=${state}`

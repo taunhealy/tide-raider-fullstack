@@ -128,9 +128,29 @@ export async function POST(req: NextRequest) {
         message: "Failed to create log",
       }));
       console.error("[raid-logs] Backend error:", errorData);
+      
+      // Extract validation errors if present
+      let errorMessage = errorData.message || errorData.error || "Failed to create log";
+      
+      // If it's a validation error, try to extract more details
+      if (response.status === 400 && errorData.details) {
+        // Validation middleware returns details array with path and message
+        const validationErrors = errorData.details
+          .map((detail: any) => {
+            const path = detail.path || "field";
+            return `${path}: ${detail.message}`;
+          })
+          .join(", ");
+        errorMessage = `Validation failed: ${validationErrors}`;
+      } else if (response.status === 400 && errorData.error) {
+        // Other validation errors
+        errorMessage = errorData.error;
+      }
+      
       return NextResponse.json(
         {
-          error: errorData.message || errorData.error || "Failed to create log",
+          error: errorMessage,
+          details: errorData.issues || errorData.details,
         },
         { status: response.status }
       );
