@@ -52,17 +52,34 @@ const s3 = new S3Client({
 
 // Add middleware to remove content-type header that causes signature mismatches with R2
 // The SDK automatically adds this header, but R2's signature calculation doesn't expect it
+// Try multiple middleware steps to ensure we catch it
 s3.middlewareStack.add(
   (next, context) => async (args: any) => {
     // Remove content-type header from the request to avoid signature mismatch
-    if (args.request?.headers && typeof args.request.headers === "object") {
-      delete args.request.headers["content-type"];
-      delete args.request.headers["Content-Type"];
+    // Check multiple possible locations where headers might be stored
+    if (args.request) {
+      const hadContentType =
+        args.request.headers?.["content-type"] ||
+        args.request.headers?.["Content-Type"] ||
+        args.request.headers?.["Content-type"];
+
+      if (args.request.headers && typeof args.request.headers === "object") {
+        delete args.request.headers["content-type"];
+        delete args.request.headers["Content-Type"];
+        delete args.request.headers["Content-type"];
+      }
+
+      if (hadContentType) {
+        console.log(
+          "[upload] Middleware removed content-type header:",
+          hadContentType
+        );
+      }
     }
     return next(args);
   },
   {
-    step: "build",
+    step: "finalizeRequest", // Run right before request is finalized and signed
     name: "removeContentTypeHeader",
     priority: "high",
   }
