@@ -1,20 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { API_CONFIG } from "@/app/lib/api-config";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Fallback: use Cloud Run backend (we no longer use localhost:4001)
-  return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
-};
-
-const BACKEND_URL = getBackendUrl();
+const BACKEND_URL = API_CONFIG.baseUrl;
 
 // Simple in-memory cache for auth responses (5 seconds)
 const authCache = new Map<string, { data: any; timestamp: number }>();

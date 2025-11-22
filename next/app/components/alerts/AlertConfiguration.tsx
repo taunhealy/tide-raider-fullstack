@@ -85,7 +85,7 @@ export function AlertConfiguration({
       Array.isArray(alert.properties?.create) &&
       alert.properties.create.length > 0
     ) {
-      const existingProperties = alert.properties.create.map((prop) => ({
+      const existingProperties = alert.properties.create.map((prop: any) => ({
         property: prop.property as ForecastProperty,
         range: Number(prop.range),
         optimalValue: Number(prop.optimalValue),

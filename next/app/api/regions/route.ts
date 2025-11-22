@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { API_CONFIG } from "@/app/lib/api-config";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-  // In development, use localhost backend (connects to Docker postgres)
-  if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
-  }
-
-  // In production, use production backend (connects to Fly.io postgres)
-  return envUrl || "https://tide-raider-backend.fly.dev";
-};
-
-const BACKEND_URL = getBackendUrl();
+const BACKEND_URL = API_CONFIG.baseUrl;
 
 // Simple in-memory cache for regions (regions don't change often)
 let regionsCache: { data: any[]; timestamp: number } | null = null;

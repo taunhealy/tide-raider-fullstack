@@ -1,9 +1,10 @@
 // Import from single source of truth
 import { getBackendUrl } from "./api-config";
 
-const BACKEND_URL = getBackendUrl();
-
 export const handleSignIn = (callbackUrl?: string) => {
+  // Call getBackendUrl() inside the function to ensure it uses current env vars
+  const BACKEND_URL = getBackendUrl();
+  
   const currentPath = window.location.pathname;
   const frontendUrl = window.location.origin;
   const redirectUrl = callbackUrl || currentPath;

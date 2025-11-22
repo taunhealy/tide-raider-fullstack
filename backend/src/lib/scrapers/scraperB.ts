@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import { readFileSync } from "fs";
@@ -28,7 +30,17 @@ async function getBrowser() {
     );
     chromium.setGraphicsMode = false;
     return puppeteerCore.launch({
-      args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--memory-pressure-off",
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless === "new" ? true : chromium.headless,

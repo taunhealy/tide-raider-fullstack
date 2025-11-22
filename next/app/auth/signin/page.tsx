@@ -6,8 +6,6 @@ import { Suspense } from "react";
 // Import from single source of truth
 import { getBackendUrl } from "@/app/lib/api-config";
 
-const BACKEND_URL = getBackendUrl();
-
 function SignInSkeleton() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-[var(--color-bg-secondary)]">
@@ -37,6 +35,9 @@ function SignInContent() {
   const callbackUrl = searchParams.get("callbackUrl") || "/raid";
 
   const handleGoogleSignIn = () => {
+    // Call getBackendUrl() inside the function to ensure it uses current env vars
+    const BACKEND_URL = getBackendUrl();
+    
     // Redirect to backend OAuth endpoint
     // Backend will handle OAuth flow and redirect back with cookie
     // Pass full frontend URL in state so backend knows where to redirect

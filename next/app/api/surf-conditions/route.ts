@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { API_CONFIG } from "@/app/lib/api-config";
 
 /**
  * GET /api/surf-conditions?regionId=xxx
@@ -16,8 +17,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+  const backendUrl = API_CONFIG.baseUrl;
 
   try {
     // Build backend URL with all query params

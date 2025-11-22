@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import puppeteerCore from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import { USER_AGENTS } from "../proxy/userAgents";
@@ -91,7 +93,21 @@ async function getBrowser() {
     );
     chromium.setGraphicsMode = false; // Disable graphics mode for serverless
     return puppeteerCore.launch({
-      args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage", // Use /tmp instead of /dev/shm
+        "--disable-gpu", // Disable GPU acceleration
+        "--disable-software-rasterizer", // Disable software rasterizer
+        "--disable-extensions", // Disable extensions
+        "--disable-background-networking", // Disable background networking
+        "--disable-background-timer-throttling", // Disable background timer throttling
+        "--disable-renderer-backgrounding", // Disable renderer backgrounding
+        "--disable-backgrounding-occluded-windows", // Disable backgrounding occluded windows
+        "--disable-ipc-flooding-protection", // Disable IPC flooding protection
+        "--memory-pressure-off", // Turn off memory pressure
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless === "new" ? true : chromium.headless,

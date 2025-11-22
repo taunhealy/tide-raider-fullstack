@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
+import { API_CONFIG } from "@/app/lib/api-config";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+const BACKEND_URL = API_CONFIG.baseUrl;
 
 /**
  * Proxy to backend /api/beaches/search
