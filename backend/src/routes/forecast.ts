@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getLatestConditions } from "../services/surfConditionsService";
+import { prisma } from "../lib/prisma";
 import { optionalAuth } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
 
@@ -24,68 +24,31 @@ router.get(
         return res.status(400).json({ error: "Region ID is required" });
       }
 
-      // Parse target date if provided
-      let targetDate: Date | undefined;
+      // Parse target date - default to today if not provided
+      let targetDate: Date;
       if (forecastDateParam) {
         const [year, month, day] = forecastDateParam.split("-").map(Number);
         targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      } else {
+        targetDate = new Date();
+        targetDate.setUTCHours(0, 0, 0, 0);
       }
 
-      // If a specific date is requested, query directly from database
-      if (targetDate) {
-        const { prisma } = await import("../lib/prisma");
-        let forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId,
-            date: targetDate,
-            source: sourceParam,
-          },
-        });
+      // Try exact match first (fastest - uses unique index)
+      let forecast = await prisma.forecast.findFirst({
+        where: {
+          regionId,
+          date: targetDate,
+          source: sourceParam,
+        },
+      });
 
-        // If forecast found, return it immediately
-        if (forecast) {
-          // Validate that the forecast has the correct source
-          const forecastSource = (forecast as any).source;
-          if (forecastSource && forecastSource !== sourceParam) {
-            console.error(
-              `[forecast] ⚠️ WARNING: Forecast source mismatch! Requested: ${sourceParam}, Got: ${forecastSource}`
-            );
-          }
-          console.log(
-            `[forecast] 📤 Returning forecast for ${targetDate.toISOString().split("T")[0]} (source: ${forecastSource || "unknown"})`
-          );
-          return res.json(forecast);
-        }
-
-        // If not found, try fallback logic (don't trigger scraping during user requests)
-        // Scraping should happen in background cron jobs, not during API requests
-        console.log(
-          `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying fallback...`
-        );
-        const mostRecentForecast = await prisma.forecast.findFirst({
+      // If not found, try most recent from same source only (no cross-source fallback)
+      if (!forecast) {
+        forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
             source: sourceParam,
-            date: {
-              lte: targetDate, // Only look for dates <= requested date
-            },
-          },
-          orderBy: {
-            date: "desc", // Get the most recent one
-          },
-        });
-
-        if (mostRecentForecast) {
-          console.log(
-            `[forecast] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), returning as fallback`
-          );
-          return res.json(mostRecentForecast);
-        }
-
-        // If still no forecast found, try any source (fallback to any available forecast)
-        const anyForecast = await prisma.forecast.findFirst({
-          where: {
-            regionId,
             date: {
               lte: targetDate,
             },
@@ -94,84 +57,14 @@ router.get(
             date: "desc",
           },
         });
-
-        if (anyForecast) {
-          console.log(
-            `[forecast] ✅ Found forecast for ${anyForecast.date.toISOString().split("T")[0]} (source: ${(anyForecast as any).source}), returning as fallback`
-          );
-          return res.json(anyForecast);
-        }
-
-        // Don't trigger scraping during user requests - return 404 instead
-        // Scraping should happen in background cron jobs, not during API requests
-        console.log(
-          `[forecast] ⚠️ No forecast data available in database for ${regionId} on ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}). Scraping should happen in background.`
-        );
-        return res
-          .status(404)
-          .json({ error: "No forecast data found for the requested date" });
-      }
-
-      // If no date provided, use today's date and query database (don't scrape)
-      const { prisma } = await import("../lib/prisma");
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-
-      // Query for today's forecast with the requested source
-      let forecast = await prisma.forecast.findFirst({
-        where: {
-          regionId,
-          date: today,
-          source: sourceParam,
-        },
-      });
-
-      // If not found for today, try most recent from SAME source only (no cross-source fallback)
-      if (!forecast) {
-        console.log(
-          `[forecast] ⚠️ No forecast found for today (source: ${sourceParam}), trying most recent from same source...`
-        );
-
-        const mostRecentForecast = await prisma.forecast.findFirst({
-          where: {
-            regionId,
-            source: sourceParam, // Must be the same source
-            date: {
-              lte: today,
-            },
-          },
-          orderBy: {
-            date: "desc",
-          },
-        });
-
-        if (mostRecentForecast) {
-          forecast = mostRecentForecast;
-          console.log(
-            `[forecast] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), returning as fallback`
-          );
-        }
       }
 
       if (!forecast) {
-        console.log(
-          `[forecast] ⚠️ No forecast data available in database for ${regionId} (source: ${sourceParam}). Data may not have been scraped yet.`
-        );
         return res
           .status(404)
           .json({ error: `No forecast data found for ${sourceParam}` });
       }
 
-      // Validate that the forecast has the correct source
-      const forecastSource = (forecast as any).source;
-      if (forecastSource && forecastSource !== sourceParam) {
-        console.error(
-          `[forecast] ⚠️ WARNING: Forecast source mismatch! Requested: ${sourceParam}, Got: ${forecastSource}`
-        );
-      }
-      console.log(
-        `[forecast] 📤 Returning forecast (source: ${forecastSource || "unknown"}, windSpeed: ${forecast.windSpeed}, swellHeight: ${forecast.swellHeight})`
-      );
       return res.json(forecast);
     } catch (error) {
       console.error("Error fetching forecast data:", error);
