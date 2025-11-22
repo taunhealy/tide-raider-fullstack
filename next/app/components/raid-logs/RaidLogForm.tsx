@@ -554,16 +554,9 @@ export function RaidLogForm({
       toast.error("Please sign in to log your session", {
         action: {
           label: "Sign In",
-          onClick: () => {
-            // Always use production backend for OAuth (since database is live)
-            const getBackendUrl = () => {
-              const envUrl = process.env.NEXT_PUBLIC_API_URL;
-              // If env URL is localhost, always use production
-              if (envUrl?.includes("localhost")) {
-                return "https://tide-raider-backend.fly.dev";
-              }
-              return envUrl || "https://tide-raider-backend.fly.dev";
-            };
+          onClick: async () => {
+            // Use single source of truth for backend URL
+            const { getBackendUrl } = await import("@/app/lib/api-config");
             const BACKEND_URL = getBackendUrl();
             window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
               `${window.location.origin}/raidlogs/new`
@@ -1370,17 +1363,8 @@ export function RaidLogForm({
                       action: {
                         label: "Sign In",
                         onClick: () => {
-                          // Always use production backend for OAuth (since database is live)
-                          const getBackendUrl = () => {
-                            const envUrl = process.env.NEXT_PUBLIC_API_URL;
-                            // If env URL is localhost, always use production
-                            if (envUrl?.includes("localhost")) {
-                              return "https://tide-raider-backend.fly.dev";
-                            }
-                            return (
-                              envUrl || "https://tide-raider-backend.fly.dev"
-                            );
-                          };
+                          // Use single source of truth for backend URL
+                          const { getBackendUrl } = await import("@/app/lib/api-config");
                           const BACKEND_URL = getBackendUrl();
                           window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
                             `${window.location.origin}/raidlogs/new`

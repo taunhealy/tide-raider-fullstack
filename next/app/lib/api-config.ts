@@ -3,18 +3,28 @@
  * Centralized configuration for backend API
  */
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
-const getBackendUrl = () => {
+/**
+ * SINGLE SOURCE OF TRUTH for backend URL
+ * 
+ * This is the ONLY place where the backend URL should be defined.
+ * All other files should import getBackendUrl from this file.
+ * 
+ * Priority:
+ * 1. NEXT_PUBLIC_API_URL environment variable (if set)
+ * 2. Cloud Run backend (production default)
+ * 
+ * No hardcoded URLs anywhere else!
+ */
+export const getBackendUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-  // In development, use localhost backend (connects to Docker postgres)
-  if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
+  
+  // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
+  if (envUrl) {
+    return envUrl;
   }
 
-  // In production, use production backend (connects to Fly.io postgres)
-  return envUrl || "https://tide-raider-backend.fly.dev";
+  // Fallback: use Cloud Run backend (we no longer use localhost:4001 or Fly.io)
+  return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
 };
 
 export const API_CONFIG = {
