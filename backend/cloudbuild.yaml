@@ -9,8 +9,8 @@ steps:
       - "-t"
       - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:latest"
       - "-f"
-      - "Dockerfile"
-      - "."
+      - "backend/Dockerfile"
+      - "backend"
 
   # Push the Docker image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
@@ -60,4 +60,3 @@ options:
 images:
   - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:${BUILD_ID}"
   - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:latest"
-
