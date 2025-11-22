@@ -11,7 +11,7 @@ const getBackendUrl = () => {
   }
 
   // Fallback: use Cloud Run backend (we no longer use localhost:4001)
-  return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
+  return "https://tide-raider-backend-82632174665.africa-south1.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();

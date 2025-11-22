@@ -31,7 +31,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 //    - Development: http://localhost:3000
 //
 // 2. Authorized redirect URIs (where Google redirects after OAuth):
-//    - Production: https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app/api/auth/google/callback
+//    - Production: https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback
 //    - Development: http://localhost:4001/api/auth/google/callback
 //
 // IMPORTANT: These must EXACTLY match (including protocol, no trailing slashes)
@@ -56,7 +56,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
             : process.env.NODE_ENV === "production"
-              ? `https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app/api/auth/google/callback`
+              ? `https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback`
               : `http://localhost:4001/api/auth/google/callback`,
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -188,7 +188,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
     process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.NODE_ENV === "production"
-        ? `https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app/api/auth/google/callback`
+        ? `https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback`
         : `http://localhost:4001/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
