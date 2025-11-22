@@ -42,77 +42,7 @@ router.get(
           },
         });
 
-        // Check if forecast has missing or invalid direction data
-        // 0 values indicate missing data, values > 360 indicate corrupted data (timestamps)
-        const hasMissingDirectionData =
-          forecast &&
-          (forecast.windDirection === 0 || forecast.swellDirection === 0);
-        const hasInvalidDirectionData =
-          forecast &&
-          (forecast.windDirection > 360 || forecast.swellDirection > 360);
-
-        // If not found OR has missing/invalid direction data, trigger scrape for the requested source
-        if (!forecast || hasMissingDirectionData || hasInvalidDirectionData) {
-          if (!forecast) {
-            console.log(
-              `[forecast] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), triggering scrape...`
-            );
-          } else if (hasInvalidDirectionData) {
-            console.log(
-              `[forecast] ⚠️ Forecast found but has invalid direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), re-scraping...`
-            );
-            // Delete the invalid forecast so it gets replaced
-            await prisma.forecast.deleteMany({
-              where: {
-                regionId,
-                date: targetDate,
-                source: sourceParam,
-              },
-            });
-          } else {
-            console.log(
-              `[forecast] ⚠️ Forecast found but has missing direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), re-scraping...`
-            );
-          }
-
-          // Force a scrape for the requested source only
-          try {
-            const scrapedForecast = await getLatestConditions(
-              regionId,
-              true,
-              sourceParam
-            );
-            console.log(
-              `[forecast] ✅ Scrape completed for ${sourceParam}, querying for target date: ${targetDate.toISOString().split("T")[0]}`
-            );
-
-            // Query again after scraping
-            forecast = await prisma.forecast.findFirst({
-              where: {
-                regionId,
-                date: targetDate,
-                source: sourceParam,
-              },
-            });
-
-            if (forecast) {
-              console.log(
-                `[forecast] ✅ Found forecast for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}) after scrape`
-              );
-            } else {
-              console.log(
-                `[forecast] ⚠️ Still no forecast for ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}) after scrape - may not be available on source page`
-              );
-            }
-          } catch (scrapeError) {
-            console.error(
-              `[forecast] ❌ Error scraping ${sourceParam} for ${targetDate.toISOString().split("T")[0]}:`,
-              scrapeError
-            );
-            // Don't throw - let it return 404 below
-          }
-        }
-
+        // If forecast found, return it immediately
         if (forecast) {
           // Validate that the forecast has the correct source
           const forecastSource = (forecast as any).source;
@@ -126,8 +56,15 @@ router.get(
           );
           return res.json(forecast);
         }
+        
+        // If not found, don't trigger scraping during user requests
+        // Scraping should happen in background cron jobs, not during API requests
+        console.log(
+          `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying fallback...`
+        );
 
         // If exact date not found, try to find the most recent available forecast for this source
+        // Don't trigger scraping during user requests - scraping should happen in background
         console.log(
           `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying to find most recent...`
         );
@@ -171,6 +108,11 @@ router.get(
           return res.json(anyForecast);
         }
 
+        // Don't trigger scraping during user requests - return 404 instead
+        // Scraping should happen in background cron jobs, not during API requests
+        console.log(
+          `[forecast] ⚠️ No forecast data available in database for ${regionId} on ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}). Scraping should happen in background.`
+        );
         return res
           .status(404)
           .json({ error: "No forecast data found for the requested date" });
