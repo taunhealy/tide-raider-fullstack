@@ -127,6 +127,50 @@ router.get(
           return res.json(forecast);
         }
 
+        // If exact date not found, try to find the most recent available forecast for this source
+        console.log(
+          `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying to find most recent...`
+        );
+        const mostRecentForecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            source: sourceParam,
+            date: {
+              lte: targetDate, // Only look for dates <= requested date
+            },
+          },
+          orderBy: {
+            date: "desc", // Get the most recent one
+          },
+        });
+
+        if (mostRecentForecast) {
+          console.log(
+            `[forecast] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), returning as fallback`
+          );
+          return res.json(mostRecentForecast);
+        }
+
+        // If still no forecast found, try any source (fallback to any available forecast)
+        const anyForecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            date: {
+              lte: targetDate,
+            },
+          },
+          orderBy: {
+            date: "desc",
+          },
+        });
+
+        if (anyForecast) {
+          console.log(
+            `[forecast] ✅ Found forecast for ${anyForecast.date.toISOString().split("T")[0]} (source: ${(anyForecast as any).source}), returning as fallback`
+          );
+          return res.json(anyForecast);
+        }
+
         return res
           .status(404)
           .json({ error: "No forecast data found for the requested date" });

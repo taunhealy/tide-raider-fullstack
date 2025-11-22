@@ -19,17 +19,18 @@ export const getBackendUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   const isDevelopment = process.env.NODE_ENV === "development";
 
-  // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
-  if (envUrl) {
+  // If NEXT_PUBLIC_API_URL is explicitly set and not localhost, use it
+  // (In production, never use localhost even if env var is set)
+  if (envUrl && !envUrl.includes("localhost")) {
     return envUrl;
   }
 
-  // In development, use localhost backend
+  // In development, use localhost backend (or env URL if set)
   if (isDevelopment) {
-    return "http://localhost:4001";
+    return envUrl || "http://localhost:4001";
   }
 
-  // In production, use Cloud Run backend
+  // In production, always use Cloud Run backend (never localhost)
   return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
 };
 

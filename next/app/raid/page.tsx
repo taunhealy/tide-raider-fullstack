@@ -1,5 +1,6 @@
 import BeachContainerWrapper from "@/app/components/BeachContainerWrapper";
 import { Metadata } from "next";
+import { getBackendUrl } from "@/app/lib/api-config";
 
 export const metadata: Metadata = {
   title: "Raid | Tide Raider",
@@ -45,25 +46,22 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
     if (regionIdFromParams) {
       try {
         // Call backend API directly (server-side fetch works fine)
-        // Always use production backend if env URL is localhost (since database is live)
-        const getBackendUrl = () => {
-          const envUrl = process.env.NEXT_PUBLIC_API_URL;
-          // If env URL is localhost, always use production
-          if (envUrl?.includes("localhost")) {
-            return "https://tide-raider-backend.fly.dev";
-          }
-          return envUrl || "https://tide-raider-backend.fly.dev";
-        };
+        // Use centralized backend URL configuration
         const backendUrl = getBackendUrl();
+
+        // Log for debugging (only in production to help diagnose issues)
+        if (process.env.NODE_ENV === "production") {
+          console.log("[RaidPage] Fetching from backend:", backendUrl);
+        }
 
         // Build query string with all params including forecastDate
         const queryString = urlSearchParams.toString();
         const backendApiUrl = `${backendUrl}/api/filtered-beaches${queryString ? `?${queryString}` : ""}`;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout (backend can be slow)
 
-        let response;
+        let response: Response | undefined = undefined;
         try {
           response = await fetch(backendApiUrl, {
             method: "GET",
@@ -76,30 +74,40 @@ export default async function RaidPage({ searchParams }: RaidPageProps) {
           });
         } catch (error: any) {
           clearTimeout(timeoutId);
-          if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
+          if (
+            error.name === "AbortError" ||
+            error.code === "ECONNREFUSED" ||
+            error.message?.includes("aborted")
+          ) {
             console.warn(
-              "[RaidPage] Backend connection failed, using empty data"
+              "[RaidPage] Backend connection failed or timed out, using empty data",
+              error.message || error.name
             );
-            initialData = null; // Will use empty state
-            return; // Exit early, will use null initialData
+            // response is already undefined, initialData will remain null
+            // Continue to render component with null data
+          } else {
+            // Re-throw unexpected errors
+            throw error;
           }
-          throw error;
         } finally {
           clearTimeout(timeoutId);
         }
 
-        if (response.ok) {
-          initialData = await response.json();
-        } else if (response.status === 429) {
-          // Handle rate limiting gracefully - return empty structure
-          initialData = {
-            beaches: [],
-            scores: {},
-            forecast: null,
-            totalCount: 0,
-          };
+        // Only process response if it exists (connection succeeded)
+        if (response && typeof response.ok !== "undefined") {
+          if (response.ok) {
+            initialData = await response.json();
+          } else if (response.status === 429) {
+            // Handle rate limiting gracefully - return empty structure
+            initialData = {
+              beaches: [],
+              scores: {},
+              forecast: null,
+              totalCount: 0,
+            };
+          }
+          // For other errors, initialData remains null and component handles empty state
         }
-        // For other errors, initialData remains null and component handles empty state
       } catch (error) {
         console.error(
           "[RaidPage] Error fetching filtered beaches from backend:",

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-
-// Use NEXT_PUBLIC_API_URL if set, otherwise default to production
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+import { getBackendUrl } from "@/app/lib/api-config";
 
 /**
  * GET /api/forecast
@@ -16,7 +13,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
 
-    const response = await fetch(`${BACKEND_URL}/api/forecast${queryString}`, {
+    const backendUrl = getBackendUrl();
+    const response = await fetch(`${backendUrl}/api/forecast${queryString}`, {
       headers: {
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
         Cookie: cookieStore.toString(),
