@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
     const queryString = searchParams ? `?${searchParams}` : "";
 
     const backendUrl = getBackendUrl();
-    
+
     // Add timeout to prevent hanging requests (30 seconds for forecast queries)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/forecast${queryString}`, {
         headers: {
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         cache: "no-store",
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {

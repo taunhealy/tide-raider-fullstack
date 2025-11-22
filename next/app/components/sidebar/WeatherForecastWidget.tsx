@@ -97,14 +97,11 @@ export default function WeatherForecastWidget() {
   // The query key change will automatically trigger a refetch, so we don't need to manually invalidate
   useEffect(() => {
     if (regionId && normalizedDate && mounted) {
-      console.log(
-        "[WeatherForecastWidget] Date or source changed:",
-        {
-          regionId,
-          normalizedDate,
-          source: selectedSource,
-        }
-      );
+      console.log("[WeatherForecastWidget] Date or source changed:", {
+        regionId,
+        normalizedDate,
+        source: selectedSource,
+      });
       // Only invalidate filtered-beaches when source changes (not on every date change)
       // The forecast query will automatically refetch due to query key change
       if (selectedSource) {
