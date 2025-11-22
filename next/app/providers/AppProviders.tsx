@@ -32,7 +32,9 @@ export default function AppProviders({
 }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider session={session} refetchInterval={0}>
+      {/* SessionProvider is kept for backward compatibility with components still using NextAuth */}
+      {/* We pass null session and disable refetch to prevent errors since we use backend auth */}
+      <SessionProvider session={null} refetchInterval={0} basePath="/api/auth">
         <SubscriptionProvider>
           <BeachProvider initialBeaches={initialBeaches}>
             <GlobalErrorHandler />

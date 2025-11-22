@@ -1,16 +1,16 @@
 import { useSubscription } from "@/app/context/SubscriptionContext";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 
 /**
  * Utility hook to determine if content should be gated
  * @returns Object with gating status and helper functions
  */
 export function useContentGating() {
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useBackendAuth();
   const { isSubscribed, hasActiveTrial } = useSubscription();
 
   // User is not logged in
-  const isLoggedOut = !session?.user;
+  const isLoggedOut = !session?.user || authStatus === "unauthenticated";
 
   // Content should be gated if:
   // 1. User is not logged in (allow all logged-in users access)

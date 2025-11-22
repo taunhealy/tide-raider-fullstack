@@ -5,9 +5,7 @@ import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/lib/authOptions";
-import type { BeachWithRelations } from "@/app/lib/beachService";
+// Removed NextAuth imports - we use backend auth now
 import { AuthCallbackHandler } from "./components/AuthCallbackHandler";
 
 // Load all weights explicitly for Inter
@@ -45,7 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Force dynamic rendering since we use getServerSession which requires headers
+// Force dynamic rendering for client-side auth
 export const dynamic = "force-dynamic";
 
 export default async function RootLayout({
@@ -53,18 +51,14 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let session;
-  try {
-    session = await getServerSession(authOptions);
-  } catch (error) {
-    console.error("Error getting session in layout:", error);
-    session = null;
-  }
+  // We use backend auth, so no need to fetch session server-side
+  // SessionProvider will handle auth client-side
+  const session = null;
 
   // Don't fetch beaches server-side - causes timeouts on Vercel
   // Beaches are already fetched client-side via API routes, so this is not needed
   // Passing empty array - AppProviders will handle client-side fetching
-  const beaches: BeachWithRelations[] = [];
+  const beaches: any[] = [];
 
   return (
     <html

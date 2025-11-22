@@ -34,50 +34,8 @@ export default function Navbar() {
   }, []);
 
   // Show loading skeleton while authentication is being checked
-  if (status === "loading" || !mounted) {
-    return (
-      <header className="sticky top-0 z-[10000] bg-white">
-        <div
-          className={cn(
-            "flex justify-between items-center px-4 md:px-8 py-4 bg-white",
-            "relative z-[10000]"
-          )}
-        >
-          {/* Logo skeleton - matches heading-6 style */}
-          <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
-
-          {/* Desktop Navigation skeleton */}
-          <div className="hidden md:flex items-center gap-8">
-            <nav>
-              <ul className="flex gap-2 items-center">
-                {NAVIGATION_ITEMS.map((link) => (
-                  <li key={link.href} className="px-2 py-2">
-                    <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div className="flex gap-4 items-center">
-              {/* Profile image skeleton - only show if we might be logged in */}
-              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
-              {/* Sign in/out button skeleton */}
-              <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
-            </div>
-          </div>
-
-          {/* Mobile Navigation skeleton */}
-          <div className="md:hidden flex items-center gap-4">
-            {/* Profile image skeleton */}
-            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
-            {/* Sign in button skeleton */}
-            <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse" />
-            {/* Menu button skeleton */}
-            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-      </header>
-    );
-  }
+  // Always render the same structure to prevent hydration mismatches
+  const isLoading = status === "loading" || !mounted;
 
   // Simple function to render profile image consistently
   const ProfileImage = () => {
@@ -126,104 +84,141 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-[10000] bg-white">
+    <header
+      className="sticky top-0 z-[10000] bg-white"
+      suppressHydrationWarning
+    >
       <div
         className={cn(
           "flex justify-between items-center px-4 md:px-8 py-4 bg-white",
           "relative z-[10000]"
         )}
       >
-        <Link
-          href="/"
-          onClick={(e) => {
-            e.preventDefault();
-            router.push("/");
-            router.refresh();
-            setIsMenuOpen(false); // Close mobile menu if open
-          }}
-          className="font-semibold hover:text-[var(--color-bg-tertiary)] transition-all duration-300"
-        >
-          <h6 className="heading-6 text-[var(--color-text-primary)]">
-            Tide Raider
-          </h6>
-        </Link>
+        {isLoading ? (
+          <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
+        ) : (
+          <Link
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push("/");
+              router.refresh();
+              setIsMenuOpen(false); // Close mobile menu if open
+            }}
+            className="font-semibold hover:text-[var(--color-bg-tertiary)] transition-all duration-300"
+          >
+            <h6 className="heading-6 text-[var(--color-text-primary)]">
+              Tide Raider
+            </h6>
+          </Link>
+        )}
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          <nav>
-            <ul className="flex gap-2 items-center">
-              {NAVIGATION_ITEMS.map((link) => (
-                <li key={link.href} className="px-2 py-2">
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      "link-nav",
-                      pathname === link.href && "link-nav-active"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="flex gap-4 items-center">
-            <div className="relative">
-              {session && (
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  title="is Profile Open"
-                  className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
-                >
-                  <ProfileImage />
-                  <NotificationBadge />
-                </button>
-              )}
+          {isLoading ? (
+            <>
+              <nav>
+                <ul className="flex gap-2 items-center">
+                  {NAVIGATION_ITEMS.map((link) => (
+                    <li key={link.href} className="px-2 py-2">
+                      <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="flex gap-4 items-center">
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
+                <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
+              </div>
+            </>
+          ) : (
+            <>
+              <nav>
+                <ul className="flex gap-2 items-center">
+                  {NAVIGATION_ITEMS.map((link) => (
+                    <li key={link.href} className="px-2 py-2">
+                      <Link
+                        href={link.href}
+                        className={cn(
+                          "link-nav",
+                          pathname === link.href && "link-nav-active"
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="flex gap-4 items-center">
+                <div className="relative">
+                  {session && (
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      title="is Profile Open"
+                      className="flex items-center gap-2 p-1 hover:bg-gray-100 rounded-full relative"
+                    >
+                      <ProfileImage />
+                      <NotificationBadge />
+                    </button>
+                  )}
 
-              {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 font-primary">
-                  <Link
-                    href="/dashboard"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/notifications"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    Notifications
-                  </Link>
-                  <Link
-                    href={`/profile/${session!.user.id}`}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    Profile
-                  </Link>
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 font-primary">
+                      <Link
+                        href="/dashboard"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/dashboard/notifications"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        Notifications
+                      </Link>
+                      <Link
+                        href={`/profile/${session!.user.id}`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <AuthButton />
-          </div>
+                <AuthButton />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Mobile Navigation */}
         <div className="md:hidden flex items-center gap-4">
-          {session && (
-            <div className="flex items-center gap-2">
-              <ProfileImage />
-            </div>
+          {isLoading ? (
+            <>
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
+              <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse" />
+              <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
+            </>
+          ) : (
+            <>
+              {session && (
+                <div className="flex items-center gap-2">
+                  <ProfileImage />
+                </div>
+              )}
+              <AuthButton />
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </>
           )}
-          <AuthButton />
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 hover:bg-gray-50 rounded-md transition-colors"
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </div>
 
