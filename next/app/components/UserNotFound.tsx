@@ -6,7 +6,7 @@ export default function UserNotFound() {
           User Not Found
         </h1>
         <p className="mb-6 text-[var(--color-text-secondary)] font-primary">
-          The user you're looking for has either wiped out or never existed.
+          The user you&apos;re looking for has either wiped out or never existed.
         </p>
         <a
           href="/"

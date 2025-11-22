@@ -35,7 +35,7 @@ export default function ForecastPanel({
   if (!windData) {
     return (
       <div className="text-yellow-600 font-primary text-sm">
-        Please select a region to view a region's forecast.
+        Please select a region to view a region&apos;s forecast.
       </div>
     );
   }

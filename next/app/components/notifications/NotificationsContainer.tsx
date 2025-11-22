@@ -151,7 +151,7 @@ export default function NotificationsContainer() {
           No notifications
         </h3>
         <p className="font-primary text-sm text-gray-500 mt-1">
-          You don't have any notifications yet
+          You don&apos;t have any notifications yet
         </p>
       </div>
     );
@@ -209,7 +209,7 @@ export default function NotificationsContainer() {
             No {activeTab !== "all" ? activeTab : ""} notifications
           </h3>
           <p className="font-primary text-sm text-gray-500 mt-1">
-            You don't have any {activeTab !== "all" ? activeTab : ""}{" "}
+            You don&apos;t have any {activeTab !== "all" ? activeTab : ""}{" "}
             notifications yet
           </p>
         </div>

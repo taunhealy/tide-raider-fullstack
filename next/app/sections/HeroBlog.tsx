@@ -41,19 +41,17 @@ interface Props {
 }
 
 export default function HeroBlogSection({ data }: Props) {
-  if (!data) {
-    return null;
-  }
-
+  // Hooks must be called before any early returns
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 5;
-  const allCategories = data.categories || [];
+  const allCategories = data?.categories || [];
   const containerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const filteredPosts = useMemo(() => {
+    if (!data) return [];
     return data.posts
       .filter((post) => {
         if (activeCategory === "All") return true;
@@ -68,7 +66,7 @@ export default function HeroBlogSection({ data }: Props) {
           new Date(a._createdAt || "").getTime()
         );
       });
-  }, [data.posts, activeCategory]);
+  }, [data, activeCategory]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,6 +98,10 @@ export default function HeroBlogSection({ data }: Props) {
       behavior: "smooth",
     });
   }, []);
+
+  if (!data) {
+    return null;
+  }
 
   return (
     <section className="blog-section pt-[54px] pb-[81px] md:pt-[54px] md:pb-[121.51px] px-4 md:px-[121.51px] bg-[var(--color-bg-primary)]">

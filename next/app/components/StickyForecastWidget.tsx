@@ -121,7 +121,7 @@ export default function StickyForecastWidget() {
         <div className="bg-white rounded-lg shadow-lg p-3 border border-gray-200 max-w-2xl">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-semibold font-primary text-[var(--color-primary)]">
-              Today's Forecast
+              Today&apos;s Forecast
             </h4>
             <span className="text-xs text-gray-500 font-primary">
               {regionName}

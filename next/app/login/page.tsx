@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <LoginButton callbackUrl={callbackUrl} />
 
         <p className="font-primary mt-4 text-sm text-gray-600 text-center">
-          You'll be redirected to:
+          You&apos;ll be redirected to:
         </p>
         <p className="font-primary p-2 text-sm text-gray-300 text-center">
           {callbackUrl}

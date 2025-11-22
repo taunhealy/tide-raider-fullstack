@@ -429,7 +429,7 @@ export default function NewRaidLogPage() {
                         🚀 Backend server running on port 4001
                       </code>
                     </li>
-                    <li>Click "Check Connection Again" above</li>
+                    <li>Click &quot;Check Connection Again&quot; above</li>
                   </ol>
                 </div>
               )}

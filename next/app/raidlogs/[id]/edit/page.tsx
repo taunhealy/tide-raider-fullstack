@@ -37,7 +37,7 @@ export default function EditRaidLogPage({
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-bold mb-4">Log Entry Not Found</h2>
-        <p>The log entry you're trying to edit doesn't exist.</p>
+        <p>The log entry you&apos;re trying to edit doesn&apos;t exist.</p>
       </div>
     );
   }

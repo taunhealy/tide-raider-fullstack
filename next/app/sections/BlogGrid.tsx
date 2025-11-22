@@ -32,22 +32,24 @@ interface BlogProps {
 }
 
 export default function BlogGrid({ data }: BlogProps) {
-  if (!data) {
-    return null;
-  }
-
+  // Hooks must be called before any early returns
   const [activeCategory, setActiveCategory] = useState("All");
-  const allCategories = data.allCategories || [];
+  const allCategories = data?.allCategories || [];
   const layout = "vertical";
 
   const filteredPosts = useMemo(() => {
+    if (!data) return [];
     return data.posts.filter((post) => {
       if (activeCategory === "All") return true;
       return post.categories?.some(
         (category) => category?.title === activeCategory
       );
     });
-  }, [data.posts, activeCategory]);
+  }, [data, activeCategory]);
+
+  if (!data) {
+    return null;
+  }
 
   return (
     <section className="blog-section pt-[32px] pb-[81px] md:pt-[32px] md:pb-[121.51px] px-4 md:px-[121.51px] bg-[var(--color-bg-primary)]">
@@ -80,9 +82,13 @@ export default function BlogGrid({ data }: BlogProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredPosts.map((post: HeroPost) => (
-            <BlogCard post={post} />
-        ))}
+        {filteredPosts.map((post: HeroPost) => {
+          const slugValue =
+            typeof post.slug === "string" ? post.slug : post.slug?.current;
+          return (
+            <BlogCard key={post._id || slugValue || post.title} post={post} />
+          );
+        })}
       </div>
     </section>
   );

@@ -48,7 +48,7 @@ export function AlertLimitModal({ isOpen, onClose }: AlertLimitModalProps) {
             Alert Limit Reached
           </DialogTitle>
           <DialogDescription className="text-center text-gray-600 pt-2">
-            You've used up your free alert. Upgrade to premium for unlimited
+            You&apos;ve used up your free alert. Upgrade to premium for unlimited
             alerts and access to all premium features.
           </DialogDescription>
         </DialogHeader>
