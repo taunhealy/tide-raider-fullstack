@@ -24,6 +24,7 @@ import {
 } from "@/app/lib/scoreDisplayBlueStars";
 import { getVideoId } from "@/app/lib/videoUtils";
 import { MultiImageUploader } from "./MultiImageUploader";
+import { getBackendUrl } from "@/app/lib/api-config";
 
 interface RaidLogFormProps {
   userEmail?: string;
@@ -554,9 +555,8 @@ export function RaidLogForm({
       toast.error("Please sign in to log your session", {
         action: {
           label: "Sign In",
-          onClick: async () => {
+          onClick: () => {
             // Use single source of truth for backend URL
-            const { getBackendUrl } = await import("@/app/lib/api-config");
             const BACKEND_URL = getBackendUrl();
             window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
               `${window.location.origin}/raidlogs/new`
@@ -1364,9 +1364,6 @@ export function RaidLogForm({
                         label: "Sign In",
                         onClick: () => {
                           // Use single source of truth for backend URL
-                          const { getBackendUrl } = await import(
-                            "@/app/lib/api-config"
-                          );
                           const BACKEND_URL = getBackendUrl();
                           window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
                             `${window.location.origin}/raidlogs/new`

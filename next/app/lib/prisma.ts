@@ -22,7 +22,8 @@ if (
     }
   } catch (e) {
     // URL parsing failed, use original
-    console.warn("Could not parse DATABASE_URL for connection optimization");
+    // Don't log the error or URL to prevent exposing credentials
+    // Silently fall back to original URL
   }
 }
 
@@ -80,18 +81,25 @@ function getPrisma() {
 
     return prismaInstance;
   } catch (error: any) {
-    // Log the actual error for debugging
-    console.error("[prisma] Failed to initialize Prisma client:", error);
+    // Sanitize error message to prevent exposing DATABASE_URL
+    const sanitizeMessage = (msg: string | undefined) => {
+      if (!msg) return msg;
+      // Remove any potential database URLs from error messages
+      return msg.replace(/postgresql:\/\/[^\s]+/gi, "postgresql://[REDACTED]");
+    };
+
+    // Log the actual error for debugging (sanitized)
+    const sanitizedMessage = sanitizeMessage(error?.message);
+    console.error("[prisma] Failed to initialize Prisma client:", sanitizedMessage);
     console.error("[prisma] Error details:", {
-      message: error?.message,
+      message: sanitizedMessage,
       code: error?.code,
-      stack: error?.stack,
       hasDatabaseUrl: !!process.env.DATABASE_URL,
       nodeEnv: process.env.NODE_ENV,
     });
     // Prisma client not available (e.g., during build or not generated)
     throw new Error(
-      `Prisma client initialization failed: ${error?.message || "Unknown error"}. Make sure DATABASE_URL is set and Prisma client is generated (npm run prisma:generate).`
+      `Prisma client initialization failed: ${sanitizedMessage || "Unknown error"}. Make sure DATABASE_URL is set and Prisma client is generated (npm run prisma:generate).`
     );
   }
 }
