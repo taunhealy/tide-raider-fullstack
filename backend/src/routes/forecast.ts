@@ -56,17 +56,11 @@ router.get(
           );
           return res.json(forecast);
         }
-        
-        // If not found, don't trigger scraping during user requests
+
+        // If not found, try fallback logic (don't trigger scraping during user requests)
         // Scraping should happen in background cron jobs, not during API requests
         console.log(
           `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying fallback...`
-        );
-
-        // If exact date not found, try to find the most recent available forecast for this source
-        // Don't trigger scraping during user requests - scraping should happen in background
-        console.log(
-          `[forecast] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying to find most recent...`
         );
         const mostRecentForecast = await prisma.forecast.findFirst({
           where: {
@@ -118,15 +112,54 @@ router.get(
           .json({ error: "No forecast data found for the requested date" });
       }
 
-      // Use the existing getLatestConditions function that handles scraping and caching
-      const forecast = await getLatestConditions(
-        regionId,
-        forceRefresh,
-        sourceParam
-      );
+      // If no date provided, use today's date and query database (don't scrape)
+      const { prisma } = await import("../lib/prisma");
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+
+      // Query for today's forecast with the requested source
+      let forecast = await prisma.forecast.findFirst({
+        where: {
+          regionId,
+          date: today,
+          source: sourceParam,
+        },
+      });
+
+      // If not found for today, try most recent from SAME source only (no cross-source fallback)
+      if (!forecast) {
+        console.log(
+          `[forecast] ⚠️ No forecast found for today (source: ${sourceParam}), trying most recent from same source...`
+        );
+
+        const mostRecentForecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            source: sourceParam, // Must be the same source
+            date: {
+              lte: today,
+            },
+          },
+          orderBy: {
+            date: "desc",
+          },
+        });
+
+        if (mostRecentForecast) {
+          forecast = mostRecentForecast;
+          console.log(
+            `[forecast] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), returning as fallback`
+          );
+        }
+      }
 
       if (!forecast) {
-        return res.status(404).json({ error: "No forecast data found" });
+        console.log(
+          `[forecast] ⚠️ No forecast data available in database for ${regionId} (source: ${sourceParam}). Data may not have been scraped yet.`
+        );
+        return res
+          .status(404)
+          .json({ error: `No forecast data found for ${sourceParam}` });
       }
 
       // Validate that the forecast has the correct source
