@@ -1,6 +1,24 @@
 # Tide Raider Backend API
 
-Express.js backend API for Tide Raider, deployed on Fly.io.
+Express.js backend API for Tide Raider. Deploy to **Google Cloud Run** with **Supabase PostgreSQL** database.
+
+## Architecture
+
+```
+Frontend (Vercel) → Cloud Run (Express.js) → Supabase (PostgreSQL)
+```
+
+**Everything runs on Cloud Run:**
+- ✅ All API routes
+- ✅ Authentication (Passport OAuth)
+- ✅ Web scrapers
+- ✅ Cron jobs
+- ✅ Business logic
+
+**Supabase is used for:**
+- ✅ PostgreSQL database only
+- ❌ No Edge Functions (all APIs on Cloud Run)
+- ❌ No Supabase Auth (using Passport on Cloud Run)
 
 ## Development Setup
 
@@ -129,35 +147,42 @@ Start the server:
 npm start
 ```
 
-## Deployment to Fly.io
+## Deployment
 
-1. Install Fly CLI: https://fly.io/docs/getting-started/installing-flyctl/
+### Google Cloud Run + Supabase (Recommended)
 
-2. Login to Fly.io:
+Deploy to Google Cloud Run with a Supabase PostgreSQL database. **Everything runs on Cloud Run** (APIs, auth, scrapers, cron), and Supabase is used **only** as the database.
 
+**Quick Start:**
 ```bash
-fly auth login
+# Complete setup guide
+# See SETUP_SUPABASE_CLOUDRUN.md for step-by-step instructions
 ```
 
-3. Launch the app:
+**Key Benefits:**
+- 🆓 **Free tier** for development/testing
+- 💰 **$0-25/month** for small apps
+- ⚡ Auto-scales to zero (pay only when running)
+- 🔄 Simple deployment with Cloud Build
+- ✅ **No migration needed** - your Express.js backend already works
 
-```bash
-fly launch
-```
+**Architecture:**
+- Frontend: Vercel (Next.js)
+- Backend: Cloud Run (Express.js) - **everything runs here**
+- Database: Supabase (PostgreSQL only)
 
-4. Set environment variables:
+**Cost:**
+- Cloud Run: $0/month (free tier: 180k vCPU-seconds, 2M requests)
+- Supabase: $0/month (free tier: 500 MB storage)
+- **Total: $0/month for development/testing**
 
-```bash
-fly secrets set DATABASE_URL=your_database_url
-fly secrets set NEXTAUTH_SECRET=your_secret
-# ... add other secrets
-```
-
-5. Deploy:
-
-```bash
-fly deploy
-```
+**Complete Guides:**
+- `SETUP_SUPABASE_CLOUDRUN.md` - **Complete setup guide (start here!)**
+- `ARCHITECTURE.md` - Architecture overview
+- `CLOUD_RUN_QUICK_START.md` - Quick reference
+- `DEPLOY_TO_CLOUD_RUN.md` - Detailed deployment steps
+- `SUPABASE_SETUP.md` - Database setup details
+- `GITHUB_LINKING_GUIDE.md` - CI/CD setup (optional)
 
 ## API Endpoints
 
@@ -191,19 +216,20 @@ postgresql://tide_raider:tide_raider_dev@localhost:5432/tide_raider_dev
 - User: `tide_raider`
 - Password: `tide_raider_dev`
 
-### Production (Fly Postgres)
+### Production Databases
 
-In production, the `DATABASE_URL` is automatically set by Fly.io when you attach a Postgres database:
+**Option 1: Supabase (Recommended for Cloud Run)**
+- Free tier: 500 MB storage
+- Easy setup: Get connection string from Supabase dashboard
+- See `SUPABASE_SETUP.md` for details
 
-```bash
-fly postgres attach tide-raider-db --app tide-raider-backend
-```
+**Option 2: Fly Postgres (For Fly.io deployment)**
+- Attach to Fly.io app: `fly postgres attach tide-raider-db --app tide-raider-backend`
+- `DATABASE_URL` is automatically set by Fly.io
 
-This ensures:
-
-- ✅ Same code runs everywhere
-- ✅ Migrations as single source of truth
-- ✅ Consistent database behavior
+**Option 3: Other PostgreSQL providers**
+- Any PostgreSQL-compatible database works
+- Just set `DATABASE_URL` environment variable
 
 ## Environment Variables
 

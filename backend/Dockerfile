@@ -65,8 +65,10 @@ RUN mkdir -p dist/lib/scrapers && \
 # Note: We keep src/ folder for reference, but only dist/ is used at runtime
 RUN npm prune --production
 
-# Expose port (can be overridden via PORT env var)
-EXPOSE 4001
+# Cloud Run expects containers to listen on PORT env var (defaults to 8080)
+# The server code already handles this: process.env.PORT || "4001"
+ENV PORT=8080
+EXPOSE 8080
 
 # Start server
 CMD ["npm", "start"]

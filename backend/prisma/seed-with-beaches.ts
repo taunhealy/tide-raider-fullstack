@@ -34,7 +34,30 @@ const currentDir = (() => {
     : pathNode.join(process.cwd(), "prisma");
 })();
 
-const prisma = new PrismaClient();
+// Create PrismaClient with connection pooler support (disable prepared statements)
+// Supabase pooler doesn't support prepared statements, so we add ?pgbouncer=true
+const getDatabaseUrl = () => {
+  const url = process.env.DATABASE_URL || "";
+  if (!url) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+
+  // If using pooler (port 6543), add pgbouncer=true to disable prepared statements
+  if (url.includes(":6543") && !url.includes("pgbouncer=true")) {
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}pgbouncer=true`;
+  }
+
+  return url;
+};
+
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: getDatabaseUrl(),
+    },
+  },
+});
 
 // Helper function to load data (avoids top-level await)
 async function loadData() {

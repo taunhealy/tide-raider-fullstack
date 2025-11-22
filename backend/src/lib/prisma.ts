@@ -2,10 +2,8 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-// Connection pool optimization for Fly.io Postgres
-// Fly.io Postgres typically has ~100 connection limit
-// Prisma default: connection_limit = num_physical_cpus * 2 + 1
-// For serverless/edge: use smaller pool
+// Connection pool optimization for Cloud Run
+// Cloud Run instances are ephemeral, so we use a conservative connection limit
 let optimizedDatabaseUrl = process.env.DATABASE_URL;
 
 // Validate DATABASE_URL is present
@@ -22,8 +20,7 @@ if (
     const url = new URL(optimizedDatabaseUrl);
     if (!url.searchParams.has("connection_limit")) {
       // Conservative limit: 10 connections per instance
-      // With 2-3 Fly.io instances = 20-30 connections total
-      // Leaves 70+ connections for Next.js
+      // With Cloud Run auto-scaling, this prevents connection exhaustion
       url.searchParams.set("connection_limit", "10");
       url.searchParams.set("pool_timeout", "10");
       optimizedDatabaseUrl = url.toString();
@@ -39,8 +36,7 @@ if (
   }
 }
 
-// Prisma Client configuration
-// Initialize with minimal config to avoid path resolution issues
+// Prisma Client configuration (Prisma v6 - stable, no adapter needed)
 // Prisma will read DATABASE_URL from environment automatically
 export const prisma =
   globalForPrisma.prisma ||

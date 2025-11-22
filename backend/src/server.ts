@@ -20,9 +20,11 @@ const PORT = parseInt(process.env.PORT || "4001", 10);
 app.set("trust proxy", 1);
 
 // Middleware
+// CORS configuration - handle FRONTEND_URL with potential trailing whitespace
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").trim();
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: frontendUrl,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
