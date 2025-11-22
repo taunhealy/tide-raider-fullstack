@@ -27,9 +27,28 @@ router.get(
       });
 
       res.json({ beaches });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch beaches:", error);
-      res.status(500).json({ error: "Failed to fetch beaches" });
+      console.error("Error details:", {
+        message: error?.message,
+        code: error?.code,
+        name: error?.name,
+      });
+      
+      // If database connection error, return empty array instead of 500
+      if (
+        error?.code === "P1001" || // Can't reach database server
+        error?.name === "PrismaClientInitializationError" ||
+        error?.message?.includes("Can't reach database server")
+      ) {
+        console.warn("[beaches] Database unavailable, returning empty array");
+        return res.json({ beaches: [] });
+      }
+      
+      res.status(500).json({ 
+        error: "Failed to fetch beaches",
+        details: error?.message || "Unknown error"
+      });
     }
   }
 );

@@ -12,21 +12,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getBackendUrl } from "@/app/lib/api-config";
 // Centralized authentication: Only using backend OAuth (auth-token cookie from Passport)
 // No NextAuth - all auth flows through backend Passport/OAuth system
-
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Fallback: use Cloud Run backend (we no longer use localhost:4001 or Fly.io)
-  return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
-};
 
 const BACKEND_URL = getBackendUrl();
 
@@ -250,7 +238,13 @@ async function handleProxy(
       });
     }
   } catch (error) {
-    console.error("Proxy error:", error);
+    console.error("[proxy] Proxy error:", error);
+    console.error("[proxy] Error details:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      backendUrl: BACKEND_URL,
+      path: pathSegments.join("/"),
+    });
 
     // For forecast endpoints, return null instead of error (frontend handles null gracefully)
     if (pathSegments.join("/").includes("forecast")) {
@@ -259,6 +253,20 @@ async function handleProxy(
         error instanceof Error ? error.message : "Unknown error"
       );
       return NextResponse.json(null, { status: 200 });
+    }
+
+    // For raid-logs and blog-posts, return empty structure instead of 500
+    const path = pathSegments.join("/");
+    if (path.includes("raid-logs")) {
+      console.warn(`[proxy] Raid-logs endpoint error, returning empty structure`);
+      return NextResponse.json({ entries: [], total: 0 }, { status: 200 });
+    }
+    if (path.includes("blog-posts")) {
+      console.warn(`[proxy] Blog-posts endpoint error, returning empty structure`);
+      return NextResponse.json(
+        { posts: [], trip: null, categories: [] },
+        { status: 200 }
+      );
     }
 
     return NextResponse.json(

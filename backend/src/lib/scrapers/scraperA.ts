@@ -95,7 +95,6 @@ async function getBrowser() {
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless === "new" ? true : chromium.headless,
-      ignoreHTTPSErrors: true,
     });
   }
 }
@@ -151,7 +150,8 @@ export async function scraperA(
     await page.waitForSelector(".weathertable", { timeout: 15000 });
     console.log("✅ Found weather table");
 
-    await page.waitForTimeout(4000);
+    // Wait 4 seconds for table to load
+    await new Promise((resolve) => setTimeout(resolve, 4000));
 
     // Extract forecast-day sections with their dates and rows
     // This finds ALL forecast-day containers on the page (today, tomorrow, day after tomorrow, etc.)

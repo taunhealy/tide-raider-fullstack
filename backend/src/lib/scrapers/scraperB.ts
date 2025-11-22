@@ -32,7 +32,6 @@ async function getBrowser() {
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless === "new" ? true : chromium.headless,
-      ignoreHTTPSErrors: true,
     });
   }
 }
@@ -191,7 +190,7 @@ export async function scraperB(
     }
 
     console.log(`[scraperB] ⏳ Waiting 4 seconds for table to fully load...`);
-    await page.waitForTimeout(4000);
+    await new Promise((resolve) => setTimeout(resolve, 4000));
 
     console.log(`[scraperB] 🔍 Extracting forecast data from page...`);
     // Load evaluation code from separate JS file to avoid TypeScript helper injection
@@ -206,7 +205,11 @@ export async function scraperB(
       extractWindguruData();
     `);
 
-    if (!forecastData || forecastData.length === 0) {
+    if (
+      !forecastData ||
+      !Array.isArray(forecastData) ||
+      forecastData.length === 0
+    ) {
       console.error(`[scraperB] ❌ No forecast data extracted from page`);
       throw new Error(
         "Failed to parse Windguru table or no morning forecast found"
@@ -221,6 +224,9 @@ export async function scraperB(
     // Convert and parse the data for each date
     const forecasts: BaseForecastData[] = [];
 
+    if (!Array.isArray(forecastData)) {
+      throw new Error("Forecast data is not an array");
+    }
     for (const data of forecastData) {
       console.log(`[scraperB] 🔄 Processing forecast data:`, {
         raw: data,

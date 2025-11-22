@@ -32,7 +32,6 @@ async function getBrowser() {
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless === "new" ? true : chromium.headless,
-      ignoreHTTPSErrors: true,
     });
   }
 }
@@ -120,7 +119,7 @@ export async function scraperC(
 
     // Wait a bit for all data to load
     console.log(`[scraperC] ⏳ Waiting 2 seconds for table to fully load...`);
-    await page.waitForTimeout(2000);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log(`[scraperC] 🔍 Extracting forecast data from page...`);
 
@@ -142,13 +141,14 @@ export async function scraperC(
       typeof forecastData === "object" &&
       "error" in forecastData
     ) {
+      const errorData = forecastData as { error: unknown; debug?: unknown };
       console.error(`[scraperC] ❌ No forecast data extracted from page`);
       console.error(
         `[scraperC] 🔍 Debug info:`,
-        JSON.stringify(forecastData.debug, null, 2)
+        JSON.stringify(errorData.debug, null, 2)
       );
       throw new Error(
-        `Failed to parse Windy.app table: ${forecastData.error}. Debug: ${JSON.stringify(forecastData.debug)}`
+        `Failed to parse Windy.app table: ${errorData.error}. Debug: ${JSON.stringify(errorData.debug)}`
       );
     }
 
@@ -161,6 +161,11 @@ export async function scraperC(
       throw new Error(
         "Failed to parse Windy.app table or no morning forecast found"
       );
+    }
+
+    // Ensure forecastData is an array
+    if (!Array.isArray(forecastData)) {
+      throw new Error("Forecast data is not an array");
     }
 
     console.log(
