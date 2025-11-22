@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 // Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
 const getBackendUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  
+
   // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
   if (envUrl) {
     return envUrl;

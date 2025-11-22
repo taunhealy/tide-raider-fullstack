@@ -5,19 +5,19 @@
 
 /**
  * SINGLE SOURCE OF TRUTH for backend URL
- * 
+ *
  * This is the ONLY place where the backend URL should be defined.
  * All other files should import getBackendUrl from this file.
- * 
+ *
  * Priority:
  * 1. NEXT_PUBLIC_API_URL environment variable (if set)
  * 2. Cloud Run backend (production default)
- * 
+ *
  * No hardcoded URLs anywhere else!
  */
 export const getBackendUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  
+
   // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
   if (envUrl) {
     return envUrl;

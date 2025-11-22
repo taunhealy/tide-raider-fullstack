@@ -1364,7 +1364,9 @@ export function RaidLogForm({
                         label: "Sign In",
                         onClick: () => {
                           // Use single source of truth for backend URL
-                          const { getBackendUrl } = await import("@/app/lib/api-config");
+                          const { getBackendUrl } = await import(
+                            "@/app/lib/api-config"
+                          );
                           const BACKEND_URL = getBackendUrl();
                           window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
                             `${window.location.origin}/raidlogs/new`

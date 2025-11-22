@@ -17,7 +17,7 @@ export const handleSignIn = (callbackUrl?: string) => {
   // Pass full frontend URL in state so backend knows where to redirect
   const state = encodeURIComponent(fullCallbackUrl);
   const oauthUrl = `${BACKEND_URL}/api/auth/google?state=${state}`;
-  
+
   // Log helpful message in development
   if (process.env.NODE_ENV === "development") {
     console.log(`[Auth] Redirecting to backend OAuth: ${oauthUrl}`);
@@ -25,6 +25,6 @@ export const handleSignIn = (callbackUrl?: string) => {
       console.log(`[Auth] ⚠️ Make sure backend is running at ${BACKEND_URL}`);
     }
   }
-  
+
   window.location.href = oauthUrl;
 };
