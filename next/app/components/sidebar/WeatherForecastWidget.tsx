@@ -93,35 +93,28 @@ export default function WeatherForecastWidget() {
     );
   }, [normalizedDate, regionId]);
 
-  // Invalidate and refetch when date or source changes
+  // Invalidate queries when date or source changes (but don't be too aggressive)
+  // The query key change will automatically trigger a refetch, so we don't need to manually invalidate
   useEffect(() => {
-    if (regionId && normalizedDate) {
+    if (regionId && normalizedDate && mounted) {
       console.log(
-        "[WeatherForecastWidget] Date or source changed, invalidating queries:",
+        "[WeatherForecastWidget] Date or source changed:",
         {
           regionId,
           normalizedDate,
           source: selectedSource,
         }
       );
-      queryClient.invalidateQueries({
-        queryKey: ["forecast", regionId],
-      });
-      // Also invalidate filtered-beaches query so scores are recalculated with new source
-      // This forces useFilteredBeaches to refetch with the new source
-      queryClient.invalidateQueries({
-        queryKey: ["filteredBeaches"],
-      });
-      // Remove all cached filteredBeaches queries to force fresh fetch
-      queryClient.removeQueries({
-        queryKey: ["filteredBeaches"],
-      });
-      // Force refetch to ensure the new source is used immediately
-      queryClient.refetchQueries({
-        queryKey: ["filteredBeaches"],
-      });
+      // Only invalidate filtered-beaches when source changes (not on every date change)
+      // The forecast query will automatically refetch due to query key change
+      if (selectedSource) {
+        queryClient.invalidateQueries({
+          queryKey: ["filteredBeaches"],
+          exact: false, // Invalidate all filteredBeaches queries
+        });
+      }
     }
-  }, [regionId, normalizedDate, selectedSource, queryClient]);
+  }, [regionId, normalizedDate, selectedSource, queryClient, mounted]);
 
   // Only enable query after mount to prevent hydration issues
   const queryEnabled = mounted && !!regionId && !!normalizedDate;
@@ -163,10 +156,13 @@ export default function WeatherForecastWidget() {
       }
     },
     enabled: queryEnabled,
-    staleTime: 0, // Always refetch when query key changes (date change)
+    staleTime: 60 * 1000, // Data is fresh for 1 minute - reduces unnecessary refetches
     refetchOnWindowFocus: false,
-    refetchOnMount: true, // Refetch when component mounts with new date
-    gcTime: 0, // Don't cache - always fetch fresh data
+    refetchOnMount: false, // Use cached data if available - faster loading
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
+    retry: 2, // Retry twice on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
+    networkMode: "online", // Only run query when online
   });
 
   // Debug: Log query state
