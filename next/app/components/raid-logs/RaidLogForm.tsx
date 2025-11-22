@@ -155,14 +155,14 @@ export function RaidLogForm({
       if (!selectedBeach?.regionId || !selectedDate) {
         // Return 'unknown' forecast instead of throwing
         return {
-          id: 'unknown',
+          id: "unknown",
           date: new Date(selectedDate || new Date()),
-          regionId: selectedBeach?.regionId || 'unknown',
-          windSpeed: 'unknown' as any,
-          windDirection: 'unknown' as any,
-          swellHeight: 'unknown' as any,
-          swellPeriod: 'unknown' as any,
-          swellDirection: 'unknown' as any,
+          regionId: selectedBeach?.regionId || "unknown",
+          windSpeed: "unknown" as any,
+          windDirection: "unknown" as any,
+          swellHeight: "unknown" as any,
+          swellPeriod: "unknown" as any,
+          swellDirection: "unknown" as any,
         };
       }
 
@@ -183,14 +183,14 @@ export function RaidLogForm({
           throw new Error("Missing beach or date");
         }
         return {
-          id: 'unknown',
+          id: "unknown",
           date: new Date(selectedDate),
           regionId: selectedBeach.regionId,
-          windSpeed: 'unknown' as any,
-          windDirection: 'unknown' as any,
-          swellHeight: 'unknown' as any,
-          swellPeriod: 'unknown' as any,
-          swellDirection: 'unknown' as any,
+          windSpeed: "unknown" as any,
+          windDirection: "unknown" as any,
+          swellHeight: "unknown" as any,
+          swellPeriod: "unknown" as any,
+          swellDirection: "unknown" as any,
         };
       }
 
@@ -247,22 +247,25 @@ export function RaidLogForm({
         return data;
       }
 
-      console.warn("[RaidLogForm] No usable forecast data in API response, returning 'unknown' values:", {
-        dataKeys: Object.keys(data || {}),
-        forecast: data?.forecast,
-        scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
-      });
-      
+      console.warn(
+        "[RaidLogForm] No usable forecast data in API response, returning 'unknown' values:",
+        {
+          dataKeys: Object.keys(data || {}),
+          forecast: data?.forecast,
+          scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
+        }
+      );
+
       // Return a forecast object with 'unknown' values instead of throwing an error
       return {
-        id: 'unknown',
+        id: "unknown",
         date: new Date(selectedDate),
         regionId: selectedBeach.regionId,
-        windSpeed: 'unknown' as any,
-        windDirection: 'unknown' as any,
-        swellHeight: 'unknown' as any,
-        swellPeriod: 'unknown' as any,
-        swellDirection: 'unknown' as any,
+        windSpeed: "unknown" as any,
+        windDirection: "unknown" as any,
+        swellHeight: "unknown" as any,
+        swellPeriod: "unknown" as any,
+        swellDirection: "unknown" as any,
       };
     },
     enabled: !!selectedBeach?.regionId && !!selectedDate,
@@ -616,8 +619,6 @@ export function RaidLogForm({
 
     // Allow submission even without forecast data (will use 'unknown' values)
     // Removed the error toast - forecast will show 'unknown' instead
-      return;
-    }
 
     setIsSubmitting(true);
     try {
@@ -853,9 +854,7 @@ export function RaidLogForm({
   if (!isOpen) return null;
 
   // If we have user data, proceed immediately (don't wait for status to update)
-  if (user) {
-    // User is available, render form
-  } else if (isAuthLoading || isBeachesLoading) {
+  if (isAuthLoading || isBeachesLoading) {
     // Show loader while auth or beaches are loading
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -866,6 +865,7 @@ export function RaidLogForm({
     );
   }
 
+  // Render form (user may or may not be logged in - form handles that)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white max-h-[90vh] overflow-y-auto p-6 rounded-lg w-full max-w-md">
@@ -995,16 +995,20 @@ export function RaidLogForm({
                     ) : forecastData ? (
                       <SurfForecastWidget forecast={forecastData} />
                     ) : (
-                      <SurfForecastWidget forecast={{
-                        id: 'unknown',
-                        date: selectedDate ? new Date(selectedDate) : new Date(),
-                        regionId: selectedBeach?.regionId || 'unknown',
-                        windSpeed: 'unknown' as any,
-                        windDirection: 'unknown' as any,
-                        swellHeight: 'unknown' as any,
-                        swellPeriod: 'unknown' as any,
-                        swellDirection: 'unknown' as any,
-                      }} />
+                      <SurfForecastWidget
+                        forecast={{
+                          id: "unknown",
+                          date: selectedDate
+                            ? new Date(selectedDate)
+                            : new Date(),
+                          regionId: selectedBeach?.regionId || "unknown",
+                          windSpeed: "unknown" as any,
+                          windDirection: "unknown" as any,
+                          swellHeight: "unknown" as any,
+                          swellPeriod: "unknown" as any,
+                          swellDirection: "unknown" as any,
+                        }}
+                      />
                     )}
                   </div>
                 </div>
