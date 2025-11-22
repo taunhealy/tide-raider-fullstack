@@ -278,8 +278,10 @@ router.get(
       );
     }
     // OAuth is configured, proceed with authentication
+    // Include scope to fix "Missing required parameter: scope" error
     passport.authenticate("google", {
       session: false,
+      scope: ["profile", "email"],
       failureRedirect: `${FRONTEND_URL}/auth/signin?error=Callback`,
     })(req, res, next);
   },
