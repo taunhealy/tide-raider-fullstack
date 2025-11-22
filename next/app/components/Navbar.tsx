@@ -33,9 +33,50 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
-  // Don't render anything until authentication is checked
+  // Show loading skeleton while authentication is being checked
   if (status === "loading" || !mounted) {
-    return null; // Or a loading spinner
+    return (
+      <header className="sticky top-0 z-[10000] bg-white">
+        <div
+          className={cn(
+            "flex justify-between items-center px-4 md:px-8 py-4 bg-white",
+            "relative z-[10000]"
+          )}
+        >
+          {/* Logo skeleton - matches heading-6 style */}
+          <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
+
+          {/* Desktop Navigation skeleton */}
+          <div className="hidden md:flex items-center gap-8">
+            <nav>
+              <ul className="flex gap-2 items-center">
+                {NAVIGATION_ITEMS.map((link) => (
+                  <li key={link.href} className="px-2 py-2">
+                    <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="flex gap-4 items-center">
+              {/* Profile image skeleton - only show if we might be logged in */}
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
+              {/* Sign in/out button skeleton */}
+              <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
+            </div>
+          </div>
+
+          {/* Mobile Navigation skeleton */}
+          <div className="md:hidden flex items-center gap-4">
+            {/* Profile image skeleton */}
+            <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
+            {/* Sign in button skeleton */}
+            <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse" />
+            {/* Menu button skeleton */}
+            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      </header>
+    );
   }
 
   // Simple function to render profile image consistently

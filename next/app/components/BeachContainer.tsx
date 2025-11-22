@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -29,12 +30,66 @@ interface BeachContainerProps {
 }
 
 export default function BeachContainer({ initialData }: BeachContainerProps) {
-  const { filters, updateFilter } = useBeachFilters();
+  const { filters, updateFilter, selectRegion } = useBeachFilters();
   const { data, isLoading, isFetching } = useFilteredBeaches({
     initialData,
     enabled: true,
   });
   const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const hasAutoRedirected = useRef(false);
+
+  // Auto-redirect to last selected region if no regionId in URL
+  const { data: recentSearches } = useQuery({
+    queryKey: ["recentSearches"],
+    queryFn: async () => {
+      const res = await fetch("/api/user-searches?limit=1");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 1000 * 60 * 5,
+    enabled: !filters.regionId && !hasAutoRedirected.current, // Only fetch if no regionId and haven't redirected yet
+  });
+
+  // Auto-redirect to most recent region if no regionId in URL
+  useEffect(() => {
+    // Only redirect if:
+    // 1. No regionId in URL
+    // 2. We have recent searches
+    // 3. We haven't already redirected
+    // 4. We're on the /raid page
+    if (
+      !filters.regionId &&
+      recentSearches &&
+      recentSearches.length > 0 &&
+      !hasAutoRedirected.current &&
+      pathname === "/raid"
+    ) {
+      const mostRecentSearch = recentSearches[0];
+      if (mostRecentSearch?.region?.id) {
+        // Construct region object from recent search data
+        const selectedRegion = {
+          id: mostRecentSearch.region.id,
+          regionId: mostRecentSearch.region.id,
+          name: mostRecentSearch.region.name,
+          countryId: mostRecentSearch.region.country?.id || "",
+          country: mostRecentSearch.region.country
+            ? {
+                id: mostRecentSearch.region.country.id || "",
+                name: mostRecentSearch.region.country.name || "",
+                continentId: mostRecentSearch.region.country.continentId || "",
+              }
+            : undefined,
+          continent: mostRecentSearch.region.continent || "",
+        };
+
+        // Use selectRegion to update URL properly
+        selectRegion(selectedRegion);
+        hasAutoRedirected.current = true;
+      }
+    }
+  }, [filters.regionId, recentSearches, selectRegion, pathname]);
 
   // Track region searches when regionId changes
   const { mutate: trackSearch } = useMutation({

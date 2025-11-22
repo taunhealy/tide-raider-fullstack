@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { getBackendUrl } from "@/app/lib/api-config";
 import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/app/components/ui/Button";
 import Textarea from "@/app/components/ui/textarea";
@@ -20,7 +21,8 @@ interface Comment {
 }
 
 export default function CommentThread({ logEntryId }: { logEntryId: string }) {
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useBackendAuth();
+  const user = session?.user;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +51,7 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !session) return;
+    if (!newComment.trim() || !user) return;
 
     setIsSubmitting(true);
     try {
@@ -126,7 +128,11 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
         <p className="text-left text-gray-500 py-4">No comments yet.</p>
       )}
 
-      {session ? (
+      {authStatus === "loading" ? (
+        <div className="bg-gray-50 p-4 rounded-lg text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+        </div>
+      ) : user ? (
         <form onSubmit={handleSubmit} className="mt-4">
           <Textarea
             value={newComment}
@@ -157,7 +163,10 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
           </p>
           <Button
             className="mt-2"
-            onClick={() => (window.location.href = "/api/auth/signin")}
+            onClick={() => {
+              const backendUrl = getBackendUrl();
+              window.location.href = `${backendUrl}/api/auth/google?state=${encodeURIComponent(window.location.href)}`;
+            }}
           >
             Sign In
           </Button>
