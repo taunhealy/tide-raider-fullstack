@@ -111,7 +111,7 @@ export function useBackendAuth() {
         const fetchStartTime = Date.now();
         try {
           // Use Next.js API route (same domain = cookies work)
-          // Add timeout to prevent hanging - reduced to 10 seconds for faster feedback
+          // Increased timeout to 60 seconds to allow for network latency to africa-south1
           const controller = new AbortController();
           const timeoutId = setTimeout(() => {
             const elapsed = Date.now() - fetchStartTime;
@@ -119,7 +119,7 @@ export function useBackendAuth() {
               `[useBackendAuth] Fetch timeout after ${elapsed}ms - aborting`
             );
             controller.abort();
-          }, 10000); // 10 second timeout
+          }, 60000); // 60 second timeout
 
           let response;
           try {

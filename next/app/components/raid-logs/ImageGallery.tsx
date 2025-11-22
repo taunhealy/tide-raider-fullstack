@@ -157,12 +157,6 @@ export function ImageGallery({
           </div>
         ))}
       </div>
-      {images.length > 0 && (
-        <p className="text-sm text-gray-500 mt-4 text-center font-primary">
-          {images.length} {images.length === 1 ? "photo" : "photos"} • Click any
-          image to view full size
-        </p>
-      )}
     </div>
   );
 }

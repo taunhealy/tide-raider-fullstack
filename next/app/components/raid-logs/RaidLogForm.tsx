@@ -153,7 +153,17 @@ export function RaidLogForm({
     queryKey: ["forecast", selectedBeach?.regionId, selectedDate],
     queryFn: async () => {
       if (!selectedBeach?.regionId || !selectedDate) {
-        throw new Error("Missing beach or date");
+        // Return 'unknown' forecast instead of throwing
+        return {
+          id: 'unknown',
+          date: new Date(selectedDate || new Date()),
+          regionId: selectedBeach?.regionId || 'unknown',
+          windSpeed: 'unknown' as any,
+          windDirection: 'unknown' as any,
+          swellHeight: 'unknown' as any,
+          swellPeriod: 'unknown' as any,
+          swellDirection: 'unknown' as any,
+        };
       }
 
       const dateStr = new Date(selectedDate).toISOString().split("T")[0];
@@ -167,8 +177,21 @@ export function RaidLogForm({
       });
 
       if (!response.ok) {
-        console.error("API error:", response.status, response.statusText);
-        throw new Error(`Failed to fetch forecast: ${response.statusText}`);
+        console.warn("API error:", response.status, response.statusText);
+        // Instead of throwing, return 'unknown' forecast
+        if (!selectedBeach?.regionId || !selectedDate) {
+          throw new Error("Missing beach or date");
+        }
+        return {
+          id: 'unknown',
+          date: new Date(selectedDate),
+          regionId: selectedBeach.regionId,
+          windSpeed: 'unknown' as any,
+          windDirection: 'unknown' as any,
+          swellHeight: 'unknown' as any,
+          swellPeriod: 'unknown' as any,
+          swellDirection: 'unknown' as any,
+        };
       }
 
       const data = await response.json();
@@ -224,12 +247,23 @@ export function RaidLogForm({
         return data;
       }
 
-      console.error("[RaidLogForm] No usable forecast data in API response:", {
+      console.warn("[RaidLogForm] No usable forecast data in API response, returning 'unknown' values:", {
         dataKeys: Object.keys(data || {}),
         forecast: data?.forecast,
         scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
       });
-      throw new Error("No forecast data available");
+      
+      // Return a forecast object with 'unknown' values instead of throwing an error
+      return {
+        id: 'unknown',
+        date: new Date(selectedDate),
+        regionId: selectedBeach.regionId,
+        windSpeed: 'unknown' as any,
+        windDirection: 'unknown' as any,
+        swellHeight: 'unknown' as any,
+        swellPeriod: 'unknown' as any,
+        swellDirection: 'unknown' as any,
+      };
     },
     enabled: !!selectedBeach?.regionId && !!selectedDate,
     staleTime: 1000 * 60 * 5,
@@ -580,8 +614,8 @@ export function RaidLogForm({
         forecastData.windSpeed !== undefined ||
         forecastData.swellHeight !== undefined);
 
-    if (!entry?.id && !hasForecastData) {
-      toast.error("No forecast data available for this date");
+    // Allow submission even without forecast data (will use 'unknown' values)
+    // Removed the error toast - forecast will show 'unknown' instead
       return;
     }
 
@@ -958,13 +992,20 @@ export function RaidLogForm({
                       <div className="text-gray-600 font-primary">
                         Loading forecast data...
                       </div>
-                    ) : forecastError ? (
-                      <div className="text-gray-600">
-                        No forecast data available for the selected date
-                      </div>
                     ) : forecastData ? (
                       <SurfForecastWidget forecast={forecastData} />
-                    ) : null}
+                    ) : (
+                      <SurfForecastWidget forecast={{
+                        id: 'unknown',
+                        date: selectedDate ? new Date(selectedDate) : new Date(),
+                        regionId: selectedBeach?.regionId || 'unknown',
+                        windSpeed: 'unknown' as any,
+                        windDirection: 'unknown' as any,
+                        swellHeight: 'unknown' as any,
+                        swellPeriod: 'unknown' as any,
+                        swellDirection: 'unknown' as any,
+                      }} />
+                    )}
                   </div>
                 </div>
               )}

@@ -17,57 +17,63 @@ export default function SurfForecastWidget({
     console.log("Forecast Data:", forecast);
   }, [forecast]);
 
-  if (!forecast) {
-    return (
-      <div className="text-gray-600 font-primary">
-        Sorry, no forecast data available. Please adjust filters, select a
-        region or refresh.
-      </div>
-    );
-  }
+  // Helper function to check if value is 'unknown'
+  const isUnknown = (value: any): boolean => {
+    return value === 'unknown' || value === null || value === undefined;
+  };
+
+  // Helper function to format value (show 'unknown' if missing)
+  const formatValue = (value: any, suffix: string = ''): string => {
+    if (isUnknown(value)) {
+      return 'unknown';
+    }
+    return `${value}${suffix}`;
+  };
 
   return (
     <div className="bg-white p-4 rounded-lg border border-gray-100">
       <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5">
         <div className="flex flex-col gap-1.5">
           {/* Wind Speed Badge */}
-          {forecast.windSpeed != null && (
-            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+            {!isUnknown(forecast.windSpeed) && (
               <span className="mr-1">{getWindEmoji(forecast.windSpeed)}</span>
-              <span>{forecast.windSpeed}kts</span>
-            </div>
-          )}
+            )}
+            <span>{formatValue(forecast.windSpeed, 'kts')}</span>
+          </div>
 
           {/* Wind Direction Badge */}
-          {forecast.windDirection != null && (
-            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-              <span>{degreesToCardinal(forecast.windDirection)}</span>
-            </div>
-          )}
+          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
+            <span>
+              {isUnknown(forecast.windDirection)
+                ? 'unknown'
+                : degreesToCardinal(forecast.windDirection)}
+            </span>
+          </div>
 
           {/* Swell Height Badge */}
-          {forecast.swellHeight != null && (
-            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+            {!isUnknown(forecast.swellHeight) && (
               <span className="mr-1">
                 {getSwellEmoji(forecast.swellHeight)}
               </span>
-              <span>{forecast.swellHeight}m</span>
-            </div>
-          )}
+            )}
+            <span>{formatValue(forecast.swellHeight, 'm')}</span>
+          </div>
 
           {/* Swell Period Badge */}
-          {forecast.swellPeriod != null && (
-            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-              <span>{forecast.swellPeriod}s</span>
-            </div>
-          )}
+          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+            <span>{formatValue(forecast.swellPeriod, 's')}</span>
+          </div>
 
           {/* Swell Direction Badge */}
-          {forecast.swellDirection != null && (
-            <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-              <span>{degreesToCardinal(forecast.swellDirection)}</span>
-            </div>
-          )}
+          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
+            <span>
+              {isUnknown(forecast.swellDirection)
+                ? 'unknown'
+                : degreesToCardinal(forecast.swellDirection)}
+            </span>
+          </div>
         </div>
       </div>
     </div>

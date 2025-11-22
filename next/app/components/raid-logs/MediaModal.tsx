@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/app/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import { Video as VideoIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
@@ -79,6 +79,20 @@ export function MediaModal({
 
   const embedUrl = videoUrl && videoPlatform ? handleEmbedVideo() : null;
 
+  // Determine the title based on content type
+  const getModalTitle = () => {
+    if (images.length > 0) {
+      return `Session photo ${currentImageIndex + 1} of ${images.length}`;
+    }
+    if (videoUrl && videoPlatform) {
+      return "Session video";
+    }
+    if (videoUrl) {
+      return "Session video";
+    }
+    return "Session media";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
@@ -86,6 +100,9 @@ export function MediaModal({
         onPointerDownOutside={onClose}
         onEscapeKeyDown={onClose}
       >
+        {/* DialogTitle for accessibility - visually hidden but accessible to screen readers */}
+        <DialogTitle className="sr-only">{getModalTitle()}</DialogTitle>
+
         {/* Close Button - Video Player Style (Black/Cyan) */}
         <button
           onClick={onClose}
@@ -175,6 +192,7 @@ export function MediaModal({
                 href={videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                title="Open video in new tab"
                 className="relative w-full max-w-2xl aspect-video"
               >
                 <Image

@@ -30,7 +30,7 @@ interface BeachContainerProps {
 
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter } = useBeachFilters();
-  const { data, isLoading } = useFilteredBeaches({
+  const { data, isLoading, isFetching } = useFilteredBeaches({
     initialData,
     enabled: true,
   });
@@ -144,6 +144,15 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <div className="grid grid-cols-1 gap-5 relative mt-5">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
+              ) : isLoading || isFetching ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <LoadingIndicator />
+                  <p className="text-gray-600 font-primary mt-4">
+                    {isFetching && !isLoading
+                      ? "Refreshing forecast data and scores..."
+                      : "Loading surf breaks and forecast data..."}
+                  </p>
+                </div>
               ) : sortedBeaches.length === 0 ? (
                 <EmptyState message="No beaches found in this region" />
               ) : (
@@ -167,7 +176,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                         beach={beach}
                         score={scoreValue} // Pass null if no score exists, or the numeric score
                         forecastData={beachForecastData} // Pass the regional forecast
-                        isLoading={!hasScore && isLoading} // Only show loading if score doesn't exist
+                        isLoading={(!hasScore && isLoading) || isFetching} // Show loading if score doesn't exist or data is being refetched
                       />
                     );
                   })}

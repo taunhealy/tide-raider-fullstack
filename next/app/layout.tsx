@@ -7,7 +7,7 @@ import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/authOptions";
-import { getAllBeaches, type BeachWithRelations } from "@/app/lib/beachService";
+import type { BeachWithRelations } from "@/app/lib/beachService";
 import { AuthCallbackHandler } from "./components/AuthCallbackHandler";
 
 // Load all weights explicitly for Inter
@@ -61,23 +61,10 @@ export default async function RootLayout({
     session = null;
   }
 
-  // Fetch beaches from database for initial data
-  // Note: In production, this may fail if DATABASE_URL is not accessible (e.g., pgbouncer only works from Fly network)
-  // The app will work fine without initial beach data - beaches will be fetched client-side via API
-  let beaches: BeachWithRelations[] = [];
-  try {
-    // Only try to fetch if DATABASE_URL is available and accessible
-    if (
-      process.env.DATABASE_URL &&
-      !process.env.DATABASE_URL.includes("pgbouncer")
-    ) {
-      beaches = await getAllBeaches();
-    }
-  } catch (error) {
-    console.error("Error fetching beaches in layout:", error);
-    // Continue with empty array - app will still work, just without initial beach data
-    beaches = [];
-  }
+  // Don't fetch beaches server-side - causes timeouts on Vercel
+  // Beaches are already fetched client-side via API routes, so this is not needed
+  // Passing empty array - AppProviders will handle client-side fetching
+  const beaches: BeachWithRelations[] = [];
 
   return (
     <html

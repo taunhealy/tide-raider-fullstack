@@ -91,11 +91,26 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             });
             console.log(`[auth] ✅ Created new user: ${user.id}`);
           } else {
-            // Update user info if needed
-            if (name && name !== user.name) {
+            // Only update name if it's empty/null (don't overwrite user's custom name)
+            // Always update image if provided (Google profile pictures can change)
+            const updateData: { name?: string; image?: string | null } = {};
+
+            // Only update name if current name is empty/null/undefined
+            // This preserves custom names set via dashboard
+            if (name && (!user.name || user.name.trim() === "")) {
+              updateData.name = name;
+            }
+
+            // Always update image if provided (Google profile pictures can change)
+            if (picture !== undefined) {
+              updateData.image = picture || user.image;
+            }
+
+            // Only update if there's something to update
+            if (Object.keys(updateData).length > 0) {
               user = await prisma.user.update({
                 where: { id: user.id },
-                data: { name, image: picture || user.image },
+                data: updateData,
               });
             }
             console.log(`[auth] ✅ Found existing user: ${user.id}`);
@@ -459,11 +474,26 @@ router.post("/login", async (req: Request, res: Response) => {
       });
       console.log(`[auth] ✅ Created new user: ${user.id}`);
     } else {
-      // Update user info if needed
-      if (name && name !== user.name) {
+      // Only update name if it's empty/null (don't overwrite user's custom name)
+      // Always update image if provided (Google profile pictures can change)
+      const updateData: { name?: string; image?: string | null } = {};
+
+      // Only update name if current name is empty/null/undefined
+      // This preserves custom names set via dashboard
+      if (name && (!user.name || user.name.trim() === "")) {
+        updateData.name = name;
+      }
+
+      // Always update image if provided (Google profile pictures can change)
+      if (picture !== undefined) {
+        updateData.image = picture || user.image;
+      }
+
+      // Only update if there's something to update
+      if (Object.keys(updateData).length > 0) {
         user = await prisma.user.update({
           where: { id: user.id },
-          data: { name, image: picture || user.image },
+          data: updateData,
         });
       }
       console.log(`[auth] ✅ Found existing user: ${user.id}`);

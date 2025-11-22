@@ -56,26 +56,43 @@ export async function backendFetch(
 
 /**
  * Get JSON response from backend API
+ * Includes timeout handling to prevent Vercel function timeouts
  */
 export async function backendGet<T = any>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit & { timeout?: number }
 ): Promise<T> {
-  const response = await backendFetch(endpoint, {
-    ...options,
-    method: "GET",
-  });
+  const timeout = options?.timeout || 8000; // Default 8 second timeout (Vercel Hobby plan has 10s limit)
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      error: `Request failed with status ${response.status}`,
-    }));
-    throw new Error(
-      error.error || `Request failed with status ${response.status}`
-    );
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await backendFetch(endpoint, {
+      ...options,
+      method: "GET",
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        error: `Request failed with status ${response.status}`,
+      }));
+      throw new Error(
+        error.error || `Request failed with status ${response.status}`
+      );
+    }
+
+    return response.json();
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      throw new Error(`Request timeout after ${timeout}ms`);
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 /**

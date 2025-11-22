@@ -68,6 +68,18 @@ export function useFilteredBeaches({
   // Source is now managed via localStorage and events from WeatherForecastWidget
   // No need for complex query cache detection
 
+  // Track the initial source to know if it has changed
+  // When source changes, the query key changes, creating a new query
+  // For the new query, we shouldn't use initialData (it's for a different source)
+  const [initialSource] = useState(selectedSource);
+  const sourceHasChanged = selectedSource !== initialSource;
+
+  // Only use initialData on the very first load with the initial source
+  // Once source changes, the query key changes and we get a fresh query (no initialData)
+  const shouldUseInitialData = !sourceHasChanged
+    ? initialData || undefined
+    : undefined;
+
   return useQuery<UseFilteredBeachesResponse>({
     queryKey: ["filteredBeaches", filters, selectedSource], // Include source in query key
     queryFn: async () => {
@@ -128,11 +140,13 @@ export function useFilteredBeaches({
 
       return await api.getFilteredBeaches(params);
     },
-    initialData: initialData || undefined,
+    initialData: shouldUseInitialData,
     enabled: enabled && !!filters.regionId,
     staleTime: 0, // Always consider data stale - refetch immediately
     gcTime: 0, // Don't cache - always fetch fresh data when source changes
     refetchOnMount: true, // Always refetch when component mounts
     refetchOnWindowFocus: false, // Don't refetch on window focus (too aggressive)
+    // Ensure query refetches when source changes (query key change should handle this, but be explicit)
+    refetchOnReconnect: true,
   });
 }

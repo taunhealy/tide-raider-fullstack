@@ -21,6 +21,9 @@ export function MultiImageUploader({
 }: MultiImageUploaderProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,43 +39,86 @@ export function MultiImageUploader({
     }
 
     try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setUploadStatus("Converting images to WebP...");
+
       // Convert all images to WebP
       const convertedFiles = await Promise.all(
         files.map((file) => convertImageToWebP(file))
       );
 
-      // Upload all images using server-side upload (avoids CORS issues)
-      // The direct upload route has been fixed to work with R2 by removing ContentType
-      const uploadPromises = convertedFiles.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "image");
+      setUploadStatus(`Uploading ${convertedFiles.length} image${convertedFiles.length > 1 ? 's' : ''}...`);
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "include",
+      // Upload all images using XMLHttpRequest to track progress
+      const uploadPromises = convertedFiles.map((file, index) => {
+        return new Promise<string>((resolve, reject) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", "image");
+
+          const xhr = new XMLHttpRequest();
+
+          // Track upload progress for this file
+          xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+              // Calculate overall progress: (completed files + current file progress) / total files
+              const fileProgress = (e.loaded / e.total) * 100;
+              const overallProgress = ((index + fileProgress / 100) / convertedFiles.length) * 100;
+              setUploadProgress(Math.min(overallProgress, 99)); // Cap at 99% until all complete
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                resolve(data.imageUrl);
+              } catch (error) {
+                reject(new Error("Failed to parse response"));
+              }
+            } else {
+              try {
+                const errorData = JSON.parse(xhr.responseText);
+                const errorMessage =
+                  errorData.error || errorData.message || "Failed to upload image";
+                reject(new Error(errorMessage));
+              } catch {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            }
+          });
+
+          xhr.addEventListener("error", () => {
+            reject(new Error("Network error during upload"));
+          });
+
+          xhr.addEventListener("abort", () => {
+            reject(new Error("Upload was cancelled"));
+          });
+
+          xhr.open("POST", "/api/upload");
+          xhr.withCredentials = true; // Include cookies for auth
+          xhr.send(formData);
         });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage =
-            errorData.error || errorData.message || "Failed to upload image";
-          // Include details if available (for debugging)
-          const fullError = errorData.details
-            ? `${errorMessage} (${JSON.stringify(errorData.details)})`
-            : errorMessage;
-          throw new Error(fullError);
-        }
-
-        const data = await response.json();
-        return data.imageUrl;
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
+      setUploadProgress(100);
+      setUploadStatus("Upload complete!");
+      
+      // Small delay to show 100% before clearing
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
       onImagesChange([...images, ...uploadedUrls]);
+      setIsUploading(false);
+      setUploadProgress(0);
+      setUploadStatus("");
     } catch (error) {
       console.error("Error uploading images:", error);
+      setIsUploading(false);
+      setUploadProgress(0);
+      setUploadStatus("");
       alert(error instanceof Error ? error.message : "Failed to upload images");
     }
 
@@ -130,16 +176,38 @@ export function MultiImageUploader({
             onChange={handleFileSelect}
             className="hidden"
             id="multi-image-upload"
+            disabled={isUploading}
           />
           <label
             htmlFor="multi-image-upload"
-            className="flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-[var(--color-tertiary)] hover:bg-gray-50 transition-colors"
+            className={cn(
+              "flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 transition-colors",
+              isUploading
+                ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-60"
+                : "border-gray-300 cursor-pointer hover:border-[var(--color-tertiary)] hover:bg-gray-50"
+            )}
           >
             <Plus className="w-5 h-5 text-gray-400" />
             <span className="text-gray-600 font-primary">
-              Add Images ({images.length}/{maxImages})
+              {isUploading ? "Uploading..." : `Add Images (${images.length}/${maxImages})`}
             </span>
           </label>
+        </div>
+      )}
+
+      {/* Upload progress bar */}
+      {isUploading && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 font-primary">{uploadStatus}</span>
+            <span className="text-gray-500 font-primary">{Math.round(uploadProgress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-[var(--color-tertiary)] h-2.5 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
         </div>
       )}
 

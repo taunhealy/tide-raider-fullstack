@@ -36,17 +36,14 @@ export default function NewRaidLogPage() {
   }, [authStatus, isProcessingToken]);
 
   // Normal loading state with timeout indicator
-  // If loading for more than 7 seconds, show a message suggesting retry
+  // If loading for more than 30 seconds, show a message suggesting retry
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
       const retryTimeout = setTimeout(() => {
         setShowRetrySuggestion(true);
-        // Also trigger timeout if it hasn't already
-        if (!authTimeout) {
-          setAuthTimeout(true);
-          checkBackendHealth();
-        }
-      }, 7000); // Show retry suggestion after 7 seconds
+        // Don't trigger timeout here - let the main timeout handle it
+        // This is just for showing a retry suggestion
+      }, 30000); // Show retry suggestion after 30 seconds
 
       return () => clearTimeout(retryTimeout);
     } else {
@@ -157,15 +154,15 @@ export default function NewRaidLogPage() {
   // But don't show error if we're processing a token from OAuth callback
   useEffect(() => {
     if (authStatus === "loading" && !isProcessingToken) {
-      // Reduced timeout to 6 seconds for faster feedback (auth/me has 5s timeout in dev)
+      // Increased timeout to 60 seconds to allow for network latency to africa-south1
       const timeoutId = setTimeout(() => {
         console.warn(
-          "[NewRaidLogPage] Auth loading timeout after 6 seconds - checking backend health"
+          "[NewRaidLogPage] Auth loading timeout after 60 seconds - checking backend health"
         );
         setAuthTimeout(true);
         // Check backend health when timeout occurs
         checkBackendHealth();
-      }, 6000); // 6 second timeout (slightly longer than auth/me 5s timeout in dev)
+      }, 60000); // 60 second timeout
 
       return () => clearTimeout(timeoutId);
     } else {
@@ -251,8 +248,13 @@ export default function NewRaidLogPage() {
   // CRITICAL: If we have session data, proceed immediately (don't wait for status to update)
   // This check MUST come before any loading/error checks to prevent false errors
   // This prevents showing "Backend Not Available" when backend is clearly working
+  // The Navbar uses the same useBackendAuth hook with global cache, so if Navbar shows "Sign Out",
+  // we should also have the session here (even if status is still "loading" due to network latency)
   // Add comprehensive null checks to prevent client-side exceptions
   const hasValidSession = session?.user && typeof session.user === "object";
+  
+  // If we have a valid session, render immediately (don't wait for authStatus to update)
+  // This fixes the issue where Navbar shows "Sign Out" but this page shows "Backend Not Available"
   if (hasValidSession) {
     // Safely extract user email with null checks to prevent client-side exceptions
     const userEmailValue = session?.user?.email || "";
@@ -312,11 +314,11 @@ export default function NewRaidLogPage() {
 
     // Show error UI if timeout has occurred OR if we've been loading for too long
     // This prevents infinite loading states
-    // Also add a safety check: if we've been loading for more than 10 seconds, show error regardless
+    // Also add a safety check: if we've been loading for more than 60 seconds, show error regardless
     const loadingDuration = loadingStartTimeRef.current
       ? Date.now() - loadingStartTimeRef.current
       : 0;
-    const hasBeenLoadingTooLong = loadingDuration > 10000; // 10 seconds
+    const hasBeenLoadingTooLong = loadingDuration > 60000; // 60 seconds (safety net)
 
     const shouldShowError =
       authStatus === "loading" &&
