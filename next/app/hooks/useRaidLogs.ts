@@ -209,10 +209,10 @@ export function useRaidLogs(
           Math.ceil((data.total || 0) / ((data as any).limit || 50)),
       };
     },
-    staleTime: 0, // Data is immediately stale - always refetch for dynamic logs
-    gcTime: 0, // Don't cache - logs are dynamic and frequently updated
-    refetchOnWindowFocus: true, // Refetch when window regains focus to get latest data
-    refetchOnMount: true, // Always refetch on mount to ensure fresh data
+    staleTime: 30 * 1000, // Data is fresh for 30 seconds - reduces unnecessary refetches
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
+    refetchOnWindowFocus: false, // Don't refetch on focus - too aggressive for logs page
+    refetchOnMount: false, // Use cached data if available - faster initial load
     refetchOnReconnect: true, // Refetch when network reconnects
     retry: 1, // Retry once on failure
     retryDelay: 1000, // Wait 1 second before retry

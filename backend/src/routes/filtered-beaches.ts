@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { ScoreService } from "../services/scoreService";
-import { getLatestConditions } from "../services/surfConditionsService";
+// Removed getLatestConditions import - we don't scrape during user requests, only query DB
 import { optionalAuth } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
 import {
@@ -214,82 +214,78 @@ router.get(
         date: targetDate.toISOString(),
       });
 
-      // Check if forecast has invalid direction data (values > 360 indicate corrupted data like timestamps)
-      const hasInvalidDirectionData =
-        forecast !== null &&
-        (forecast.windDirection > 360 || forecast.swellDirection > 360);
+      // If no forecast found for exact date, try to find the most recent available forecast
+      // This avoids triggering slow scraping during user requests - scraping should happen in background
+      if (!forecast) {
+        console.log(
+          `[filtered-beaches] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying to find most recent...`
+        );
+        
+        // Try to find the most recent forecast for the same source
+        const mostRecentForecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            source: sourceParam,
+            date: {
+              lte: targetDate, // Only look for dates <= requested date
+            },
+          },
+          orderBy: {
+            date: "desc", // Get the most recent one
+          },
+          select: {
+            id: true,
+            windSpeed: true,
+            windDirection: true,
+            swellHeight: true,
+            swellPeriod: true,
+            swellDirection: true,
+            date: true,
+            regionId: true,
+            source: true,
+          },
+        });
 
-      // If no forecast exists OR has invalid direction data, try to scrape it
-      // The scraper fetches ALL available forecast days (today, tomorrow, etc.) in one run
-      if (!forecast || hasInvalidDirectionData) {
-        try {
-          if (hasInvalidDirectionData && forecast) {
-            console.log(
-              `[filtered-beaches] ⚠️ Forecast found but has invalid direction data (windDirection: ${forecast.windDirection}, swellDirection: ${forecast.swellDirection}) for ${targetDate.toISOString().split("T")[0]}, deleting and re-scraping...`
-            );
-            // Delete the invalid forecast so it gets replaced
-            await prisma.forecast.deleteMany({
-              where: {
-                regionId,
-                date: targetDate,
-                source: sourceParam,
+        if (mostRecentForecast) {
+          forecast = mostRecentForecast;
+          console.log(
+            `[filtered-beaches] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), using as fallback`
+          );
+        } else {
+          // If still no forecast found, try any source (fallback to any available forecast)
+          const anyForecast = await prisma.forecast.findFirst({
+            where: {
+              regionId,
+              date: {
+                lte: targetDate,
               },
-            });
+            },
+            orderBy: {
+              date: "desc",
+            },
+            select: {
+              id: true,
+              windSpeed: true,
+              windDirection: true,
+              swellHeight: true,
+              swellPeriod: true,
+              swellDirection: true,
+              date: true,
+              regionId: true,
+              source: true,
+            },
+          });
+
+          if (anyForecast) {
+            forecast = anyForecast;
+            console.log(
+              `[filtered-beaches] ✅ Found most recent forecast for ${anyForecast.date.toISOString().split("T")[0]} (any source), using as fallback`
+            );
           } else {
             console.log(
-              `[filtered-beaches] ⚠️ No forecast found for ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+              `[filtered-beaches] ⚠️ No forecast data available in database for ${regionId}. Scraping should happen in background cron job, not during user requests.`
             );
           }
-
-          // Force a scrape for the requested source - this will fetch ALL available forecast days and store them
-          // forceRefresh=true ensures we scrape even if today's data already exists
-          const scrapedForecast = await getLatestConditions(
-            regionId,
-            true,
-            sourceParam
-          );
-
-          if (scrapedForecast) {
-            console.log(
-              `[filtered-beaches] ✅ Scrape completed, querying for target date: ${targetDate.toISOString().split("T")[0]}`
-            );
-
-            // After scraping, query again for the target date (scraper stores all days)
-            const updatedForecast = await prisma.forecast.findFirst({
-              where: {
-                regionId,
-                date: targetDate,
-                source: sourceParam, // Use the requested source
-              },
-              select: {
-                id: true, // Include ID so RaidLogForm can link it
-                windSpeed: true,
-                windDirection: true,
-                swellHeight: true,
-                swellPeriod: true,
-                swellDirection: true,
-                date: true,
-                regionId: true,
-                source: true,
-              },
-            });
-
-            if (updatedForecast) {
-              forecast = updatedForecast;
-              console.log(
-                `[filtered-beaches] ✅ Found forecast for ${targetDate.toISOString().split("T")[0]} after scrape`
-              );
-            } else {
-              console.log(
-                `[filtered-beaches] ⚠️ Still no forecast for ${targetDate.toISOString().split("T")[0]} after scrape - may not be available on source page`
-              );
-            }
-          }
-        } catch (error) {
-          console.error(
-            `[filtered-beaches] ❌ Failed to scrape forecast for ${targetDate.toISOString().split("T")[0]}:`,
-            error
-          );
         }
       }
 
@@ -325,11 +321,11 @@ router.get(
         existingScoresData.length > 0 &&
         existingScoresData.every((s) => s.score === 0);
 
-      // Always recalculate scores when forecast exists to ensure they match the requested source
-      // Since scores are stored per beach/date (not per source), we need to recalculate
-      // whenever a different source is selected to get accurate scores
+      // Only recalculate scores if they don't exist or are all zero
+      // Don't always recalculate - it's expensive and data should already be in DB
+      // Scores are calculated per beach/date, not per source, so we use the forecast we found
       const needsRecalculation =
-        forecast && (existingScores === 0 || allScoresZero || true); // Always recalculate when forecast exists to ensure scores match the selected source
+        forecast && (existingScores === 0 || allScoresZero);
 
       console.log(`Existing scores sample:`, existingScoresData);
       console.log(`All scores are zero: ${allScoresZero}`);

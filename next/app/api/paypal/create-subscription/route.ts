@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://tide-raider-backend.fly.dev";
+import { getBackendUrl } from "@/app/lib/api-config";
 
 /**
  * POST /api/paypal/create-subscription
@@ -17,7 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/paypal/create-subscription`, {
+    const backendUrl = getBackendUrl();
+    const response = await fetch(`${backendUrl}/api/paypal/create-subscription`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
