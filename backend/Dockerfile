@@ -42,7 +42,8 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install all dependencies (needed for TypeScript build)
-RUN npm ci
+# Use --legacy-peer-deps to handle any peer dependency conflicts
+RUN npm ci --legacy-peer-deps
 
 # Copy source code
 COPY . .

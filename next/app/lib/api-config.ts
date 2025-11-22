@@ -17,13 +17,19 @@
  */
 export const getBackendUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const isDevelopment = process.env.NODE_ENV === "development";
 
   // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
   if (envUrl) {
     return envUrl;
   }
 
-  // Fallback: use Cloud Run backend (we no longer use localhost:4001 or Fly.io)
+  // In development, use localhost backend
+  if (isDevelopment) {
+    return "http://localhost:4001";
+  }
+
+  // In production, use Cloud Run backend
   return "https://tide-raider-backend-o6rx5gs5rq-uc.a.run.app";
 };
 

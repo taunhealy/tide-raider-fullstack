@@ -38,11 +38,20 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 // Only initialize Google OAuth strategy if credentials are available
 // This allows the server to start in Docker without OAuth credentials (for local dev)
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  // Trim whitespace and newlines from credentials (common issue with .env files)
+  const clientID = process.env.GOOGLE_CLIENT_ID.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET.trim();
+
+  console.log(
+    "[auth] 🔑 Initializing Google OAuth with Client ID:",
+    clientID.substring(0, 30) + "..."
+  );
+
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        clientID: clientID,
+        clientSecret: clientSecret,
         callbackURL:
           process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
@@ -183,9 +192,13 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
         : `http://localhost:4001/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
+  const clientID = process.env.GOOGLE_CLIENT_ID?.trim() || "NOT SET";
+  console.log("[auth] 🔑 Client ID (full):", clientID);
+  console.log("[auth] 🔑 Client ID length:", clientID.length);
   console.log(
-    "[auth] 🔑 Client ID:",
-    process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "..."
+    "[auth] 🔑 Client ID matches expected:",
+    clientID ===
+      "82632174665-tlmshrjeeahbb3giec045o009u8ag67j.apps.googleusercontent.com"
   );
 
   next();

@@ -28,58 +28,15 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Handle electron and other missing modules
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      electron: false,
-      fs: false,
-      path: false,
-      stream: false,
-      crypto: false,
-      util: false,
-      os: false,
-      http: false,
-      https: false,
-      zlib: false,
-      constants: false,
-      child_process: false,
-      worker_threads: false,
-      readline: false,
-      net: false,
-      tls: false,
-      "react-is": require.resolve("react-is"),
-      "web-worker": false,
-    };
-
-    // Ignore warnings for specific modules
-    config.ignoreWarnings = [
-      { module: /node_modules[\/\\]playwright-core/ },
-      { module: /node_modules[\/\\]electron/ },
-      { module: /node_modules[\/\\]@sanity/ },
-      { module: /node_modules[\/\\]geotiff/ },
-      { module: /node_modules[\/\\]web-worker/ },
-    ];
-
-    if (isServer) {
-      config.module.rules.push({
-        test: /\.(ttf|html)$/,
-        use: "null-loader",
-      });
-    }
-
-    return config;
+  // Turbopack configuration
+  // Note: Turbopack handles most module resolution automatically
+  // If you need custom configuration, add it here
+  turbopack: {
+    // Turbopack automatically handles Node.js built-in modules
+    // No need for explicit fallbacks like webpack
   },
   // Moved from experimental.serverComponentsExternalPackages (deprecated in Next.js 15)
   serverExternalPackages: ["@sparticuz/chromium"],
-
-  // Turbopack is now stable, moved from experimental.turbo
-  turbopack: {
-    rules: {
-      // Add rules configuration if needed (use glob patterns instead of extensions)
-      // Example: "*.mdx": ["mdx-loader"]
-    },
-  },
   transpilePackages: [
     "@sanity/ui",
     "@sanity/vision",
