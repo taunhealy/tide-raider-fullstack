@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { AlertConfig } from "@/app/types/alerts";
-import { AlertType } from "@prisma/client";
+import { AlertConfig, AlertType } from "@/app/types/alerts";
 import { AlertConfigTypes } from "@/app/types/alerts";
 import { AlertsList } from "@/app/components/alerts/AlertsList";
 import { Button } from "@/app/components/ui/Button";
