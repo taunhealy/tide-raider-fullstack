@@ -343,7 +343,7 @@ export async function scraperB(
       }
 
       const forecast: BaseForecastData = {
-        date: forecastDate.toISOString().split("T")[0], // YYYY-MM-DD
+        date: forecastDate, // Return Date object, not string
         windSpeed: windSpeedMs,
         windDirection: windDirection,
         swellHeight: swellHeight,

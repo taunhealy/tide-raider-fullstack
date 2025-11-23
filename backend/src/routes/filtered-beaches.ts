@@ -188,20 +188,31 @@ router.get(
       // If still no forecast, trigger on-demand scraping as fallback
       if (!forecast) {
         console.log(
-          `[filtered-beaches] No forecast found for ${regionId} (${sourceParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+          `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
         );
+        console.log(`[filtered-beaches] ⏱️ Starting scrape at ${new Date().toISOString()}`);
+        
         try {
           // getLatestConditions will scrape if no data exists for today
           // forceRefresh=false means it checks DB first, only scrapes if needed
+          const scrapeStartTime = Date.now();
           const scrapedForecast = await getLatestConditions(
             regionId,
             false, // Don't force refresh - only scrape if no data
             sourceParam
           );
+          const scrapeDuration = Date.now() - scrapeStartTime;
+          
+          console.log(`[filtered-beaches] ⏱️ Scrape completed in ${scrapeDuration}ms`);
           
           if (scrapedForecast) {
             console.log(
-              `[filtered-beaches] ✅ Scraping successful for ${regionId} (${sourceParam})`
+              `[filtered-beaches] ✅ Scraping successful for ${regionId} (${sourceParam})`,
+              {
+                windSpeed: scrapedForecast.windSpeed,
+                swellHeight: scrapedForecast.swellHeight,
+                date: scrapedForecast.date,
+              }
             );
             // Query the forecast again after scraping
             forecast = await prisma.forecast.findFirst({
@@ -212,15 +223,19 @@ router.get(
               },
               select: forecastSelect,
             });
+            console.log(`[filtered-beaches] 📊 Re-queried forecast after scraping:`, forecast ? 'FOUND' : 'NOT FOUND');
           } else {
             console.warn(
-              `[filtered-beaches] ⚠️ Scraping returned no data for ${regionId} (${sourceParam})`
+              `[filtered-beaches] ⚠️ Scraping returned null/undefined for ${regionId} (${sourceParam})`
             );
           }
         } catch (scrapeError) {
           console.error(
-            `[filtered-beaches] ❌ Error during on-demand scraping:`,
-            scrapeError
+            `[filtered-beaches] ❌ Error during on-demand scraping for ${regionId} (${sourceParam}):`,
+            {
+              error: scrapeError instanceof Error ? scrapeError.message : String(scrapeError),
+              stack: scrapeError instanceof Error ? scrapeError.stack : undefined,
+            }
           );
           // Continue anyway - return null forecast and let UI handle it
         }
