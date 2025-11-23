@@ -585,53 +585,47 @@ function extractWindguruData() {
   const forecastsByDate = {};
 
   console.log(
-    `[scraperB] [page.evaluate] Processing ${timeColumns.length} time columns for morning hours (5-11)...`
+    `[scraperB] [page.evaluate] Processing ${timeColumns.length} time columns...`
   );
   for (let i = 0; i < timeColumns.length; i++) {
     const timeCol = timeColumns[i];
-    if (timeCol.hour >= 5 && timeCol.hour <= 11) {
-      const dateKey = timeCol.date.toISOString().split("T")[0];
+    const dateKey = timeCol.date.toISOString().split("T")[0];
 
-      if (!forecastsByDate[dateKey]) {
-        const colIndex = timeCol.index;
-        const windSpeed = windSpeedRow[colIndex] || "";
-        const windDir = windDirRow[colIndex] || "";
-        const waveHeight = waveHeightRow[colIndex] || "";
-        const wavePeriod = wavePeriodRow[colIndex] || "";
-        const waveDir = waveDirRow[colIndex] || "";
+    if (!forecastsByDate[dateKey]) {
+      const colIndex = timeCol.index;
+      const windSpeed = windSpeedRow[colIndex] || "";
+      const windDir = windDirRow[colIndex] || "";
+      const waveHeight = waveHeightRow[colIndex] || "";
+      const wavePeriod = wavePeriodRow[colIndex] || "";
+      const waveDir = waveDirRow[colIndex] || "";
 
-        console.log(
-          `[scraperB] [page.evaluate] Column ${colIndex} (${dateKey} ${timeCol.hour}:00):`,
-          {
-            windSpeed,
-            windDir,
-            waveHeight,
-            wavePeriod,
-            waveDir,
-          }
-        );
-
-        forecastsByDate[dateKey] = {
-          date: timeCol.date,
-          hour: timeCol.hour,
-          unixtime: timeCol.unixtime,
+      console.log(
+        `[scraperB] [page.evaluate] Column ${colIndex} (${dateKey} ${timeCol.hour}:00):`,
+        {
           windSpeed,
           windDir,
           waveHeight,
           wavePeriod,
           waveDir,
-        };
-      }
-    } else {
-      console.log(
-        `[scraperB] [page.evaluate] Skipping column ${timeCol.index} (hour ${timeCol.hour} not in 5-11 range)`
+        }
       );
+
+      forecastsByDate[dateKey] = {
+        date: timeCol.date,
+        hour: timeCol.hour,
+        unixtime: timeCol.unixtime,
+        windSpeed,
+        windDir,
+        waveHeight,
+        wavePeriod,
+        waveDir,
+      };
     }
   }
 
   const result = Object.values(forecastsByDate);
   console.log(
-    `[scraperB] [page.evaluate] ✅ Extracted ${result.length} forecast(s) for morning hours`
+    `[scraperB] [page.evaluate] ✅ Extracted ${result.length} forecast(s)`
   );
   return result;
 }

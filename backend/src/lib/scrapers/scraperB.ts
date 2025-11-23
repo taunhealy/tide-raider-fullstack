@@ -266,30 +266,45 @@ export async function scraperB(
         swellDirection,
       });
 
-      // Create date from unixtime
-      // Primary source: unixtime (seconds since epoch)
-      let forecastDate = new Date(data.unixtime * 1000);
-      // Fallback: if the data also provides an ISO date string, prefer that (more reliable)
-      if (data.date && typeof data.date === "string") {
-        const iso = new Date(data.date);
-        if (!isNaN(iso.getTime())) {
-          forecastDate = iso;
-        }
+      // Windguru provides unixtime in local time, so we need to adjust to UTC
+      // The unixtime is for the start of the day (00:00 local time)
+      // We want to store it as UTC 00:00 for that day.
+      // So, we create a Date object from the unixtime, which will be in local time.
+      // Then we get its UTC components and create a new Date object representing
+      // the start of that day in UTC.
+      let forecastDate: Date;
+      if (data.unixtime) {
+        const localDate = new Date(data.unixtime * 1000);
+        forecastDate = new Date(
+          Date.UTC(
+            localDate.getFullYear(),
+            localDate.getMonth(),
+            localDate.getDate()
+          )
+        );
+        // Normalize to UTC midnight for DB consistency
+        forecastDate.setUTCHours(0, 0, 0, 0);
+      } else {
+        // Fallback if unixtime is missing or invalid
+        console.warn(
+          `[scraperB] ⚠️ Missing or invalid unixtime for forecast data:`,
+          data
+        );
+        // Use current date as a fallback, normalized to UTC midnight
+        const now = new Date();
+        forecastDate = new Date(
+          Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+        );
       }
-      // Normalize to UTC midnight for DB consistency
-      forecastDate.setUTCHours(0, 0, 0, 0);
 
       const forecast: BaseForecastData = {
-        date: forecastDate,
-        regionId: region,
+        date: forecastDate.toISOString().split("T")[0], // YYYY-MM-DD
         windSpeed: windSpeedMs,
         windDirection: windDirection,
         swellHeight: swellHeight,
         swellPeriod: swellPeriod,
         swellDirection: swellDirection,
       };
-
-      console.log(`[scraperB] ✅ Created forecast object:`, forecast);
       forecasts.push(forecast);
     }
 
