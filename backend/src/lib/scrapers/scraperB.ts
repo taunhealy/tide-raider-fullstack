@@ -159,14 +159,59 @@ export async function scraperB(
     });
 
     console.log(`[scraperB] 🌐 Navigating to ${url}...`);
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    // Wait for networkidle2 to ensure dynamic content loads
+    await page.goto(url, { 
+      waitUntil: ["domcontentloaded", "networkidle2"], 
+      timeout: 45000 
+    });
     console.log(`[scraperB] ✅ Page loaded successfully`);
+
+    // Wait additional time for JavaScript to render the table
+    console.log(`[scraperB] ⏳ Waiting for dynamic content to render...`);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    // Check if table is in an iframe
+    console.log(`[scraperB] 🔍 Checking for iframes...`);
+    const frames = page.frames();
+    console.log(`[scraperB] Found ${frames.length} frame(s) on page`);
+    
+    let targetFrame = page;
+    let tableFound = false;
+
+    // First, try to find table in main page
+    try {
+      const mainTable = await page.$(".tabulka");
+      if (mainTable) {
+        console.log(`[scraperB] ✅ Found .tabulka in main page`);
+        tableFound = true;
+      }
+    } catch (e) {
+      console.log(`[scraperB] ⚠️ .tabulka not in main page, checking iframes...`);
+    }
+
+    // If not in main page, check iframes
+    if (!tableFound && frames.length > 1) {
+      for (let i = 0; i < frames.length; i++) {
+        const frame = frames[i];
+        try {
+          const frameTable = await frame.$(".tabulka");
+          if (frameTable) {
+            console.log(`[scraperB] ✅ Found .tabulka in iframe ${i}`);
+            targetFrame = frame;
+            tableFound = true;
+            break;
+          }
+        } catch (e) {
+          // Continue checking other frames
+        }
+      }
+    }
 
     console.log(
       `[scraperB] 🔍 Waiting for Windguru table selector (.tabulka)...`
     );
     try {
-      await page.waitForSelector(".tabulka", { timeout: 15000 });
+      await targetFrame.waitForSelector(".tabulka", { timeout: 20000 });
       console.log("✅ Found Windguru table (.tabulka)");
     } catch (selectorError) {
       console.error(
@@ -182,7 +227,7 @@ export async function scraperB(
       let found = false;
       for (const selector of altSelectors) {
         try {
-          await page.waitForSelector(selector, { timeout: 5000 });
+          await targetFrame.waitForSelector(selector, { timeout: 5000 });
           console.log(`[scraperB] ✅ Found table with selector: ${selector}`);
           found = true;
           break;
@@ -192,7 +237,7 @@ export async function scraperB(
       }
       if (!found) {
         // Log page content for debugging
-        const pageContent = await page.content();
+        const pageContent = await targetFrame.content();
         console.error(
           `[scraperB] ❌ Page content (first 2000 chars):`,
           pageContent.substring(0, 2000)
@@ -201,8 +246,8 @@ export async function scraperB(
       }
     }
 
-    console.log(`[scraperB] ⏳ Waiting 4 seconds for table to fully load...`);
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    console.log(`[scraperB] ⏳ Waiting 2 seconds for table data to populate...`);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log(`[scraperB] 🔍 Extracting forecast data from page...`);
     // Load evaluation code from separate JS file to avoid TypeScript helper injection
@@ -210,9 +255,9 @@ export async function scraperB(
     const evalCodePath = join(__dirname, "windguru-eval.js");
     const evalCode = readFileSync(evalCodePath, "utf-8");
 
-    // Use page.evaluate with the entire function code as a string
+    // Use targetFrame.evaluate to extract data from the correct frame (main page or iframe)
     // This avoids TypeScript compilation entirely
-    const forecastData = await page.evaluate(`
+    const forecastData = await targetFrame.evaluate(`
       ${evalCode}
       extractWindguruData();
     `);
