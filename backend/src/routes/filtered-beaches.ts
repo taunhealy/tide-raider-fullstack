@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { ScoreService } from "../services/scoreService";
-// Removed getLatestConditions import - we don't scrape during user requests, only query DB
+import { getLatestConditions } from "../services/surfConditionsService";
 import { optionalAuth } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
 import {
@@ -183,6 +183,47 @@ router.get(
           orderBy: { date: "desc" },
           select: forecastSelect,
         });
+      }
+
+      // If still no forecast, trigger on-demand scraping as fallback
+      if (!forecast) {
+        console.log(
+          `[filtered-beaches] No forecast found for ${regionId} (${sourceParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+        );
+        try {
+          // getLatestConditions will scrape if no data exists for today
+          // forceRefresh=false means it checks DB first, only scrapes if needed
+          const scrapedForecast = await getLatestConditions(
+            regionId,
+            false, // Don't force refresh - only scrape if no data
+            sourceParam
+          );
+          
+          if (scrapedForecast) {
+            console.log(
+              `[filtered-beaches] ✅ Scraping successful for ${regionId} (${sourceParam})`
+            );
+            // Query the forecast again after scraping
+            forecast = await prisma.forecast.findFirst({
+              where: {
+                regionId,
+                date: targetDate,
+                source: sourceParam,
+              },
+              select: forecastSelect,
+            });
+          } else {
+            console.warn(
+              `[filtered-beaches] ⚠️ Scraping returned no data for ${regionId} (${sourceParam})`
+            );
+          }
+        } catch (scrapeError) {
+          console.error(
+            `[filtered-beaches] ❌ Error during on-demand scraping:`,
+            scrapeError
+          );
+          // Continue anyway - return null forecast and let UI handle it
+        }
       }
 
       // Ensure date matches target date
