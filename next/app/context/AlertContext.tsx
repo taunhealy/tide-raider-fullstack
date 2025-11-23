@@ -2,10 +2,10 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import {
   Alert,
-  AlertType,
   AlertProperty as PrismaAlertProperty,
   Prisma,
 } from "@prisma/client";
+import { AlertType } from "@/app/types/alerts";
 import { LogEntry } from "@/app/types/raidlogs";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { v4 as uuidv4 } from "uuid";
