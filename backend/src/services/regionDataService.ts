@@ -30,7 +30,23 @@ export async function fetchAllRegionsData() {
         console.log(`Processing region: ${region.name} (${region.id})`);
 
         // Find region config to determine which sources are available
-        const regionConfig = REGION_CONFIGS[region.id];
+        let regionConfig = REGION_CONFIGS[region.id];
+
+        // If not found by ID, try slug format variations (same logic as in surfConditionsService)
+        if (!regionConfig) {
+          const slugVariations = [
+            region.id.toLowerCase(),
+            region.id.replace(/\s+/g, "-").toLowerCase(),
+            region.name.toLowerCase().replace(/\s+/g, "-"),
+          ];
+
+          for (const slug of slugVariations) {
+            if (REGION_CONFIGS[slug]) {
+              regionConfig = REGION_CONFIGS[slug];
+              break;
+            }
+          }
+        }
 
         // Determine which sources to scrape based on what's configured
         const sourcesToScrape: Array<"WINDFINDER" | "WINDGURU" | "WINDY"> = [];
