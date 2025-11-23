@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { getLatestConditions } from "./surfConditionsService";
 import { ScoreService } from "./scoreService";
+import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 
 export async function fetchAllRegionsData() {
   const results = {
@@ -8,6 +9,8 @@ export async function fetchAllRegionsData() {
     regionsSucceeded: 0,
     regionsFailed: 0,
     errors: [] as string[],
+    sourcesScraped: 0,
+    sourcesFailed: 0,
   };
 
   try {
@@ -26,24 +29,93 @@ export async function fetchAllRegionsData() {
       try {
         console.log(`Processing region: ${region.name} (${region.id})`);
 
-        // Fetch latest conditions (will use cached data if available, only scrape if missing)
-        // forceRefresh = false means: check DB first, only scrape if no data for today
-        const conditions = await getLatestConditions(region.id, false);
+        // Find region config to determine which sources are available
+        const regionConfig = REGION_CONFIGS[region.id];
 
-        if (!conditions) {
+        // Determine which sources to scrape based on what's configured
+        const sourcesToScrape: Array<"WINDFINDER" | "WINDGURU" | "WINDY"> = [];
+        if (regionConfig?.sourceA) sourcesToScrape.push("WINDFINDER");
+        if (regionConfig?.sourceB) sourcesToScrape.push("WINDGURU");
+        if (regionConfig?.sourceC) sourcesToScrape.push("WINDY");
+
+        if (sourcesToScrape.length === 0) {
           console.log(
-            `No conditions found for region ${region.id}, skipping...`
+            `⚠️ No sources configured for region ${region.id}, skipping...`
           );
           results.regionsFailed++;
-          results.errors.push(`No conditions for ${region.id}`);
+          results.errors.push(`No sources configured for ${region.id}`);
+          results.regionsProcessed++;
           continue;
         }
 
-        // Calculate and store scores for this region
-        await ScoreService.calculateAndStoreScores(region.id, conditions);
+        console.log(
+          `📊 Scraping ${sourcesToScrape.length} source(s) for ${region.id}: ${sourcesToScrape.join(", ")}`
+        );
 
-        console.log(`✅ Successfully processed region ${region.id}`);
-        results.regionsSucceeded++;
+        // Scrape all available sources for this region
+        let hasAnyConditions = false;
+        let lastSuccessfulConditions = null;
+
+        for (const source of sourcesToScrape) {
+          try {
+            console.log(
+              `  🔍 Fetching conditions for ${region.id} from ${source}...`
+            );
+            // forceRefresh = false means: check DB first, only scrape if no data for today
+            const conditions = await getLatestConditions(
+              region.id,
+              false,
+              source
+            );
+
+            if (conditions) {
+              hasAnyConditions = true;
+              lastSuccessfulConditions = conditions;
+              results.sourcesScraped++;
+              console.log(
+                `  ✅ Successfully fetched conditions from ${source} for ${region.id}`
+              );
+            } else {
+              results.sourcesFailed++;
+              console.log(
+                `  ⚠️ No conditions found from ${source} for ${region.id}`
+              );
+            }
+          } catch (error) {
+            results.sourcesFailed++;
+            console.error(
+              `  ❌ Error fetching conditions from ${source} for ${region.id}:`,
+              error
+            );
+            // Continue with next source even if one fails
+          }
+        }
+
+        // Calculate and store scores using the last successful conditions
+        // (or any available conditions - scores are source-agnostic)
+        if (hasAnyConditions && lastSuccessfulConditions) {
+          try {
+            await ScoreService.calculateAndStoreScores(
+              region.id,
+              lastSuccessfulConditions
+            );
+            console.log(`✅ Successfully processed region ${region.id}`);
+            results.regionsSucceeded++;
+          } catch (error) {
+            console.error(
+              `❌ Error calculating scores for region ${region.id}:`,
+              error
+            );
+            // Still count as succeeded if we got conditions, even if score calculation failed
+            results.regionsSucceeded++;
+          }
+        } else {
+          console.log(
+            `⚠️ No conditions found for any source for region ${region.id}`
+          );
+          results.regionsFailed++;
+          results.errors.push(`No conditions for ${region.id}`);
+        }
       } catch (error) {
         console.error(`❌ Error processing region ${region.id}:`, error);
         results.regionsFailed++;
@@ -51,11 +123,16 @@ export async function fetchAllRegionsData() {
           `${region.id}: ${error instanceof Error ? error.message : "Unknown error"}`
         );
         // Continue with next region even if one fails
-        continue;
       } finally {
         results.regionsProcessed++;
       }
     }
+
+    console.log(`📊 Scraping summary:`, {
+      sourcesScraped: results.sourcesScraped,
+      sourcesFailed: results.sourcesFailed,
+      totalSourcesAttempted: results.sourcesScraped + results.sourcesFailed,
+    });
 
     return results;
   } catch (error) {

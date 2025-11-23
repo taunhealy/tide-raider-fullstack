@@ -80,8 +80,38 @@ export function useFilteredBeaches({
     ? initialData || undefined
     : undefined;
 
+  // Create a stable query key from filter values (not the object reference)
+  // This ensures React Query can properly match cached queries
+  const queryKey = useMemo(() => {
+    // Serialize filters to create a stable key that only changes when values change
+    const filterKey = {
+      regionId: filters.regionId,
+      searchQuery: filters.searchQuery,
+      optimalTide: filters.optimalTide,
+      waveTypes: filters.waveTypes,
+      crimeLevel: filters.crimeLevel,
+      bestSeasons: filters.bestSeasons,
+      difficulty: filters.difficulty,
+      hazards: filters.hazards,
+      forecastDate: filters.forecastDate,
+    };
+
+    return ["filteredBeaches", filterKey, selectedSource];
+  }, [
+    filters.regionId,
+    filters.searchQuery,
+    filters.optimalTide,
+    filters.waveTypes,
+    filters.crimeLevel,
+    filters.bestSeasons,
+    filters.difficulty,
+    filters.hazards,
+    filters.forecastDate,
+    selectedSource,
+  ]);
+
   return useQuery<UseFilteredBeachesResponse>({
-    queryKey: ["filteredBeaches", filters, selectedSource], // Include source in query key
+    queryKey, // Use the memoized stable key
     queryFn: async () => {
       // Convert filters to api-client params
       const params: {

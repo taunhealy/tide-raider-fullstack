@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, Suspense, useMemo } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -67,15 +67,16 @@ function RegionalHighScoresContent({
   ]);
 
   // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
-  // Use useState to ensure consistent date during hydration (only set on client)
-  const [today] = useState(() => {
+  // Use useState with useEffect to ensure consistent date during hydration
+  const [today, setToday] = useState<string>("");
+
+  useEffect(() => {
     // Only calculate on client to avoid hydration mismatch
     if (typeof window !== "undefined") {
-      return new Date().toISOString().split("T")[0];
+      const todayStr = new Date().toISOString().split("T")[0];
+      setToday(todayStr);
     }
-    // Server-side: return empty string, will be set on client
-    return "";
-  });
+  }, []);
 
   // Use the new endpoint
   // Only enable query when we have a date (client-side) and region
@@ -98,14 +99,28 @@ function RegionalHighScoresContent({
 
       if (!response.ok) {
         // For other errors, still return empty array instead of throwing
-        console.error(
-          "[RegionalHighScores] Failed to fetch scores:",
-          response.status
-        );
+        const errorText = await response.text();
+        console.error("[RegionalHighScores] Failed to fetch scores:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          url: `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}`,
+        });
         return { beaches: [] };
       }
 
       const data = await response.json();
+
+      // Log response for debugging
+      if (process.env.NODE_ENV === "development") {
+        console.log("[RegionalHighScores] API response:", {
+          regionId: selectedRegion,
+          period: timePeriod,
+          beachCount: data?.beaches?.length || 0,
+          hasBeaches: Array.isArray(data?.beaches),
+        });
+      }
+
       // Ensure we always return an object with beaches array
       return Array.isArray(data?.beaches) ? data : { beaches: [] };
     },

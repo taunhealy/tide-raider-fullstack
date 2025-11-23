@@ -237,13 +237,22 @@ export default function WeatherForecastWidget() {
     }
     if (error) {
       console.error("[WeatherForecastWidget] Error state:", error);
-      return `Error: ${error instanceof Error ? error.message : "Failed to load forecast"}`;
+      // Don't show error message - just show "No forecast data available"
+      // The error is likely a 404 (no data), which is expected
+      return "No forecast data available";
     }
     if (isLoading || isFetching) {
       return <LoadingSpinner />;
     }
     if (!forecastData) {
-      return "No forecast data available";
+      // Show which source doesn't have data
+      const sourceLabel =
+        selectedSource === "WINDFINDER"
+          ? "A"
+          : selectedSource === "WINDGURU"
+            ? "B"
+            : "C";
+      return `No forecast data available for source ${sourceLabel}`;
     }
     return null;
   };

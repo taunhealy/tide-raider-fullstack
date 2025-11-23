@@ -265,7 +265,25 @@ export const api = {
     if (source) {
       params.append("source", source);
     }
-    return apiRequest<any>(`/api/forecast?${params.toString()}`);
+
+    try {
+      const result = await apiRequest<any>(
+        `/api/forecast?${params.toString()}`
+      );
+      // Backend-proxy returns null with status 200 when no data exists (404 from backend)
+      // This is expected behavior - return null gracefully
+      return result;
+    } catch (error: any) {
+      // If it's a 404 error, return null instead of throwing (no data is not an error)
+      if (error?.response?.status === 404) {
+        console.warn(
+          `[api-client] No forecast data found for ${regionId} (source: ${source || "WINDFINDER"}), returning null`
+        );
+        return null;
+      }
+      // For other errors, throw as normal
+      throw error;
+    }
   },
 
   // Filtered Beaches
