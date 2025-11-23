@@ -4,7 +4,7 @@ import {
   getSwellEmoji,
   degreesToCardinal,
 } from "@/app/lib/forecastUtils";
-import { Alert, AlertProperty, AlertType } from "@prisma/client";
+import { Alert, AlertProperty, AlertType } from "@/app/types/alerts";
 
 interface AlertDetailCardProps {
   alert: Alert & {
@@ -67,7 +67,7 @@ export function AlertDetailCard({
             })}
           </div>
           <p className="font-primary text-sm text-gray-600">
-            Reference date: {formatDate(alert.forecastDate)}
+            Reference date: {alert.forecastDate ? formatDate(alert.forecastDate) : "N/A"}
           </p>
         </div>
       )}

@@ -267,11 +267,16 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 md:gap-3">
-                  <BlueStarRating
-                    score={entry.surferRating || 0}
-                    outOfFive={true}
-                  />
+                <div className="space-y-2">
+                  <h2 className="font-primary text-[12px] text-[var(--color-text-secondary)] font-medium uppercase tracking-wide">
+                    Surf Session Rating
+                  </h2>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <BlueStarRating
+                      score={entry.surferRating || 0}
+                      outOfFive={true}
+                    />
+                  </div>
                 </div>
 
                 {/* Conditions Section - Right under star rating */}

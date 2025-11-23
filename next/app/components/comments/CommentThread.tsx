@@ -27,6 +27,19 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
   const [newComment, setNewComment] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authTimeout, setAuthTimeout] = useState(false);
+
+  // Handle auth loading timeout
+  useEffect(() => {
+    if (authStatus === "loading") {
+      const timeout = setTimeout(() => {
+        setAuthTimeout(true);
+      }, 5000); // 5 second timeout
+      return () => clearTimeout(timeout);
+    } else {
+      setAuthTimeout(false);
+    }
+  }, [authStatus]);
 
   useEffect(() => {
     fetchComments();
@@ -128,7 +141,7 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
         <p className="text-left text-gray-500 py-4">No comments yet.</p>
       )}
 
-      {authStatus === "loading" ? (
+      {authStatus === "loading" && !authTimeout ? (
         <div className="bg-gray-50 p-4 rounded-lg text-center">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
         </div>
