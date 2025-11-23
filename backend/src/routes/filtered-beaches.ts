@@ -32,10 +32,6 @@ router.get(
         (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") ||
         "WINDFINDER";
 
-      console.log(
-        `[filtered-beaches] Request received for regionId: ${regionIdParam}, source: ${sourceParam}`
-      );
-
       if (!regionIdParam) {
         return res.status(400).json({ error: "regionId is required" });
       }
@@ -54,14 +50,6 @@ router.get(
           )
           .join(" ");
 
-        console.log(
-          `[filtered-beaches] 🔍 Searching for region with name variations:`,
-          {
-            original: regionIdParam,
-            nameFromSlug,
-          }
-        );
-
         region = await prisma.region.findFirst({
           where: {
             OR: [
@@ -73,47 +61,15 @@ router.get(
             ],
           },
         });
-
-        if (!region) {
-          // Log available regions for debugging
-          console.log("[DEBUG] About to query regions with findMany...");
-          console.log("[DEBUG] Prisma client instance:", !!prisma);
-          console.log("[DEBUG] Region ID being searched:", regionIdParam);
-
-          try {
-            const allRegions = await prisma.region.findMany({
-              select: { id: true, name: true },
-              take: 20,
-            });
-            console.log("[DEBUG] Query executed successfully");
-            console.log("[DEBUG] Number of regions found:", allRegions.length);
-            console.log(
-              "[DEBUG] Query result:",
-              JSON.stringify(allRegions, null, 2)
-            );
-            console.log(
-              `[filtered-beaches] 🔍 Sample of available regions in database:`,
-              allRegions.map((r) => `${r.id} -> "${r.name}"`)
-            );
-          } catch (queryError: any) {
-            console.error("[DEBUG] Query failed with error:", queryError);
-            console.error("[DEBUG] Error message:", queryError.message);
-            console.error("[DEBUG] Error stack:", queryError.stack);
-          }
-        }
       }
 
       if (!region) {
-        console.log(`[filtered-beaches] ❌ Region not found: ${regionIdParam}`);
         return res
           .status(404)
           .json({ error: `Region not found: ${regionIdParam}` });
       }
 
-      const regionId = region.id; // Use resolved database region ID
-      console.log(
-        `[filtered-beaches] ✅ Region resolved: ${region.id} (name: ${region.name}, from: ${regionIdParam})`
-      );
+      const regionId = region.id;
 
       // Handle array parameters properly
       const crimeLevelParam = req.query.crimeLevel as string | undefined;
@@ -170,218 +126,87 @@ router.get(
       let targetDate: Date;
 
       if (forecastDateParam) {
-        // Parse the date string (YYYY-MM-DD format) - parse manually to avoid timezone issues
         const [year, month, day] = forecastDateParam.split("-").map(Number);
         targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-        console.log(
-          `[filtered-beaches] 📅 Parsed forecastDate param: "${forecastDateParam}" -> ${targetDate.toISOString()}`
-        );
       } else {
-        // Default to today
         targetDate = new Date();
         targetDate.setUTCHours(0, 0, 0, 0);
-        console.log(
-          `[filtered-beaches] 📅 No forecastDate param, using today: ${targetDate.toISOString()}`
-        );
       }
 
-      // Step 1: Get or fetch forecast data for the requested source
-      console.log(
-        `[filtered-beaches] 🔍 Querying forecast for regionId: ${regionId}, date: ${targetDate.toISOString()}, source: ${sourceParam}`
-      );
-      let forecast = await prisma.forecast.findFirst({
-        where: {
-          regionId,
-          date: targetDate,
-          source: sourceParam, // Use the requested source
-        },
-        select: {
-          id: true, // Include ID so RaidLogForm can link it
-          windSpeed: true,
-          windDirection: true,
-          swellHeight: true,
-          swellPeriod: true,
-          swellDirection: true,
-          date: true,
-          regionId: true,
-          source: true,
-        },
-      });
+      // Step 1: Get forecast data and check scores in parallel for better performance
+      const forecastSelect = {
+        id: true,
+        windSpeed: true,
+        windDirection: true,
+        swellHeight: true,
+        swellPeriod: true,
+        swellDirection: true,
+        date: true,
+        regionId: true,
+        source: true,
+      };
 
-      console.log(`[filtered-beaches] 📊 Forecast query result:`, {
-        found: !!forecast,
-        regionId,
-        date: targetDate.toISOString(),
-      });
+      // Parallel queries: forecast lookup and score check
+      const [exactForecast, scoreCheck] = await Promise.all([
+        // Try exact match first
+        prisma.forecast.findFirst({
+          where: {
+            regionId,
+            date: targetDate,
+            source: sourceParam,
+          },
+          select: forecastSelect,
+        }),
+        // Check if scores exist (single query instead of count + findMany)
+        prisma.beachDailyScore.findFirst({
+          where: {
+            regionId,
+            date: targetDate,
+          },
+          select: {
+            score: true,
+            beachId: true,
+          },
+        }),
+      ]);
 
-      // If no forecast found for exact date, try to find the most recent available forecast
-      // This avoids triggering slow scraping during user requests - scraping should happen in background
+      let forecast = exactForecast;
+
+      // If no exact forecast, try fallback (same source, most recent)
       if (!forecast) {
-        console.log(
-          `[filtered-beaches] ⚠️ No forecast found for exact date ${targetDate.toISOString().split("T")[0]} (source: ${sourceParam}), trying to find most recent...`
-        );
-        
-        // Try to find the most recent forecast for the same source
-        const mostRecentForecast = await prisma.forecast.findFirst({
+        forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
             source: sourceParam,
-            date: {
-              lte: targetDate, // Only look for dates <= requested date
-            },
+            date: { lte: targetDate },
           },
-          orderBy: {
-            date: "desc", // Get the most recent one
-          },
-          select: {
-            id: true,
-            windSpeed: true,
-            windDirection: true,
-            swellHeight: true,
-            swellPeriod: true,
-            swellDirection: true,
-            date: true,
-            regionId: true,
-            source: true,
-          },
+          orderBy: { date: "desc" },
+          select: forecastSelect,
         });
-
-        if (mostRecentForecast) {
-          forecast = mostRecentForecast;
-          console.log(
-            `[filtered-beaches] ✅ Found most recent forecast for ${mostRecentForecast.date.toISOString().split("T")[0]} (source: ${sourceParam}), using as fallback`
-          );
-        } else {
-          // If still no forecast found, try any source (fallback to any available forecast)
-          const anyForecast = await prisma.forecast.findFirst({
-            where: {
-              regionId,
-              date: {
-                lte: targetDate,
-              },
-            },
-            orderBy: {
-              date: "desc",
-            },
-            select: {
-              id: true,
-              windSpeed: true,
-              windDirection: true,
-              swellHeight: true,
-              swellPeriod: true,
-              swellDirection: true,
-              date: true,
-              regionId: true,
-              source: true,
-            },
-          });
-
-          if (anyForecast) {
-            forecast = anyForecast;
-            console.log(
-              `[filtered-beaches] ✅ Found most recent forecast for ${anyForecast.date.toISOString().split("T")[0]} (any source), using as fallback`
-            );
-          } else {
-            console.log(
-              `[filtered-beaches] ⚠️ No forecast data available in database for ${regionId}. Scraping should happen in background cron job, not during user requests.`
-            );
-          }
-        }
       }
 
-      // If forecast found, ensure date matches
+      // Ensure date matches target date
       if (forecast) {
         forecast.date = targetDate;
       }
 
-      // Step 2: Check if scores exist for the target date and if they match the requested source
-      const existingScores = await prisma.beachDailyScore.count({
-        where: {
-          regionId,
-          date: targetDate,
-        },
-      });
-
-      // Check if existing scores were calculated with a different source
-      // We store the source in the conditions JSON, so we can check it
-      const existingScoresData = await prisma.beachDailyScore.findMany({
-        where: {
-          regionId,
-          date: targetDate,
-        },
-        select: {
-          score: true,
-          beachId: true,
-          conditions: true,
-        },
-        take: 5, // Sample first 5
-      });
-
-      const allScoresZero =
-        existingScoresData.length > 0 &&
-        existingScoresData.every((s) => s.score === 0);
-
-      // Only recalculate scores if they don't exist or are all zero
-      // Don't always recalculate - it's expensive and data should already be in DB
-      // Scores are calculated per beach/date, not per source, so we use the forecast we found
-      const needsRecalculation =
-        forecast && (existingScores === 0 || allScoresZero);
-
-      console.log(`Existing scores sample:`, existingScoresData);
-      console.log(`All scores are zero: ${allScoresZero}`);
-      console.log(`Needs recalculation: ${needsRecalculation}`);
-
-      // Step 3: Calculate scores if they don't exist OR if source changed
-      // Only calculate scores if we have forecast data for the target date
-      if (needsRecalculation && forecast) {
-        console.log(
-          `${existingScores === 0 ? "Calculating" : "Recalculating"} scores for ${regionId} on ${targetDate.toISOString().split("T")[0]}...`
-        );
+      // Step 2: Calculate scores only if they don't exist and we have forecast
+      // Most common case: scores exist, so we skip this entirely (fast path)
+      if (forecast && !scoreCheck) {
+        // Scores don't exist - calculate them synchronously so user sees them
+        // This is rare (scores should already be in DB from cron jobs)
         try {
           await ScoreService.calculateAndStoreScores(regionId, {
             ...forecast,
             date: targetDate,
           });
-          console.log("✓ Scores calculated and stored");
-
-          // Verify scores were created and log sample values
-          const verifyScores = await prisma.beachDailyScore.findMany({
-            where: {
-              regionId,
-              date: targetDate,
-            },
-            select: {
-              beachId: true,
-              score: true,
-            },
-            take: 5,
-          });
-          console.log(
-            `✓ Verified ${verifyScores.length} scores exist for ${regionId}`
-          );
-          console.log(`Sample calculated scores:`, verifyScores);
         } catch (error) {
-          console.error("Failed to calculate scores:", error);
+          console.error(`[filtered-beaches] Score calculation failed:`, error);
+          // Continue anyway - return beaches without scores
         }
-      } else if (existingScores === 0) {
-        console.log(
-          `⚠ No forecast data available for ${regionId}, cannot calculate scores`
-        );
-      } else {
-        console.log(
-          `✓ Using existing scores (${existingScores} beaches) for ${regionId}`
-        );
       }
 
-      // Step 4: Fetch beaches with their daily scores for the target date
-      console.log(
-        `[filtered-beaches] 🔍 Querying beaches for regionId: ${regionId} with filters:`,
-        {
-          searchQuery: searchQuery || "none",
-          filters: Object.keys(whereClause).filter((k) => k !== "regionId"),
-          targetDate: targetDate.toISOString().split("T")[0],
-        }
-      );
+      // Step 3: Fetch beaches with their daily scores for the target date
       const beaches = await prisma.beach.findMany({
         where: whereClause,
         include: {
@@ -397,41 +222,7 @@ router.get(
         },
       });
 
-      console.log(`[filtered-beaches] 📊 Database query successful:`, {
-        beachCount: beaches.length,
-        regionId,
-        hasScores: beaches.filter((b) => b.beachDailyScores.length > 0).length,
-        beachesWithScores: beaches.filter((b) => b.beachDailyScores.length > 0)
-          .length,
-      });
-
-      // EXTRA DEBUG: if no beaches are found, inspect what's actually in the DB
-      if (beaches.length === 0) {
-        console.log(
-          `[filtered-beaches][DEBUG] No beaches returned for regionId=${regionId}. Inspecting DB...`
-        );
-
-        const sampleBeaches = await prisma.beach.findMany({
-          select: { id: true, name: true, regionId: true, countryId: true },
-          take: 10,
-        });
-        console.log(
-          "[filtered-beaches][DEBUG] Sample beaches in DB (first 10):",
-          sampleBeaches
-        );
-
-        const regionBeaches = await prisma.beach.findMany({
-          where: { regionId },
-          select: { id: true, name: true, regionId: true, countryId: true },
-          take: 10,
-        });
-        console.log(
-          `[filtered-beaches][DEBUG] Beaches for regionId=${regionId}:`,
-          regionBeaches
-        );
-      }
-
-      // Transform scores into a flat dictionary, ensuring the full beach object is included.
+      // Transform scores into a flat dictionary
       const scores = beaches.reduce(
         (
           acc: Record<
@@ -448,7 +239,7 @@ router.get(
             score: dailyScore?.score ?? 0,
             beach: {
               ...beach,
-              beachDailyScores: dailyScore ? [dailyScore] : [], // Ensure beachDailyScores is an array
+              beachDailyScores: dailyScore ? [dailyScore] : [],
             },
           };
           return acc;
@@ -456,18 +247,8 @@ router.get(
         {}
       );
 
-      console.log(
-        `Transformed scores object has ${Object.keys(scores).length} entries`
-      );
-      console.log(
-        `Sample scores:`,
-        Object.entries(scores)
-          .slice(0, 3)
-          .map(([id, data]) => ({ beachId: id, score: data.score }))
-      );
-
-      // Log the response structure
-      const responseData = {
+      // Return response
+      return res.json({
         beaches: beaches.map((beach) => {
           const { beachDailyScores, ...beachData } = beach;
           return beachData;
@@ -475,17 +256,7 @@ router.get(
         scores,
         forecast,
         totalCount: beaches.length,
-      };
-
-      console.log(`[filtered-beaches] ✅ Success - preparing response:`, {
-        beachCount: responseData.beaches.length,
-        scoreCount: Object.keys(responseData.scores).length,
-        hasForecast: !!responseData.forecast,
-        sampleScoreKeys: Object.keys(responseData.scores).slice(0, 3),
       });
-
-      // Return transformed data structure
-      return res.json(responseData);
     } catch (error: any) {
       console.error("API Error:", error);
 

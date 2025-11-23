@@ -142,11 +142,10 @@ export function useFilteredBeaches({
     },
     initialData: shouldUseInitialData,
     enabled: enabled && !!filters.regionId,
-    staleTime: 0, // Always consider data stale - refetch immediately
-    gcTime: 0, // Don't cache - always fetch fresh data when source changes
-    refetchOnMount: true, // Always refetch when component mounts
-    refetchOnWindowFocus: false, // Don't refetch on window focus (too aggressive)
-    // Ensure query refetches when source changes (query key change should handle this, but be explicit)
-    refetchOnReconnect: true,
+    staleTime: 30 * 1000, // Data is fresh for 30 seconds - reduces unnecessary refetches
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
+    refetchOnMount: false, // Use cached data if available - faster loading
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: true, // Refetch when network reconnects
   });
 }
