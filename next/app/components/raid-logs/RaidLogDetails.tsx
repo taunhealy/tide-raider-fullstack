@@ -28,6 +28,13 @@ import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { ImageGallery } from "./ImageGallery";
 import type { VideoPlatform } from "@/app/types/raidlogs";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/app/components/ui/dialog";
+import ForecastAlertForm from "@/app/components/alerts/ForecastAlertForm";
+import { Bell } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface RaidLogDetailsProps {
   id: string;
@@ -91,10 +98,24 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const router = useRouter();
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const { data: entry, isLoading, error } = useRaidLog(id);
 
   const isOwner = session?.user?.id === entry?.userId;
+
+  // Check if user has an existing alert for this log entry
+  const { data: existingAlert } = useQuery({
+    queryKey: ["alert-for-log", id, session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id || !entry?.id) return null;
+      const response = await fetch(`/api/alerts?logEntryId=${entry.id}`);
+      if (!response.ok) return null;
+      const alerts = await response.json();
+      return alerts.length > 0 ? alerts[0] : null;
+    },
+    enabled: !!session?.user?.id && !!entry?.id,
+  });
 
   if (isLoading) {
     return (
@@ -150,18 +171,32 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
             <span className="sm:hidden">Back</span>
           </Link>
 
-          {isOwner && (
+          <div className="flex items-center gap-2">
             <Button
-              onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
-              variant="outline"
+              onClick={() => setIsAlertModalOpen(true)}
+              variant="default"
               size="sm"
-              className="flex items-center gap-2 font-primary text-sm"
+              className="flex items-center gap-2 font-primary text-sm bg-[var(--color-tertiary)] hover:opacity-90 text-white"
             >
-              <Pencil className="w-4 h-4" />
-              <span className="hidden sm:inline">Edit Log</span>
-              <span className="sm:hidden">Edit</span>
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {existingAlert ? "Edit Alert" : "Set Alert"}
+              </span>
             </Button>
-          )}
+
+            {isOwner && (
+              <Button
+                onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 font-primary text-sm"
+              >
+                <Pencil className="w-4 h-4" />
+                <span className="hidden sm:inline">Edit Log</span>
+                <span className="sm:hidden">Edit</span>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -446,6 +481,18 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         videoPlatform={entry.videoPlatform as VideoPlatform}
         initialImageIndex={selectedImageIndex}
       />
+
+      {/* Alert Modal */}
+      <Dialog open={isAlertModalOpen} onOpenChange={setIsAlertModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+          <ForecastAlertForm
+            logEntry={entry}
+            existingAlert={existingAlert}
+            onClose={() => setIsAlertModalOpen(false)}
+            onSaved={() => setIsAlertModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
