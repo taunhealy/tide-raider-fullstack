@@ -49,13 +49,21 @@ router.post(
       }
 
       if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-        console.error("[PayPal] Missing credentials:", {
-          hasClientId: !!PAYPAL_CLIENT_ID,
-          hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+        console.error("[PayPal] ❌ Missing credentials - Environment variables check:", {
+          PAYPAL_CLIENT_ID: PAYPAL_CLIENT_ID ? `SET (${PAYPAL_CLIENT_ID.substring(0, 10)}...)` : "❌ MISSING",
+          PAYPAL_CLIENT_SECRET: PAYPAL_CLIENT_SECRET ? `SET (${PAYPAL_CLIENT_SECRET.substring(0, 10)}...)` : "❌ MISSING",
+          PAYPAL_MODE: PAYPAL_MODE || "❌ MISSING (defaults to sandbox)",
+          PAYPAL_PLAN_ID: process.env.PAYPAL_PLAN_ID ? `SET (${process.env.PAYPAL_PLAN_ID})` : "❌ MISSING",
+          NODE_ENV: process.env.NODE_ENV,
         });
         return res.status(500).json({
           error: "PayPal configuration missing",
           message: "PayPal credentials not configured",
+          details: {
+            hasClientId: !!PAYPAL_CLIENT_ID,
+            hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+            mode: PAYPAL_MODE,
+          }
         });
       }
 
