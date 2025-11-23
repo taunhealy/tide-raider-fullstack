@@ -267,8 +267,17 @@ export async function scraperB(
       });
 
       // Create date from unixtime
-      const forecastDate = new Date(data.unixtime * 1000);
-      forecastDate.setUTCHours(0, 0, 0, 0); // Set to start of day
+      // Primary source: unixtime (seconds since epoch)
+      let forecastDate = new Date(data.unixtime * 1000);
+      // Fallback: if the data also provides an ISO date string, prefer that (more reliable)
+      if (data.date && typeof data.date === "string") {
+        const iso = new Date(data.date);
+        if (!isNaN(iso.getTime())) {
+          forecastDate = iso;
+        }
+      }
+      // Normalize to UTC midnight for DB consistency
+      forecastDate.setUTCHours(0, 0, 0, 0);
 
       const forecast: BaseForecastData = {
         date: forecastDate,

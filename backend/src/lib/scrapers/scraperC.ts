@@ -213,11 +213,14 @@ export async function scraperC(
       });
 
       // Use the date from the data (should be an ISO string)
-      const forecastDate = new Date(data.date);
+      // Primary source: ISO date string from data.date
+      let forecastDate = new Date(data.date);
+      // Fallback: if the date is invalid, use current UTC date
       if (isNaN(forecastDate.getTime())) {
-        console.error(`[scraperC] ❌ Invalid date: ${data.date}`);
-        throw new Error(`Invalid date received from scraper: ${data.date}`);
+        console.warn(`[scraperC] ❗ Invalid date '${data.date}' - falling back to today`);
+        forecastDate = new Date();
       }
+      // Normalize to UTC midnight for DB consistency
       forecastDate.setUTCHours(0, 0, 0, 0);
 
       const forecast: BaseForecastData = {

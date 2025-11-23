@@ -61,31 +61,49 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     // 4. We're on the /raid page
     if (
       !filters.regionId &&
-      recentSearches &&
-      recentSearches.length > 0 &&
       !hasAutoRedirected.current &&
       pathname === "/raid"
     ) {
-      const mostRecentSearch = recentSearches[0];
-      if (mostRecentSearch?.region?.id) {
-        // Construct region object from recent search data
-        const selectedRegion = {
-          id: mostRecentSearch.region.id,
-          regionId: mostRecentSearch.region.id,
-          name: mostRecentSearch.region.name,
-          countryId: mostRecentSearch.region.country?.id || "",
-          country: mostRecentSearch.region.country
-            ? {
-                id: mostRecentSearch.region.country.id || "",
-                name: mostRecentSearch.region.country.name || "",
-                continentId: mostRecentSearch.region.country.continentId || "",
-              }
-            : undefined,
-          continent: mostRecentSearch.region.continent || "",
-        };
+      // If we have recent searches, use the most recent one
+      if (recentSearches && recentSearches.length > 0) {
+        const mostRecentSearch = recentSearches[0];
+        if (mostRecentSearch?.region?.id) {
+          // Construct region object from recent search data
+          const selectedRegion = {
+            id: mostRecentSearch.region.id,
+            regionId: mostRecentSearch.region.id,
+            name: mostRecentSearch.region.name,
+            countryId: mostRecentSearch.region.country?.id || "",
+            country: mostRecentSearch.region.country
+              ? {
+                  id: mostRecentSearch.region.country.id || "",
+                  name: mostRecentSearch.region.country.name || "",
+                  continentId: mostRecentSearch.region.country.continentId || "",
+                }
+              : undefined,
+            continent: mostRecentSearch.region.continent || "",
+          };
 
-        // Use selectRegion to update URL properly
-        selectRegion(selectedRegion);
+          // Use selectRegion to update URL properly
+          selectRegion(selectedRegion);
+          hasAutoRedirected.current = true;
+        }
+      } else if (recentSearches !== undefined) {
+        // No recent searches - default to Western Cape for first-time visitors
+        const defaultRegion = {
+          id: "western-cape",
+          regionId: "western-cape",
+          name: "Western Cape",
+          countryId: "za",
+          country: {
+            id: "za",
+            name: "South Africa",
+            continentId: "AF",
+          },
+          continent: "Africa",
+        };
+        
+        selectRegion(defaultRegion);
         hasAutoRedirected.current = true;
       }
     }
