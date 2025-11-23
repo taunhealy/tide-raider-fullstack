@@ -196,16 +196,22 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               beaches={beaches}
             />
 
+            {/* Subtle background refresh indicator */}
+            {isFetching && data && !isLoading && (
+              <div className="text-xs text-gray-500 text-center py-2 font-primary">
+                Refreshing data...
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-5 relative mt-5">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
-              ) : isLoading || isFetching ? (
+              ) : isLoading && !data ? (
+                // Only show loading spinner when there's no data at all
                 <div className="flex flex-col items-center justify-center py-12">
                   <LoadingIndicator />
                   <p className="text-gray-600 font-primary mt-4">
-                    {isFetching && !isLoading
-                      ? "Refreshing forecast data and scores..."
-                      : "Loading surf breaks and forecast data..."}
+                    Loading surf breaks and forecast data...
                   </p>
                 </div>
               ) : sortedBeaches.length === 0 ? (
@@ -231,7 +237,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                         beach={beach}
                         score={scoreValue} // Pass null if no score exists, or the numeric score
                         forecastData={beachForecastData} // Pass the regional forecast
-                        isLoading={(!hasScore && isLoading) || isFetching} // Show loading if score doesn't exist or data is being refetched
+                        isLoading={!hasScore && isLoading && !data} // Only show loading if no score AND no data at all
                       />
                     );
                   })}
