@@ -30,7 +30,15 @@ async function getPayPalAccessToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to get PayPal access token");
+    const errorText = await response.text();
+    console.error("[PayPal] Failed to get access token:", {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText,
+      url: `${PAYPAL_BASE_URL}/v1/oauth2/token`,
+      clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 5) + "...",
+    });
+    throw new Error(`Failed to get PayPal access token: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = (await response.json()) as { access_token: string };
