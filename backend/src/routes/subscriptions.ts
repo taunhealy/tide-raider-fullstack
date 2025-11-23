@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
+import { notifyAdminNewTrial } from "../lib/adminNotifications";
 
 const router = Router();
 
@@ -36,7 +37,7 @@ router.post(
       trialEndDate.setDate(trialEndDate.getDate() + 7);
 
       // Update user with trial information
-      await prisma.user.update({
+      const updatedUser = await prisma.user.update({
         where: { id: authReq.user.id },
         data: {
           hasActiveTrial: true,
@@ -44,10 +45,21 @@ router.post(
           trialEndDate: trialEndDate,
           subscriptionStatus: "TRIAL",
         },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          trialEndDate: true,
+        },
       });
 
       console.log(
         `[subscriptions] ✅ Started trial for user: ${authReq.user.id}, trial ends: ${trialEndDate.toISOString()}`
+      );
+      
+      // Notify admin of new trial (async, don't wait)
+      notifyAdminNewTrial(updatedUser).catch((err) =>
+        console.error("Failed to send admin notification:", err)
       );
 
       return res.json({

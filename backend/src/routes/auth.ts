@@ -4,6 +4,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
+import { notifyAdminNewUser } from "../lib/adminNotifications";
 
 const router = Router();
 
@@ -90,6 +91,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               },
             });
             console.log(`[auth] ✅ Created new user: ${user.id}`);
+            
+            // Notify admin of new user signup (async, don't wait)
+            notifyAdminNewUser({
+              id: user.id,
+              email: user.email,
+              name: user.name,
+            }).catch((err) => console.error("Failed to send admin notification:", err));
           } else {
             // Only update name if it's empty/null (don't overwrite user's custom name)
             // Always update image if provided (Google profile pictures can change)
@@ -473,6 +481,13 @@ router.post("/login", async (req: Request, res: Response) => {
         },
       });
       console.log(`[auth] ✅ Created new user: ${user.id}`);
+      
+      // Notify admin of new user signup (async, don't wait)
+      notifyAdminNewUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      }).catch((err) => console.error("Failed to send admin notification:", err));
     } else {
       // Only update name if it's empty/null (don't overwrite user's custom name)
       // Always update image if provided (Google profile pictures can change)

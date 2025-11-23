@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
+import { notifyAdminNewSubscription, notifyAdminNewTrial } from "../lib/adminNotifications";
 
 const router = Router();
 
@@ -48,6 +49,10 @@ router.post(
       }
 
       if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+        console.error("[PayPal] Missing credentials:", {
+          hasClientId: !!PAYPAL_CLIENT_ID,
+          hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+        });
         return res.status(500).json({
           error: "PayPal configuration missing",
           message: "PayPal credentials not configured",
@@ -71,6 +76,7 @@ router.post(
       const PLAN_ID = process.env.PAYPAL_PLAN_ID;
 
       if (!PLAN_ID) {
+        console.error("[PayPal] PAYPAL_PLAN_ID not configured. Please set this environment variable.");
         return res.status(500).json({
           error: "PayPal plan not configured",
           message: "PAYPAL_PLAN_ID environment variable is required",
@@ -603,7 +609,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
 });
 
 async function handleSubscriptionActive(subscriptionId: string) {
-  await prisma.user.updateMany({
+  const updatedUsers = await prisma.user.updateMany({
     where: { paypalSubscriptionId: subscriptionId },
     data: {
       subscriptionStatus: "ACTIVE",
@@ -612,6 +618,19 @@ async function handleSubscriptionActive(subscriptionId: string) {
     },
   });
   console.log(`Subscription ${subscriptionId} activated`);
+  
+  // Notify admin of new subscription
+  if (updatedUsers.count > 0) {
+    const user = await prisma.user.findFirst({
+      where: { paypalSubscriptionId: subscriptionId },
+      select: { id: true, email: true, name: true, paypalSubscriptionId: true },
+    });
+    if (user) {
+      notifyAdminNewSubscription(user).catch((err) =>
+        console.error("Failed to send admin notification:", err)
+      );
+    }
+  }
 }
 
 async function handleSubscriptionEnded(
