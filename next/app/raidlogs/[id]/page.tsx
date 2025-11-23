@@ -10,7 +10,7 @@ const getBackendUrl = () => {
     envUrl ||
     (isDevelopment
       ? "http://localhost:4001"
-      : "https://tide-raider-backend.fly.dev")
+      : "https://tide-raider-backend-82632174665.africa-south1.run.app")
   );
 };
 

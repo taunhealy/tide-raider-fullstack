@@ -42,7 +42,7 @@ import { useDebounce } from "@/app/hooks/useDebounce";
 import * as React from "react";
 import { AlertProvider, useAlert } from "@/app/context/AlertContext";
 import { cardinalToDegreesMap } from "@/app/lib/directionUtils";
-import { AlertType, Prisma, Alert } from "@prisma/client";
+import { Prisma, Alert } from "@prisma/client";
 import {
   Select,
   SelectContent,
