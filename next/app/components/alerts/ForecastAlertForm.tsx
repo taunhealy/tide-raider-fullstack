@@ -7,6 +7,7 @@ import {
   NotificationMethod,
   AlertProperty,
   CreateAlertInput,
+  AlertType,
 } from "@/app/types/alerts";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { v4 as uuidv4 } from "uuid";
