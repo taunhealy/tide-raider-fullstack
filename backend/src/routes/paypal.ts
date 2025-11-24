@@ -15,7 +15,11 @@ const PAYPAL_BASE_URL =
     : "https://api-m.sandbox.paypal.com";
 
 // Get PayPal access token
-async function getPayPalAccessToken(): Promise<string> {
+console.log('[PayPal] Env vars:', {
+  clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 10),
+  clientSecretPrefix: PAYPAL_CLIENT_SECRET?.substring(0, 10),
+  mode: PAYPAL_MODE,
+});
   const auth = Buffer.from(
     `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
   ).toString("base64");
