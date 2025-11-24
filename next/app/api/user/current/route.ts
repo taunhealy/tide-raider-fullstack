@@ -81,58 +81,46 @@ export async function GET() {
 
     const userData = await userResponse.json();
 
-    // Get subscription status from PayPal endpoint (more accurate)
-    const subController = new AbortController();
-    const subTimeoutId = setTimeout(() => subController.abort(), 5000); // 5 second timeout
-
-    let subscriptionResponse;
+    // Get subscription status from Next.js API endpoint (more reliable than backend)
+    let subscriptionData = null;
     try {
-      subscriptionResponse = await fetch(
-        `${BACKEND_URL}/api/paypal/subscription-status`,
+      // Use the Next.js API route instead of backend
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
+      const subscriptionResponse = await fetch(
+        `${baseUrl}/api/paypal/subscription-status`,
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
             Cookie: `auth-token=${authToken}`,
           },
-          credentials: "include",
           cache: "no-store",
-          signal: subController.signal,
         }
       );
-    } catch (error: any) {
-      clearTimeout(subTimeoutId);
-      // Handle connection errors gracefully - fallback to user data
-      if (error.name === "AbortError" || error.code === "ECONNREFUSED") {
-        console.warn(
-          "[user/current] Subscription check failed, using fallback"
-        );
-        subscriptionResponse = null; // Will use fallback below
-      } else {
-        throw error;
+
+      if (subscriptionResponse.ok) {
+        subscriptionData = await subscriptionResponse.json();
       }
-    } finally {
-      clearTimeout(subTimeoutId);
+    } catch (error) {
+      console.warn("[user/current] Subscription check failed:", error);
+      // Will use fallback below
     }
 
-    let subscriptionStatus = "INACTIVE";
-    let paypalSubscriptionId = null;
-
-    if (subscriptionResponse && subscriptionResponse.ok) {
-      const subData = await subscriptionResponse.json();
-      subscriptionStatus = subData.subscriptionStatus || "INACTIVE";
-      paypalSubscriptionId = subData.paypalSubscriptionId || null;
-    } else {
-      // Fallback to isSubscribed from user data
-      subscriptionStatus = userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE";
-    }
+    // Extract subscription status
+    const subscriptionStatus =
+      subscriptionData?.subscriptionStatus ||
+      (userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE");
+    const paypalSubscriptionId =
+      subscriptionData?.paypalSubscriptionId || null;
+    const hasActiveTrial =
+      subscriptionData?.hasActiveTrial || userData.user?.hasActiveTrial || false;
 
     // Extract subscription-related fields from user object
     return NextResponse.json({
-      hasActiveTrial: userData.user?.hasActiveTrial || false,
-      hasTrialEnded: userData.user?.hasActiveTrial === false,
+      hasActiveTrial,
+      hasTrialEnded: userData.user?.hasTrialEnded || false,
       trialEndDate: userData.user?.trialEndDate || null,
-      subscriptionStatus: subscriptionStatus,
-      paypalSubscriptionId: paypalSubscriptionId,
+      subscriptionStatus,
+      paypalSubscriptionId,
     });
   } catch (error) {
     console.error("[user/current] Error:", error);

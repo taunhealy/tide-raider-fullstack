@@ -1,82 +1,204 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getBackendUrl } from "@/app/lib/api-config";
+import { getServerAuth } from "@/app/lib/server-auth";
+import { PrismaClient } from "@prisma/client";
+
+// Initialize Prisma Client
+const prisma = new PrismaClient();
 
 /**
  * POST /api/paypal/sync
- * Proxy to backend to sync subscription status from PayPal
+ * Sync the user's subscription status from PayPal API to the database
+ * This fetches the latest status from PayPal and updates the user record
  */
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+    // -------------------------------------------------
+    // 1️⃣ Authenticate the user
+    // -------------------------------------------------
+    const { user } = await getServerAuth();
 
-    if (!authToken) {
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const backendUrl = getBackendUrl();
-    const response = await fetch(`${backendUrl}/api/paypal/sync`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-        Cookie: `auth-token=${authToken}`,
+    // -------------------------------------------------
+    // 2️⃣ Get user's PayPal subscription ID from database
+    // -------------------------------------------------
+    const userData = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        paypalSubscriptionId: true,
+        hasActiveTrial: true,
+        subscriptionStatus: true,
       },
-      credentials: "include",
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      }));
-
-      // If backend returns 500 with PayPal configuration error, check if it's a trial user
-      // and return a more informative message
-      if (
-        response.status === 500 &&
-        error.error?.includes("PayPal configuration missing")
-      ) {
-        // Try to get user info to check if they're on a trial
-        try {
-          const userResponse = await fetch(
-            `${backendUrl}/api/paypal/subscription-status`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${authToken}`,
-                Cookie: `auth-token=${authToken}`,
-              },
-              credentials: "include",
-            }
-          );
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            if (
-              userData.hasActiveTrial ||
-              userData.subscriptionStatus === "TRIAL"
-            ) {
-              return NextResponse.json({
-                message:
-                  "You are on a free trial. No PayPal subscription to sync.",
-                subscriptionStatus: userData.subscriptionStatus,
-                hasActiveTrial: userData.hasActiveTrial,
-                synced: false,
-              });
-            }
-          }
-        } catch (e) {
-          // If we can't check user status, just return the original error
-        }
-      }
-
-      return NextResponse.json(error, { status: response.status });
+    if (!userData) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Check if user is on trial (no PayPal subscription to sync)
+    if (userData.hasActiveTrial || userData.subscriptionStatus === "TRIAL") {
+      return NextResponse.json({
+        message: "You are on a free trial. No PayPal subscription to sync.",
+        subscriptionStatus: userData.subscriptionStatus,
+        hasActiveTrial: userData.hasActiveTrial,
+        synced: false,
+      });
+    }
+
+    // Check if user has a PayPal subscription ID
+    if (!userData.paypalSubscriptionId) {
+      return NextResponse.json(
+        {
+          error: "No PayPal subscription found",
+          message: "You don't have an active PayPal subscription to sync.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // -------------------------------------------------
+    // 3️⃣ Load PayPal credentials from Vercel env vars
+    // -------------------------------------------------
+    const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+    const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+    const PAYPAL_MODE = process.env.PAYPAL_MODE ?? "sandbox";
+
+    const PAYPAL_BASE_URL =
+      PAYPAL_MODE === "live"
+        ? "https://api-m.paypal.com"
+        : "https://api-m.sandbox.paypal.com";
+
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+      return NextResponse.json(
+        {
+          error: "PayPal configuration missing",
+          details: {
+            hasClientId: !!PAYPAL_CLIENT_ID,
+            hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    // -------------------------------------------------
+    // 4️⃣ Get an access token from PayPal
+    // -------------------------------------------------
+    const basicAuth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+
+    const tokenRes = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: "grant_type=client_credentials",
+    });
+
+    if (!tokenRes.ok) {
+      const err = await tokenRes.text();
+      return NextResponse.json(
+        {
+          error: "Failed to obtain PayPal access token",
+          status: tokenRes.status,
+          body: err,
+        },
+        { status: tokenRes.status }
+      );
+    }
+
+    const { access_token } = (await tokenRes.json()) as {
+      access_token: string;
+    };
+
+    // -------------------------------------------------
+    // 5️⃣ Get subscription details from PayPal
+    // -------------------------------------------------
+    const subscriptionRes = await fetch(
+      `${PAYPAL_BASE_URL}/v1/billing/subscriptions/${userData.paypalSubscriptionId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+
+    if (!subscriptionRes.ok) {
+      const err = await subscriptionRes.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          error: "Failed to fetch subscription from PayPal",
+          details: err,
+        },
+        { status: subscriptionRes.status }
+      );
+    }
+
+    const subscriptionData = await subscriptionRes.json();
+
+    // -------------------------------------------------
+    // 6️⃣ Map PayPal status to our database status
+    // -------------------------------------------------
+    // PayPal statuses: APPROVAL_PENDING, APPROVED, ACTIVE, SUSPENDED, CANCELLED, EXPIRED
+    const paypalStatus = subscriptionData.status;
+    let dbSubscriptionStatus = "INACTIVE";
+
+    if (paypalStatus === "ACTIVE") {
+      dbSubscriptionStatus = "ACTIVE";
+    } else if (paypalStatus === "SUSPENDED") {
+      dbSubscriptionStatus = "SUSPENDED";
+    } else if (
+      paypalStatus === "CANCELLED" ||
+      paypalStatus === "EXPIRED"
+    ) {
+      dbSubscriptionStatus = "INACTIVE";
+    } else if (
+      paypalStatus === "APPROVAL_PENDING" ||
+      paypalStatus === "APPROVED"
+    ) {
+      dbSubscriptionStatus = "PENDING";
+    }
+
+    // -------------------------------------------------
+    // 7️⃣ Update user's subscription status in database
+    // -------------------------------------------------
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        subscriptionStatus: dbSubscriptionStatus,
+        // If subscription is cancelled/inactive, mark trial as ended (prevents reactivation)
+        hasTrialEnded:
+          dbSubscriptionStatus === "INACTIVE" ? true : userData.hasActiveTrial
+            ? false
+            : true,
+      },
+      select: {
+        id: true,
+        subscriptionStatus: true,
+        paypalSubscriptionId: true,
+        hasActiveTrial: true,
+      },
+    });
+
+    console.log(
+      `[paypal/sync] ✅ Synced subscription for user ${user.id}: ${paypalStatus} → ${dbSubscriptionStatus}`
+    );
+
+    // -------------------------------------------------
+    // 8️⃣ Return sync result
+    // -------------------------------------------------
+    return NextResponse.json({
+      synced: true,
+      subscriptionStatus: updatedUser.subscriptionStatus,
+      paypalStatus: paypalStatus,
+      paypalSubscriptionId: updatedUser.paypalSubscriptionId,
+      message: `Subscription status synced successfully: ${paypalStatus}`,
+    });
   } catch (error) {
     console.error("[paypal/sync] Error:", error);
     return NextResponse.json(
