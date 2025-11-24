@@ -1,74 +1,132 @@
+// next/app/api/paypal/create-subscription/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getBackendUrl } from "@/app/lib/api-config";
 
-/**
- * POST /api/paypal/create-subscription
- * Proxy to backend to create PayPal subscription
- */
+// Edge runtime – runs on Vercel’s edge network
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
-  try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+  // -------------------------------------------------
+  // 1️⃣ Parse the request body (you may need userId or other data)
+  // -------------------------------------------------
+  const { userId } = await req.json(); // adjust shape as needed
 
-    console.log("[create-subscription] Starting request", {
-      hasAuthToken: !!authToken,
-      authTokenPrefix: authToken?.substring(0, 10),
-    });
+  // -------------------------------------------------
+  // 2️⃣ Load PayPal credentials from Vercel env vars
+  // -------------------------------------------------
+  const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+  const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+  const PAYPAL_PLAN_ID = process.env.PAYPAL_PLAN_ID;
+  const PAYPAL_MODE = process.env.PAYPAL_MODE ?? "sandbox";
 
-    if (!authToken) {
-      console.error("[create-subscription] No auth token found");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const PAYPAL_BASE_URL =
+    PAYPAL_MODE === "live"
+      ? "https://api-m.paypal.com"
+      : "https://api-m.sandbox.paypal.com";
 
-    const backendUrl = getBackendUrl();
-    console.log("[create-subscription] Backend URL:", backendUrl);
-
-    const targetUrl = `${backendUrl}/api/paypal/create-subscription`;
-    console.log("[create-subscription] Calling:", targetUrl);
-
-    const response = await fetch(targetUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-        Cookie: `auth-token=${authToken}`,
-      },
-      credentials: "include",
-    });
-
-    console.log("[create-subscription] Response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[create-subscription] Error response:", {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-      });
-      
-      let error;
-      try {
-        error = JSON.parse(errorText);
-      } catch {
-        error = { error: `HTTP ${response.status}: ${response.statusText}`, details: errorText };
-      }
-      
-      return NextResponse.json(error, { status: response.status });
-    }
-
-    const data = await response.json();
-    console.log("[create-subscription] Success:", data);
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("[create-subscription] Exception:", error);
+  if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET || !PAYPAL_PLAN_ID) {
     return NextResponse.json(
       {
-        error: "Failed to create subscription",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: "PayPal configuration missing",
+        details: {
+          hasClientId: !!PAYPAL_CLIENT_ID,
+          hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+          hasPlanId: !!PAYPAL_PLAN_ID,
+        },
       },
       { status: 500 }
     );
   }
-}
 
+  // -------------------------------------------------
+  // 3️⃣ Get an access token from PayPal
+  // -------------------------------------------------
+  const auth = Buffer.from(
+    `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+  ).toString("base64");
+
+  const tokenRes = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${auth}`,
+    },
+    body: "grant_type=client_credentials",
+  });
+
+  if (!tokenRes.ok) {
+    const err = await tokenRes.text();
+    return NextResponse.json(
+      {
+        error: "Failed to obtain PayPal access token",
+        status: tokenRes.status,
+        body: err,
+      },
+      { status: tokenRes.status }
+    );
+  }
+
+  const { access_token } = (await tokenRes.json()) as {
+    access_token: string;
+  };
+
+  // -------------------------------------------------
+  // 4️⃣ Create the subscription with PayPal
+  // -------------------------------------------------
+  const subscriptionRes = await fetch(
+    `${PAYPAL_BASE_URL}/v1/billing/subscriptions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+      body: JSON.stringify({
+        plan_id: PAYPAL_PLAN_ID,
+        // You can add subscriber info here if you have it
+        application_context: {
+          brand_name: "Tide Raider",
+          locale: "en-US",
+          shipping_preference: "NO_SHIPPING",
+          user_action: "SUBSCRIBE_NOW",
+          return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success`,
+          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
+        },
+      }),
+    }
+  );
+
+  if (!subscriptionRes.ok) {
+    const err = await subscriptionRes.json().catch(() => ({}));
+    return NextResponse.json(
+      {
+        error: "Failed to create PayPal subscription",
+        details: err,
+      },
+      { status: subscriptionRes.status }
+    );
+  }
+
+  const data = (await subscriptionRes.json()) as {
+    id: string;
+    status: string;
+    links?: Array<{ rel: string; href: string }>;
+  };
+
+  // -------------------------------------------------
+  // 5️⃣ Return the approval URL (or subscription ID) to the client
+  // -------------------------------------------------
+  const approvalUrl = data.links?.find((l) => l.rel === "approve")?.href;
+
+  if (!approvalUrl) {
+    return NextResponse.json(
+      { error: "No approval URL returned from PayPal" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    subscriptionId: data.id,
+    approvalUrl,
+    status: data.status,
+  });
+}
