@@ -104,7 +104,6 @@ export default function DashboardPage() {
   const subscriptionData = subscriptionDetails;
   const { mutate } = useSubscriptionManagement();
   const { refetch: refetchAuth } = useBackendAuth();
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Add loading states
   const [loadingStates, setLoadingStates] = useState({
@@ -559,10 +558,10 @@ export default function DashboardPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleSyncSubscription}
-                    disabled={isSyncing}
+                    disabled={loadingStates.subscribe}
                     className="font-primary"
                   >
-                    {isSyncing ? "Syncing..." : "Sync Status"}
+                    {loadingStates.subscribe ? "Syncing..." : "Sync Status"}
                   </Button>
                 </div>
                 {isLoadingDetails ? (
