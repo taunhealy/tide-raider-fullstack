@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/app/lib/server-auth";
-import { prisma } from "@/app/lib/prisma";
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 
 /**
  * GET /api/paypal/subscription-status
- * Get the current user's subscription status from the database
+ * Get the current user's subscription status by proxying to backend
  * Returns: subscriptionStatus, hasActiveTrial, paypalSubscriptionId, isPremium
  */
 export async function GET(req: NextRequest) {
@@ -19,42 +22,48 @@ export async function GET(req: NextRequest) {
     }
 
     // -------------------------------------------------
-    // 2️⃣ Get user data from database
+    // 2️⃣ Fetch user data from backend /api/auth/me
     // -------------------------------------------------
-    const userData = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        subscriptionStatus: true,
-        hasActiveTrial: true,
-        paypalSubscriptionId: true,
-        trialEndDate: true,
-        hasTrialEnded: true,
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: req.headers.get("cookie") || "",
       },
+      credentials: "include",
     });
 
-    if (!userData) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 401) {
+        return NextResponse.json(
+          { error: "User not found or unauthorized" },
+          { status: response.status }
+        );
+      }
+      throw new Error(`Backend returned ${response.status}`);
     }
+
+    const data = await response.json();
+    const userData = data.user;
 
     // -------------------------------------------------
     // 3️⃣ Determine if user has premium access
+    // Backend already provides isSubscribed
     // -------------------------------------------------
-    const isSubscribed = userData.subscriptionStatus === "ACTIVE";
     const hasActiveTrial = userData.hasActiveTrial || false;
+    const isSubscribed = userData.isSubscribed || false;
     const isPremium = isSubscribed || hasActiveTrial;
 
     // -------------------------------------------------
     // 4️⃣ Return subscription status
     // -------------------------------------------------
     return NextResponse.json({
-      subscriptionStatus: userData.subscriptionStatus || null,
+      subscriptionStatus: isSubscribed ? "ACTIVE" : null,
       hasActiveTrial,
-      paypalSubscriptionId: userData.paypalSubscriptionId || null,
+      paypalSubscriptionId: null, // Not returned by /api/auth/me
       isPremium,
       // Additional info that might be useful
       trialEndDate: userData.trialEndDate,
-      hasTrialEnded: userData.hasTrialEnded,
+      hasTrialEnded: false, // Not returned by /api/auth/me
     });
   } catch (error) {
     console.error("[paypal/subscription-status] Error:", error);
