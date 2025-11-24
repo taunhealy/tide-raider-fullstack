@@ -1,6 +1,6 @@
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
-import Navbar frLet's create a betom "./components/Navbar";
+import Navbar from "./components/Navbar";
 import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
 import AppProviders from "./providers/AppProviders";

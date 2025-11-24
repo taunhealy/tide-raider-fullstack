@@ -18,11 +18,18 @@ export async function POST(req: NextRequest) {
   const PAYPAL_PLAN_ID = process.env.PAYPAL_PLAN_ID;
   const PAYPAL_MODE = process.env.PAYPAL_MODE ?? "sandbox";
 
+  // Debug: log first few chars of env vars (no secrets) to verify they are loaded
+  console.log('[PayPal Edge] Env vars loaded', {
+    clientIdPrefix: PAYPAL_CLIENT_ID?.slice(0, 10),
+    clientSecretPrefix: PAYPAL_CLIENT_SECRET?.slice(0, 10),
+    planIdPrefix: PAYPAL_PLAN_ID?.slice(0, 10),
+    mode: PAYPAL_MODE,
+  });
+
   const PAYPAL_BASE_URL =
     PAYPAL_MODE === "live"
       ? "https://api-m.paypal.com"
       : "https://api-m.sandbox.paypal.com";
-
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET || !PAYPAL_PLAN_ID) {
     return NextResponse.json(
       {
@@ -40,15 +47,14 @@ export async function POST(req: NextRequest) {
   // -------------------------------------------------
   // 3️⃣ Get an access token from PayPal
   // -------------------------------------------------
-  const auth = Buffer.from(
-    `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
-  ).toString("base64");
+  // Edge runtime does not have Node's Buffer, use btoa instead
+  const basicAuth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
 
   const tokenRes = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${auth}`,
+      Authorization: `Basic ${basicAuth}`,
     },
     body: "grant_type=client_credentials",
   });
