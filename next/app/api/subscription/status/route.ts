@@ -3,18 +3,16 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/lib/authOptions";
 import { cookies } from "next/headers";
 
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
+// Use the same backend URL as the rest of the app
 const getBackendUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDevelopment = process.env.NODE_ENV === "development";
 
-  // In development, use localhost backend (connects to Docker postgres)
-  if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
+  if (envUrl) {
+    return envUrl;
   }
 
-  // In production, use production backend (connects to Fly.io postgres)
-  return envUrl || "https://tide-raider-backend.fly.dev";
+  // Fallback: use Cloud Run backend (EU West)
+  return "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();

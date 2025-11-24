@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
 import { useSubscription } from "@/app/providers/SubscriptionProvider";
+import { useRouter } from "next/navigation";
 
 type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
 
@@ -29,6 +30,7 @@ const NoDataState = () => (
 
 export default function WeatherForecastWidget() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const {
     filters: { regionId, forecastDate },
   } = useBeachFilters();
@@ -308,14 +310,13 @@ export default function WeatherForecastWidget() {
               B
             </button>
             <button
-              onClick={() => isPremium && setSelectedSource("WINDY")}
-              disabled={!isPremium}
+              onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
               className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
                   : isPremium
                     ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-not-allowed"
+                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
               } ${
                 !isPremium ? "wave-pulse" : ""
               }`}
@@ -464,15 +465,14 @@ export default function WeatherForecastWidget() {
                 B
               </button>
               <button
-                onClick={() => isPremium && setSelectedSource("WINDY")}
-                disabled={!isPremium}
-                title={!isPremium ? "Subscribe to unlock Source C" : ""}
+                onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
+                title={!isPremium ? "Click to subscribe and unlock Source C" : ""}
                 className={`relative flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDY"
                     ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
                     : isPremium
                       ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-not-allowed"
+                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
                 } ${
                   !isPremium ? "wave-pulse" : ""
                 }`}

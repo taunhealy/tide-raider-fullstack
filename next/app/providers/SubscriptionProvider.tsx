@@ -27,14 +27,28 @@ export function SubscriptionProvider({
 
   const checkSubscription = async () => {
     try {
+      console.log("[SubscriptionProvider] Fetching subscription status...");
       const response = await fetch("/api/subscription/status");
+      
+      if (!response.ok) {
+        console.error("[SubscriptionProvider] Error response:", response.status);
+        return;
+      }
+      
       const data = await response.json();
+      console.log("[SubscriptionProvider] Subscription data received:", data);
+      
       setState({
-        isSubscribed: data.isSubscribed,
-        hasActiveTrial: data.hasActiveTrial,
+        isSubscribed: data.isSubscribed || false,
+        hasActiveTrial: data.hasActiveTrial || false,
+      });
+      
+      console.log("[SubscriptionProvider] State updated:", {
+        isSubscribed: data.isSubscribed || false,
+        hasActiveTrial: data.hasActiveTrial || false,
       });
     } catch (error) {
-      console.error("Failed to check subscription:", error);
+      console.error("[SubscriptionProvider] Failed to check subscription:", error);
     }
   };
 
