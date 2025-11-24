@@ -838,14 +838,16 @@ function AlertFormFooter() {
       } else {
         // For creation, transform Prisma format to API format
         const properties = Array.isArray(alert.properties?.create)
-          ? alert.properties.create.map((prop: any) => ({
-              property: prop.property,
-              optimalValue: Number(prop.optimalValue),
-              // Ensure range is at least 0.1 (API requirement: min 0.1, max 100)
-              range: Math.max(0.1, Number(prop.range)),
-              sourceType: prop.sourceType || ("log_entry" as const),
-              sourceId: prop.sourceId || undefined,
-            }))
+          ? alert.properties.create
+              .filter((prop: any) => prop.optimalValue != null) // Filter out null/undefined values
+              .map((prop: any) => ({
+                property: prop.property,
+                optimalValue: Number(prop.optimalValue),
+                // Ensure range is at least 0.1 (API requirement: min 0.1, max 100)
+                range: Math.max(0.1, Number(prop.range)),
+                sourceType: prop.sourceType || ("log_entry" as const),
+                sourceId: prop.sourceId || undefined,
+              }))
           : [];
 
         // Validate based on mode (more reliable than alertType)
