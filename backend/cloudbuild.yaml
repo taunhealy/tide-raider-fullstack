@@ -1,6 +1,6 @@
-# Cloud Build configuration for Google Cloud Run deployment
+# Cloud Build configuration for deploying backend to Cloud Run
 steps:
-  # Build the Docker image
+  # 1️⃣ Build the Docker image
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"
@@ -9,17 +9,17 @@ steps:
       - "-t"
       - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:latest"
       - "-f"
-      - "backend/Dockerfile"
-      - "backend" # <-- Correct build context
+      - "Dockerfile" # Dockerfile in current folder
+      - "." # Build context = current folder (backend)
 
-  # Push the Docker image to Artifact Registry
+  # 2️⃣ Push the Docker image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
       - "push"
       - "--all-tags"
       - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}"
 
-  # Deploy to Cloud Run
+  # 3️⃣ Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
@@ -44,19 +44,29 @@ steps:
       - "--min-instances"
       - "0"
       - "--set-env-vars"
-      - "NODE_ENV=production"
+      - "NODE_ENV=production,FRONTEND_URL=https://your-frontend.vercel.app"
       - "--update-secrets"
-      - "DATABASE_URL=DATABASE_URL:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,JWT_SECRET=JWT_SECRET:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,FRONTEND_URL=FRONTEND_URL:latest"
+      - "DATABASE_URL=DATABASE_URL:latest"
+      - "--update-secrets"
+      - "GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest"
+      - "--update-secrets"
+      - "GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest"
+      - "--update-secrets"
+      - "JWT_SECRET=JWT_SECRET:latest"
+      - "--update-secrets"
+      - "NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest"
 
 # Substitutions (can be overridden)
 substitutions:
-  _REGION: "africa-south1"
+  _REGION: "europe-west1"
   _ARTIFACT_REGISTRY_REPO: "tide-raider"
   _SERVICE_NAME: "tide-raider-backend"
 
+# Only log Cloud Logging output
 options:
   logging: CLOUD_LOGGING_ONLY
 
+# Images to push to Artifact Registry
 images:
   - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:${BUILD_ID}"
   - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:latest"
