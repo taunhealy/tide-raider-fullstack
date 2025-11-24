@@ -10,7 +10,7 @@ steps:
       - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REGISTRY_REPO}/${_SERVICE_NAME}:latest"
       - "-f"
       - "backend/Dockerfile"
-      - "backend"
+      - "backend" # <-- Correct build context
 
   # Push the Docker image to Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
@@ -50,7 +50,7 @@ steps:
 
 # Substitutions (can be overridden)
 substitutions:
-  _REGION: "africa-south1" # Johannesburg - best latency for South Africa
+  _REGION: "africa-south1"
   _ARTIFACT_REGISTRY_REPO: "tide-raider"
   _SERVICE_NAME: "tide-raider-backend"
 

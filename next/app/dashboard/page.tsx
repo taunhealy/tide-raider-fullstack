@@ -557,6 +557,7 @@ export default function DashboardPage() {
                   <Button
                     variant="outline"
                     size="sm"
+                    title="Subscription sync"
                     onClick={handleSyncSubscription}
                     disabled={loadingStates.subscribe}
                     className="font-primary"

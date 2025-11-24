@@ -3,15 +3,12 @@
  * Run with: node scripts/create-paypal-plan.js
  */
 
-require('dotenv').config({ path: '.env.local' });
+// require('dotenv').config({ path: '.env.local' });
 
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_MODE = process.env.PAYPAL_MODE || "sandbox";
-const PAYPAL_BASE_URL =
-  PAYPAL_MODE === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+const PAYPAL_CLIENT_ID = "AQB7ECPXxz6yj3zxF4-6T_lTqzbIsYm-sE5ygpEcbZ7BG_dUvdt9Hbg_XBGbszwr3JfPk0abxdcoPuVC";
+const PAYPAL_CLIENT_SECRET = "EGkJqsDOPDnLndplJrKPEA35p0UI6rYvhmR5CiiC7JX8w1gyqAKr5u4iC3TRfdv_w2D6f1H_GKEDH5sR";
+const PAYPAL_MODE = "live";
+const PAYPAL_BASE_URL = "https://api-m.paypal.com";
 
 async function getPayPalAccessToken() {
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
