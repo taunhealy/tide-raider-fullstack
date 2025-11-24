@@ -1,18 +1,10 @@
 /**
- * API Client — Tide Raider EU (Direct to Cloud Run backend)
- * No proxy. No Next.js API routes. Fast, simple, correct.
+ * API Client — Uses Next.js proxy to communicate with backend
+ * This ensures cookies are properly forwarded server-side
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
-
-// Optional debug (remove in production if you want)
-if (typeof window === "undefined") {
-  console.log("[api-client] Server-side backend URL:", BACKEND_URL);
-} else {
-  console.log("[api-client] Client-side backend URL:", BACKEND_URL);
-}
+// Use Next.js API proxy on the same domain (no CORS issues)
+const API_BASE = "/api/backend";
 
 interface RequestOptions extends RequestInit {
   token?: string;
@@ -29,14 +21,18 @@ async function apiRequest<T>(
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
-  // Direct call to real backend — no proxy, no /api/backend-proxy
-  const url = `${BACKEND_URL}${endpoint.startsWith("/api") ? "" : "/api"}${endpoint}`;
+  // Remove /api prefix if present (proxy will add it)
+  const cleanEndpoint = endpoint.startsWith("/api")
+    ? endpoint.substring(4)
+    : endpoint;
+
+  const url = `${API_BASE}${cleanEndpoint}`;
 
   try {
     const response = await fetch(url, {
       ...fetchOptions,
       headers,
-      credentials: "include", // Sends auth cookies (your backend OAuth token)
+      credentials: "include", // Include cookies for session
     });
 
     if (!response.ok) {
