@@ -7,6 +7,9 @@ import { prisma } from "@/app/lib/prisma";
  * Sync the user's subscription status from PayPal API to the database
  * This fetches the latest status from PayPal and updates the user record
  */
+// Switching to nodejs for better compatibility
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     // -------------------------------------------------
@@ -16,6 +19,24 @@ export async function POST(req: NextRequest) {
 
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if request has body with subscriptionId (from checkout success page)
+    let subscriptionIdToLink: string | undefined;
+    try {
+      const body = await req.json();
+      subscriptionIdToLink = body.subscriptionId;
+    } catch (e) {
+      // Body might be empty if called without data
+    }
+
+    // If we have a new subscription ID, update the user first
+    if (subscriptionIdToLink) {
+      console.log(`[paypal/sync] Linking new subscription ID ${subscriptionIdToLink} to user ${user.id}`);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { paypalSubscriptionId: subscriptionIdToLink },
+      });
     }
 
     // -------------------------------------------------

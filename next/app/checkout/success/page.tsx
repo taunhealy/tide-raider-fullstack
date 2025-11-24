@@ -28,8 +28,13 @@ export default function CheckoutSuccessPage() {
         }
 
         // Call sync endpoint to check PayPal subscription status
+        // Pass subscriptionId so it can be linked to the user if not already
         const response = await fetch("/api/paypal/sync", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ subscriptionId }),
           credentials: "include",
         });
 
