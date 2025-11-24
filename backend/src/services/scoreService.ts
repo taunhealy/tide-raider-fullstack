@@ -197,6 +197,7 @@ export class ScoreService {
       | "swellDirection"
       | "swellPeriod"
       | "date"
+      | "source"
     >
   ) {
     let beaches: Beach[] = [];
@@ -223,6 +224,7 @@ export class ScoreService {
         return {
           beachId: beach.id,
           regionId,
+          source: forecastData.source,
           score: integerScore,
           starRating: starRating,
           date: forecastData.date,
@@ -240,11 +242,12 @@ export class ScoreService {
         `Attempting to upsert ${scores.length} scores for date ${forecastData.date}`
       );
 
-      // Delete existing scores for this region and date
+      // Delete existing scores for this region, date, and source
       const deleteResult = await prisma.beachDailyScore.deleteMany({
         where: {
           regionId,
           date: forecastData.date,
+          source: forecastData.source,
         },
       });
 
@@ -271,9 +274,9 @@ export class ScoreService {
   }
 
   /**
-   * Get stored scores for a specific date and region
+   * Get stored scores for a specific date, region, and source
    */
-  static async getScores(regionId: string, date: Date) {
+  static async getScores(regionId: string, date: Date, source?: string) {
     const normalizedDate = new Date(date);
     normalizedDate.setUTCHours(0, 0, 0, 0);
 
@@ -281,6 +284,7 @@ export class ScoreService {
       where: {
         regionId,
         date: normalizedDate,
+        ...(source ? { source } : {}),
       },
       include: {
         beach: true,
@@ -336,6 +340,7 @@ export class ScoreService {
       bestMonthOfYear?: string[];
       sharkAttack?: string[];
       isHiddenGem?: boolean;
+      source?: string;
     }>;
   }) {
     const normalizedDate = new Date(date);
@@ -390,6 +395,7 @@ export class ScoreService {
           where: {
             date: normalizedDate,
             regionId,
+            ...(filters.source ? { source: filters.source } : {}),
           },
           orderBy: {
             score: "desc",

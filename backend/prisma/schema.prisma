@@ -247,6 +247,7 @@ model BeachDailyScore {
   id         String   @id @default(cuid())
   beachId    String
   regionId   String
+  source     String   @default("WINDFINDER") // Forecast source: WINDFINDER, WINDGURU, or WINDY
   region     Region   @relation(fields: [regionId], references: [id])
   score      Int      @default(0)
   starRating Int? // Star rating 1-5, calculated from score (score / 2, clamped to 1-5)
@@ -256,10 +257,12 @@ model BeachDailyScore {
   updatedAt  DateTime @updatedAt
   beach      Beach    @relation(fields: [beachId], references: [id])
 
-  @@unique([beachId, date])
+  @@unique([beachId, date, source])
   @@index([regionId])
   @@index([beachId, date])
   @@index([starRating])
+  @@index([source])
+  @@index([regionId, date, source])
 }
 
 model Beach {

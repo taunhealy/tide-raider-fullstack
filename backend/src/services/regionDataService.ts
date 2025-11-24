@@ -70,7 +70,7 @@ export async function fetchAllRegionsData() {
 
         // Scrape all available sources for this region
         let hasAnyConditions = false;
-        let lastSuccessfulConditions = null;
+        const successfulConditions: Array<any> = [];
 
         for (const source of sourcesToScrape) {
           try {
@@ -86,11 +86,28 @@ export async function fetchAllRegionsData() {
 
             if (conditions) {
               hasAnyConditions = true;
-              lastSuccessfulConditions = conditions;
+              successfulConditions.push(conditions);
               results.sourcesScraped++;
               console.log(
                 `  ✅ Successfully fetched conditions from ${source} for ${region.id}`
               );
+
+              // Calculate and store scores for this specific source
+              try {
+                await ScoreService.calculateAndStoreScores(
+                  region.id,
+                  conditions
+                );
+                console.log(
+                  `  ✅ Calculated scores for ${source} in ${region.id}`
+                );
+              } catch (error) {
+                console.error(
+                  `  ❌ Error calculating scores for ${source} in ${region.id}:`,
+                  error
+                );
+                // Continue with other sources even if score calculation fails
+              }
             } else {
               results.sourcesFailed++;
               console.log(
@@ -107,24 +124,10 @@ export async function fetchAllRegionsData() {
           }
         }
 
-        // Calculate and store scores using the last successful conditions
-        // (or any available conditions - scores are source-agnostic)
-        if (hasAnyConditions && lastSuccessfulConditions) {
-          try {
-            await ScoreService.calculateAndStoreScores(
-              region.id,
-              lastSuccessfulConditions
-            );
-            console.log(`✅ Successfully processed region ${region.id}`);
-            results.regionsSucceeded++;
-          } catch (error) {
-            console.error(
-              `❌ Error calculating scores for region ${region.id}:`,
-              error
-            );
-            // Still count as succeeded if we got conditions, even if score calculation failed
-            results.regionsSucceeded++;
-          }
+        // Mark as succeeded if we got conditions from at least one source
+        if (hasAnyConditions) {
+          console.log(`✅ Successfully processed region ${region.id}`);
+          results.regionsSucceeded++;
         } else {
           console.log(
             `⚠️ No conditions found for any source for region ${region.id}`
