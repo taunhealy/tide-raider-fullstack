@@ -10,8 +10,8 @@ const getBackendUrl = () => {
     return envUrl;
   }
 
-  // Fallback: use Cloud Run backend (we no longer use localhost:4001)
-  return "https://tide-raider-backend-82632174665.africa-south1.run.app";
+  // Fallback: use Cloud Run backend (EU West)
+  return "https://tide-raider-backend-eu-o6rx5ggs5rq-ew.a.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();
