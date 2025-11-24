@@ -1,20 +1,20 @@
 /**
- * API Client for communicating with the backend API
- * Uses Next.js API proxy to handle cross-domain authentication
- *
- * The proxy route (/api/backend-proxy) handles:
- * - Getting NextAuth session tokens from cookies
- * - Forwarding requests to the backend with proper auth headers
- * - No cross-domain cookie issues
+ * API Client — Tide Raider EU (Direct to Cloud Run backend)
+ * No proxy. No Next.js API routes. Fast, simple, correct.
  */
 
-// Use the proxy route instead of direct backend URL
-// The proxy will forward to the actual backend
-const PROXY_BASE_URL = "/api/backend-proxy";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://tide-raider-backend-eu-82632174665.europe-west1.run.app";
+
+// Optional debug (remove in production if you want)
+if (typeof window === "undefined") {
+  console.log("[api-client] Server-side backend URL:", BACKEND_URL);
+} else {
+  console.log("[api-client] Client-side backend URL:", BACKEND_URL);
+}
 
 interface RequestOptions extends RequestInit {
-  // Token is no longer needed - proxy handles it automatically
-  // Keeping for backward compatibility but it's ignored
   token?: string;
 }
 
@@ -29,36 +29,30 @@ async function apiRequest<T>(
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
-  // Build URL through proxy
-  // endpoint should be like "/api/alerts" -> proxy forwards to backend
-  const url = `${PROXY_BASE_URL}${endpoint}`;
+  // Direct call to real backend — no proxy, no /api/backend-proxy
+  const url = `${BACKEND_URL}${endpoint.startsWith("/api") ? "" : "/api"}${endpoint}`;
 
   try {
     const response = await fetch(url, {
       ...fetchOptions,
       headers,
-      credentials: "include", // Include cookies for NextAuth session (for proxy)
+      credentials: "include", // Sends auth cookies (your backend OAuth token)
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        error: `HTTP ${response.status}: ${response.statusText}`,
-      }));
+      let errorData: any;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+      }
 
-      // Create error object with full details for better error handling
       const error = new Error(
         errorData.error || errorData.message || "Request failed"
-      ) as Error & {
-        response?: { data?: any; status?: number };
-      };
+      ) as Error & { response?: { data?: any; status?: number } };
 
-      // Attach response data for error handling in components
-      error.response = {
-        data: errorData,
-        status: response.status,
-      };
+      error.response = { data: errorData, status: response.status };
 
-      // If validation error, include details
       if (errorData.error === "Validation failed" && errorData.details) {
         const details = errorData.details
           .map((d: any) => `${d.path}: ${d.message}`)
@@ -76,14 +70,7 @@ async function apiRequest<T>(
   }
 }
 
-// Token helper no longer needed - proxy handles authentication automatically
-// Keeping for backward compatibility but it's not used
-function getAuthToken(): string | null {
-  // Proxy handles auth automatically, so we don't need to extract tokens
-  return null;
-}
-
-// API methods
+// All API methods — now go directly to your EU backend
 export const api = {
   // Beaches
   getBeaches: async (regionId?: string) => {
@@ -92,17 +79,11 @@ export const api = {
   },
 
   getBeach: async (name: string) => {
-    return apiRequest<{ beach: any }>(
-      `/api/beaches/${encodeURIComponent(name)}`
-    );
+    return apiRequest<{ beach: any }>(`/api/beaches/${encodeURIComponent(name)}`);
   },
 
   // Alerts
-  getAlerts: async (params?: {
-    region?: string;
-    logEntryId?: string;
-    starRatings?: boolean;
-  }) => {
+  getAlerts: async (params?: { region?: string; logEntryId?: string; starRatings?: boolean }) => {
     const queryParams = new URLSearchParams();
     if (params?.region) queryParams.append("region", params.region);
     if (params?.logEntryId) queryParams.append("logEntryId", params.logEntryId);
@@ -111,305 +92,89 @@ export const api = {
     return apiRequest<any[]>(`/api/alerts${query ? `?${query}` : ""}`);
   },
 
-  getAlert: async (id: string) => {
-    return apiRequest<any>(`/api/alerts/${id}`);
-  },
-
-  createAlert: async (data: any) => {
-    return apiRequest<any>("/api/alerts", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  updateAlert: async (id: string, data: any) => {
-    return apiRequest<any>(`/api/alerts/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-  },
-
-  patchAlert: async (id: string, data: any) => {
-    return apiRequest<any>(`/api/alerts/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-  },
-
-  deleteAlert: async (id: string) => {
-    return apiRequest<{ success: boolean }>(`/api/alerts/${id}`, {
-      method: "DELETE",
-    });
-  },
-
-  notifyAlerts: async (userId: string) => {
-    return apiRequest<{ success: boolean; processed: any }>(
-      "/api/alerts/notify",
-      {
-        method: "POST",
-        body: JSON.stringify({ userId }),
-      }
-    );
-  },
+  getAlert: async (id: string) => apiRequest<any>(`/api/alerts/${id}`),
+  createAlert: async (data: any) => apiRequest<any>("/api/alerts", { method: "POST", body: JSON.stringify(data) }),
+  updateAlert: async (id: string, data: any) => apiRequest<any>(`/api/alerts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  patchAlert: async (id: string, data: any) => apiRequest<any>(`/api/alerts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteAlert: async (id: string) => apiRequest<{ success: boolean }>(`/api/alerts/${id}`, { method: "DELETE" }),
+  notifyAlerts: async (userId: string) => apiRequest<any>("/api/alerts/notify", { method: "POST", body: JSON.stringify({ userId }) }),
 
   // Logs
-  getLogs: async () => {
-    return apiRequest<any[]>("/api/logs");
-  },
-
-  getLog: async (id: string) => {
-    return apiRequest<any>(`/api/logs/${id}`);
-  },
-
-  createLog: async (data: any) => {
-    return apiRequest<any>("/api/logs", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
+  getLogs: async () => apiRequest<any[]>("/api/logs"),
+  getLog: async (id: string) => apiRequest<any>(`/api/logs/${id}`),
+  createLog: async (data: any) => apiRequest<any>("/api/logs", { method: "POST", body: JSON.stringify(data) }),
 
   // Raid Logs
-  getRaidLogs: async (params?: {
-    id?: string;
-    beaches?: string[];
-    regions?: string[];
-    regionId?: string;
-    countries?: string[];
-    minRating?: number;
-    maxRating?: number;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-    isPrivate?: boolean;
-    userId?: string;
-    beachId?: string;
-  }) => {
+  getRaidLogs: async (params?: any) => {
     const queryParams = new URLSearchParams();
-    if (params?.id) queryParams.append("id", params.id);
-    if (params?.beaches?.length)
-      queryParams.append("beaches", params.beaches.join(","));
-    if (params?.regions?.length)
-      queryParams.append("regions", params.regions.join(","));
-    if (params?.regionId) queryParams.append("regionId", params.regionId);
-    if (params?.countries?.length)
-      queryParams.append("countries", params.countries.join(","));
-    if (params?.minRating !== undefined)
-      queryParams.append("minRating", params.minRating.toString());
-    if (params?.maxRating !== undefined)
-      queryParams.append("maxRating", params.maxRating.toString());
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.page !== undefined && params.page > 0)
-      queryParams.append("page", params.page.toString());
-    if (params?.limit !== undefined && params.limit > 0)
-      queryParams.append("limit", params.limit.toString());
-    if (params?.isPrivate !== undefined)
-      queryParams.append("isPrivate", params.isPrivate ? "true" : "false");
-    if (params?.userId) queryParams.append("userId", params.userId);
-    if (params?.beachId) queryParams.append("beachId", params.beachId);
+    Object.keys(params || {}).forEach(key => {
+      const value = params[key];
+      if (Array.isArray(value)) queryParams.append(key, value.join(","));
+      else if (value !== undefined && value !== null) queryParams.append(key, value.toString());
+    });
     const query = queryParams.toString();
-    return apiRequest<{
-      entries: any[];
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-    }>(`/api/raid-logs${query ? `?${query}` : ""}`);
+    return apiRequest<any>(`/api/raid-logs${query ? `?${query}` : ""}`);
   },
 
-  createRaidLog: async (data: any) => {
-    return apiRequest<any>("/api/raid-logs", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  updateRaidLog: async (data: any) => {
-    return apiRequest<any>("/api/raid-logs", {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
-  },
-
-  deleteRaidLog: async (id: string) => {
-    return apiRequest<{ message: string }>(
-      `/api/raid-logs?id=${encodeURIComponent(id)}`,
-      {
-        method: "DELETE",
-      }
-    );
-  },
-
-  getRaidLogForecast: async (region: string, date: string) => {
-    return apiRequest<any>(
-      `/api/raid-logs/forecast?region=${encodeURIComponent(region)}&date=${encodeURIComponent(date)}`
-    );
-  },
-
-  getUserRaidLogs: async (userId: string) => {
-    return apiRequest<any[]>(`/api/raid-logs/user/${userId}`);
-  },
+  createRaidLog: async (data: any) => apiRequest<any>("/api/raid-logs", { method: "POST", body: JSON.stringify(data) }),
+  updateRaidLog: async (data: any) => apiRequest<any>("/api/raid-logs", { method: "PUT", body: JSON.stringify(data) }),
+  deleteRaidLog: async (id: string) => apiRequest<any>(`/api/raid-logs?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
+  getRaidLogForecast: async (region: string, date: string) =>
+    apiRequest<any>(`/api/raid-logs/forecast?region=${encodeURIComponent(region)}&date=${encodeURIComponent(date)}`),
+  getUserRaidLogs: async (userId: string) => apiRequest<any[]>(`/api/raid-logs/user/${userId}`),
 
   // Forecast
-  getForecast: async (
-    regionId: string,
-    forecastDate?: string,
-    source?: "WINDFINDER" | "WINDGURU" | "WINDY"
-  ) => {
-    const params = new URLSearchParams();
-    params.append("regionId", regionId);
-    if (forecastDate) {
-      params.append("forecastDate", forecastDate);
-    }
-    if (source) {
-      params.append("source", source);
-    }
+  getForecast: async (regionId: string, forecastDate?: string, source?: "WINDFINDER" | "WINDGURU" | "WINDY") => {
+    const params = new URLSearchParams({ regionId });
+    if (forecastDate) params.append("forecastDate", forecastDate);
+    if (source) params.append("source", source);
 
     try {
-      const result = await apiRequest<any>(
-        `/api/forecast?${params.toString()}`
-      );
-      // Backend-proxy returns null with status 200 when no data exists (404 from backend)
-      // This is expected behavior - return null gracefully
-      return result;
+      return await apiRequest<any>(`/api/forecast?${params.toString()}`);
     } catch (error: any) {
-      // If it's a 404 error, return null instead of throwing (no data is not an error)
       if (error?.response?.status === 404) {
-        console.warn(
-          `[api-client] No forecast data found for ${regionId} (source: ${source || "WINDFINDER"}), returning null`
-        );
+        console.warn(`No forecast data for ${regionId}`);
         return null;
       }
-      // For other errors, throw as normal
       throw error;
     }
   },
 
   // Filtered Beaches
-  getFilteredBeaches: async (params?: {
-    regionId?: string;
-    searchQuery?: string;
-    optimalTide?: string;
-    waveType?: string;
-    crimeLevel?: string;
-    bestSeasons?: string;
-    difficulty?: string;
-    hazards?: string;
-    forecastDate?: string; // ISO date string (YYYY-MM-DD)
-    source?: "WINDFINDER" | "WINDGURU" | "WINDY";
-  }) => {
+  getFilteredBeaches: async (params?: any) => {
     const queryParams = new URLSearchParams();
-    if (params?.regionId) queryParams.append("regionId", params.regionId);
-    if (params?.searchQuery)
-      queryParams.append("searchQuery", params.searchQuery);
-    if (params?.optimalTide)
-      queryParams.append("optimalTide", params.optimalTide);
-    if (params?.waveType) queryParams.append("waveType", params.waveType);
-    if (params?.crimeLevel) queryParams.append("crimeLevel", params.crimeLevel);
-    if (params?.bestSeasons)
-      queryParams.append("bestSeasons", params.bestSeasons);
-    if (params?.difficulty) queryParams.append("difficulty", params.difficulty);
-    if (params?.hazards) queryParams.append("hazards", params.hazards);
-    if (params?.forecastDate)
-      queryParams.append("forecastDate", params.forecastDate);
-    if (params?.source) queryParams.append("source", params.source);
+    Object.keys(params || {}).forEach(key => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== "")
+        queryParams.append(key, Array.isArray(value) ? value.join(",") : value.toString());
+    });
     const query = queryParams.toString();
-    return apiRequest<{
-      beaches: any[];
-      scores: Record<string, { score: number; beach: any }>;
-      forecast: any;
-      totalCount: number;
-    }>(`/api/filtered-beaches${query ? `?${query}` : ""}`);
+    return apiRequest<any>(`/api/filtered-beaches${query ? `?${query}` : ""}`);
   },
 
-  // Regions
+  // Regions — NOW GOES THROUGH BACKEND (fixed!)
   getRegions: async () => {
-    // Use direct route instead of proxy (route handler takes precedence)
-    const response = await fetch("/api/regions", {
-      credentials: "include",
-    });
-    if (!response.ok) {
-      // Handle 429 gracefully - return empty array instead of throwing
-      if (response.status === 429) {
-        console.warn(
-          "[api-client] Rate limited when fetching regions, returning empty array"
-        );
-        return [];
-      }
-      // Handle 404 - backend route might not exist or backend not running
-      if (response.status === 404) {
-        console.error(
-          "[api-client] Regions endpoint returned 404 - backend might not be running or route not registered"
-        );
-        // Return empty array instead of throwing to prevent UI crashes
-        return [];
-      }
-      // For other errors, try to get error message
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      try {
-        const errorData = await response.json();
-        if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (e) {
-        // Ignore JSON parse errors
-      }
-      console.error("[api-client] Error fetching regions:", errorMessage);
-      // Return empty array instead of throwing to prevent UI crashes
-      return [];
-    }
-    const data = await response.json();
-    // Ensure we return an array even if the response is malformed
-    return Array.isArray(data) ? data : [];
+    return apiRequest<any[]>("/api/regions");
   },
 
   // User
-  getUser: async (userId: string) => {
-    return apiRequest<any>(`/api/user/${userId}`);
-  },
-
-  getCurrentUser: async () => {
-    return apiRequest<any>("/api/user/current");
-  },
+  getUser: async (userId: string) => apiRequest<any>(`/api/user/${userId}`),
+  getCurrentUser: async () => apiRequest<any>("/api/user/current"),
 
   // Notifications
-  getNotifications: async () => {
-    return apiRequest<any[]>("/api/notifications");
-  },
+  getNotifications: async () => apiRequest<any[]>("/api/notifications"),
+  getNotificationCount: async () => apiRequest<{ count: number }>("/api/notifications/count"),
+  markNotificationRead: async (id: string) => apiRequest<any>(`/api/notifications/${id}`, { method: "PUT" }),
+  markAllNotificationsRead: async () => apiRequest<any>("/api/notifications/read", { method: "PUT" }),
 
-  getNotificationCount: async () => {
-    return apiRequest<{ count: number }>("/api/notifications/count");
-  },
+  // Subscriptions & Sponsors
+  getSubscriptionStatus: async () => apiRequest<any>("/api/subscription/status"),
+  getSponsors: async () => apiRequest<any[]>("/api/sponsors"),
 
-  markNotificationRead: async (id: string) => {
-    return apiRequest<any>(`/api/notifications/${id}`, {
-      method: "PUT",
-    });
-  },
+  // Health
+  health: async () => apiRequest<{ status: string; timestamp: string }>("/health"),
 
-  markAllNotificationsRead: async () => {
-    return apiRequest<any>("/api/notifications/read", {
-      method: "PUT",
-    });
-  },
-
-  // Subscriptions
-  getSubscriptionStatus: async () => {
-    return apiRequest<any>("/api/subscription/status");
-  },
-
-  // Sponsors
-  getSponsors: async () => {
-    return apiRequest<any[]>("/api/sponsors");
-  },
-
-  // Health check
-  health: async () => {
-    return apiRequest<{ status: string; timestamp: string }>("/health");
-  },
-
-  // Generic request method for custom endpoints
+  // Raw request
   request: apiRequest,
 };
 
