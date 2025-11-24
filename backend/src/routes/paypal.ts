@@ -1,6 +1,6 @@
+import { prisma } from "../lib/prisma";
 import { Router, Request, Response } from "express";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
-import { prisma } from "../lib/prisma";
 import { notifyAdminNewSubscription, notifyAdminNewTrial } from "../lib/adminNotifications";
 
 const router = Router();
@@ -8,39 +8,40 @@ const router = Router();
 // PayPal API configuration
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+const PAYPAL_PLAN_ID = process.env.PAYPAL_PLAN_ID;
 const PAYPAL_MODE = process.env.PAYPAL_MODE || "sandbox"; // 'sandbox' or 'live'
-const PAYPAL_BASE_URL =
-  PAYPAL_MODE === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+const PAYPAL_BASE_URL = PAYPAL_MODE === "live"
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
 
 // Get PayPal access token
-console.log('[PayPal] Env vars:', {
-  clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 10),
-  clientSecretPrefix: PAYPAL_CLIENT_SECRET?.substring(0, 10),
-  mode: PAYPAL_MODE,
-});
-  const auth = Buffer.from(
-    `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
-  ).toString("base64");
+async function getPayPalAccessToken(): Promise<string> {
+  // Debug: show the first few characters of each env var
+  console.log('[PayPal] Env vars:', {
+    clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 10),
+    clientSecretPrefix: PAYPAL_CLIENT_SECRET?.substring(0, 10),
+    mode: PAYPAL_MODE,
+  });
+
+  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
 
   const response = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${auth}`,
     },
-    body: "grant_type=client_credentials",
+    body: 'grant_type=client_credentials',
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("[PayPal] Failed to get access token:", {
+    console.error('[PayPal] Failed to get access token:', {
       status: response.status,
       statusText: response.statusText,
       error: errorText,
       url: `${PAYPAL_BASE_URL}/v1/oauth2/token`,
-      clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 5) + "...",
+      clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 5) + '...',
     });
     throw new Error(`Failed to get PayPal access token: ${response.status} ${response.statusText} - ${errorText}`);
   }
@@ -48,6 +49,7 @@ console.log('[PayPal] Env vars:', {
   const data = (await response.json()) as { access_token: string };
   return data.access_token;
 }
+
 
 // POST /api/paypal/create-subscription - Create a PayPal subscription
 router.post(
