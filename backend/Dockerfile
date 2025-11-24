@@ -1,10 +1,10 @@
-# Use Node.js 22
-FROM node:22-slim
+# ─────────────────────────────────────────────────────────────
+# Tide Raider Backend – Optimized for Cloud Run (2025)
+# ─────────────────────────────────────────────────────────────
+FROM node:22-slim AS base
 
-# Install dependencies for Playwright/Chromium
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
+# Install only the exact system dependencies needed for Chromium/Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     fonts-liberation \
     libasound2 \
@@ -18,59 +18,71 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libnspr4 \
     libnss3 \
-    libnss3-dev \
-    libnspr4-dev \
-    libwayland-client0 \
     libxcomposite1 \
     libxdamage1 \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
     libxss1 \
-    libgconf-2-4 \
     libxtst6 \
-    libxshmfence1 \
-    libglu1-mesa \
+    wget \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Create non-root user (Cloud Run strongly recommends this)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 WORKDIR /app
 
-# Copy package files
+# ───── Stage 1: Install all dependencies (including dev) ─────
 COPY package*.json ./
 COPY prisma ./prisma/
-
-# Install all dependencies (needed for TypeScript build)
-# Use --legacy-peer-deps to handle any peer dependency conflicts
 RUN npm ci --legacy-peer-deps
 
-# Copy source code
+# ───── Stage 2: Build the app ─────
 COPY . .
-
-# Generate Prisma Client
-# Set a dummy DATABASE_URL for Prisma client generation (not used at runtime)
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate
-
-# Build TypeScript
-RUN npm run build
-
-# Copy JavaScript eval files to dist (they're not compiled by TypeScript)
-# These files are loaded at runtime and must be present in dist
-RUN mkdir -p dist/lib/scrapers && \
+RUN npx prisma generate && \
+    npm run build && \
+    # Copy the raw .js eval files that are loaded at runtime
+    mkdir -p dist/lib/scrapers && \
     cp src/lib/scrapers/windy-eval.js dist/lib/scrapers/windy-eval.js && \
     cp src/lib/scrapers/windguru-eval.js dist/lib/scrapers/windguru-eval.js
 
-# Remove dev dependencies to reduce image size
-# Note: We keep src/ folder for reference, but only dist/ is used at runtime
-RUN npm prune --production
+# ───── Stage 3: Production slim image ─────
+FROM node:22-slim
 
-# Cloud Run expects containers to listen on PORT env var (defaults to 8080)
-# The server code already handles this: process.env.PORT || "4001"
-ENV PORT=8080
+# Re-install only the minimal system deps needed at runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy only what we need from the build stage
+COPY --from=base /app /app
+
+WORKDIR /app
+ENV NODE_ENV=production \
+    PORT=8080
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 8080
-
-# Start server
 CMD ["npm", "start"]
-
