@@ -597,3 +597,18 @@ body {
 .animate-bounce-cartoon:hover span {
   animation: text-bulge 1.5s ease infinite;
 }
+
+/* Wave pulse animation - simulates ocean waves coming and going */
+@keyframes wave-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(214, 181, 136, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(214, 181, 136, 0);
+  }
+}
+
+.wave-pulse {
+  animation: wave-pulse 3s ease-in-out infinite;
+}
+

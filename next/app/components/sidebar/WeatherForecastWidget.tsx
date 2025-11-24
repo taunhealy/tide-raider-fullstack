@@ -7,6 +7,7 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
+import { useSubscription } from "@/app/providers/SubscriptionProvider";
 
 type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
 
@@ -31,6 +32,8 @@ export default function WeatherForecastWidget() {
   const {
     filters: { regionId, forecastDate },
   } = useBeachFilters();
+  const { isSubscribed, hasActiveTrial } = useSubscription();
+  const isPremium = isSubscribed || hasActiveTrial;
 
   // Track if component is mounted to prevent hydration mismatch
   const [mounted, setMounted] = useState(false);
@@ -305,14 +308,25 @@ export default function WeatherForecastWidget() {
               B
             </button>
             <button
-              onClick={() => setSelectedSource("WINDY")}
-              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              onClick={() => isPremium && setSelectedSource("WINDY")}
+              disabled={!isPremium}
+              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
-                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                  : isPremium
+                    ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-not-allowed"
+              } ${
+                !isPremium ? "wave-pulse" : ""
               }`}
             >
               C
+              {!isPremium && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d6b588] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d6b588]"></span>
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -450,14 +464,26 @@ export default function WeatherForecastWidget() {
                 B
               </button>
               <button
-                onClick={() => setSelectedSource("WINDY")}
-                className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                onClick={() => isPremium && setSelectedSource("WINDY")}
+                disabled={!isPremium}
+                title={!isPremium ? "Subscribe to unlock Source C" : ""}
+                className={`relative flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDY"
                     ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
-                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                    : isPremium
+                      ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-not-allowed"
+                } ${
+                  !isPremium ? "wave-pulse" : ""
                 }`}
               >
                 C
+                {!isPremium && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d6b588] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d6b588]"></span>
+                  </span>
+                )}
               </button>
             </div>
           </div>
