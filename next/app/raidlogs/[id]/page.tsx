@@ -29,7 +29,7 @@ const getBaseUrl = () => {
 async function getRaidLogForMetadata(id: string) {
   try {
     const BACKEND_URL = getBackendUrl();
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
     const headers: Record<string, string> = {

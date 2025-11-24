@@ -97,26 +97,7 @@ export default async function RootLayout({
         className="min-h-screen flex flex-col font-primary"
         suppressHydrationWarning
       >
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Early error handler for external scripts (before React loads)
-              window.addEventListener('error', function(event) {
-                var errorSource = event.filename || event.message || '';
-                var errorMessage = event.message || '';
-                
-                if (errorSource.includes('share-modal') || 
-                    (errorMessage.includes('Cannot read properties of null') && 
-                     errorMessage.includes('addEventListener'))) {
-                  console.warn('[EarlyErrorHandler] Suppressed external script error:', errorMessage);
-                  event.preventDefault();
-                  event.stopPropagation();
-                  return false;
-                }
-              }, true);
-            `,
-          }}
-        />
+
         <AuthCallbackHandler />
         <AppProviders session={session} initialBeaches={beaches}>
           <NewsBannerWrapper />
