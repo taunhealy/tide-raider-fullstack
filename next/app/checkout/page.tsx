@@ -39,7 +39,7 @@ export default function CheckoutPage() {
     if (status === "authenticated" && session?.user) {
       let cancelled = false;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
       const checkSubscription = async () => {
         try {
@@ -55,11 +55,17 @@ export default function CheckoutPage() {
               isPremium: data.isPremium,
               paypalSubscriptionId: data.paypalSubscriptionId,
             });
+          } else if (!cancelled) {
+            // If response is not ok, set to null so page can render
+            console.warn("[CheckoutPage] Subscription check failed:", response.status);
+            setSubscriptionStatus(null);
           }
         } catch (error: any) {
           if (!cancelled && error.name !== "AbortError") {
             console.error("[CheckoutPage] Error checking subscription:", error);
-            // Set to null on error so page can still render
+          }
+          // Always set to null on error so page can still render
+          if (!cancelled) {
             setSubscriptionStatus(null);
           }
         } finally {
@@ -73,6 +79,9 @@ export default function CheckoutPage() {
         controller.abort();
         clearTimeout(timeoutId);
       };
+    } else {
+      // If not authenticated, set to null immediately
+      setSubscriptionStatus(null);
     }
   }, [status, session]);
 

@@ -210,14 +210,8 @@ export default function DashboardPage() {
   const handleSubscribeWithLoading = async () => {
     setLoadingStates((prev) => ({ ...prev, subscribe: true }));
     try {
-      // Check if user is logged in first
-      if (!session?.user) {
-        // Redirect to OAuth if not logged in
-        await handleSubscribe();
-        return;
-      }
-
-      // User is logged in, go directly to checkout
+      // Dashboard is already a protected route, so user must be logged in
+      // Go directly to checkout
       router.push("/checkout");
     } catch (error) {
       console.error("Subscribe error:", error);
@@ -394,23 +388,8 @@ export default function DashboardPage() {
     if (!subscriptionData?.hasTrialEnded && !subscriptionData?.hasActiveTrial) {
       return (
         <div className="mb-4">
-          <p className="font-primary">Ready to start your free trial?</p>
+          <p className="font-primary">Ready to unlock premium features?</p>
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto font-primary"
-              onClick={() => handleTrial()}
-              disabled={isTrialLoading}
-            >
-              {isTrialLoading ? (
-                <div className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  Starting Trial...
-                </div>
-              ) : (
-                "Start 7-Day Free Trial"
-              )}
-            </Button>
             <Button
               variant="default"
               className="w-full sm:w-auto font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90"
@@ -749,17 +728,12 @@ export default function DashboardPage() {
                         <Button
                           variant="default"
                           className="w-full sm:w-auto font-primary"
-                          onClick={handleButtonClick}
-                          disabled={loadingStates.subscribe || isTrialLoading}
+                          onClick={handleSubscribeWithLoading}
+                          disabled={loadingStates.subscribe}
                         >
-                          {!subscriptionData?.hasTrialEnded &&
-                          !subscriptionData?.hasActiveTrial
-                            ? isTrialLoading
-                              ? "Starting Trial..."
-                              : "Start Free Trial"
-                            : loadingStates.subscribe
-                              ? "Processing..."
-                              : "Subscribe Now"}
+                          {loadingStates.subscribe
+                            ? "Processing..."
+                            : "Subscribe Now"}
                         </Button>
                       )}
                     </div>
