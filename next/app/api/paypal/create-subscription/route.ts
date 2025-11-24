@@ -1,4 +1,3 @@
-// next/app/api/paypal/create-subscription/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 // Edge runtime – runs on Vercel’s edge network
@@ -6,9 +5,11 @@ export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   // -------------------------------------------------
-  // 1️⃣ Parse the request body (you may need userId or other data)
+  // 1️⃣ Parse the request body (optional)
   // -------------------------------------------------
-  const { userId } = await req.json(); // adjust shape as needed
+  // We don't strictly need the body for the subscription creation
+  // unless we want to pass custom user data to PayPal.
+  // const body = await req.json().catch(() => ({}));
 
   // -------------------------------------------------
   // 2️⃣ Load PayPal credentials from Vercel env vars
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
   const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
   const PAYPAL_PLAN_ID = process.env.PAYPAL_PLAN_ID;
   const PAYPAL_MODE = process.env.PAYPAL_MODE ?? "sandbox";
+  const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.tideraider.com";
 
   // Debug: log first few chars of env vars (no secrets) to verify they are loaded
   console.log('[PayPal Edge] Env vars loaded', {
@@ -30,6 +32,7 @@ export async function POST(req: NextRequest) {
     PAYPAL_MODE === "live"
       ? "https://api-m.paypal.com"
       : "https://api-m.sandbox.paypal.com";
+
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET || !PAYPAL_PLAN_ID) {
     return NextResponse.json(
       {
@@ -88,14 +91,13 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         plan_id: PAYPAL_PLAN_ID,
-        // You can add subscriber info here if you have it
         application_context: {
           brand_name: "Tide Raider",
           locale: "en-US",
           shipping_preference: "NO_SHIPPING",
           user_action: "SUBSCRIBE_NOW",
-          return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success`,
-          cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
+          return_url: `${NEXT_PUBLIC_BASE_URL}/checkout/success`,
+          cancel_url: `${NEXT_PUBLIC_BASE_URL}/checkout/cancel`,
         },
       }),
     }
