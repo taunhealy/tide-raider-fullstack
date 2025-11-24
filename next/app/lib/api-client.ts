@@ -5,7 +5,7 @@
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://tide-raider-backend-eu-82632174665.europe-west1.run.app";
+  "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 
 // Optional debug (remove in production if you want)
 if (typeof window === "undefined") {
@@ -44,7 +44,9 @@ async function apiRequest<T>(
       try {
         errorData = await response.json();
       } catch {
-        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        errorData = {
+          error: `HTTP ${response.status}: ${response.statusText}`,
+        };
       }
 
       const error = new Error(
@@ -79,11 +81,17 @@ export const api = {
   },
 
   getBeach: async (name: string) => {
-    return apiRequest<{ beach: any }>(`/api/beaches/${encodeURIComponent(name)}`);
+    return apiRequest<{ beach: any }>(
+      `/api/beaches/${encodeURIComponent(name)}`
+    );
   },
 
   // Alerts
-  getAlerts: async (params?: { region?: string; logEntryId?: string; starRatings?: boolean }) => {
+  getAlerts: async (params?: {
+    region?: string;
+    logEntryId?: string;
+    starRatings?: boolean;
+  }) => {
     const queryParams = new URLSearchParams();
     if (params?.region) queryParams.append("region", params.region);
     if (params?.logEntryId) queryParams.append("logEntryId", params.logEntryId);
@@ -93,38 +101,78 @@ export const api = {
   },
 
   getAlert: async (id: string) => apiRequest<any>(`/api/alerts/${id}`),
-  createAlert: async (data: any) => apiRequest<any>("/api/alerts", { method: "POST", body: JSON.stringify(data) }),
-  updateAlert: async (id: string, data: any) => apiRequest<any>(`/api/alerts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  patchAlert: async (id: string, data: any) => apiRequest<any>(`/api/alerts/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  deleteAlert: async (id: string) => apiRequest<{ success: boolean }>(`/api/alerts/${id}`, { method: "DELETE" }),
-  notifyAlerts: async (userId: string) => apiRequest<any>("/api/alerts/notify", { method: "POST", body: JSON.stringify({ userId }) }),
+  createAlert: async (data: any) =>
+    apiRequest<any>("/api/alerts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateAlert: async (id: string, data: any) =>
+    apiRequest<any>(`/api/alerts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  patchAlert: async (id: string, data: any) =>
+    apiRequest<any>(`/api/alerts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  deleteAlert: async (id: string) =>
+    apiRequest<{ success: boolean }>(`/api/alerts/${id}`, { method: "DELETE" }),
+  notifyAlerts: async (userId: string) =>
+    apiRequest<any>("/api/alerts/notify", {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    }),
 
   // Logs
   getLogs: async () => apiRequest<any[]>("/api/logs"),
   getLog: async (id: string) => apiRequest<any>(`/api/logs/${id}`),
-  createLog: async (data: any) => apiRequest<any>("/api/logs", { method: "POST", body: JSON.stringify(data) }),
+  createLog: async (data: any) =>
+    apiRequest<any>("/api/logs", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   // Raid Logs
   getRaidLogs: async (params?: any) => {
     const queryParams = new URLSearchParams();
-    Object.keys(params || {}).forEach(key => {
+    Object.keys(params || {}).forEach((key) => {
       const value = params[key];
       if (Array.isArray(value)) queryParams.append(key, value.join(","));
-      else if (value !== undefined && value !== null) queryParams.append(key, value.toString());
+      else if (value !== undefined && value !== null)
+        queryParams.append(key, value.toString());
     });
     const query = queryParams.toString();
     return apiRequest<any>(`/api/raid-logs${query ? `?${query}` : ""}`);
   },
 
-  createRaidLog: async (data: any) => apiRequest<any>("/api/raid-logs", { method: "POST", body: JSON.stringify(data) }),
-  updateRaidLog: async (data: any) => apiRequest<any>("/api/raid-logs", { method: "PUT", body: JSON.stringify(data) }),
-  deleteRaidLog: async (id: string) => apiRequest<any>(`/api/raid-logs?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
+  createRaidLog: async (data: any) =>
+    apiRequest<any>("/api/raid-logs", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateRaidLog: async (data: any) =>
+    apiRequest<any>("/api/raid-logs", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteRaidLog: async (id: string) =>
+    apiRequest<any>(`/api/raid-logs?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
   getRaidLogForecast: async (region: string, date: string) =>
-    apiRequest<any>(`/api/raid-logs/forecast?region=${encodeURIComponent(region)}&date=${encodeURIComponent(date)}`),
-  getUserRaidLogs: async (userId: string) => apiRequest<any[]>(`/api/raid-logs/user/${userId}`),
+    apiRequest<any>(
+      `/api/raid-logs/forecast?region=${encodeURIComponent(region)}&date=${encodeURIComponent(date)}`
+    ),
+  getUserRaidLogs: async (userId: string) =>
+    apiRequest<any[]>(`/api/raid-logs/user/${userId}`),
 
   // Forecast
-  getForecast: async (regionId: string, forecastDate?: string, source?: "WINDFINDER" | "WINDGURU" | "WINDY") => {
+  getForecast: async (
+    regionId: string,
+    forecastDate?: string,
+    source?: "WINDFINDER" | "WINDGURU" | "WINDY"
+  ) => {
     const params = new URLSearchParams({ regionId });
     if (forecastDate) params.append("forecastDate", forecastDate);
     if (source) params.append("source", source);
@@ -143,10 +191,13 @@ export const api = {
   // Filtered Beaches
   getFilteredBeaches: async (params?: any) => {
     const queryParams = new URLSearchParams();
-    Object.keys(params || {}).forEach(key => {
+    Object.keys(params || {}).forEach((key) => {
       const value = params[key];
       if (value !== undefined && value !== null && value !== "")
-        queryParams.append(key, Array.isArray(value) ? value.join(",") : value.toString());
+        queryParams.append(
+          key,
+          Array.isArray(value) ? value.join(",") : value.toString()
+        );
     });
     const query = queryParams.toString();
     return apiRequest<any>(`/api/filtered-beaches${query ? `?${query}` : ""}`);
@@ -163,16 +214,21 @@ export const api = {
 
   // Notifications
   getNotifications: async () => apiRequest<any[]>("/api/notifications"),
-  getNotificationCount: async () => apiRequest<{ count: number }>("/api/notifications/count"),
-  markNotificationRead: async (id: string) => apiRequest<any>(`/api/notifications/${id}`, { method: "PUT" }),
-  markAllNotificationsRead: async () => apiRequest<any>("/api/notifications/read", { method: "PUT" }),
+  getNotificationCount: async () =>
+    apiRequest<{ count: number }>("/api/notifications/count"),
+  markNotificationRead: async (id: string) =>
+    apiRequest<any>(`/api/notifications/${id}`, { method: "PUT" }),
+  markAllNotificationsRead: async () =>
+    apiRequest<any>("/api/notifications/read", { method: "PUT" }),
 
   // Subscriptions & Sponsors
-  getSubscriptionStatus: async () => apiRequest<any>("/api/subscription/status"),
+  getSubscriptionStatus: async () =>
+    apiRequest<any>("/api/subscription/status"),
   getSponsors: async () => apiRequest<any[]>("/api/sponsors"),
 
   // Health
-  health: async () => apiRequest<{ status: string; timestamp: string }>("/health"),
+  health: async () =>
+    apiRequest<{ status: string; timestamp: string }>("/health"),
 
   // Raw request
   request: apiRequest,

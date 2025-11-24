@@ -31,7 +31,7 @@ export const getBackendUrl = (): string => {
   }
 
   // In production, always use Cloud Run backend (never localhost)
-  return "https://tide-raider-backend-82632174665.africa-south1.run.app";
+  return "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 };
 
 export const API_CONFIG = {

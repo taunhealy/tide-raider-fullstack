@@ -11,7 +11,7 @@ const getBackendUrl = () => {
   }
 
   // Fallback: use Cloud Run backend (EU West)
-  return "https://tide-raider-backend-eu-o6rx5ggs5rq-ew.a.run.app";
+  return "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();
