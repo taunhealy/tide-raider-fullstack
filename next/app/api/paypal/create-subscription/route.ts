@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Edge runtime – runs on Vercel’s edge network
-export const runtime = "edge";
+// Switching to nodejs for better compatibility and debugging (Buffer support)
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   // -------------------------------------------------
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.tideraider.com";
 
   // Debug: log first few chars of env vars (no secrets) to verify they are loaded
-  console.log('[PayPal Edge] Env vars loaded', {
+  console.log('[PayPal Node] Env vars loaded', {
     clientIdPrefix: PAYPAL_CLIENT_ID?.slice(0, 10),
     clientSecretPrefix: PAYPAL_CLIENT_SECRET?.slice(0, 10),
     planIdPrefix: PAYPAL_PLAN_ID?.slice(0, 10),
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       : "https://api-m.sandbox.paypal.com";
 
   if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET || !PAYPAL_PLAN_ID) {
+    console.error("[PayPal] Missing configuration");
     return NextResponse.json(
       {
         error: "PayPal configuration missing",
@@ -50,8 +51,8 @@ export async function POST(req: NextRequest) {
   // -------------------------------------------------
   // 3️⃣ Get an access token from PayPal
   // -------------------------------------------------
-  // Edge runtime does not have Node's Buffer, use btoa instead
-  const basicAuth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+  // Use Node's Buffer for reliable base64 encoding
+  const basicAuth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64");
 
   const tokenRes = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
     method: "POST",
@@ -63,12 +64,18 @@ export async function POST(req: NextRequest) {
   });
 
   if (!tokenRes.ok) {
-    const err = await tokenRes.text();
+    const errText = await tokenRes.text();
+    console.error("[PayPal] Token Error:", {
+      status: tokenRes.status,
+      statusText: tokenRes.statusText,
+      body: errText
+    });
+    
     return NextResponse.json(
       {
         error: "Failed to obtain PayPal access token",
         status: tokenRes.status,
-        body: err,
+        body: errText,
       },
       { status: tokenRes.status }
     );
@@ -105,6 +112,7 @@ export async function POST(req: NextRequest) {
 
   if (!subscriptionRes.ok) {
     const err = await subscriptionRes.json().catch(() => ({}));
+    console.error("[PayPal] Subscription Creation Error:", err);
     return NextResponse.json(
       {
         error: "Failed to create PayPal subscription",
@@ -126,6 +134,7 @@ export async function POST(req: NextRequest) {
   const approvalUrl = data.links?.find((l) => l.rel === "approve")?.href;
 
   if (!approvalUrl) {
+    console.error("[PayPal] No approval URL in response:", data);
     return NextResponse.json(
       { error: "No approval URL returned from PayPal" },
       { status: 500 }
