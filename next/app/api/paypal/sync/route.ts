@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/app/lib/server-auth";
-import { PrismaClient } from "@prisma/client";
-
-// Initialize Prisma Client
-const prisma = new PrismaClient();
+import { prisma } from "@/app/lib/prisma";
 
 /**
  * POST /api/paypal/sync
