@@ -38,6 +38,45 @@ function RegionalHighScoresContent({
   onBeachClick,
 }: RegionalHighScoresProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("today");
+
+  // Get selected source from localStorage (shared with WeatherForecastWidget)
+  const [selectedSource, setSelectedSource] = useState<
+    "WINDFINDER" | "WINDGURU" | "WINDY"
+  >(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
+        return stored as "WINDFINDER" | "WINDGURU" | "WINDY";
+      }
+    }
+    return "WINDFINDER";
+  });
+
+  // Listen for source changes from WeatherForecastWidget
+  useEffect(() => {
+    const handleSourceChange = (event: CustomEvent) => {
+      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY";
+      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(newSource)) {
+        setSelectedSource(newSource);
+        console.log(
+          "[RegionalHighScores] Source changed via event:",
+          newSource
+        );
+      }
+    };
+
+    window.addEventListener(
+      "forecastSourceChanged",
+      handleSourceChange as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "forecastSourceChanged",
+        handleSourceChange as EventListener
+      );
+    };
+  }, []);
+
   // Use the same backend subscription check as BeachCard
   // This calls /api/paypal/subscription-status which proxies to the backend
   const {
@@ -81,12 +120,18 @@ function RegionalHighScoresContent({
   // Use the new endpoint
   // Only enable query when we have a date (client-side) and region
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ["regionalHighScores", selectedRegion, timePeriod, today],
+    queryKey: [
+      "regionalHighScores",
+      selectedRegion,
+      timePeriod,
+      selectedSource,
+      today,
+    ],
     queryFn: async () => {
       if (!selectedRegion || !today) return { beaches: [] };
 
       const response = await fetch(
-        `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}`
+        `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}&source=${selectedSource}`
       );
 
       // Handle 429 gracefully - return empty beaches array

@@ -81,6 +81,16 @@ const forecastProperties = [
   },
 ] as const;
 
+// Map forecast source names to letters (A, B, C)
+const getSourceDisplayName = (source: string): string => {
+  const sourceMap: Record<string, string> = {
+    WINDFINDER: "A",
+    WINDGURU: "B",
+    WINDY: "C",
+  };
+  return sourceMap[source] || source;
+};
+
 type PropertyUpdateAction = {
   index: number;
   key: "property" | "range" | "optimalValue";
@@ -423,7 +433,9 @@ function AlertFormBody({
                 id={`source-${source}`}
                 checked={(alert.sources as string[])?.includes(source)}
                 onCheckedChange={(checked) => {
-                  const currentSources = (alert.sources as string[]) || ["WINDFINDER"];
+                  const currentSources = (alert.sources as string[]) || [
+                    "WINDFINDER",
+                  ];
                   let newSources: string[];
                   if (checked) {
                     newSources = [...currentSources, source];
@@ -432,13 +444,17 @@ function AlertFormBody({
                   }
                   // Ensure at least one source is selected
                   if (newSources.length === 0) {
-                    toast.error("At least one forecast source must be selected");
+                    toast.error(
+                      "At least one forecast source must be selected"
+                    );
                     return;
                   }
                   updateAlert({ sources: newSources as any });
                 }}
               />
-              <Label htmlFor={`source-${source}`}>{source}</Label>
+              <Label htmlFor={`source-${source}`}>
+                {getSourceDisplayName(source)}
+              </Label>
             </div>
           ))}
         </div>

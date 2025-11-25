@@ -158,9 +158,14 @@ export default function RightSidebar() {
         />
       )}
 
-      {/* regionalSidebar removed */}
-      <RecentRaidLogs />
-      <FunFacts />
+      {/* Sticky container for Recent Sessions and Travel Posts */}
+      <div className="sticky top-4 space-y-8">
+        <RecentRaidLogs />
+        {filters.regionId && (
+          <AdventureExperiences selectedRegion={filters.regionId} />
+        )}
+        <FunFacts />
+      </div>
     </aside>
   );
 }

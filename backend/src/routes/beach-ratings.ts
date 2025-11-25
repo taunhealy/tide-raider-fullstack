@@ -46,11 +46,15 @@ router.get(
   optionalAuth,
   async (req: Request, res: Response) => {
     try {
-      const { regionId, period } = req.query;
+      const { regionId, period, source } = req.query;
 
       if (!regionId) {
         return res.status(400).json({ error: "regionId is required" });
       }
+
+      // Default to WINDFINDER if no source specified
+      const selectedSource =
+        (source as "WINDFINDER" | "WINDGURU" | "WINDY") || "WINDFINDER";
 
       // Calculate date range based on period
       const now = new Date();
@@ -126,6 +130,7 @@ router.get(
                 gte: startDate,
                 lte: endDate,
               },
+              source: selectedSource,
             },
             orderBy: {
               date: "desc",
