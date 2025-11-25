@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { Prisma, ForecastSource } from "@prisma/client";
 
 export enum AlertType {
   VARIABLES = "VARIABLES",
@@ -22,6 +22,7 @@ export type AlertCreateData = {
   beachId?: string | null;
   alertType?: AlertType;
   starRating?: number | null;
+  sources?: ForecastSource[];
 };
 
 export type AlertUpdateData = {
@@ -40,6 +41,7 @@ export type AlertUpdateData = {
   beachId?: string | null;
   alertType?: AlertType;
   starRating?: number | null;
+  sources?: ForecastSource[];
 };
 
 export class AlertService {
@@ -173,6 +175,7 @@ export class AlertService {
       forecastDate: new Date(data.forecastDate || Date.now()),
       alertType: data.alertType || AlertType.VARIABLES,
       starRating: data.starRating,
+      sources: data.sources,
       ...(data.properties &&
         data.properties.length > 0 && {
           properties: {
@@ -266,6 +269,7 @@ export class AlertService {
         ...(dateOnly && { forecastDate: new Date(dateOnly) }),
         ...(data.alertType && { alertType: data.alertType }),
         ...(data.starRating !== undefined && { starRating: data.starRating }),
+        ...(data.sources && { sources: data.sources }),
         ...(data.regionId && {
           region: {
             connect: { id: data.regionId },

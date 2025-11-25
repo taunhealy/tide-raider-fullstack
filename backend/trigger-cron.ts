@@ -4,7 +4,7 @@
  */
 
 async function triggerCron() {
-  const BACKEND_URL = process.env.BACKEND_URL || "https://tide-raider-backend-82632174665.africa-south1.run.app";
+  const BACKEND_URL = process.env.BACKEND_URL || "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
   const CRON_SECRET = process.env.CRON_SECRET;
 
   if (!CRON_SECRET) {

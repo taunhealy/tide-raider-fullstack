@@ -1,0 +1,400 @@
+
+// ============================================================================
+// GARDEN CAMPING - Airbnb-style Camping Marketplace
+// ============================================================================
+// Scalable schema designed for growth while supporting MVP features
+// ============================================================================
+
+// ────────────────────────────────────────────────────────────────────────────
+// LISTINGS
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingListing {
+  id                String                  @id @default(cuid())
+  title             String                  // "Beachside Tent Spot in Kommetjie"
+  description       String                  @db.Text
+  
+  // Location
+  beachId           String?                 // Optional: Near which beach?
+  beach             Beach?                  @relation(fields: [beachId], references: [id])
+  regionId          String
+  region            Region                  @relation(fields: [regionId], references: [id])
+  address           String?                 // Full address (privacy-protected)
+  displayAddress    String?                 // "Kommetjie, Western Cape" (shown publicly)
+  coordinates       Json?                   // {lat, lng} for map display
+  
+  // Host
+  hostId            String
+  host              User                    @relation("CampingHost", fields: [hostId], references: [id])
+  
+  // Pricing (ZAR cents to avoid floating point issues)
+  pricePerNightCents Int                    // Base price per night in cents
+  cleaningFeeCents  Int                     @default(0)
+  serviceFeeCents   Int                     @default(0) // Platform fee
+  
+  // Capacity
+  maxTents          Int                     @default(1)
+  maxGuests         Int                     @default(2)
+  
+  // Property Type
+  propertyType      CampingPropertyType     @default(GARDEN)
+  
+  // Images
+  images            CampingListingImage[]
+  coverImageUrl     String?                 // Primary image
+  
+  // Amenities (many-to-many for scalability)
+  amenities         CampingAmenity[]
+  
+  // House Rules
+  rules             String?                 @db.Text
+  checkInTime       String?                 // "14:00"
+  checkOutTime      String?                 // "11:00"
+  minimumNights     Int                     @default(1)
+  maximumNights     Int?
+  
+  // Instant Book vs Request to Book
+  instantBookEnabled Boolean                @default(false) // MVP: false (enquiry only)
+  
+  // Status
+  status            CampingListingStatus    @default(DRAFT)
+  published         Boolean                 @default(false)
+  
+  // Stats (for sorting/ranking)
+  averageRating     Float?
+  reviewCount       Int                     @default(0)
+  bookingCount      Int                     @default(0)
+  responseRate      Float?                  // % of enquiries responded to within 24h
+  responseTime      Int?                    // Average hours to respond
+  
+  // Timestamps
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  publishedAt       DateTime?
+  
+  // Relations
+  bookings          CampingBooking[]
+  enquiries         CampingEnquiry[]
+  reviews           CampingReview[]         @relation("ListingReviews")
+  availability      CampingAvailability[]
+  blockedDates      CampingBlockedDate[]
+  
+  @@index([hostId])
+  @@index([regionId])
+  @@index([beachId])
+  @@index([status, published])
+  @@index([averageRating])
+  @@map("camping_listings")
+}
+
+model CampingListingImage {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   CampingListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  order     Int            @default(0)
+  createdAt DateTime       @default(now())
+  
+  @@index([listingId])
+  @@map("camping_listing_images")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// AMENITIES (Flexible & Scalable)
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingAmenity {
+  id          String                    @id @default(cuid())
+  name        String                    @unique // "shower", "toilet", "gas_skottel"
+  displayName String                    // "Access to Shower"
+  category    CampingAmenityCategory
+  icon        String?                   // Icon identifier for UI
+  listings    CampingListing[]
+  
+  @@index([category])
+  @@map("camping_amenities")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// BOOKINGS
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingBooking {
+  id                String              @id @default(cuid())
+  confirmationCode  String              @unique @default(cuid()) // "TR-CAMP-ABC123"
+  
+  // Parties
+  listingId         String
+  listing           CampingListing      @relation(fields: [listingId], references: [id])
+  guestId           String
+  guest             User                @relation("CampingGuest", fields: [guestId], references: [id])
+  hostId            String              // Denormalized for easier queries
+  
+  // Dates
+  checkIn           DateTime
+  checkOut          DateTime
+  nights            Int                 // Calculated
+  
+  // Guest Details
+  numberOfTents     Int                 @default(1)
+  numberOfGuests    Int
+  guestMessage      String?             @db.Text
+  
+  // Pricing (snapshot at booking time)
+  pricePerNightCents Int
+  totalNightsCents  Int
+  cleaningFeeCents  Int                 @default(0)
+  serviceFeeCents   Int                 @default(0)
+  totalCents        Int                 // Total amount
+  
+  // Payment (MVP: handled externally)
+  paymentStatus     CampingPaymentStatus @default(PENDING)
+  paymentMethod     String?             // "paypal", "manual_transfer", etc.
+  paymentId         String?             // External payment reference
+  
+  // Status
+  status            CampingBookingStatus @default(PENDING)
+  
+  // Cancellation
+  cancelledAt       DateTime?
+  cancelledBy       String?             // "guest" or "host"
+  cancellationReason String?           @db.Text
+  
+  // Timestamps
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  confirmedAt       DateTime?
+  completedAt       DateTime?           // When checkout happens
+  
+  // Relations
+  messages          CampingMessage[]
+  review            CampingReview?      // Guest reviews listing after stay
+  
+  @@index([listingId])
+  @@index([guestId])
+  @@index([hostId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+  @@map("camping_bookings")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ENQUIRIES (MVP: Primary flow before booking)
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingEnquiry {
+  id             String                @id @default(cuid())
+  listingId      String
+  listing        CampingListing        @relation(fields: [listingId], references: [id])
+  guestId        String
+  guest          User                  @relation("CampingEnquirer", fields: [guestId], references: [id])
+  hostId         String                // Denormalized
+  
+  // Enquiry Details
+  checkIn        DateTime
+  checkOut       DateTime
+  numberOfTents  Int                   @default(1)
+  numberOfGuests Int
+  message        String                @db.Text
+  
+  // Status
+  status         CampingEnquiryStatus  @default(PENDING)
+  
+  // Conversion
+  convertedToBookingId String?         @unique
+  convertedToBooking   CampingBooking? @relation("EnquiryConversion", fields: [convertedToBookingId], references: [id])
+  
+  // Response tracking
+  respondedAt    DateTime?
+  responseTime   Int?                  // Hours to first response
+  
+  // Timestamps
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  expiresAt      DateTime?             // Optional: auto-expire after X days
+  
+  // Relations
+  messages       CampingMessage[]
+  
+  @@index([listingId])
+  @@index([guestId])
+  @@index([hostId])
+  @@index([status])
+  @@map("camping_enquiries")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// MESSAGES (Enquiry & Booking Communication)
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingMessage {
+  id         String          @id @default(cuid())
+  
+  // Thread Context (either enquiry OR booking)
+  enquiryId  String?
+  enquiry    CampingEnquiry? @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  bookingId  String?
+  booking    CampingBooking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  // Message
+  senderId   String
+  sender     User            @relation("CampingMessageSender", fields: [senderId], references: [id])
+  content    String          @db.Text
+  
+  // Metadata
+  isFromHost Boolean         // Quick filter
+  readAt     DateTime?
+  
+  // Timestamps
+  createdAt  DateTime        @default(now())
+  
+  @@index([enquiryId])
+  @@index([bookingId])
+  @@index([senderId])
+  @@map("camping_messages")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// REVIEWS (Bidirectional: Guest ↔ Host)
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingReview {
+  id                String          @id @default(cuid())
+  
+  // Context
+  listingId         String
+  listing           CampingListing  @relation("ListingReviews", fields: [listingId], references: [id])
+  bookingId         String          @unique // One review per booking
+  booking           CampingBooking  @relation(fields: [bookingId], references: [id])
+  
+  // Reviewer & Subject
+  reviewerId        String
+  reviewer          User            @relation("CampingReviewer", fields: [reviewerId], references: [id])
+  revieweeId        String
+  reviewee          User            @relation("CampingReviewee", fields: [revieweeId], references: [id])
+  
+  // Type
+  type              CampingReviewType // GUEST_TO_HOST or HOST_TO_GUEST
+  
+  // Ratings (1-5)
+  overallRating     Int             // Required
+  cleanlinessRating Int?            // Optional detailed ratings
+  communicationRating Int?
+  accuracyRating    Int?
+  valueRating       Int?
+  
+  // Content
+  comment           String?         @db.Text
+  publicComment     String?         @db.Text // Shown on listing
+  privateComment    String?         @db.Text // Only to recipient
+  
+  // Status
+  published         Boolean         @default(false)
+  flagged           Boolean         @default(false)
+  
+  // Timestamps
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  publishedAt       DateTime?
+  
+  @@index([listingId])
+  @@index([bookingId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+  @@index([type])
+  @@map("camping_reviews")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// AVAILABILITY & CALENDAR
+// ────────────────────────────────────────────────────────────────────────────
+
+model CampingAvailability {
+  id          String         @id @default(cuid())
+  listingId   String
+  listing     CampingListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  date        DateTime       // Single date
+  available   Boolean        @default(true)
+  priceCents  Int?           // Override default price for this date
+  minNights   Int?           // Override minimum nights
+  
+  @@unique([listingId, date])
+  @@index([listingId])
+  @@index([date])
+  @@map("camping_availability")
+}
+
+model CampingBlockedDate {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   CampingListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?        // "maintenance", "personal_use", etc.
+  createdAt DateTime       @default(now())
+  
+  @@index([listingId])
+  @@map("camping_blocked_dates")
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ────────────────────────────────────────────────────────────────────────────
+
+enum CampingPropertyType {
+  GARDEN           // Private backyard
+  FARM             // Farm land
+  BEACHFRONT       // Right on the beach
+  RIVERSIDE        // Near river
+  FOREST           // Wooded area
+  MOUNTAIN         // Mountain property
+}
+
+enum CampingAmenityCategory {
+  BATHROOM         // Toilet, Shower
+  COOKING          // Kitchen access, Gas skottel, BBQ
+  UTILITIES        // Electricity, Water, WiFi
+  COMFORT          // Mattress, Blankets, Chairs
+  SAFETY           // Secure parking, Lighting, First aid
+  ACTIVITIES       // Surf storage, Bike storage
+  PROPERTY         // Ocean view, Garden, Pets allowed
+}
+
+enum CampingListingStatus {
+  DRAFT            // Not yet submitted
+  PENDING          // Awaiting review (future: admin approval)
+  ACTIVE           // Live and bookable
+  INACTIVE         // Temporarily unavailable
+  ARCHIVED         // Permanently closed
+}
+
+enum CampingBookingStatus {
+  PENDING          // Awaiting host confirmation
+  CONFIRMED        // Host accepted
+  CHECKED_IN       // Guest arrived
+  COMPLETED        // Checkout completed
+  CANCELLED        // Cancelled by guest or host
+  DECLINED         // Host declined
+}
+
+enum CampingEnquiryStatus {
+  PENDING          // Awaiting host response
+  RESPONDED        // Host replied but not yet converted
+  ACCEPTED         // Host wants to book
+  CONVERTED        // Converted to booking
+  DECLINED         // Host declined
+  EXPIRED          // Enquiry expired
+}
+
+enum CampingPaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum CampingReviewType {
+  GUEST_TO_HOST    // Guest reviews the property & host
+  HOST_TO_GUEST    // Host reviews the guest
+}

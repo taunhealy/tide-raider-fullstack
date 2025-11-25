@@ -32,6 +32,7 @@ export const createAlertSchema = z
     beachId: z.string().nullable().optional(),
     alertType: z.nativeEnum(AlertType).default(AlertType.VARIABLES),
     starRating: z.number().min(1).max(5).nullable().optional(),
+    sources: z.array(z.enum(["WINDFINDER", "WINDGURU", "WINDY"])).optional(),
   })
   .refine(
     (data) => {
@@ -84,6 +85,7 @@ export const updateAlertSchema = z.object({
   starRating: z.number().min(1).max(5).nullable().optional(),
   beachId: z.string().nullable().optional(),
   active: z.boolean().optional(),
+  sources: z.array(z.enum(["WINDFINDER", "WINDGURU", "WINDY"])).optional(),
 });
 
 export const getAlertParamsSchema = z.object({

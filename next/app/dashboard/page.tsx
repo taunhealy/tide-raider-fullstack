@@ -289,7 +289,7 @@ export default function DashboardPage() {
           data.message.includes("No PayPal subscription"))
       ) {
         console.log("[Dashboard] Sync response (trial/no subscription):", data);
-        toast.success(data.message || "Subscription status updated");
+        toast.info(data.message || "No active PayPal subscription to sync");
 
         // Refresh subscription data even if no sync was needed
         await queryClient.invalidateQueries({
@@ -306,15 +306,24 @@ export default function DashboardPage() {
         return;
       }
 
+      // Handle "No PayPal subscription found" response - this is also NOT an error
+      if (response.status === 400 && data.error === "No PayPal subscription found") {
+        console.log("[Dashboard] No PayPal subscription to sync");
+        toast.info(data.message || "No PayPal subscription found to sync");
+        return;
+      }
+
+      // Handle PayPal configuration errors gracefully
+      if (response.status === 500 && data.error?.includes("PayPal configuration missing")) {
+        console.log("[Dashboard] PayPal not configured (expected for trial users)");
+        toast.info("You are on a free trial. No PayPal subscription to sync.");
+        return;
+      }
+
+      // NOW handle actual errors (network issues, API failures, etc.)
       if (!response.ok) {
-        const error = data.error || "Failed to sync subscription";
-        // If it's a PayPal configuration error, provide a user-friendly message
-        if (error.includes("PayPal configuration missing")) {
-          toast.info(
-            "You are on a free trial. No PayPal subscription to sync."
-          );
-          return;
-        }
+        const error = data.error || data.details || "Failed to sync subscription";
+        console.error("[Dashboard] Sync API error:", { status: response.status, error, data });
         throw new Error(error);
       }
 
@@ -343,8 +352,11 @@ export default function DashboardPage() {
 
       router.refresh();
     } catch (error) {
+      // Only log and show errors for ACTUAL failures
       console.error("[Dashboard] Sync failed:", error);
-      toast.error(error instanceof Error ? error.message : "Sync failed");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to sync subscription"
+      );
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }

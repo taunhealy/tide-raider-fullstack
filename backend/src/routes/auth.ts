@@ -32,7 +32,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 //    - Development: http://localhost:3000
 //
 // 2. Authorized redirect URIs (where Google redirects after OAuth):
-//    - Production: https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback
+//    - Production: https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback
 //    - Development: http://localhost:4001/api/auth/google/callback
 //
 // IMPORTANT: These must EXACTLY match (including protocol, no trailing slashes)
@@ -57,7 +57,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
             : process.env.NODE_ENV === "production"
-              ? `https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback`
+              ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
               : `http://localhost:4001/api/auth/google/callback`,
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -91,13 +91,15 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
               },
             });
             console.log(`[auth] ✅ Created new user: ${user.id}`);
-            
+
             // Notify admin of new user signup (async, don't wait)
             notifyAdminNewUser({
               id: user.id,
               email: user.email,
               name: user.name,
-            }).catch((err) => console.error("Failed to send admin notification:", err));
+            }).catch((err) =>
+              console.error("Failed to send admin notification:", err)
+            );
           } else {
             // Only update name if it's empty/null (don't overwrite user's custom name)
             // Always update image if provided (Google profile pictures can change)
@@ -211,7 +213,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
     process.env.BACKEND_URL && process.env.BACKEND_URL.startsWith("http")
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.NODE_ENV === "production"
-        ? `https://tide-raider-backend-82632174665.africa-south1.run.app/api/auth/google/callback`
+        ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
         : `http://localhost:4001/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
@@ -481,13 +483,15 @@ router.post("/login", async (req: Request, res: Response) => {
         },
       });
       console.log(`[auth] ✅ Created new user: ${user.id}`);
-      
+
       // Notify admin of new user signup (async, don't wait)
       notifyAdminNewUser({
         id: user.id,
         email: user.email,
         name: user.name,
-      }).catch((err) => console.error("Failed to send admin notification:", err));
+      }).catch((err) =>
+        console.error("Failed to send admin notification:", err)
+      );
     } else {
       // Only update name if it's empty/null (don't overwrite user's custom name)
       // Always update image if provided (Google profile pictures can change)

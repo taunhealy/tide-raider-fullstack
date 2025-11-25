@@ -410,6 +410,40 @@ function AlertFormBody({
         </p>
       </div>
 
+      {/* Forecast Sources */}
+      <div className="space-y-4">
+        <Label>Forecast Sources</Label>
+        <p className="text-sm text-gray-500">
+          Select which forecast sources to monitor for this alert.
+        </p>
+        <div className="flex gap-4">
+          {(["WINDFINDER", "WINDGURU", "WINDY"] as const).map((source) => (
+            <div key={source} className="flex items-center space-x-2">
+              <Checkbox
+                id={`source-${source}`}
+                checked={(alert.sources as string[])?.includes(source)}
+                onCheckedChange={(checked) => {
+                  const currentSources = (alert.sources as string[]) || ["WINDFINDER"];
+                  let newSources: string[];
+                  if (checked) {
+                    newSources = [...currentSources, source];
+                  } else {
+                    newSources = currentSources.filter((s) => s !== source);
+                  }
+                  // Ensure at least one source is selected
+                  if (newSources.length === 0) {
+                    toast.error("At least one forecast source must be selected");
+                    return;
+                  }
+                  updateAlert({ sources: newSources as any });
+                }}
+              />
+              <Label htmlFor={`source-${source}`}>{source}</Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Mode Selection */}
       <div className="flex space-x-1 bg-gray-100 p-1 rounded-md">
         <button
@@ -783,6 +817,7 @@ function AlertFormFooter() {
           starRating: mode === "starRating" ? (alert.starRating ?? 3) : null,
           logEntryId: alert.logEntry?.connect?.id || null,
           beachId: alert.beach?.connect?.id || null,
+          sources: alert.sources || ["WINDFINDER"],
         };
 
         const response = await fetch(`/api/alerts/${alert.id}`, {

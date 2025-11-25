@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 import { MapPin } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
@@ -68,7 +69,7 @@ export default function RecentRaidLogs() {
             href={`/raidlogs/${entry.id}`}
             className="group block"
           >
-            <article className="space-y-2">
+            <article className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors font-primary">
@@ -96,6 +97,20 @@ export default function RecentRaidLogs() {
                   />
                 </div>
               </div>
+              
+              {/* Square Instagram-sized thumbnail */}
+              {entry.imageUrl && (
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+                  <Image
+                    src={entry.imageUrl}
+                    alt={entry.beach?.name || entry.beachName || "Session photo"}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+              )}
+              
               {entry.comments && (
                 <p className="text-[12px] text-[var(--color-text-primary)] line-clamp-2 font-primary">
                   {entry.comments}

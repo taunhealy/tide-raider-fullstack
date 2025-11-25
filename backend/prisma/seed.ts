@@ -1,6 +1,6 @@
-import { beachData } from "@/app/data/beachData";
-import { HARDCODED_COUNTRIES } from "../app/lib/location/countries/constants";
-import { prisma } from "@/app/lib/prisma";
+import { beachData } from "../src/data/beachData";
+import { HARDCODED_COUNTRIES } from "../src/lib/location/countries/constants";
+import { prisma } from "../src/lib/prisma";
 import {
   Difficulty,
   WaveType,
@@ -567,9 +567,10 @@ async function main() {
     for (const entry of sampleLogEntries) {
       try {
         // Create a forecast for this entry
-        const forecast = await prisma.forecastA.create({
+        const forecast = await prisma.forecast.create({
           data: {
             date: entry.date,
+            source: "WINDFINDER", // Required field
             region: {
               connect: { id: beach.region.id },
             },

@@ -54,65 +54,18 @@ export async function processUserAlerts(userId: string, today: Date) {
     });
 
     // Get today's forecasts for all relevant regions
-    // Try WINDFINDER first, then fall back to any available source
+    // Fetch ALL sources, we will filter in memory based on alert preferences
     const regions = [...new Set(userAlerts.map((alert) => alert.regionId))];
 
-    // First, try to get WINDFINDER forecasts
-    let todaysForecasts = await prisma.forecast.findMany({
+    const todaysForecasts = await prisma.forecast.findMany({
       where: {
         regionId: { in: regions },
-        source: "WINDFINDER",
         date: {
           gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
           lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
         },
       },
     });
-
-    // For regions without WINDFINDER forecasts, try to get any available source
-    const regionsWithForecasts = new Set(
-      todaysForecasts.map((f) => f.regionId)
-    );
-    const regionsWithoutForecasts = regions.filter(
-      (r) => !regionsWithForecasts.has(r)
-    );
-
-    if (regionsWithoutForecasts.length > 0) {
-      // Get all available forecasts for regions without WINDFINDER data
-      const allFallbackForecasts = await prisma.forecast.findMany({
-        where: {
-          regionId: { in: regionsWithoutForecasts },
-          date: {
-            gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
-            lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
-          },
-        },
-        orderBy: [
-          { source: "asc" }, // WINDFINDER comes before WINDGURU alphabetically
-          { date: "asc" },
-        ],
-      });
-
-      // Deduplicate: keep only the first forecast per region (prefer WINDFINDER if both exist)
-      const regionForecastMap = new Map<
-        string,
-        (typeof allFallbackForecasts)[0]
-      >();
-      for (const forecast of allFallbackForecasts) {
-        if (!regionForecastMap.has(forecast.regionId)) {
-          regionForecastMap.set(forecast.regionId, forecast);
-        }
-      }
-
-      const newForecasts = Array.from(regionForecastMap.values());
-      todaysForecasts = [...todaysForecasts, ...newForecasts];
-
-      if (newForecasts.length > 0) {
-        console.log(
-          `[Alert Processor] Using fallback forecasts for ${newForecasts.length} region(s): ${newForecasts.map((f) => `${f.regionId} (${f.source})`).join(", ")}`
-        );
-      }
-    }
 
     // Get beach IDs from alerts (both from logEntry and direct beachId)
     const beachIds = userAlerts
@@ -207,10 +160,20 @@ export async function processUserAlerts(userId: string, today: Date) {
           "Unknown location";
         const beachId = (alert.logEntry as any)?.beach?.id || alert.beachId;
 
-        // Find today's forecast for this alert's region
-        const todaysForecast = todaysForecasts.find(
-          (f) => f.regionId === alert.regionId
-        );
+        // Find today's forecast for this alert's region and preferred sources
+        const alertSources =
+          alert.sources && alert.sources.length > 0
+            ? alert.sources
+            : ["WINDFINDER"]; // Default to WINDFINDER if not specified
+
+        // Find the first available forecast that matches one of the preferred sources
+        let todaysForecast = null;
+        for (const source of alertSources) {
+          todaysForecast = todaysForecasts.find(
+            (f) => f.regionId === alert.regionId && f.source === source
+          );
+          if (todaysForecast) break;
+        }
 
         // Only require forecast for VARIABLES alerts, not RATING alerts
         if (

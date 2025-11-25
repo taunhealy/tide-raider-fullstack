@@ -55,7 +55,10 @@ export interface Alert {
   forecastId: string | null;
   beachId: string | null;
   properties?: AlertProperty[];
+  sources: ForecastSource[];
 }
+
+export type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
 
 // Type aliases for operations
 export type AlertCreate = Partial<Alert>;
@@ -95,6 +98,7 @@ export interface AlertConfig {
   forecast: Forecast | null;
   forecastId: string | null;
   userId: string;
+  sources: ForecastSource[];
 }
 
 // Use this for creating/updating alerts

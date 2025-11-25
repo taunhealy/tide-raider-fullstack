@@ -13,12 +13,15 @@ import seedRouter from "./seed";
 import authRouter from "./auth";
 import beachRatingsRouter from "./beach-ratings";
 import userSearchesRouter from "./user-searches";
-
+import subscriptionsRouter from "./subscriptions";
 import usersRouter from "./users";
 import commentsRouter from "./comments";
-import subscriptionsRouter from "./subscriptions";
+import campingRouter from "./camping";
 
 const router = Router();
+
+router.use("/camping", campingRouter);
+
 
 // Mount route handlers
 router.use("/auth", authRouter);

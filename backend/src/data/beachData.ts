@@ -1065,6 +1065,56 @@ export const beachData: Beach[] = [
     },
   },
   {
+    id: "the-groynes",
+    name: "The Groynes",
+    continent: "Africa",
+    countryId: "South Africa",
+    regionId: "Eastern Cape",
+    location: "Anne Ave, Sea Vista, St Francis Bay",
+    distanceFromCT: 750,
+    optimalWindDirections: ["NW"],
+    optimalSwellDirections: {
+      min: 135, 
+      max: 180, 
+      cardinal: "S/SE",
+    },
+    bestSeasons: ["winter"],
+    optimalTide: "LOW",
+    description:
+      "Heavy beach break",
+    difficulty: "ADVANCED",
+    waveType: "BEACH_BREAK",
+    swellSize: {
+      min: 1.6,
+      max: 4.0,
+    },
+    idealSwellPeriod: {
+      min: 12,
+      max: 24,
+    },
+    waterTemp: {
+      summer: 22,
+      winter: 18,
+    },
+    hazards: ["Rocks", "Strong currents", "Sharks"],
+    crimeLevel: "Medium",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    videos: [
+      {
+        url: "https://www.youtube.com/watch?v=GH4rb1tq1-I",
+        title: "Man Made Ocean Wave Pool St Francis Bay Groynes!",
+        platform: "youtube",
+      },
+    ],
+    coordinates: {
+      lat: -34.0507,
+      lng: 24.9281,
+    },
+  },
+  {
     id: "clapton's-coils",
     name: "Clapton's Coils",
     continent: "Africa",

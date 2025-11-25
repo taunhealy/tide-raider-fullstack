@@ -40,6 +40,7 @@ const initialState: AlertState = {
     properties: { create: [] },
     region: { connect: { id: "" } },
     user: { connect: { id: "" } },
+    sources: ["WINDFINDER"],
   },
   mode: "logEntry",
   selectedLogEntry: null,
