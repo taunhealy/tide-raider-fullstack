@@ -366,6 +366,7 @@ export const beachData: Beach[] = [
     countryId: "South Africa",
     regionId: "Western Cape",
     location: "Hout Bay",
+    isHiddenGem: true,
     distanceFromCT: 40,
     optimalWindDirections: ["SE", "SSE"],
     optimalSwellDirections: {
@@ -410,6 +411,7 @@ export const beachData: Beach[] = [
   {
     id: "hout-bay-harbour-wedge",
     name: "Hout Bay Harbour Wedge",
+    isHiddenGem: true,
     continent: "Africa",
     countryId: "South Africa",
     regionId: "Western Cape",
@@ -1074,14 +1076,13 @@ export const beachData: Beach[] = [
     distanceFromCT: 750,
     optimalWindDirections: ["NW"],
     optimalSwellDirections: {
-      min: 135, 
-      max: 180, 
+      min: 135,
+      max: 180,
       cardinal: "S/SE",
     },
     bestSeasons: ["winter"],
     optimalTide: "LOW",
-    description:
-      "Heavy beach break",
+    description: "Heavy beach break",
     difficulty: "ADVANCED",
     waveType: "BEACH_BREAK",
     swellSize: {

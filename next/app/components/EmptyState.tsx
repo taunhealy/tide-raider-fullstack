@@ -14,7 +14,7 @@ export default function EmptyState({
     helpText ??
     (message === "Select a region to view beaches"
       ? "Choose a region from the recent searches or use the filters"
-      : message === "No beaches found in this region"
+      : message === "No breaks found in this region, change the filters?"
         ? "Try selecting a different region"
         : "Try adjusting your filters or selecting a different region");
 

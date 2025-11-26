@@ -174,9 +174,9 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           <div className="flex items-center gap-2">
             <Button
               onClick={() => setIsAlertModalOpen(true)}
-              variant="default"
+              variant="dark"
               size="sm"
-              className="flex items-center gap-2 font-primary text-sm bg-[var(--color-tertiary)] hover:opacity-90 text-white"
+              className="flex items-center gap-2 font-primary text-sm"
             >
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">
@@ -187,7 +187,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
             {isOwner && (
               <Button
                 onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
-                variant="outline"
+                variant="dark"
                 size="sm"
                 className="flex items-center gap-2 font-primary text-sm"
               >

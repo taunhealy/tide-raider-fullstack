@@ -233,7 +233,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                   </p>
                 </div>
               ) : sortedBeaches.length === 0 ? (
-                <EmptyState message="No beaches found in this region" />
+                <EmptyState message="No breaks found in this region, change filters?" />
               ) : (
                 <div>
                   {currentBeaches.map((beach: Beach) => {
