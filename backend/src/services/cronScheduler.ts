@@ -11,12 +11,12 @@ import { processAllUserAlerts } from "./alertProcessor";
  * - This ensures global coverage (6 times per day)
  *
  * Times (UTC):
- * - 00:00 (midnight UTC)
- * - 04:00 (4 AM UTC)
- * - 08:00 (8 AM UTC)
- * - 12:00 (noon UTC)
- * - 16:00 (4 PM UTC)
- * - 20:00 (8 PM UTC)
+ * - 00:00 (midnight UTC) - Asia/Pacific morning
+ * - 04:00 (4 AM UTC) - Europe/Africa morning
+ * - 08:00 (8 AM UTC) - Europe/Africa midday, Americas early morning
+ * - 12:00 (noon UTC) - Americas morning, Europe/Africa afternoon
+ * - 16:00 (4 PM UTC) - Americas afternoon, Asia/Pacific evening
+ * - 20:00 (8 PM UTC) - Americas evening, Asia/Pacific night
  */
 export class CronScheduler {
   private tasks: cron.ScheduledTask[] = [];
@@ -38,7 +38,7 @@ export class CronScheduler {
     console.log("🕐 Starting cron scheduler...");
 
     // Schedule: Run every 4 hours (at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
-    // This provides 6 runs per day, covering different timezones
+    // This provides 6 runs per day, covering all global timezones
     const task = cron.schedule(
       "0 */4 * * *",
       async () => {

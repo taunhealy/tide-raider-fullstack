@@ -17,6 +17,8 @@ import subscriptionsRouter from "./subscriptions";
 import usersRouter from "./users";
 import commentsRouter from "./comments";
 import campingRouter from "./camping";
+import testEmailRouter from "./test-email";
+import hiddenGemsRouter from "./hidden-gems";
 
 const router = Router();
 
@@ -42,5 +44,7 @@ router.use("/user-searches", userSearchesRouter);
 router.use("/users", usersRouter);
 router.use("/comments", commentsRouter);
 router.use("/subscriptions", subscriptionsRouter);
+router.use("/test-email", testEmailRouter);
+router.use("/hidden-gems", hiddenGemsRouter);
 
 export default router;

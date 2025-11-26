@@ -139,6 +139,10 @@ model User {
   messagesSent            Message[]            @relation("MessageSender")
   reviewsGiven            PropertyReview[]     @relation("Reviewer")
   reviewsReceived         PropertyReview[]     @relation("Reviewee")
+  
+  // Hidden Gems
+  hiddenGemsSubmitted     HiddenGem[]          @relation("HiddenGemSubmitter")
+  hiddenGemsModerated     HiddenGem[]          @relation("ModeratedHiddenGems")
 
   @@index([email])
   @@index([skillLevel])
@@ -180,17 +184,20 @@ model LogEntry {
   userId        String?  @map("user_id")
   regionId      String
   forecastId    String?
+  hiddenGemId   String?
 
   beach    Beach?    @relation(fields: [beachId], references: [id])
   region   Region    @relation(fields: [regionId], references: [id])
   forecast Forecast? @relation(fields: [forecastId], references: [id])
   user     User?     @relation(fields: [userId], references: [id])
+  hiddenGem  HiddenGem? @relation("HiddenGemLogs", fields: [hiddenGemId], references: [id])
   alerts   Alert[]
 
   @@index([regionId])
   @@index([beachId])
   @@index([userId])
   @@index([forecastId])
+  @@index([hiddenGemId])
 }
 
 model SafariBooking {
@@ -320,6 +327,83 @@ model Beach {
   @@index([countryId])
   @@index([waveType])
   @@index([difficulty])
+  @@index([isHiddenGem])
+}
+
+model HiddenGem {
+  id                     String      @id @default(cuid())
+  
+  // Basic Info
+  name                   String
+  description            String      @db.Text
+  location               String      // e.g., "Near Kommetjie, Western Cape"
+  
+  // Geographic Data
+  regionId               String
+  region                 Region      @relation(fields: [regionId], references: [id])
+  countryId              String
+  country                Country     @relation(fields: [countryId], references: [id])
+  continent              String
+  coordinates            Json        // {lat, lng}
+  
+  // Surf Conditions
+  waveType               WaveType
+  difficulty             Difficulty
+  optimalTide            OptimalTide
+  bestSeasons            Season[]
+  optimalWindDirections  String[]    // e.g., ["NW", "W", "SW"]
+  optimalSwellDirections Json?       // {min: 180, max: 270, cardinal: "SW"}
+  swellSize              Json?       // {min: 1.5, max: 3.0} in meters
+  idealSwellPeriod       Json?       // {min: 12, max: 16} in seconds
+  
+  // Safety & Environment
+  hazards                Hazard[]
+  crimeLevel             CrimeLevel?
+  sharkRisk              SharkRisk?
+  sheltered              Boolean     @default(false)
+  crowdLevel             String?     // "Empty", "Few", "Moderate", "Crowded"
+  
+  // Media
+  images                 String[]    // Array of image URLs
+  videos                 Json?       // Array of {url, title, platform}
+  
+  // User & Moderation
+  submittedById          String
+  submittedBy            User        @relation("HiddenGemSubmitter", fields: [submittedById], references: [id])
+  status                 HiddenGemStatus @default(PENDING)
+  moderatedById          String?
+  moderatedBy            User?       @relation("ModeratedHiddenGems", fields: [moderatedById], references: [id])
+  moderationNotes        String?     @db.Text
+  rejectionReason        String?     @db.Text
+  
+  // Engagement
+  viewCount              Int         @default(0)
+  likeCount              Int         @default(0)
+  verified               Boolean     @default(false) // Admin verified as accurate
+  
+  // Timestamps
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  publishedAt            DateTime?
+  
+  // Relations
+  logEntries             LogEntry[]  @relation("HiddenGemLogs")
+  
+  @@index([regionId])
+  @@index([countryId])
+  @@index([submittedById])
+  @@index([status])
+  @@index([waveType])
+  @@index([difficulty])
+  @@index([createdAt])
+}
+
+enum HiddenGemStatus {
+  PENDING       // Awaiting moderation
+  APPROVED      // Approved and published
+  REJECTED      // Rejected by moderator
+  FLAGGED       // Flagged for review
+  DRAFT         // User's draft (not submitted)
 }
 
 model Account {
@@ -568,6 +652,7 @@ model Region {
   logEntries       LogEntry[]
   searches         UserSearch[]
   properties       Property[]           // Garden Camping V2
+  hiddenGems       HiddenGem[]
 }
 
 model Comment {
@@ -692,6 +777,7 @@ model Country {
   continent   Continent @relation(fields: [continentId], references: [id])
   regions     Region[]
   beaches     Beach[]
+  hiddenGems  HiddenGem[]
 }
 
 model SponsorGlobal {

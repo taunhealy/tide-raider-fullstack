@@ -16,7 +16,8 @@ export type FilterType =
   | "searchQuery"
   | "country"
   | "continent"
-  | "hazards";
+  | "hazards"
+  | "isHiddenGem";
 
 // The complete filters interface that can be used across the app
 export interface Filters {
@@ -34,6 +35,7 @@ export interface Filters {
   country: string;
   continent: string;
   hazards: string[];
+  isHiddenGem: boolean;
 }
 
 export interface FilterConfig {

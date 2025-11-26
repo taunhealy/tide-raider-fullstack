@@ -74,4 +74,11 @@ export const FILTERS: FilterConfig[] = [
     urlParam: "bestSeasons",
     beachProp: "bestSeasons",
   },
+  {
+    key: "isHiddenGem",
+    type: "boolean",
+    label: "Hidden Gems",
+    urlParam: "isHiddenGem",
+    beachProp: "isHiddenGem",
+  },
 ];

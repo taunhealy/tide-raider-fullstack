@@ -121,6 +121,15 @@ router.get(
         }),
       };
 
+      // Add isHiddenGem filter if specified
+      if (req.query.isHiddenGem === "true") {
+        whereClause.isHiddenGem = true;
+      }
+
+      console.log("[filtered-beaches] isHiddenGem filter:", req.query.isHiddenGem);
+      console.log("[filtered-beaches] whereClause:", JSON.stringify(whereClause, null, 2));
+
+
       // Get date from query params or default to today
       const forecastDateParam = req.query.forecastDate as string | undefined;
       let targetDate: Date;

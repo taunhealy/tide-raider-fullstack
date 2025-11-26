@@ -94,6 +94,7 @@ export function useFilteredBeaches({
       difficulty: filters.difficulty,
       hazards: filters.hazards,
       forecastDate: filters.forecastDate,
+      isHiddenGem: filters.isHiddenGem,
     };
 
     return ["filteredBeaches", filterKey, selectedSource];
@@ -107,6 +108,7 @@ export function useFilteredBeaches({
     filters.difficulty,
     filters.hazards,
     filters.forecastDate,
+    filters.isHiddenGem,
     selectedSource,
   ]);
 
@@ -124,6 +126,7 @@ export function useFilteredBeaches({
         difficulty?: string;
         hazards?: string;
         forecastDate?: string;
+        isHiddenGem?: string;
         source?: "WINDFINDER" | "WINDGURU" | "WINDY";
       } = {};
 
@@ -158,6 +161,7 @@ export function useFilteredBeaches({
           : filters.hazards;
       }
       if (filters.forecastDate) params.forecastDate = filters.forecastDate;
+      if (filters.isHiddenGem) params.isHiddenGem = "true";
       params.source = selectedSource; // Pass the selected source
 
       if (process.env.NODE_ENV === "development") {

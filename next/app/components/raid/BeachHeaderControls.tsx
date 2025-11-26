@@ -12,6 +12,7 @@ import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
+import { HiddenGemsButton } from "@/app/components/ui/GradientButton";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -49,10 +50,29 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
 
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
               <div className="flex flex-col w-full sm:w-auto flex-1 gap-3 min-w-0">
+                {/* Search Bar */}
                 <div className="w-full overflow-visible">
                   <SearchBar />
                 </div>
-                <RecentRegionSearch regionCounts={regionCountsData} />
+                
+                {/* Recent Regions (Left) and Hidden Gems Button (Right) - Side by Side */}
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                  {/* Recent Regions - Left Half */}
+                  <div className="flex-1 min-w-0">
+                    <RecentRegionSearch regionCounts={regionCountsData} />
+                  </div>
+                  
+                  {/* Hidden Gems Button - Right Half */}
+                  <div className="flex-1 flex items-start justify-end">
+                    <HiddenGemsButton
+                      active={!!filters.isHiddenGem}
+                      onClick={() => {
+                        const newValue = !filters.isHiddenGem;
+                        updateFilter("isHiddenGem", newValue ? "true" : "");
+                      }}
+                    />
+                  </div>
+                </div>
 
                 {/* Mobile Forecast Widget - Below Region Selection */}
                 <div className="lg:hidden">
