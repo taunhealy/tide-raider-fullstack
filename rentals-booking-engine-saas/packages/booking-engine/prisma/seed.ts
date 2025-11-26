@@ -123,8 +123,23 @@ async function main() {
       minRentalDays: 1,
       maxRentalDays: 7,
       advanceNoticeDays: 3,
-      pickupLocation: "Cape Town CBD",
-      dropoffLocation: "Cape Town CBD",
+
+      pickupLocations: {
+        create: {
+          isPrimary: true,
+          location: {
+            create: {
+              companyId: supercarCompany.id,
+              name: "Cape Town CBD",
+              address: "123 Main St, Cape Town",
+              city: "Cape Town",
+              province: "Western Cape",
+              latitude: -33.9249,
+              longitude: 18.4241,
+            }
+          }
+        }
+      },
       latitude: -33.9249,
       longitude: 18.4241,
       specifications: {
@@ -195,7 +210,21 @@ async function main() {
       minRentalDays: 1,
       maxRentalDays: 14,
       advanceNoticeDays: 7,
-      pickupLocation: "Durban Marina",
+
+      pickupLocations: {
+        create: {
+          isPrimary: true,
+          location: {
+            create: {
+              companyId: yachtCompany.id,
+              name: "Durban Marina",
+              address: "1 Marina Drive, Durban",
+              city: "Durban",
+              province: "KwaZulu-Natal",
+            }
+          }
+        }
+      },
       specifications: {
         length: "60 feet",
         cabins: 3,

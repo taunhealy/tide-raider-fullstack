@@ -1,6 +1,9 @@
-// Prisma Schema for Multi-Tenant Luxury Rental Booking SaaS
-// Supports: Supercars, Yachts, Jet-skis, 4x4 Campers
-// Database: Supabase Postgres via Prisma Accelerate
+// ===================================================
+// LUXURY ADVENTURE RENTAL SAAS – FINAL BATTLE-TESTED SCHEMA
+// Works perfectly for: Supercars · 4×4 Campers · Yachts · Jet-skis · Bundled Packages
+// Multi-tenant · Direct PayPal payouts · Weather pricing · Delivery polygons · Packages
+// Supabase/Postgres via Prisma Accelerate
+// ===================================================
 
 generator client {
   provider        = "prisma-client-js"
@@ -9,14 +12,12 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("PRISMA_ACCELERATE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL") // for migrations
 }
 
-// ============================================
-// AUTHENTICATION & USERS (next-auth v5)
-// ============================================
 
+// ==================== AUTH (Next-Auth v5) ====================
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -26,31 +27,28 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  // Relations
-  accounts Account[]
-  sessions Session[]
-  bookings Booking[] // Customer bookings
-  reviews  Review[] // Customer reviews
-
-  // Company ownership (for rental company owners)
+  accounts      Account[]
+  sessions      Session[]
+  bookings      Booking[]
+  reviews       Review[]
   ownedCompanies Company[] @relation("CompanyOwner")
 
   @@map("users")
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String  @map("user_id")
-  type              String
-  provider          String // "google"
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id                 String  @id @default(cuid())
+  userId             String  @map("user_id")
+  type               String
+  provider           String
+  providerAccountId  String  @map("provider_account_id")
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -64,46 +62,37 @@ model Session {
   userId       String   @map("user_id")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@map("sessions")
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
-// ============================================
-// MULTI-TENANT: COMPANIES (Rental Businesses)
-// ============================================
-
+// ==================== MULTI-TENANT COMPANIES ====================
 model Company {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  slug        String   @unique // For subdomains/custom URLs
-  description String?  @db.Text
-  logo        String? // URL to logo
+  slug        String    @unique
+  description String?   @db.Text
+  logo        String?
   email       String
   phone       String?
   website     String?
   address     String?
   city        String?
-  province    String? // South African provinces
-  country     String   @default("ZA")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  province    String?
+  country     String    @default("ZA")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  // Relations
-  ownerId  String  @map("owner_id")
-  owner    User    @relation("CompanyOwner", fields: [ownerId], references: [id])
-  settings CompanySettings?
-  listings Listing[]
-  bookings Booking[]
-  reviews  Review[]
+  ownerId     String @map("owner_id")
+  owner   User   @relation("CompanyOwner", fields: [ownerId], references: [id])
+
+  settings        CompanySettings?
+  locations       RentalLocation[]
+  listings        Listing[]
+  packages        Package[]
+  bookings        Booking[]
+  reviews         Review[]
+  deliveryFields  DeliveryField[]
+  deliveryRegions DeliveryRegion[]
 
   @@index([slug])
   @@index([ownerId])
@@ -111,42 +100,108 @@ model Company {
 }
 
 model CompanySettings {
-  id        String   @id @default(cuid())
-  companyId String   @unique @map("company_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id      String @id @default(cuid())
+  companyId String @unique @map("company_id")
 
   // Encrypted PayPal credentials (AES-256-GCM)
-  paypalClientId     String? @map("paypal_client_id") @db.Text // Encrypted
-  paypalClientSecret String? @map("paypal_client_secret") @db.Text // Encrypted
-  paypalMode         String  @default("sandbox") @map("paypal_mode") // "sandbox" or "live"
+  paypalClientId     String? @db.Text
+  paypalClientSecret String? @db.Text
+  paypalMode         String  @default("sandbox") // sandbox | live
 
-  // Business settings
-  currency              String  @default("ZAR")
-  taxRate               Float   @default(0.15) @map("tax_rate") // 15% VAT in SA
-  depositPercentage     Float   @default(0.30) @map("deposit_percentage") // 30% deposit
-  cancellationPolicyDays Int    @default(7) @map("cancellation_policy_days")
-  autoApproveBookings   Boolean @default(false) @map("auto_approve_bookings")
-
-  // Weather-based dynamic pricing
-  enableDynamicPricing Boolean @default(false) @map("enable_dynamic_pricing")
+  currency               String  @default("ZAR")
+  taxRate                Float   @default(0.15)
+  depositPercentage      Float   @default(0.30)
+  cancellationPolicyDays Int     @default(7)
+  autoApproveBookings    Boolean @default(false)
+  enableDynamicPricing   Boolean @default(true)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("company_settings")
 }
 
-// ============================================
-// RENTAL INVENTORY (Listings)
-// ============================================
+// ==================== LOCATIONS & DELIVERY ====================
+model RentalLocation {
+  id          String @id @default(cuid())
+  companyId   String @map("company_id")
+  name        String
+  address     String?
+  city        String?
+  province    String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean @default(true)
 
+  deliveryAvailable   Boolean @default(false)
+  deliveryPricePerKm  Float?
+  freeDeliveryRadius  Int?
+  maxDeliveryRadius   Int?
+
+  company   Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  listings  ListingPickupLocation[]
+
+  @@index([companyId])
+  @@map("rental_locations")
+}
+
+model ListingPickupLocation {
+  listingId   String
+  locationId  String
+  isPrimary   Boolean @default(false)
+
+  deliveryAvailable   Boolean?
+  deliveryPricePerKm  Float?
+  freeDeliveryRadius  Int?
+  maxDeliveryRadius   Int?
+
+  listing  Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  location RentalLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, locationId])
+  @@map("listing_pickup_locations")
+}
+
+model DeliveryRegion {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  name        String
+  description String?  @db.Text
+  boundary    Json     @db.JsonB // GeoJSON Polygon
+  isActive    Boolean  @default(true)
+
+  deliveryPrice       Float?
+  deliveryPricePerKm  Float?
+  freeDeliveryMinOrder Float?
+
+  company  Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  listings ListingDeliveryRegion[]
+
+  @@index([companyId])
+  @@map("delivery_regions")
+}
+
+model ListingDeliveryRegion {
+  listingId String
+  regionId  String
+
+  deliveryPrice      Float?
+  deliveryPricePerKm Float?
+
+  listing Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  region  DeliveryRegion @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, regionId])
+  @@map("listing_delivery_regions")
+}
+
+// ==================== LISTINGS (Supercars, Campers, etc.) ====================
 enum ListingCategory {
   SUPERCAR
   YACHT
   JETSKI
   CAMPER_4X4
-  SNOWBOARD
-  SKIS
+  TRAILER
+  SNOWSPORT
   OTHER
 }
 
@@ -158,46 +213,56 @@ enum ListingStatus {
 }
 
 model Listing {
-  id          String          @id @default(cuid())
-  companyId   String          @map("company_id")
-  title       String
-  slug        String // URL-friendly
-  description String          @db.Text
-  category    ListingCategory
-  status      ListingStatus   @default(DRAFT)
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id                 String   @id @default(cuid())
+  companyId          String   @map("company_id")
+  title              String
+  slug               String
+  description        String   @db.Text
+  category           ListingCategory
+  status             ListingStatus @default(DRAFT)
 
   // Pricing
-  basePricePerDay    Float   @map("base_price_per_day") // Daily rate
-  weeklyDiscount     Float   @default(0.10) @map("weekly_discount") // 10% off for 7+ days
-  monthlyDiscount    Float   @default(0.20) @map("monthly_discount") // 20% off for 30+ days
-  securityDeposit    Float   @default(0) @map("security_deposit")
-  cleaningFee        Float   @default(0) @map("cleaning_fee")
-  insurancePerDay    Float   @default(0) @map("insurance_per_day")
+  basePricePerDay    Float
+  weeklyDiscount     Float     @default(0.10)
+  monthlyDiscount    Float     @default(0.20)
+  securityDeposit    Float     @default(0)
+  cleaningFee        Float     @default(0)
+  insurancePerDay    Float     @default(0)
 
-  // Availability
-  minRentalDays      Int     @default(1) @map("min_rental_days")
-  maxRentalDays      Int     @default(30) @map("max_rental_days")
-  advanceNoticeDays  Int     @default(2) @map("advance_notice_days") // Book X days in advance
+  // Rules
+  minRentalDays      Int       @default(1)
+  maxRentalDays      Int?      @default(30)
+  advanceNoticeDays  Int       @default(1)
+  maxConcurrentBookings Int    @default(1)
 
-  // Location
-  pickupLocation     String? @map("pickup_location")
-  dropoffLocation    String? @map("dropoff_location")
+  // Delivery defaults
+  deliveryAvailable  Boolean   @default(false)
+  deliveryPricePerKm Float?
+  freeDeliveryRadius Int?
+  maxDeliveryRadius  Int?
+
+  // Location & geo
   latitude           Float?
   longitude          Float?
 
-  // Vehicle/Asset Details (flexible JSON)
-  specifications     Json?   @db.JsonB // e.g., {make, model, year, seats, transmission}
-  features           Json?   @db.JsonB // e.g., ["GPS", "Bluetooth", "Roof Rack"]
-  addOns             Json?   @db.JsonB // e.g., [{name: "Camping Gear", price: 500}]
+  // Flexible fields
+  specifications     Json?     @db.JsonB
+  features           Json?     @db.JsonB
+  addOns             Json?     @db.JsonB // [{ name, price, mandatory }]
 
-  // Relations
-  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  images       ListingImage[]
-  bookings     Booking[]
-  pricingRules PricingRule[]
-  reviews      Review[]
+  isPackageOnly      Boolean   @default(false)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  company            Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  images             ListingImage[]
+  pickupLocations    ListingPickupLocation[]
+  deliveryRegions    ListingDeliveryRegion[]
+  bookings           Booking[]
+  packageItems       PackageItem[]
+  pricingRules       PricingRule[]
+  reviews            Review[]
 
   @@unique([companyId, slug])
   @@index([companyId])
@@ -207,23 +272,54 @@ model Listing {
 }
 
 model ListingImage {
-  id        String   @id @default(cuid())
-  listingId String   @map("listing_id")
-  url       String
-  altText   String?  @map("alt_text")
-  order     Int      @default(0)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  @@index([listingId])
+  id         String  @id @default(cuid())
+  listingId  String  @map("listing_id")
+  url        String
+  altText    String?
+  order      Int     @default(0)
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   @@map("listing_images")
 }
 
-// ============================================
-// BOOKINGS & PAYMENTS
-// ============================================
+// ==================== PACKAGES & BUNDLES ====================
+model Package {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  title       String
+  slug        String
+  description String?  @db.Text
+  images      Json?    @db.JsonB
+  basePrice   Float
+  isActive    Boolean  @default(true)
+  validFrom   DateTime? @db.Date
+  validUntil  DateTime? @db.Date
 
+  items       PackageItem[]
+  bookings    Booking[]
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, slug])
+  @@map("packages")
+}
+
+model PackageItem {
+  id         String  @id @default(cuid())
+  packageId  String  @map("package_id")
+  listingId  String? @map("listing_id")
+  name       String
+  quantity   Int     @default(1)
+  price      Float
+
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  listing    Listing? @relation(fields: [listingId], references: [id])
+
+  bookings   BookingPackageItem[]
+
+  @@map("package_items")
+}
+
+// ==================== BOOKINGS ====================
 enum BookingStatus {
   PENDING_PAYMENT
   PAID
@@ -234,56 +330,109 @@ enum BookingStatus {
   REFUNDED
 }
 
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+  PICKUP_AND_DELIVERY
+}
+
 model Booking {
-  id        String        @id @default(cuid())
-  companyId String        @map("company_id")
-  listingId String        @map("listing_id")
-  userId    String        @map("user_id")
-  status    BookingStatus @default(PENDING_PAYMENT)
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
+  id                String         @id @default(cuid())
+  companyId         String         @map("company_id")
+  listingId         String?        @map("listing_id") // null if pure package booking
+  packageId         String?        @map("package_id")
+  userId            String         @map("user_id")
 
-  // Booking details
-  startDate DateTime @map("start_date") @db.Date
-  endDate   DateTime @map("end_date") @db.Date
-  totalDays Int      @map("total_days")
+  status            BookingStatus  @default(PENDING_PAYMENT)
+  startDate         DateTime       @db.Date
+  endDate           DateTime       @db.Date
+  totalDays         Int
 
-  // Pricing breakdown (snapshot at booking time)
-  basePrice       Float  @map("base_price")
-  discountAmount  Float  @default(0) @map("discount_amount")
-  taxAmount       Float  @default(0) @map("tax_amount")
-  depositAmount   Float  @default(0) @map("deposit_amount")
-  insuranceAmount Float  @default(0) @map("insurance_amount")
-  addOnsAmount    Float  @default(0) @map("add_ons_amount")
-  totalAmount     Float  @map("total_amount")
-  currency        String @default("ZAR")
+  // Pricing snapshot
+  basePrice         Float
+  discountAmount    Float          @default(0)
+  deliveryFee       Float          @default(0)
+  taxAmount         Float          @default(0)
+  depositAmount     Float          @default(0)
+  insuranceAmount   Float          @default(0)
+  addOnsAmount      Float          @default(0)
+  totalAmount       Float
+  currency          String         @default("ZAR")
 
-  // Customer details (snapshot)
-  customerName  String @map("customer_name")
-  customerEmail String @map("customer_email")
-  customerPhone String @map("customer_phone")
+  // Delivery
+  deliveryRequired  Boolean        @default(false)
+  deliveryType      DeliveryType?
+  deliveryAddress   String?        @db.Text
+  deliveryLat       Float?         @map("delivery_latitude")
+  deliveryLng       Float?         @map("delivery_longitude")
+  deliveryDistance  Float?
+  deliveryNotes     String?        @db.Text
 
-  // Selected add-ons (snapshot)
-  selectedAddOns Json?  @db.JsonB
+  pickupLocationId  String?        @map("pickup_location_id")
+  pickupLocation    RentalLocation? @relation(fields: [pickupLocationId], references: [id])
 
-  // Notes
-  customerNotes String? @db.Text @map("customer_notes")
-  adminNotes    String? @db.Text @map("admin_notes")
+  // Customer snapshot
+  customerName      String
+  customerEmail     String
+  customerPhone     String
+
+  selectedAddOns    Json?          @db.JsonB
+  customerNotes     String?        @db.Text
+  adminNotes        String?        @db.Text
 
   // Relations
-  company  Company   @relation(fields: [companyId], references: [id])
-  listing  Listing   @relation(fields: [listingId], references: [id])
-  user     User      @relation(fields: [userId], references: [id])
-  payments Payment[]
-  review   Review?
+  company           Company               @relation(fields: [companyId], references: [id])
+  listing           Listing?              @relation(fields: [listingId], references: [id])
+  package           Package?              @relation(fields: [packageId], references: [id])
+  user              User                  @relation(fields: [userId], references: [id])
+  payments          Payment[]
+  packageItems      BookingPackageItem[]
+  deliveryFields    BookingDeliveryField[]
+  handover          ListingHandover?
+  review            Review?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([companyId])
   @@index([listingId])
-  @@index([userId])
   @@index([status])
   @@index([startDate])
   @@map("bookings")
 }
+
+model BookingPackageItem {
+  bookingId     String
+  packageItemId String
+  listingId     String? // for calendar blocking
+
+  booking     Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  packageItem PackageItem @relation(fields: [packageItemId], references: [id], onDelete: Cascade)
+
+  @@id([bookingId, packageItemId])
+  @@index([listingId])
+  @@map("booking_package_items")
+}
+
+// ==================== PAYMENTS & WEBHOOKS ====================
+model Payment {
+  id              String   @id @default(cuid())
+  bookingId       String   @map("booking_id")
+  paypalOrderId   String   @unique
+  paypalPayerId   String?
+  paypalPayerEmail String?
+  amount          Float
+  currency        String   @default("ZAR")
+  status          PaymentStatus @default(PENDING)
+  webhookReceived  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
 
 enum PaymentStatus {
   PENDING
@@ -292,53 +441,20 @@ enum PaymentStatus {
   REFUNDED
 }
 
-model Payment {
-  id        String        @id @default(cuid())
-  bookingId String        @map("booking_id")
-  status    PaymentStatus @default(PENDING)
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
-
-  // PayPal details
-  paypalOrderId   String  @unique @map("paypal_order_id")
-  paypalPayerId   String? @map("paypal_payer_id")
-  paypalPayerEmail String? @map("paypal_payer_email")
-
-  // Payment details
-  amount         Float
-  currency       String  @default("ZAR")
-  paymentMethod  String  @default("paypal") @map("payment_method")
-
-  // Webhook tracking
-  webhookReceived Boolean @default(false) @map("webhook_received")
-  webhookEventId  String? @map("webhook_event_id")
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-
-  @@index([bookingId])
-  @@index([paypalOrderId])
-  @@map("payments")
-}
 
 model WebhookEvent {
-  id         String   @id @default(cuid())
-  eventId    String   @unique @map("event_id") // PayPal webhook event ID
-  eventType  String   @map("event_type") // e.g., "PAYMENT.CAPTURE.COMPLETED"
-  resourceId String   @map("resource_id") // e.g., paypal_order_id
-  payload    Json     @db.JsonB
-  processed  Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  eventType String
+  resourceId String
+  payload   Json     @db.JsonB
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-  @@index([eventId])
-  @@index([eventType])
-  @@index([processed])
   @@map("webhook_events")
 }
 
-// ============================================
-// DYNAMIC PRICING (Weather-based)
-// ============================================
-
+// ==================== DYNAMIC PRICING & WEATHER ====================
 enum PricingRuleType {
   WEATHER_SUNNY
   WEATHER_RAINY
@@ -388,15 +504,67 @@ model WeatherCache {
   @@map("weather_cache")
 }
 
-// ============================================
-// REVIEWS & RATINGS
-// ============================================
+// ==================== HANDOVER / DAMAGE CHECKLISTS (Supercars love this) ====================
+enum HandoverType {
+  CHECK_IN
+  CHECK_OUT
+}
 
+
+model ListingHandover {
+  id            String      @id @default(cuid())
+  bookingId     String      @unique
+  type          HandoverType
+  fuelLevel     Int?
+  mileage       Int?
+  notes         Json?       @db.JsonB
+  images        Json?       @db.JsonB
+  signedByCustomer Boolean @default(false)
+  signedByStaff    Boolean @default(false)
+  createdAt     DateTime    @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("listing_handovers")
+}
+
+// ==================== CUSTOM DELIVERY FIELDS ====================
+// Inferred models as they were missing from the provided context but referenced
+model DeliveryField {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  label       String
+  key         String
+  type        String   @default("text") // text, number, boolean
+  isRequired  Boolean  @default(false) @map("is_required")
+  order       Int      @default(0)
+  
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  values      BookingDeliveryField[]
+
+  @@unique([companyId, key])
+  @@map("delivery_fields")
+}
+
+model BookingDeliveryField {
+  id              String        @id @default(cuid())
+  bookingId       String        @map("booking_id")
+  deliveryFieldId String        @map("delivery_field_id")
+  value           String?       @db.Text
+
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  deliveryField   DeliveryField @relation(fields: [deliveryFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, deliveryFieldId])
+  @@map("booking_delivery_fields")
+}
+
+// ==================== REVIEWS & RATINGS ====================
 model Review {
   id        String   @id @default(cuid())
   bookingId String   @unique @map("booking_id")
   companyId String   @map("company_id")
-  listingId String   @map("listing_id")
+  listingId String?  @map("listing_id") // Made optional to support Package bookings
   userId    String   @map("user_id")
   rating    Int // 1-5 stars
   comment   String?  @db.Text
@@ -406,7 +574,7 @@ model Review {
   // Relations
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id])
-  listing Listing @relation(fields: [listingId], references: [id])
+  listing Listing? @relation(fields: [listingId], references: [id])
   user    User    @relation(fields: [userId], references: [id])
 
   @@index([companyId])
@@ -415,10 +583,7 @@ model Review {
   @@map("reviews")
 }
 
-// ============================================
-// ADMIN LOGS (Future: Audit trail)
-// ============================================
-
+// ==================== AUDIT LOG ====================
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?  @map("user_id")
