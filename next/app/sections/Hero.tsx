@@ -628,7 +628,7 @@ export default function HeroSection({ data }: HeroProps) {
       {/* Background image - full screen cover, cropped from top to show surfer */}
       <div className="absolute inset-0 w-full h-full z-0">
         <Image
-          src="/images/woman-surfer.avif"
+          src="/images/unsplash-1.webp"
           alt="Woman surfer hero cover"
           fill
           priority
