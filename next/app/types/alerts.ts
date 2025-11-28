@@ -20,6 +20,8 @@ export interface BeachDetails {
   optimalWindDirections: string[];
   idealSwellPeriod: { min: number; max: number };
   optimalSwellDirections: { min: number; max: number; cardinal: string };
+  region?: Region;
+  countryId?: string;
 }
 
 // Type definitions (replacing Prisma imports)

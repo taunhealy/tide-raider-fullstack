@@ -1,0 +1,790 @@
+{
+  "region": {
+    "name": "Western Cape",
+    "id": "western-cape"
+  },
+  "beachCount": 109,
+  "scoresCount": 2289,
+  "specificDateScoresCount": 327,
+  "specificDatePositiveScoresCount": 146,
+  "specificDateSampleScores": [
+    {
+      "id": "cmibz93fk0004s60efmw7r71l",
+      "beachId": "wilderness",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 4,
+      "starRating": 2,
+      "conditions": {
+        "windSpeed": 0,
+        "swellHeight": 1.4,
+        "swellPeriod": 9,
+        "windDirection": 292.5,
+        "swellDirection": 135
+      },
+      "date": "2025-11-28T00:00:00.000Z",
+      "createdAt": "2025-11-23T17:13:51.008Z",
+      "updatedAt": "2025-11-23T17:13:51.008Z",
+      "beach": {
+        "id": "wilderness",
+        "name": "Wilderness",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Wilderness",
+        "distanceFromCT": 440,
+        "optimalWindDirections": [
+          "SW",
+          "W"
+        ],
+        "optimalSwellDirections": {
+          "max": 270,
+          "min": 180
+        },
+        "bestSeasons": [
+          "SUMMER",
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Long stretch of beach break with multiple peaks. Best known for its consistent waves and beautiful setting within the Garden Route. Works in most conditions but excels with SW swell and light offshore winds. Multiple peaks spread crowds well. Good for all skill levels depending on conditions. Beach access is easy with multiple parking areas and facilities nearby. Watch for strong rip currents, especially during bigger swells.",
+        "difficulty": "INTERMEDIATE",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 3,
+          "min": 1.3
+        },
+        "idealSwellPeriod": {
+          "max": 16,
+          "min": 10
+        },
+        "waterTemp": {
+          "summer": 21,
+          "winter": 17
+        },
+        "hazards": [
+          "CURRENTS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.1234,
+          "lng": 18.4567
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmibz93fk0005s60e0htj53pi",
+      "beachId": "thermopylae",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 0,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 0,
+        "swellHeight": 1.4,
+        "swellPeriod": 9,
+        "windDirection": 292.5,
+        "swellDirection": 135
+      },
+      "date": "2025-11-28T00:00:00.000Z",
+      "createdAt": "2025-11-23T17:13:51.008Z",
+      "updatedAt": "2025-11-23T17:13:51.008Z",
+      "beach": {
+        "id": "thermopylae",
+        "name": "Thermopylae",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Cape Peninsula",
+        "distanceFromCT": 40,
+        "optimalWindDirections": [
+          "SE"
+        ],
+        "optimalSwellDirections": {
+          "max": 247.5,
+          "min": 225,
+          "cardinal": "SW to WSW"
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Powerful left-hand reef break that works only on big to massive swells. Wave wraps around and creates powerful sections along its 200m length. Located just inside a shipwreck with a critical takeoff. Despite being more protected than exposed breaks, experiences very strong currents. Inconsistent (3/10) but moderately crowded (5/10) when working. Requires solid swell to break but offers quality waves when conditions align.",
+        "difficulty": "ADVANCED",
+        "waveType": "REEF_BREAK",
+        "swellSize": {
+          "max": 4.7,
+          "min": 1.8
+        },
+        "idealSwellPeriod": {
+          "max": 18,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS",
+          "ROCKS",
+          "ROCKS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.1012,
+          "lng": 18.4987
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmibz93fk0006s60e81s0jwko",
+      "beachId": "scarborough",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 0,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 0,
+        "swellHeight": 1.4,
+        "swellPeriod": 9,
+        "windDirection": 292.5,
+        "swellDirection": 135
+      },
+      "date": "2025-11-28T00:00:00.000Z",
+      "createdAt": "2025-11-23T17:13:51.008Z",
+      "updatedAt": "2025-11-23T17:13:51.008Z",
+      "beach": {
+        "id": "scarborough",
+        "name": "Scarborough",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Scarborough",
+        "distanceFromCT": 35,
+        "optimalWindDirections": [
+          "SE",
+          "E",
+          "NE"
+        ],
+        "optimalSwellDirections": {
+          "max": 315,
+          "min": 225
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Powerful beach break with multiple peaks along 2km stretch. Main peak offers hollow lefts and rights, especially punchy on low tide. Outside bank holds bigger swells, creating long walls and occasional barrels. Best on SW swell with light easterly winds. Morning sessions crucial as wind typically picks up by 11am. Strong rips provide good paddle-out channels but create hazardous currents. Remote location means uncrowded sessions but bring all supplies. Watch for hidden rocks on inside section at low tide.",
+        "difficulty": "ADVANCED",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 6,
+          "min": 1.8
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 18,
+          "winter": 14
+        },
+        "hazards": [
+          "CURRENTS",
+          "ROCKS",
+          "SHARKS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.1123,
+          "lng": 18.4876
+        },
+        "videos": [
+          {
+            "url": "https://www.youtube.com/watch?v=fX_E3_QsHWI&ab_channel=GeoffHautman",
+            "title": "Scarborough Cape Town Windsurf RAW 2nd Jan 2023 Aerials galore",
+            "platform": "youtube"
+          }
+        ],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmibz93fk0007s60et9xb6kng",
+      "beachId": "dungeons",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 0,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 0,
+        "swellHeight": 1.4,
+        "swellPeriod": 9,
+        "windDirection": 292.5,
+        "swellDirection": 135
+      },
+      "date": "2025-11-28T00:00:00.000Z",
+      "createdAt": "2025-11-23T17:13:51.008Z",
+      "updatedAt": "2025-11-23T17:13:51.008Z",
+      "beach": {
+        "id": "dungeons",
+        "name": "Dungeons 💀",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Hout Bay",
+        "distanceFromCT": 40,
+        "optimalWindDirections": [
+          "SE",
+          "SSE"
+        ],
+        "optimalSwellDirections": {
+          "max": 247.5,
+          "min": 157.5
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Legendary big wave spot breaking over three distinct reef sections. Outside peak ('The Ridge') starts working at 15ft and holds up to 60ft faces, producing steep drops into massive walls. Middle section ('The Bowl') creates perfect giant barrels, while inside section ('The Finger') offers slightly smaller but still challenging waves. Needs minimum 15ft SW-WSW groundswell with 15+ second period to break properly. SE winds under 15 knots provide best conditions. Deep-water channel allows boat access but extremely challenging paddle-out (30+ minutes) even for elite surfers. Multiple boils and ledges create unpredictable wave behavior - extensive local knowledge essential. Strong currents can sweep surfers kilometers out to sea. Only attempt with proper big wave equipment, safety team, and serious experience. Best during winter months (June-August) when large groundswells are most consistent.",
+        "difficulty": "ADVANCED",
+        "waveType": "REEF_BREAK",
+        "swellSize": {
+          "max": 20,
+          "min": 3.5
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS",
+          "ROCKS",
+          "SHARKS",
+          "ROCKS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.0576,
+          "lng": 18.3497
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmibz93fk0008s60euetkax8n",
+      "beachId": "hout-bay-harbour-wedge",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 0,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 0,
+        "swellHeight": 1.4,
+        "swellPeriod": 9,
+        "windDirection": 292.5,
+        "swellDirection": 135
+      },
+      "date": "2025-11-28T00:00:00.000Z",
+      "createdAt": "2025-11-23T17:13:51.008Z",
+      "updatedAt": "2025-11-23T17:13:51.008Z",
+      "beach": {
+        "id": "hout-bay-harbour-wedge",
+        "name": "Hout Bay Harbour Wedge",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Hout Bay",
+        "distanceFromCT": 40,
+        "optimalWindDirections": [
+          "SE",
+          "SSE"
+        ],
+        "optimalSwellDirections": {
+          "max": 240,
+          "min": 225
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Rarely works.",
+        "difficulty": "ADVANCED",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 20,
+          "min": 3.2
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS"
+        ],
+        "crimeLevel": "MEDIUM",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": 0,
+          "lng": 0
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    }
+  ],
+  "sourceCounts": [
+    {
+      "_count": {
+        "source": 981
+      },
+      "source": "WINDFINDER"
+    },
+    {
+      "_count": {
+        "source": 654
+      },
+      "source": "WINDY"
+    },
+    {
+      "_count": {
+        "source": 654
+      },
+      "source": "WINDGURU"
+    }
+  ],
+  "sampleScores": [
+    {
+      "id": "cmihbf8yq000cs60el3t242ja",
+      "beachId": "wilderness",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 9,
+      "starRating": 4,
+      "conditions": {
+        "windSpeed": 4,
+        "swellHeight": 2.3,
+        "swellPeriod": 11,
+        "windDirection": 286.14,
+        "swellDirection": 218.12
+      },
+      "date": "2025-11-30T00:00:00.000Z",
+      "createdAt": "2025-11-27T10:53:24.386Z",
+      "updatedAt": "2025-11-27T10:53:24.386Z",
+      "beach": {
+        "id": "wilderness",
+        "name": "Wilderness",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Wilderness",
+        "distanceFromCT": 440,
+        "optimalWindDirections": [
+          "SW",
+          "W"
+        ],
+        "optimalSwellDirections": {
+          "max": 270,
+          "min": 180
+        },
+        "bestSeasons": [
+          "SUMMER",
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Long stretch of beach break with multiple peaks. Best known for its consistent waves and beautiful setting within the Garden Route. Works in most conditions but excels with SW swell and light offshore winds. Multiple peaks spread crowds well. Good for all skill levels depending on conditions. Beach access is easy with multiple parking areas and facilities nearby. Watch for strong rip currents, especially during bigger swells.",
+        "difficulty": "INTERMEDIATE",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 3,
+          "min": 1.3
+        },
+        "idealSwellPeriod": {
+          "max": 16,
+          "min": 10
+        },
+        "waterTemp": {
+          "summer": 21,
+          "winter": 17
+        },
+        "hazards": [
+          "CURRENTS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.1234,
+          "lng": 18.4567
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmihbf8yq000ds60ewayc5j2l",
+      "beachId": "thermopylae",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 1,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 4,
+        "swellHeight": 2.3,
+        "swellPeriod": 11,
+        "windDirection": 286.14,
+        "swellDirection": 218.12
+      },
+      "date": "2025-11-30T00:00:00.000Z",
+      "createdAt": "2025-11-27T10:53:24.386Z",
+      "updatedAt": "2025-11-27T10:53:24.386Z",
+      "beach": {
+        "id": "thermopylae",
+        "name": "Thermopylae",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Cape Peninsula",
+        "distanceFromCT": 40,
+        "optimalWindDirections": [
+          "SE"
+        ],
+        "optimalSwellDirections": {
+          "max": 247.5,
+          "min": 225,
+          "cardinal": "SW to WSW"
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Powerful left-hand reef break that works only on big to massive swells. Wave wraps around and creates powerful sections along its 200m length. Located just inside a shipwreck with a critical takeoff. Despite being more protected than exposed breaks, experiences very strong currents. Inconsistent (3/10) but moderately crowded (5/10) when working. Requires solid swell to break but offers quality waves when conditions align.",
+        "difficulty": "ADVANCED",
+        "waveType": "REEF_BREAK",
+        "swellSize": {
+          "max": 4.7,
+          "min": 1.8
+        },
+        "idealSwellPeriod": {
+          "max": 18,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS",
+          "ROCKS",
+          "ROCKS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -34.1012,
+          "lng": 18.4987
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmihbf8yq000as60e09bg30xy",
+      "beachId": "hout-bay-harbour-wedge",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 0,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 4,
+        "swellHeight": 2.3,
+        "swellPeriod": 11,
+        "windDirection": 286.14,
+        "swellDirection": 218.12
+      },
+      "date": "2025-11-30T00:00:00.000Z",
+      "createdAt": "2025-11-27T10:53:24.386Z",
+      "updatedAt": "2025-11-27T10:53:24.386Z",
+      "beach": {
+        "id": "hout-bay-harbour-wedge",
+        "name": "Hout Bay Harbour Wedge",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Hout Bay",
+        "distanceFromCT": 40,
+        "optimalWindDirections": [
+          "SE",
+          "SSE"
+        ],
+        "optimalSwellDirections": {
+          "max": 240,
+          "min": 225
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Rarely works.",
+        "difficulty": "ADVANCED",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 20,
+          "min": 3.2
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS"
+        ],
+        "crimeLevel": "MEDIUM",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": 0,
+          "lng": 0
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmihbf8yq000bs60ewrt7kt9m",
+      "beachId": "big-bay",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 1,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 4,
+        "swellHeight": 2.3,
+        "swellPeriod": 11,
+        "windDirection": 286.14,
+        "swellDirection": 218.12
+      },
+      "date": "2025-11-30T00:00:00.000Z",
+      "createdAt": "2025-11-27T10:53:24.386Z",
+      "updatedAt": "2025-11-27T10:53:24.386Z",
+      "beach": {
+        "id": "big-bay",
+        "name": "Big Bay",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Bloubergstrand",
+        "distanceFromCT": 35,
+        "optimalWindDirections": [
+          "SE",
+          "SSE",
+          "ESE"
+        ],
+        "optimalSwellDirections": {
+          "max": 245,
+          "min": 225
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "Expansive beach break with multiple peaks across 1.5km stretch. Three distinct areas: 'Big Rock' (southern end) offers longer right-handers up to 150m with occasional barrels on bigger swells, 'Middle Peak' provides consistent A-frame waves ideal for intermediate surfers, and 'Kite Beach' (northern end) reserved for kitesurfing. Wave mechanics vary significantly with tide - low tide exposes rock shelf creating hollow, punchy waves especially at Big Rock, while high tide offers fuller, more forgiving walls better for longboarding and beginners. Best performance on 4-6ft SW swell with 12-15 second period and SE-SSE winds under 15 knots. Morning sessions (before 11am) typically glassy with light offshore conditions before the Cape Doctor kicks in. Multiple rip channels between sandbars provide easy paddle-outs but create strong lateral currents - use landmarks to maintain position. Peak hierarchy strictly observed at Big Rock, while beach breaks offer more relaxed vibe. Winter (May-August) brings bigger swells and cleaner conditions with NW winds, while summer offers reliable 2-4ft waves perfect for learning. Shark spotters present during daylight hours. Facilities include showers, toilets, restaurants, and surf shops. Parking can be challenging on weekends - arrive early. Watch for bluebottles in summer months and seal activity near rocks. Wave quality highly dependent on sand movement - banks shift significantly after big storms.",
+        "difficulty": "INTERMEDIATE",
+        "waveType": "BEACH_BREAK",
+        "swellSize": {
+          "max": 4,
+          "min": 1.2
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 18,
+          "winter": 14
+        },
+        "hazards": [
+          "CURRENTS",
+          "ROCKS",
+          "ROCKS"
+        ],
+        "crimeLevel": "LOW",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -33.7947,
+          "lng": 18.4553
+        },
+        "videos": [
+          {
+            "url": "https://www.youtube.com/watch?v=W5IOP63ALvE&ab_channel=CapeTownSurf",
+            "title": "Big Bay Surf Report - 3 June 2021",
+            "platform": "youtube"
+          }
+        ],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    },
+    {
+      "id": "cmihbf8yq000es60ed1jkvhq6",
+      "beachId": "elands-bay-the-point",
+      "regionId": "western-cape",
+      "source": "WINDFINDER",
+      "score": 1,
+      "starRating": 1,
+      "conditions": {
+        "windSpeed": 4,
+        "swellHeight": 2.3,
+        "swellPeriod": 11,
+        "windDirection": 286.14,
+        "swellDirection": 218.12
+      },
+      "date": "2025-11-30T00:00:00.000Z",
+      "createdAt": "2025-11-27T10:53:24.386Z",
+      "updatedAt": "2025-11-27T10:53:24.386Z",
+      "beach": {
+        "id": "elands-bay-the-point",
+        "name": "Elands Bay The Point",
+        "continent": "Africa",
+        "regionId": "western-cape",
+        "location": "Elands Bay",
+        "distanceFromCT": 220,
+        "optimalWindDirections": [
+          "SE"
+        ],
+        "optimalSwellDirections": {
+          "max": 270,
+          "min": 225,
+          "cardinal": "SW"
+        },
+        "bestSeasons": [
+          "WINTER"
+        ],
+        "optimalTide": "UNKNOWN",
+        "description": "World-class left-hand point break. Long walls and barrel sections on bigger swells.",
+        "difficulty": "ADVANCED",
+        "waveType": "POINT_BREAK",
+        "swellSize": {
+          "max": 3.8,
+          "min": 1.6
+        },
+        "idealSwellPeriod": {
+          "max": 24,
+          "min": 12
+        },
+        "waterTemp": {
+          "summer": 16,
+          "winter": 12
+        },
+        "hazards": [
+          "ROCKS",
+          "ROCKS",
+          "ROCKS",
+          "SHARKS"
+        ],
+        "crimeLevel": "MEDIUM",
+        "sharkAttack": "NONE",
+        "image": null,
+        "coordinates": {
+          "lat": -32.3127,
+          "lng": 18.3331
+        },
+        "videos": [],
+        "profileImage": null,
+        "advertisingPrice": null,
+        "coffeeShop": null,
+        "hasSharkAlert": null,
+        "bestMonthOfYear": null,
+        "isHiddenGem": null,
+        "sheltered": null,
+        "countryId": "south-africa"
+      }
+    }
+  ]
+}

@@ -113,6 +113,34 @@ export function AlertProvider({
 }: AlertProviderProps) {
   const router = useRouter();
   const { data: session } = useBackendAuth();
+  
+  // Transform existingAlert from backend format to Prisma format
+  const transformedExistingAlert = existingAlert
+    ? {
+        ...existingAlert,
+        // Transform beachId to Prisma connect format
+        ...(existingAlert.beachId && {
+          beach: { connect: { id: existingAlert.beachId } },
+        }),
+        // Transform regionId to Prisma connect format
+        ...(existingAlert.regionId && {
+          region: { connect: { id: existingAlert.regionId } },
+        }),
+        // Ensure sources is properly set
+        sources: existingAlert.sources || ["WINDFINDER"],
+        // Transform properties array to Prisma create format
+        properties: existingAlert.properties?.length
+          ? {
+              create: existingAlert.properties.map((prop: any) => ({
+                property: prop.property,
+                range: prop.range,
+                optimalValue: prop.optimalValue,
+              })),
+            }
+          : { create: [] },
+      }
+    : null;
+
   // Initialize mode based on existing alert type
   const initialMode =
     existingAlert?.alertType === AlertType.RATING
@@ -124,7 +152,7 @@ export function AlertProvider({
 
   const [state, dispatch] = useReducer(alertReducer, {
     ...initialState,
-    alert: existingAlert ?? initialState.alert,
+    alert: transformedExistingAlert ?? initialState.alert,
     mode: initialMode,
     selectedLogEntry: logEntry ?? null, // Initialize from prop
   });
@@ -175,7 +203,8 @@ export function AlertProvider({
         }
         throw new Error(errorData.error || "Failed to fetch beach details");
       }
-      return response.json();
+      const data = await response.json();
+      return data.beach || data;
     },
     enabled: !!state.alert.beach?.connect?.id,
     retry: false, // Don't retry on 404 errors

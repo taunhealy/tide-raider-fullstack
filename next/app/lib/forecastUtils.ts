@@ -65,3 +65,37 @@ export function degreesToCardinal(degrees: number): string {
   ];
   return cardinals[Math.round((degrees % 360) / 22.5) % 16];
 }
+
+export function formatPropertyName(property: string): string {
+  switch (property) {
+    case "windSpeed":
+      return "Wind Speed";
+    case "windDirection":
+      return "Wind Direction";
+    case "swellHeight":
+      return "Swell Height";
+    case "swellPeriod":
+      return "Swell Period";
+    case "swellDirection":
+      return "Swell Direction";
+    default:
+      // Handle snake_case or other formats if needed, or just capitalize
+      return property.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+  }
+}
+
+export function getUnit(property: string): string {
+  switch (property) {
+    case "windSpeed":
+      return "kts";
+    case "windDirection":
+    case "swellDirection":
+      return "°";
+    case "swellHeight":
+      return "m";
+    case "swellPeriod":
+      return "s";
+    default:
+      return "";
+  }
+}

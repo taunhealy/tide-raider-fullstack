@@ -52,6 +52,7 @@ async function getAlert(id: string, userId: string): Promise<any | null> {
       forecastDate: alert.forecastDate,
       regionId: alert.regionId,
       userId: alert.userId,
+      sources: alert.sources || ["WINDFINDER"], // Include sources field
       properties: (alert.properties || []).map((prop: any) => ({
         property: prop.property,
         range: prop.range,

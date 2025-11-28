@@ -387,9 +387,12 @@ function AlertFormBody({
   useEffect(() => {
     if (!alert.beach?.connect?.id) {
       setSelectedBeach(null);
+    } else if (beachDetails && beachDetails.id === alert.beach.connect.id) {
+      // We can safely cast here because we know the API returns the full beach object
+      // and we've updated BeachDetails to include necessary fields
+      setSelectedBeach(beachDetails as unknown as Beach);
     }
-    // Don't set selectedBeach from beachDetails - it's missing required Beach properties
-  }, [alert.beach?.connect?.id]);
+  }, [alert.beach?.connect?.id, beachDetails]);
 
   return (
     <div className="space-y-8">

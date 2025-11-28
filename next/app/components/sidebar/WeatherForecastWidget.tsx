@@ -293,7 +293,7 @@ export default function WeatherForecastWidget() {
               onClick={() => setSelectedSource("WINDFINDER")}
               className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDFINDER"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
@@ -303,7 +303,7 @@ export default function WeatherForecastWidget() {
               onClick={() => setSelectedSource("WINDGURU")}
               className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
@@ -313,7 +313,7 @@ export default function WeatherForecastWidget() {
               onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
               className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : isPremium
                     ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                     : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
@@ -448,7 +448,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDFINDER")}
                 className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDFINDER"
-                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                     : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                 }`}
               >
@@ -458,7 +458,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDGURU")}
                 className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDGURU"
-                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                     : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                 }`}
               >
@@ -469,7 +469,7 @@ export default function WeatherForecastWidget() {
                 title={!isPremium ? "Click to subscribe and unlock Source C" : ""}
                 className={`relative flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDY"
-                    ? "bg-[var(--color-tertiary)] text-white shadow-[0_0_10px_rgba(28,217,255,0.4)]"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                     : isPremium
                       ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                       : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"

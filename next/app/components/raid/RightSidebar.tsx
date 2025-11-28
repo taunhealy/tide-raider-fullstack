@@ -2,7 +2,6 @@
 
 import { useBeachData } from "@/app/hooks/useBeachData";
 import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
-import AdventureExperiences from "../AdventureExperiences";
 import RegionalHighScores from "../RegionalHighScores";
 import FunFacts from "../FunFacts";
 import RecentRaidLogs from "../RecentRaidLogs";
@@ -83,20 +82,7 @@ const RegionalHighScoresSkeleton = () => (
   </div>
 );
 
-const AdventureExperiencesSkeleton = () => (
-  <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
-    <Skeleton className="h-7 w-48 mb-4" />
-    <div className="space-y-3">
-      {[...Array(2)].map((_, i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-40 w-full rounded-md" />
-          <Skeleton className="h-5 w-3/4" />
-          <Skeleton className="h-4 w-2/3" />
-        </div>
-      ))}
-    </div>
-  </div>
-);
+
 
 const RegionalServicesSidebarSkeleton = () => (
   <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
@@ -146,7 +132,7 @@ export default function RightSidebar() {
   const { filters } = useBeachFilters();
 
   return (
-    <aside className="space-y-8 lg:w-[250px] xl:w-[300px]">
+    <aside className="w-full lg:w-[250px] xl:w-[300px] space-y-8">
       {/* Desktop Forecast Widget - Hidden on mobile (shown in BeachHeaderControls) */}
       <div className="hidden lg:block">
         <WeatherForecastWidget />
@@ -161,9 +147,6 @@ export default function RightSidebar() {
       {/* Sticky container for Recent Sessions and Travel Posts */}
       <div className="sticky top-4 space-y-8">
         <RecentRaidLogs />
-        {filters.regionId && (
-          <AdventureExperiences selectedRegion={filters.regionId} />
-        )}
         <FunFacts />
       </div>
     </aside>

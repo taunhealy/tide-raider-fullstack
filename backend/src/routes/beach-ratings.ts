@@ -46,48 +46,59 @@ router.get(
   optionalAuth,
   async (req: Request, res: Response) => {
     try {
-      const { regionId, period, source } = req.query;
+      const { regionId, period } = req.query;
 
       if (!regionId) {
         return res.status(400).json({ error: "regionId is required" });
       }
 
-      // Default to WINDFINDER if no source specified
-      const selectedSource =
-        (source as "WINDFINDER" | "WINDGURU" | "WINDY") || "WINDFINDER";
-
       // Calculate date range based on period
+      // Calculate date range based on period or specific date
       const now = new Date();
       let startDate: Date;
-      const endDate = new Date(now);
-      endDate.setUTCHours(23, 59, 59, 999);
+      let endDate: Date;
 
-      switch (period) {
-        case "week":
-          startDate = new Date(now);
-          startDate.setDate(startDate.getDate() - 7);
-          startDate.setUTCHours(0, 0, 0, 0);
-          break;
-        case "month":
-          startDate = new Date(now);
-          startDate.setMonth(startDate.getMonth() - 1);
-          startDate.setUTCHours(0, 0, 0, 0);
-          break;
-        case "year":
-          startDate = new Date(now);
-          startDate.setFullYear(startDate.getFullYear() - 1);
-          startDate.setUTCHours(0, 0, 0, 0);
-          break;
-        case "3years":
-          startDate = new Date(now);
-          startDate.setFullYear(startDate.getFullYear() - 3);
-          startDate.setUTCHours(0, 0, 0, 0);
-          break;
-        case "today":
-        default:
-          startDate = new Date(now);
-          startDate.setUTCHours(0, 0, 0, 0);
-          break;
+      const dateParam = req.query.date as string;
+
+      if (dateParam) {
+        // Specific date requested
+        startDate = new Date(dateParam);
+        startDate.setUTCHours(0, 0, 0, 0);
+        
+        endDate = new Date(startDate);
+        endDate.setUTCHours(23, 59, 59, 999);
+      } else {
+        // Period-based range (defaulting to today)
+        endDate = new Date(now);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        switch (period) {
+          case "week":
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 7);
+            startDate.setUTCHours(0, 0, 0, 0);
+            break;
+          case "month":
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 1);
+            startDate.setUTCHours(0, 0, 0, 0);
+            break;
+          case "year":
+            startDate = new Date(now);
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            startDate.setUTCHours(0, 0, 0, 0);
+            break;
+          case "3years":
+            startDate = new Date(now);
+            startDate.setFullYear(startDate.getFullYear() - 3);
+            startDate.setUTCHours(0, 0, 0, 0);
+            break;
+          case "today":
+          default:
+            startDate = new Date(now);
+            startDate.setUTCHours(0, 0, 0, 0);
+            break;
+        }
       }
 
       // Resolve regionId (could be slug or UUID)
@@ -119,7 +130,7 @@ router.get(
         resolvedRegionId = region.id;
       }
 
-      // Get beaches for the region
+      // Get beaches for the region with scores from ALL sources
       const beaches = await prisma.beach.findMany({
         where: { regionId: resolvedRegionId },
         include: {
@@ -130,7 +141,7 @@ router.get(
                 gte: startDate,
                 lte: endDate,
               },
-              source: selectedSource,
+              // Remove source filter to get scores from all sources
             },
             orderBy: {
               date: "desc",
@@ -139,14 +150,31 @@ router.get(
         },
       });
 
-      // Calculate total scores for the period
+      // Calculate total scores for the period, aggregating across all sources
       const beachesWithScores = beaches.map((beach) => {
         const scores = beach.beachDailyScores;
+        
+        // Aggregate scores across all sources
         const totalScore = scores.reduce(
           (sum, score) => sum + (score.score || 0),
           0
         );
-        const appearances = scores.length;
+        
+        // Count unique date appearances (not source appearances)
+        const uniqueDates = new Set(
+          scores.map(score => score.date.toISOString().split('T')[0])
+        );
+        const appearances = uniqueDates.size;
+
+        // For latest score, get the sum of all sources for the most recent date
+        const latestDate = scores.length > 0 ? scores[0].date : null;
+        const latestScores = latestDate 
+          ? scores.filter(s => s.date.getTime() === latestDate.getTime())
+          : [];
+        const latestScore = latestScores.reduce(
+          (sum, score) => sum + (score.score || 0),
+          0
+        );
 
         return {
           id: beach.id,
@@ -154,13 +182,34 @@ router.get(
           region: beach.region,
           totalScore: totalScore,
           appearances,
-          latestScore: scores[0]?.score || 0,
+          latestScore: latestScore,
         };
       });
 
+      // Filter out beaches with no scores (totalScore = 0)
+      const beachesWithValidScores = beachesWithScores.filter(
+        (beach) => beach.totalScore > 0
+      );
+
+      // Debug logging
+      console.log(`[beach-ratings/historical] Region: ${resolvedRegionId}, Period: ${period}`);
+      console.log(`[beach-ratings/historical] Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      console.log(`[beach-ratings/historical] Total beaches in region: ${beaches.length}`);
+      
+      if (beaches.length > 0) {
+        const firstBeach = beaches[0];
+        console.log(`[beach-ratings/historical] First beach (${firstBeach.name}) scores count: ${firstBeach.beachDailyScores.length}`);
+        if (firstBeach.beachDailyScores.length > 0) {
+          console.log(`[beach-ratings/historical] First beach first score:`, firstBeach.beachDailyScores[0]);
+        }
+      }
+
+      console.log(`[beach-ratings/historical] Beaches with scores > 0: ${beachesWithValidScores.length}`);
+
       // Sort by total score for all periods, or latest score for today
-      const sortedBeaches = beachesWithScores.sort((a, b) =>
-        period === "today"
+      // If specific date is requested, sort by total score for that date (which is effectively latestScore logic since range is 1 day)
+      const sortedBeaches = beachesWithValidScores.sort((a, b) =>
+        (period === "today" || dateParam)
           ? b.latestScore - a.latestScore
           : b.totalScore - a.totalScore
       );

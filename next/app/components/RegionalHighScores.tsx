@@ -5,14 +5,12 @@ import { useState, useEffect, Suspense, useMemo } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { subDays, subYears, startOfDay, endOfDay } from "date-fns";
+import { subDays, subYears, startOfDay, endOfDay, addDays, format } from "date-fns";
 import { RandomLoader } from "@/app/components/ui/random-loader";
 import { useRegions } from "@/app/hooks/useRegions";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { Lock } from "lucide-react";
 import Link from "next/link";
-
-type TimePeriod = "today" | "week" | "year" | "3years" | "month";
 
 interface RegionalHighScoresProps {
   beaches: Beach[];
@@ -37,45 +35,28 @@ function RegionalHighScoresContent({
   selectedRegion,
   onBeachClick,
 }: RegionalHighScoresProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("today");
-
-  // Get selected source from localStorage (shared with WeatherForecastWidget)
-  const [selectedSource, setSelectedSource] = useState<
-    "WINDFINDER" | "WINDGURU" | "WINDY"
-  >(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("forecastSource");
-      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
-        return stored as "WINDFINDER" | "WINDGURU" | "WINDY";
-      }
-    }
-    return "WINDFINDER";
-  });
-
-  // Listen for source changes from WeatherForecastWidget
-  useEffect(() => {
-    const handleSourceChange = (event: CustomEvent) => {
-      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY";
-      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(newSource)) {
-        setSelectedSource(newSource);
-        console.log(
-          "[RegionalHighScores] Source changed via event:",
-          newSource
-        );
-      }
-    };
-
-    window.addEventListener(
-      "forecastSourceChanged",
-      handleSourceChange as EventListener
-    );
-    return () => {
-      window.removeEventListener(
-        "forecastSourceChanged",
-        handleSourceChange as EventListener
-      );
-    };
+  // Use date strings for state: "YYYY-MM-DD"
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  
+  // Calculate the 3 dates for tabs
+  const dateTabs = useMemo(() => {
+    const today = new Date();
+    const tomorrow = addDays(today, 1);
+    const dayAfter = addDays(today, 2);
+    
+    return [
+      { id: format(today, 'yyyy-MM-dd'), label: 'Today' },
+      { id: format(tomorrow, 'yyyy-MM-dd'), label: 'Tomorrow' },
+      { id: format(dayAfter, 'yyyy-MM-dd'), label: format(dayAfter, 'EEE, MMM d') },
+    ];
   }, []);
+
+  // Initialize selectedDate with today once mounted
+  useEffect(() => {
+    if (typeof window !== "undefined" && !selectedDate) {
+      setSelectedDate(dateTabs[0].id);
+    }
+  }, [dateTabs, selectedDate]);
 
   // Use the same backend subscription check as BeachCard
   // This calls /api/paypal/subscription-status which proxies to the backend
@@ -105,33 +86,20 @@ function RegionalHighScoresContent({
     subscriptionStatus,
   ]);
 
-  // Get today's date string to include in query key - this ensures cache refreshes when scores are recalculated
-  // Use useState with useEffect to ensure consistent date during hydration
-  const [today, setToday] = useState<string>("");
-
-  useEffect(() => {
-    // Only calculate on client to avoid hydration mismatch
-    if (typeof window !== "undefined") {
-      const todayStr = new Date().toISOString().split("T")[0];
-      setToday(todayStr);
-    }
-  }, []);
-
   // Use the new endpoint
   // Only enable query when we have a date (client-side) and region
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: [
       "regionalHighScores",
       selectedRegion,
-      timePeriod,
-      selectedSource,
-      today,
+      selectedDate,
     ],
     queryFn: async () => {
-      if (!selectedRegion || !today) return { beaches: [] };
+      if (!selectedRegion || !selectedDate) return { beaches: [] };
 
+      // Pass date parameter instead of period
       const response = await fetch(
-        `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}&source=${selectedSource}`
+        `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`
       );
 
       // Handle 429 gracefully - return empty beaches array
@@ -149,7 +117,7 @@ function RegionalHighScoresContent({
           status: response.status,
           statusText: response.statusText,
           error: errorText,
-          url: `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&period=${timePeriod}`,
+          url: `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`,
         });
         return { beaches: [] };
       }
@@ -160,7 +128,7 @@ function RegionalHighScoresContent({
       if (process.env.NODE_ENV === "development") {
         console.log("[RegionalHighScores] API response:", {
           regionId: selectedRegion,
-          period: timePeriod,
+          date: selectedDate,
           beachCount: data?.beaches?.length || 0,
           hasBeaches: Array.isArray(data?.beaches),
         });
@@ -169,7 +137,7 @@ function RegionalHighScoresContent({
       // Ensure we always return an object with beaches array
       return Array.isArray(data?.beaches) ? data : { beaches: [] };
     },
-    enabled: !!selectedRegion && !!today, // Only run query when we have region and date
+    enabled: !!selectedRegion && !!selectedDate, // Only run query when we have region and date
     staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
     refetchOnMount: false, // Don't refetch on mount if data is fresh
@@ -178,15 +146,6 @@ function RegionalHighScoresContent({
     // Provide default value to prevent undefined access during SSR
     initialData: { beaches: [] },
   });
-
-  // Time period tab labels
-  const timePeriodLabels = {
-    today: "Today",
-    week: "Week",
-    month: "Month",
-    year: "Year",
-    "3years": "3 Years",
-  };
 
   // Safely access beaches from API response with fallback to empty array
   // Type assertion needed because the API returns BeachWithScore[]
@@ -210,21 +169,30 @@ function RegionalHighScoresContent({
   }
 
   return (
-    <>
+    <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 font-primary">
+          Top Surf Breaks
+        </h3>
+        <p className="text-xs text-gray-500 font-primary mt-1">
+          Scores aggregated from all forecast sources
+        </p>
+      </div>
+
       {/* Time period tabs */}
       <div className="flex space-x-1 mb-4 bg-gray-100 p-1 rounded-md">
-        {(Object.keys(timePeriodLabels) as TimePeriod[]).map((period) => (
+        {dateTabs.map((tab) => (
           <button
-            key={period}
-            onClick={() => setTimePeriod(period)}
+            key={tab.id}
+            onClick={() => setSelectedDate(tab.id)}
             className={cn(
               "flex-1 py-1.5 px-2 text-xs font-medium rounded font-primary transition-colors",
-              timePeriod === period
+              selectedDate === tab.id
                 ? "bg-white text-gray-800 shadow-sm"
                 : "text-gray-600 hover:bg-gray-50"
             )}
           >
-            {timePeriodLabels[period]}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -246,8 +214,8 @@ function RegionalHighScoresContent({
           Error loading surf breaks. Please try again.
         </p>
       ) : apiBeaches.length === 0 ? (
-        <p className="text-gray-600 text-sm font-primary">
-          No good surf breaks found for this time period in {selectedRegion}.
+        <p className="text-gray-600 text-sm font-primary text-center py-4">
+          No surf breaks with scores found for this time period.
         </p>
       ) : (
         <>
@@ -256,8 +224,8 @@ function RegionalHighScoresContent({
               .slice(0, 10)
               .map((beach: BeachWithScore, index: number) => {
                 // Calculate display score for the badge
-                const displayScore =
-                  timePeriod === "today" ? beach.latestScore : beach.totalScore;
+                // Since we are filtering by a specific date, totalScore represents the score for that day
+                const displayScore = beach.totalScore;
                 const roundedScore = Math.round(displayScore);
 
                 // Lock the first 5 items for all time periods for non-premium users
@@ -266,7 +234,7 @@ function RegionalHighScoresContent({
                 // If user is premium (subscribed or has trial), NO gates at all
                 const isLocked = isPremium
                   ? false
-                  : !isSubscriptionLoading && index < 5 && !!today;
+                  : !isSubscriptionLoading && index < 5 && !!selectedDate;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {
@@ -277,7 +245,7 @@ function RegionalHighScoresContent({
                     isSubscribed,
                     hasActiveTrial,
                     subscriptionStatus,
-                    today,
+                    selectedDate,
                     isLocked,
                   });
                 }
@@ -340,7 +308,7 @@ function RegionalHighScoresContent({
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }
 
