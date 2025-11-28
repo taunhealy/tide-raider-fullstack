@@ -12,37 +12,42 @@ const BACKEND_URL =
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyToBackend(req, params.path, "GET");
+  const { path } = await params;
+  return proxyToBackend(req, path, "GET");
 }
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyToBackend(req, params.path, "POST");
+  const { path } = await params;
+  return proxyToBackend(req, path, "POST");
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyToBackend(req, params.path, "PUT");
+  const { path } = await params;
+  return proxyToBackend(req, path, "PUT");
 }
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyToBackend(req, params.path, "PATCH");
+  const { path } = await params;
+  return proxyToBackend(req, path, "PATCH");
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  return proxyToBackend(req, params.path, "DELETE");
+  const { path } = await params;
+  return proxyToBackend(req, path, "DELETE");
 }
 
 async function proxyToBackend(
@@ -96,6 +101,14 @@ async function proxyToBackend(
       data = await response.json();
     } else {
       data = await response.text();
+    }
+
+    // Log backend errors for debugging
+    if (!response.ok) {
+      console.error(
+        `[backend-proxy] Backend error ${response.status}:`,
+        JSON.stringify(data, null, 2)
+      );
     }
 
     // Return response with same status
