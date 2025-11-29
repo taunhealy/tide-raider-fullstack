@@ -612,3 +612,13 @@ body {
   animation: wave-pulse 3s ease-in-out infinite;
 }
 
+
+.bg-brand-dark {
+  @apply bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md border border-gray-700;
+  border-color: rgba(28, 217, 255, 0.4);
+  box-shadow: 0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.text-brand-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-[var(--color-tertiary)];
+}

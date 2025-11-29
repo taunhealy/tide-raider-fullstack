@@ -101,6 +101,13 @@ async function loadData() {
     beachData =
       beachDataModule.beachData || beachDataModule.default?.beachData || [];
     console.log(`✓ Loaded ${beachData.length} beaches from beachData.ts`);
+    
+    const dungeonsData = beachData.find(b => b.id === 'dungeons');
+    if (dungeonsData) {
+        console.log(`DEBUG: Loaded Dungeons data. isHiddenGem: ${dungeonsData.isHiddenGem}`);
+    } else {
+        console.log("DEBUG: Dungeons beach not found in loaded data!");
+    }
   } catch (error: any) {
     console.warn("⚠️ Could not load beachData. Beach seeding will be skipped.");
     console.warn(`   Error: ${error.message}`);
@@ -709,6 +716,7 @@ async function main() {
               bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
               coordinates: beach.coordinates,
               videos: beach.videos || [],
+              isHiddenGem: beach.isHiddenGem,
             },
             create: {
               id: beach.id,
@@ -736,8 +744,13 @@ async function main() {
               bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
               coordinates: beach.coordinates,
               videos: beach.videos || [],
+              isHiddenGem: beach.isHiddenGem,
             },
           });
+
+          if (beach.id === 'dungeons') {
+             console.log(`DEBUG: Processing Dungeons. isHiddenGem in data: ${beach.isHiddenGem}`);
+          }
 
           createdCount++;
           if (createdCount % 50 === 0) {
@@ -786,9 +799,10 @@ async function main() {
       console.log("6. Creating log entries...");
       for (const entry of sampleLogEntries) {
         try {
-          const forecast = await prisma.forecastA.create({
+          const forecast = await prisma.forecast.create({
             data: {
               date: entry.date,
+              source: "WINDFINDER",
               region: { connect: { id: beach.region.id } },
               windSpeed: Math.floor(Math.random() * 20) + 5,
               windDirection: Math.floor(Math.random() * 360),

@@ -477,6 +477,7 @@ async function main() {
             bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
             coordinates: beach.coordinates,
             videos: beach.videos || [],
+            isHiddenGem: beach.isHiddenGem || false,
           },
           create: {
             // Create new beach
@@ -503,6 +504,7 @@ async function main() {
             bestMonthOfYear: mapMonth(beach.bestMonthOfYear),
             coordinates: beach.coordinates,
             videos: beach.videos || [],
+            isHiddenGem: beach.isHiddenGem || false,
           },
         });
 

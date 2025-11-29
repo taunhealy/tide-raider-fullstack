@@ -45,8 +45,8 @@ export function AlertCard({
   return (
     <Card
       className={cn(
-        "bg-gray-800 rounded-xl overflow-hidden shadow-md transition-all duration-200 hover:shadow-xl hover:scale-[1.02] h-full flex flex-col border-0",
-        alert.active && "ring-1 ring-purple-500/50 shadow-lg shadow-purple-500/10"
+        "bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] h-full flex flex-col border border-gray-200",
+        alert.active && "ring-1 ring-[var(--color-tertiary)]/50 shadow-lg shadow-[var(--color-tertiary)]/10"
       )}
     >
       <CardHeader className="pb-2 relative">
@@ -61,8 +61,8 @@ export function AlertCard({
                       onToggleActive(alert.id, checked)
                     }
                     className={cn(
-                      "data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-pink-500",
-                      "data-[state=unchecked]:bg-gray-700"
+                      "data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-gray-900 data-[state=checked]:to-[var(--color-tertiary)]",
+                      "data-[state=unchecked]:bg-gray-200"
                     )}
                     aria-label={
                       alert.active ? "Deactivate alert" : "Activate alert"
@@ -79,7 +79,7 @@ export function AlertCard({
             variant="ghost"
             size="icon"
             onClick={() => onEdit(alert.id)}
-            className="h-8 w-8 text-gray-400 hover:text-white hover:bg-gray-700"
+            className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-100"
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -87,32 +87,32 @@ export function AlertCard({
             variant="ghost"
             size="icon"
             onClick={() => onDelete(alert.id)}
-            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+            className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-        <h3 className="text-base font-primary font-bold text-white flex items-center pr-24">
+        <h3 className="text-base font-primary font-bold text-gray-900 flex items-center pr-24">
           {alert.name}
         </h3>
       </CardHeader>
       <CardContent className="flex-grow flex-1">
         <div className="text-sm space-y-2 sm:space-y-3 font-primary h-full flex flex-col">
-          <p className="text-gray-400">
+          <p className="text-gray-500">
             {alert.region?.name || alert.regionId}
           </p>
 
           {/* Beach Badge */}
           {alert.beach?.name && (
             <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 border border-gray-600 rounded-md text-sm font-medium text-gray-200">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700">
                 <span>{alert.beach.name}</span>
               </div>
             </div>
           )}
 
-          <p className="text-gray-400">
-            <span className="font-medium text-gray-200">🔔</span>{" "}
+          <p className="text-gray-500">
+            <span className="font-medium text-gray-700">🔔</span>{" "}
             {formatNotificationMethod(alert.notificationMethod)}
           </p>
           <AlertConditions alert={alert} />
