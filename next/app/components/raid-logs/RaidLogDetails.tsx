@@ -323,7 +323,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                             </p>
                             <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
                               {forecastData.swellHeight != null
-                                ? `${forecastData.swellHeight}m`
+                                ? `${Number(forecastData.swellHeight).toFixed(2)}m`
                                 : "N/A"}
                               {forecastData.swellDirection != null && (
                                 <span className="text-[var(--color-text-secondary)] font-normal ml-1">

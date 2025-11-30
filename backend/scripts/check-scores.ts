@@ -57,9 +57,9 @@ async function main() {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   
-  // Check for scores specifically for TODAY (2025-11-28)
-  const startOfDay = new Date("2025-11-28T00:00:00.000Z");
-  const endOfDay = new Date("2025-11-28T23:59:59.999Z");
+  // Check for scores specifically for TODAY (2025-11-30)
+  const startOfDay = new Date("2025-11-30T00:00:00.000Z");
+  const endOfDay = new Date("2025-12-02T23:59:59.999Z");
   
   const specificDateScoresCount = await prisma.beachDailyScore.count({
     where: {

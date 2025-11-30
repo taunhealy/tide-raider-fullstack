@@ -44,10 +44,7 @@ export function AlertCard({
 }: AlertCardProps) {
   return (
     <Card
-      className={cn(
-        "bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] h-full flex flex-col border border-gray-200",
-        alert.active && "ring-1 ring-[var(--color-tertiary)]/50 shadow-lg shadow-[var(--color-tertiary)]/10"
-      )}
+      className="bg-white rounded-xl overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] h-full flex flex-col border border-gray-200"
     >
       <CardHeader className="pb-2 relative">
         <div className="absolute top-3 right-3 flex items-center gap-2">

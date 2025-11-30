@@ -246,7 +246,7 @@ function ForecastInfo({
         <p className="text-gray-700">
           {hasSwell && forecast.swellHeight !== undefined && (
             <>
-              {getSwellEmoji(forecast.swellHeight)} {forecast.swellHeight}m
+              {getSwellEmoji(forecast.swellHeight)} {Number(forecast.swellHeight).toFixed(2)}m
             </>
           )}
           {hasSwellPeriod && forecast.swellPeriod !== undefined && (

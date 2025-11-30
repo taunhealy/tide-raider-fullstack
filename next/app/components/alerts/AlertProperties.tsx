@@ -16,8 +16,8 @@ interface AlertPropertiesProps {
 
 export function AlertProperties({ properties }: AlertPropertiesProps) {
   return (
-    <div className="mt-2 pt-2 border-t border-gray-700">
-      <p className="font-medium mb-2 text-gray-300">Alert Triggers When:</p>
+    <div className="mt-2 pt-2 border-t border-gray-200">
+      <p className="font-medium mb-2 text-gray-700">Alert Triggers When:</p>
       <div className="flex flex-wrap gap-2">
         {properties.map((prop, index) => (
           <PropertyDisplay key={index} property={prop} />
@@ -31,12 +31,12 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
   const propName = property.property.toLowerCase();
   const isWind = propName.includes("wind");
   const isSwell = propName.includes("swell");
-  const bgColor = isWind ? "bg-blue-900/30" : "bg-cyan-900/30";
-  const textColor = isWind ? "text-blue-300" : "text-cyan-300";
+  const bgColor = isWind ? "bg-[var(--color-tertiary)]/10" : "bg-[var(--color-tertiary)]/10";
+  const textColor = "text-gray-900";
   const optimalValue = property.optimalValue ?? 0; // Default to 0 if undefined
 
   return (
-    <div className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md border border-gray-700/50`}>
+    <div className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md border border-[var(--color-tertiary)]/20`}>
       {propName === "windspeed" && (
         <span className={textColor}>{getWindEmoji(optimalValue)}</span>
       )}
@@ -47,13 +47,13 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
       {propName === "swellperiod" && <span className={textColor}>⏱️</span>}
       {propName === "swelldirection" && <span className={textColor}>🧭</span>}
       <div>
-        <span className="text-gray-400 font-primary text-xs">
+        <span className="text-gray-600 font-primary text-xs">
           {formatPropertyName(property.property)}
         </span>
         <p className={`font-medium ${textColor} font-primary text-sm`}>
           {propName.includes("direction")
-            ? `${degreesToCardinal(optimalValue)} (${optimalValue}°)`
-            : `${optimalValue} ${getUnit(property.property)}`}
+            ? `${degreesToCardinal(optimalValue)} (${Number(optimalValue).toFixed(2).replace(/\.?0+$/, "")}°)`
+            : `${Number(optimalValue).toFixed(2).replace(/\.?0+$/, "")} ${getUnit(property.property)}`}
         </p>
         <span className="text-xs text-gray-500">
           ±{property.range} {getUnit(property.property)}

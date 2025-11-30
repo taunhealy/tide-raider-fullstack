@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function AlertsPage() {
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 bg-[var(--color-bg-secondary)] min-h-screen">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="space-y-1">
           <h1 className="text-xl sm:text-2xl font-semibold font-primary text-[var(--color-text-primary)]">

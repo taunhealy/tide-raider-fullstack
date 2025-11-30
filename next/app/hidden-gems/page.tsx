@@ -45,14 +45,14 @@ export default function HiddenGemsPage() {
   }, [regionId]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <header className="bg-brand-dark sticky top-0 z-40">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             {/* Logo and Title */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-[var(--color-tertiary)] border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.3)]">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="currentColor"
@@ -62,10 +62,10 @@ export default function HiddenGemsPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-bold text-white font-primary">
                   Hidden Gems
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-300 font-primary">
                   Discover secret surf spots
                 </p>
               </div>
@@ -86,10 +86,10 @@ export default function HiddenGemsPage() {
           <div className="p-4 sm:p-6 lg:p-8">
             {/* Region Info */}
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">
                 {beaches.length} Hidden {beaches.length === 1 ? "Gem" : "Gems"}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-[var(--color-text-secondary)]">
                 Explore lesser-known surf breaks in this region
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function HiddenGemsPage() {
             // You can implement a modal map view for mobile here
             alert("Mobile map view - to be implemented");
           }}
-          className="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full font-medium shadow-lg flex items-center gap-2 hover:scale-105 transition-transform"
+          className="px-6 py-3 bg-brand-dark text-white rounded-full font-medium shadow-lg flex items-center gap-2 hover:scale-105 transition-transform"
         >
           <svg
             className="w-5 h-5"

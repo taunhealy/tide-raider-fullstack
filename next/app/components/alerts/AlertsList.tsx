@@ -146,7 +146,7 @@ export function AlertsList() {
             onClick={() => setActiveTab("all")}
             className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
               activeTab === "all"
-                ? "border-b-2 border-[var(--color-alert-tab-active)] text-[var(--color-alert-tab-active)] font-medium"
+                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
@@ -159,7 +159,7 @@ export function AlertsList() {
             onClick={() => setActiveTab("variable")}
             className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
               activeTab === "variable"
-                ? "border-b-2 border-[var(--color-alert-tab-active)] text-[var(--color-alert-tab-active)] font-medium"
+                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
@@ -172,7 +172,7 @@ export function AlertsList() {
             onClick={() => setActiveTab("rating")}
             className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
               activeTab === "rating"
-                ? "border-b-2 border-[var(--color-alert-tab-active)] text-[var(--color-alert-tab-active)] font-medium"
+                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
