@@ -37,10 +37,9 @@ export class CronScheduler {
 
     console.log("🕐 Starting cron scheduler...");
 
-    // Schedule: Run every 4 hours (at 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
-    // This provides 6 runs per day, covering all global timezones
+    // Schedule: Run twice per day at 02:00 UTC (4am SA time) and 20:00 UTC (4am Bali time)
     const task = cron.schedule(
-      "0 */4 * * *",
+      "0 2,20 * * *",
       async () => {
         await this.runScheduledJob();
       },
@@ -51,7 +50,7 @@ export class CronScheduler {
 
     this.tasks.push(task);
     console.log(
-      "✅ Cron job scheduled: Every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)"
+      "✅ Cron job scheduled: Twice daily at 02:00 UTC (4am SA) and 20:00 UTC (4am Bali)"
     );
 
     // Optional: Run immediately on startup (useful for testing)
