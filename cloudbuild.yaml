@@ -31,8 +31,8 @@ steps:
       - ${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --memory=2Gi
-      - --cpu=2
+      - --memory=1Gi
+      - --cpu=1
       - --timeout=300
       - --max-instances=10
       - --min-instances=0
