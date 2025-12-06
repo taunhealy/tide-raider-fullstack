@@ -38,7 +38,6 @@ steps:
       - --min-instances=0
       - --port=8080
       - --set-env-vars=NODE_ENV=production,FRONTEND_URL=https://www.tideraider.com
-      - --update-secrets=DATABASE_URL=DATABASE_URL:latest
       - --update-secrets=GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest
       - --update-secrets=GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
       - --update-secrets=JWT_SECRET=JWT_SECRET:latest

@@ -73,8 +73,8 @@ router.get(
             return date;
           })();
 
-      // Try exact match first (uses unique index - fastest path)
-      let forecast = await prisma.forecast.findUnique({
+      // Try exact match only - no fallback to prevent returning wrong date data
+      const forecast = await prisma.forecast.findUnique({
         where: {
           date_regionId_source: {
             date: targetDate,
@@ -84,40 +84,19 @@ router.get(
         },
       });
 
-      // If not found, try most recent from same source (fallback)
       if (!forecast) {
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: resolvedRegionId,
-            source: sourceParam,
-            date: {
-              lte: targetDate,
-            },
-          },
-          orderBy: {
-            date: "desc",
-          },
+        const dateStr = targetDate.toISOString().split("T")[0];
+        console.log(
+          `[forecast] No forecast found for regionId: ${resolvedRegionId} (original: ${regionId}), date: ${dateStr}, source: ${sourceParam}`
+        );
+
+        return res.status(404).json({
+          error: `No forecast data found`,
+          message: `No forecast data available for ${sourceParam} on ${dateStr} in region ${region.name || resolvedRegionId}`,
+          regionId: resolvedRegionId,
+          date: dateStr,
+          source: sourceParam,
         });
-
-        // Log fallback usage only in development
-        if (forecast && process.env.NODE_ENV === "development") {
-          console.log(
-            `[forecast] Using fallback forecast for ${resolvedRegionId}: requested ${targetDate.toISOString().split("T")[0]}, got ${forecast.date.toISOString().split("T")[0]}`
-          );
-        }
-      }
-
-      if (!forecast) {
-        // Only log in development to reduce production noise
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `[forecast] No forecast found for regionId: ${resolvedRegionId} (original: ${regionId}), date: ${targetDate.toISOString().split("T")[0]}, source: ${sourceParam}`
-          );
-        }
-
-        return res
-          .status(404)
-          .json({ error: `No forecast data found for ${sourceParam}` });
       }
 
       return res.json(forecast);

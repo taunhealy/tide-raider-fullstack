@@ -4,11 +4,12 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Connection pool optimization for Cloud Run
 // Cloud Run instances are ephemeral, so we use a conservative connection limit
-let optimizedDatabaseUrl = process.env.DATABASE_URL;
+// Check for DATABASE_URL first, then fall back to DATABASE_URL_SUPABASE (for Cloud Run)
+let optimizedDatabaseUrl = process.env.DATABASE_URL || process.env.DATABASE_URL_SUPABASE;
 
 // Validate DATABASE_URL is present
 if (!optimizedDatabaseUrl) {
-  console.error("❌ DATABASE_URL environment variable is not set!");
+  console.error("❌ DATABASE_URL or DATABASE_URL_SUPABASE environment variable is not set!");
   throw new Error("DATABASE_URL is required but was not provided");
 }
 
