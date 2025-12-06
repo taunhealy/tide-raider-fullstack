@@ -975,7 +975,7 @@ export default function RaidLogTable({
                                 getSwellEmoji(entry.forecast.swellHeight)
                               )}
                             </span>
-                            <span>{entry.forecast.swellHeight}m</span>
+                            <span>{Number(entry.forecast.swellHeight).toFixed(2)}m</span>
                           </div>
                         )}
 

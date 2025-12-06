@@ -1,11 +1,11 @@
-"use client";
-
+import { useState } from "react";
 import { Beach } from "@/app/types/beaches";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface HiddenGemsGridProps {
-  beaches: Beach[];
+  // Be permissive here to accept HiddenGem which acts like Beach
+  beaches: any[]; 
   selectedBeach: Beach | null;
   onBeachSelect: (beach: Beach | null) => void;
   isLoading?: boolean;
@@ -18,18 +18,34 @@ export default function HiddenGemsGrid({
   isLoading = false,
 }: HiddenGemsGridProps) {
   const router = useRouter();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const handleBeachClick = (beach: Beach) => {
-    if (selectedBeach?.id === beach.id) {
-      onBeachSelect(null);
-    } else {
-      onBeachSelect(beach);
+    // If selecting for map, keep existing behavior
+    // But clicking the card typically navigates
+    if (onBeachSelect) {
+        if (selectedBeach?.id === beach.id) {
+            onBeachSelect(null);
+        } else {
+            onBeachSelect(beach);
+        }
     }
   };
 
   const handleViewDetails = (beach: Beach, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/raid?regionId=${beach.regionId}&searchQuery=${beach.name}`);
+    // Navigate to the specific hidden gem detail page
+    router.push(`/hidden-gems/${beach.id}`);
+  };
+
+  // Helper to get video URL if available
+  const getVideoUrl = (beach: any) => {
+    if (beach.videos && beach.videos.length > 0) {
+        // Handle both older array-of-strings or new array-of-objects format if mixed
+        const vid = beach.videos[0];
+        return typeof vid === 'string' ? vid : vid.url;
+    }
+    return null;
   };
 
   if (isLoading) {
@@ -83,11 +99,18 @@ export default function HiddenGemsGrid({
     <div className="grid grid-cols-1 gap-4">
       {beaches.map((beach) => {
         const isSelected = selectedBeach?.id === beach.id;
+        const videoUrl = getVideoUrl(beach);
+        const isHovered = hoveredId === beach.id;
         
+        // Handle images: check profileImage, image, or images[0]
+        const mainImage = beach.profileImage || beach.image || (beach.images && beach.images.length > 0 ? beach.images[0] : null) || "";
+
         return (
           <div
             key={beach.id}
             onClick={() => handleBeachClick(beach)}
+            onMouseEnter={() => setHoveredId(beach.id)}
+            onMouseLeave={() => setHoveredId(null)}
             className={`
               bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md
               cursor-pointer transition-all duration-200 hover:shadow-xl
@@ -98,11 +121,20 @@ export default function HiddenGemsGrid({
               }
             `}
           >
-            {/* Beach Image */}
-            <div className="relative h-48 bg-gradient-to-br from-purple-400 to-pink-400">
-              {beach.profileImage || beach.image ? (
+            {/* Media Area */}
+            <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
+              {isHovered && videoUrl ? (
+                <video
+                    src={videoUrl}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                />
+              ) : mainImage ? (
                 <Image
-                  src={beach.profileImage || beach.image || ""}
+                  src={mainImage}
                   alt={beach.name}
                   fill
                   className="object-cover"
@@ -127,7 +159,7 @@ export default function HiddenGemsGrid({
               )}
               
               {/* Hidden Gem Badge */}
-              <div className="absolute top-3 right-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5">
+              <div className="absolute top-3 right-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1.5 z-10">
                 <svg
                   className="w-4 h-4 text-purple-500"
                   fill="currentColor"
@@ -141,7 +173,7 @@ export default function HiddenGemsGrid({
               </div>
             </div>
 
-            {/* Beach Info */}
+            {/* Content */}
             <div className="p-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                 {beach.name}
@@ -151,14 +183,18 @@ export default function HiddenGemsGrid({
                 {beach.location}
               </p>
 
-              {/* Beach Details */}
+              {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-3">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                  {beach.waveType.replace(/_/g, " ")}
-                </span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-                  {beach.difficulty}
-                </span>
+                {beach.waveType && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                    {beach.waveType.replace(/_/g, " ")}
+                    </span>
+                )}
+                {beach.difficulty && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                    {beach.difficulty}
+                    </span>
+                )}
               </div>
 
               {/* Description */}

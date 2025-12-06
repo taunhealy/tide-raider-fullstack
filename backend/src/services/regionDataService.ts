@@ -77,10 +77,11 @@ export async function fetchAllRegionsData() {
             console.log(
               `  🔍 Fetching conditions for ${region.id} from ${source}...`
             );
-            // forceRefresh = false means: check DB first, only scrape if no data for today
+            // forceRefresh = true means: always scrape to get fresh data for today + future days
+            // This ensures we replace existing data with the latest forecast
             const conditions = await getLatestConditions(
               region.id,
-              false,
+              true,
               source
             );
 

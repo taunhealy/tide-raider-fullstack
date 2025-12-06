@@ -112,6 +112,18 @@ export function AlertCard({
             <span className="font-medium text-gray-700">🔔</span>{" "}
             {formatNotificationMethod(alert.notificationMethod)}
           </p>
+
+          <p className="text-gray-500">
+            <span className="font-medium text-gray-700">📡</span>{" "}
+            {alert.sources && alert.sources.length > 0
+              ? alert.sources
+                  .map(
+                    (s) =>
+                      s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+                  )
+                  .join(", ")
+              : "All Sources"}
+          </p>
           <AlertConditions alert={alert} />
         </div>
       </CardContent>

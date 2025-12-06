@@ -7,15 +7,17 @@ import HiddenGemsGrid from "@/app/components/hidden-gems/HiddenGemsGrid";
 import { Beach } from "@/app/types/beaches";
 import SearchBar from "@/app/components/SearchBar";
 
+import Link from "next/link";
+
 export default function HiddenGemsPage() {
   const searchParams = useSearchParams();
-  const [beaches, setBeaches] = useState<Beach[]>([]);
-  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
+  const [beaches, setBeaches] = useState<any[]>([]);
+  const [selectedBeach, setSelectedBeach] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Get region from URL or default to a popular surf region
-  const regionId = searchParams.get("regionId") || "western-cape";
+  const regionId = searchParams.get("regionId");
 
   useEffect(() => {
     const fetchHiddenGems = async () => {
@@ -23,16 +25,17 @@ export default function HiddenGemsPage() {
       setError(null);
 
       try {
-        const response = await fetch(
-          `/api/beaches/filter?regionId=${regionId}&isHiddenGem=true`
-        );
+        const queryParams = new URLSearchParams();
+        if (regionId) queryParams.append("regionId", regionId);
+        
+        const response = await fetch(`/api/hidden-gems?${queryParams.toString()}`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch hidden gems");
         }
 
         const data = await response.json();
-        setBeaches(data.beaches || []);
+        setBeaches(data.hiddenGems || []);
       } catch (err) {
         console.error("Error fetching hidden gems:", err);
         setError("Failed to load hidden gems. Please try again.");
@@ -52,7 +55,7 @@ export default function HiddenGemsPage() {
           <div className="flex items-center justify-between gap-4">
             {/* Logo and Title */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-[var(--color-tertiary)] border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.3)]">
+              <Link href="/hidden-gems" className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-gray-900 to-[var(--color-tertiary)] border border-[var(--color-tertiary)]/30 shadow-[0_0_10px_rgba(28,217,255,0.3)]">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="currentColor"
@@ -60,7 +63,7 @@ export default function HiddenGemsPage() {
                 >
                   <path d="M12 2l2.286 6.857L21 12l-6.714 3.143L12 22l-2.286-6.857L3 12l6.714-3.143L12 2z" />
                 </svg>
-              </div>
+              </Link>
               <div>
                 <h1 className="text-xl font-bold text-white font-primary">
                   Hidden Gems
@@ -71,9 +74,17 @@ export default function HiddenGemsPage() {
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-md">
-              <SearchBar placeholder="Search hidden gems..." />
+            {/* Actions */}
+            <div className="flex items-center gap-4">
+                <div className="hidden md:block w-64">
+                   <SearchBar placeholder="Search hidden gems..." />
+                </div>
+                <Link 
+                    href="/hidden-gems/create"
+                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg shadow-purple-500/20 whitespace-nowrap"
+                >
+                    + List Gem
+                </Link>
             </div>
           </div>
         </div>

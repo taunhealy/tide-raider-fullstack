@@ -35,6 +35,9 @@ function RegionalHighScoresContent({
   selectedRegion,
   onBeachClick,
 }: RegionalHighScoresProps) {
+  // Use date strings for state: "YYYY-MM-DD"
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  
   // Calculate the 3 dates for tabs
   const dateTabs = useMemo(() => {
     const today = new Date();
@@ -48,12 +51,12 @@ function RegionalHighScoresContent({
     ];
   }, []);
 
-  // Initialize selectedDate with today's date immediately
-  // Use date strings for state: "YYYY-MM-DD"
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const today = new Date();
-    return format(today, 'yyyy-MM-dd');
-  });
+  // Initialize selectedDate with today once mounted
+  useEffect(() => {
+    if (typeof window !== "undefined" && !selectedDate) {
+      setSelectedDate(dateTabs[0].id);
+    }
+  }, [dateTabs, selectedDate]);
 
   // Use the same backend subscription check as BeachCard
   // This calls /api/paypal/subscription-status which proxies to the backend
