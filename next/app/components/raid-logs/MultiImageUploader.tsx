@@ -21,17 +21,25 @@ export function MultiImageUploader({
 }: MultiImageUploaderProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = async (files: File[]) => {
     if (files.length === 0) return;
 
+    // Filter to only image files
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+    if (imageFiles.length === 0) {
+      alert("Please select image files only");
+      return;
+    }
+
     const remainingSlots = maxImages - images.length;
-    if (files.length > remainingSlots) {
+    if (imageFiles.length > remainingSlots) {
       alert(
         `You can only upload ${remainingSlots} more image${remainingSlots === 1 ? "" : "s"}`
       );
@@ -45,10 +53,12 @@ export function MultiImageUploader({
 
       // Convert all images to WebP
       const convertedFiles = await Promise.all(
-        files.map((file) => convertImageToWebP(file))
+        imageFiles.map((file) => convertImageToWebP(file))
       );
 
-      setUploadStatus(`Uploading ${convertedFiles.length} image${convertedFiles.length > 1 ? 's' : ''}...`);
+      setUploadStatus(
+        `Uploading ${convertedFiles.length} image${convertedFiles.length > 1 ? "s" : ""}...`
+      );
 
       // Upload all images using XMLHttpRequest to track progress
       const uploadPromises = convertedFiles.map((file, index) => {
@@ -64,7 +74,8 @@ export function MultiImageUploader({
             if (e.lengthComputable) {
               // Calculate overall progress: (completed files + current file progress) / total files
               const fileProgress = (e.loaded / e.total) * 100;
-              const overallProgress = ((index + fileProgress / 100) / convertedFiles.length) * 100;
+              const overallProgress =
+                ((index + fileProgress / 100) / convertedFiles.length) * 100;
               setUploadProgress(Math.min(overallProgress, 99)); // Cap at 99% until all complete
             }
           });
@@ -81,7 +92,9 @@ export function MultiImageUploader({
               try {
                 const errorData = JSON.parse(xhr.responseText);
                 const errorMessage =
-                  errorData.error || errorData.message || "Failed to upload image";
+                  errorData.error ||
+                  errorData.message ||
+                  "Failed to upload image";
                 reject(new Error(errorMessage));
               } catch {
                 reject(new Error(`Upload failed with status ${xhr.status}`));
@@ -106,10 +119,10 @@ export function MultiImageUploader({
       const uploadedUrls = await Promise.all(uploadPromises);
       setUploadProgress(100);
       setUploadStatus("Upload complete!");
-      
+
       // Small delay to show 100% before clearing
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       onImagesChange([...images, ...uploadedUrls]);
       setIsUploading(false);
       setUploadProgress(0);
@@ -128,6 +141,11 @@ export function MultiImageUploader({
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
   const handleRemove = (index: number) => {
     const newImages = images.filter((_, i) => i !== index);
     onImagesChange(newImages);
@@ -137,7 +155,7 @@ export function MultiImageUploader({
     setDraggedIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleImageDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     setDragOverIndex(index);
   };
@@ -158,16 +176,61 @@ export function MultiImageUploader({
     setDragOverIndex(null);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleImageDrop = (e: React.DragEvent) => {
     e.preventDefault();
     handleDragEnd();
   };
 
+  // Drag and drop handlers for file upload (from outside)
+  const handleFileDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only show drag over state if dragging files (not images for reordering)
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleFileDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only show drag over state if dragging files (not images for reordering)
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleFileDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only clear drag over state if leaving the drop zone
+    if (!dropZoneRef.current?.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (isUploading || images.length >= maxImages) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    await processFiles(files);
+  };
+
   return (
     <div className={cn("space-y-4 font-primary", className)}>
-      {/* Upload button */}
+      {/* Upload area with drag and drop */}
       {images.length < maxImages && (
-        <div>
+        <div
+          ref={dropZoneRef}
+          onDragEnter={handleFileDragEnter}
+          onDragOver={handleFileDragOver}
+          onDragLeave={handleFileDragLeave}
+          onDrop={handleFileDrop}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -181,16 +244,39 @@ export function MultiImageUploader({
           <label
             htmlFor="multi-image-upload"
             className={cn(
-              "flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 transition-colors",
+              "flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-lg p-8 transition-all cursor-pointer",
               isUploading
                 ? "border-gray-300 bg-gray-100 cursor-not-allowed opacity-60"
-                : "border-gray-300 cursor-pointer hover:border-[var(--color-tertiary)] hover:bg-gray-50"
+                : isDragOver
+                  ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5 scale-[1.02]"
+                  : "border-gray-300 hover:border-[var(--color-tertiary)] hover:bg-gray-50"
             )}
           >
-            <Plus className="w-5 h-5 text-gray-400" />
-            <span className="text-gray-600 font-primary">
-              {isUploading ? "Uploading..." : `Add Images (${images.length}/${maxImages})`}
-            </span>
+            <Plus
+              className={cn(
+                "w-8 h-8 transition-colors",
+                isDragOver ? "text-[var(--color-tertiary)]" : "text-gray-400"
+              )}
+            />
+            <div className="text-center">
+              <span
+                className={cn(
+                  "font-primary block",
+                  isDragOver
+                    ? "text-[var(--color-tertiary)] font-medium"
+                    : "text-gray-600"
+                )}
+              >
+                {isUploading
+                  ? "Uploading..."
+                  : isDragOver
+                    ? "Drop images here"
+                    : "Add images or drag and drop"}
+              </span>
+              <span className="text-xs text-gray-500 font-primary mt-1 block">
+                {images.length} of {maxImages} images
+              </span>
+            </div>
           </label>
         </div>
       )}
@@ -200,7 +286,9 @@ export function MultiImageUploader({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 font-primary">{uploadStatus}</span>
-            <span className="text-gray-500 font-primary">{Math.round(uploadProgress)}%</span>
+            <span className="text-gray-500 font-primary">
+              {Math.round(uploadProgress)}%
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div
@@ -219,9 +307,9 @@ export function MultiImageUploader({
               key={index}
               draggable
               onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
+              onDragOver={(e) => handleImageDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              onDrop={handleDrop}
+              onDrop={handleImageDrop}
               className={cn(
                 "relative group aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 transition-all",
                 draggedIndex === index && "opacity-50 scale-95",

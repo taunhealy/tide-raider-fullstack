@@ -149,6 +149,24 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   // Forecast is always a single object (one-to-one relation) or null from Prisma
   const forecastData = entry.forecast || null;
 
+  // Fetch beach scores for all sources (A, B, C) for this date
+  const beachId = (entry as any).beachId || entry.beach?.id;
+  const logDate = entry.date ? new Date(entry.date).toISOString().split("T")[0] : null;
+  
+  const { data: beachScores } = useQuery({
+    queryKey: ["beach-scores", beachId, logDate],
+    queryFn: async () => {
+      if (!beachId || !logDate) return null;
+      
+      const response = await fetch(
+        `/api/beach-scores?beachId=${beachId}&date=${logDate}`
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!beachId && !!logDate,
+  });
+
   // Check if media is available (including uploaded videos without platform)
   // Validate that videoUrl is not empty string
   // Support both single imageUrl and imageUrls array
@@ -285,69 +303,103 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     <h2 className="font-primary text-base md:text-lg font-semibold text-[var(--color-text-primary)]">
                       Conditions
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                      {(typeof forecastData.windSpeed === "number" ||
-                        typeof forecastData.windDirection === "number") && (
-                        <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
-                            <Wind className="w-5 h-5 text-[var(--color-tertiary)]" />
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
+                      <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                        {(typeof forecastData.windSpeed === "number" ||
+                          typeof forecastData.windDirection === "number") && (
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                              <Wind className="w-5 h-5 text-[var(--color-tertiary)]" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
+                                Wind
+                              </p>
+                              <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
+                                {forecastData.windSpeed != null
+                                  ? `${forecastData.windSpeed}kts`
+                                  : "N/A"}
+                                {forecastData.windDirection != null && (
+                                  <span className="text-[var(--color-text-secondary)] font-normal ml-1">
+                                    {degreesToCardinal(
+                                      forecastData.windDirection
+                                    )}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
-                              Wind
-                            </p>
-                            <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
-                              {forecastData.windSpeed != null
-                                ? `${forecastData.windSpeed}kts`
-                                : "N/A"}
-                              {forecastData.windDirection != null && (
-                                <span className="text-[var(--color-text-secondary)] font-normal ml-1">
-                                  {degreesToCardinal(
-                                    forecastData.windDirection
-                                  )}
-                                </span>
-                              )}
-                            </p>
+                        )}
+                        {(typeof forecastData.swellHeight === "number" ||
+                          typeof forecastData.swellDirection === "number") && (
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                              <Waves className="w-5 h-5 text-[var(--color-tertiary)]" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
+                                Swell
+                              </p>
+                              <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
+                                {forecastData.swellHeight != null
+                                  ? `${Number(forecastData.swellHeight).toFixed(2)}m`
+                                  : "N/A"}
+                                {forecastData.swellDirection != null && (
+                                  <span className="text-[var(--color-text-secondary)] font-normal ml-1">
+                                    {degreesToCardinal(
+                                      forecastData.swellDirection
+                                    )}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {(typeof forecastData.swellHeight === "number" ||
-                        typeof forecastData.swellDirection === "number") && (
-                        <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
-                            <Waves className="w-5 h-5 text-[var(--color-tertiary)]" />
+                        )}
+                        {typeof forecastData.swellPeriod === "number" && (
+                          <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
+                              <Clock className="w-5 h-5 text-[var(--color-tertiary)]" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
+                                Period
+                              </p>
+                              <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
+                                {forecastData.swellPeriod}s
+                              </p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
-                              Swell
-                            </p>
-                            <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
-                              {forecastData.swellHeight != null
-                                ? `${Number(forecastData.swellHeight).toFixed(2)}m`
-                                : "N/A"}
-                              {forecastData.swellDirection != null && (
-                                <span className="text-[var(--color-text-secondary)] font-normal ml-1">
-                                  {degreesToCardinal(
-                                    forecastData.swellDirection
-                                  )}
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {typeof forecastData.swellPeriod === "number" && (
-                        <div className="bg-gray-50 rounded-lg p-3 md:p-4 flex gap-3 items-center border border-gray-200">
-                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-[var(--color-tertiary)]" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs md:text-sm text-[var(--color-text-secondary)] font-primary mb-0.5">
-                              Period
-                            </p>
-                            <p className="text-[var(--color-text-primary)] font-primary font-semibold text-sm md:text-base">
-                              {forecastData.swellPeriod}s
-                            </p>
+                        )}
+                      </div>
+                      
+                      {/* Forecast Star Ratings - Right side on desktop */}
+                      {beachScores?.scores && beachScores.scores.length > 0 && (
+                        <div className="lg:col-span-1 space-y-2">
+                          <h3 className="font-primary text-xs md:text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
+                            Forecast Ratings
+                          </h3>
+                          <div className="space-y-2">
+                            {beachScores.scores.map((score: any) => (
+                              <div
+                                key={score.source}
+                                className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs text-[var(--color-text-secondary)] font-primary">
+                                    {score.sourceName}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <BlueStarRating
+                                    score={score.starRating}
+                                    outOfFive={true}
+                                  />
+                                  <span className="text-xs text-[var(--color-text-secondary)] font-primary ml-1">
+                                    {score.starRating}/5
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}

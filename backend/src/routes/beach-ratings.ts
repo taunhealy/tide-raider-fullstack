@@ -510,4 +510,68 @@ router.post(
   }
 );
 
+/**
+ * GET /api/beach-scores?beachId=xxx&date=2025-12-07
+ * Get beach scores for all sources for a specific beach and date
+ */
+router.get(
+  "/beach-scores",
+  optionalAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const { beachId, date } = req.query;
+
+      if (!beachId || !date) {
+        return res.status(400).json({
+          error: "beachId and date are required",
+        });
+      }
+
+      const [year, month, day] = (date as string).split("-").map(Number);
+      const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      const endDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+      const scores = await prisma.beachDailyScore.findMany({
+        where: {
+          beachId: beachId as string,
+          date: {
+            gte: targetDate,
+            lte: endDate,
+          },
+        },
+        select: {
+          source: true,
+          score: true,
+          starRating: true,
+        },
+        orderBy: {
+          source: "asc",
+        },
+      });
+
+      // Map source names to display names
+      const sourceMap: Record<string, string> = {
+        WINDFINDER: "Source A",
+        WINDGURU: "Source B",
+        WINDY: "Source C",
+      };
+
+      const formattedScores = scores.map((score) => ({
+        source: score.source,
+        sourceName: sourceMap[score.source] || score.source,
+        score: score.score,
+        starRating: score.starRating || Math.max(1, Math.min(5, Math.floor(score.score / 2))),
+      }));
+
+      return res.json({ scores: formattedScores });
+    } catch (error) {
+      console.error("[beach-ratings] Error fetching beach scores:", error);
+      return res.status(500).json({
+        error: "Failed to fetch beach scores",
+        details: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
 export default router;
