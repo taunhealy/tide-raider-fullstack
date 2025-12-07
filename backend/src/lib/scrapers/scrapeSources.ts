@@ -60,6 +60,10 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       url: "https://www.windguru.cz/4865", // TODO: Find Windguru spot ID for Durban Bluff
       scraper: scraperB,
     },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/30655/Durban", // TODO: Verify WINDY spot ID for Durban Bluff
+      scraper: scraperC,
+    },
   },
   "northern-cape": {
     regionId: "northern-cape",

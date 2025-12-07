@@ -14,14 +14,22 @@ export async function GET(request: NextRequest) {
     const authToken = cookieStore.get("auth-token")?.value;
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
+    
+    // Log the request for debugging
+    const regionId = request.nextUrl.searchParams.get("regionId");
+    const date = request.nextUrl.searchParams.get("date");
+    console.log(
+      `[beach-ratings/historical] 📥 Request received: regionId=${regionId}, date=${date}`
+    );
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
     let response;
     try {
-      response = await fetch(
-        `${BACKEND_URL}/api/beach-ratings/historical${queryString}`,
+      const backendUrl = `${BACKEND_URL}/api/beach-ratings/historical${queryString}`;
+      console.log(`[beach-ratings/historical] 🔄 Proxying to backend: ${backendUrl}`);
+      response = await fetch(backendUrl,
         {
           headers: {
             ...(authToken && { Authorization: `Bearer ${authToken}` }),
@@ -59,6 +67,9 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log(
+      `[beach-ratings/historical] ✅ Response for date=${date}: ${data?.beaches?.length || 0} beaches, top beach: ${data?.beaches?.[0]?.name || "none"} (score: ${data?.beaches?.[0]?.totalScore || 0})`
+    );
     return NextResponse.json(data);
   } catch (error) {
     console.error("Failed to fetch historical beach ratings:", error);

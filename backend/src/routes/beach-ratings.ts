@@ -61,12 +61,14 @@ router.get(
       const dateParam = req.query.date as string;
 
       if (dateParam) {
-        // Specific date requested
-        startDate = new Date(dateParam);
-        startDate.setUTCHours(0, 0, 0, 0);
-        
-        endDate = new Date(startDate);
-        endDate.setUTCHours(23, 59, 59, 999);
+        // Specific date requested - use exact date match (same day, no range)
+        const [year, month, day] = dateParam.split("-").map(Number);
+        startDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+        endDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+        console.log(
+          `[beach-ratings/historical] Specific date requested: ${dateParam}, range: ${startDate.toISOString()} to ${endDate.toISOString()}`
+        );
       } else {
         // Period-based range (defaulting to today)
         endDate = new Date(now);
@@ -131,16 +133,30 @@ router.get(
       }
 
       // Get beaches for the region with scores from ALL sources
+      // For specific date requests, use a tight date range (same day only) to avoid including other days
+      const scoreWhereClause: any = dateParam
+        ? {
+            // Tight date range for specific date requests (same day only)
+            date: {
+              gte: startDate, // 00:00:00 UTC of the requested date
+              lte: endDate, // 23:59:59 UTC of the requested date
+            },
+          }
+        : {
+            // Date range for period-based requests
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+          };
+
       const beaches = await prisma.beach.findMany({
         where: { regionId: resolvedRegionId },
         include: {
           region: true,
           beachDailyScores: {
             where: {
-              date: {
-                gte: startDate,
-                lte: endDate,
-              },
+              ...scoreWhereClause,
               // Remove source filter to get scores from all sources
             },
             orderBy: {
@@ -150,26 +166,57 @@ router.get(
         },
       });
 
+      // Debug: Log the date filter being used and what we got back
+      if (dateParam) {
+        console.log(
+          `[beach-ratings/historical] 📅 Filtering scores for date: ${dateParam} (range: ${startDate.toISOString()} to ${endDate.toISOString()})`
+        );
+
+        // Log detailed info about what scores were returned
+        const beachesWithScoresCount = beaches.filter(
+          (b) => b.beachDailyScores.length > 0
+        ).length;
+        console.log(
+          `[beach-ratings/historical] 📊 Found ${beaches.length} beaches, ${beachesWithScoresCount} have scores for this date`
+        );
+
+        if (beaches.length > 0) {
+          // Check first few beaches to see what dates their scores are for
+          const sampleBeaches = beaches.slice(0, 3);
+          sampleBeaches.forEach((beach, idx) => {
+            if (beach.beachDailyScores.length > 0) {
+              const scoreDates = beach.beachDailyScores.map(
+                (s) => s.date.toISOString().split("T")[0]
+              );
+              const uniqueDates = [...new Set(scoreDates)];
+              console.log(
+                `[beach-ratings/historical] 🏖️  Beach "${beach.name}": ${beach.beachDailyScores.length} score(s) for date(s): ${uniqueDates.join(", ")}`
+              );
+            }
+          });
+        }
+      }
+
       // Calculate total scores for the period, aggregating across all sources
       const beachesWithScores = beaches.map((beach) => {
         const scores = beach.beachDailyScores;
-        
+
         // Aggregate scores across all sources
         const totalScore = scores.reduce(
           (sum, score) => sum + (score.score || 0),
           0
         );
-        
+
         // Count unique date appearances (not source appearances)
         const uniqueDates = new Set(
-          scores.map(score => score.date.toISOString().split('T')[0])
+          scores.map((score) => score.date.toISOString().split("T")[0])
         );
         const appearances = uniqueDates.size;
 
         // For latest score, get the sum of all sources for the most recent date
         const latestDate = scores.length > 0 ? scores[0].date : null;
-        const latestScores = latestDate 
-          ? scores.filter(s => s.date.getTime() === latestDate.getTime())
+        const latestScores = latestDate
+          ? scores.filter((s) => s.date.getTime() === latestDate.getTime())
           : [];
         const latestScore = latestScores.reduce(
           (sum, score) => sum + (score.score || 0),
@@ -191,28 +238,175 @@ router.get(
         (beach) => beach.totalScore > 0
       );
 
-      // Debug logging
-      console.log(`[beach-ratings/historical] Region: ${resolvedRegionId}, Period: ${period}`);
-      console.log(`[beach-ratings/historical] Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-      console.log(`[beach-ratings/historical] Total beaches in region: ${beaches.length}`);
-      
-      if (beaches.length > 0) {
-        const firstBeach = beaches[0];
-        console.log(`[beach-ratings/historical] First beach (${firstBeach.name}) scores count: ${firstBeach.beachDailyScores.length}`);
-        if (firstBeach.beachDailyScores.length > 0) {
-          console.log(`[beach-ratings/historical] First beach first score:`, firstBeach.beachDailyScores[0]);
+      // If no scores exist for the requested date, check if forecasts exist and trigger score calculation
+      if (beachesWithValidScores.length === 0 && dateParam) {
+        // Check if forecasts exist for this date (any source)
+        const forecastsForDate = await prisma.forecast.findMany({
+          where: {
+            regionId: resolvedRegionId,
+            date: startDate, // startDate is the requested date when dateParam is provided
+          },
+          select: {
+            source: true,
+            date: true,
+          },
+        });
+
+        if (forecastsForDate.length > 0) {
+          console.log(
+            `[beach-ratings/historical] Found ${forecastsForDate.length} forecast(s) but no scores. Calculating scores...`
+          );
+
+          // Calculate scores for all sources that have forecasts
+          const sourcesToCalculate = [
+            ...new Set(forecastsForDate.map((f) => f.source)),
+          ];
+
+          for (const source of sourcesToCalculate) {
+            const forecast = await prisma.forecast.findFirst({
+              where: {
+                regionId: resolvedRegionId,
+                date: startDate,
+                source: source,
+              },
+            });
+
+            if (forecast) {
+              try {
+                // Check if scores already exist for this source
+                const existingScores = await prisma.beachDailyScore.findFirst({
+                  where: {
+                    regionId: resolvedRegionId,
+                    date: startDate,
+                    source: source,
+                  },
+                });
+
+                if (!existingScores) {
+                  console.log(
+                    `[beach-ratings/historical] Calculating scores for ${resolvedRegionId} (${source}) on ${dateParam}`
+                  );
+                  await ScoreService.calculateAndStoreScores(resolvedRegionId, {
+                    windSpeed: forecast.windSpeed,
+                    windDirection: forecast.windDirection,
+                    swellHeight: forecast.swellHeight,
+                    swellPeriod: forecast.swellPeriod,
+                    swellDirection: forecast.swellDirection,
+                    date: forecast.date,
+                    source: forecast.source,
+                  });
+                }
+              } catch (scoreError: any) {
+                console.error(
+                  `[beach-ratings/historical] Failed to calculate scores for ${source}:`,
+                  scoreError?.message
+                );
+              }
+            }
+          }
+
+          // Re-query beaches with scores after calculation
+          // Use the same date filter as the original query
+          const beachesAfterCalc = await prisma.beach.findMany({
+            where: { regionId: resolvedRegionId },
+            include: {
+              region: true,
+              beachDailyScores: {
+                where: scoreWhereClause, // Use the same date filter
+                orderBy: {
+                  date: "desc",
+                },
+              },
+            },
+          });
+
+          // Recalculate scores
+          const beachesWithScoresAfterCalc = beachesAfterCalc.map((beach) => {
+            const scores = beach.beachDailyScores;
+            const totalScore = scores.reduce(
+              (sum, score) => sum + (score.score || 0),
+              0
+            );
+            const uniqueDates = new Set(
+              scores.map((score) => score.date.toISOString().split("T")[0])
+            );
+            const appearances = uniqueDates.size;
+            const latestDate = scores.length > 0 ? scores[0].date : null;
+            const latestScores = latestDate
+              ? scores.filter((s) => s.date.getTime() === latestDate.getTime())
+              : [];
+            const latestScore = latestScores.reduce(
+              (sum, score) => sum + (score.score || 0),
+              0
+            );
+
+            return {
+              id: beach.id,
+              name: beach.name,
+              region: beach.region,
+              totalScore: totalScore,
+              appearances,
+              latestScore: latestScore,
+            };
+          });
+
+          const beachesWithValidScoresAfterCalc =
+            beachesWithScoresAfterCalc.filter((beach) => beach.totalScore > 0);
+
+          // Use the recalculated scores
+          beachesWithValidScores.push(...beachesWithValidScoresAfterCalc);
         }
       }
 
-      console.log(`[beach-ratings/historical] Beaches with scores > 0: ${beachesWithValidScores.length}`);
+      // Debug logging
+      console.log(
+        `[beach-ratings/historical] Region: ${resolvedRegionId}, Period: ${period}`
+      );
+      console.log(
+        `[beach-ratings/historical] Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`
+      );
+      console.log(
+        `[beach-ratings/historical] Total beaches in region: ${beaches.length}`
+      );
+
+      if (beaches.length > 0) {
+        const firstBeach = beaches[0];
+        console.log(
+          `[beach-ratings/historical] First beach (${firstBeach.name}) scores count: ${firstBeach.beachDailyScores.length}`
+        );
+        if (firstBeach.beachDailyScores.length > 0) {
+          console.log(
+            `[beach-ratings/historical] First beach first score:`,
+            firstBeach.beachDailyScores[0]
+          );
+        }
+      }
+
+      console.log(
+        `[beach-ratings/historical] Beaches with scores > 0: ${beachesWithValidScores.length}`
+      );
 
       // Sort by total score for all periods, or latest score for today
       // If specific date is requested, sort by total score for that date (which is effectively latestScore logic since range is 1 day)
       const sortedBeaches = beachesWithValidScores.sort((a, b) =>
-        (period === "today" || dateParam)
+        period === "today" || dateParam
           ? b.latestScore - a.latestScore
           : b.totalScore - a.totalScore
       );
+
+      // Debug: Log top 3 beaches for this date
+      if (dateParam && sortedBeaches.length > 0) {
+        console.log(
+          `[beach-ratings/historical] 🏆 Top 3 beaches for ${dateParam}:`,
+          sortedBeaches.slice(0, 3).map((b, idx) => ({
+            rank: idx + 1,
+            name: b.name,
+            totalScore: b.totalScore,
+            latestScore: b.latestScore,
+            appearances: b.appearances,
+          }))
+        );
+      }
 
       return res.json({
         beaches: sortedBeaches,

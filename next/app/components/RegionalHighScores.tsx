@@ -1,13 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, Suspense, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Beach } from "@/app/types/beaches";
 import { cn } from "@/app/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { subDays, subYears, startOfDay, endOfDay, addDays, format } from "date-fns";
-import { RandomLoader } from "@/app/components/ui/random-loader";
-import { useRegions } from "@/app/hooks/useRegions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { addDays, format } from "date-fns";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { Lock } from "lucide-react";
 import Link from "next/link";
@@ -37,19 +35,27 @@ function RegionalHighScoresContent({
 }: RegionalHighScoresProps) {
   // Use date strings for state: "YYYY-MM-DD"
   const [selectedDate, setSelectedDate] = useState<string>("");
-  
+
   // Calculate the 3 dates for tabs
+  // Recalculate daily to ensure "Today" is always current
   const dateTabs = useMemo(() => {
     const today = new Date();
     const tomorrow = addDays(today, 1);
     const dayAfter = addDays(today, 2);
-    
-    return [
-      { id: format(today, 'yyyy-MM-dd'), label: 'Today' },
-      { id: format(tomorrow, 'yyyy-MM-dd'), label: 'Tomorrow' },
-      { id: format(dayAfter, 'yyyy-MM-dd'), label: format(dayAfter, 'EEE, MMM d') },
+
+    const tabs = [
+      { id: format(today, "yyyy-MM-dd"), label: "Today" },
+      { id: format(tomorrow, "yyyy-MM-dd"), label: "Tomorrow" },
+      {
+        id: format(dayAfter, "yyyy-MM-dd"),
+        label: format(dayAfter, "EEE, MMM d"),
+      },
     ];
-  }, []);
+
+    console.log("[RegionalHighScores] Date tabs calculated:", tabs);
+
+    return tabs;
+  }, []); // Empty deps is fine - we want it to recalculate on mount, and selectedDate changes will trigger new queries
 
   // Initialize selectedDate with today once mounted
   useEffect(() => {
@@ -57,6 +63,13 @@ function RegionalHighScoresContent({
       setSelectedDate(dateTabs[0].id);
     }
   }, [dateTabs, selectedDate]);
+
+  // Debug: Log when selectedDate changes
+  useEffect(() => {
+    if (selectedDate) {
+      console.log("[RegionalHighScores] Selected date changed:", selectedDate);
+    }
+  }, [selectedDate]);
 
   // Use the same backend subscription check as BeachCard
   // This calls /api/paypal/subscription-status which proxies to the backend
@@ -86,21 +99,45 @@ function RegionalHighScoresContent({
     subscriptionStatus,
   ]);
 
+  const queryClient = useQueryClient();
+
+  // Force clear cache and refetch when date changes
+  useEffect(() => {
+    if (selectedDate && selectedRegion) {
+      console.log(
+        `[RegionalHighScores] 🔄 Date changed to ${selectedDate}, clearing cache and forcing refetch`
+      );
+      // Remove all cached data for this query key
+      queryClient.removeQueries({
+        queryKey: ["regionalHighScores", selectedRegion],
+      });
+      // Force refetch
+      queryClient.refetchQueries({
+        queryKey: ["regionalHighScores", selectedRegion, selectedDate],
+      });
+    }
+  }, [selectedDate, selectedRegion, queryClient]);
+
   // Use the new endpoint
   // Only enable query when we have a date (client-side) and region
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: [
-      "regionalHighScores",
-      selectedRegion,
-      selectedDate,
-    ],
+    queryKey: ["regionalHighScores", selectedRegion, selectedDate],
     queryFn: async () => {
-      if (!selectedRegion || !selectedDate) return { beaches: [] };
+      if (!selectedRegion || !selectedDate) {
+        console.warn(
+          "[RegionalHighScores] Missing region or date, returning empty"
+        );
+        return { beaches: [] };
+      }
 
-      // Pass date parameter instead of period
-      const response = await fetch(
-        `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`
+      const url = `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`;
+      console.log(`[RegionalHighScores] 🔍 FETCHING: ${url}`);
+      console.log(
+        `[RegionalHighScores] Query key: ["regionalHighScores", "${selectedRegion}", "${selectedDate}"]`
       );
+
+      const fetchStartTime = Date.now();
+      const response = await fetch(url);
 
       // Handle 429 gracefully - return empty beaches array
       if (response.status === 429) {
@@ -113,57 +150,103 @@ function RegionalHighScoresContent({
       if (!response.ok) {
         // For other errors, still return empty array instead of throwing
         const errorText = await response.text();
-        console.error("[RegionalHighScores] Failed to fetch scores:", {
+        console.error("[RegionalHighScores] ❌ Failed to fetch scores:", {
           status: response.status,
           statusText: response.statusText,
           error: errorText,
-          url: `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`,
+          url: url,
         });
         return { beaches: [] };
       }
 
       const data = await response.json();
+      const fetchDuration = Date.now() - fetchStartTime;
 
-      // Log response for debugging
-      if (process.env.NODE_ENV === "development") {
-        console.log("[RegionalHighScores] API response:", {
+      // Detailed logging for debugging
+      console.log(
+        `[RegionalHighScores] ✅ API response received (${fetchDuration}ms):`,
+        {
           regionId: selectedRegion,
           date: selectedDate,
+          url: url,
           beachCount: data?.beaches?.length || 0,
           hasBeaches: Array.isArray(data?.beaches),
-        });
-      }
+          top3Beaches:
+            data?.beaches?.slice(0, 3).map((b: any) => ({
+              name: b.name,
+              totalScore: b.totalScore,
+              latestScore: b.latestScore,
+            })) || [],
+        }
+      );
 
       // Ensure we always return an object with beaches array
-      return Array.isArray(data?.beaches) ? data : { beaches: [] };
+      const result = Array.isArray(data?.beaches) ? data : { beaches: [] };
+      console.log(
+        `[RegionalHighScores] 📦 Returning data for ${selectedDate}:`,
+        {
+          beachCount: result.beaches.length,
+          topBeach: result.beaches[0]?.name || "none",
+        }
+      );
+      return result;
     },
     enabled: !!selectedRegion && !!selectedDate, // Only run query when we have region and date
-    staleTime: 5 * 60 * 1000, // 5 minutes - cache for longer to reduce server load
-    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache
-    refetchOnMount: false, // Don't refetch on mount if data is fresh
-    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent hanging
-    retry: 0, // Don't retry on error to avoid hitting rate limits
-    // Provide default value to prevent undefined access during SSR
-    initialData: { beaches: [] },
+    staleTime: 0, // NO CACHING - always fetch fresh data
+    gcTime: 0, // NO CACHE - don't keep in cache at all
+    refetchOnMount: true, // Always refetch on mount
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: true, // Refetch on reconnect
+    retry: 0, // Don't retry on error
+    // Don't provide initialData - let it be undefined so loading state shows properly
   });
 
   // Safely access beaches from API response with fallback to empty array
   // Type assertion needed because the API returns BeachWithScore[]
   const apiBeaches = (data?.beaches || []) as BeachWithScore[];
 
+  // Debug: Log when data changes to verify different dates return different data
+  useEffect(() => {
+    if (data && selectedDate) {
+      console.log(
+        `[RegionalHighScores] 📊 RENDER: Data updated for ${selectedDate}:`,
+        {
+          beachCount: apiBeaches.length,
+          top5Beaches: apiBeaches.slice(0, 5).map((b) => ({
+            name: b.name,
+            totalScore: b.totalScore,
+            latestScore: b.latestScore,
+          })),
+          queryKey: ["regionalHighScores", selectedRegion, selectedDate],
+        }
+      );
+    }
+  }, [data, selectedDate, apiBeaches, selectedRegion]);
+
   // Handle initial loading state - show skeleton while data is being fetched
-  if (isLoading && !data) {
+  // Show loading if query is loading OR if we don't have data yet (even if not loading, might be initial mount)
+  if (isLoading || (isFetching && !data)) {
     return (
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-2">
-            <div className="flex-1">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-              <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 font-primary">
+            Top Surf Breaks
+          </h3>
+          <p className="text-xs text-gray-500 font-primary mt-1">
+            Scores aggregated from all forecast sources
+          </p>
+        </div>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-2">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+              <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
             </div>
-            <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
@@ -219,7 +302,7 @@ function RegionalHighScoresContent({
         </p>
       ) : (
         <>
-          <div className="space-y-0">
+          <div className="space-y-0" key={`beaches-${selectedDate}`}>
             {apiBeaches
               .slice(0, 10)
               .map((beach: BeachWithScore, index: number) => {
