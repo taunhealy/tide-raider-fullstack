@@ -52,30 +52,39 @@ router.get(
         ? (regions as string).split(",").filter(Boolean)
         : [];
 
-      const result = await LogService.getLogEntriesWithFilters(
-        {
-          id: id as string | undefined,
-          beaches: beachList,
-          regions: regionList,
-          regionId: regionIdParam as string | undefined,
-          countries: countries
-            ? (countries as string).split(",").filter(Boolean)
-            : undefined,
-          minRating: minRating as number | undefined,
-          maxRating: maxRating as number | undefined,
-          startDate: startDate as string | undefined,
-          endDate: endDate as string | undefined,
-          page: page as number | undefined,
-          limit: limit as number | undefined,
-          isPrivate: isPrivateParam as boolean | undefined,
-          userId: filterUserId as string | undefined,
-          beachId: beachId as string | undefined,
-        },
-        authReq.user?.id
-      );
+      let result;
+      try {
+        result = await LogService.getLogEntriesWithFilters(
+          {
+            id: id as string | undefined,
+            beaches: beachList,
+            regions: regionList,
+            regionId: regionIdParam as string | undefined,
+            countries: countries
+              ? (countries as string).split(",").filter(Boolean)
+              : undefined,
+            minRating: minRating as number | undefined,
+            maxRating: maxRating as number | undefined,
+            startDate: startDate as string | undefined,
+            endDate: endDate as string | undefined,
+            page: page as number | undefined,
+            limit: limit as number | undefined,
+            isPrivate: isPrivateParam as boolean | undefined,
+            userId: filterUserId as string | undefined,
+            beachId: beachId as string | undefined,
+          },
+          authReq.user?.id
+        );
+      } catch (serviceError: any) {
+        // Re-throw service errors to be caught by outer catch block
+        throw serviceError;
+      }
 
       // If single entry was requested
-      if (result.entry) {
+      if (id) {
+        if (!result.entry) {
+          return res.status(404).json({ error: "Log entry not found" });
+        }
         return res.json(result.entry);
       }
 
@@ -88,10 +97,16 @@ router.get(
         totalPages: result.totalPages,
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes("Unauthorized")) {
-        return res.status(403).json({ error: error.message });
-      }
       console.error("❌ Error fetching raid logs:", error);
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes("unauthorized") || errorMessage.includes("unauthorized to view")) {
+          return res.status(403).json({ error: error.message });
+        }
+        if (errorMessage.includes("not found") || errorMessage.includes("log entry not found")) {
+          return res.status(404).json({ error: error.message });
+        }
+      }
       return res.status(500).json({ error: "Failed to fetch logs" });
     }
   }

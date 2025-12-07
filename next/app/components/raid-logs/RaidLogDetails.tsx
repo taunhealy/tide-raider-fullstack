@@ -28,10 +28,7 @@ import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { ImageGallery } from "./ImageGallery";
 import type { VideoPlatform } from "@/app/types/raidlogs";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
-import {
-  Dialog,
-  DialogContent,
-} from "@/app/components/ui/dialog";
+import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import ForecastAlertForm from "@/app/components/alerts/ForecastAlertForm";
 import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -104,6 +101,27 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   const isOwner = session?.user?.id === entry?.userId;
 
+  // Fetch beach scores for all sources (A, B, C) for this date
+  // Must be called before any conditional returns to follow Rules of Hooks
+  const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
+  const logDate = entry?.date
+    ? new Date(entry.date).toISOString().split("T")[0]
+    : null;
+
+  const { data: beachScores } = useQuery({
+    queryKey: ["beach-scores", beachId, logDate],
+    queryFn: async () => {
+      if (!beachId || !logDate) return null;
+
+      const response = await fetch(
+        `/api/beach-scores?beachId=${beachId}&date=${logDate}`
+      );
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!beachId && !!logDate && !!entry,
+  });
+
   // Check if user has an existing alert for this log entry
   const { data: existingAlert } = useQuery({
     queryKey: ["alert-for-log", id, session?.user?.id],
@@ -148,24 +166,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   // Forecast is always a single object (one-to-one relation) or null from Prisma
   const forecastData = entry.forecast || null;
-
-  // Fetch beach scores for all sources (A, B, C) for this date
-  const beachId = (entry as any).beachId || entry.beach?.id;
-  const logDate = entry.date ? new Date(entry.date).toISOString().split("T")[0] : null;
-  
-  const { data: beachScores } = useQuery({
-    queryKey: ["beach-scores", beachId, logDate],
-    queryFn: async () => {
-      if (!beachId || !logDate) return null;
-      
-      const response = await fetch(
-        `/api/beach-scores?beachId=${beachId}&date=${logDate}`
-      );
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!beachId && !!logDate,
-  });
 
   // Check if media is available (including uploaded videos without platform)
   // Validate that videoUrl is not empty string
@@ -371,7 +371,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Forecast Star Ratings - Right side on desktop */}
                       {beachScores?.scores && beachScores.scores.length > 0 && (
                         <div className="lg:col-span-1 space-y-2">

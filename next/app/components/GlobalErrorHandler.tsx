@@ -17,8 +17,11 @@ export default function GlobalErrorHandler() {
 
       // Check for null reference errors with addEventListener
       const isNullAddEventListenerError =
-        errorMessage.includes("Cannot read properties of null") &&
-        errorMessage.includes("addEventListener");
+        (errorMessage.includes("Cannot read properties of null") ||
+          errorMessage.includes("Cannot read property") ||
+          errorMessage.includes("Cannot read")) &&
+        (errorMessage.includes("addEventListener") ||
+          errorSource.includes("share-modal"));
 
       if (isNullAddEventListenerError) {
         // Log the error but don't let it crash the app
