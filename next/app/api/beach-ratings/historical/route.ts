@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const authToken = cookieStore.get("auth-token")?.value;
     const searchParams = request.nextUrl.searchParams.toString();
     const queryString = searchParams ? `?${searchParams}` : "";
-    
+
     // Log the request for debugging
     const regionId = request.nextUrl.searchParams.get("regionId");
     const date = request.nextUrl.searchParams.get("date");
