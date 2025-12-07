@@ -170,12 +170,12 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
           </Button>
         </form>
       ) : (
-        <div className="bg-gray-50 p-4 rounded-lg text-center">
+        <div className="bg-gray-50 p-4 rounded-lg flex flex-col items-left justify-left text-left mb-5">
           <p className="text-gray-600 font-primary">
             Please sign in to leave a comment
           </p>
           <Button
-            className="mt-2"
+            className="mt-2 max-w-[420px]"
             onClick={() => {
               const backendUrl = getBackendUrl();
               window.location.href = `${backendUrl}/api/auth/google?state=${encodeURIComponent(window.location.href)}`;
