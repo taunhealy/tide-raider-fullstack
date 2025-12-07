@@ -53,6 +53,32 @@ const ConditionsSkeleton = () => (
   </div>
 );
 
+// Helper function to format wave type enum to display name
+const formatWaveType = (waveType: string | undefined): string => {
+  if (!waveType) return "Beach Break";
+
+  // Convert enum values like "BEACH_BREAK" to "Beach Break"
+  return waveType
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+// Helper function to format region name
+const formatRegionName = (
+  regionName: string | undefined,
+  regionId: string | undefined
+): string => {
+  if (regionName) return regionName;
+  if (regionId) {
+    return regionId
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
+  return "";
+};
+
 const BeachCard = memo(function BeachCard({
   beach,
   score,
@@ -283,7 +309,7 @@ const BeachCard = memo(function BeachCard({
                       `}
                         data-no-animation
                       >
-                        {beach.waveType}
+                        {formatWaveType(beach.waveType)}
                       </div>
                     )}
                   </div>
@@ -325,15 +351,7 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                      {beach.region?.name ||
-                        beach.regionId
-                          ?.split("-")
-                          .map(
-                            (word) =>
-                              word.charAt(0).toUpperCase() +
-                              word.slice(1).toLowerCase()
-                          )
-                          .join(" ")}
+                      {formatRegionName(beach.region?.name, beach.regionId)}
                     </h6>
                   </div>
                 </div>
@@ -606,7 +624,7 @@ const BeachCard = memo(function BeachCard({
                       `}
                         data-no-animation
                       >
-                        {beach.waveType}
+                        {formatWaveType(beach.waveType)}
                       </div>
                     )}
                   </div>
@@ -648,15 +666,7 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                      {beach.region?.name ||
-                        beach.regionId
-                          ?.split("-")
-                          .map(
-                            (word) =>
-                              word.charAt(0).toUpperCase() +
-                              word.slice(1).toLowerCase()
-                          )
-                          .join(" ")}
+                      {formatRegionName(beach.region?.name, beach.regionId)}
                     </h6>
                   </div>
                 </div>
