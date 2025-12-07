@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { optionalAuth } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
 import { getLatestConditions } from "../services/surfConditionsService";
+import { ScoreService } from "../services/scoreService";
 
 const router = Router();
 
@@ -197,6 +198,53 @@ router.get(
                 console.log(
                   `[forecast] 📊 Found forecast after scraping, returning data`
                 );
+
+                // Calculate scores for this forecast (if they don't exist)
+                // This ensures the highscores widget has data
+                try {
+                  // Check if scores already exist for this date/source
+                  const existingScores = await prisma.beachDailyScore.findFirst(
+                    {
+                      where: {
+                        regionId: resolvedRegionId,
+                        date: targetDate,
+                        source: sourceParam,
+                      },
+                    }
+                  );
+
+                  if (!existingScores) {
+                    console.log(
+                      `[forecast] 📊 Calculating scores for ${resolvedRegionId} (${sourceParam}) on ${dateStr}`
+                    );
+                    await ScoreService.calculateAndStoreScores(
+                      resolvedRegionId,
+                      {
+                        windSpeed: forecast.windSpeed,
+                        windDirection: forecast.windDirection,
+                        swellHeight: forecast.swellHeight,
+                        swellPeriod: forecast.swellPeriod,
+                        swellDirection: forecast.swellDirection,
+                        date: forecast.date,
+                        source: forecast.source,
+                      }
+                    );
+                    console.log(
+                      `[forecast] ✅ Scores calculated and stored for ${resolvedRegionId} (${sourceParam})`
+                    );
+                  } else {
+                    console.log(
+                      `[forecast] ℹ️ Scores already exist for ${resolvedRegionId} (${sourceParam}) on ${dateStr}, skipping calculation`
+                    );
+                  }
+                } catch (scoreError: any) {
+                  console.error(
+                    `[forecast] ⚠️ Failed to calculate scores (non-fatal):`,
+                    scoreError?.message
+                  );
+                  // Don't fail the request if score calculation fails
+                }
+
                 return res.json(forecast);
               } else {
                 console.warn(
