@@ -10,6 +10,7 @@ import { Button } from "@/app/components/ui/Button";
 import { compressVideoIfNeeded, validateVideoFile } from "@/app/lib/file";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -1073,6 +1074,17 @@ export function RaidLogForm({
                     onImagesChange={setImageUrls}
                     maxImages={maxImages}
                   />
+                  {!isPremium && imageUrls.length > 0 && (
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-2 font-primary">
+                      Subscribers can upload up to 30 photos.{" "}
+                      <Link
+                        href="/checkout"
+                        className="text-[var(--color-primary)] hover:underline"
+                      >
+                        Learn more
+                      </Link>
+                    </p>
+                  )}
                 </div>
               )}
 
