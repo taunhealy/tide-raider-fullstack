@@ -149,8 +149,12 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Maputo Costa do Sol
+      url: "https://www.windguru.cz/335490", // TODO: Find Windguru spot ID for Maputo Costa do Sol
       scraper: scraperB,
+    },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/175672/Tofo+Beach+Praia+Tofo",
+      scraper: scraperC,
     },
   },
   zambia: {
@@ -171,8 +175,12 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Cabo Ledo
+      url: "https://www.windguru.cz/50205", // TODO: Find Windguru spot ID for Cabo Ledo
       scraper: scraperB,
+    },
+    sourceC: {
+      url: "https://windy.app/forecast2/spot/326137/Luanda+Ilha+de+Luanda",
+      scraper: scraperC,
     },
   },
   benguela: {

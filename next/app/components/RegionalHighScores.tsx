@@ -105,15 +105,12 @@ function RegionalHighScoresContent({
   useEffect(() => {
     if (selectedDate && selectedRegion) {
       console.log(
-        `[RegionalHighScores] 🔄 Date changed to ${selectedDate}, clearing cache and forcing refetch`
+        `[RegionalHighScores] 🔄 Date changed to ${selectedDate}, invalidating cache`
       );
-      // Remove all cached data for this query key
-      queryClient.removeQueries({
+      // Invalidate all queries for this region (will trigger refetch)
+      queryClient.invalidateQueries({
         queryKey: ["regionalHighScores", selectedRegion],
-      });
-      // Force refetch
-      queryClient.refetchQueries({
-        queryKey: ["regionalHighScores", selectedRegion, selectedDate],
+        exact: false, // Match all queries that start with this key
       });
     }
   }, [selectedDate, selectedRegion, queryClient]);
