@@ -675,14 +675,33 @@ async function main() {
             continue;
           }
 
-          const regionName = beach.regionId;
-          const regionId = transformRegionToId(regionName);
+          const regionId = transformRegionToId(beach.regionId);
+          
+          // Look up proper region name from allRegions (which has correct names like "Western Cape")
+          // If not found, format the regionId to a proper name (e.g., "western-cape" -> "Western Cape")
+          const predefinedRegion = allRegions.find((r) => r.id === regionId);
+          const regionName = predefinedRegion?.name || 
+            regionId
+              .split("-")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(" ");
 
           // Ensure region exists (create or update if needed) instead of skipping the beach
+          // Only update name if it's not already set or if we have a better name from allRegions
+          const existingRegion = await prisma.region.findUnique({
+            where: { id: regionId },
+            select: { name: true },
+          });
+
           const region = await prisma.region.upsert({
             where: { id: regionId },
             update: {
-              name: regionName,
+              // Only update name if it's currently in snake_case or if we have a predefined name
+              name: existingRegion?.name && 
+                    existingRegion.name !== regionId && 
+                    !existingRegion.name.includes("-") 
+                    ? existingRegion.name  // Keep existing proper name
+                    : regionName,  // Use proper name from allRegions or formatted name
               countryId: country.id,
             },
             create: {
