@@ -69,6 +69,9 @@ router.get(
         console.log(
           `[beach-ratings/historical] Specific date requested: ${dateParam}, range: ${startDate.toISOString()} to ${endDate.toISOString()}`
         );
+        console.log(
+          `[beach-ratings/historical] Date objects: startDate=${startDate.getTime()}, endDate=${endDate.getTime()}`
+        );
       } else {
         // Period-based range (defaulting to today)
         endDate = new Date(now);
@@ -134,6 +137,7 @@ router.get(
 
       // Get beaches for the region with scores from ALL sources
       // For specific date requests, use a tight date range (same day only) to avoid including other days
+      // Note: regionId is already filtered at the beach level, so we don't need it in scoreWhereClause
       const scoreWhereClause: any = dateParam
         ? {
             // Tight date range for specific date requests (same day only)
@@ -149,6 +153,22 @@ router.get(
               lte: endDate,
             },
           };
+
+      if (dateParam) {
+        console.log(
+          `[beach-ratings/historical] 🔍 Prisma where clause for scores (date=${dateParam}):`,
+          JSON.stringify(
+            {
+              date: {
+                gte: startDate.toISOString(),
+                lte: endDate.toISOString(),
+              },
+            },
+            null,
+            2
+          )
+        );
+      }
 
       const beaches = await prisma.beach.findMany({
         where: { regionId: resolvedRegionId },
@@ -394,7 +414,7 @@ router.get(
           : b.totalScore - a.totalScore
       );
 
-      // Debug: Log top 3 beaches for this date
+      // Debug: Log top 3 beaches for this date with detailed score breakdown
       if (dateParam && sortedBeaches.length > 0) {
         console.log(
           `[beach-ratings/historical] 🏆 Top 3 beaches for ${dateParam}:`,
@@ -406,6 +426,21 @@ router.get(
             appearances: b.appearances,
           }))
         );
+
+        // Also log the actual score records for the top beach to verify date filtering
+        if (sortedBeaches.length > 0) {
+          const topBeach = beaches.find((b) => b.id === sortedBeaches[0].id);
+          if (topBeach && topBeach.beachDailyScores.length > 0) {
+            console.log(
+              `[beach-ratings/historical] 🔍 Top beach "${topBeach.name}" score details:`,
+              topBeach.beachDailyScores.map((s) => ({
+                date: s.date.toISOString().split("T")[0],
+                source: s.source,
+                score: s.score,
+              }))
+            );
+          }
+        }
       }
 
       return res.json({
