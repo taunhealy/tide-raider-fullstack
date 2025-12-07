@@ -4352,6 +4352,7 @@ export const beachData: Beach[] = [
     continent: "Africa",
     countryId: "za",
     regionId: "western-cape",
+    isHiddenGem: true,
     location: "Kommetjie",
     distanceFromCT: 40,
     optimalWindDirections: ["SE", "SSE"],

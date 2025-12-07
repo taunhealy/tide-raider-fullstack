@@ -18,6 +18,7 @@ import { useUpdateLog } from "@/app/hooks/useUpdateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
 import { BeachContext } from "@/app/context/BeachContext";
 import { useContext } from "react";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import {
   BlueStarRating,
   InteractiveBlueStarRating,
@@ -54,6 +55,13 @@ export function RaidLogForm({
   const { data: session, status: authStatus } = useBackendAuth();
   const router = useRouter();
   const user = session?.user;
+
+  // Check subscription status for photo upload limits
+  const { isPremium, isLoading: isSubscriptionLoading } =
+    useSubscriptionStatus();
+
+  // Set max images based on subscription: 30 for subscribers, 10 for non-subscribers
+  const maxImages = isPremium ? 30 : 10;
 
   // Debug: Log auth state to help troubleshoot
   useEffect(() => {
@@ -1063,7 +1071,7 @@ export function RaidLogForm({
                   <MultiImageUploader
                     images={imageUrls}
                     onImagesChange={setImageUrls}
-                    maxImages={10}
+                    maxImages={maxImages}
                   />
                 </div>
               )}
