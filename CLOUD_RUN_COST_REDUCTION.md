@@ -7,11 +7,13 @@
 **Problem**: Build script was trying to use `DATABASE_URL` secret, but you have `DATABASE_URL_SUPABASE` set as an environment variable in Cloud Run.
 
 **Solution**:
+
 - ✅ Removed `DATABASE_URL` secret reference from `cloudbuild.yaml`
 - ✅ Updated `backend/src/lib/prisma.ts` to check for `DATABASE_URL_SUPABASE` if `DATABASE_URL` is not set
 - ✅ Your existing `DATABASE_URL_SUPABASE` environment variable in Cloud Run will now be used automatically
 
 **What this means**:
+
 - No need to create/update a `DATABASE_URL` secret
 - The code automatically uses `DATABASE_URL_SUPABASE` from Cloud Run
 - No changes needed in Cloud Run console - it will work with your existing setup
@@ -23,10 +25,11 @@
 ```bash
 gcloud artifacts repositories update tide-raider \
   --location=europe-west1 \
-  --no-scan-on-push
+  --disable-vulnerability-scanning
 ```
 
 **Or via Cloud Console**:
+
 1. Go to [Artifact Registry](https://console.cloud.google.com/artifacts)
 2. Select repository: `tide-raider`
 3. Click **Edit**
@@ -70,6 +73,7 @@ gcloud artifacts repositories update tide-raider \
 ### 1. Check DATABASE_URL is working:
 
 After your next deployment, check the logs:
+
 ```bash
 gcloud run services logs read tide-raider-backend \
   --region=europe-west1 \
@@ -77,6 +81,7 @@ gcloud run services logs read tide-raider-backend \
 ```
 
 Look for:
+
 - ✅ `[prisma] ✅ Using Supabase pooler...` (if using pooler)
 - ❌ No `DATABASE_URL is required but was not provided` errors
 
@@ -90,7 +95,7 @@ gcloud artifacts docker images list \
 # Check repository settings
 gcloud artifacts repositories describe tide-raider \
   --location=europe-west1 \
-  --format="yaml(scanOnPush,lifecyclePolicy)"
+  --format="yaml(vulnerabilityScanningConfig,lifecyclePolicy)"
 ```
 
 ## Next Steps
@@ -105,5 +110,3 @@ gcloud artifacts repositories describe tide-raider \
 - **No breaking changes**: Your existing `DATABASE_URL_SUPABASE` in Cloud Run will work immediately
 - **Backward compatible**: Code still checks `DATABASE_URL` first, then falls back to `DATABASE_URL_SUPABASE`
 - **Artifact Registry**: Disabling scanning is the biggest cost saver - storage costs are usually minimal
-
-

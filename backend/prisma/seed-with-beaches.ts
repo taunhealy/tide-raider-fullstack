@@ -651,14 +651,24 @@ async function main() {
             continue;
           }
 
+          // Map common country code variations to the correct country ID
+          const countryIdMap: Record<string, string> = {
+            "za": "south-africa", // ISO code to slug
+            "zaf": "south-africa", // ISO 3-letter code
+            "south africa": "south-africa",
+            "southafrica": "south-africa",
+          };
+
+          const mappedCountryId = countryIdMap[beach.countryId?.toLowerCase() || ""] || beach.countryId;
+
           const country = HARDCODED_COUNTRIES.find(
-            (c) => c.id === beach.countryId || c.name === beach.countryId
+            (c) => c.id === mappedCountryId || c.id === beach.countryId || c.name === beach.countryId || c.name.toLowerCase() === beach.countryId?.toLowerCase()
           );
 
           if (!country) {
             if (skippedCount < 5) {
               console.warn(
-                `Skipping beach ${beach.name}: Country not found: ${beach.countryId}`
+                `Skipping beach ${beach.name}: Country not found: ${beach.countryId} (tried: ${mappedCountryId})`
               );
             }
             skippedCount++;

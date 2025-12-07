@@ -586,6 +586,7 @@ export const beachData: Beach[] = [
     countryId: "za",
     regionId: "western-cape",
     location: "Gansbaai",
+    isHiddenGem: true,
     distanceFromCT: 150,
     optimalWindDirections: ["SSE", "SE", "ESE"],
     optimalSwellDirections: {

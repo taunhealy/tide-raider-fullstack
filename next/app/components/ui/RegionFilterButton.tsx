@@ -33,7 +33,16 @@ export default function RegionFilterButton({
         isSelected && "bg-[var(--color-bg-tertiary)]  text-white"
       )}
     >
-      <span className="relative z-10">{region.name}</span>
+      <span className="relative z-10">
+        {region.name ||
+          region.id
+            ?.split("-")
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ")}
+      </span>
       {count > 0 && (
         <span
           className={cn(

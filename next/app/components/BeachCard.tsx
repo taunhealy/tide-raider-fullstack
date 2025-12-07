@@ -100,14 +100,17 @@ const BeachCard = memo(function BeachCard({
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
 
-  // Check if beach is 5-star (score >= 10) and user is not premium
+  // Check if beach is 5-star (score >= 10) or hidden gem, and user is not premium
   // Ensure score is a number for comparison
   const numericScore = score !== null ? Number(score) : null;
   const isFiveStar = numericScore !== null && numericScore >= 10;
+  const isHiddenGem = beach.isHiddenGem === true;
   const isPremium = directIsPremium; // Use direct backend check
   // If user is premium (subscribed or has trial), NO gates at all
-  // Only gate 5-star beaches if user is NOT premium AND subscription status has loaded
-  const isLocked = isPremium ? false : isFiveStar && !isSubscriptionLoading;
+  // Gate 5-star beaches OR hidden gems if user is NOT premium AND subscription status has loaded
+  const isLocked = isPremium
+    ? false
+    : (isFiveStar || isHiddenGem) && !isSubscriptionLoading;
 
   // Debug logging for premium gating
   console.log(`[BeachCard] ${beach.name} - Premium gating check:`, {
@@ -115,6 +118,7 @@ const BeachCard = memo(function BeachCard({
     numericScore,
     scoreType: typeof score,
     isFiveStar,
+    isHiddenGem,
     isSubscribed,
     hasActiveTrial,
     isPremium,
@@ -321,7 +325,15 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                      {beach.region?.name}
+                      {beach.region?.name ||
+                        beach.regionId
+                          ?.split("-")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() +
+                              word.slice(1).toLowerCase()
+                          )
+                          .join(" ")}
                     </h6>
                   </div>
                 </div>
@@ -636,7 +648,15 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
-                      {beach.region?.name}
+                      {beach.region?.name ||
+                        beach.regionId
+                          ?.split("-")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() +
+                              word.slice(1).toLowerCase()
+                          )
+                          .join(" ")}
                     </h6>
                   </div>
                 </div>
