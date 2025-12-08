@@ -21,6 +21,7 @@ import testEmailRouter from "./test-email";
 import hiddenGemsRouter from "./hidden-gems";
 import squadsRouter from "./squads";
 import promoCodesRouter from "./promo-codes";
+import paypalRouter from "./paypal";
 
 const router = Router();
 
@@ -49,5 +50,6 @@ router.use("/test-email", testEmailRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
 router.use("/squads", squadsRouter);
 router.use("/promo-codes", promoCodesRouter);
+router.use("/paypal", paypalRouter);
 
 export default router;

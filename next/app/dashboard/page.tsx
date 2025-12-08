@@ -235,9 +235,18 @@ export default function DashboardPage() {
         });
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || "Failed to cancel subscription");
+          throw new Error(
+            error.error || error.message || "Failed to cancel subscription"
+          );
         }
-        toast.success("Subscription cancelled successfully");
+        const data = await response.json();
+        const message =
+          data.message ||
+          (subscriptionData?.status === SubscriptionStatus.TRIAL ||
+          subscriptionData?.hasActiveTrial
+            ? "Trial ended successfully"
+            : "Subscription cancelled successfully");
+        toast.success(message);
       } else if (action === "suspend") {
         const response = await fetch("/api/paypal/suspend", {
           method: "POST",
