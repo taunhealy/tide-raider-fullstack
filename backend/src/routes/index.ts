@@ -19,11 +19,11 @@ import commentsRouter from "./comments";
 import campingRouter from "./camping";
 import testEmailRouter from "./test-email";
 import hiddenGemsRouter from "./hidden-gems";
+import squadsRouter from "./squads";
 
 const router = Router();
 
 router.use("/camping", campingRouter);
-
 
 // Mount route handlers
 router.use("/auth", authRouter);
@@ -46,5 +46,6 @@ router.use("/comments", commentsRouter);
 router.use("/subscriptions", subscriptionsRouter);
 router.use("/test-email", testEmailRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
+router.use("/squads", squadsRouter);
 
 export default router;

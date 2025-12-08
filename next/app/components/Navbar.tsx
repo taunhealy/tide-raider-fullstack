@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "./ui/Button";
+import { Input } from "./ui/input";
 import { useSubscription } from "../providers/SubscriptionProvider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,12 +23,18 @@ const NAVIGATION_ITEMS = [
 
 export default function Navbar() {
   const { data: session, status, signOut } = useBackendAuth();
-  const { isSubscribed } = useSubscription();
+  const { isSubscribed, checkSubscription } = useSubscription();
   const pathname = usePathname();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [isActivatingTrial, setIsActivatingTrial] = useState(false);
+  const [trialMessage, setTrialMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -83,6 +90,71 @@ export default function Navbar() {
     router.refresh();
   };
 
+  const handleActivateTrial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!promoCode.trim()) {
+      setTrialMessage({
+        type: "error",
+        text: "Please enter a promo code",
+      });
+      return;
+    }
+
+    if (!session) {
+      setTrialMessage({
+        type: "error",
+        text: "Please sign in to activate a trial",
+      });
+      return;
+    }
+
+    setIsActivatingTrial(true);
+    setTrialMessage(null);
+
+    try {
+      const response = await fetch("/api/subscriptions/activate-trial", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ promoCode: promoCode.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setTrialMessage({
+          type: "error",
+          text: data.message || data.error || "Failed to activate trial",
+        });
+        return;
+      }
+
+      setTrialMessage({
+        type: "success",
+        text: data.message || "Trial activated successfully!",
+      });
+      setPromoCode("");
+      
+      // Refresh subscription status
+      await checkSubscription();
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setTrialMessage(null);
+      }, 5000);
+    } catch (error) {
+      console.error("Failed to activate trial:", error);
+      setTrialMessage({
+        type: "error",
+        text: "An error occurred. Please try again.",
+      });
+    } finally {
+      setIsActivatingTrial(false);
+    }
+  };
+
   return (
     <header
       className="sticky top-0 z-[10000] bg-white"
@@ -94,24 +166,63 @@ export default function Navbar() {
           "relative z-[10000]"
         )}
       >
-        {isLoading ? (
-          <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
-        ) : (
-          <Link
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              router.push("/");
-              router.refresh();
-              setIsMenuOpen(false); // Close mobile menu if open
-            }}
-            className="font-semibold hover:text-[var(--color-bg-tertiary)] transition-all duration-300"
-          >
-            <h6 className="heading-6 text-[var(--color-text-primary)]">
-              Tide Raider
-            </h6>
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {isLoading ? (
+            <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <Link
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/");
+                router.refresh();
+                setIsMenuOpen(false); // Close mobile menu if open
+              }}
+              className="font-semibold hover:text-[var(--color-bg-tertiary)] transition-all duration-300"
+            >
+              <h6 className="heading-6 text-[var(--color-text-primary)]">
+                Tide Raider
+              </h6>
+            </Link>
+          )}
+          
+          {/* Trial Promo Code Input - Desktop Only */}
+          {!isLoading && session && !isSubscribed && (
+            <form
+              onSubmit={handleActivateTrial}
+              className="hidden md:flex items-center gap-2"
+              onFocus={() => setTrialMessage(null)}
+            >
+              <Input
+                type="text"
+                placeholder="Enter the promo code"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="h-9 w-48 text-sm font-primary"
+                disabled={isActivatingTrial}
+              />
+              <Button
+                type="submit"
+                disabled={isActivatingTrial || !promoCode.trim()}
+                className="h-9 px-4 text-sm font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isActivatingTrial ? "Activating..." : "Unlock 1 Month Trial"}
+              </Button>
+              {trialMessage && (
+                <span
+                  className={cn(
+                    "text-xs font-primary whitespace-nowrap",
+                    trialMessage.type === "success"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  )}
+                >
+                  {trialMessage.text}
+                </span>
+              )}
+            </form>
+          )}
+        </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">

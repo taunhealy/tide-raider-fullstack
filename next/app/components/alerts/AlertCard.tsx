@@ -16,6 +16,17 @@ import { AlertProperties } from "./AlertProperties";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { formatNotificationMethod } from "@/app/lib/formatters";
 
+// Map source names to display names
+const sourceMap: Record<string, string> = {
+  WINDFINDER: "Source A",
+  WINDGURU: "Source B",
+  WINDY: "Source C",
+};
+
+const formatSourceName = (source: string): string => {
+  return sourceMap[source.toUpperCase()] || source;
+};
+
 // Extended Alert type with optional relations
 type AlertWithRelations = Alert & {
   properties?: AlertProperty[];
@@ -116,12 +127,7 @@ export function AlertCard({
           <p className="text-gray-500">
             <span className="font-medium text-gray-700">📡</span>{" "}
             {alert.sources && alert.sources.length > 0
-              ? alert.sources
-                  .map(
-                    (s) =>
-                      s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
-                  )
-                  .join(", ")
+              ? alert.sources.map(formatSourceName).join(", ")
               : "All Sources"}
           </p>
           <AlertConditions alert={alert} />

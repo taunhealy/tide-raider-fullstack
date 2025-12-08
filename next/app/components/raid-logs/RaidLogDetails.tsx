@@ -32,6 +32,7 @@ import { Dialog, DialogContent } from "@/app/components/ui/dialog";
 import ForecastAlertForm from "@/app/components/alerts/ForecastAlertForm";
 import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 
 interface RaidLogDetailsProps {
   id: string;
@@ -139,8 +140,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[var(--color-tertiary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-primary">Loading session...</p>
+          <LoadingSpinner size="lg" />
+          <p className="text-gray-600 font-primary mt-4">Loading session...</p>
         </div>
       </div>
     );

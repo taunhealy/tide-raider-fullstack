@@ -77,5 +77,159 @@ router.post(
   }
 );
 
+// POST /api/subscriptions/activate-trial-with-code - Activate 1-month trial with promo code
+router.post(
+  "/activate-trial-with-code",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { promoCode } = req.body;
+
+      if (!promoCode || typeof promoCode !== "string") {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Promo code is required",
+        });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: authReq.user.id },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Find the promo code
+      const code = await prisma.promoCode.findUnique({
+        where: { code: promoCode.toUpperCase().trim() },
+      });
+
+      if (!code) {
+        return res.status(404).json({
+          error: "Invalid code",
+          message: "The promo code you entered is invalid.",
+        });
+      }
+
+      if (!code.isActive) {
+        return res.status(400).json({
+          error: "Code inactive",
+          message: "This promo code is no longer active.",
+        });
+      }
+
+      // Check if code has reached max uses
+      if (code.maxUses !== null && code.usedCount >= code.maxUses) {
+        return res.status(400).json({
+          error: "Code expired",
+          message: "This promo code has reached its usage limit.",
+        });
+      }
+
+      // Check if user has already used this code
+      const existingUsage = await prisma.promoCodeUsage.findUnique({
+        where: {
+          promoCodeId_userId: {
+            promoCodeId: code.id,
+            userId: user.id,
+          },
+        },
+      });
+
+      if (existingUsage) {
+        return res.status(400).json({
+          error: "Code already used",
+          message: "You have already used this promo code.",
+        });
+      }
+
+      // Check if user already has an active subscription or trial
+      if (
+        user.subscriptionStatus === "ACTIVE" ||
+        (user.hasActiveTrial && user.trialEndDate && new Date() < user.trialEndDate)
+      ) {
+        return res.status(400).json({
+          error: "Already subscribed",
+          message: "You already have an active subscription or trial.",
+        });
+      }
+
+      // Calculate trial end date (using trialDays from promo code, default 30 days)
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + code.trialDays);
+
+      // Start transaction to update user and record usage
+      const result = await prisma.$transaction(async (tx) => {
+        // Update user with trial information
+        const updatedUser = await tx.user.update({
+          where: { id: user.id },
+          data: {
+            hasActiveTrial: true,
+            trialStartDate: new Date(),
+            trialEndDate: trialEndDate,
+            subscriptionStatus: "TRIAL",
+            hasTrialEnded: false,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            trialEndDate: true,
+          },
+        });
+
+        // Record promo code usage
+        await tx.promoCodeUsage.create({
+          data: {
+            promoCodeId: code.id,
+            userId: user.id,
+          },
+        });
+
+        // Increment used count
+        await tx.promoCode.update({
+          where: { id: code.id },
+          data: {
+            usedCount: {
+              increment: 1,
+            },
+          },
+        });
+
+        return updatedUser;
+      });
+
+      console.log(
+        `[subscriptions] ✅ Activated ${code.trialDays}-day trial with code ${code.code} for user: ${user.id}, trial ends: ${trialEndDate.toISOString()}`
+      );
+
+      // Notify admin of new trial (async, don't wait)
+      notifyAdminNewTrial(result).catch((err) =>
+        console.error("Failed to send admin notification:", err)
+      );
+
+      return res.json({
+        success: true,
+        trialEndDate: trialEndDate.toISOString(),
+        trialDays: code.trialDays,
+        message: `Successfully activated ${code.trialDays}-day free trial!`,
+      });
+    } catch (error) {
+      console.error("[subscriptions] ❌ Activate trial with code error:", error);
+      return res.status(500).json({
+        error: "Failed to activate trial",
+        message:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  }
+);
+
 export default router;
 

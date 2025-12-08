@@ -63,6 +63,7 @@
     "playwright-core": "^1.41.0",
     "puppeteer-core": "^24.31.0",
     "resend": "^4.0.1",
+    "twilio": "^5.10.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {

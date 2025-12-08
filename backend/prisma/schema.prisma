@@ -31,12 +31,12 @@ model AdRequest {
   endDate               DateTime
   variantId             String?
   paypalSubscriptionId  String?
+  categoryType          String?        @default("local")
+  customCategory        String?
   ad                    Ad?
   region                Region         @relation(fields: [regionId], references: [id])
   user                  User?          @relation(fields: [userId], references: [id])
   notifications         Notification[]
-  categoryType          String?        @default("local")
-  customCategory        String?
 
   @@index([regionId])
   @@index([category])
@@ -61,14 +61,14 @@ model Ad {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   userId               String?
+  categoryType         String?             @default("local")
+  customCategory       String?
   region               Region              @relation(fields: [regionId], references: [id])
   adRequest            AdRequest           @relation(fields: [requestId], references: [id])
   user                 User?               @relation(fields: [userId], references: [id])
   beachConnections     AdBeachConnection[]
   clicks               AdClick[]
   notifications        Notification[]
-  categoryType         String?             @default("local")
-  customCategory       String?
 
   @@index([regionId])
   @@index([category])
@@ -111,39 +111,39 @@ model User {
   subscriptionEndsAt   DateTime?
   subscriptionStatus   String?
   paypalSubscriptionId String?
-  roles                   UserRole[]             @default([SURFER])
-  accounts                Account[]
-  ads                     Ad[]
-  adRequests              AdRequest[]
-  alerts                  Alert[]
-  boards                  Board[]
-  comments                Comment[]
-  events                  Event[]
-  logEntries              LogEntry[]
-  membership              Membership?
-  notifications           Notification[]
-  rentalChatMessages      RentalChatMessage[]
-  rentalItems             RentalItem[]
-  ownedItemRequests       RentalItemRequest[]    @relation("OwnerItemRequests")
-  rentedItemRequests      RentalItemRequest[]    @relation("RenterItemRequests")
-  safariBookings          SafariBooking[]
-  sessions                Session[]
-  stories                 Story[]
-  surfSafaris             SurfSafariListing[]
-  favorites               UserFavorite[]
-  filters                 UserFilters?
-  
-  // Garden Camping V2 - Property→Unit Architecture
-  propertiesAsHost        Property[]           @relation("PropertyHost")
-  bookingsAsGuest         Booking[]            @relation("BookingGuest")
-  enquiriesAsGuest        Enquiry[]            @relation("EnquiryGuest")
-  messagesSent            Message[]            @relation("MessageSender")
-  reviewsGiven            PropertyReview[]     @relation("Reviewer")
-  reviewsReceived         PropertyReview[]     @relation("Reviewee")
-  
-  // Hidden Gems
-  hiddenGemsSubmitted     HiddenGem[]          @relation("HiddenGemSubmitter")
-  hiddenGemsModerated     HiddenGem[]          @relation("ModeratedHiddenGems")
+  roles                UserRole[]          @default([SURFER])
+  accounts             Account[]
+  ads                  Ad[]
+  adRequests           AdRequest[]
+  alerts               Alert[]
+  boards               Board[]
+  comments             Comment[]
+  events               Event[]
+  hiddenGemsModerated  HiddenGem[]         @relation("ModeratedHiddenGems")
+  hiddenGemsSubmitted  HiddenGem[]         @relation("HiddenGemSubmitter")
+  logEntries           LogEntry[]
+  membership           Membership?
+  notifications        Notification[]
+  rentalChatMessages   RentalChatMessage[]
+  rentalItems          RentalItem[]
+  ownedItemRequests    RentalItemRequest[] @relation("OwnerItemRequests")
+  rentedItemRequests   RentalItemRequest[] @relation("RenterItemRequests")
+  safariBookings       SafariBooking[]
+  sessions             Session[]
+  stories              Story[]
+  surfSafaris          SurfSafariListing[]
+  favorites            UserFavorite[]
+  filters              UserFilters?
+  bookingsAsGuest      Booking[]           @relation("BookingGuest")
+  enquiriesAsGuest     Enquiry[]           @relation("EnquiryGuest")
+  messagesSent         Message[]           @relation("MessageSender")
+  propertiesAsHost     Property[]          @relation("PropertyHost")
+  reviewsReceived      PropertyReview[]    @relation("Reviewee")
+  reviewsGiven         PropertyReview[]    @relation("Reviewer")
+
+  // Squads
+  squads Squad[]
+  promoCodeUsages PromoCodeUsage[]
 
   @@index([email])
   @@index([skillLevel])
@@ -167,32 +167,31 @@ model Event {
 }
 
 model LogEntry {
-  id            String   @id @default(uuid())
-  date          DateTime @db.Date
+  id            String     @id @default(uuid())
+  date          DateTime   @db.Date
   surferName    String?
   surferEmail   String?
   beachName     String?
-  surferRating  Int      @default(0)
+  surferRating  Int        @default(0)
   comments      String?
   imageUrl      String?
-  imageUrls     Json? // Array of image URLs for multiple images support
   videoUrl      String?
   videoPlatform String?
-  isPrivate     Boolean  @default(false)
-  isAnonymous   Boolean  @default(false)
+  isPrivate     Boolean    @default(false)
+  isAnonymous   Boolean    @default(false)
   waveType      String?
   beachId       String?
-  userId        String?  @map("user_id")
+  userId        String?    @map("user_id")
   regionId      String
   forecastId    String?
+  imageUrls     Json?
   hiddenGemId   String?
-
-  beach    Beach?    @relation(fields: [beachId], references: [id])
-  region   Region    @relation(fields: [regionId], references: [id])
-  forecast Forecast? @relation(fields: [forecastId], references: [id])
-  user     User?     @relation(fields: [userId], references: [id])
-  hiddenGem  HiddenGem? @relation("HiddenGemLogs", fields: [hiddenGemId], references: [id])
-  alerts   Alert[]
+  alerts        Alert[]
+  beach         Beach?     @relation(fields: [beachId], references: [id])
+  forecast      Forecast?  @relation(fields: [forecastId], references: [id])
+  hiddenGem     HiddenGem? @relation("HiddenGemLogs", fields: [hiddenGemId], references: [id])
+  region        Region     @relation(fields: [regionId], references: [id])
+  user          User?      @relation(fields: [userId], references: [id])
 
   @@index([regionId])
   @@index([beachId])
@@ -263,15 +262,15 @@ model BeachDailyScore {
   id         String   @id @default(cuid())
   beachId    String
   regionId   String
-  source     String   @default("WINDFINDER") // Forecast source: WINDFINDER, WINDGURU, or WINDY
-  region     Region   @relation(fields: [regionId], references: [id])
   score      Int      @default(0)
-  starRating Int? // Star rating 1-5, calculated from score (score / 2, clamped to 1-5)
   conditions Json
   date       DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  starRating Int?
+  source     String   @default("WINDFINDER")
   beach      Beach    @relation(fields: [beachId], references: [id])
+  region     Region   @relation(fields: [regionId], references: [id])
 
   @@unique([beachId, date, source])
   @@index([regionId])
@@ -311,18 +310,19 @@ model Beach {
   bestMonthOfYear        Month?
   isHiddenGem            Boolean?
   sheltered              Boolean?
-  alerts                 Alert[]
+  countryId              String
   adConnections          AdBeachConnection[]
+  alerts                 Alert[]
+  country                Country                 @relation(fields: [countryId], references: [id])
   region                 Region                  @relation(fields: [regionId], references: [id])
+  beachDailyScores       BeachDailyScore[]
   rentalItems            BeachRentalConnection[]
   feedbacks              Feedback[]
   logEntries             LogEntry[]
   rentalItemRequests     RentalItemRequest[]
   stories                Story[]
-  countryId              String
-  country                Country                 @relation(fields: [countryId], references: [id])
-  beachDailyScores       BeachDailyScore[]
-  properties             Property[]              // Garden Camping V2
+  properties             Property[]
+  broadcasts             Broadcast[]
 
   @@index([regionId])
   @@index([countryId])
@@ -332,64 +332,46 @@ model Beach {
 }
 
 model HiddenGem {
-  id                     String      @id @default(cuid())
-  
-  // Basic Info
+  id                     String          @id @default(cuid())
   name                   String
-  description            String      @db.Text
-  location               String      // e.g., "Near Kommetjie, Western Cape"
-  
-  // Geographic Data
+  description            String
+  location               String
   regionId               String
-  region                 Region      @relation(fields: [regionId], references: [id])
   countryId              String
-  country                Country     @relation(fields: [countryId], references: [id])
   continent              String
-  coordinates            Json        // {lat, lng}
-  
-  // Surf Conditions
+  coordinates            Json
   waveType               WaveType
   difficulty             Difficulty
   optimalTide            OptimalTide
   bestSeasons            Season[]
-  optimalWindDirections  String[]    // e.g., ["NW", "W", "SW"]
-  optimalSwellDirections Json?       // {min: 180, max: 270, cardinal: "SW"}
-  swellSize              Json?       // {min: 1.5, max: 3.0} in meters
-  idealSwellPeriod       Json?       // {min: 12, max: 16} in seconds
-  
-  // Safety & Environment
+  optimalWindDirections  String[]
+  optimalSwellDirections Json?
+  swellSize              Json?
+  idealSwellPeriod       Json?
   hazards                Hazard[]
   crimeLevel             CrimeLevel?
   sharkRisk              SharkRisk?
-  sheltered              Boolean     @default(false)
-  crowdLevel             String?     // "Empty", "Few", "Moderate", "Crowded"
-  
-  // Media
-  images                 String[]    // Array of image URLs
-  videos                 Json?       // Array of {url, title, platform}
-  
-  // User & Moderation
+  sheltered              Boolean         @default(false)
+  crowdLevel             String?
+  images                 String[]
+  videos                 Json?
   submittedById          String
-  submittedBy            User        @relation("HiddenGemSubmitter", fields: [submittedById], references: [id])
   status                 HiddenGemStatus @default(PENDING)
   moderatedById          String?
-  moderatedBy            User?       @relation("ModeratedHiddenGems", fields: [moderatedById], references: [id])
-  moderationNotes        String?     @db.Text
-  rejectionReason        String?     @db.Text
-  
-  // Engagement
-  viewCount              Int         @default(0)
-  likeCount              Int         @default(0)
-  verified               Boolean     @default(false) // Admin verified as accurate
-  
-  // Timestamps
-  createdAt              DateTime    @default(now())
-  updatedAt              DateTime    @updatedAt
+  moderationNotes        String?
+  rejectionReason        String?
+  viewCount              Int             @default(0)
+  likeCount              Int             @default(0)
+  verified               Boolean         @default(false)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
   publishedAt            DateTime?
-  
-  // Relations
-  logEntries             LogEntry[]  @relation("HiddenGemLogs")
-  
+  country                Country         @relation(fields: [countryId], references: [id])
+  moderatedBy            User?           @relation("ModeratedHiddenGems", fields: [moderatedById], references: [id])
+  region                 Region          @relation(fields: [regionId], references: [id])
+  submittedBy            User            @relation("HiddenGemSubmitter", fields: [submittedById], references: [id])
+  logEntries             LogEntry[]      @relation("HiddenGemLogs")
+
   @@index([regionId])
   @@index([countryId])
   @@index([submittedById])
@@ -397,14 +379,6 @@ model HiddenGem {
   @@index([waveType])
   @@index([difficulty])
   @@index([createdAt])
-}
-
-enum HiddenGemStatus {
-  PENDING       // Awaiting moderation
-  APPROVED      // Approved and published
-  REJECTED      // Rejected by moderator
-  FLAGGED       // Flagged for review
-  DRAFT         // User's draft (not submitted)
 }
 
 model Account {
@@ -459,24 +433,18 @@ model Board {
   @@index([userId])
 }
 
-enum ForecastSource {
-  WINDFINDER
-  WINDGURU
-  WINDY
-}
-
 model Forecast {
   id             String         @id @default(uuid())
   date           DateTime       @db.Date
   regionId       String
   source         ForecastSource
-  region         Region         @relation(fields: [regionId], references: [id])
   windSpeed      Int            @default(0)
   windDirection  Float          @default(0)
   swellHeight    Float          @default(0)
   swellPeriod    Int            @default(0)
   swellDirection Float          @default(0)
   alerts         Alert[]
+  region         Region         @relation(fields: [regionId], references: [id])
   logEntries     LogEntry[]
 
   @@unique([date, regionId, source])
@@ -641,19 +609,19 @@ model Region {
   name             String
   countryId        String
   continent        String?
-  country          Country           @relation(fields: [countryId], references: [id])
-  forecasts        Forecast[]
   ads              Ad[]
   adRequests       AdRequest[]
-  beaches          Beach[]
-  events           Event[]
-  stories          Story[]
   alerts           Alert[]
+  beaches          Beach[]
   beachDailyScores BeachDailyScore[]
-  logEntries       LogEntry[]
-  searches         UserSearch[]
-  properties       Property[]           // Garden Camping V2
+  events           Event[]
+  forecasts        Forecast[]
   hiddenGems       HiddenGem[]
+  logEntries       LogEntry[]
+  country          Country           @relation(fields: [countryId], references: [id])
+  stories          Story[]
+  searches         UserSearch[]
+  properties       Property[]
 }
 
 model Comment {
@@ -681,9 +649,7 @@ model Alert {
   id                 String              @id @default(uuid())
   name               String
   beachId            String?
-  beach              Beach?              @relation(fields: [beachId], references: [id])
   regionId           String
-  region             Region              @relation(fields: [regionId], references: [id])
   notificationMethod String
   contactInfo        String
   active             Boolean             @default(true)
@@ -693,13 +659,15 @@ model Alert {
   starRating         Int?
   forecastDate       DateTime            @db.Date
   forecastId         String?
+  sources            ForecastSource[]    @default([WINDFINDER])
+  beach              Beach?              @relation(fields: [beachId], references: [id])
   forecast           Forecast?           @relation(fields: [forecastId], references: [id])
   logEntry           LogEntry?           @relation(fields: [logEntryId], references: [id])
+  region             Region              @relation(fields: [regionId], references: [id])
   user               User                @relation(fields: [userId], references: [id])
-  properties         AlertProperty[]
   checks             AlertCheck[]        @relation("AlertChecks")
   notifications      AlertNotification[] @relation("AlertNotifications")
-  sources            ForecastSource[]    @default([WINDFINDER])
+  properties         AlertProperty[]
 
   @@index([forecastId])
   @@index([logEntryId])
@@ -772,24 +740,356 @@ model Continent {
 }
 
 model Country {
-  id          String    @id
+  id          String      @id
   name        String
   continentId String
-  continent   Continent @relation(fields: [continentId], references: [id])
-  regions     Region[]
   beaches     Beach[]
+  continent   Continent   @relation(fields: [continentId], references: [id])
   hiddenGems  HiddenGem[]
+  regions     Region[]
 }
 
 model SponsorGlobal {
   id        String   @id @default(cuid())
   name      String
-  logo      String // URL to logo image
-  link      String // URL to sponsor's website
+  logo      String
+  link      String
   isActive  Boolean  @default(true)
-  order     Int // For controlling display order
+  order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AlertProperty {
+  id           String @id @default(uuid())
+  alertId      String
+  property     String
+  optimalValue Float
+  range        Float
+  alert        Alert  @relation(fields: [alertId], references: [id])
+
+  @@index([alertId])
+}
+
+model UserSearch {
+  id        String   @id @default(cuid())
+  userId    String?
+  regionId  String
+  createdAt DateTime @default(now())
+  region    Region   @relation(fields: [regionId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Property {
+  id              String              @id @default(cuid())
+  title           String
+  description     String
+  beachId         String?
+  regionId        String
+  address         String?
+  displayAddress  String
+  coordinates     Json?
+  hostId          String
+  propertyType    PropertyType        @default(HOUSE)
+  coverImageUrl   String?
+  rules           String?
+  checkInTime     String?
+  checkOutTime    String?
+  averageRating   Float?
+  reviewCount     Int                 @default(0)
+  bookingCount    Int                 @default(0)
+  status          PropertyStatus      @default(DRAFT)
+  published       Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  publishedAt     DateTime?
+  units           AccommodationUnit[]
+  beach           Beach?              @relation(fields: [beachId], references: [id])
+  host            User                @relation("PropertyHost", fields: [hostId], references: [id])
+  region          Region              @relation(fields: [regionId], references: [id])
+  sharedAmenities PropertyAmenity[]
+  images          PropertyImage[]
+  reviews         PropertyReview[]    @relation("PropertyReviews")
+
+  @@index([hostId])
+  @@index([regionId])
+  @@index([beachId])
+  @@index([status, published])
+  @@index([averageRating])
+  @@map("properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  caption    String?
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
+}
+
+model AccommodationUnit {
+  id                 String                @id @default(cuid())
+  propertyId         String
+  name               String
+  description        String?
+  unitType           AccommodationUnitType
+  maxGuests          Int                   @default(2)
+  numberOfBeds       Int?
+  bedType            String?
+  maxTents           Int?
+  tentIncluded       Boolean               @default(false)
+  pricePerNightCents Int
+  cleaningFeeCents   Int                   @default(0)
+  coverImageUrl      String?
+  isActive           Boolean               @default(true)
+  minimumNights      Int                   @default(1)
+  maximumNights      Int?
+  instantBookEnabled Boolean               @default(false)
+  averageRating      Float?
+  reviewCount        Int                   @default(0)
+  bookingCount       Int                   @default(0)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  property           Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookings           Booking[]
+  enquiries          Enquiry[]
+  unitAmenities      UnitAmenity[]
+  availability       UnitAvailability[]
+  blockedDates       UnitBlockedDate[]
+  images             UnitImage[]
+
+  @@index([propertyId])
+  @@index([unitType])
+  @@index([isActive])
+  @@map("accommodation_units")
+}
+
+model UnitImage {
+  id      String            @id @default(cuid())
+  unitId  String
+  url     String
+  caption String?
+  order   Int               @default(0)
+  unit    AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId])
+  @@map("unit_images")
+}
+
+model Amenity {
+  id                String            @id @default(cuid())
+  name              String            @unique
+  displayName       String
+  category          AmenityCategory
+  icon              String?
+  propertyAmenities PropertyAmenity[]
+  unitAmenities     UnitAmenity[]
+
+  @@index([category])
+  @@map("amenities")
+}
+
+model PropertyAmenity {
+  id         String   @id @default(cuid())
+  propertyId String
+  amenityId  String
+  amenity    Amenity  @relation(fields: [amenityId], references: [id])
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, amenityId])
+  @@index([propertyId])
+  @@index([amenityId])
+  @@map("property_amenities")
+}
+
+model UnitAmenity {
+  id        String            @id @default(cuid())
+  unitId    String
+  amenityId String
+  amenity   Amenity           @relation(fields: [amenityId], references: [id])
+  unit      AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, amenityId])
+  @@index([unitId])
+  @@index([amenityId])
+  @@map("unit_amenities")
+}
+
+model Booking {
+  id                 String                @id @default(cuid())
+  confirmationCode   String                @unique @default(cuid())
+  unitId             String
+  propertyId         String
+  guestId            String
+  hostId             String
+  checkIn            DateTime
+  checkOut           DateTime
+  nights             Int
+  numberOfGuests     Int
+  numberOfTents      Int?
+  guestMessage       String?
+  pricePerNightCents Int
+  totalNightsCents   Int
+  cleaningFeeCents   Int                   @default(0)
+  serviceFeeCents    Int                   @default(0)
+  totalCents         Int
+  paymentStatus      PaymentStatus         @default(PENDING)
+  paymentMethod      String?
+  paymentId          String?
+  status             PropertyBookingStatus @default(PENDING)
+  cancelledAt        DateTime?
+  cancelledBy        String?
+  cancellationReason String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  confirmedAt        DateTime?
+  completedAt        DateTime?
+  guest              User                  @relation("BookingGuest", fields: [guestId], references: [id])
+  unit               AccommodationUnit     @relation(fields: [unitId], references: [id])
+  enquiry            Enquiry?              @relation("EnquiryConversion")
+  messages           Message[]
+  review             PropertyReview?       @relation("BookingReview")
+
+  @@index([unitId])
+  @@index([propertyId])
+  @@index([guestId])
+  @@index([hostId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+  @@map("bookings")
+}
+
+model Enquiry {
+  id                   String            @id @default(cuid())
+  unitId               String
+  propertyId           String
+  guestId              String
+  hostId               String
+  checkIn              DateTime
+  checkOut             DateTime
+  numberOfGuests       Int
+  numberOfTents        Int?
+  message              String
+  status               EnquiryStatus     @default(PENDING)
+  convertedToBookingId String?           @unique
+  respondedAt          DateTime?
+  responseTime         Int?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  expiresAt            DateTime?
+  convertedToBooking   Booking?          @relation("EnquiryConversion", fields: [convertedToBookingId], references: [id])
+  guest                User              @relation("EnquiryGuest", fields: [guestId], references: [id])
+  unit                 AccommodationUnit @relation(fields: [unitId], references: [id])
+  messages             Message[]
+
+  @@index([unitId])
+  @@index([propertyId])
+  @@index([guestId])
+  @@index([hostId])
+  @@index([status])
+  @@map("enquiries")
+}
+
+model Message {
+  id         String    @id @default(cuid())
+  enquiryId  String?
+  bookingId  String?
+  senderId   String
+  content    String
+  isFromHost Boolean
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+  booking    Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  enquiry    Enquiry?  @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  sender     User      @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([enquiryId])
+  @@index([bookingId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model PropertyReview {
+  id                  String     @id @default(cuid())
+  propertyId          String
+  bookingId           String     @unique
+  reviewerId          String
+  revieweeId          String
+  type                ReviewType
+  overallRating       Int
+  cleanlinessRating   Int?
+  communicationRating Int?
+  accuracyRating      Int?
+  valueRating         Int?
+  locationRating      Int?
+  comment             String?
+  publicComment       String?
+  privateComment      String?
+  published           Boolean    @default(false)
+  flagged             Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  publishedAt         DateTime?
+  booking             Booking    @relation("BookingReview", fields: [bookingId], references: [id])
+  property            Property   @relation("PropertyReviews", fields: [propertyId], references: [id])
+  reviewee            User       @relation("Reviewee", fields: [revieweeId], references: [id])
+  reviewer            User       @relation("Reviewer", fields: [reviewerId], references: [id])
+
+  @@index([propertyId])
+  @@index([bookingId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+  @@index([type])
+  @@map("property_reviews")
+}
+
+model UnitAvailability {
+  id         String            @id @default(cuid())
+  unitId     String
+  date       DateTime
+  available  Boolean           @default(true)
+  priceCents Int?
+  minNights  Int?
+  unit       AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, date])
+  @@index([unitId])
+  @@index([date])
+  @@map("unit_availability")
+}
+
+model UnitBlockedDate {
+  id        String            @id @default(cuid())
+  unitId    String
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime          @default(now())
+  unit      AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId])
+  @@map("unit_blocked_dates")
+}
+
+enum HiddenGemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+  DRAFT
+}
+
+enum ForecastSource {
+  WINDFINDER
+  WINDGURU
+  WINDY
 }
 
 enum SkillLevel {
@@ -851,31 +1151,9 @@ enum RequestStatus {
   COMPLETED
 }
 
-model AlertProperty {
-  id           String @id @default(uuid())
-  alertId      String
-  property     String // e.g. "windSpeed", "swellHeight"
-  optimalValue Float
-  range        Float
-  alert        Alert  @relation(fields: [alertId], references: [id])
-
-  @@index([alertId])
-}
-
 enum AlertType {
   VARIABLES
   RATING
-}
-
-model UserSearch {
-  id        String   @id @default(cuid())
-  userId    String? // Optional, for when we have authenticated users
-  regionId  String
-  region    Region   @relation(fields: [regionId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
 }
 
 enum OptimalTide {
@@ -953,473 +1231,39 @@ enum SharkRisk {
   EXTREME
 }
 
-
-
-// ============================================================================
-// GARDEN CAMPING V2 - Airbnb-style Multi-Unit Properties
-// ============================================================================
-// A single property can have multiple accommodation units:
-// - Tent spots in the garden
-// - Private rooms in the house
-// - Entire granny flat/cottage
-// ============================================================================
-
-// ────────────────────────────────────────────────────────────────────────────
-// PROPERTY (The Host's Physical Location)
-// ────────────────────────────────────────────────────────────────────────────
-
-model Property {
-  id                String                  @id @default(cuid())
-  title             String                  // "Beachside Home in Kommetjie"
-  description       String                  @db.Text
-  
-  // Location
-  beachId           String?
-  beach             Beach?                  @relation(fields: [beachId], references: [id])
-  regionId          String
-  region            Region                  @relation(fields: [regionId], references: [id])
-  address           String?                 // Full address (privacy-protected)
-  displayAddress    String                  // "Kommetjie, Western Cape" (shown publicly)
-  coordinates       Json?                   // {lat, lng} for map
-  
-  // Host
-  hostId            String
-  host              User                    @relation("PropertyHost", fields: [hostId], references: [id])
-  
-  // Property Details
-  propertyType      PropertyType            @default(HOUSE)
-  
-  // Images (property-level)
-  images            PropertyImage[]
-  coverImageUrl     String?
-  
-  // Shared Amenities (available to all units)
-  sharedAmenities   PropertyAmenity[]
-  
-  // Common Rules (apply to all units)
-  rules             String?                 @db.Text
-  checkInTime       String?                 // "14:00"
-  checkOutTime      String?                 // "11:00"
-  
-  // Stats (aggregated from all units)
-  averageRating     Float?
-  reviewCount       Int                     @default(0)
-  bookingCount      Int                     @default(0)
-  
-  // Status
-  status            PropertyStatus          @default(DRAFT)
-  published         Boolean                 @default(false)
-  
-  // Timestamps
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  publishedAt       DateTime?
-  
-  // Relations
-  units             AccommodationUnit[]     // Can have multiple units
-  reviews           PropertyReview[]        @relation("PropertyReviews")
-  
-  @@index([hostId])
-  @@index([regionId])
-  @@index([beachId])
-  @@index([status, published])
-  @@index([averageRating])
-  @@map("properties")
-}
-
-model PropertyImage {
-  id         String   @id @default(cuid())
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  url        String
-  caption    String?
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-  
-  @@index([propertyId])
-  @@map("property_images")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// ACCOMMODATION UNIT (Bookable units within a property)
-// ────────────────────────────────────────────────────────────────────────────
-
-model AccommodationUnit {
-  id                String                  @id @default(cuid())
-  propertyId        String
-  property          Property                @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  
-  // Unit Details
-  name              String                  // "Tent Spot #1", "Private Room", "Entire Granny Flat"
-  description       String?                 @db.Text
-  unitType          AccommodationUnitType   // TENT_SPOT, PRIVATE_ROOM, SHARED_ROOM, ENTIRE_UNIT
-  
-  // Capacity
-  maxGuests         Int                     @default(2)
-  numberOfBeds      Int?                    // For rooms/units
-  bedType           String?                 // "Double Bed", "Twin Beds", etc.
-  
-  // For Tent Spots
-  maxTents          Int?                    // How many tents can fit
-  tentIncluded      Boolean                 @default(false) // Host provides tent
-  
-  // Pricing (per night in ZAR cents)
-  pricePerNightCents Int
-  cleaningFeeCents  Int                     @default(0)
-  
-  // Unit-specific amenities (in addition to shared property amenities)
-  unitAmenities     UnitAmenity[]
-  
-  // Images (unit-specific)
-  images            UnitImage[]
-  coverImageUrl     String?
-  
-  // Availability
-  isActive          Boolean                 @default(true)
-  minimumNights     Int                     @default(1)
-  maximumNights     Int?
-  
-  // Instant Book
-  instantBookEnabled Boolean                @default(false)
-  
-  // Stats
-  averageRating     Float?
-  reviewCount       Int                     @default(0)
-  bookingCount      Int                     @default(0)
-  
-  // Timestamps
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  
-  // Relations
-  bookings          Booking[]
-  enquiries         Enquiry[]
-  availability      UnitAvailability[]
-  blockedDates      UnitBlockedDate[]
-  
-  @@index([propertyId])
-  @@index([unitType])
-  @@index([isActive])
-  @@map("accommodation_units")
-}
-
-model UnitImage {
-  id     String            @id @default(cuid())
-  unitId String
-  unit   AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  url    String
-  caption String?
-  order  Int               @default(0)
-  
-  @@index([unitId])
-  @@map("unit_images")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// AMENITIES (Two-tier: Property-level & Unit-level)
-// ────────────────────────────────────────────────────────────────────────────
-
-model Amenity {
-  id                String              @id @default(cuid())
-  name              String              @unique // "shower", "wifi", "kitchen"
-  displayName       String              // "Shower Access"
-  category          AmenityCategory
-  icon              String?
-  
-  // Relations
-  propertyAmenities PropertyAmenity[]
-  unitAmenities     UnitAmenity[]
-  
-  @@index([category])
-  @@map("amenities")
-}
-
-model PropertyAmenity {
-  id         String   @id @default(cuid())
-  propertyId String
-  amenityId  String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  amenity    Amenity  @relation(fields: [amenityId], references: [id])
-  
-  @@unique([propertyId, amenityId])
-  @@index([propertyId])
-  @@index([amenityId])
-  @@map("property_amenities")
-}
-
-model UnitAmenity {
-  id        String            @id @default(cuid())
-  unitId    String
-  amenityId String
-  unit      AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  amenity   Amenity           @relation(fields: [amenityId], references: [id])
-  
-  @@unique([unitId, amenityId])
-  @@index([unitId])
-  @@index([amenityId])
-  @@map("unit_amenities")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// BOOKINGS (Updated to reference Unit instead of Listing)
-// ────────────────────────────────────────────────────────────────────────────
-
-model Booking {
-  id                String              @id @default(cuid())
-  confirmationCode  String              @unique @default(cuid())
-  
-  // What's being booked
-  unitId            String
-  unit              AccommodationUnit   @relation(fields: [unitId], references: [id])
-  propertyId        String              // Denormalized for easier queries
-  
-  // Parties
-  guestId           String
-  guest             User                @relation("BookingGuest", fields: [guestId], references: [id])
-  hostId            String              // Denormalized
-  
-  // Dates
-  checkIn           DateTime
-  checkOut          DateTime
-  nights            Int
-  
-  // Guest Details
-  numberOfGuests    Int
-  numberOfTents     Int?                // Only for tent bookings
-  guestMessage      String?             @db.Text
-  
-  // Pricing (snapshot at booking time)
-  pricePerNightCents Int
-  totalNightsCents  Int
-  cleaningFeeCents  Int                 @default(0)
-  serviceFeeCents   Int                 @default(0)
-  totalCents        Int
-  
-  // Payment
-  paymentStatus     PaymentStatus       @default(PENDING)
-  paymentMethod     String?
-  paymentId         String?
-  
-  // Status
-  status            PropertyBookingStatus @default(PENDING)
-  
-  // Cancellation
-  cancelledAt       DateTime?
-  cancelledBy       String?
-  cancellationReason String?           @db.Text
-  
-  // Timestamps
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  confirmedAt       DateTime?
-  completedAt       DateTime?
-  
-  // Relations
-  messages          Message[]
-  review            PropertyReview?     @relation("BookingReview")
-  enquiry           Enquiry?            @relation("EnquiryConversion")
-  
-  @@index([unitId])
-  @@index([propertyId])
-  @@index([guestId])
-  @@index([hostId])
-  @@index([status])
-  @@index([checkIn, checkOut])
-  @@map("bookings")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// ENQUIRIES (Updated)
-// ────────────────────────────────────────────────────────────────────────────
-
-model Enquiry {
-  id                   String            @id @default(cuid())
-  unitId               String
-  unit                 AccommodationUnit @relation(fields: [unitId], references: [id])
-  propertyId           String            // Denormalized
-  
-  guestId              String
-  guest                User              @relation("EnquiryGuest", fields: [guestId], references: [id])
-  hostId               String
-  
-  // Enquiry Details
-  checkIn              DateTime
-  checkOut             DateTime
-  numberOfGuests       Int
-  numberOfTents        Int?              // Only for tent enquiries
-  message              String            @db.Text
-  
-  // Status
-  status               EnquiryStatus     @default(PENDING)
-  
-  // Conversion
-  convertedToBookingId String?           @unique
-  convertedToBooking   Booking?          @relation("EnquiryConversion", fields: [convertedToBookingId], references: [id])
-  
-  // Response tracking
-  respondedAt          DateTime?
-  responseTime         Int?
-  
-  // Timestamps
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  expiresAt            DateTime?
-  
-  // Relations
-  messages             Message[]
-  
-  @@index([unitId])
-  @@index([propertyId])
-  @@index([guestId])
-  @@index([hostId])
-  @@index([status])
-  @@map("enquiries")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// MESSAGES (Updated)
-// ────────────────────────────────────────────────────────────────────────────
-
-model Message {
-  id         String    @id @default(cuid())
-  
-  enquiryId  String?
-  enquiry    Enquiry?  @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
-  bookingId  String?
-  booking    Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  senderId   String
-  sender     User      @relation("MessageSender", fields: [senderId], references: [id])
-  content    String    @db.Text
-  
-  isFromHost Boolean
-  readAt     DateTime?
-  
-  createdAt  DateTime  @default(now())
-  
-  @@index([enquiryId])
-  @@index([bookingId])
-  @@index([senderId])
-  @@map("messages")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// REVIEWS (Updated - Reviews are for Properties, not individual units)
-// ────────────────────────────────────────────────────────────────────────────
-
-model PropertyReview {
-  id                  String       @id @default(cuid())
-  
-  propertyId          String
-  property            Property     @relation("PropertyReviews", fields: [propertyId], references: [id])
-  bookingId           String       @unique
-  booking             Booking      @relation("BookingReview", fields: [bookingId], references: [id])
-  
-  reviewerId          String
-  reviewer            User         @relation("Reviewer", fields: [reviewerId], references: [id])
-  revieweeId          String
-  reviewee            User         @relation("Reviewee", fields: [revieweeId], references: [id])
-  
-  type                ReviewType   // GUEST_TO_HOST or HOST_TO_GUEST
-  
-  // Ratings (1-5)
-  overallRating       Int
-  cleanlinessRating   Int?
-  communicationRating Int?
-  accuracyRating      Int?
-  valueRating         Int?
-  locationRating      Int?
-  
-  // Content
-  comment             String?      @db.Text
-  publicComment       String?      @db.Text
-  privateComment      String?      @db.Text
-  
-  // Status
-  published           Boolean      @default(false)
-  flagged             Boolean      @default(false)
-  
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-  publishedAt         DateTime?
-  
-  @@index([propertyId])
-  @@index([bookingId])
-  @@index([reviewerId])
-  @@index([revieweeId])
-  @@index([type])
-  @@map("property_reviews")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// AVAILABILITY (Unit-level)
-// ────────────────────────────────────────────────────────────────────────────
-
-model UnitAvailability {
-  id         String            @id @default(cuid())
-  unitId     String
-  unit       AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  date       DateTime
-  available  Boolean           @default(true)
-  priceCents Int?              // Override price for this date
-  minNights  Int?
-  
-  @@unique([unitId, date])
-  @@index([unitId])
-  @@index([date])
-  @@map("unit_availability")
-}
-
-model UnitBlockedDate {
-  id        String            @id @default(cuid())
-  unitId    String
-  unit      AccommodationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  startDate DateTime
-  endDate   DateTime
-  reason    String?
-  createdAt DateTime          @default(now())
-  
-  @@index([unitId])
-  @@map("unit_blocked_dates")
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// ENUMS
-// ────────────────────────────────────────────────────────────────────────────
-
 enum PropertyType {
-  HOUSE              // Traditional house
-  APARTMENT          // Apartment/flat
-  FARM               // Farm property
-  ECO_LODGE          // Eco lodge
-  BEACH_HOUSE        // Beach house
-  COTTAGE            // Cottage
-  VILLA              // Villa
-  OTHER              // Other type
+  HOUSE
+  APARTMENT
+  FARM
+  ECO_LODGE
+  BEACH_HOUSE
+  COTTAGE
+  VILLA
+  OTHER
 }
 
 enum AccommodationUnitType {
-  TENT_SPOT          // Space for guest's tent
-  TENT_PROVIDED      // Host provides tent
-  PRIVATE_ROOM       // Private bedroom
-  SHARED_ROOM        // Shared bedroom
-  ENTIRE_UNIT        // Entire granny flat/cottage/apartment
-  CAMPERVAN_SPOT     // Parking spot for campervan
+  TENT_SPOT
+  TENT_PROVIDED
+  PRIVATE_ROOM
+  SHARED_ROOM
+  ENTIRE_UNIT
+  CAMPERVAN_SPOT
 }
 
 enum AmenityCategory {
-  BATHROOM           // Toilet, Shower
-  COOKING            // Kitchen, Gas skottel, BBQ
-  UTILITIES          // Electricity, Water, WiFi
-  COMFORT            // Mattress, Blankets, Heating
-  SAFETY             // Parking, Lighting, First aid
-  ACTIVITIES         // Surf storage, Bike storage
-  PROPERTY           // Ocean view, Garden, Pets
+  BATHROOM
+  COOKING
+  UTILITIES
+  COMFORT
+  SAFETY
+  ACTIVITIES
+  PROPERTY
 }
 
 enum PropertyStatus {
   DRAFT
-  PENDING            // Awaiting approval
+  PENDING
   ACTIVE
   INACTIVE
   ARCHIVED
@@ -1453,4 +1297,83 @@ enum PaymentStatus {
 enum ReviewType {
   GUEST_TO_HOST
   HOST_TO_GUEST
+}
+
+model Squad {
+  id         String        @id @default(uuid())
+  name       String
+  userId     String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  members    SquadMember[]
+  broadcasts Broadcast[]
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SquadMember {
+  id          String   @id @default(uuid())
+  squadId     String
+  phoneNumber String // E.164 format: +1234567890
+  name        String? // Optional name for the member
+  createdAt   DateTime @default(now())
+  squad       Squad    @relation(fields: [squadId], references: [id], onDelete: Cascade)
+
+  @@unique([squadId, phoneNumber])
+  @@index([squadId])
+}
+
+model Broadcast {
+  id          String          @id @default(uuid())
+  squadId     String
+  beachId     String?
+  beachName   String? // Store beach name in case beach is deleted
+  message     String
+  scheduledAt DateTime // Date and time for when they're going surfing
+  sentAt      DateTime? // When the broadcast was actually sent
+  status      BroadcastStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  squad       Squad           @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  beach       Beach?          @relation(fields: [beachId], references: [id], onDelete: SetNull)
+
+  @@index([squadId])
+  @@index([beachId])
+  @@index([status])
+}
+
+enum BroadcastStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model PromoCode {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  description String?
+  isActive    Boolean           @default(true)
+  maxUses     Int?              // null = unlimited
+  usedCount   Int               @default(0)
+  trialDays   Int               @default(30) // 1 month = 30 days
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  usages      PromoCodeUsage[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model PromoCodeUsage {
+  id           String      @id @default(cuid())
+  promoCodeId String
+  userId       String
+  usedAt       DateTime    @default(now())
+  promoCode    PromoCode   @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([promoCodeId, userId])
+  @@index([promoCodeId])
+  @@index([userId])
 }
