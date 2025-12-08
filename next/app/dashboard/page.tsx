@@ -391,8 +391,11 @@ export default function DashboardPage() {
       return <ActiveSubscriptionView />;
     }
 
-    // Check trial status
-    if (subscriptionData?.hasActiveTrial) {
+    // Check trial status - check both status and hasActiveTrial flag
+    if (
+      subscriptionData?.status === SubscriptionStatus.TRIAL ||
+      subscriptionData?.hasActiveTrial
+    ) {
       return (
         <div className="mb-4">
           <p className="font-primary">
@@ -597,7 +600,7 @@ export default function DashboardPage() {
                 ) : subscriptionData ? (
                   <div className="p-6 border rounded-xl bg-white shadow-sm space-y-6">
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                           ${
@@ -617,6 +620,15 @@ export default function DashboardPage() {
                         >
                           {subscriptionData.status || "INACTIVE"}
                         </span>
+                        {subscriptionData.status === SubscriptionStatus.TRIAL &&
+                          subscriptionData.trialEndDate && (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 font-primary">
+                              Ends:{" "}
+                              {formatDate(
+                                subscriptionData.trialEndDate.toString()
+                              )}
+                            </span>
+                          )}
                       </div>
 
                       {(trialEndDate ||

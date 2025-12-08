@@ -11,8 +11,19 @@ export function useSubscriptionDetails() {
       }
       const data = await response.json();
 
+      // Normalize subscription status - ensure TRIAL is properly recognized
+      let status = data?.subscriptionStatus || SubscriptionStatus.INACTIVE;
+      if (status === "TRIAL" || status === "trial") {
+        status = SubscriptionStatus.TRIAL;
+      }
+      
+      // If hasActiveTrial is true but status is not TRIAL, set status to TRIAL
+      if (data?.hasActiveTrial && status !== SubscriptionStatus.TRIAL) {
+        status = SubscriptionStatus.TRIAL;
+      }
+
       return {
-        status: data?.subscriptionStatus || SubscriptionStatus.INACTIVE,
+        status,
         id: data?.paypalSubscriptionId || null,
         paypalSubscriptionId: data?.paypalSubscriptionId || null,
         hasActiveTrial: data?.hasActiveTrial || false,
