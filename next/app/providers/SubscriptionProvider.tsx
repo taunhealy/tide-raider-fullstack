@@ -54,6 +54,20 @@ export function SubscriptionProvider({
 
   useEffect(() => {
     checkSubscription();
+    
+    // Listen for subscription refresh events
+    const handleRefresh = () => {
+      console.log("[SubscriptionProvider] Subscription refresh event received");
+      checkSubscription();
+    };
+    
+    window.addEventListener("subscription-refresh", handleRefresh);
+    window.addEventListener("auth-refresh", handleRefresh);
+    
+    return () => {
+      window.removeEventListener("subscription-refresh", handleRefresh);
+      window.removeEventListener("auth-refresh", handleRefresh);
+    };
   }, []);
 
   return (

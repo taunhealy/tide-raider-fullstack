@@ -266,7 +266,13 @@ export default function DashboardPage() {
       await queryClient.invalidateQueries({
         queryKey: ["user", session?.user?.id],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["subscriptionStatus", session?.user?.id],
+      });
+
+      // Trigger subscription refresh for all components
       window.dispatchEvent(new Event("auth-refresh"));
+      window.dispatchEvent(new Event("subscription-refresh"));
       router.refresh();
     } catch (error) {
       console.error("Subscription action failed:", error);
@@ -334,6 +340,18 @@ export default function DashboardPage() {
           "[Dashboard] PayPal not configured (expected for trial users)"
         );
         toast.info("You are on a free trial. No PayPal subscription to sync.");
+        return;
+      }
+
+      // Handle cases where user has no active subscription
+      if (
+        response.status === 200 &&
+        data.message &&
+        (data.message.includes("free trial") ||
+          data.message.includes("don't have an active subscription"))
+      ) {
+        console.log("[Dashboard] No subscription to sync:", data.message);
+        toast.info(data.message || "No active subscription to sync.");
         return;
       }
 
@@ -888,16 +906,20 @@ export default function DashboardPage() {
 
         <div className="flex-none w-full sm:w-[800px] relative h-[600px]">
           <div className="absolute inset-0">
-            <Image
-              src={
-                data?.heroImage?.image
-                  ? urlForImage(data.heroImage.image).url()
-                  : "/fallback-image.jpg"
-              }
-              alt={data?.heroImage?.alt || "Dashboard background"}
-              fill
-              className="object-cover"
-            />
+            {data?.heroImage?.image ? (
+              <Image
+                src={urlForImage(data.heroImage.image).url()}
+                alt={data.heroImage.alt || "Dashboard background"}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[var(--color-tertiary)]/20 to-gray-100 flex items-center justify-center">
+                <span className="text-gray-400 font-primary text-sm">
+                  No image available
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

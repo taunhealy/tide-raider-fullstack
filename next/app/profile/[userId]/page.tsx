@@ -152,17 +152,14 @@ export default function ProfilePage() {
             <div className="absolute inset-0 overflow-hidden rounded-lg">
               {data?.heroImage?.image ? (
                 <Image
-                  src={
-                    urlForImage(data.heroImage.image)?.url() ||
-                    "/fallback-image.jpg"
-                  }
+                  src={urlForImage(data.heroImage.image)?.url() || ""}
                   alt={data?.heroImage?.alt || "Profile background"}
                   fill
                   className="object-cover rounded-lg"
                   sizes="(max-width: 640px) 100vw, 50vw"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-[var(--color-tertiary)]/20 to-gray-100 flex items-center justify-center rounded-lg">
                   <span className="text-gray-400 font-primary">
                     No image available
                   </span>

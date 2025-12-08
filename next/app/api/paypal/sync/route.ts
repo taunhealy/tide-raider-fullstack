@@ -56,11 +56,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user is on trial (no PayPal subscription to sync)
-    if (userData.hasActiveTrial || userData.subscriptionStatus === "TRIAL") {
+    // Check if user is on trial or has no active subscription (no PayPal subscription to sync)
+    if (
+      userData.hasActiveTrial ||
+      userData.subscriptionStatus === "TRIAL" ||
+      userData.subscriptionStatus === "INACTIVE" ||
+      userData.subscriptionStatus === "CANCELLED"
+    ) {
       return NextResponse.json({
-        message: "You are on a free trial. No PayPal subscription to sync.",
-        subscriptionStatus: "TRIAL",
+        message:
+          userData.subscriptionStatus === "TRIAL"
+            ? "You are on a free trial. No PayPal subscription to sync."
+            : "You don't have an active subscription to sync.",
+        subscriptionStatus: userData.subscriptionStatus,
         hasActiveTrial: userData.hasActiveTrial,
         synced: false,
       });
