@@ -105,12 +105,27 @@ router.post(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Find the promo code
+      // Normalize promo code to uppercase for case-insensitive lookup
+      const normalizedCode = promoCode.toUpperCase().trim();
+      
+      console.log(`[promo-code] Looking up code: "${promoCode}" -> normalized: "${normalizedCode}"`);
+
+      // Find the promo code (case-insensitive)
       const code = await prisma.promoCode.findUnique({
-        where: { code: promoCode.toUpperCase().trim() },
+        where: { code: normalizedCode },
       });
+      
+      console.log(`[promo-code] Code lookup result:`, code ? { id: code.id, code: code.code, isActive: code.isActive } : "not found");
 
       if (!code) {
+        // Log available codes for debugging (in development only)
+        if (process.env.NODE_ENV === "development") {
+          const allCodes = await prisma.promoCode.findMany({
+            select: { code: true, isActive: true },
+          });
+          console.log(`[promo-code] Available codes:`, allCodes.map(c => c.code));
+        }
+        
         return res.status(404).json({
           error: "Invalid code",
           message: "The promo code you entered is invalid.",

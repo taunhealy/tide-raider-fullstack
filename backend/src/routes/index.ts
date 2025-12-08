@@ -20,6 +20,7 @@ import campingRouter from "./camping";
 import testEmailRouter from "./test-email";
 import hiddenGemsRouter from "./hidden-gems";
 import squadsRouter from "./squads";
+import promoCodesRouter from "./promo-codes";
 
 const router = Router();
 
@@ -47,5 +48,6 @@ router.use("/subscriptions", subscriptionsRouter);
 router.use("/test-email", testEmailRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
 router.use("/squads", squadsRouter);
+router.use("/promo-codes", promoCodesRouter);
 
 export default router;

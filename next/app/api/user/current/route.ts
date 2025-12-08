@@ -105,8 +105,9 @@ export async function GET() {
       // Will use fallback below
     }
 
-    // Extract subscription status
+    // Extract subscription status - prioritize backend subscriptionStatus from /api/auth/me
     const subscriptionStatus =
+      userData.user?.subscriptionStatus ||
       subscriptionData?.subscriptionStatus ||
       (userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE");
     const paypalSubscriptionId =

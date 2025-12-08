@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     if (userData.hasActiveTrial || userData.subscriptionStatus === "TRIAL") {
       return NextResponse.json({
         message: "You are on a free trial. No PayPal subscription to sync.",
-        subscriptionStatus: userData.subscriptionStatus,
+        subscriptionStatus: "TRIAL",
         hasActiveTrial: userData.hasActiveTrial,
         synced: false,
       });
@@ -185,13 +185,21 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------
     // 7️⃣ Update user's subscription status in database
     // -------------------------------------------------
+    // Don't overwrite TRIAL status - preserve it if user is on trial
+    const finalStatus = userData.subscriptionStatus === "TRIAL" 
+      ? "TRIAL" 
+      : dbSubscriptionStatus;
+    
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
-        subscriptionStatus: dbSubscriptionStatus,
+        subscriptionStatus: finalStatus,
         // If subscription is cancelled/inactive, mark trial as ended (prevents reactivation)
+        // But preserve active trial status if user is on trial
         hasTrialEnded:
-          dbSubscriptionStatus === "INACTIVE" ? true : userData.hasActiveTrial
+          finalStatus === "INACTIVE" && !userData.hasActiveTrial
+            ? true 
+            : userData.hasActiveTrial
             ? false
             : true,
       },

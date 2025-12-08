@@ -307,23 +307,36 @@ export default function DashboardPage() {
       }
 
       // Handle "No PayPal subscription found" response - this is also NOT an error
-      if (response.status === 400 && data.error === "No PayPal subscription found") {
+      if (
+        response.status === 400 &&
+        data.error === "No PayPal subscription found"
+      ) {
         console.log("[Dashboard] No PayPal subscription to sync");
         toast.info(data.message || "No PayPal subscription found to sync");
         return;
       }
 
       // Handle PayPal configuration errors gracefully
-      if (response.status === 500 && data.error?.includes("PayPal configuration missing")) {
-        console.log("[Dashboard] PayPal not configured (expected for trial users)");
+      if (
+        response.status === 500 &&
+        data.error?.includes("PayPal configuration missing")
+      ) {
+        console.log(
+          "[Dashboard] PayPal not configured (expected for trial users)"
+        );
         toast.info("You are on a free trial. No PayPal subscription to sync.");
         return;
       }
 
       // NOW handle actual errors (network issues, API failures, etc.)
       if (!response.ok) {
-        const error = data.error || data.details || "Failed to sync subscription";
-        console.error("[Dashboard] Sync API error:", { status: response.status, error, data });
+        const error =
+          data.error || data.details || "Failed to sync subscription";
+        console.error("[Dashboard] Sync API error:", {
+          status: response.status,
+          error,
+          data,
+        });
         throw new Error(error);
       }
 
@@ -591,12 +604,15 @@ export default function DashboardPage() {
                             subscriptionData.status ===
                             SubscriptionStatus.ACTIVE
                               ? "bg-green-50 text-green-700"
-                              : subscriptionData.status === "SUSPENDED"
-                                ? "bg-yellow-50 text-yellow-700"
-                                : subscriptionData.status === "CANCELLED" ||
-                                    subscriptionData.status === "EXPIRED"
-                                  ? "bg-red-50 text-red-700"
-                                  : "bg-gray-50 text-gray-700"
+                              : subscriptionData.status ===
+                                  SubscriptionStatus.TRIAL
+                                ? "bg-blue-50 text-blue-700"
+                                : subscriptionData.status === "SUSPENDED"
+                                  ? "bg-yellow-50 text-yellow-700"
+                                  : subscriptionData.status === "CANCELLED" ||
+                                      subscriptionData.status === "EXPIRED"
+                                    ? "bg-red-50 text-red-700"
+                                    : "bg-gray-50 text-gray-700"
                           }`}
                         >
                           {subscriptionData.status || "INACTIVE"}
@@ -626,7 +642,8 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                      {subscriptionData.status === SubscriptionStatus.ACTIVE ? (
+                      {subscriptionData.status === SubscriptionStatus.ACTIVE ||
+                      subscriptionData.status === SubscriptionStatus.TRIAL ? (
                         <>
                           <Button
                             variant="outline"

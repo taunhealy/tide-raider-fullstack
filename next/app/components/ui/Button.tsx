@@ -20,6 +20,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         dark: "bg-gray-700 dark:bg-gray-600 text-white hover:bg-gray-600 dark:hover:bg-gray-500",
+        grey: "bg-gray-600 text-white hover:bg-gray-700 border border-gray-600",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -44,7 +45,8 @@ export interface ButtonProps
     | "ghost"
     | "link"
     | "secondary"
-    | "dark";
+    | "dark"
+    | "grey";
   size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
   asChild?: boolean;

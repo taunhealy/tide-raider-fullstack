@@ -109,7 +109,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
     ? new Date(entry.date).toISOString().split("T")[0]
     : null;
 
-  const { data: beachScores } = useQuery({
+  const { data: beachScores, isLoading: isLoadingBeachScores } = useQuery({
     queryKey: ["beach-scores", beachId, logDate],
     queryFn: async () => {
       if (!beachId || !logDate) return null;
@@ -409,7 +409,38 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         </div>
 
                         {/* Forecast Star Ratings - Right column */}
-                        {beachScores?.scores &&
+                        {isLoadingBeachScores ? (
+                          <div className="space-y-2">
+                            <h3 className="font-primary text-[10px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
+                              Forecast Ratings
+                            </h3>
+                            <div className="space-y-2">
+                              {/* Skeleton loader for 3 sources */}
+                              {["Source A", "Source B", "Source C"].map((source) => (
+                                <div
+                                  key={source}
+                                  className="bg-gray-50 rounded-lg p-2.5 border border-gray-200 animate-pulse"
+                                >
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <div className="h-2.5 w-16 bg-gray-200 rounded"></div>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex gap-0.5">
+                                      {[...Array(5)].map((_, i) => (
+                                        <div
+                                          key={i}
+                                          className="w-3 h-3 bg-gray-200 rounded"
+                                        ></div>
+                                      ))}
+                                    </div>
+                                    <div className="h-3 w-8 bg-gray-200 rounded"></div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          beachScores?.scores &&
                           beachScores.scores.length > 0 && (
                             <div className="space-y-2">
                               <h3 className="font-primary text-[10px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wide mb-2">
@@ -439,7 +470,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                 ))}
                               </div>
                             </div>
-                          )}
+                          )
+                        )}
                       </div>
                     </div>
                   </div>

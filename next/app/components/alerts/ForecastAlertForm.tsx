@@ -1030,7 +1030,7 @@ function AlertFormFooter() {
       <Button variant="outline" onClick={onClose}>
         Cancel
       </Button>
-      <Button onClick={handleSave}>Save Alert</Button>
+      <Button variant="grey" onClick={handleSave}>Save Alert</Button>
     </div>
   );
 }

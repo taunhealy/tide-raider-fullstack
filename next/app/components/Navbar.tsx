@@ -23,7 +23,7 @@ const NAVIGATION_ITEMS = [
 
 export default function Navbar() {
   const { data: session, status, signOut } = useBackendAuth();
-  const { isSubscribed, checkSubscription } = useSubscription();
+  const { isSubscribed, hasActiveTrial, checkSubscription } = useSubscription();
   const pathname = usePathname();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -92,7 +92,7 @@ export default function Navbar() {
 
   const handleActivateTrial = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!promoCode.trim()) {
       setTrialMessage({
         type: "error",
@@ -136,10 +136,10 @@ export default function Navbar() {
         text: data.message || "Trial activated successfully!",
       });
       setPromoCode("");
-      
+
       // Refresh subscription status
       await checkSubscription();
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => {
         setTrialMessage(null);
@@ -185,9 +185,9 @@ export default function Navbar() {
               </h6>
             </Link>
           )}
-          
+
           {/* Trial Promo Code Input - Desktop Only */}
-          {!isLoading && session && !isSubscribed && (
+          {!isLoading && !isSubscribed && !hasActiveTrial && (
             <form
               onSubmit={handleActivateTrial}
               className="hidden md:flex items-center gap-2"
@@ -203,8 +203,10 @@ export default function Navbar() {
               />
               <Button
                 type="submit"
+                variant="dark"
+                size="sm"
                 disabled={isActivatingTrial || !promoCode.trim()}
-                className="h-9 px-4 text-sm font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 font-primary text-sm"
               >
                 {isActivatingTrial ? "Activating..." : "Unlock 1 Month Trial"}
               </Button>
