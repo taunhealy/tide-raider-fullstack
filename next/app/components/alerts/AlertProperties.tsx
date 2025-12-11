@@ -17,7 +17,7 @@ interface AlertPropertiesProps {
 export function AlertProperties({ properties }: AlertPropertiesProps) {
   return (
     <div className="mt-2 pt-2 border-t border-gray-200">
-      <p className="font-medium mb-2 text-gray-700">Alert Triggers When:</p>
+
       <div className="flex flex-wrap gap-2">
         {properties.map((prop, index) => (
           <PropertyDisplay key={index} property={prop} />
