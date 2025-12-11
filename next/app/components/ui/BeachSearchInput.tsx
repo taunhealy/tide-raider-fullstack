@@ -179,7 +179,7 @@ export function BeachSearchInput({
           placeholder={placeholder}
           className={cn(
             "w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg",
-            "focus:outline-none focus:ring-1 focus:ring-[var(--color-bg-tertiary)] focus:border-transparent",
+            "focus-visible:ring-0 focus-visible:bg-gray-50 focus-visible:border-gray-300",
             "placeholder-gray-400 transition-all font-primary",
             "focus-visible:ring-offset-0"
           )}

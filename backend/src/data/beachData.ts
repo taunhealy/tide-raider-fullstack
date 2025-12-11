@@ -2686,7 +2686,7 @@ export const beachData: Beach[] = [
     name: "Plettenberg Bay",
     continent: "Africa",
     countryId: "za",
-    regionId: "eastern-cape",
+    regionId: "western-cape",
     location: "Plettenberg Bay",
     distanceFromCT: 520,
     optimalWindDirections: ["W", "SW"],
