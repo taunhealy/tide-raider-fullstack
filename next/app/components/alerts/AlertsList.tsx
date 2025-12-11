@@ -4,36 +4,18 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import api from "@/app/lib/api-client";
+import { EmptyAlertsState } from "@/app/components/ui/EmptyAlertsState";
 
+import api from "@/app/lib/api-client";
 import {
   Alert,
   AlertProperty,
-  NotificationMethod,
-  AlertType,
 } from "@/app/types/alerts";
 import { AlertCard } from "./AlertCard";
 import { PropertyDisplay } from "./AlertProperties";
 import { AlertCardSkeleton } from "./AlertCardSkeleton";
 
 type AlertTab = "all" | "variable" | "rating";
-
-// Move getUnit outside the AlertsList component to make it accessible to all components
-function getUnit(property: AlertProperty["property"]): string {
-  switch (property.toLowerCase()) {
-    case "windspeed":
-      return "kts";
-    case "winddirection":
-    case "swelldirection":
-      return "°";
-    case "swellheight":
-      return "m";
-    case "swellperiod":
-      return "s";
-    default:
-      return "";
-  }
-}
 
 export function AlertsList() {
   const router = useRouter();
@@ -49,11 +31,10 @@ export function AlertsList() {
     queryFn: async () => {
       return api.getAlerts();
     },
-    staleTime: 0, // Always consider data stale to allow refetching
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  // Properly typed mutations
   const deleteMutation = useMutation<void, Error, string>({
     mutationFn: async (alertId: string) => {
       const response = await fetch(`/api/alerts/${alertId}`, {
@@ -74,7 +55,6 @@ export function AlertsList() {
     },
   });
 
-  // Properly typed toggle mutation
   const toggleActiveMutation = useMutation<
     void,
     Error,
@@ -138,6 +118,10 @@ export function AlertsList() {
       return true;
     }) ?? [];
 
+  if (!isLoading && !error && filteredAlerts.length === 0 && activeTab === "all") {
+    return <EmptyAlertsState />;
+  }
+
   return (
     <>
       <div className="mb-6 border-b border-[var(--color-border-light)]">
@@ -198,7 +182,6 @@ export function AlertsList() {
   );
 }
 
-// Break out into components for better organization
 function AlertProperties({ properties }: { properties: AlertProperty[] }) {
   return (
     <div className="mt-2 pt-2 border-t border-gray-200">

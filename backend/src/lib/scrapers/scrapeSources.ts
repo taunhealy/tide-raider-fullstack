@@ -164,7 +164,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Livingstone
+      url: "https://www.windguru.cz/960923", // TODO: Find Windguru spot ID for Livingstone
       scraper: scraperB,
     },
   },
@@ -190,7 +190,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Caota
+      url: "https://www.windguru.cz/960923", // TODO: Find Windguru spot ID for Caota
       scraper: scraperB,
     },
   },
@@ -201,7 +201,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Cocobeach
+      url: "https://www.windguru.cz/1170270", // TODO: Find Windguru spot ID for Cocobeach
       scraper: scraperB,
     },
   },
@@ -249,7 +249,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Noosa
+      url: "https://www.windguru.cz/1093348", // TODO: Find Windguru spot ID for Noosa
       scraper: scraperB,
     },
   },
@@ -293,7 +293,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Chicama
+      url: "https://www.windguru.cz/209091", // TODO: Find Windguru spot ID for Chicama
       scraper: scraperB,
     },
   },
@@ -315,7 +315,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Paripé
+      url: "https://www.windguru.cz/208971", // TODO: Find Windguru spot ID for Paripé
       scraper: scraperB,
     },
   },
@@ -348,7 +348,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Oban
+      url: "https://www.windguru.cz/826134", // TODO: Find Windguru spot ID for Oban
       scraper: scraperB,
     },
   },
@@ -403,7 +403,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Taghazout
+      url: "https://www.windguru.cz/549853", // TODO: Find Windguru spot ID for Taghazout
       scraper: scraperB,
     },
   },
