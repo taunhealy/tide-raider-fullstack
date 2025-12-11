@@ -124,44 +124,62 @@ export function AlertsList() {
 
   return (
     <>
-      <div className="mb-6 border-b border-[var(--color-border-light)]">
-        <div className="flex space-x-4 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab("all")}
-            className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
+            className={`px-4 py-2 rounded-full text-sm font-primary border transition-colors flex items-center gap-2 ${
               activeTab === "all"
-                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
-                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                ? "bg-[var(--color-tertiary)] text-black border-transparent font-medium shadow-sm"
+                : "bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border-light)]"
             }`}
           >
             All Alerts
-            <span className="ml-1 sm:ml-2 text-xs bg-[var(--color-bg-secondary)] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                activeTab === "all"
+                  ? "bg-black/10 text-black"
+                  : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+              }`}
+            >
               {alerts?.length ?? 0}
             </span>
           </button>
           <button
             onClick={() => setActiveTab("variable")}
-            className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
+            className={`px-4 py-2 rounded-full text-sm font-primary border transition-colors flex items-center gap-2 ${
               activeTab === "variable"
-                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
-                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                ? "bg-[var(--color-tertiary)] text-black border-transparent font-medium shadow-sm"
+                : "bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border-light)]"
             }`}
           >
             Variable Alerts
-            <span className="ml-1 sm:ml-2 text-xs bg-[var(--color-bg-secondary)] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                activeTab === "variable"
+                  ? "bg-black/10 text-black"
+                  : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+              }`}
+            >
               {alerts?.filter((a) => a.alertType === "VARIABLES").length ?? 0}
             </span>
           </button>
           <button
             onClick={() => setActiveTab("rating")}
-            className={`py-3 px-2 sm:px-4 font-primary text-xs sm:text-sm ${
+            className={`px-4 py-2 rounded-full text-sm font-primary border transition-colors flex items-center gap-2 ${
               activeTab === "rating"
-                ? "border-b-2 border-[var(--color-tertiary)] text-[var(--color-tertiary)] font-medium"
-                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                ? "bg-[var(--color-tertiary)] text-black border-transparent font-medium shadow-sm"
+                : "bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] border-[var(--color-border-light)]"
             }`}
           >
             Rating Alerts
-            <span className="ml-1 sm:ml-2 text-xs bg-[var(--color-bg-secondary)] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full ${
+                activeTab === "rating"
+                  ? "bg-black/10 text-black"
+                  : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+              }`}
+            >
               {alerts?.filter((a) => a.alertType === "RATING").length ?? 0}
             </span>
           </button>
