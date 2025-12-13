@@ -71,15 +71,6 @@ jobs:
 
 Before setting up the scheduler, trigger the cron manually to get today's data:
 
-```powershell
-# Replace with your actual values
-$BACKEND_URL = "https://tide-raider-backend-82632174665.africa-south1.run.app"
-$CRON_SECRET = "your-secret-here"
-
-curl -X POST "$BACKEND_URL/api/cron/run-now" `
-  -H "Content-Type: application/json" `
-  -H "x-cron-secret: $CRON_SECRET"
-```
 
 ## Verification
 

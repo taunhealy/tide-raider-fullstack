@@ -62,7 +62,30 @@ CRON_SECRET=your-super-secret-key-change-this-in-production
 
 ## Setting Up Multiple Timezone Cron Jobs
 
-### Option 1: GitHub Actions (Recommended)
+### Option 1: GitHub Actions (IMPLEMENTED)
+
+We have configured a GitHub Actions workflow in `.github/workflows/cron.yml` to run every 4 hours.
+
+**Required GitHub Secrets:**
+
+- `CRON_SECRET`: Must match `CRON_SECRET` in backend `.env`
+- `BACKEND_URL`: `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app`
+
+The workflow file:
+
+```yaml
+name: Tide Raider Cron Jobs
+
+on:
+  schedule:
+    # Run every 4 hours (00:00, 04:00, 08:00, ... UTC)
+    - cron: "0 */4 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  fetch-and-alert:
+    # ... (see .github/workflows/cron.yml for full content)
+```
 
 Create `.github/workflows/cron-jobs.yml`:
 
