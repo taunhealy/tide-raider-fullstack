@@ -1,5 +1,5 @@
 # Cloud Scheduler Setup Script for Tide Raider (PowerShell)
-# This script sets up Google Cloud Scheduler to trigger your Cloud Run backend every 4 hours
+# This script sets up Google Cloud Scheduler to trigger your Cloud Run backend daily at 3 AM SAST
 
 Write-Host "🌊 Tide Raider - Cloud Scheduler Setup" -ForegroundColor Cyan
 Write-Host "=======================================" -ForegroundColor Cyan
@@ -74,35 +74,45 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME `
     --project=$PROJECT_ID
 
 Write-Host ""
-Write-Host "Step 4/5: Creating Cloud Scheduler job..." -ForegroundColor Yellow
-$jobExists = gcloud scheduler jobs describe tide-raider-cron-4hourly --location=$REGION 2>$null
+Write-Host "Step 4/5: Managing Cloud Scheduler jobs..." -ForegroundColor Yellow
+
+# Check for and delete old job
+$jobOldExists = gcloud scheduler jobs describe tide-raider-cron-4hourly --location=$REGION 2>$null
+if ($jobOldExists) {
+    Write-Host "   ⚠️  Found old 4-hourly job. Deleting..." -ForegroundColor Yellow
+    gcloud scheduler jobs delete tide-raider-cron-4hourly --location=$REGION --quiet
+    Write-Host "   ✅ Old job deleted" -ForegroundColor Green
+}
+
+# Create or update new job
+$jobExists = gcloud scheduler jobs describe tide-raider-cron-daily-3am --location=$REGION 2>$null
 if ($jobExists) {
     Write-Host "   ℹ️  Job already exists. Updating..." -ForegroundColor Gray
-    gcloud scheduler jobs update http tide-raider-cron-4hourly `
+    gcloud scheduler jobs update http tide-raider-cron-daily-3am `
         --location=$REGION `
-        --schedule="0 */4 * * *" `
+        --schedule="0 3 * * *" `
         --uri="$BACKEND_URL/api/cron/run-now" `
         --http-method=POST `
         --headers="Content-Type=application/json,x-cron-secret=$CRON_SECRET_PLAIN" `
         --oidc-service-account-email=$serviceAccountEmail `
         --oidc-token-audience=$BACKEND_URL `
-        --time-zone="UTC" `
+        --time-zone="Africa/Johannesburg" `
         --attempt-deadline=600s `
         --max-retry-attempts=2 `
         --project=$PROJECT_ID
 } else {
-    gcloud scheduler jobs create http tide-raider-cron-4hourly `
+    gcloud scheduler jobs create http tide-raider-cron-daily-3am `
         --location=$REGION `
-        --schedule="0 */4 * * *" `
+        --schedule="0 3 * * *" `
         --uri="$BACKEND_URL/api/cron/run-now" `
         --http-method=POST `
         --headers="Content-Type=application/json,x-cron-secret=$CRON_SECRET_PLAIN" `
         --oidc-service-account-email=$serviceAccountEmail `
         --oidc-token-audience=$BACKEND_URL `
-        --time-zone="UTC" `
+        --time-zone="Africa/Johannesburg" `
         --attempt-deadline=600s `
         --max-retry-attempts=2 `
-        --description="Fetch surf forecasts and process alerts every 4 hours" `
+        --description="Fetch surf forecasts and process alerts daily at 3 AM SAST" `
         --project=$PROJECT_ID
 }
 
@@ -111,13 +121,13 @@ Write-Host "Step 5/5: Testing the job..." -ForegroundColor Yellow
 $testRun = Read-Host "Run a test execution now? (y/n)"
 if ($testRun -eq 'y' -or $testRun -eq 'Y') {
     Write-Host "   🚀 Triggering test run..." -ForegroundColor Cyan
-    gcloud scheduler jobs run tide-raider-cron-4hourly --location=$REGION --project=$PROJECT_ID
+    gcloud scheduler jobs run tide-raider-cron-daily-3am --location=$REGION --project=$PROJECT_ID
     Write-Host ""
     Write-Host "   ⏳ Waiting for execution (this may take 1-2 minutes)..." -ForegroundColor Gray
     Start-Sleep -Seconds 10
     Write-Host ""
     Write-Host "   📊 Recent execution status:" -ForegroundColor Cyan
-    gcloud scheduler jobs describe tide-raider-cron-4hourly `
+    gcloud scheduler jobs describe tide-raider-cron-daily-3am `
         --location=$REGION `
         --project=$PROJECT_ID `
         --format="table(state, lastAttemptTime, status.code, status.message)"
@@ -126,15 +136,15 @@ if ($testRun -eq 'y' -or $testRun -eq 'Y') {
 Write-Host ""
 Write-Host "✅ Setup complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "📅 Schedule: Every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)" -ForegroundColor Cyan
-Write-Host "💰 Estimated cost: ~`$1.10/month (97% savings vs 24/7!)" -ForegroundColor Green
+Write-Host "📅 Schedule: Daily at 03:00 SAST (01:00 UTC)" -ForegroundColor Cyan
+Write-Host "💰 Estimated cost: ~`$1.10/month" -ForegroundColor Green
 Write-Host ""
 Write-Host "📝 Useful commands:" -ForegroundColor Yellow
 Write-Host "   List jobs:    gcloud scheduler jobs list --location=$REGION"
-Write-Host "   Run manually: gcloud scheduler jobs run tide-raider-cron-4hourly --location=$REGION"
-Write-Host "   View logs:    gcloud scheduler jobs describe tide-raider-cron-4hourly --location=$REGION"
-Write-Host "   Pause job:    gcloud scheduler jobs pause tide-raider-cron-4hourly --location=$REGION"
-Write-Host "   Resume job:   gcloud scheduler jobs resume tide-raider-cron-4hourly --location=$REGION"
+Write-Host "   Run manually: gcloud scheduler jobs run tide-raider-cron-daily-3am --location=$REGION"
+Write-Host "   View logs:    gcloud scheduler jobs describe tide-raider-cron-daily-3am --location=$REGION"
+Write-Host "   Pause job:    gcloud scheduler jobs pause tide-raider-cron-daily-3am --location=$REGION"
+Write-Host "   Resume job:   gcloud scheduler jobs resume tide-raider-cron-daily-3am --location=$REGION"
 Write-Host ""
 Write-Host "🎉 Your backend will now run on-demand only when needed!" -ForegroundColor Green
 Write-Host ""

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cloud Scheduler Setup Script for Tide Raider
-# This script sets up Google Cloud Scheduler to trigger your Cloud Run backend every 4 hours
+# This script sets up Google Cloud Scheduler to trigger your Cloud Run backend daily at 3 AM SAST
 
 set -e
 
@@ -77,32 +77,40 @@ gcloud run services add-iam-policy-binding $SERVICE_NAME \
 echo ""
 echo "Step 4/5: Creating Cloud Scheduler job..."
 if gcloud scheduler jobs describe tide-raider-cron-4hourly --location=$REGION &>/dev/null; then
+    echo "   ⚠️  Found old 4-hourly job. Deleting..."
+    gcloud scheduler jobs delete tide-raider-cron-4hourly --location=$REGION --quiet
+    echo "   ✅ Old job deleted"
+fi
+
+echo ""
+echo "Step 4/5: Creating Cloud Scheduler job (Daily at 3AM SAST)..."
+if gcloud scheduler jobs describe tide-raider-cron-daily-3am --location=$REGION &>/dev/null; then
     echo "   ℹ️  Job already exists. Updating..."
-    gcloud scheduler jobs update http tide-raider-cron-4hourly \
+    gcloud scheduler jobs update http tide-raider-cron-daily-3am \
         --location=$REGION \
-        --schedule="0 */4 * * *" \
+        --schedule="0 3 * * *" \
         --uri="${BACKEND_URL}/api/cron/run-now" \
         --http-method=POST \
         --headers="Content-Type=application/json,x-cron-secret=${CRON_SECRET}" \
         --oidc-service-account-email="cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com" \
         --oidc-token-audience="${BACKEND_URL}" \
-        --time-zone="UTC" \
+        --time-zone="Africa/Johannesburg" \
         --attempt-deadline=600s \
         --max-retry-attempts=2 \
         --project=$PROJECT_ID
 else
-    gcloud scheduler jobs create http tide-raider-cron-4hourly \
+    gcloud scheduler jobs create http tide-raider-cron-daily-3am \
         --location=$REGION \
-        --schedule="0 */4 * * *" \
+        --schedule="0 3 * * *" \
         --uri="${BACKEND_URL}/api/cron/run-now" \
         --http-method=POST \
         --headers="Content-Type=application/json,x-cron-secret=${CRON_SECRET}" \
         --oidc-service-account-email="cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com" \
         --oidc-token-audience="${BACKEND_URL}" \
-        --time-zone="UTC" \
+        --time-zone="Africa/Johannesburg" \
         --attempt-deadline=600s \
         --max-retry-attempts=2 \
-        --description="Fetch surf forecasts and process alerts every 4 hours" \
+        --description="Fetch surf forecasts and process alerts daily at 3 AM SAST" \
         --project=$PROJECT_ID
 fi
 
@@ -112,13 +120,13 @@ read -p "Run a test execution now? (y/n): " -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "   🚀 Triggering test run..."
-    gcloud scheduler jobs run tide-raider-cron-4hourly --location=$REGION --project=$PROJECT_ID
+    gcloud scheduler jobs run tide-raider-cron-daily-3am --location=$REGION --project=$PROJECT_ID
     echo ""
     echo "   ⏳ Waiting for execution (this may take 1-2 minutes)..."
     sleep 10
     echo ""
     echo "   📊 Recent execution status:"
-    gcloud scheduler jobs describe tide-raider-cron-4hourly \
+    gcloud scheduler jobs describe tide-raider-cron-daily-3am \
         --location=$REGION \
         --project=$PROJECT_ID \
         --format="table(state, lastAttemptTime, status.code, status.message)"
@@ -127,13 +135,13 @@ fi
 echo ""
 echo "✅ Setup complete!"
 echo ""
-echo "📅 Schedule: Every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)"
+echo "📅 Schedule: Daily at 03:00 SAST (01:00 UTC)"
 echo "💰 Estimated cost: ~$1.10/month"
 echo ""
 echo "📝 Useful commands:"
 echo "   List jobs:    gcloud scheduler jobs list --location=$REGION"
-echo "   Run manually: gcloud scheduler jobs run tide-raider-cron-4hourly --location=$REGION"
-echo "   View logs:    gcloud scheduler jobs describe tide-raider-cron-4hourly --location=$REGION"
-echo "   Pause job:    gcloud scheduler jobs pause tide-raider-cron-4hourly --location=$REGION"
-echo "   Resume job:   gcloud scheduler jobs resume tide-raider-cron-4hourly --location=$REGION"
+echo "   Run manually: gcloud scheduler jobs run tide-raider-cron-daily-3am --location=$REGION"
+echo "   View logs:    gcloud scheduler jobs describe tide-raider-cron-daily-3am --location=$REGION"
+echo "   Pause job:    gcloud scheduler jobs pause tide-raider-cron-daily-3am --location=$REGION"
+echo "   Resume job:   gcloud scheduler jobs resume tide-raider-cron-daily-3am --location=$REGION"
 echo ""
