@@ -95,7 +95,7 @@ if gcloud scheduler jobs describe tide-raider-cron-daily-3am --location=$REGION 
         --oidc-service-account-email="cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com" \
         --oidc-token-audience="${BACKEND_URL}" \
         --time-zone="Africa/Johannesburg" \
-        --attempt-deadline=3600s \
+        --attempt-deadline=1800s \
         --max-retry-attempts=2 \
         --project=$PROJECT_ID
 else
@@ -108,7 +108,7 @@ else
         --oidc-service-account-email="cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com" \
         --oidc-token-audience="${BACKEND_URL}" \
         --time-zone="Africa/Johannesburg" \
-        --attempt-deadline=3600s \
+        --attempt-deadline=1800s \
         --max-retry-attempts=2 \
         --description="Fetch surf forecasts and process alerts daily at 3 AM SAST" \
         --project=$PROJECT_ID
