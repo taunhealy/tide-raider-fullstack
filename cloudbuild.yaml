@@ -33,7 +33,7 @@ steps:
       - --allow-unauthenticated
       - --memory=1Gi
       - --cpu=1
-      - --timeout=300
+      - --timeout=3600
       - --max-instances=10
       - --min-instances=0
       - --port=8080

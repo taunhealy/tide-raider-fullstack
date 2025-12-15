@@ -97,7 +97,7 @@ if ($jobExists) {
         --oidc-service-account-email=$serviceAccountEmail `
         --oidc-token-audience=$BACKEND_URL `
         --time-zone="Africa/Johannesburg" `
-        --attempt-deadline=600s `
+        --attempt-deadline=3600s `
         --max-retry-attempts=2 `
         --project=$PROJECT_ID
 } else {
@@ -110,7 +110,7 @@ if ($jobExists) {
         --oidc-service-account-email=$serviceAccountEmail `
         --oidc-token-audience=$BACKEND_URL `
         --time-zone="Africa/Johannesburg" `
-        --attempt-deadline=600s `
+        --attempt-deadline=3600s `
         --max-retry-attempts=2 `
         --description="Fetch surf forecasts and process alerts daily at 3 AM SAST" `
         --project=$PROJECT_ID
