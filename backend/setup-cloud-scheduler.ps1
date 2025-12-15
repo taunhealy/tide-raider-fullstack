@@ -134,7 +134,7 @@ $commonArgs = @(
     "--oidc-service-account-email=$serviceAccountEmail",
     "--oidc-token-audience=$BACKEND_URL",
     "--time-zone=Africa/Johannesburg",
-    "--attempt-deadline=3600s",
+    "--attempt-deadline=1800s",
     "--max-retry-attempts=2",
     "--project=$PROJECT_ID"
 )
