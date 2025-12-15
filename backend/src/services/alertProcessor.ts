@@ -119,10 +119,13 @@ export async function processUserAlerts(userId: string, today: Date) {
             beachId: true,
             score: true,
             starRating: true,
+            date: true, // Fetch date to verify
           },
         });
 
-        console.log(`[Alert Processor] Raw ratings data from DB:`, ratingsData);
+        console.log(`[Alert Processor] Raw ratings data from DB (${ratingsData.length} items):`, 
+          ratingsData.map(r => ({ ...r, date: r.date.toISOString() }))
+        );
 
         // Use starRating from DB if available, otherwise calculate from score
         beachRatings = ratingsData.map((br) => ({
@@ -132,12 +135,7 @@ export async function processUserAlerts(userId: string, today: Date) {
             br.starRating ?? Math.max(1, Math.min(5, Math.floor(br.score / 2))),
         }));
         console.log(
-          `[Alert Processor] Found ${beachRatings.length} beach ratings:`,
-          beachRatings.map((br) => ({
-            beachId: br.beachId,
-            score: br.score,
-            starRating: br.starRating,
-          }))
+          `[Alert Processor] Processed ${beachRatings.length} beach ratings mappings`
         );
       } catch (error) {
         console.log(
@@ -272,7 +270,10 @@ export async function processUserAlerts(userId: string, today: Date) {
             const currentStarRating = beachRating.starRating;
 
             console.log(
-              `[Alert Processor] Beach ${beachId} (${beachName}): score=${beachRating.score}, starRating=${currentStarRating}, alert requires >= ${alert.starRating}`
+              `[Alert Processor] Checking Alert "${alert.name}" (ID: ${alert.id}):` +
+              `\n  - Target Beach: ${beachId} (${beachName})` +
+              `\n  - Required Rating: >= ${alert.starRating}` +
+              `\n  - Actual Rating: ${currentStarRating} (Score: ${beachRating.score})`
             );
 
             shouldSendAlert = currentStarRating >= alert.starRating!;
@@ -287,12 +288,13 @@ export async function processUserAlerts(userId: string, today: Date) {
             });
 
             console.log(
-              `[Alert Processor] RATING alert ${alert.name}: ${shouldSendAlert ? "WILL TRIGGER" : "will not trigger"} (${currentStarRating} >= ${alert.starRating})`
+              `[Alert Processor] -> Result: ${shouldSendAlert ? "MATCHED ✅" : "NOT MATCHED ❌"}`
             );
           } else {
             console.log(
-              `[Alert Processor] No beach rating found for beach ${beachId} (${beachName}) today. Available beachIds:`,
-              beachRatings.map((br) => br.beachId)
+              `[Alert Processor] ❌ No rating found for beach ${beachId} (${beachName}) in loaded ratings.` +
+              `\n  - Available Beach IDs: ${beachRatings.map(b => b.beachId).join(', ')}` +
+              `\n  - Alert Beach ID: ${beachId}`
             );
           }
         } else if ((alert.alertType as any) === AlertType.RATING) {
