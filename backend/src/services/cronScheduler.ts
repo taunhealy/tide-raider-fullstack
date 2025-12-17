@@ -89,7 +89,8 @@ export class CronScheduler {
       console.log("📊 Step 1: Fetching surf conditions for all regions");
       let regionResults;
       try {
-        regionResults = await fetchAllRegionsData();
+        // Daily run only needs today + tomorrow (2 days)
+        regionResults = await fetchAllRegionsData(2);
         console.log("✅ Region data fetch completed:", {
           regionsProcessed: regionResults.regionsProcessed,
           regionsSucceeded: regionResults.regionsSucceeded,
@@ -163,6 +164,40 @@ export class CronScheduler {
   async runNow() {
     console.log("🔧 Manually triggering cron job...");
     return await this.runScheduledJob();
+  }
+
+  /**
+   * Run the weekly full scrape (fetches all available days)
+   * This is resource intensive!
+   */
+  async runWeeklyJob() {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+
+    console.log(`\n📅 [${timestamp}] Starting WEEKLY scraping job...`);
+
+    try {
+      // Step 1: Fetch and store surf conditions for all regions (FULL SCRAPE)
+      console.log("📊 Fetching FULL WEEK surf conditions for all regions");
+      const regionResults = await fetchAllRegionsData(); // No limit = full week
+      
+      const duration = Date.now() - startTime;
+      console.log(
+        `✅ [${new Date().toISOString()}] Weekly scrape completed in ${duration}ms`
+      );
+      
+      return {
+        success: true,
+        timestamp: new Date().toISOString(),
+        duration: `${duration}ms`,
+        regionResults,
+        type: "WEEKLY_FULL_SCRAPE"
+      };
+    } catch (error) {
+       const duration = Date.now() - startTime;
+       console.error(`❌ Weekly scrape failed after ${duration}ms:`, error);
+       throw error;
+    }
   }
 }
 

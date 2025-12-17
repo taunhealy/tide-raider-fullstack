@@ -153,11 +153,12 @@ export async function sendAlertNotification(
           gte: new Date(new Date().setHours(0, 0, 0, 0)), // Today
           lt: new Date(new Date().setHours(24, 0, 0, 0)),
         },
+        success: true,
       },
     });
 
     if (existingNotification) {
-      console.log("Notification already sent today, skipping");
+      console.log("Notification already sent today (successfully), skipping");
       return true;
     }
 

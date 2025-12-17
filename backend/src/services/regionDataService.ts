@@ -3,7 +3,7 @@ import { getLatestConditions } from "./surfConditionsService";
 import { ScoreService } from "./scoreService";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 
-export async function fetchAllRegionsData() {
+export async function fetchAllRegionsData(daysLimit?: number) {
   const results = {
     regionsProcessed: 0,
     regionsSucceeded: 0,
@@ -92,7 +92,8 @@ export async function fetchAllRegionsData() {
               const conditions = await getLatestConditions(
                 region.id,
                 true,
-                source
+                source,
+                daysLimit // Pass the limit here
               );
 
               if (conditions) {

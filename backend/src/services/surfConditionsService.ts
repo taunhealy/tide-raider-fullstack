@@ -13,7 +13,8 @@ function getTodayDate() {
 export async function getLatestConditions(
   regionId: string,
   forceRefresh = false,
-  source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER"
+  source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER",
+  daysLimit?: number
 ) {
   // First, try to find region by ID (exact match, case-sensitive)
   console.log(
@@ -261,8 +262,13 @@ export async function getLatestConditions(
 
     // Store all scraped forecasts (today, tomorrow, and day after tomorrow)
     let storedTodayForecast = null;
+    
+    // Store scraped forecasts (limit if requested, e.g. Daily scrape)
+    const forecastsToStore = daysLimit 
+      ? scrapedForecasts.slice(0, daysLimit)
+      : scrapedForecasts;
 
-    for (const scrapedForecast of scrapedForecasts) {
+    for (const scrapedForecast of forecastsToStore) {
       // Strip time from date
       scrapedForecast.date.setUTCHours(0, 0, 0, 0);
 

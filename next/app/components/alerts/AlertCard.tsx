@@ -131,16 +131,16 @@ export function AlertCard({
 
              <div className="flex flex-col gap-1 p-2 rounded-md bg-[var(--color-bg-secondary)]/50 border border-[var(--color-border-light)]/50">
                <span className="text-xs text-[var(--color-text-secondary)] font-medium uppercase">Sources</span>
-               <div className="flex items-center gap-2 text-[var(--color-text-primary)] font-medium truncate">
-                  <span>📡</span>
-                  <span className="truncate">
-                    {alert.sources && alert.sources.length > 0
-                      ? Array.from(new Set(alert.sources))
-                          .map(formatSourceName)
-                          .join(", ")
-                      : "All"}
-                  </span>
-               </div>
+                <div className="flex items-center gap-2 text-[var(--color-text-primary)] font-medium">
+                   <span>📡</span>
+                   <span>
+                     {alert.sources && alert.sources.length > 0
+                       ? Array.from(new Set(alert.sources))
+                           .map(formatSourceName)
+                           .join(", ")
+                       : "All"}
+                   </span>
+                </div>
              </div>
           </div>
 

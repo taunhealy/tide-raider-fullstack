@@ -91,11 +91,13 @@ Write-Host "Step 3/5: Granting Cloud Run invoker permission..." -ForegroundColor
 $SERVICE_NAME = $BACKEND_URL -replace 'https://', '' -replace '\..*', '' -replace '-\d+$', ''
 Write-Host "   Detected service name: $SERVICE_NAME" -ForegroundColor Gray
 
-& gcloud run services add-iam-policy-binding $SERVICE_NAME `
-    --member="serviceAccount:$serviceAccountEmail" `
     --role="roles/run.invoker" `
     --region=$REGION `
     --project=$PROJECT_ID
+
+Write-Host ""
+Write-Host "Step 3.5/5: Updating Cloud Run timeout..." -ForegroundColor Yellow
+& gcloud run services update $SERVICE_NAME --timeout=3600 --region=$REGION --project=$PROJECT_ID
 
 Write-Host ""
 Write-Host "Step 4/5: Managing Cloud Scheduler jobs..." -ForegroundColor Yellow

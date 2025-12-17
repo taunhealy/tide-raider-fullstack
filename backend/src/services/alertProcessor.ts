@@ -288,6 +288,7 @@ export async function processUserAlerts(userId: string, today: Date) {
             });
 
             console.log(
+              `[Alert Processor] -> Comparison: ${currentStarRating} >= ${alert.starRating} ? ${shouldSendAlert}\n` +
               `[Alert Processor] -> Result: ${shouldSendAlert ? "MATCHED ✅" : "NOT MATCHED ❌"}`
             );
           } else {

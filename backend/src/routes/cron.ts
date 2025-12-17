@@ -108,6 +108,23 @@ router.post("/run-now", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/cron/run-weekly - Trigger full weekly scrape
+router.post("/run-weekly", async (req: Request, res: Response) => {
+  try {
+    const cronSecret = req.headers["x-cron-secret"];
+    if (cronSecret !== process.env.CRON_SECRET) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { getCronScheduler } = await import("../services/cronScheduler");
+    const result = await getCronScheduler().runWeeklyJob();
+    return res.json(result);
+  } catch (error) {
+    console.error("❌ Error running weekly job:", error);
+    return res.status(500).json({ error: "Weekly job failed" });
+  }
+});
+
 // GET /api/cron/test - Test endpoint (development only, no auth required)
 router.get("/test", async (req: Request, res: Response) => {
   // Only allow in development

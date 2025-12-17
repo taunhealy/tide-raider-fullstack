@@ -68,11 +68,13 @@ echo "Step 3/5: Granting Cloud Run invoker permission..."
 SERVICE_NAME=$(echo $BACKEND_URL | sed 's/https:\/\///' | cut -d'.' -f1 | sed 's/-[0-9]*$//')
 echo "   Detected service name: $SERVICE_NAME"
 
-gcloud run services add-iam-policy-binding $SERVICE_NAME \
-    --member="serviceAccount:cloud-scheduler-invoker@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role="roles/run.invoker" \
     --region=$REGION \
     --project=$PROJECT_ID
+
+echo ""
+echo "Step 3.5/5: Updating Cloud Run timeout..."
+gcloud run services update $SERVICE_NAME --timeout=3600 --region=$REGION --project=$PROJECT_ID
 
 echo ""
 echo "Step 4/5: Creating Cloud Scheduler job..."
