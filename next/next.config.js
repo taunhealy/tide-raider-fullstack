@@ -36,7 +36,11 @@ const nextConfig = {
     // No need for explicit fallbacks like webpack
   },
   // Moved from experimental.serverComponentsExternalPackages (deprecated in Next.js 15)
-  serverExternalPackages: ["@sparticuz/chromium"],
+  serverExternalPackages: [
+    "@sparticuz/chromium",
+    "@ffmpeg-installer/ffmpeg",
+    "fluent-ffmpeg",
+  ],
   transpilePackages: [
     "@sanity/ui",
     "@sanity/vision",
