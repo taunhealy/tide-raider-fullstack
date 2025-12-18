@@ -3,6 +3,14 @@ import { getServerAuth } from "@/app/lib/server-auth";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+// Set ffmpeg path
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 // Decode JWT without verification (for performance - we only need user ID)
 // The token is already validated by being in an HttpOnly cookie set by the backend
@@ -49,9 +57,52 @@ const s3 = new S3Client({
   // Removed middleware - simplifying to match old working pattern
 });
 
+// Helper to compress video
+async function compressVideo(inputBuffer: Buffer): Promise<Buffer> {
+  const tempDir = os.tmpdir();
+  const uniqueId = uuidv4();
+  const inputPath = path.join(tempDir, `input-${uniqueId}.mp4`);
+  const outputPath = path.join(tempDir, `output-${uniqueId}.mp4`);
+
+  await fs.promises.writeFile(inputPath, inputBuffer);
+
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .outputOptions([
+        "-c:v libx264",
+        "-crf 28", // Higher CRF = lower quality/size. 23 is default, 28 is decent compression.
+        "-preset ultrafast", // Fast compression to avoid timeouts
+        "-movflags +faststart",
+        "-pix_fmt yuv420p", // Ensure compatibility
+      ])
+      .save(outputPath)
+      .on("end", async () => {
+        try {
+          const compressed = await fs.promises.readFile(outputPath);
+          // Cleanup
+          await fs.promises.unlink(inputPath).catch(() => {});
+          await fs.promises.unlink(outputPath).catch(() => {});
+          console.log(
+            `[upload] Video compressed: ${inputBuffer.length} -> ${compressed.length} bytes`
+          );
+          resolve(compressed);
+        } catch (e) {
+          reject(e);
+        }
+      })
+      .on("error", async (err: any) => {
+        console.error("[upload] FFmpeg error:", err);
+        // Cleanup on error
+        await fs.promises.unlink(inputPath).catch(() => {});
+        await fs.promises.unlink(outputPath).catch(() => {});
+        reject(err);
+      });
+  });
+}
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300; // Increase timeout to 5 minutes for video compression
 
 export async function POST(req: NextRequest) {
   try {
@@ -108,13 +159,15 @@ export async function POST(req: NextRequest) {
 
     // Validate file size based on type
     const MAX_IMAGE_SIZE = 30 * 1024 * 1024; // 30MB for images
-    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB for videos
+    const MAX_VIDEO_SIZE = 150 * 1024 * 1024; // Increased to 150MB since we compress
 
     if (file.type.startsWith("video/") || fileType === "video") {
       if (file.size > MAX_VIDEO_SIZE) {
         return NextResponse.json(
           {
-            error: `Video file is too large. Maximum size is ${MAX_VIDEO_SIZE / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+            error: `Video file is too large. Maximum size is ${
+              MAX_VIDEO_SIZE / (1024 * 1024)
+            }MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
           },
           { status: 413 }
         );
@@ -123,7 +176,9 @@ export async function POST(req: NextRequest) {
       if (file.size > MAX_IMAGE_SIZE) {
         return NextResponse.json(
           {
-            error: `Image file is too large. Maximum size is ${MAX_IMAGE_SIZE / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
+            error: `Image file is too large. Maximum size is ${
+              MAX_IMAGE_SIZE / (1024 * 1024)
+            }MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`,
           },
           { status: 413 }
         );
@@ -157,11 +212,27 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Get file extension
-      const extension = file.name.split(".").pop() || "mp4";
+      // Compress video if it's larger than 10MB
+      const COMPRESSION_THRESHOLD = 5 * 1024 * 1024; // 5MB
+      let videoBuffer = buffer;
+
+      if (buffer.length > COMPRESSION_THRESHOLD) {
+        try {
+          console.log(`[upload] Compressing video (${buffer.length} bytes)...`);
+          videoBuffer = await compressVideo(buffer);
+        } catch (compressionError: any) {
+          console.error("[upload] Video compression failed, using original:", compressionError);
+          // Fallback to original buffer if compression fails
+          videoBuffer = buffer;
+        }
+      }
+
+      // Always save as mp4 when compressed, but keep original ext if fallback?
+      // Actually, ffmpeg converts to mp4 (libx264).
+      const extension = "mp4";
       key = `surf-videos/${userId}/${timestamp}-${uniqueId}.${extension}`;
-      contentType = file.type;
-      body = buffer; // Upload video as-is (no compression)
+      contentType = "video/mp4";
+      body = videoBuffer;
     } else if (file.type.startsWith("image/")) {
       // Handle image upload - convert to WebP for better compression
       // Resize and convert to WebP format

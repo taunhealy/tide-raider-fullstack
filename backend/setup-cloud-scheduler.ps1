@@ -91,6 +91,8 @@ Write-Host "Step 3/5: Granting Cloud Run invoker permission..." -ForegroundColor
 $SERVICE_NAME = $BACKEND_URL -replace 'https://', '' -replace '\..*', '' -replace '-\d+$', ''
 Write-Host "   Detected service name: $SERVICE_NAME" -ForegroundColor Gray
 
+& gcloud run services add-iam-policy-binding $SERVICE_NAME `
+    --member="serviceAccount:$serviceAccountEmail" `
     --role="roles/run.invoker" `
     --region=$REGION `
     --project=$PROJECT_ID
@@ -145,10 +147,10 @@ try {
     if ($jobExists) {
         Write-Host "   ℹ️  Job already exists. Updating..." -ForegroundColor Gray
         $updateArgs = @("scheduler", "jobs", "update", "http", "tide-raider-cron-daily-3am") + $commonArgs
-        & gcloud $updateArgs
+        & gcloud @updateArgs
     } else {
         $createArgs = @("scheduler", "jobs", "create", "http", "tide-raider-cron-daily-3am", "--description=Fetch surf forecasts and process alerts daily at 3 AM SAST") + $commonArgs
-        & gcloud $createArgs
+        & gcloud @createArgs
     }
 } catch {
     Write-Error "Failed to update/create scheduler job. See above error."
@@ -157,14 +159,15 @@ try {
 
 Write-Host ""
 Write-Host "Step 5/5: Testing the job..." -ForegroundColor Yellow
-$testRun = Read-Host "Run a test execution now? (y/n)"
 if ($testRun -eq 'y' -or $testRun -eq 'Y') {
     Write-Host "   🚀 Triggering test run..." -ForegroundColor Cyan
     & gcloud scheduler jobs run tide-raider-cron-daily-3am --location=$REGION --project=$PROJECT_ID
     
     Write-Host ""
     Write-Host "   ⏳ Waiting for execution (this may take 1-2 minutes)..." -ForegroundColor Gray
-    Start-Sleep -Seconds 10
+    }
+
+
     
     Write-Host ""
     Write-Host "   📊 Recent execution status:" -ForegroundColor Cyan
