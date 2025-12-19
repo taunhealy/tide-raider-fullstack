@@ -23,7 +23,8 @@
     "db:reset": "prisma migrate reset --force",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "fly:migrate": "fly ssh console -C 'cd /app && npx prisma migrate deploy' --app tide-raider-backend"
+    "fly:migrate": "fly ssh console -C 'cd /app && npx prisma migrate deploy' --app tide-raider-backend",
+    "partner:onboard": "tsx src/scripts/onboard-partner.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.732.0",

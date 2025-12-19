@@ -4,6 +4,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/input";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getBackendUrl } from "@/app/lib/api-config";
 
 export default function PartnersPage() {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ export default function PartnersPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/partners", {
+      const response = await fetch(`${getBackendUrl()}/api/partners/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -38,9 +39,18 @@ export default function PartnersPage() {
       toast.success("Registration successful!");
     } catch (error) {
       console.error("Partner registration error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to register. Please try again."
-      );
+      
+      // Provide specific feedback for network errors
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        toast.error(
+          "Unable to connect to the server. Please check that the backend is running and try again.",
+          { duration: 5000 }
+        );
+      } else {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to register. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -93,16 +103,16 @@ export default function PartnersPage() {
   }
 
   return (
-    <div className="bg-[var(--color-bg-primary)] min-h-screen">
-      <div className="container mx-auto px-4 py-12 md:py-24">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+    <div className="bg-[var(--color-bg-primary)] min-h-screen flex flex-col justify-center">
+      <div className="container mx-auto px-4 py-8 md:py-12 lg:py-24">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           {/* Hero Content */}
           <div>
             <h1 className="heading-1 mb-6 text-[var(--color-text-primary)]">
               Turn Your Stoke Into Income
             </h1>
             <p className="text-large text-[var(--color-text-secondary)] mb-8">
-              Join the Tide Raider Partner Program. Share surf alerts with your
+              Join the Tide Raider Partner Program. Share Tide Raider with your
               community and earn recurring revenue.
             </p>
 
@@ -118,7 +128,7 @@ export default function PartnersPage() {
                 },
                 {
                   title: "Automated Monthly Payouts",
-                  desc: "Get paid directly to your PayPal on the 1st of every month.",
+                  desc: "Get paid directly to your PayPal on the 1st of every month (min $20 balance).",
                 },
               ].map((item, i) => (
                 <div key={i} className="flex gap-4">
@@ -138,8 +148,7 @@ export default function PartnersPage() {
             </div>
           </div>
 
-          {/* Registration Form */}
-          <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100">
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 w-full max-w-sm mx-auto lg:ml-auto lg:max-w-md relative z-10">
             <h2 className="heading-4 mb-6">Become a Partner</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
