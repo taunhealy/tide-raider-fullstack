@@ -6,11 +6,12 @@ import { getBackendUrl } from "@/app/lib/api-config";
 
 const BACKEND_URL = getBackendUrl();
 
+
 export function useHandleSubscribe() {
   const { data: session } = useBackendAuth();
   const user = session?.user;
 
-  return async () => {
+  return async (promoCode?: string) => {
     try {
       if (!user) {
         // Redirect to backend OAuth
@@ -24,8 +25,9 @@ export function useHandleSubscribe() {
       const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create" }),
+        body: JSON.stringify({ action: "create", promoCode }),
       });
+
 
       if (!response.ok) {
         throw new Error("Failed to create subscription");

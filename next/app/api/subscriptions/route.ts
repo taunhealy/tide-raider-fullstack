@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { action } = await request.json();
+    const { action, promoCode } = await request.json();
     console.log("Received action:", action); // Debug log
 
     // Handle trial start FIRST, before any PayPal logic
@@ -49,8 +49,8 @@ export async function POST(request: Request) {
           return envUrl || "http://localhost:4001";
         }
 
-        // In production, use production backend (connects to Fly.io postgres)
-        return envUrl || "https://tide-raider-backend.fly.dev";
+        // In production, use production backend (Google Cloud Run)
+        return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
       };
 
       const BACKEND_URL = getBackendUrl();
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
 
     switch (action) {
       case "create":
-        return handleCreate();
+        return handleCreate(promoCode);
       case "unsubscribe":
       case "cancel":
         const user = await prisma.user.findUnique({
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handleCreate() {
+async function handleCreate(promoCode?: string) {
   try {
     // Proxy to backend instead of calling PayPal directly
     // This ensures we always use the correct plan ID from backend environment
@@ -199,8 +199,8 @@ async function handleCreate() {
         return envUrl || "http://localhost:4001";
       }
 
-      // In production, use production backend (connects to Fly.io postgres)
-      return envUrl || "https://tide-raider-backend.fly.dev";
+      // In production, use production backend (Google Cloud Run)
+      return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
     };
 
     const BACKEND_URL = getBackendUrl();
@@ -225,6 +225,7 @@ async function handleCreate() {
           Cookie: cookieStore.toString(),
         },
         credentials: "include",
+        body: JSON.stringify({ promoCode }),
       }
     );
 

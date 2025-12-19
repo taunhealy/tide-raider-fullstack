@@ -44,6 +44,7 @@ export default function PricingPage() {
     subscribe: false,
     unsubscribe: false,
   });
+  const [promoCode, setPromoCode] = useState("");
   const { data: subscriptionDetails } = useSubscriptionDetails();
   const isActiveSubscription =
     subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
@@ -70,6 +71,7 @@ export default function PricingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "start-trial",
+            promoCode,
           }),
         });
 
@@ -88,6 +90,7 @@ export default function PricingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create",
+          promoCode,
         }),
       });
       const data = await response.json();
@@ -208,6 +211,17 @@ export default function PricingPage() {
                 </ul>
 
                 <div className="space-y-4">
+                  {!isSubscribed && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Promo Code"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                      />
+                    </div>
+                  )}
                   <Button
                     variant="outline"
                     className={cn("w-full font-primary")}

@@ -93,7 +93,7 @@ async function createPlan(accessToken: string, productId: string) {
           total_cycles: 0, // 0 = infinite
           pricing_scheme: {
             fixed_price: {
-              value: "3.00",
+              value: "4.00",
               currency_code: "USD",
             },
           },
@@ -157,7 +157,7 @@ async function main() {
     console.log("=".repeat(60));
     console.log("\n📋 Next steps:");
     console.log(
-      `1. Set this as PAYPAL_PLAN_ID in Fly.io:\n   fly secrets set PAYPAL_PLAN_ID="${plan.id}" --app tide-raider-backend`
+      `1. Set this as PAYPAL_PLAN_ID in Google Cloud Run (Variables & Secrets tab)`
     );
     console.log(
       `2. Or add to your .env.local:\n   PAYPAL_PLAN_ID="${plan.id}"`

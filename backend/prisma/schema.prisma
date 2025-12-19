@@ -144,6 +144,12 @@ model User {
   // Squads
   squads Squad[]
   promoCodeUsages PromoCodeUsage[]
+  
+  // Partner / Referral System
+  partnerProfile       PartnerProfile?
+  ownedPromoCodes      PromoCode[]         @relation("PartnerPromoCodes")
+  commissionsReceived  Commission[]        @relation("PartnerCommissions")
+  commissionsGenerated Commission[]        @relation("ReferredCommissions")
 
   @@index([email])
   @@index([skillLevel])
@@ -1359,7 +1365,13 @@ model PromoCode {
   trialDays   Int               @default(30) // 1 month = 30 days
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
-  usages      PromoCodeUsage[]
+  usages            PromoCodeUsage[]
+  
+  // Referral System
+  discountPercent   Float?           @default(0)
+  commissionPercent Float?           @default(0)
+  ownerId           String?
+  owner             User?            @relation("PartnerPromoCodes", fields: [ownerId], references: [id])
 
   @@index([code])
   @@index([isActive])
@@ -1376,4 +1388,38 @@ model PromoCodeUsage {
   @@unique([promoCodeId, userId])
   @@index([promoCodeId])
   @@index([userId])
+}
+
+
+model PartnerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  paypalEmail String?
+  balance     Float    @default(0)
+  totalPaid   Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Commission {
+  id             String           @id @default(cuid())
+  partnerId      String
+  referredUserId String
+  amount         Float
+  currency       String           @default("USD")
+  status         CommissionStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  paidAt         DateTime?
+  partner        User             @relation("PartnerCommissions", fields: [partnerId], references: [id])
+  referredUser   User             @relation("ReferredCommissions", fields: [referredUserId], references: [id])
+
+  @@index([partnerId])
+  @@index([status])
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
 }

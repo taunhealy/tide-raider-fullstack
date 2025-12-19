@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { fetchAllRegionsData } from "../services/regionDataService";
 import { processAllUserAlerts } from "../services/alertProcessor";
+import { prisma } from "../lib/prisma";
 
 const router = Router();
 
@@ -149,6 +150,99 @@ router.get("/test", async (req: Request, res: Response) => {
       error: "Failed to run cron job",
       message: error instanceof Error ? error.message : "Unknown error",
     });
+  }
+});
+
+
+// POST /api/cron/process-payouts - Monthly Payout Job
+// Trigger this on the 1st of every month
+router.post("/process-payouts", async (req: Request, res: Response) => {
+  try {
+     const cronSecret = req.headers["x-cron-secret"];
+     if (cronSecret !== process.env.CRON_SECRET) {
+       return res.status(401).json({ error: "Unauthorized" });
+     }
+
+     console.log("💰 Starting Monthly Payout Processing...");
+
+     // 1. Get all PENDING commissions
+     const pendingCommissions = await prisma.commission.findMany({
+       where: { status: "PENDING" },
+       include: { partner: { include: { partnerProfile: true } } }
+     });
+
+     if (pendingCommissions.length === 0) {
+       return res.json({ message: "No pending commissions to pay." });
+     }
+
+     // 2. Group by Partner
+     const payoutsByPartner = new Map<string, {
+       email: string,
+       amount: number,
+       commissionIds: string[]
+     }>();
+
+     for (const comm of pendingCommissions) {
+       const email = comm.partner.partnerProfile?.paypalEmail;
+       if (!email) continue; // Skip if no paypal email set
+
+       if (!payoutsByPartner.has(comm.partnerId)) {
+         payoutsByPartner.set(comm.partnerId, { email, amount: 0, commissionIds: [] });
+       }
+       
+       const entry = payoutsByPartner.get(comm.partnerId)!;
+       entry.amount += comm.amount;
+       entry.commissionIds.push(comm.id);
+     }
+
+     // 3. Prepare Batch Items
+     const batchItems: any[] = [];
+     const commissionIdsToUpdate: string[] = [];
+     const MIN_PAYOUT_THRESHOLD = 20.00; // Only pay if > $20 to save fees - Updated per user request
+
+     for (const [partnerId, data] of payoutsByPartner) {
+        if (data.amount >= MIN_PAYOUT_THRESHOLD) {
+           batchItems.push({
+             recipient_type: "EMAIL",
+             amount: {
+               value: data.amount.toFixed(2),
+               currency: "USD"
+             },
+             note: "Tide Raider Monthly Affiliate Commission",
+             sender_item_id: `payout_${partnerId}_${Date.now()}`,
+             receiver: data.email
+           });
+           commissionIdsToUpdate.push(...data.commissionIds);
+        } else {
+          console.log(`Skipping payout for ${data.email} - Below threshold ($${data.amount.toFixed(2)})`);
+        }
+     }
+
+     // 4. Send Batch
+    if (batchItems.length > 0) {
+      const { PayPalService } = await import("../services/paypal"); // Dynamic import
+      await PayPalService.sendBatchPayout(batchItems);
+
+      // 5. Update DB Status
+      await prisma.commission.updateMany({
+        where: { id: { in: commissionIdsToUpdate } },
+        data: {
+          status: "PAID",
+          paidAt: new Date()
+        }
+      });
+      console.log(`✅ Successfully paid out ${batchItems.length} partners.`);
+    }
+
+     return res.json({
+       success: true,
+       processedCount: batchItems.length,
+       totalPending: pendingCommissions.length
+     });
+
+  } catch (error) {
+    console.error("❌ Payout Job Failed:", error);
+    res.status(500).json({ error: "Payout failed" });
   }
 });
 
