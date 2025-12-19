@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { XMarkIcon, VideoCameraIcon } from "@heroicons/react/24/outline";
 
+import { getBackendUrl } from "@/app/lib/api-config";
+
 interface VideoUploaderProps {
   videos: { url: string; title: string; platform: string }[];
   setVideos: (videos: { url: string; title: string; platform: string }[]) => void;
@@ -33,7 +35,7 @@ export function VideoUploader({
         formData.append("file", file);
         formData.append("type", "video");
 
-        const response = await fetch("/api/upload", {
+        const response = await fetch(`${getBackendUrl()}/api/upload`, {
           method: "POST",
           body: formData,
           credentials: "include",

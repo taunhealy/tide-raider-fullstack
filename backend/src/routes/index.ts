@@ -22,9 +22,11 @@ import hiddenGemsRouter from "./hidden-gems";
 import squadsRouter from "./squads";
 import promoCodesRouter from "./promo-codes";
 import paypalRouter from "./paypal";
+import uploadRouter from "./upload";
 
 const router = Router();
 
+router.use("/upload", uploadRouter);
 router.use("/camping", campingRouter);
 
 // Mount route handlers
