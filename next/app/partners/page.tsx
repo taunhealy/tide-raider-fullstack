@@ -9,6 +9,7 @@ import { getBackendUrl } from "@/app/lib/api-config";
 export default function PartnersPage() {
   const [formData, setFormData] = useState({
     businessName: "",
+    businessLink: "",
     contactName: "",
     email: "",
     paypalEmail: "",
@@ -161,6 +162,21 @@ export default function PartnersPage() {
                   value={formData.businessName}
                   onChange={(e) =>
                     setFormData({ ...formData, businessName: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Business Website
+                </label>
+                <Input
+                  required
+                  type="url"
+                  placeholder="https://yourbusiness.com"
+                  value={formData.businessLink}
+                  onChange={(e) =>
+                    setFormData({ ...formData, businessLink: e.target.value })
                   }
                 />
               </div>

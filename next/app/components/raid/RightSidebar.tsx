@@ -9,6 +9,7 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import Sponsors from "../Sponsors";
+import PartnersShowcase from "../PartnersShowcase";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -144,9 +145,10 @@ export default function RightSidebar() {
         />
       )}
 
-      {/* Sticky container for Recent Sessions and Travel Posts */}
+      {/* Sticky container for Recent Sessions, Partners, and Travel Posts */}
       <div className="sticky top-4 space-y-8">
         <RecentRaidLogs />
+        <PartnersShowcase />
         <FunFacts />
       </div>
     </aside>

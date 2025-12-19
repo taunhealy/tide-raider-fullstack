@@ -6,7 +6,7 @@ const router = Router();
 // POST /api/partners/register
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    const { businessName, contactName, email, paypalEmail } = req.body;
+    const { businessName, businessLink, contactName, email, paypalEmail } = req.body;
 
     // 1. Generate a Code from Business Name
     // Remove spaces, special chars, uppercase, limit to 15 chars
@@ -46,9 +46,15 @@ router.post("/register", async (req: Request, res: Response) => {
     // 3. Create Partner Profile
     await prisma.partnerProfile.upsert({
       where: { userId: user.id },
-      update: { paypalEmail },
+      update: { 
+        businessName,
+        businessLink,
+        paypalEmail 
+      },
       create: {
         userId: user.id,
+        businessName,
+        businessLink,
         paypalEmail,
         balance: 0,
         totalPaid: 0
@@ -116,6 +122,32 @@ router.post("/register", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Partner Registration Failed:", error);
     return res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// GET /api/partners - Fetch all active partners
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const partners = await prisma.partnerProfile.findMany({
+      where: {
+        businessName: { not: null },
+        businessLink: { not: null },
+      },
+      select: {
+        id: true,
+        businessName: true,
+        businessLink: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return res.json({ partners });
+  } catch (error) {
+    console.error("Failed to fetch partners:", error);
+    return res.status(500).json({ error: "Failed to fetch partners" });
   }
 });
 

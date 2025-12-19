@@ -5,7 +5,7 @@
  * - Assigns them a Promo Code for referrals
  * 
  * Usage:
- *   npx tsx scripts/onboard-partner.ts --name "Surf Shop" --email "shop@example.com" --paypal "payments@example.com" --code "SURFSHOP20"
+ *   npx tsx scripts/onboard-partner.ts --name "Surf Shop" --link "https://surfshop.com" --email "shop@example.com" --paypal "payments@example.com" --code "SURFSHOP20"
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -14,6 +14,7 @@ const prisma = new PrismaClient();
 
 interface Args {
   name: string;
+  link: string;
   email: string;
   paypalEmail: string;
   promoCode: string;
@@ -26,14 +27,15 @@ function parseArgs(): Args {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--name" && args[i + 1]) result.name = args[++i];
+    if (arg === "--link" && args[i + 1]) result.link = args[++i];
     if (arg === "--email" && args[i + 1]) result.email = args[++i];
     if (arg === "--paypal" && args[i + 1]) result.paypalEmail = args[++i];
     if (arg === "--code" && args[i + 1]) result.promoCode = args[++i].toUpperCase();
   }
 
-  if (!result.email || !result.paypalEmail || !result.promoCode || !result.name) {
+  if (!result.email || !result.paypalEmail || !result.promoCode || !result.name || !result.link) {
     console.error("❌ Missing required arguments.");
-    console.log("Usage: npx tsx scripts/onboard-partner.ts --name \"Name\" --email \"email\" --paypal \"paypal\" --code \"CODE\"");
+    console.log("Usage: npx tsx scripts/onboard-partner.ts --name \"Name\" --link \"https://site.com\" --email \"email\" --paypal \"paypal\" --code \"CODE\"");
     process.exit(1);
   }
 
@@ -63,15 +65,22 @@ async function main() {
     // 2. Create/Update Partner Profile
     await prisma.partnerProfile.upsert({
       where: { userId: user.id },
-      update: { paypalEmail: args.paypalEmail },
+      update: { 
+        businessName: args.name,
+        businessLink: args.link,
+        paypalEmail: args.paypalEmail 
+      },
       create: {
         userId: user.id,
+        businessName: args.name,
+        businessLink: args.link,
         paypalEmail: args.paypalEmail,
         balance: 0,
         totalPaid: 0
       }
     });
     console.log(`✅ Partner Profile set with PayPal: ${args.paypalEmail}`);
+    console.log(`   - Website: ${args.link}`);
 
     // 3. Create/Link Promo Code
     const code = await prisma.promoCode.upsert({

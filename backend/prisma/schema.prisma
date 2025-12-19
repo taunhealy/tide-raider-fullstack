@@ -1392,14 +1392,16 @@ model PromoCodeUsage {
 
 
 model PartnerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  paypalEmail String?
-  balance     Float    @default(0)
-  totalPaid   Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  businessName String?
+  businessLink String?
+  paypalEmail  String?
+  balance      Float    @default(0)
+  totalPaid    Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Commission {
