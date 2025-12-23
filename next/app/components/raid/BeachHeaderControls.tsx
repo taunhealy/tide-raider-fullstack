@@ -10,13 +10,18 @@ import WeatherForecastWidget from "../sidebar/WeatherForecastWidget";
 
 import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
-import { LocationFilter } from "@/app/types/filters";
+import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
 import { HiddenGemsButton } from "@/app/components/ui/GradientButton";
+import { Filter } from "lucide-react";
+import { Button } from "@/app/components/ui/Button";
+import { FilterDrawer } from "@/app/components/ui/filterdrawer";
+import LocationFilter from "../LocationFilter";
+import { useRegions } from "@/app/hooks/useRegions";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
-  onRegionSelect: (regionId: LocationFilter["regionId"]) => void;
+  onRegionSelect: (regionId: LocationFilterType["regionId"]) => void;
   currentRegion: string;
   beaches: Beach[];
 }
@@ -24,6 +29,8 @@ interface BeachHeaderControlsProps {
 export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { data: regions = [] } = useRegions();
   const searchParams = useSearchParams();
   const { data: regionCountsData } = useRegionCounts();
   const { filters, updateFilter } = useBeachFilters();
@@ -63,14 +70,27 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                   </div>
                   
                   {/* Hidden Gems Button - Right Half */}
-                  <div className="flex-1 flex items-start justify-end">
+                  <div className="flex-1 flex items-start justify-end gap-2">
+                    {/* Mobile Filter Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="lg:hidden flex items-center gap-2 bg-white"
+                      onClick={() => setIsFilterOpen(true)}
+                    >
+                      <Filter className="w-4 h-4" />
+                      Filters
+                    </Button>
+
                     <HiddenGemsButton
                       active={!!filters.isHiddenGem}
                       onClick={() => {
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");
                       }}
-                    />
+                    >
+                      Hidden Gems
+                    </HiddenGemsButton>
                   </div>
                 </div>
 
@@ -85,6 +105,9 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
       </div>
 
       {/* Include FilterSidebar directly in this component */}
+      <FilterDrawer isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+        <LocationFilter regions={regions} />
+      </FilterDrawer>
     </>
   );
 }

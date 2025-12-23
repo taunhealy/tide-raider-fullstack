@@ -393,6 +393,55 @@ export default function Navbar() {
                   </li>
                 </>
               )}
+              
+              {/* Mobile Promo Code Input */}
+              {!isSubscribed && !hasActiveTrial && (
+                <li className="px-2 py-3">
+                  <form
+                    onSubmit={(e) => {
+                      handleActivateTrial(e);
+                    }}
+                    className="flex flex-col gap-2"
+                  >
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
+                      Start 1 Month Free Trial
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        className="h-9 text-sm font-primary flex-1"
+                        disabled={isActivatingTrial}
+                      />
+                      <Button
+                        type="submit"
+                        variant="dark"
+                        size="sm"
+                        disabled={isActivatingTrial || !promoCode.trim()}
+                        className="font-primary text-sm whitespace-nowrap"
+                      >
+                        {isActivatingTrial ? "..." : "Unlock"}
+                      </Button>
+                    </div>
+                    {trialMessage && (
+                      <span
+                        className={cn(
+                          "text-xs font-primary",
+                          trialMessage.type === "success"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        )}
+                      >
+                        {trialMessage.text}
+                      </span>
+                    )}
+                  </form>
+                  <div className="border-t border-[var(--color-border-light)] mt-3" />
+                </li>
+              )}
+
               {NAVIGATION_ITEMS.map((link) => (
                 <li key={link.href} className="px-2 py-3">
                   <Link
