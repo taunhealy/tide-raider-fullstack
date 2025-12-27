@@ -166,7 +166,25 @@ export async function scraperA(
     await page.waitForSelector(".weathertable", { timeout: 15000 });
     console.log("✅ Found weather table");
 
-    // Wait 4 seconds for table to load
+    // Auto-scroll to ensure all lazy-loaded content appears
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let totalHeight = 0;
+        const distance = 100;
+        const timer = setInterval(() => {
+          const scrollHeight = document.body.scrollHeight;
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+
+          if (totalHeight >= scrollHeight) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 100);
+      });
+    });
+
+    // Wait 4 seconds for table to load (after scrolling)
     await new Promise((resolve) => setTimeout(resolve, 4000));
 
     // Extract forecast-day sections with their dates and rows
