@@ -89,8 +89,8 @@ export class CronScheduler {
       console.log("📊 Step 1: Fetching surf conditions for all regions");
       let regionResults;
       try {
-        // Daily run only needs today + tomorrow (2 days)
-        regionResults = await fetchAllRegionsData(2);
+        // Daily run: Fetch 7 days of data (users requested more than 2 days)
+        regionResults = await fetchAllRegionsData(7);
         console.log("✅ Region data fetch completed:", {
           regionsProcessed: regionResults.regionsProcessed,
           regionsSucceeded: regionResults.regionsSucceeded,

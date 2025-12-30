@@ -261,7 +261,7 @@ const BeachCard = memo(function BeachCard({
         duration-300 
         hover:shadow-md
         [&_.animate-in]:opacity-0
-        min-w-[320px]
+        w-full
         ${isLocalLoading ? "animate-pulse" : ""}
       `}
       >
