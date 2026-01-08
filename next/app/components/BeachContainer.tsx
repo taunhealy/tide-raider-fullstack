@@ -174,6 +174,25 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentBeaches = sortedBeaches.slice(startIndex, endIndex);
 
+  // Generate pagination numbers
+  const paginationRange = useMemo(() => {
+    const maxVisible = 7;
+    
+    if (totalPages <= maxVisible) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
+    
+    if (currentPage >= totalPages - 3) {
+      return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    
+    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+  }, [totalPages, currentPage]);
+
   // Reset to first page if current page is out of bounds
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
@@ -262,7 +281,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-8 mb-4">
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-8 mb-4">
                       <Button
                         variant="outline"
                         size="sm"
@@ -274,23 +293,34 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                         Previous
                       </Button>
 
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
-                          <Button
-                            key={page}
-                            variant={
-                              currentPage === page ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => handlePageChange(page)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {page}
-                          </Button>
-                        ))}
+                      {/* Mobile Page Indicator */}
+                      <span className="text-sm font-medium text-gray-600 sm:hidden px-2">
+                        Page {currentPage} of {totalPages}
+                      </span>
+
+                      {/* Desktop Page Numbers */}
+                      <div className="hidden sm:flex items-center gap-1">
+                        {paginationRange.map((page, index) => {
+                          if (page === "...") {
+                            return (
+                              <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+                                ...
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(Number(page))}
+                              className="w-8 h-8 p-0"
+                            >
+                              {page}
+                            </Button>
+                          );
+                        })}
                       </div>
 
                       <Button

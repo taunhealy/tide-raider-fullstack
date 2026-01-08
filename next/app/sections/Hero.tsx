@@ -104,7 +104,7 @@ export default function HeroSection({ data }: HeroProps) {
         return "🔔";
       case "logbook":
         return "📓";
-      case "gallery":
+      case "log gallery":
         return "🖼️";
       default:
         return "✨";
@@ -351,7 +351,7 @@ export default function HeroSection({ data }: HeroProps) {
               yoyo: true,
             });
           }
-        } else if (productFeatures[currentFeature].title === "Gallery") {
+        } else if (productFeatures[currentFeature].title === "Log Gallery") {
           // Camera icon animation - subtle tilt with flash on exit
           gsap.to(icon, {
             rotation: 5,
@@ -450,7 +450,7 @@ export default function HeroSection({ data }: HeroProps) {
           mode="wait"
           onExitComplete={() => {
             // Flash effect on exit for camera
-            if (productFeatures[currentFeature].title === "Gallery") {
+            if (productFeatures[currentFeature].title === "Log Gallery") {
               const icon = featureIconRef.current?.querySelector("svg");
               const glowEffect =
                 featureIconRef.current?.querySelector(".filter.blur-xl");
@@ -519,7 +519,7 @@ export default function HeroSection({ data }: HeroProps) {
                   </>
                 )}
 
-                {productFeatures[currentFeature].title === "Gallery" && (
+                {productFeatures[currentFeature].title === "Log Gallery" && (
                   <>
                     <div className="absolute inset-0 bg-[var(--color-tertiary)]/10 rounded-xl filter blur-xl"></div>
                     <Camera className="text-[var(--color-tertiary)] w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 z-10 drop-shadow-[0_0_8px_rgba(28,217,255,0.7)]" />

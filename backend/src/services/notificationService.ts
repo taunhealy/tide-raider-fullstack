@@ -97,6 +97,7 @@ interface Alert {
   starRating?: number | null;
   logEntry?: any;
   beach?: any;
+  sources?: string[];
 }
 
 export async function sendAlertNotification(
@@ -167,7 +168,8 @@ export async function sendAlertNotification(
       alertMatch,
       resolvedBeachName,
       regionName,
-      forecastDate
+      forecastDate,
+      alert.sources || []
     );
 
     // Create AlertNotification record BEFORE sending to prevent duplicates
@@ -363,7 +365,8 @@ function createNotificationMessage(
   alertMatch: AlertMatch,
   beachName: string,
   regionName: string,
-  forecastDate: Date
+  forecastDate: Date,
+  alertSources: string[] = []
 ) {
   // Format the date
   const date = new Date(forecastDate);
@@ -601,6 +604,10 @@ function createNotificationMessage(
               <span class="info-label">Date:</span>
               <span class="info-value">${dateString}</span>
             </div>
+            <div class="info-row">
+              <span class="info-label">Alert Sources:</span>
+              <span class="info-value">${alertSources.length > 0 ? alertSources.join(", ") : "All Sources"}</span>
+            </div>
           </div>
           
           <div class="conditions">
@@ -627,6 +634,7 @@ Location Details:
 - Region: ${regionName}
 - Day: ${dayName}
 - Date: ${dateString}
+- Alert Sources: ${alertSources.length > 0 ? alertSources.join(", ") : "All Sources"}
 
 ✅ Conditions Met:
 Surf conditions at ${beachName} have met your alert criteria: ${details}
