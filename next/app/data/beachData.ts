@@ -14,12 +14,14 @@ export const beachData: Beach[] = [
     distanceFromCT: 25,
     optimalWindDirections: ["NW", "N", "NE"],
     optimalSwellDirections: {
-      min: 120,
-      max: 150,
-    }, // single closing brace for optimalSwellDirections
+      min: 210,
+      max: 240,
+      cardinal: "SW",
+    },
     bestSeasons: ["winter"], // continue with the rest of the properties
     optimalTide: "ALL",
-    description: "Gentle beach break, perfect for beginners",
+    description:
+      "Premium long, peeling, groomed lines. Perfect for longboarding.",
     difficulty: "BEGINNER",
     waveType: "BEACH_BREAK",
     swellSize: {
