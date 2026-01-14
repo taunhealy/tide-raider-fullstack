@@ -1,0 +1,20 @@
+{
+  "rules": [
+    {
+      "description": "Delete untagged images older than 7 days",
+      "action": { "type": "DELETE" },
+      "condition": {
+        "tagState": "UNTAGGED",
+        "olderThan": "7d"
+      }
+    },
+    {
+      "description": "Keep only last 10 tagged images",
+      "action": { "type": "DELETE" },
+      "condition": {
+        "tagState": "TAGGED",
+        "olderThan": "30d"
+      }
+    }
+  ]
+}

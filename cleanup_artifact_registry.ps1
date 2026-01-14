@@ -29,6 +29,7 @@ try {
     foreach ($image in $IMAGES_TO_DELETE) {
         if (-not [string]::IsNullOrWhiteSpace($image)) {
             Write-Host "Deleting: $image"
+            # Extract the digest or tag to ensure correct deletion format if needed, but the package URL should work
             gcloud artifacts docker images delete $image --quiet
         }
     }
