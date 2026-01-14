@@ -947,6 +947,7 @@ function AlertFormFooter() {
               : typeof alert.forecastDate === "string"
                 ? alert.forecastDate
                 : new Date().toISOString(),
+          sources: alert.sources || ["WINDFINDER"],
         };
 
         try {
