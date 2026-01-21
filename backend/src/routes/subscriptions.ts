@@ -34,7 +34,7 @@ router.post(
 
       // Calculate trial end date (7 days from now)
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
 
       // Update user with trial information
       const updatedUser = await prisma.user.update({

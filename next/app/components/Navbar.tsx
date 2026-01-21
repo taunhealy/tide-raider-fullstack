@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "./ui/Button";
-import { Input } from "./ui/input";
+
 import { useSubscription } from "../providers/SubscriptionProvider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,7 +30,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
+
   const [isActivatingTrial, setIsActivatingTrial] = useState(false);
   const [trialMessage, setTrialMessage] = useState<{
     type: "success" | "error";
@@ -91,16 +91,8 @@ export default function Navbar() {
     router.refresh();
   };
 
-  const handleActivateTrial = async (e: React.FormEvent) => {
+  const handleActivateTrial = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
-
-    if (!promoCode.trim()) {
-      setTrialMessage({
-        type: "error",
-        text: "Please enter a promo code",
-      });
-      return;
-    }
 
     if (!session) {
       setTrialMessage({
@@ -114,12 +106,12 @@ export default function Navbar() {
     setTrialMessage(null);
 
     try {
-      const response = await fetch("/api/subscriptions/activate-trial", {
+      const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ promoCode: promoCode.trim() }),
+        body: JSON.stringify({ action: "start-trial" }),
       });
 
       const data = await response.json();
@@ -136,7 +128,6 @@ export default function Navbar() {
         type: "success",
         text: data.message || "Trial activated successfully!",
       });
-      setPromoCode("");
 
       // Refresh subscription status
       await checkSubscription();
@@ -187,29 +178,20 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Trial Promo Code Input - Desktop Only */}
+          {/* Start Free Trial Button - Desktop Only */}
           {!isLoading && !isSubscribed && !hasActiveTrial && (
-            <form
-              onSubmit={handleActivateTrial}
-              className="hidden md:flex items-center gap-2"
-              onFocus={() => setTrialMessage(null)}
-            >
-              <Input
-                type="text"
-                placeholder="Enter the promo code"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                className="h-9 w-48 text-sm font-primary"
-                disabled={isActivatingTrial}
-              />
+            <div className="hidden md:flex items-center gap-4">
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">
+                Unlock Surf Alerts
+              </span>
               <Button
-                type="submit"
                 variant="dark"
                 size="sm"
-                disabled={isActivatingTrial || !promoCode.trim()}
+                onClick={handleActivateTrial}
+                disabled={isActivatingTrial}
                 className="flex items-center gap-2 font-primary text-sm"
               >
-                {isActivatingTrial ? "Activating..." : "Unlock 1 Month Trial"}
+                {isActivatingTrial ? "Activating..." : "Start Trial"}
               </Button>
               {trialMessage && (
                 <span
@@ -223,7 +205,7 @@ export default function Navbar() {
                   {trialMessage.text}
                 </span>
               )}
-            </form>
+            </div>
           )}
         </div>
 
@@ -394,35 +376,22 @@ export default function Navbar() {
                 </>
               )}
               
-              {/* Mobile Promo Code Input */}
+              {/* Mobile Start Trial */}
               {!isSubscribed && !hasActiveTrial && (
                 <li className="px-2 py-3">
-                  <form
-                    onSubmit={(e) => {
-                      handleActivateTrial(e);
-                    }}
-                    className="flex flex-col gap-2"
-                  >
+                  <div className="flex flex-col gap-2">
                     <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                      Start 1 Month Free Trial
+                      Unlock Surf Alerts
                     </p>
                     <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Promo code"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        className="h-9 text-sm font-primary flex-1"
-                        disabled={isActivatingTrial}
-                      />
                       <Button
-                        type="submit"
                         variant="dark"
                         size="sm"
-                        disabled={isActivatingTrial || !promoCode.trim()}
-                        className="font-primary text-sm whitespace-nowrap"
+                        onClick={handleActivateTrial}
+                        disabled={isActivatingTrial}
+                        className="font-primary text-sm whitespace-nowrap w-full"
                       >
-                        {isActivatingTrial ? "..." : "Unlock"}
+                        {isActivatingTrial ? "..." : "Start Trial"}
                       </Button>
                     </div>
                     {trialMessage && (
@@ -437,7 +406,7 @@ export default function Navbar() {
                         {trialMessage.text}
                       </span>
                     )}
-                  </form>
+                  </div>
                   <div className="border-t border-[var(--color-border-light)] mt-3" />
                 </li>
               )}
