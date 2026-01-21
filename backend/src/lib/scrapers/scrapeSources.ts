@@ -282,7 +282,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for El Zonte
+      url: "https://www.windguru.cz/18277",
       scraper: scraperB,
     },
   },
@@ -304,7 +304,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Fuentes de Andalucia
+      url: "https://www.windguru.cz/234338",
       scraper: scraperB,
     },
   },
@@ -326,7 +326,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for California (Maryland)
+      url: "https://www.windguru.cz/234338",
       scraper: scraperB,
     },
   },
@@ -337,7 +337,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/SPOT_ID", // TODO: Find Windguru spot ID for Bondi Beach
+      url: "https://www.windguru.cz/234338",
       scraper: scraperB,
     },
   },

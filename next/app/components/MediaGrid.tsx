@@ -181,7 +181,7 @@ function MediaGridBase({
                   {/* Forecast conditions */}
                   {latestLogEntry[0].forecast && (
                     <div className="flex items-center gap-1.5 w-full sm:w-auto border-t sm:border-t-0 border-[var(--color-border-light)] py-1.5">
-                      <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 rounded-full text-xs font-primary">
+                      <div className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-primary">
                         <span className="hidden sm:inline mr-1">
                           {getWindEmoji(latestLogEntry[0].forecast.windSpeed)}
                         </span>
@@ -192,11 +192,9 @@ function MediaGridBase({
                           )}
                         </span>
                       </div>
-                      <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 rounded-full text-xs font-primary">
+                      <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-xs font-primary">
                         <span className="hidden sm:inline mr-1">
-                          {getSwellEmoji(
-                            latestLogEntry[0].forecast.swellHeight
-                          )}
+                          🌊
                         </span>
                         <span>
                           {latestLogEntry[0].forecast.swellHeight.toFixed(2)}m @{" "}

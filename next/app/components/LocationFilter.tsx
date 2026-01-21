@@ -50,7 +50,7 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
     return (
       <div className="space-y-4">
         <FilterHeader
-          title="Locations"
+          title="Regions"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onClearFilters={() => {
@@ -66,7 +66,7 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
   return (
     <div className="space-y-4">
       <FilterHeader
-        title="Locations"
+        title="Regions"
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onClearFilters={() => {
