@@ -1,0 +1,1 @@
+{ "rules": [ { "description": "Keep only the last 3 images", "action": { "type": "DELETE" }, "condition": { "tagState": "TAGGED", "olderThan": "30d" } }, { "description": "Keep only the last 3 images", "action": { "type": "DELETE" }, "condition": { "tagState": "UNTAGGED", "olderThan": "1d" } } ] }

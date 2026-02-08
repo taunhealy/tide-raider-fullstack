@@ -1,0 +1,19 @@
+{
+  "rules": [
+    {
+      "action": { "type": "DELETE" },
+      "condition": {
+        "tagState": "ANY",
+        "olderThan": "90d"
+      }
+    },
+    {
+      "action": { "type": "KEEP" },
+      "condition": {
+        "tagState": "TAGGED",
+        "tagPrefixes": ["latest"],
+        "olderThan": "3650d"
+      }
+    }
+  ]
+}

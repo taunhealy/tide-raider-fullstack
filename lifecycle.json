@@ -1,0 +1,18 @@
+{
+  "rules": [
+    {
+      "action": { "type": "DELETE" },
+      "condition": {
+        "tagState": "UNTAGGED",
+        "olderThan": "1d"
+      }
+    },
+    {
+      "action": { "type": "DELETE" },
+      "condition": {
+        "tagState": "TAGGED",
+        "olderThan": "30d"
+      }
+    }
+  ]
+}

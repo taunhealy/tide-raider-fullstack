@@ -26,7 +26,7 @@ export async function fetchAllRegionsData(daysLimit?: number) {
 
     // Process regions in parallel chunks to speed up execution
     // Cloud Run has a 5 min timeout, so we need to be efficient
-    const CONCURRENCY = 4; // Process 4 regions at once
+    const CONCURRENCY = 1; // Process 1 region at a time to prevent memory overload
     const chunks = [];
     
     for (let i = 0; i < regions.length; i += CONCURRENCY) {
