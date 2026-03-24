@@ -182,9 +182,6 @@ export async function scraperA(
       console.log("⚠️ Container selector failed, attempting fallback...");
     }
 
-    await page.screenshot({ path: 'scraper-debug.png', fullPage: true });
-    console.log("📸 Screenshot saved to scraper-debug.png");
-
 
     // ... scroll logic ... (kept same)
 
@@ -221,15 +218,18 @@ export async function scraperA(
       (function() {
         const docNodes = Array.from(document.querySelectorAll('*'));
         
-        // Find day containers directly by class suffix pattern
-        const dayContainers = Array.from(document.querySelectorAll('[class*="_day_"], [class*="forecast-day"]'))
-           .filter(el => el.textContent.trim().length < 50);
+        // Find day containers - support grid (_day_), legacy (.weathertable), and header classes
+        const dayContainers = Array.from(document.querySelectorAll('[class*="_day_"], [class*="forecast-day"], .weathertable__header'))
+           .filter(el => {
+              const t = el.textContent.trim();
+              return t.length > 5 && t.length < 50 && /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t);
+           });
 
         if (dayContainers.length === 0) {
-           // Fallback to any text that looks like a date
+           // Extreme Fallback
            const headers = docNodes.filter(el => {
               const t = el.textContent.trim();
-              return /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && t.length < 35;
+              return t.length > 5 && t.length < 35 && /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && el.children.length === 0;
            });
            dayContainers.push(...headers);
         }
@@ -238,28 +238,63 @@ export async function scraperA(
           const dateText = header.textContent.trim();
           let block = header.parentElement;
           
-          while (block && block.querySelectorAll('[class*="_column_"], [class*="_col_"]').length < 5 && block !== document.body) {
+          // Support both Grid Containers and Legacy Table Containers
+          while (block && block.querySelectorAll('[class*="_column_"], [class*="_col_"], .weathertable__cell').length < 5 && block !== document.body) {
              block = block.parentElement;
           }
 
           if (block) {
-             const columns = Array.from(block.querySelectorAll('[class*="_column_"], [class*="_col_"]'));
-             const labels = Array.from(block.querySelectorAll('[class*="_label_"], [class*="_labelRow_"]')).filter(el => el.textContent.trim() !== "");
+             // 1. Map Labels
+             const labels = Array.from(block.querySelectorAll('[class*="_label_"], [class*="_labelRow_"], .weathertable__label, .weathertable__row-label'))
+                .filter(el => el.textContent.trim() !== "");
              
              const labelMap = {};
              labels.forEach((l, i) => {
                 const t = l.textContent.trim().toLowerCase();
-                if (t.includes('wind speed') || t.includes('kts')) labelMap.wind = i;
-                if (t.includes('wave height') || t.includes('m')) labelMap.wave = i;
-                if (t.includes('period') || t.includes('s')) labelMap.period = i;
+                if (t.includes('wind speed') || t.includes('wind speed') || t.includes('kts')) labelMap.wind = i;
+                if (t.includes('wave height') || t.includes('swell height') || t.includes('m')) labelMap.wave = i;
+                if (t.includes('wave period') || t.includes('s')) labelMap.period = i;
              });
 
+             // 2. Extract Columns
+             const columns = Array.from(block.querySelectorAll('[class*="_column_"], [class*="_col_"], .weathertable__cell--time, .weathertable__column'))
+                .filter(el => {
+                   const t = el.textContent.trim();
+                   return t.includes('h') || el.querySelector('[class*="_time_"], .weathertable__time');
+                });
+
+             // If columns are just time headers (legacy), we might need to find the data row
+             // For legacy table, we often iterate rows. But most modern Windfinder is column-based or simulated column-based.
+             
              const rows = columns.map(col => {
-                const timeStr = col.querySelector('[class*="_time_"], [class*="_header_"]')?.textContent.trim() || "";
+                const timeEl = col.querySelector('[class*="_time_"], [class*="_header_"], .weathertable__time') || col;
+                const timeStr = timeEl.textContent.trim();
                 if (!timeStr.includes('h')) return null;
-                const vals = Array.from(col.querySelectorAll('[class*="_value_"], [class*="_cell_"]'));
-                const get = (k) => (typeof labelMap[k] !== 'undefined' && vals[labelMap[k]]) ? vals[labelMap[k]].textContent.trim().replace(/[^\\d.]/g, "") : "0";
-                return { time: timeStr, windSpeed: get('wind'), windDir: "0", waveHeight: get('wave'), wavePeriod: get('period'), swellDir: "0" };
+
+                // Find the data container for this column
+                // In column-based grids, it's 'col'. In legacy tables, we might need a different lookup.
+                const vals = Array.from(col.querySelectorAll('[class*="_value_"], [class*="_cell_"], .weathertable__value, .weathertable__cell-value'));
+                
+                // If col has no values, look for the parent or adjacent that might have them
+                let dataSrc = (vals.length > 0) ? vals : [];
+                if (dataSrc.length === 0 && col.parentElement) {
+                   // This handles cases where time is in a header row and data is below
+                   // This is complex, but the grid logic handles most cases.
+                }
+
+                const getVal = (k) => {
+                   const idx = labelMap[k];
+                   return (typeof idx !== 'undefined' && dataSrc[idx]) ? dataSrc[idx].textContent.trim().replace(/[^\\d.]/g, "") : "0";
+                };
+
+                return { 
+                   time: timeStr, 
+                   windSpeed: getVal('wind'), 
+                   windDir: "0", 
+                   waveHeight: getVal('wave'), 
+                   wavePeriod: getVal('period'), 
+                   swellDir: "0" 
+                };
              }).filter(Boolean);
              
              return { dateText, rows };
