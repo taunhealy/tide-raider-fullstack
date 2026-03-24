@@ -66,7 +66,7 @@ export default function HeroSection({ data }: HeroProps) {
     {
       id: 1,
       title: "Raid",
-      description: "Swiftly reveal top rated surf breaks.",
+      description: "Swiftly reveal this weeks top rated surf breaks.",
       icon: "raid-icon",
       link: "/raid",
     },

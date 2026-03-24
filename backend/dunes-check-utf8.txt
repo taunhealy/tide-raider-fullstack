@@ -1,0 +1,23 @@
+﻿DUNES_LOG:{
+  "id": "ca12de6f-923d-4175-b58d-36831a6e30b0",
+  "date": "2026-03-08T00:00:00.000Z",
+  "surferName": "Tide Raider",
+  "surferEmail": null,
+  "beachName": "Dunes",
+  "surferRating": 5,
+  "comments": "BEST SURF _ DUNES (P2) _ Session 2026 03 08 #walkonwater #surf #westcoast #capetown #_\n\nVideo credit: cape | doctor",
+  "imageUrl": "https://media.tideraider.com/BEST%20SURF%20_%20DUNES%20(P2)%20_%20Session%202026%2003%2008%20%23walkonwater%20%23surf%20%23westcoast%20%23capetown%20%23_)%200-18%20screenshot.webp",
+  "videoUrl": "https://www.youtube.com/watch?v=oeZ596HbhSw",
+  "videoPlatform": "youtube",
+  "isPrivate": false,
+  "isAnonymous": false,
+  "waveType": null,
+  "beachId": "dunes",
+  "userId": null,
+  "regionId": "western-cape",
+  "forecastId": "8f7e85da-4ba4-4b08-86ce-b62579de1a36",
+  "imageUrls": [
+    "https://media.tideraider.com/BEST%20SURF%20_%20DUNES%20(P2)%20_%20Session%202026%2003%2008%20%23walkonwater%20%23surf%20%23westcoast%20%23capetown%20%23_)%200-18%20screenshot.webp"
+  ],
+  "hiddenGemId": null
+}

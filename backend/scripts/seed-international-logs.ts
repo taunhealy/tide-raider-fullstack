@@ -59,7 +59,8 @@ async function seedLog({
   }
 
   const logEntryId = uuidv4();
-  const fullUrl = `https://media.tideraider.com/${encodeURIComponent(fileName)}`;
+  const publicUrl = process.env.R2_PUBLIC_URL || 'https://media.tideraider.com';
+  const fullUrl = `${publicUrl}/${encodeURIComponent(fileName)}`;
 
   await prisma.$executeRaw`
     INSERT INTO "LogEntry" (

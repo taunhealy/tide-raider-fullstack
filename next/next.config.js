@@ -8,6 +8,7 @@ const nextConfig = {
       "cdn.sanity.io",
       `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
       "media.tideraider.com",
+      "assets.blueowlmedia.nz",
     ],
     remotePatterns: [
       {
@@ -25,6 +26,10 @@ const nextConfig = {
       },
       {
         hostname: `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      },
+      {
+        protocol: "https",
+        hostname: "assets.blueowlmedia.nz",
       },
     ],
   },
