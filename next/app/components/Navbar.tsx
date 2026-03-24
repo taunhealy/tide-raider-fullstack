@@ -178,35 +178,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Start Free Trial Button - Desktop Only */}
-          {!isLoading && !isSubscribed && !hasActiveTrial && (
-            <div className="hidden md:flex items-center gap-4">
-              <span className="text-sm font-medium text-[var(--color-text-primary)]">
-                Unlock Surf Alerts
-              </span>
-              <Button
-                variant="dark"
-                size="sm"
-                onClick={handleActivateTrial}
-                disabled={isActivatingTrial}
-                className="flex items-center gap-2 font-primary text-sm"
-              >
-                {isActivatingTrial ? "Activating..." : "Start Trial"}
-              </Button>
-              {trialMessage && (
-                <span
-                  className={cn(
-                    "text-xs font-primary whitespace-nowrap",
-                    trialMessage.type === "success"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  )}
-                >
-                  {trialMessage.text}
-                </span>
-              )}
-            </div>
-          )}
+
         </div>
 
         {/* Desktop Navigation */}
@@ -376,40 +348,7 @@ export default function Navbar() {
                 </>
               )}
               
-              {/* Mobile Start Trial */}
-              {!isSubscribed && !hasActiveTrial && (
-                <li className="px-2 py-3">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] mb-1">
-                      Unlock Surf Alerts
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="dark"
-                        size="sm"
-                        onClick={handleActivateTrial}
-                        disabled={isActivatingTrial}
-                        className="font-primary text-sm whitespace-nowrap w-full"
-                      >
-                        {isActivatingTrial ? "..." : "Start Trial"}
-                      </Button>
-                    </div>
-                    {trialMessage && (
-                      <span
-                        className={cn(
-                          "text-xs font-primary",
-                          trialMessage.type === "success"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        )}
-                      >
-                        {trialMessage.text}
-                      </span>
-                    )}
-                  </div>
-                  <div className="border-t border-[var(--color-border-light)] mt-3" />
-                </li>
-              )}
+
 
               {NAVIGATION_ITEMS.map((link) => (
                 <li key={link.href} className="px-2 py-3">

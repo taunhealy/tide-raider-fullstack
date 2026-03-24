@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/app/lib/api-client";
 import { useSubscription } from "@/app/providers/SubscriptionProvider";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
 
 type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
 
@@ -300,14 +301,18 @@ export default function WeatherForecastWidget() {
               A
             </button>
             <button
-              onClick={() => setSelectedSource("WINDGURU")}
-              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              onClick={() => isPremium ? setSelectedSource("WINDGURU") : router.push("/checkout")}
+              title={!isPremium ? "Click to subscribe and unlock Source B" : ""}
+              className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                  : isPremium
+                    ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
               }`}
             >
               B
+              {!isPremium && <Lock className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />}
             </button>
             <button
               onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
@@ -455,14 +460,18 @@ export default function WeatherForecastWidget() {
                 A
               </button>
               <button
-                onClick={() => setSelectedSource("WINDGURU")}
-                className={`flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
+                onClick={() => isPremium ? setSelectedSource("WINDGURU") : router.push("/checkout")}
+                title={!isPremium ? "Click to subscribe and unlock Source B" : ""}
+                className={`relative flex flex-1 items-center justify-center gap-0.5 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDGURU"
                     ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                    : isPremium
+                      ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
                 }`}
               >
                 B
+                {!isPremium && <Lock className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />}
               </button>
               <button
                 onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
