@@ -23,7 +23,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
   "western-cape": {
     regionId: "western-cape",
     sourceA: {
-      url: "https://www.windfinder.com/weatherforecast/muizenberg",
+      url: "https://www.windfinder.com/forecast/muizenberg",
       scraper: scraperA,
     },
     sourceB: {

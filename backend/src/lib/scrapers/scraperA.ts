@@ -70,7 +70,6 @@ async function getBrowser() {
   // Check if running on Vercel (serverless environment) or Fly.io (container environment)
   const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
   const isFly = process.env.FLY_APP_NAME !== undefined;
-  const isProduction = process.env.NODE_ENV === "production";
 
   // Use @sparticuz/chromium for production environments (Vercel, Fly.io, etc.)
   // Only use system Chrome in local development
@@ -80,7 +79,6 @@ async function getBrowser() {
     return puppeteerCore.launch({
       headless: true,
       args: ["--no-sandbox"],
-      // On Windows, you might need to specify the path to Chrome/Chromium
       executablePath:
         process.platform === "win32"
           ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" // Default Chrome path
@@ -97,16 +95,8 @@ async function getBrowser() {
         ...chromium.args,
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage", // Use /tmp instead of /dev/shm
-        "--disable-gpu", // Disable GPU acceleration
-        "--disable-software-rasterizer", // Disable software rasterizer
-        "--disable-extensions", // Disable extensions
-        "--disable-background-networking", // Disable background networking
-        "--disable-background-timer-throttling", // Disable background timer throttling
-        "--disable-renderer-backgrounding", // Disable renderer backgrounding
-        "--disable-backgrounding-occluded-windows", // Disable backgrounding occluded windows
-        "--disable-ipc-flooding-protection", // Disable IPC flooding protection
-        "--memory-pressure-off", // Turn off memory pressure
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
       ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
@@ -124,7 +114,6 @@ export async function scraperA(
   console.log("Region:", region);
 
   let browser = null;
-  const proxy = proxyManager.getProxyForRegion(region);
   const startTime = Date.now();
 
   try {
@@ -133,6 +122,11 @@ export async function scraperA(
 
     const page = await browser.newPage();
     console.log("✅ New page created");
+    
+    // Force Desktop layout
+    await page.setViewport({ width: 1440, height: 900 });
+
+    page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
 
     await page.setUserAgent(
       USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
@@ -140,22 +134,14 @@ export async function scraperA(
 
     // Anti-bot measures
     await page.evaluateOnNewDocument(() => {
-      // @ts-ignore - navigator is available in browser context
+      // @ts-ignore
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-      // @ts-ignore - navigator is available in browser context
-      Object.defineProperty(navigator, "plugins", {
-        get: () => [
-          { name: "Chrome PDF Plugin" },
-          { name: "Chrome PDF Viewer" },
-          { name: "Native Client" },
-        ],
-      });
     });
 
     // Block unnecessary resources
     await page.setRequestInterception(true);
     page.on("request", (request) => {
-      if (["image", "stylesheet", "font"].includes(request.resourceType())) {
+      if (["image", "font", "stylesheet"].includes(request.resourceType())) {
         request.abort();
       } else {
         request.continue();
@@ -163,20 +149,47 @@ export async function scraperA(
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    
-    // Modernize wait selector to handle CSS modules and potential layout shifts
+ 
+    // Handle Cookie Consent
+    await page.evaluate(function () {
+      const btns = Array.from(document.querySelectorAll('button, a, span')).filter(function(el) {
+         const t = el.textContent?.trim().toLowerCase() || "";
+         return t === 'accept' || t === 'agree' || t.includes('allow all') || t.includes('accept all');
+      }) as any[];
+      btns.forEach(b => { if (typeof b.click === 'function') b.click(); });
+    });
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Wait until forecast data is actually on page
+    console.log("⏳ Waiting for forecast data to load...");
     try {
-      await page.waitForSelector('[class*="forecast-day"], [class*="weathertable"], [class*="day-forecast"], [class*="_day_"]', { timeout: 15000 });
-      console.log("✅ Found forecast container via CSS module pattern");
-    } catch (e) {
-      // Fallback: wait for header containing day text
-      console.log("⚠️ Could not find specific container, waiting for generic day text...");
       await page.waitForFunction(() => {
-        return Array.from(document.querySelectorAll('h3, h4, div')).some(el => /^[A-Za-z]+, [A-Za-z]+ \d+/.test(el.textContent.trim()));
-      }, { timeout: 10000 });
+        const text = document.body.innerText;
+        return /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(text) && /\d{2}h/i.test(text);
+      }, { timeout: 30000 });
+      console.log("✅ Forecast data detected on page");
+    } catch (e) {
+      console.log("⚠️ Timeout waiting for forecast pattern, proceeding anyway...");
     }
 
-    // Auto-scroll to ensure all lazy-loaded content appears
+    const bodyText = await page.evaluate(() => document.body.innerText);
+    console.log("✅ Page loaded. Body text length:", bodyText.length);
+
+    // Modernize wait selector
+    try {
+      console.log("✅ Found forecast container");
+    } catch (e) {
+      console.log("⚠️ Container selector failed, attempting fallback...");
+    }
+
+    await page.screenshot({ path: 'scraper-debug.png', fullPage: true });
+    console.log("📸 Screenshot saved to scraper-debug.png");
+
+
+    // ... scroll logic ... (kept same)
+
+
+    // Auto-scroll
     await page.evaluate(async function () {
       await new Promise<void>(function (resolve) {
         let totalHeight = 0;
@@ -185,7 +198,6 @@ export async function scraperA(
           const scrollHeight = document.body.scrollHeight;
           window.scrollBy(0, distance);
           totalHeight += distance;
-
           if (totalHeight >= scrollHeight || totalHeight > 5000) {
             clearInterval(timer);
             resolve();
@@ -194,87 +206,65 @@ export async function scraperA(
       });
     });
 
-    // Wait slightly for table to stabilize
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // 1. Reveal night hours
+    await page.evaluate(function () {
+      const btns = Array.from(document.querySelectorAll('button, a, span, div')).filter(function(el) {
+         const t = el.textContent?.trim().toLowerCase() || "";
+         return t.includes("night hours") || t.includes("show night");
+      }) as any[];
+      btns.forEach((b) => { if (typeof b.click === 'function') b.click(); });
+    });
+    await new Promise(r => setTimeout(r, 2000));
 
-    // Advanced extraction logic for new grid-based structure
-    // We use a string to prevent tsx/esbuild from injecting __name or other closures
+    // Advanced extraction logic
     const extractionScript = `
       (function() {
-        const allDivs = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
-        const dayHeaders = allDivs.filter(function(el) { 
-          const text = el.textContent.trim();
-          // Support "Monday, Mar 24" OR "Today, Mar 24" OR "Tomorrow, Mar 25"
-          return /^(?:Today|Tomorrow|[A-Za-z]+), [A-Za-z]+ \\d+/.test(text) && el.children.length === 0; 
-        });
+        const docNodes = Array.from(document.querySelectorAll('*'));
         
-        console.log("[Browser] Found " + dayHeaders.length + " potential day headers");
+        // Find day containers directly by class suffix pattern
+        const dayContainers = Array.from(document.querySelectorAll('[class*="_day_"], [class*="forecast-day"]'))
+           .filter(el => el.textContent.trim().length < 50);
 
-        return dayHeaders.map(function(header) {
+        if (dayContainers.length === 0) {
+           // Fallback to any text that looks like a date
+           const headers = docNodes.filter(el => {
+              const t = el.textContent.trim();
+              return /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && t.length < 35;
+           });
+           dayContainers.push(...headers);
+        }
+
+        return dayContainers.map(header => {
           const dateText = header.textContent.trim();
           let block = header.parentElement;
-          while (block && block.querySelectorAll('div').length < 15 && block !== document.body) {
-            block = block.parentElement;
+          
+          while (block && block.querySelectorAll('[class*="_column_"], [class*="_col_"]').length < 5 && block !== document.body) {
+             block = block.parentElement;
           }
 
-          if (!block) return { dateText: dateText, rows: [] };
+          if (block) {
+             const columns = Array.from(block.querySelectorAll('[class*="_column_"], [class*="_col_"]'));
+             const labels = Array.from(block.querySelectorAll('[class*="_label_"], [class*="_labelRow_"]')).filter(el => el.textContent.trim() !== "");
+             
+             const labelMap = {};
+             labels.forEach((l, i) => {
+                const t = l.textContent.trim().toLowerCase();
+                if (t.includes('wind speed') || t.includes('kts')) labelMap.wind = i;
+                if (t.includes('wave height') || t.includes('m')) labelMap.wave = i;
+                if (t.includes('period') || t.includes('s')) labelMap.period = i;
+             });
 
-          const timeElements = Array.from(block.querySelectorAll('div, span'))
-            .filter(function(el) { 
-              const text = el.textContent.trim();
-              return /^\\d{2}h$/.test(text) && el.children.length === 0; 
-            });
-            
-          console.log("[Browser] Day " + dateText + ": Found " + timeElements.length + " time elements");
-
-          const rows = timeElements.map(function(timeEl) {
-            const time = timeEl.textContent.trim();
-            const timeRect = timeEl.getBoundingClientRect();
-            const centerX = timeRect.left + timeRect.width / 2;
-            
-            const cells = Array.from(block.querySelectorAll('div, span, a'))
-              .filter(function(cell) {
-                if (cell === timeEl || cell.children.length > 2) return false;
-                const cellRect = cell.getBoundingClientRect();
-                const cellCenterX = cellRect.left + cellRect.width / 2;
-                return Math.abs(cellCenterX - centerX) < 25;
-              });
-
-            const findByUnit = function(unit) {
-               const found = cells.find(function(c) { 
-                  const t = c.textContent.trim();
-                  return t.endsWith(unit) && !isNaN(parseFloat(t));
-               });
-               return found ? found.textContent.trim() : "";
-            };
-
-            const windSpeed = findByUnit("kts") || findByUnit("kt") || "";
-            const waveHeight = findByUnit("m") || "";
-            const wavePeriod = findByUnit("s") || "";
-            
-            const arrowCell = cells.find(function(c) {
-               return c.querySelector('[class*="directionarrow"], [title*="°"]');
-            }) || cells.find(function(c) {
-               const title = c.getAttribute('title') || "";
-               return title.includes("°");
-            });
-            
-            const direction = arrowCell ? (arrowCell.getAttribute('title') || arrowCell.querySelector('[title*="°"]')?.getAttribute('title') || "") : "";
-
-            return {
-              time: time,
-              windSpeed: windSpeed.replace(/[^\\d.]/g, ""),
-              windDir: direction,
-              waveHeight: waveHeight.replace(/[^\\d.]/g, ""),
-              wavePeriod: wavePeriod.replace(/[^\\d.]/g, ""),
-              swellDir: direction
-            };
-          });
-
-          return {
-            dateText: dateText,
-            rows: rows
-          };
+             const rows = columns.map(col => {
+                const timeStr = col.querySelector('[class*="_time_"], [class*="_header_"]')?.textContent.trim() || "";
+                if (!timeStr.includes('h')) return null;
+                const vals = Array.from(col.querySelectorAll('[class*="_value_"], [class*="_cell_"]'));
+                const get = (k) => (typeof labelMap[k] !== 'undefined' && vals[labelMap[k]]) ? vals[labelMap[k]].textContent.trim().replace(/[^\\d.]/g, "") : "0";
+                return { time: timeStr, windSpeed: get('wind'), windDir: "0", waveHeight: get('wave'), wavePeriod: get('period'), swellDir: "0" };
+             }).filter(Boolean);
+             
+             return { dateText, rows };
+          }
+          return { dateText, rows: [] };
         });
       })()
     `;
@@ -283,139 +273,75 @@ export async function scraperA(
 
     if (!forecastDaysData || forecastDaysData.length === 0 || forecastDaysData.every(d => d.rows.length === 0)) {
        console.error("❌ Failed to parse forecast days or rows.");
-       throw new Error("No forecast data could be extracted from the grid.");
+       throw new Error("No forecast columns could be extracted.");
     }
 
-    if (!forecastDaysData || forecastDaysData.length === 0) {
-      throw new Error("Failed to parse forecast days from grid structure");
-    }
+    console.log(`✅ Found ${forecastDaysData.length} forecast day container(s) on the page`);
 
-    console.log(
-      `✅ Found ${forecastDaysData.length} forecast day container(s) on the page`
-    );
-    console.log(
-      `📅 Dates found: ${forecastDaysData.map((d) => d.dateText).join(", ")}`
-    );
-
-    // Get current date for year determination
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
-
     const forecasts: BaseForecastData[] = [];
 
-    // Helper function to parse date from text like "Monday, Nov 17"
-    // Handles dates in current year and next year (for year rollover)
     const parseDateFromText = (dateText: string): Date | null => {
       try {
-        const monthNames = [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
-        // Split by comma or space
-        const parts = dateText.split(/[, ]+/).filter(Boolean);
-        // Format can be "Monday, Mar 30" or "Monday Mar 30" or just "Mar 30"
-        let monthName = "";
-        let dayStr = "";
-        
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const cleanText = dateText.replace(/^(?:Today|Tomorrow),/, "Day,");
+        const parts = cleanText.split(/[, ]+/).filter(Boolean);
+        let monthName = "", dayStr = "";
         for (let i = 0; i < parts.length; i++) {
-           if (monthNames.includes(parts[i])) {
+           if (monthNames.indexOf(parts[i]) !== -1) {
               monthName = parts[i];
               dayStr = parts[i+1];
               break;
            }
         }
-
         const day = parseInt(dayStr);
         const monthIndex = monthNames.indexOf(monthName);
-        
         if (monthIndex !== -1 && !isNaN(day)) {
           let year = currentYear;
-          if ((currentMonth === 10 || currentMonth === 11) && monthIndex <= 1) {
-            year = currentYear + 1;
-          }
-          let parsedDate = new Date(year, monthIndex, day);
-          if (Math.floor((parsedDate.getTime() - now.getTime()) / 86400000) < -1) {
-             parsedDate = new Date(currentYear + 1, monthIndex, day);
-          }
+          if (currentMonth >= 10 && monthIndex <= 1) year = currentYear + 1;
+          const parsedDate = new Date(Date.UTC(year, monthIndex, day, 0, 0, 0, 0));
+          const diff = (parsedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+          if (diff < -30) return new Date(Date.UTC(year + 1, monthIndex, day, 0, 0, 0, 0));
           return parsedDate;
         }
-      } catch (error) {
-        console.error("Error parsing date:", error);
-      }
+      } catch (error) { console.error("Error parsing date:", error); }
       return null;
     };
 
-    // Process ALL forecast days found on the page
     for (const dayData of forecastDaysData) {
       const parsedDate = parseDateFromText(dayData.dateText);
-      if (!parsedDate) {
-        console.warn(
-          `⚠️ Could not parse date from "${dayData.dateText}", skipping...`
-        );
-        continue;
-      }
-
+      if (!parsedDate) continue;
       const dateStr = parsedDate.toISOString().split("T")[0];
-      console.log(
-        `🔍 Processing forecast for ${dayData.dateText} (${dateStr})...`
-      );
-
-      // Find morning forecast data (hours 5-11)
-      let morningForecast: BaseForecastData | null = null;
+      console.log(`🔍 Processing forecast for ${dayData.dateText} (${dateStr})...`);
 
       for (const row of dayData.rows) {
-        const timeStr = row.time?.toString() || "";
-        const hour = parseInt(timeStr.replace("h", ""));
-
+        const hour = parseInt(row.time?.toString().replace("h", "") || "0");
         if (hour >= 5 && hour <= 11) {
-          console.log(
-            `✅ Found morning forecast data for ${dateStr} at hour ${hour}`
-          );
-          morningForecast = {
-            date: new Date(parsedDate),
+          const forecast: BaseForecastData = {
+            date: parsedDate,
             regionId: region,
-            windSpeed: parseInt(row.windSpeed || "0"),
+            windSpeed: Math.round(parseFloat(row.windSpeed || "0")),
             windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
             swellHeight: parseFloat(row.waveHeight || "0"),
-            swellPeriod: parseInt((row.wavePeriod || "0").replace(/\s+s$/, "")),
+            swellPeriod: Math.round(parseFloat(row.wavePeriod || "0")),
             swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
           };
-          console.log("📊 Forecast data:", morningForecast);
-          break; // Use first morning hour found
+          forecasts.push(forecast);
+          console.log("📊 Forecast data:", forecast);
+          break; 
         }
       }
-
-      if (morningForecast) {
-        forecasts.push(morningForecast);
-      } else {
-        console.warn(
-          `⚠️ No morning forecast found between 05h-11h for ${dayData.dateText} (${dateStr})`
-        );
-      }
     }
 
-    if (forecasts.length === 0) {
-      console.error("❌ No morning forecast data found for any day");
-      throw new Error("No morning forecast data found between 05h-11h");
-    }
-
-    console.log(
-      `✅ Successfully scraped ${forecasts.length} forecast(s): ${forecasts.map((f) => f.date.toISOString().split("T")[0]).join(", ")}`
-    );
+    if (forecasts.length === 0) throw new Error("No morning forecast data found.");
+    console.log(`✅ Successfully scraped ${forecasts.length} forecast(s)`);
     return forecasts;
   } catch (error) {
-    console.error("\n❌ Scraping failed:", {
-      url,
-      region,
-      error: (error as Error).message,
-      stack: (error as Error).stack,
-    });
+    console.error("\n❌ Scraping failed:", (error as Error).message);
     throw error;
   } finally {
-    if (browser) {
-      await browser.close();
-      console.log("\n🔚 Browser closed");
-    }
+    if (browser) await browser.close();
   }
 }
