@@ -1,6 +1,0 @@
-﻿--- Checking with media.tideraider.com ---
-[200] https://media.tideraider.com/BEST%20SURF%20_%20DUNES%20(P2)%20_%20Session%202026%2003%2008%20%23walkonwater%20%23surf%20%23westcoast%20%23capetown%20%23_)%200-18%20screenshot.webp
-[200] https://media.tideraider.com/BEST%20SURF%20_%20OUTERS%20_%20Cape%20town%20_%202025_11_11%20%23walkonwater%20%23surf%20%23downsouth%20%23westcoast%207-6%20screenshot.webp
---- Checking with assets.blueowlmedia.nz ---
-[200] https://assets.blueowlmedia.nz/BEST%20SURF%20_%20DUNES%20(P2)%20_%20Session%202026%2003%2008%20%23walkonwater%20%23surf%20%23westcoast%20%23capetown%20%23_)%200-18%20screenshot.webp
-[200] https://assets.blueowlmedia.nz/BEST%20SURF%20_%20OUTERS%20_%20Cape%20town%20_%202025_11_11%20%23walkonwater%20%23surf%20%23downsouth%20%23westcoast%207-6%20screenshot.webp
