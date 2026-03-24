@@ -163,20 +163,30 @@ export async function scraperA(
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForSelector(".weathertable", { timeout: 15000 });
-    console.log("✅ Found weather table");
+    
+    // Modernize wait selector to handle CSS modules and potential layout shifts
+    try {
+      await page.waitForSelector('[class*="forecast-day"], [class*="weathertable"], [class*="day-forecast"], [class*="_day_"]', { timeout: 15000 });
+      console.log("✅ Found forecast container via CSS module pattern");
+    } catch (e) {
+      // Fallback: wait for header containing day text
+      console.log("⚠️ Could not find specific container, waiting for generic day text...");
+      await page.waitForFunction(() => {
+        return Array.from(document.querySelectorAll('h3, h4, div')).some(el => /^[A-Za-z]+, [A-Za-z]+ \d+/.test(el.textContent.trim()));
+      }, { timeout: 10000 });
+    }
 
     // Auto-scroll to ensure all lazy-loaded content appears
-    await page.evaluate(async () => {
-      await new Promise<void>((resolve) => {
+    await page.evaluate(async function () {
+      await new Promise<void>(function (resolve) {
         let totalHeight = 0;
         const distance = 100;
-        const timer = setInterval(() => {
+        const timer = setInterval(function () {
           const scrollHeight = document.body.scrollHeight;
           window.scrollBy(0, distance);
           totalHeight += distance;
 
-          if (totalHeight >= scrollHeight) {
+          if (totalHeight >= scrollHeight || totalHeight > 5000) {
             clearInterval(timer);
             resolve();
           }
@@ -184,58 +194,100 @@ export async function scraperA(
       });
     });
 
-    // Wait 4 seconds for table to load (after scrolling)
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    // Wait slightly for table to stabilize
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    // Extract forecast-day sections with their dates and rows
-    // This finds ALL forecast-day containers on the page (today, tomorrow, day after tomorrow, etc.)
-    const forecastDaysData = await page.evaluate(() => {
-      // @ts-ignore - document is available in browser context
-      const doc = document as any;
-      // Find all forecast-day containers - each represents a different day
-      const forecastDays = Array.from(doc.querySelectorAll(".forecast-day"));
+    // Advanced extraction logic for new grid-based structure
+    // We use a string to prevent tsx/esbuild from injecting __name or other closures
+    const extractionScript = `
+      (function() {
+        const allDivs = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
+        const dayHeaders = allDivs.filter(function(el) { 
+          const text = el.textContent.trim();
+          // Support "Monday, Mar 24" OR "Today, Mar 24" OR "Tomorrow, Mar 25"
+          return /^(?:Today|Tomorrow|[A-Za-z]+), [A-Za-z]+ \\d+/.test(text) && el.children.length === 0; 
+        });
+        
+        console.log("[Browser] Found " + dayHeaders.length + " potential day headers");
 
-      console.log(
-        `[Browser] Found ${forecastDays.length} forecast-day container(s)`
-      );
+        return dayHeaders.map(function(header) {
+          const dateText = header.textContent.trim();
+          let block = header.parentElement;
+          while (block && block.querySelectorAll('div').length < 15 && block !== document.body) {
+            block = block.parentElement;
+          }
 
-      return forecastDays.map((dayElement: any, index: number) => {
-        // Extract date from header - each forecast-day has its own header with the date
-        const header = dayElement.querySelector(".weathertable__header");
-        const headline = header?.querySelector(".weathertable__headline");
-        const dateText = headline?.textContent?.trim() || "";
+          if (!block) return { dateText: dateText, rows: [] };
 
-        // Extract all rows for THIS specific day's container
-        // Each forecast-day container has its own set of weathertable__row elements
-        const rows = Array.from(
-          dayElement.querySelectorAll(".weathertable__row")
-        ).map((row: any) => ({
-          time: row.querySelector(".data-time .value")?.textContent,
-          windSpeed: row.querySelector(".cell-wind-3 .units-ws")?.textContent,
-          windDir: row
-            .querySelector(".cell-wind-2 .directionarrow")
-            ?.getAttribute("title"),
-          waveHeight: row.querySelector(".cell-waves-2 .units-wh")?.textContent,
-          wavePeriod: row.querySelector(".cell-waves-2 .data-wavefreq")
-            ?.textContent,
-          swellDir: row
-            .querySelector(".cell-waves-1 .directionarrow")
-            ?.getAttribute("title"),
-        }));
+          const timeElements = Array.from(block.querySelectorAll('div, span'))
+            .filter(function(el) { 
+              const text = el.textContent.trim();
+              return /^\\d{2}h$/.test(text) && el.children.length === 0; 
+            });
+            
+          console.log("[Browser] Day " + dateText + ": Found " + timeElements.length + " time elements");
 
-        console.log(
-          `[Browser] Day ${index + 1}: "${dateText}" with ${rows.length} time slots`
-        );
+          const rows = timeElements.map(function(timeEl) {
+            const time = timeEl.textContent.trim();
+            const timeRect = timeEl.getBoundingClientRect();
+            const centerX = timeRect.left + timeRect.width / 2;
+            
+            const cells = Array.from(block.querySelectorAll('div, span, a'))
+              .filter(function(cell) {
+                if (cell === timeEl || cell.children.length > 2) return false;
+                const cellRect = cell.getBoundingClientRect();
+                const cellCenterX = cellRect.left + cellRect.width / 2;
+                return Math.abs(cellCenterX - centerX) < 25;
+              });
 
-        return {
-          dateText,
-          rows,
-        };
-      });
-    });
+            const findByUnit = function(unit) {
+               const found = cells.find(function(c) { 
+                  const t = c.textContent.trim();
+                  return t.endsWith(unit) && !isNaN(parseFloat(t));
+               });
+               return found ? found.textContent.trim() : "";
+            };
+
+            const windSpeed = findByUnit("kts") || findByUnit("kt") || "";
+            const waveHeight = findByUnit("m") || "";
+            const wavePeriod = findByUnit("s") || "";
+            
+            const arrowCell = cells.find(function(c) {
+               return c.querySelector('[class*="directionarrow"], [title*="°"]');
+            }) || cells.find(function(c) {
+               const title = c.getAttribute('title') || "";
+               return title.includes("°");
+            });
+            
+            const direction = arrowCell ? (arrowCell.getAttribute('title') || arrowCell.querySelector('[title*="°"]')?.getAttribute('title') || "") : "";
+
+            return {
+              time: time,
+              windSpeed: windSpeed.replace(/[^\\d.]/g, ""),
+              windDir: direction,
+              waveHeight: waveHeight.replace(/[^\\d.]/g, ""),
+              wavePeriod: wavePeriod.replace(/[^\\d.]/g, ""),
+              swellDir: direction
+            };
+          });
+
+          return {
+            dateText: dateText,
+            rows: rows
+          };
+        });
+      })()
+    `;
+
+    const forecastDaysData = await page.evaluate(extractionScript) as any[];
+
+    if (!forecastDaysData || forecastDaysData.length === 0 || forecastDaysData.every(d => d.rows.length === 0)) {
+       console.error("❌ Failed to parse forecast days or rows.");
+       throw new Error("No forecast data could be extracted from the grid.");
+    }
 
     if (!forecastDaysData || forecastDaysData.length === 0) {
-      throw new Error("Failed to parse forecast days");
+      throw new Error("Failed to parse forecast days from grid structure");
     }
 
     console.log(
@@ -257,52 +309,36 @@ export async function scraperA(
     const parseDateFromText = (dateText: string): Date | null => {
       try {
         const monthNames = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ];
-        const parts = dateText.split(",");
-        if (parts.length >= 2) {
-          const monthDay = parts[1].trim().split(" ");
-          const monthName = monthDay[0];
-          const day = parseInt(monthDay[1]);
+        // Split by comma or space
+        const parts = dateText.split(/[, ]+/).filter(Boolean);
+        // Format can be "Monday, Mar 30" or "Monday Mar 30" or just "Mar 30"
+        let monthName = "";
+        let dayStr = "";
+        
+        for (let i = 0; i < parts.length; i++) {
+           if (monthNames.includes(parts[i])) {
+              monthName = parts[i];
+              dayStr = parts[i+1];
+              break;
+           }
+        }
 
-          const monthIndex = monthNames.indexOf(monthName);
-          if (monthIndex !== -1 && !isNaN(day)) {
-            // Determine the year - start with current year
-            let year = currentYear;
-
-            // If we're in Nov/Dec and see Jan/Feb, it's next year
-            if (
-              (currentMonth === 10 || currentMonth === 11) &&
-              monthIndex <= 1
-            ) {
-              year = currentYear + 1;
-            }
-
-            let parsedDate = new Date(year, monthIndex, day);
-
-            // If the parsed date is in the past (more than 1 day ago), it's probably next year
-            // Forecast pages typically only show future dates
-            const daysDiff = Math.floor(
-              (parsedDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            if (daysDiff < -1) {
-              // Date is in the past, assume it's next year
-              parsedDate = new Date(currentYear + 1, monthIndex, day);
-            }
-
-            return parsedDate;
+        const day = parseInt(dayStr);
+        const monthIndex = monthNames.indexOf(monthName);
+        
+        if (monthIndex !== -1 && !isNaN(day)) {
+          let year = currentYear;
+          if ((currentMonth === 10 || currentMonth === 11) && monthIndex <= 1) {
+            year = currentYear + 1;
           }
+          let parsedDate = new Date(year, monthIndex, day);
+          if (Math.floor((parsedDate.getTime() - now.getTime()) / 86400000) < -1) {
+             parsedDate = new Date(currentYear + 1, monthIndex, day);
+          }
+          return parsedDate;
         }
       } catch (error) {
         console.error("Error parsing date:", error);
