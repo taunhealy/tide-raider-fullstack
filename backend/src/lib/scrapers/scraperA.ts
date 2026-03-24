@@ -216,10 +216,55 @@ export async function scraperA(
     // Advanced extraction logic
     const extractionScript = `
       (function() {
+        // Modern Layout (fc-day blocks)
+        const fcDays = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], [class*="day-block"]'));
+        if (fcDays.length > 0) {
+           return fcDays.map(day => {
+              const header = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"]');
+              const dateText = header ? header.textContent.trim() : "";
+              
+              // Find all horizon tables which are the columns in modern fc-day layout
+              const columns = Array.from(day.querySelectorAll('.fc-table-horizon, [class*="column"], [class*="col"], [class*="cell-time"]'))
+                 .filter(el => {
+                    const t = el.textContent.trim();
+                    return t.includes('h') || el.className.includes('horizon');
+                 });
+              
+              const rows = columns.map(col => {
+                 const timeEl = col.querySelector('.cell-time, [class*="time"], [class*="ts"]') || col;
+                 const timeStr = timeEl.textContent.trim();
+                 
+                 const getVal = (cls) => {
+                    const el = col.querySelector('.' + cls) || col.querySelector('[class*="' + cls + '"]');
+                    return el ? el.textContent.trim().replace(/[^0-9.]/g, "") : "0";
+                 };
+
+                 // Support legacy and modern classes
+                 const wind = getVal('cell-ws') || getVal('wind');
+                 const wave = getVal('cell-wh') || getVal('wave') || getVal('waves-wrapper');
+                 const period = getVal('cell-wp') || getVal('period');
+                 const windDirEl = col.querySelector('.cell-wd title, [class*="wd"] title, .cell-wd, [class*="wd"]');
+                 const windDir = windDirEl ? (windDirEl.textContent || windDirEl.getAttribute('title') || "0").replace(/[^0-9.]/g, "") : "0";
+                 const swellDirEl = col.querySelector('.cell-waves-wrapper [class*="wd"] title, .cell-waves-wrapper [class*="wd"]');
+                 const swellDir = swellDirEl ? (swellDirEl.textContent || swellDirEl.getAttribute('title') || "0").replace(/[^0-9.]/g, "") : "0";
+
+                 return { 
+                    time: timeStr, 
+                    windSpeed: wind, 
+                    windDir: windDir, 
+                    waveHeight: wave, 
+                    wavePeriod: period, 
+                    swellDir: swellDir 
+                 };
+              }).filter(r => r.time.includes('h'));
+              
+              return { dateText, rows };
+           }).filter(d => d.dateText !== "");
+        }
+
+        // Legacy/Table Layout
         const docNodes = Array.from(document.querySelectorAll('*'));
-        
-        // Find day containers - support grid (_day_), legacy (.weathertable), and header classes
-        const dayContainers = Array.from(document.querySelectorAll('[class*="_day_"], [class*="forecast-day"], .weathertable__header'))
+        const dayContainers = Array.from(document.querySelectorAll('[class*="day-header"], [class*="_day_"], [class*="forecast-day"], .weathertable__header, [class*="_daylabel_"]'))
            .filter(el => {
               const t = el.textContent.trim();
               return t.length > 5 && t.length < 50 && /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t);
@@ -229,7 +274,7 @@ export async function scraperA(
            // Extreme Fallback
            const headers = docNodes.filter(el => {
               const t = el.textContent.trim();
-              return t.length > 5 && t.length < 35 && /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && el.children.length === 0;
+              return t.length > 5 && t.length < 45 && /(?:[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && el.children.length <= 1;
            });
            dayContainers.push(...headers);
         }
