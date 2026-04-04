@@ -1,15 +1,12 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import Link from "next/link";
 import { Bell, Lock, Waves, CheckCircle } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 
 export function EmptyAlertsState() {
-  const { data: session } = useSession();
-  
-  // Check if user is subscribed (premium or has a subscription tier)
-  const isSubscribed = session?.user?.isSubscribed;
+  const { isPremium } = useSubscriptionStatus();
   
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-light)] shadow-sm text-center max-w-2xl mx-auto mt-8">
@@ -43,7 +40,7 @@ export function EmptyAlertsState() {
         </div>
       </div>
 
-      {isSubscribed ? (
+      {isPremium ? (
         <Link href="/alerts/new">
           <Button size="lg" className="font-primary px-8 bg-[var(--color-tertiary)] hover:bg-[var(--color-ui-accent)] text-black">
             Create Your First Alert

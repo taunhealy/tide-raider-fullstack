@@ -381,12 +381,55 @@ async function main() {
 
     const uniqueRegions = new Map<string, Set<string>>(); // countryId -> Set<regionName>
 
+    // ISO 2-letter code mapping to our IDs
+    const isoMap: Record<string, string> = {
+      za: "south-africa",
+      na: "namibia",
+      mz: "mozambique",
+      mg: "madagascar",
+      ao: "angola",
+      ga: "gabon",
+      lr: "liberia",
+      id: "indonesia",
+      cr: "costa-rica",
+      au: "australia",
+      nz: "new-zealand",
+      sv: "el-salvador",
+      pe: "peru",
+      es: "spain",
+      us: "united-states",
+      gb: "united-kingdom",
+      fo: "faroe-islands",
+      ma: "morocco",
+      sn: "senegal",
+      yt: "mayotte",
+      pt: "portugal",
+      fr: "france",
+      br: "brazil",
+      mx: "mexico",
+      jp: "japan",
+      fj: "fiji",
+      mv: "maldives",
+      cl: "chile",
+      ni: "nicaragua",
+      pa: "panama",
+      ph: "philippines",
+      lk: "sri-lanka",
+      tw: "taiwan",
+      th: "thailand",
+      ie: "ireland",
+      ec: "ecuador",
+    };
+
     if (beachData.length > 0) {
       beachData.forEach((beach) => {
         if (!beach.countryId || !beach.regionId) return;
-        // Resolve beach.countryId (which might be "South Africa") to actual country ID ("south-africa")
-        const actualCountryId = countryNameToId.get(beach.countryId);
-        if (!actualCountryId) return; // Skip if country not found
+        
+        // Resolve beach.countryId through isoMap first, then countryNameToId
+        const countryIdLower = beach.countryId.toLowerCase();
+        const actualCountryId = isoMap[countryIdLower] || countryNameToId.get(beach.countryId) || countryNameToId.get(countryIdLower);
+        
+        if (!actualCountryId) return; 
 
         if (!uniqueRegions.has(actualCountryId)) {
           uniqueRegions.set(actualCountryId, new Set());
@@ -651,24 +694,18 @@ async function main() {
             continue;
           }
 
-          // Map common country code variations to the correct country ID
-          const countryIdMap: Record<string, string> = {
-            "za": "south-africa", // ISO code to slug
-            "zaf": "south-africa", // ISO 3-letter code
-            "south africa": "south-africa",
-            "southafrica": "south-africa",
-          };
-
-          const mappedCountryId = countryIdMap[beach.countryId?.toLowerCase() || ""] || beach.countryId;
+          // Resolve beach.countryId through isoMap first, then find in HARDCODED_COUNTRIES
+          const countryIdLower = beach.countryId?.toLowerCase() || "";
+          const resolvedCountryId = isoMap[countryIdLower] || beach.countryId;
 
           const country = HARDCODED_COUNTRIES.find(
-            (c) => c.id === mappedCountryId || c.id === beach.countryId || c.name === beach.countryId || c.name.toLowerCase() === beach.countryId?.toLowerCase()
+            (c) => c.id === resolvedCountryId || c.id === beach.countryId || c.name === beach.countryId || c.name.toLowerCase() === countryIdLower
           );
 
           if (!country) {
-            if (skippedCount < 5) {
+            if (skippedCount < 5 || beach.id === 'skeleton-bay') {
               console.warn(
-                `Skipping beach ${beach.name}: Country not found: ${beach.countryId} (tried: ${mappedCountryId})`
+                `Skipping beach ${beach.name}: Country not found for countryId: ${beach.countryId} (resolved: ${resolvedCountryId})`
               );
             }
             skippedCount++;

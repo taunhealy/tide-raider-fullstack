@@ -312,9 +312,8 @@ function RegionalHighScoresContent({
                 // This consistently locks the top locations regardless of time period
                 // Only lock if subscription status has been loaded and user is not premium
                 // If user is premium (subscribed or has trial), NO gates at all
-                const isLocked = isPremium
-                  ? false
-                  : !isSubscriptionLoading && index < 5 && !!selectedDate;
+                // All surf breaks are now unlocked for everyone
+                const isLocked = false;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {

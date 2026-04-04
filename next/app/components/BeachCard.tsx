@@ -126,28 +126,12 @@ const BeachCard = memo(function BeachCard({
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
 
-  // Check if beach is 5-star (score >= 10) or hidden gem, and user is not premium
-  // Ensure score is a number for comparison
-  const numericScore = score !== null ? Number(score) : null;
-  const isFiveStar = numericScore !== null && numericScore >= 10;
-  const isHiddenGem = beach.isHiddenGem === true;
-  const isPremium = directIsPremium; // Use direct backend check
-  // If user is premium (subscribed or has trial), NO gates at all
-  // Gate 5-star beaches OR hidden gems if user is NOT premium AND subscription status has loaded
-  const isLocked = isPremium
-    ? false
-    : (isFiveStar || isHiddenGem) && !isSubscriptionLoading;
+  // All beaches are now unlocked for everyone
+  const isLocked = false;
 
-  // Debug logging for premium gating
-  console.log(`[BeachCard] ${beach.name} - Premium gating check:`, {
+  // Debug logging for beach data
+  console.log(`[BeachCard] ${beach.name} - Data:`, {
     score,
-    numericScore,
-    scoreType: typeof score,
-    isFiveStar,
-    isHiddenGem,
-    isSubscribed,
-    hasActiveTrial,
-    isPremium,
     isLocked,
     subscriptionStatus,
     sessionUser: session?.user,
@@ -317,37 +301,22 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
-                      {isLocked ? (
-                        <>
-                          <Lock className="w-4 h-4 text-amber-700" />
-                          <Link
-                            href="/checkout"
-                            className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-sm font-medium"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Subscribe to Unlock
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          {beach.name}
-                          {forecastData?.windSpeed &&
-                            forecastData.windSpeed > 25 && (
-                              <span title="Strong winds">🌪️</span>
-                            )}
-                          {beach.sharkAttack?.hasAttack && (
-                            <span title="At least 1 shark attack reported">
-                              {beach.sharkAttack.incidents?.some(
-                                (incident) =>
-                                  new Date(incident.date).getTime() >
-                                  new Date().getTime() -
-                                    5 * 365 * 24 * 60 * 60 * 1000
-                              )
-                                ? "⋆༺𓆩☠︎︎𓆪༻⋆"
-                                : "🦈"}
-                            </span>
-                          )}
-                        </>
+                      {beach.name}
+                      {forecastData?.windSpeed &&
+                        forecastData.windSpeed > 25 && (
+                          <span title="Strong winds">🌪️</span>
+                        )}
+                      {beach.sharkAttack?.hasAttack && (
+                        <span title="At least 1 shark attack reported">
+                          {beach.sharkAttack.incidents?.some(
+                            (incident) =>
+                              new Date(incident.date).getTime() >
+                              new Date().getTime() -
+                                5 * 365 * 24 * 60 * 60 * 1000
+                          )
+                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                            : "🦈"}
+                        </span>
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
@@ -632,37 +601,22 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
-                      {isLocked ? (
-                        <>
-                          <Lock className="w-4 h-4 text-amber-700" />
-                          <Link
-                            href="/checkout"
-                            className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-sm font-medium"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Subscribe to Unlock
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          {beach.name}
-                          {forecastData?.windSpeed &&
-                            forecastData.windSpeed > 25 && (
-                              <span title="Strong winds">🌪️</span>
-                            )}
-                          {beach.sharkAttack?.hasAttack && (
-                            <span title="At least 1 shark attack reported">
-                              {beach.sharkAttack.incidents?.some(
-                                (incident) =>
-                                  new Date(incident.date).getTime() >
-                                  new Date().getTime() -
-                                    5 * 365 * 24 * 60 * 60 * 1000
-                              )
-                                ? "⋆༺𓆩☠︎︎𓆪༻⋆"
-                                : "🦈"}
-                            </span>
-                          )}
-                        </>
+                      {beach.name}
+                      {forecastData?.windSpeed &&
+                        forecastData.windSpeed > 25 && (
+                          <span title="Strong winds">🌪️</span>
+                        )}
+                      {beach.sharkAttack?.hasAttack && (
+                        <span title="At least 1 shark attack reported">
+                          {beach.sharkAttack.incidents?.some(
+                            (incident) =>
+                              new Date(incident.date).getTime() >
+                              new Date().getTime() -
+                                5 * 365 * 24 * 60 * 60 * 1000
+                          )
+                            ? "⋆༺𓆩☠︎︎𓆪༻⋆"
+                            : "🦈"}
+                        </span>
                       )}
                     </h4>
                     <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">

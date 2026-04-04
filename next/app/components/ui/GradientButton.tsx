@@ -24,7 +24,7 @@ interface GradientButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<GradientButtonVariant, { active: string; inactive: string }> = {
   "purple-pink": {
-    active: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30",
+    active: "bg-gradient-to-r from-blue-600 to-gray-800 text-white shadow-lg shadow-blue-500/30",
     inactive: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
   },
   "blue-purple": {

@@ -11,11 +11,10 @@ export default function EmptyState({
 }: EmptyStateProps) {
   // Determine help text based on message if not provided
   const defaultHelpText =
-    helpText ??
     (message === "Select a region to view beaches"
       ? "Choose a region from the recent searches or use the filters"
-      : message === "No breaks found in this region, change the filters?"
-        ? "Try selecting a different region"
+      : message === "No breaks found in this region, change filters?"
+        ? "Try adjusting your filters or selecting a different region"
         : "Try adjusting your filters or selecting a different region");
 
   return (

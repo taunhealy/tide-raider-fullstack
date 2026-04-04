@@ -12,13 +12,9 @@ export function useContentGating() {
   // User is not logged in
   const isLoggedOut = !session?.user || authStatus === "unauthenticated";
 
-  // Content should be gated if:
-  // 1. User is not logged in (allow all logged-in users access)
-  // Premium features are now free for all logged-in users
-  const isGated = isLoggedOut;
-
-  // Specific gating for logged out users (even in beta mode)
-  const isLoggedOutGated = isLoggedOut;
+  // No more gating - all content is free for everyone
+  const isGated = false;
+  const isLoggedOutGated = false;
 
   return {
     isGated,

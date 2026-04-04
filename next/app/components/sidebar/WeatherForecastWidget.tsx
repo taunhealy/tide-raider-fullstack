@@ -301,38 +301,24 @@ export default function WeatherForecastWidget() {
               A
             </button>
             <button
-              onClick={() => isPremium ? setSelectedSource("WINDGURU") : router.push("/checkout")}
-              title={!isPremium ? "Click to subscribe and unlock Source B" : ""}
+              onClick={() => setSelectedSource("WINDGURU")}
               className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : isPremium
-                    ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
               B
-              {!isPremium && <Lock className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />}
             </button>
             <button
-              onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
+              onClick={() => setSelectedSource("WINDY")}
               className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : isPremium
-                    ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                    : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
-              } ${
-                !isPremium ? "wave-pulse" : ""
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
               C
-              {!isPremium && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d6b588] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d6b588]"></span>
-                </span>
-              )}
             </button>
           </div>
         </div>
@@ -460,39 +446,24 @@ export default function WeatherForecastWidget() {
                 A
               </button>
               <button
-                onClick={() => isPremium ? setSelectedSource("WINDGURU") : router.push("/checkout")}
-                title={!isPremium ? "Click to subscribe and unlock Source B" : ""}
+                onClick={() => setSelectedSource("WINDGURU")}
                 className={`relative flex flex-1 items-center justify-center gap-0.5 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDGURU"
                     ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                    : isPremium
-                      ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                 }`}
               >
                 B
-                {!isPremium && <Lock className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />}
               </button>
               <button
-                onClick={() => isPremium ? setSelectedSource("WINDY") : router.push("/checkout")}
-                title={!isPremium ? "Click to subscribe and unlock Source C" : ""}
+                onClick={() => setSelectedSource("WINDY")}
                 className={`relative flex-1 px-2 py-1 rounded text-xs font-primary transition-all duration-200 ${
                   selectedSource === "WINDY"
                     ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                    : isPremium
-                      ? "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-                      : "bg-gray-800/40 text-gray-500 border border-gray-700/50 cursor-pointer hover:bg-gray-800/60"
-                } ${
-                  !isPremium ? "wave-pulse" : ""
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
                 }`}
               >
                 C
-                {!isPremium && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d6b588] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d6b588]"></span>
-                  </span>
-                )}
               </button>
             </div>
           </div>
