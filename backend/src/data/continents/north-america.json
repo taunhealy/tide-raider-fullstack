@@ -1,0 +1,560 @@
+[
+  {
+    "id": "punta-roca",
+    "name": "Punta Roca",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "san-salvador",
+    "location": "La Libertad",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "NNE",
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "dry-season"
+    ],
+    "optimalTide": "MID",
+    "description": "World-class point break rated 4/5, known for its powerful, consistent waves. Features long, workable walls that can produce excellent barrels when conditions align. Best performance with SSW groundswells meeting NNE offshore winds. Wave faces typically range from 4-12ft breaking over reef. Popular spot that draws crowds during prime conditions. Local knowledge important for navigating hazards and respecting lineup priorities. Watch for exposed rocks, particularly during lower tides, and be mindful of local surfing etiquette.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.4,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 29,
+      "winter": 26
+    },
+    "hazards": [
+      "Rocks",
+      "Strong locals",
+      "Pollution",
+      "Crowds"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 13.4833,
+      "lng": -89.3667
+    }
+  },
+  {
+    "id": "pavones",
+    "name": "Pavones",
+    "continent": "North America",
+    "countryId": "cr",
+    "regionId": "puntarenas-province",
+    "location": "Puntarenas",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "wet-season"
+    ],
+    "optimalTide": "LOW",
+    "description": "Legendary left-hand point break rated 4/5, known for producing one of the longest rides in the world when conditions align. Despite inconsistent nature, delivers world-class waves during SW groundswells. Best performance with easterly offshore winds. Located in the sheltered Golfo Dulce region. Wave faces typically range from 3-10ft breaking over rocky bottom. Popular spot that draws crowds during prime conditions. Access requires significant travel but rewards with exceptional wave quality when working.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 30,
+      "winter": 28
+    },
+    "hazards": [
+      "Rocks",
+      "Remote location",
+      "Crowds",
+      "Inconsistent waves"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 8.4097,
+      "lng": -83.1328
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=8AmSwojuEMQ&ab_channel=RawSurf",
+        "title": "Pavones Surfing",
+        "platform": "youtube"
+      }
+    ]
+  },
+  {
+    "id": "malibu",
+    "name": "Malibu",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "LA County",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed point break rated 4/5, offering very consistent surf throughout the year with optimal conditions during summer. Works best with Southwest groundswells meeting North offshore winds. One of California's most iconic breaks, known for its perfect peeling waves. Despite its quality, gets extremely crowded, especially during weekends and good conditions. Watch out for pollution after rain and rocks at certain sections.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 20,
+      "winter": 14
+    },
+    "hazards": [
+      "Crowds",
+      "Pollution",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 34.0259,
+      "lng": -118.7798
+    }
+  },
+  {
+    "id": "cardiff-reef",
+    "name": "Cardiff Reef",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "San Diego County",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 292.5,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed reef break rated 2/5, offering very consistent surf throughout the year with optimal conditions during winter. Works best with West-northwest groundswells meeting East offshore winds. Features both left and right reef breaks, with lefts generally considered superior. Groundswells are more frequent than windswells. Despite its modest rating, can get crowded, especially during weekends and good conditions. Watch out for rocks and crowds in the lineup.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 15
+    },
+    "hazards": [
+      "Rocks",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 33.0147,
+      "lng": -117.2792
+    }
+  },
+  {
+    "id": "el-zunzal",
+    "name": "El Zunzal",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "costa-del-balsamo",
+    "location": "Costa del Balsamo",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "NNE",
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 225,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "LOW",
+    "description": "Exposed point break rated 3/5, offering consistent surf throughout the year. Works best with South-southwest groundswells meeting North-northeast offshore winds. Located along the Costa del Balsamo coastline, this break receives primarily distant groundswells. Best performance during low tide. Despite its quality, can get crowded when conditions align. Exercise caution around rocks in the lineup and along the shore.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 29,
+      "winter": 27
+    },
+    "hazards": [
+      "Rocks",
+      "Crowds"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 13.4917,
+      "lng": -89.4417
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=ed0EYodRfYo&ab_channel=DanHarmon",
+        "title": "Surfing in El Salvador (Surf City) || What’s it Actually Like!?",
+        "platform": "youtube"
+      }
+    ],
+    "coffeeShop": [
+      {
+        "name": "Zunzal Beach Cafe"
+      }
+    ]
+  },
+  {
+    "id": "punta-mango",
+    "name": "Punta Mango",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "costa-del-balsamo",
+    "location": "Costa del Balsamo",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "NNW",
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 168.75,
+      "max": 191.25,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed point break rated 2/5, offering dependable surf throughout the year. Works best with South groundswells meeting North-northwest offshore winds. Located along the Costa del Balsamo coastline, this break receives primarily distant groundswells. One of the less crowded spots in El Salvador, making it a good option for those seeking to avoid crowds. Exercise caution around rocks in the lineup and along the shore.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 30,
+      "winter": 27
+    },
+    "hazards": [
+      "Rocks"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 13.4333,
+      "lng": -88.3333
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=jZoKbXl4acA&ab_channel=OSCAR",
+        "title": "Surfing Punta Mango - El Salvador",
+        "platform": "youtube"
+      }
+    ],
+    "coffeeShop": [
+      {
+        "name": "Mango Point Cafe"
+      }
+    ]
+  },
+  {
+    "id": "las-flores",
+    "name": "Las Flores",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "costa-del-balsamo",
+    "location": "Costa del Balsamo",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 225,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach and point break rated 3/5, offering fairly consistent surf throughout the year. Works best with South-southwest groundswells meeting North offshore winds, with some shelter from west winds. Groundswells are more common than windswells. Features predominantly left-breaking waves. Located along the Costa del Balsamo coastline in El Salvador, this break offers quality waves without the crowds, making it a hidden gem for those in the know. Exercise caution around dangerous rip currents in the area.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 30,
+      "winter": 27
+    },
+    "hazards": [
+      "Rip currents"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 13.4917,
+      "lng": -89.3833
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=jiIGy2gQiGE&ab_channel=ShaneReynolds",
+        "title": "Surfing Las Flores - El Salvador",
+        "platform": "youtube"
+      }
+    ],
+    "coffeeShop": [
+      {
+        "name": "Flores Beach Cafe"
+      }
+    ]
+  },
+  {
+    "id": "el-zonte",
+    "name": "El Zonte",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "costa-del-balsamo",
+    "location": "Costa del Balsamo",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "NNE"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 225,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "HIGH",
+    "description": "Exposed reef, point and rivermouth break rated 3/5, offering very consistent surf throughout the year. Works best with South-southwest groundswells meeting North-northeast offshore winds. Most of the surf here comes from groundswells. Features a left-hand reef break. Located along the Costa del Balsamo coastline in El Salvador, this diverse break performs best around high tide when the tide is rising. Despite its quality, can get quite busy when conditions align. Exercise caution around rip currents and rocks in the lineup and along the shore.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 29,
+      "winter": 27
+    },
+    "hazards": [
+      "Rip currents",
+      "Rocks",
+      "Crowds"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 13.4944,
+      "lng": -89.4444
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=RjSN47ejLF4&ab_channel=SurfersofPanama",
+        "title": "Surfing El Zonte - El Salvador",
+        "platform": "youtube"
+      }
+    ],
+    "coffeeShop": [
+      {
+        "name": "Zonte Point Cafe"
+      }
+    ]
+  },
+  {
+    "id": "waikiki-queens",
+    "name": "Waikiki (Queens)",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "oahu",
+    "location": "Honolulu",
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "NE",
+      "N",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 157.5,
+      "max": 202.5,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "The birthplace of surfing. Perfectly peeling waves over a deep reef. One of the best waves in the world for longboarding.",
+    "difficulty": "BEGINNER",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 27,
+      "winter": 24
+    },
+    "hazards": [
+      "Extreme crowds",
+      "Beginners"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 21.2728,
+      "lng": -157.8242
+    }
+  },
+  {
+    "id": "sayulita-main",
+    "name": "Sayulita",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "nayarit",
+    "location": "Sayulita",
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "E",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 315,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn",
+      "spring",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Gentle, long-peeling waves perfect for longboarding in a tropical setting. Known for its consistency and vibrant surf culture.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 29,
+      "winter": 25
+    },
+    "hazards": [
+      "Rocks",
+      "Crowds"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 20.8692,
+      "lng": -105.4411
+    }
+  }
+]

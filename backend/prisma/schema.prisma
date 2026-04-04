@@ -317,6 +317,7 @@ model Beach {
   isHiddenGem            Boolean?
   sheltered              Boolean?
   countryId              String
+  isLongboarding         Boolean                 @default(false)
   adConnections          AdBeachConnection[]
   alerts                 Alert[]
   country                Country                 @relation(fields: [countryId], references: [id])

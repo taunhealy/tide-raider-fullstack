@@ -12,7 +12,7 @@ import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
-import { HiddenGemsButton } from "@/app/components/ui/GradientButton";
+import { HiddenGemsButton, LoggersButton } from "@/app/components/ui/GradientButton";
 import { Filter } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
@@ -81,6 +81,16 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                       <Filter className="w-4 h-4" />
                       Filters
                     </Button>
+
+                    <LoggersButton
+                      active={!!filters.isLongboarding}
+                      onClick={() => {
+                        const newValue = !filters.isLongboarding;
+                        updateFilter("isLongboarding", newValue ? "true" : "");
+                      }}
+                    >
+                      Loggers
+                    </LoggersButton>
 
                     <HiddenGemsButton
                       active={!!filters.isHiddenGem}

@@ -1,0 +1,316 @@
+[
+  {
+    "id": "tjornuvik-bay",
+    "name": "Tjornuvik Bay",
+    "continent": "Europe",
+    "countryId": "fo",
+    "regionId": "streymoy",
+    "location": "Streymoy",
+    "distanceFromCT": 10500,
+    "optimalWindDirections": [
+      "SSE"
+    ],
+    "optimalSwellDirections": {
+      "min": 315,
+      "max": 337.5,
+      "cardinal": "NNW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Fairly exposed beach break that only works when conditions are just right with no particular seasonal pattern. Offshore winds are from the south southeast. The short fetch makes for windswells rather than groundswells and the ideal wave direction is from the north northwest. The beach breaks offer lefts and rights. An uncrowded break, even when it is working.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 12
+    },
+    "waterTemp": {
+      "summer": 11,
+      "winter": 7
+    },
+    "hazards": [
+      "Cold water",
+      "Remote location",
+      "Inconsistent waves"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 62.2906,
+      "lng": -7.1522
+    }
+  },
+  {
+    "id": "husavik-shorey",
+    "name": "Húsavik Shorey",
+    "continent": "Europe",
+    "countryId": "fo",
+    "regionId": "sandoy",
+    "location": "Sandoy",
+    "distanceFromCT": 10500,
+    "optimalWindDirections": [
+      "WSW"
+    ],
+    "optimalSwellDirections": {
+      "min": 56.25,
+      "max": 78.75,
+      "cardinal": "ENE"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Reasonably exposed sandbar break rated 1/5, known for very reliable surf conditions. Features both left and right-handers breaking over sandbar. Works best with East-northeast swells meeting West-southwest offshore winds. Despite its low rating, maintains very consistent wave production. Remains uncrowded even when working well. Exercise caution around rocks.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.8,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 12
+    },
+    "waterTemp": {
+      "summer": 11,
+      "winter": 7
+    },
+    "hazards": [
+      "Rocks",
+      "Cold water",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 61.8025,
+      "lng": -6.759
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=4sLxWD6T8P0&ab_channel=DedicationPhotography",
+        "title": "Surfing in Sandoy",
+        "platform": "youtube"
+      }
+    ]
+  },
+  {
+    "id": "famjin-left",
+    "name": "Fámjin Left",
+    "continent": "Europe",
+    "countryId": "fo",
+    "regionId": "suðuroy",
+    "location": "Suðuroy",
+    "distanceFromCT": 10500,
+    "optimalWindDirections": [
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 270,
+      "cardinal": "W"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed point break rated 3/5, offering fairly consistent surf throughout the year. Works best with West groundswells meeting East-southeast offshore winds. Despite the description as a point break, note states 'there is no point break' - likely referring to a specific feature. Remains uncrowded even when working well. Exercise caution around rocks.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 12,
+      "winter": 7
+    },
+    "hazards": [
+      "Rocks",
+      "Cold water",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 61.8833,
+      "lng": -6.8833
+    }
+  },
+  {
+    "id": "birsay-bay",
+    "name": "Birsay Bay",
+    "continent": "Europe",
+    "countryId": "gb",
+    "regionId": "scotland",
+    "location": "Orkney Islands",
+    "distanceFromCT": 10200,
+    "optimalWindDirections": [
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 292.5,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach break rated 4/5, offering fairly consistent surf throughout the year. Works best with West-northwest swells meeting Southeast offshore winds. Receives both windswells and groundswells in equal measure. Located on the northern coast of Orkney Mainland. Despite its quality, remains relatively uncrowded due to remote location.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 14,
+      "winter": 8
+    },
+    "hazards": [
+      "Cold water",
+      "Remote location",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=VynU_K5M51U&ab_channel=ErrantSurf",
+        "title": "Surfing in Orkney Islands",
+        "platform": "youtube"
+      }
+    ],
+    "image": "",
+    "coordinates": {
+      "lat": 59.1333,
+      "lng": -3.3167
+    }
+  },
+  {
+    "id": "bay-of-skaill",
+    "name": "Bay of Skaill",
+    "continent": "Europe",
+    "countryId": "gb",
+    "regionId": "scotland",
+    "location": "Orkney Islands",
+    "distanceFromCT": 10200,
+    "optimalWindDirections": [
+      "SSE"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 292.5,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach break rated 4/5, offering fairly consistent surf throughout the year. Works best with West-northwest swells meeting South-southeast offshore winds. Receives both windswells and groundswells in equal measure. Located on the western coast of Orkney Mainland. Despite its quality, remains very rarely crowded due to remote location.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 14,
+      "winter": 8
+    },
+    "hazards": [
+      "Cold water",
+      "Remote location",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 59.0514,
+      "lng": -3.3428
+    }
+  },
+  {
+    "id": "rackwick",
+    "name": "Rackwick",
+    "continent": "Europe",
+    "countryId": "gb",
+    "regionId": "scotland",
+    "location": "Orkney Islands",
+    "distanceFromCT": 10200,
+    "optimalWindDirections": [
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 292.5,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed break rated 4/5, offering fairly consistent surf throughout the year. Works best with West-northwest swells meeting Northeast offshore winds. Receives both windswells and groundswells in equal measure. Benefits from some shelter against southeast winds. Located in the Orkney Islands. Despite its quality, remains uncrowded even when working well. Exercise caution around submerged rocks.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 14,
+      "winter": 8
+    },
+    "hazards": [
+      "Submerged rocks",
+      "Cold water",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 58.9833,
+      "lng": -3.3833
+    }
+  }
+]

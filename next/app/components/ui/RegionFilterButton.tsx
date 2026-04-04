@@ -9,6 +9,16 @@ interface RegionFilterButtonProps {
   count: number;
 }
 
+const getCountryFlag = (countryId?: string) => {
+  if (!countryId) return "";
+  const code = countryId.toUpperCase();
+  // Handle 2-letter ISO codes properly
+  if (code.length !== 2) return "";
+  return String.fromCodePoint(
+    ...code.split("").map((char) => 127397 + char.charCodeAt(0))
+  );
+};
+
 export default function RegionFilterButton({
   region,
   isSelected,
@@ -16,11 +26,15 @@ export default function RegionFilterButton({
   onClick,
   count,
 }: RegionFilterButtonProps) {
+  const flagEmoji = getCountryFlag(region.countryId);
+  const countryName = region.country?.name || region.countryId?.toUpperCase();
+
   return (
     <button
       onClick={() => {
         onClick(region);
       }}
+      title={countryName ? `Region in ${countryName}` : undefined}
       disabled={isLoading}
       className={cn(
         "px-3 py-1.5 text-sm rounded-full",
@@ -33,15 +47,22 @@ export default function RegionFilterButton({
         isSelected && "bg-[var(--color-bg-tertiary)]  text-white"
       )}
     >
-      <span className="relative z-10">
-        {region.name ||
-          region.id
-            ?.split("-")
-            .map(
-              (word) =>
-                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ")}
+      <span className="flex items-center gap-1.5 relative z-10">
+        {flagEmoji && (
+          <span className="text-base leading-none" aria-hidden="true">
+            {flagEmoji}
+          </span>
+        )}
+        <span>
+          {region.name ||
+            region.id
+              ?.split("-")
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ")}
+        </span>
       </span>
       {count > 0 && (
         <span

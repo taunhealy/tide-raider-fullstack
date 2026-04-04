@@ -1,0 +1,154 @@
+[
+  {
+    "id": "chicama-el-point",
+    "name": "Chicama - El Point",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Chicama",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 191.25,
+      "max": 213.75,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Legendary left point break rated 4/5, known as the world's longest left. Features multiple sections combining beach reef and point break characteristics. Works best with SSW groundswells and ENE offshore winds. Wave faces typically range from 2-8ft. Despite its world-class status, remains relatively uncrowded. Multiple takeoff zones along the point offering different wave characteristics.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.4,
+      "max": 3.2
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 23,
+      "winter": 19
+    },
+    "hazards": [
+      "Rocks",
+      "Long paddle",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -7.6982,
+      "lng": -79.4422
+    }
+  },
+  {
+    "id": "nuqui-pizario",
+    "name": "Pico de Loro (Nuquí)",
+    "continent": "South America",
+    "countryId": "co",
+    "regionId": "choco",
+    "location": "Nuquí",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Wild Pacific point break. Long, reeling lefts in an untouched jungle setting. Requires boat access and local expertise.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 26
+    },
+    "hazards": [
+      "Remote location",
+      "Marine life",
+      "Strong currents"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 5.7167,
+      "lng": -77.2667
+    }
+  },
+  {
+    "id": "cabo-marzo",
+    "name": "Cabo Marzo",
+    "continent": "South America",
+    "countryId": "co",
+    "regionId": "choco",
+    "location": "Choco",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "N"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful Pacific reef break. Extremely remote and heavy waves for experts only.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2,
+      "max": 8
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 26
+    },
+    "hazards": [
+      "Remote location",
+      "Heavy waves",
+      "Rocks"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 6.4833,
+      "lng": -77.6833
+    }
+  }
+]

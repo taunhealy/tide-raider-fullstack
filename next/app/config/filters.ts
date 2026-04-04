@@ -81,4 +81,11 @@ export const FILTERS: FilterConfig[] = [
     urlParam: "isHiddenGem",
     beachProp: "isHiddenGem",
   },
+  {
+    key: "isLongboarding",
+    type: "boolean",
+    label: "Loggers",
+    urlParam: "isLongboarding",
+    beachProp: "isLongboarding",
+  },
 ];

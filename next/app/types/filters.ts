@@ -17,7 +17,8 @@ export type FilterType =
   | "country"
   | "continent"
   | "hazards"
-  | "isHiddenGem";
+  | "isHiddenGem"
+  | "isLongboarding";
 
 // The complete filters interface that can be used across the app
 export interface Filters {
@@ -36,6 +37,7 @@ export interface Filters {
   continent: string;
   hazards: string[];
   isHiddenGem: boolean;
+  isLongboarding: boolean;
 }
 
 export interface FilterConfig {

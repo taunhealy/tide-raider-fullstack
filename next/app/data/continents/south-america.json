@@ -1,0 +1,53 @@
+[
+  {
+    "id": "chicama-el-point",
+    "name": "Chicama - El Point",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Chicama",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 191.25,
+      "max": 213.75,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Legendary left point break rated 4/5, known as the world's longest left. Features multiple sections combining beach reef and point break characteristics. Works best with SSW groundswells and ENE offshore winds. Wave faces typically range from 2-8ft. Despite its world-class status, remains relatively uncrowded. Multiple takeoff zones along the point offering different wave characteristics.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.4,
+      "max": 3.2
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 23,
+      "winter": 19
+    },
+    "hazards": [
+      "Rocks",
+      "Long paddle",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -7.6982,
+      "lng": -79.4422
+    }
+  }
+]
