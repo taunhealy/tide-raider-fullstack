@@ -175,6 +175,9 @@ export default function Navbar() {
               <h6 className="heading-6 text-[var(--color-text-primary)]">
                 Tide Raider
               </h6>
+              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-blue-100 text-blue-700 rounded-md border border-blue-200">
+                Beta
+              </span>
             </Link>
           )}
 
