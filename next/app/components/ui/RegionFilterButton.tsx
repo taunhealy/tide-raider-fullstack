@@ -49,7 +49,10 @@ export default function RegionFilterButton({
     >
       <span className="flex items-center gap-1.5 relative z-10">
         {flagEmoji && (
-          <span className="text-base leading-none" aria-hidden="true">
+          <span className={cn(
+            "text-base leading-none p-1 rounded-sm",
+            isSelected ? "bg-white/20" : "bg-gray-100"
+          )} aria-hidden="true">
             {flagEmoji}
           </span>
         )}

@@ -407,4 +407,15 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperB,
     },
   },
+  choco: {
+    regionId: "choco",
+    sourceA: {
+      url: "https://www.windfinder.com/forecast/nuqui",
+      scraper: scraperA,
+    },
+    sourceB: {
+      url: "https://www.windguru.cz/418302",
+      scraper: scraperB,
+    },
+  },
 };
