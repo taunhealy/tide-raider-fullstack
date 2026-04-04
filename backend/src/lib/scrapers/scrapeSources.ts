@@ -418,4 +418,37 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperB,
     },
   },
+  "basque-country": {
+    regionId: "basque-country",
+    sourceA: {
+      url: "https://www.windfinder.com/forecast/mundaka",
+      scraper: scraperA,
+    },
+    sourceB: {
+      url: "https://www.windguru.cz/48520",
+      scraper: scraperB,
+    },
+  },
+  cantabria: {
+    regionId: "cantabria",
+    sourceA: {
+      url: "https://www.windfinder.com/forecast/somo",
+      scraper: scraperA,
+    },
+    sourceB: {
+      url: "https://www.windguru.cz/48524",
+      scraper: scraperB,
+    },
+  },
+  asturias: {
+    regionId: "asturias",
+    sourceA: {
+      url: "https://www.windfinder.com/forecast/salinas",
+      scraper: scraperA,
+    },
+    sourceB: {
+      url: "https://www.windguru.cz/48529",
+      scraper: scraperB,
+    },
+  },
 };

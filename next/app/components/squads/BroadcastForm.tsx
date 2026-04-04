@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
+import Textarea from "@/app/components/ui/textarea";
 import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
 import { Input } from "@/app/components/ui/input";
 import type { Beach } from "@/app/types/beaches";

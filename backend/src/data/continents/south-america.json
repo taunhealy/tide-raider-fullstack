@@ -2,6 +2,7 @@
   {
     "id": "chicama-el-point",
     "name": "Chicama - El Point",
+    "isLongboarding": true,
     "continent": "South America",
     "countryId": "pe",
     "regionId": "chicama",

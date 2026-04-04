@@ -467,5 +467,215 @@
       "lat": 36.0143,
       "lng": -5.6044
     }
+  },
+  {
+    "id": "mundaka",
+    "name": "Mundaka",
+    "continent": "Europe",
+    "countryId": "es",
+    "regionId": "basque-country",
+    "location": "Gernika",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SW",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 337.5,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "autumn",
+      "winter"
+    ],
+    "optimalTide": "LOW",
+    "description": "Widely considered the best river mouth wave in the world. A heavy, hollow left-hand barrel that can peel for 200 meters. Extremely sensitive to tide and sandbar conditions.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "isLongboarding": false,
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 12
+    },
+    "hazards": [
+      "Heavy current",
+      "Sharp rocks",
+      "Crowds",
+      "Localism"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 43.4072,
+      "lng": -2.6975
+    }
+  },
+  {
+    "id": "somo",
+    "name": "Somo",
+    "continent": "Europe",
+    "countryId": "es",
+    "regionId": "cantabria",
+    "location": "Santander",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 360,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "Very consistent beach break across from Santander. Multiple peaks along a long stretch of sand. Great for all levels and a major surf hub in Spain.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "isLongboarding": true,
+    "swellSize": {
+      "min": 0.5,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 15
+    },
+    "waterTemp": {
+      "summer": 20,
+      "winter": 12
+    },
+    "hazards": [
+      "Crowds",
+      "Beginners"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 43.4542,
+      "lng": -3.7431
+    }
+  },
+  {
+    "id": "rodiles",
+    "name": "Rodiles",
+    "continent": "Europe",
+    "countryId": "es",
+    "regionId": "asturias",
+    "location": "Villaviciosa",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SW"
+    ],
+    "optimalSwellDirections": {
+      "min": 292.5,
+      "max": 337.5,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "autumn",
+      "winter"
+    ],
+    "optimalTide": "LOW",
+    "description": "Asturias' answer to Mundaka. A powerful left-hand river mouth barrel. Works best on large NW swells and S offshore winds. Surrounded by stunning pine forests.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "isLongboarding": false,
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 12
+    },
+    "hazards": [
+      "Currents",
+      "Rocks",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 43.5325,
+      "lng": -5.3783
+    }
+  },
+  {
+    "id": "salinas",
+    "name": "Salinas",
+    "continent": "Europe",
+    "countryId": "es",
+    "regionId": "asturias",
+    "location": "Castrillón",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 360,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "The spiritual home of longboarding in Spain. A long beach break with multiple peaks. Very consistent and holds a famous annual longboard festival. Premium peeling lines.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "isLongboarding": true,
+    "swellSize": {
+      "min": 0.5,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 12
+    },
+    "hazards": [
+      "Crowds",
+      "Rip currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 43.5786,
+      "lng": -5.9553
+    }
   }
 ]

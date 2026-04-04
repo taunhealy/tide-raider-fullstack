@@ -112,7 +112,7 @@ async function main() {
           update: {},
           create: { 
             id: dbBeach.regionId, 
-            name: dbBeach.regionId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+            name: dbBeach.regionId.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
             countryId: dbBeach.countryId,
             continent: dbBeach.continent
           }
