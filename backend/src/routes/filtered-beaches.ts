@@ -126,7 +126,13 @@ router.get(
         whereClause.isHiddenGem = true;
       }
 
+      // Add isLongboarding filter if specified
+      if (req.query.isLongboarding === "true") {
+        whereClause.isLongboarding = true;
+      }
+
       console.log("[filtered-beaches] isHiddenGem filter:", req.query.isHiddenGem);
+      console.log("[filtered-beaches] isLongboarding filter:", req.query.isLongboarding);
       console.log("[filtered-beaches] whereClause:", JSON.stringify(whereClause, null, 2));
 
 

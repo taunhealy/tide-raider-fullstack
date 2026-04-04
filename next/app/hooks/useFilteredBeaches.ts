@@ -95,6 +95,7 @@ export function useFilteredBeaches({
       hazards: filters.hazards,
       forecastDate: filters.forecastDate,
       isHiddenGem: filters.isHiddenGem,
+      isLongboarding: filters.isLongboarding,
     };
 
     return ["filteredBeaches", filterKey, selectedSource];
@@ -127,6 +128,7 @@ export function useFilteredBeaches({
         hazards?: string;
         forecastDate?: string;
         isHiddenGem?: string;
+        isLongboarding?: string;
         source?: "WINDFINDER" | "WINDGURU" | "WINDY";
       } = {};
 
@@ -162,6 +164,7 @@ export function useFilteredBeaches({
       }
       if (filters.forecastDate) params.forecastDate = filters.forecastDate;
       if (filters.isHiddenGem) params.isHiddenGem = "true";
+      if (filters.isLongboarding) params.isLongboarding = "true";
       params.source = selectedSource; // Pass the selected source
 
       if (process.env.NODE_ENV === "development") {

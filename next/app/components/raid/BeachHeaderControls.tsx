@@ -84,6 +84,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
 
                     <LoggersButton
                       active={!!filters.isLongboarding}
+                      title="Quickly filter by waves good for long boarding"
                       onClick={() => {
                         const newValue = !filters.isLongboarding;
                         updateFilter("isLongboarding", newValue ? "true" : "");
