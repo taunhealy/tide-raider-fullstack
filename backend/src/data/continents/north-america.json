@@ -116,6 +116,8 @@
     "countryId": "us",
     "regionId": "california",
     "location": "LA County",
+    "isLongboarding": true,
+    "isFoiling": true,
     "distanceFromCT": 0,
     "optimalWindDirections": [
       "N"
@@ -555,6 +557,157 @@
     "coordinates": {
       "lat": 20.8692,
       "lng": -105.4411
+    }
+  },
+  {
+    "id": "san-onofre",
+    "name": "San Onofre (Sano)",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "San Clemente",
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "S-SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "MID",
+    "description": "California's classic longboard playground. Gentle, rolling peaks over a cobblestone reef. Extremely consistent and historical.",
+    "difficulty": "BEGINNER",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 14
+    },
+    "hazards": [
+      "Crowds",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 33.3711,
+      "lng": -117.5619
+    }
+  },
+  {
+    "id": "outer-reefs-avalanche",
+    "name": "Outer Reefs (Avalanche)",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "oahu-north-shore",
+    "location": "North Shore, Oahu",
+    "isFoiling": true,
+    "optimalWindDirections": [
+      "SE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 315,
+      "max": 345,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Massive deep-water reef break. Too big for surfing at times, but the rolling blue hills of Avalanche and Phantoms are the world's ultimate foiling proving ground. Ultra-high fidelity ride.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2,
+      "max": 12
+    },
+    "idealSwellPeriod": {
+      "min": 14,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 26,
+      "winter": 23
+    },
+    "hazards": [
+      "Massive waves",
+      "Long hold-downs",
+      "Shark risk"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": true
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 21.6441,
+      "lng": -158.0645
+    }
+  },
+  {
+    "id": "bolsa-chica",
+    "name": "Bolsa Chica",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "Huntington Beach",
+    "isFoiling": true,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "S-SW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "MID",
+    "description": "Huntington Beach's premiere foiling zone. The soft, mushy peaks at Bolsa Chica are the perfect canvas for long, efficient foil runs.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 14
+    },
+    "hazards": [
+      "Stingrays",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 33.7022,
+      "lng": -118.053
     }
   }
 ]

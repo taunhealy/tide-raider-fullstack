@@ -6409,6 +6409,58 @@
     }
   },
   {
+    "id": "le-morne-one-eye",
+    "name": "One Eye / Le Morne",
+    "continent": "Africa",
+    "countryId": "mu",
+    "regionId": "mauritius-south",
+    "location": "Le Morne",
+    "isFoiling": true,
+    "optimalWindDirections": [
+      "SE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "World-class reef break. Famous for windsurfing and surfing, but the deep water channels and consistent swell make it one of the premier foiling spots in the Indian Ocean.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 6
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 23
+    },
+    "hazards": [
+      "Sharp reef",
+      "Strong currents",
+      "Boats"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -20.4578,
+      "lng": 57.3089
+    }
+  },
+  {
     "id": "mussels",
     "name": "Mussels",
     "continent": "Africa",

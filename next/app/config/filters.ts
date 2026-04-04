@@ -88,4 +88,11 @@ export const FILTERS: FilterConfig[] = [
     urlParam: "isLongboarding",
     beachProp: "isLongboarding",
   },
+  {
+    key: "isFoiling",
+    type: "boolean",
+    label: "Foiling",
+    urlParam: "isFoiling",
+    beachProp: "isFoiling",
+  },
 ];

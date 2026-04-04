@@ -68,6 +68,7 @@ export interface FilterType {
   hasSharkAlert: boolean;
   hasCoffeeShop: boolean;
   isLongboarding: boolean;
+  isFoiling: boolean;
 }
 
 export const WAVE_TYPES = [
@@ -163,6 +164,7 @@ export interface Beach {
   hasSharkAlert?: boolean;
   bestMonthOfYear?: string;
   isLongboarding?: boolean;
+  isFoiling?: boolean;
 }
 
 export interface AdSlot {

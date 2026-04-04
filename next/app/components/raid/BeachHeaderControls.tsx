@@ -12,7 +12,7 @@ import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
-import { HiddenGemsButton, LoggersButton } from "@/app/components/ui/GradientButton";
+import { HiddenGemsButton, LoggersButton, FoilingButton } from "@/app/components/ui/GradientButton";
 import { Filter } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
@@ -62,15 +62,14 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                   <SearchBar />
                 </div>
                 
-                {/* Recent Regions (Left) and Hidden Gems Button (Right) - Side by Side */}
-                <div className="flex flex-col sm:flex-row gap-3 w-full">
-                  {/* Recent Regions - Left Half */}
-                  <div className="flex-1 min-w-0">
+                <div className="flex flex-col gap-3 w-full">
+                  {/* Recent Regions Row */}
+                  <div className="w-full">
                     <RecentRegionSearch regionCounts={regionCountsData} />
                   </div>
                   
-                  {/* Hidden Gems Button - Right Half */}
-                  <div className="flex-1 flex items-start justify-end gap-2">
+                  {/* Filters Row - Balanced and professional */}
+                  <div className="flex flex-wrap items-center gap-2 px-1">
                     {/* Mobile Filter Button */}
                     <Button
                       variant="outline"
@@ -84,6 +83,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
 
                     <LoggersButton
                       active={!!filters.isLongboarding}
+                      size="sm"
                       title="Quickly filter by waves good for long boarding"
                       onClick={() => {
                         const newValue = !filters.isLongboarding;
@@ -93,8 +93,20 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                       Loggers
                     </LoggersButton>
 
+                    <FoilingButton
+                      active={!!filters.isFoiling}
+                      size="sm"
+                      onClick={() => {
+                        const newValue = !filters.isFoiling;
+                        updateFilter("isFoiling", newValue ? "true" : "");
+                      }}
+                    >
+                      Foiling
+                    </FoilingButton>
+
                     <HiddenGemsButton
                       active={!!filters.isHiddenGem}
+                      size="sm"
                       onClick={() => {
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");

@@ -677,5 +677,107 @@
       "lat": 43.5786,
       "lng": -5.9553
     }
+  },
+  {
+    "id": "cote-des-basques",
+    "name": "Cote des Basques",
+    "continent": "Europe",
+    "countryId": "fr",
+    "regionId": "basque-country",
+    "location": "Biarritz",
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "E",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 315,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "summer",
+      "autumn"
+    ],
+    "optimalTide": "MID",
+    "description": "The birthplace of European surfing. A stunning beach break under cliffs, legendary for its longboarding community and gentle, peeling waves.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 22,
+      "winter": 12
+    },
+    "hazards": [
+      "Crowds",
+      "Tide cutoff"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 43.4831,
+      "lng": -1.5631
+    }
+  },
+  {
+    "id": "lacanau-ocean",
+    "name": "Lacanau Ocean",
+    "continent": "Europe",
+    "countryId": "fr",
+    "regionId": "gironde",
+    "location": "Lacanau",
+    "isFoiling": true,
+    "optimalWindDirections": [
+      "E",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 315,
+      "cardinal": "NW"
+    },
+    "bestSeasons": [
+      "summer",
+      "autumn"
+    ],
+    "optimalTide": "MID",
+    "description": "Infinite stretch of sandbars. Famous for its heavy consistent beach breaks, but the long gutters and deep water sections make it a premier foiling destination in Europe.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 11
+    },
+    "hazards": [
+      "Rip currents",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": 44.9789,
+      "lng": -1.1983
+    }
   }
 ]

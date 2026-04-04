@@ -322,6 +322,8 @@ model Beach {
   country                Country                 @relation(fields: [countryId], references: [id])
   beachDailyScores       BeachDailyScore[]
   properties             Property[]              // Garden Camping V2
+  isLongboarding         Boolean                 @default(false)
+  isFoiling              Boolean                 @default(false)
 
   @@index([regionId])
   @@index([countryId])

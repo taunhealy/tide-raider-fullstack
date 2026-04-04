@@ -318,6 +318,7 @@ model Beach {
   sheltered              Boolean?
   countryId              String
   isLongboarding         Boolean                 @default(false)
+  isFoiling              Boolean                 @default(false)
   adConnections          AdBeachConnection[]
   alerts                 Alert[]
   country                Country                 @relation(fields: [countryId], references: [id])

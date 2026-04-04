@@ -37,7 +37,7 @@ WORKDIR /app
 # ───── Stage 1: Install all dependencies (including dev) ─────
 COPY package*.json ./
 COPY prisma ./prisma/
-RUN npm ci --legacy-peer-deps
+RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --legacy-peer-deps
 
 # ───── Stage 2: Build the app ─────
 COPY . .

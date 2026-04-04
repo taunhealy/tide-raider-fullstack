@@ -52,6 +52,56 @@
     }
   },
   {
+    "id": "batukaras",
+    "name": "Batukaras",
+    "continent": "Asia",
+    "countryId": "id",
+    "regionId": "west-java",
+    "location": "Pangandaran",
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "W",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "S-SW"
+    },
+    "bestSeasons": [
+      "dry-season"
+    ],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "Known as the 'Waikiki of Indonesia'. A long, mellow right-hand point break that peels endlessly. Perfect for learning and the ultimate high-fidelity logging spot.",
+    "difficulty": "BEGINNER",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 27
+    },
+    "hazards": [
+      "Crowds",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -7.7479,
+      "lng": 108.502
+    }
+  },
+  {
     "id": "padang-padang",
     "name": "Padang Padang",
     "continent": "Asia",
@@ -158,6 +208,8 @@
     "countryId": "indonesia",
     "regionId": "bali",
     "location": "Canggu",
+    "isLongboarding": true,
+    "isFoiling": true,
     "distanceFromCT": 0,
     "optimalWindDirections": [
       "NE",

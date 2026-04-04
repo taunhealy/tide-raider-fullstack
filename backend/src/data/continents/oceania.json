@@ -7,6 +7,7 @@
     "regionId": "sunshine-coast",
     "location": "Noosa Heads",
     "isLongboarding": true,
+    "isFoiling": true,
     "distanceFromCT": 0,
     "optimalWindDirections": [
       "S"
@@ -218,6 +219,107 @@
     "coordinates": {
       "lat": -31.1869,
       "lng": 152.9731
+    }
+  },
+  {
+    "id": "mount-maunganui",
+    "name": "Mount Maunganui",
+    "continent": "Oceania",
+    "countryId": "nz",
+    "regionId": "bay-of-plenty",
+    "location": "Tauranga",
+    "isFoiling": true,
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "SW",
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 15,
+      "max": 60,
+      "cardinal": "NE"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "New Zealand's coastal heart. Long, peeling waves around the Main Beach and leisure island. Perfect for both logging and foiling on smaller days.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 15
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 14
+    },
+    "hazards": [
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -37.6322,
+      "lng": 176.177
+    }
+  },
+  {
+    "id": "coffs-jetty",
+    "name": "Coffs Harbour (Jetty)",
+    "continent": "Oceania",
+    "countryId": "au",
+    "regionId": "nsw-north-coast",
+    "location": "Coffs Harbour",
+    "isFoiling": true,
+    "isLongboarding": true,
+    "optimalWindDirections": [
+      "SW",
+      "W"
+    ],
+    "optimalSwellDirections": {
+      "min": 45,
+      "max": 135,
+      "cardinal": "E-SE"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "MID",
+    "description": "Sheltered and mellow. The Jetty at Coffs offers consistent, easy peaks that are the ideal canvas for high-fidelity foil runs and classic logging.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.5,
+      "max": 2
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 24,
+      "winter": 19
+    },
+    "hazards": [
+      "Swimmers",
+      "Sandbars"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -30.3015,
+      "lng": 153.138
     }
   },
   {
