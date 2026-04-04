@@ -89,28 +89,8 @@ export function AlertsList() {
 
   return (
     <div className="space-y-8">
-      {!isPremium && (
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="bg-blue-100 p-2 sm:p-2.5 rounded-full">
-              <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm sm:text-base font-semibold text-blue-900 font-primary">
-                Free Plan: 1 Active Alert
-              </p>
-              <p className="text-xs sm:text-sm text-blue-700 font-primary">
-                You currently get 1 free alert. Subscribe to unlock unlimited alerts and instant notifications.
-              </p>
-            </div>
-          </div>
-          <Link href="/pricing" className="w-full sm:w-auto">
-            <button className="w-full sm:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors font-primary whitespace-nowrap">
-              Upgrade Now
-            </button>
-          </Link>
-        </div>
-      )}
+      {/* Democratized: Removed isPremium check and upgrade banner */}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {alerts.map((alert) => (

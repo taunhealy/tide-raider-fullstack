@@ -91,7 +91,7 @@
     "typescript": "^5.7.3"
   },
   "prisma": {
-    "seed": "tsx prisma/seed-with-beaches.ts"
+    "seed": "tsx --env-file=.env prisma/seed-with-beaches.ts"
   },
   "engines": {
     "node": "22.x"

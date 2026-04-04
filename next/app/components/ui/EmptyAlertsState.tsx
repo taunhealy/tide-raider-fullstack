@@ -40,23 +40,11 @@ export function EmptyAlertsState() {
         </div>
       </div>
 
-      {isPremium ? (
-        <Link href="/alerts/new">
-          <Button size="lg" className="font-primary px-8 bg-[var(--color-tertiary)] hover:bg-[var(--color-ui-accent)] text-black">
-            Create Your First Alert
-          </Button>
-        </Link>
-      ) : (
-        <div className="flex flex-col items-center gap-3">
-          <Link href="/pricing">
-            <Button size="lg" className="font-primary px-8 gap-2 bg-[var(--color-tertiary)] hover:bg-[var(--color-ui-accent)] text-black border-none">
-              <Lock className="w-4 h-4" />
-              Subscribe to Unlock Alerts
-            </Button>
-          </Link>
-          
-        </div>
-      )}
+      <Link href="/alerts/new">
+        <Button size="lg" className="font-primary px-8 bg-[var(--color-tertiary)] hover:bg-[var(--color-ui-accent)] text-black">
+          Create Your First Alert
+        </Button>
+      </Link>
     </div>
   );
 }

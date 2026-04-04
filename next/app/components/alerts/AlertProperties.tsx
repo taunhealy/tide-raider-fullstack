@@ -31,9 +31,21 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
   const propName = property.property.toLowerCase();
   const isWind = propName.includes("wind");
   const isSwell = propName.includes("swell");
-  const bgColor = isWind ? "bg-[var(--color-tertiary)]/10" : "bg-[var(--color-tertiary)]/10";
+  const bgColor = isWind || isSwell ? "bg-[var(--color-tertiary)]/10" : "bg-[var(--color-primary)]/5";
   const textColor = "text-gray-900";
-  const optimalValue = property.optimalValue ?? 0; // Default to 0 if undefined
+  
+  // Safely parse optimalValue
+  const optimalValue = property.optimalValue !== undefined && property.optimalValue !== null 
+    ? Number(property.optimalValue) 
+    : 0;
+    
+  const range = property.range !== undefined && property.range !== null
+    ? Number(property.range)
+    : 0;
+
+  const formattedValue = !isNaN(optimalValue) 
+    ? optimalValue.toFixed(2).replace(/\.?0+$/, "") 
+    : "0";
 
   return (
     <div className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md border border-[var(--color-tertiary)]/20`}>
@@ -52,11 +64,11 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
         </span>
         <p className={`font-medium ${textColor} font-primary text-sm`}>
           {propName.includes("direction")
-            ? `${degreesToCardinal(optimalValue)} (${Number(optimalValue).toFixed(2).replace(/\.?0+$/, "")}°)`
-            : `${Number(optimalValue).toFixed(2).replace(/\.?0+$/, "")} ${getUnit(property.property)}`}
+            ? `${degreesToCardinal(optimalValue)} (${formattedValue}°)`
+            : `${formattedValue} ${getUnit(property.property)}`}
         </p>
         <span className="text-xs text-gray-500">
-          ±{property.range} {getUnit(property.property)}
+          ±{range} {getUnit(property.property)}
         </span>
       </div>
     </div>
