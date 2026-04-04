@@ -6,7 +6,8 @@ import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -35,6 +36,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     initialData,
     enabled: true,
   });
+  const { data: authData } = useBackendAuth();
+  const user = authData?.user;
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const hasAutoRedirected = useRef(false);
@@ -201,6 +204,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   }, [currentPage, totalPages]);
 
   const handlePageChange = (page: number) => {
+    if (page >= 2 && !user) {
+      // Redirect to login if trying to access page 2 or more while not logged in
+      const targetUrl = `${pathname}?page=${page}`;
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(targetUrl)}`;
+      return;
+    }
     setCurrentPage(page);
     // Scroll to top of beach list
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -315,9 +324,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                               variant={currentPage === page ? "default" : "outline"}
                               size="sm"
                               onClick={() => handlePageChange(Number(page))}
-                              className="w-8 h-8 p-0"
+                              className="w-8 h-8 p-0 relative"
                             >
                               {page}
+                              {Number(page) >= 2 && !user && (
+                                <Lock className="w-2 h-2 absolute top-0.5 right-0.5 text-gray-400" />
+                              )}
                             </Button>
                           );
                         })}

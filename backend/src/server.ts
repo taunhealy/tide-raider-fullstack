@@ -1,3 +1,4 @@
+import "./lib/prisma"; // Initialize prisma and optimize DATABASE_URL
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -34,19 +35,27 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Session middleware for Passport (minimal, we use JWT)
+// Session middleware for Passport (persistent store to avoid memory leaks)
+const pgSession = require("connect-pg-simple")(session);
 app.use(
   session({
+    store: new pgSession({
+      conString: process.env.DATABASE_URL || process.env.DATABASE_URL_SUPABASE,
+      tableName: "session", // Ensure this table exists in your DB
+      createTableIfMissing: true, // Automatically create the session table
+    }),
     secret:
       process.env.NEXTAUTH_SECRET ||
       process.env.AUTH_SECRET ||
       "your-secret-key",
     resave: false,
     saveUninitialized: false,
+    name: "tide-raider-session", // Renamed to avoid conflicts
     cookie: {
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Cross-site support in prod
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   })
 );
