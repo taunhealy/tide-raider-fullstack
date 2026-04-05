@@ -69,6 +69,7 @@ export default function BlogCard({ post, layout = "vertical" }: BlogCardProps) {
               )}
               <ClientImage
                 src={
+                  post.mainImage?.asset?.url ??
                   urlForImage(post.mainImage)?.width(600)?.height(400)?.url() ??
                   ""
                 }

@@ -312,5 +312,149 @@
       "lat": 58.9833,
       "lng": -3.3833
     }
+  },
+  {
+    "id": "grand-plage-biarritz-france",
+    "name": "Grand Plage",
+    "continent": "Europe",
+    "countryId": "france",
+    "regionId": "biarritz",
+    "location": "Biarritz",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "SE"],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 315,
+      "cardinal": "West"
+    },
+    "bestSeasons": ["autumn", "spring"],
+    "optimalTide": "ALL (MID BEST)",
+    "description": "Grand Plage is the crown jewel of Biarritz surfing. This beach break offers a variety of peaks that are particularly suited for longboarding on smaller swells and mid-tides. It's where European surfing was born, and the elegance of the surfers here reflects that history. The wave is consistent and offers long, workable walls.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 21, "winter": 13 },
+    "hazards": ["Strong currents", "Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=2620&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=jU_ZW0y5ihk",
+        "title": "Surfing Super Clean Beautiful Waves in Biarritz 4K",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.483, "lng": -1.564 }
+  },
+  {
+    "id": "cote-des-basques-biarritz-france",
+    "name": "Côte des Basques",
+    "continent": "Europe",
+    "countryId": "fr",
+    "regionId": "biarritz",
+    "location": "Biarritz",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "ENE"],
+    "optimalSwellDirections": {
+      "min": 280,
+      "max": 310,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": ["summer", "autumn"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Considered the cradle of surfing in Europe. Côte des Basques is a stunning beach break framed by cliffs and the Villa Belza. It's world-famous for its long, gentle waves that are ideal for longboarding. *Note: At high tide, the beach completely disappears against the rocks.*",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 22, "winter": 12 },
+    "hazards": ["Rocks at high tide", "Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=lK2-wiGrhUg",
+        "title": "Biarritz Belza Classic 2025 – Longboard à la Côte des Basques",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.477, "lng": -1.568 }
+  },
+  {
+    "id": "somo-beach-spain",
+    "name": "Somo Beach",
+    "continent": "Europe",
+    "countryId": "es",
+    "regionId": "cantabria",
+    "location": "Somo",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["S", "SW"],
+    "optimalSwellDirections": {
+      "min": 290,
+      "max": 330,
+      "cardinal": "NW"
+    },
+    "bestSeasons": ["all"],
+    "optimalTide": "ALL",
+    "description": "Located across the bay from Santander, Somo is one of Spain's most consistent beach breaks. It features miles of golden sand and multiple peaks. The wave is generally mellow and consistent, making it a hotspot for the Spanish longboarding and skate culture.",
+    "difficulty": "ALL_LEVELS",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 21, "winter": 13 },
+    "hazards": ["Currents"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=F0vjr00cToY",
+        "title": "“First Light” | Sunrise Longboard Surf on the Northern Coast of Spain",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.458, "lng": -3.743 }
+  },
+  {
+    "id": "saunton-sands-uk",
+    "name": "Saunton Sands",
+    "continent": "Europe",
+    "countryId": "gb",
+    "regionId": "devon",
+    "location": "North Devon",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "NE"],
+    "optimalSwellDirections": {
+      "min": 260,
+      "max": 300,
+      "cardinal": "W/NW"
+    },
+    "bestSeasons": ["winter", "autumn"],
+    "optimalTide": "ALL",
+    "description": "Saunton Sands is the UK's premier longboarding beach. Known for its incredibly long, slow-breaking waves that can peel for hundreds of yards across the shallow sand banks. It's a vast, beautiful location that handles large crowds and offers some of the best logging in Northern Europe.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 3 },
+    "idealSwellPeriod": { "min": 8, "max": 16 },
+    "waterTemp": { "summer": 17, "winter": 9 },
+    "hazards": ["Long paddle out", "Cold water"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=s5t-yL2Wk4Y",
+        "title": "Longboard Surfing at Saunton Sands 14 March 2022",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 51.104, "lng": -4.218 }
   }
 ]

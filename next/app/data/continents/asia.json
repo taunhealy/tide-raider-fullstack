@@ -1770,5 +1770,185 @@
       "lat": -8.4097,
       "lng": 114.8264
     }
+  },
+  {
+    "id": "lazy-left-sri-lanka",
+    "name": "Lazy Left",
+    "continent": "Asia",
+    "countryId": "sri-lanka",
+    "regionId": "midigama",
+    "location": "Midigama",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "NNE"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "ALL (MID BEST)",
+    "description": "True to its name, Lazy Left is a long, rolling left-hand point break that is a favorite for longboarders in Sri Lanka. It offers a mellow ride that can go for 200+ meters on the right swell. The wave is gentle and predictable, making it perfect for noseriding and big, carve-like turns.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 18 },
+    "waterTemp": { "summer": 28, "winter": 28 },
+    "hazards": ["Rocks at low tide"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=_8-IpK5J9wk",
+        "title": "Wonder of Asia 🇱🇰 | Surf Sri Lanka",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 5.972, "lng": 80.389 }
+  },
+  {
+    "id": "sire-beach-medana-lombok-indonesia",
+    "name": "Sire Beach",
+    "continent": "Asia",
+    "countryId": "id",
+    "regionId": "lombok",
+    "location": "Medana, North Lombok",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["ESE", "E"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["dry"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "A hidden gem on Lombok's northern coast. Sire Beach (Medana) offers very long, gentle walls over a safe sand and reef bottom. It's often glassy and provides the perfect 'party wave' atmosphere for longboarders looking to escape the crowds of the Bukit.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 10, "max": 18 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Shallow reef sections", "Sea urchins"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=auIY60jJmJY",
+        "title": "Surfing Lombok: The Ultimate Longboarding Adventure!",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": -8.358, "lng": 116.111 }
+  },
+  {
+    "id": "batu-karas-java-indonesia",
+    "name": "Batu Karas",
+    "continent": "Asia",
+    "countryId": "id",
+    "regionId": "west-java",
+    "location": "West Java",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "NE"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 200,
+      "cardinal": "S/SW"
+    },
+    "bestSeasons": ["dry", "all"],
+    "optimalTide": "MID",
+    "description": "Known as the most longboarding-friendly wave in Indonesia. Batu Karas is a protected point break that offers mechanical, slow-breaking right-handers. The sand bottom makes it extremely safe and accessible for all levels of loggers.",
+    "difficulty": "ALL_LEVELS",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 28, "winter": 26 },
+    "hazards": ["Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=uooRe3xANQo",
+        "title": "JOYBELLS | Longboard surfing film featuring local loggers at Batukaras",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": -7.747, "lng": 108.501 }
+  },
+  {
+    "id": "jeju-jungmun-south-korea",
+    "name": "Jeju Island",
+    "continent": "Asia",
+    "countryId": "kr",
+    "regionId": "jeju",
+    "location": "Jungmun Beach",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["N", "NNE"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 190,
+      "cardinal": "S"
+    },
+    "bestSeasons": ["summer", "autumn"],
+    "optimalTide": "ALL",
+    "description": "Jungmun Saekdal Beach is the birthplace of Korean surfing. It captures any southern swell and provides fun, crumbly peaks that are perfect for longboarding. The volcanic landscape and clear water make it a unique Asian surfing destination.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 26, "winter": 14 },
+    "hazards": ["Rocks at the ends of the beach", "Strong currents during typhoon swells"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=uK1JbN267p8",
+        "title": "SURFING JEJU ISLAND, SOUTH KOREA – JUNGMUN SAEKDAL BEACH",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 33.243, "lng": 126.413 }
+  },
+  {
+    "id": "gas-stations-midigama-sri-lanka",
+    "name": "Gas Stations",
+    "continent": "Asia",
+    "countryId": "lk",
+    "regionId": "south-province",
+    "location": "Midigama",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "N"],
+    "optimalSwellDirections": {
+      "min": 200,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "MID",
+    "description": "Located right in front of a local gas station, this spot is a classic A-frame reef break. While the peak can be sharp, the left shoulder peels for ages, providing a perfect runway for longboarders to practice their footwork in warm, tropical water.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.9, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 28, "winter": 28 },
+    "hazards": ["Sharp reef", "Urchins"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=pJI1KIsI7N0",
+        "title": "Gas Stations Sri Lanka Surf Session",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 5.968, "lng": 80.404 }
   }
 ]

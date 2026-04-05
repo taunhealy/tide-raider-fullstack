@@ -831,5 +831,124 @@
       "lng": 176.17
     },
     "isLongboarding": true
+  },
+  {
+    "id": "the-pass-byron-bay",
+    "name": "The Pass, Byron Bay",
+    "continent": "Oceania",
+    "countryId": "au",
+    "regionId": "new-south-wales",
+    "location": "Byron Bay",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SW"
+    ],
+    "optimalSwellDirections": {
+      "min": 135,
+      "max": 180,
+      "cardinal": "SE"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "MID",
+    "description": "One of the most iconic right-hand point breaks in the world for longboarding. The Pass offers long, mechanical, peeling walls that can connect for hundreds of meters. A true noserider's paradise. It's extremely crowded, but the long rides make it worth the wait.",
+    "difficulty": "BEGINNER",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 26,
+      "winter": 20
+    },
+    "hazards": [
+      "Extreme crowds",
+      "Sharks",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": true
+    },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -28.6385,
+      "lng": 153.6289
+    },
+    "isLongboarding": true,
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=AFEjjIEPjgk",
+        "title": "DREAMY SURF at The Pass in Byron Bay",
+        "platform": "youtube"
+      }
+    ]
+  },
+  {
+    "id": "tea-tree-bay-noosa",
+    "name": "Tea Tree Bay, Noosa",
+    "continent": "Oceania",
+    "countryId": "au",
+    "regionId": "sunshine-coast",
+    "location": "Noosa National Park",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 45,
+      "max": 90,
+      "cardinal": "E"
+    },
+    "bestSeasons": [
+      "autumn",
+      "winter"
+    ],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "Located inside Noosa National Park, Tea Tree Bay is a high-performance longboarding haven. It offers a more punchy wave than First Point and is preferred by many 'loggers' for its beautiful setting and perfect reef/sand bottom. Requires a short walk through the park.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.8,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 27,
+      "winter": 21
+    },
+    "hazards": [
+      "Rocks",
+      "Sharks",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": true
+    },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -26.38,
+      "lng": 153.1
+    },
+    "isLongboarding": true,
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=kpLvjor3Wpg",
+        "title": "Best of Noosa Surfing (2024) - Longboarding Paradise",
+        "platform": "youtube"
+      }
+    ]
   }
 ]

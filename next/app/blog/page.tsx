@@ -78,6 +78,36 @@ export default async function BlogPage() {
     );
   }
 
+  if (content && content.blog) {
+    const longboardingPost = {
+      _id: "top-longboarding-spots-static",
+      title: "The Glide: Top Longboarding Spots in the World",
+      slug: "top-longboarding-spots",
+      description: "Explore the most iconic longboarding surf spots across the globe, from the historic rollers of Waikiki to the endless lefts of Chicama.",
+      publishedAt: new Date().toISOString(),
+      mainImage: {
+        asset: {
+          _ref: "image-longboarding-hero",
+          url: "/images/blog/longboarding-ghibli-thumbnail.png"
+        }
+      },
+      categories: [
+        { _id: "cat-travel", title: "Travel", slug: "travel" },
+        { _id: "cat-guides", title: "Guides", slug: "guides" }
+      ]
+    };
+
+    // Add to the beginning of the posts array
+    content.blog.posts = [longboardingPost, ...(content.blog.posts || [])];
+    
+    // Ensure categories are updated too
+    if (content.blog.allCategories) {
+      if (!content.blog.allCategories.some((c: any) => c.title === "Guides")) {
+        content.blog.allCategories.push({ _id: "cat-guides", title: "Guides", slug: "guides" });
+      }
+    }
+  }
+
   return (
     <main className="bg-white">
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
