@@ -71,62 +71,37 @@ async function loadData() {
   let HARDCODED_COUNTRIES: any[] = [];
 
   try {
-    // Try multiple paths to find beachData.ts
-    // In container: /app/prisma/seed-with-beaches.ts -> /app/src/data/beachData.ts
-    // Locally: backend/prisma/seed-with-beaches.ts -> backend/src/data/beachData.ts
-    let beachDataModule: any;
-    const possiblePaths = [
-      "../src/data/beachData", // Relative from prisma/
-      "../../src/data/beachData", // Alternative relative
-      join(process.cwd(), "src/data/beachData"), // From cwd
-      join(process.cwd(), "backend/src/data/beachData"), // If cwd is root
-      "/app/src/data/beachData", // Absolute in container
-      join(currentDir, "../src/data/beachData"), // Using currentDir
-    ];
-
-    let lastError: any = null;
-    for (const pathToTry of possiblePaths) {
-      try {
-        console.log(`Trying to load beachData from: ${pathToTry}`);
-        beachDataModule = await import(pathToTry);
-        console.log(`✓ Successfully loaded from: ${pathToTry}`);
-        break;
-      } catch (err: any) {
-        lastError = err;
-        // Continue to next path
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Define the continents to load
+    const continents = ["africa", "asia", "europe", "north-america", "oceania", "south-america"];
+    
+    // Path to the continents directory in the frontend
+    // In local dev: k:/Kea/tide-raider-fullstack/next/app/data/continents/
+    // In fly.io/container, you might need a different path or volume
+    const frontendDataPath = join(process.cwd(), "../next/app/data/continents");
+    
+    console.log(`Loading beach data from JSON files in: ${frontendDataPath}`);
+    
+    for (const continent of continents) {
+      const jsonPath = join(frontendDataPath, `${continent}.json`);
+      if (fs.existsSync(jsonPath)) {
+        try {
+          const rawData = fs.readFileSync(jsonPath, "utf8");
+          const data = JSON.parse(rawData);
+          beachData = [...beachData, ...data];
+          console.log(`✓ Loaded ${data.length} beaches from ${continent}.json`);
+        } catch (err) {
+          console.error(`Error reading ${jsonPath}:`, err);
+        }
+      } else {
+        console.warn(`⚠️ Continent file not found: ${jsonPath}`);
       }
     }
-
-    if (!beachDataModule) {
-      throw (
-        lastError ||
-        new Error("Could not find beachData.ts in any expected location")
-      );
-    }
-
-    beachData =
-      beachDataModule.beachData || beachDataModule.default?.beachData || [];
-    console.log(`✓ Loaded ${beachData.length} beaches from beachData.ts`);
-    
-    const dungeonsData = beachData.find(b => b.id === 'dungeons');
-    if (dungeonsData) {
-        console.log(`DEBUG: Loaded Dungeons data. isHiddenGem: ${dungeonsData.isHiddenGem}`);
-    } else {
-        console.log("DEBUG: Dungeons beach not found in loaded data!");
-    }
   } catch (error: any) {
-    console.warn("⚠️ Could not load beachData. Beach seeding will be skipped.");
+    console.warn("⚠️ Could not load beachData from JSON. Beach seeding might be incomplete.");
     console.warn(`   Error: ${error.message}`);
-    if (error.stack) {
-      console.warn(
-        `   Error stack: ${error.stack.split("\n").slice(0, 5).join("\n")}`
-      );
-    }
-    console.warn(
-      "   Make sure beachData.ts is in backend/src/data/beachData.ts"
-    );
-    console.warn(`   Current working directory: ${process.cwd()}`);
-    console.warn(`   __dirname: ${currentDir}`);
     beachData = [];
   }
 
@@ -789,6 +764,8 @@ async function main() {
               coordinates: beach.coordinates,
               videos: beach.videos || [],
               isHiddenGem: beach.isHiddenGem,
+              isFoiling: beach.isFoiling || false,
+              isLongboarding: beach.isLongboarding || false,
             },
             create: {
               id: beach.id,
@@ -817,6 +794,8 @@ async function main() {
               coordinates: beach.coordinates,
               videos: beach.videos || [],
               isHiddenGem: beach.isHiddenGem,
+              isFoiling: beach.isFoiling || false,
+              isLongboarding: beach.isLongboarding || false,
             },
           });
 

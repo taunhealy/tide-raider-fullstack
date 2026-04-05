@@ -100,4 +100,6 @@ export interface Beach {
   hasSharkAlert?: boolean;
   bestMonthOfYear?: string;
   isHiddenGem?: boolean | null | undefined;
+  isFoiling?: boolean;
+  isLongboarding?: boolean;
 }

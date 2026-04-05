@@ -86,7 +86,9 @@
         "name": "Jack Black Beer",
         "url": "https://jackblackbeer.com/?srsltid=AfmBOorD3plPrF2vmxOr_MrbqSaLxAMnslwC99syTmtfU15O-_OXQBlS"
       }
-    ]
+    ],
+    "isLongboarding": true,
+    "isFoiling": true
   },
   {
     "id": "long-beach",
@@ -157,6 +159,8 @@
         "name": "Good Riddance Coffee Co."
       }
     ],
+    "isLongboarding": true,
+    "isFoiling": true,
     "advertisingPrice": 1000
   },
   {
@@ -288,7 +292,167 @@
       {
         "name": "The Surf Cafe"
       }
-    ]
+    ],
+    "isFoiling": true
+  },
+  {
+    "id": "sunset-beach",
+    "name": "Sunset Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Milnerton",
+    "distanceFromCT": 15,
+    "optimalWindDirections": [
+      "SE",
+      "SSE",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 245,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Premier wind-sport destination receiving the SE wind earlier than most. Excellent for wingfoiling and kitefoiling with rolling waves and consistent wind. Can have a challenging shorebreak. Home to some of the cleanest waves on the Atlantic side during the peak summer season.",
+    "difficulty": "ADVANCED",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Shorebreak",
+      "Rip currents",
+      "Strong wind"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -33.8569,
+      "lng": 18.4841
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "brandvlei-dam",
+    "name": "Brandvlei Dam",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Worcester",
+    "distanceFromCT": 110,
+    "optimalWindDirections": [
+      "SE",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 0,
+      "max": 360,
+      "cardinal": "ALL"
+    },
+    "bestSeasons": [
+      "summer",
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "A premier inland foiling destination. Known for consistent thermal SE winds in summer and strong NW winds in winter. The freshwater dam provides a unique foiling experience with large chop but no salt. Popular for both wingfoiling and kitefoiling when the coastal spots are blown out.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0,
+      "max": 1
+    },
+    "idealSwellPeriod": {
+      "min": 2,
+      "max": 6
+    },
+    "waterTemp": {
+      "summer": 24,
+      "winter": 16
+    },
+    "hazards": [
+      "Rocks near shore",
+      "Strong wind",
+      "Cold water in winter"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1544551763-47a184117db7?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -33.6828,
+      "lng": 19.4144
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "misty-cliffs-witsands",
+    "name": "Misty Cliffs / Witsands",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Scarborough",
+    "distanceFromCT": 45,
+    "optimalWindDirections": [
+      "SE",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 195,
+      "max": 225,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "LOW",
+    "description": "Extremely scenic and exposed spot known for its powerful waves and strong winds. Premier location for advanced wingfoilers and windsurfers, especially in Northwest winds. The 'Witsands' section offers long rolling swells perfect for high-speed runs. Use caution with the rocky shoreline and heavy kelp.",
+    "difficulty": "ADVANCED",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Heavy kelp",
+      "Rocks",
+      "Strong wind",
+      "Sharks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -34.1914,
+      "lng": 18.3512
+    },
+    "isFoiling": true
   },
   {
     "id": "dunes",
@@ -1181,7 +1345,8 @@
         "title": "Surfing POV / Cape Town Melkbos",
         "platform": "youtube"
       }
-    ]
+    ],
+    "isFoiling": true
   },
   {
     "id": "kogel-bay",
@@ -1340,7 +1505,8 @@
     "coordinates": {
       "lat": -34.1012,
       "lng": 18.4987
-    }
+    },
+    "isFoiling": true
   },
   {
     "id": "bruce's-beauties",
@@ -10550,5 +10716,329 @@
         "platform": "youtube"
       }
     ]
+  },
+  {
+    "id": "tofinho-point",
+    "name": "Tofinho Point",
+    "continent": "Africa",
+    "countryId": "mz",
+    "regionId": "inhambane-province",
+    "location": "Tofo",
+    "distanceFromCT": 1800,
+    "optimalWindDirections": [
+      "W",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 150,
+      "max": 180,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "World-class right-hand point break over reef. Known for its powerful barrels and long, high-performance sections. Best in winter South swells.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 27,
+      "winter": 23
+    },
+    "hazards": [
+      "Sharp reef",
+      "Strong currents",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -23.8631,
+      "lng": 35.5483
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "ponta-do-ouro",
+    "name": "Ponta do Ouro",
+    "continent": "Africa",
+    "countryId": "mz",
+    "regionId": "ponta-do-ouro",
+    "location": "Ponta do Ouro",
+    "distanceFromCT": 1600,
+    "optimalWindDirections": [
+      "W",
+      "SW"
+    ],
+    "optimalSwellDirections": {
+      "min": 150,
+      "max": 180,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Legendary long right-hand point break. Peels for hundreds of meters over sand. Excellent for both surfing and foiling the long walls.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.9,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 24
+    },
+    "hazards": [
+      "Strong currents",
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1516108317508-6788f6a160e6?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -26.8458,
+      "lng": 32.8885
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "barra-beach",
+    "name": "Barra Beach",
+    "continent": "Africa",
+    "countryId": "mz",
+    "regionId": "inhambane-province",
+    "location": "Barra",
+    "distanceFromCT": 1800,
+    "optimalWindDirections": [
+      "SE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 90,
+      "max": 180,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Wide sandy beach with consistent right-handers. Premier destination for wingfoiling and kitesurfing due to reliable trade winds.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 24
+    },
+    "hazards": [
+      "Strong wind"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -23.8115,
+      "lng": 35.5126
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "pomene",
+    "name": "Pomene",
+    "continent": "Africa",
+    "countryId": "mz",
+    "regionId": "mozambique",
+    "location": "Pomene",
+    "distanceFromCT": 2200,
+    "optimalWindDirections": [
+      "SE",
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 150,
+      "max": 180,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Remote headland with a long, barrelling right-hand point break. The combination of ocean-side point and massive estuary makes it an adventurous dream for surfing and foiling.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 24
+    },
+    "hazards": [
+      "Remote location",
+      "Sharks",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -22.9833,
+      "lng": 35.5833
+    },
+    "isFoiling": true
+  },
+  {
+    "id": "cabo-ledo-angola",
+    "name": "Cabo Ledo",
+    "continent": "Africa",
+    "countryId": "ao",
+    "regionId": "luanda-province",
+    "location": "Cabo Ledo",
+    "distanceFromCT": 2800,
+    "optimalWindDirections": [
+      "E",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Legendary long, soft left-hand point break. Known as the 'Malibu of Africa', it offers world-class longboarding conditions with rides up to 500 meters. Set against dramatic cliffs and jungle, it's one of the most consistent and user-friendly world-class waves in Africa.",
+    "difficulty": "BEGINNER",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 26,
+      "winter": 22
+    },
+    "hazards": [
+      "Remote location",
+      "Sunburn"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -9.6833,
+      "lng": 13.2167
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=FOfpEnG6q6I",
+        "title": "Surf in Cabo Ledo - Angola",
+        "platform": "youtube"
+      }
+    ],
+    "isLongboarding": true,
+    "isFoiling": true
+  },
+  {
+    "id": "le-morne-one-eye-mauritius",
+    "name": "Le Morne (One Eye)",
+    "continent": "Africa",
+    "countryId": "mu",
+    "regionId": "one-eye",
+    "location": "Le Morne",
+    "distanceFromCT": 3500,
+    "optimalWindDirections": [
+      "SE",
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "World-famous fast, shallow reef break. Known for its 'One Eye' barrel. Elite spot for surfing and kite/wind foiling due to consistent trade winds and perfect reef contours.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 5.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 27,
+      "winter": 23
+    },
+    "hazards": [
+      "Sharp reef",
+      "Strong currents",
+      "Shallow water",
+      "Power"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1589991130394-5ee1950d03f0?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -20.47,
+      "lng": 57.31
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=OwRgAlCYQRE",
+        "title": "One Eye - Le Morne, Mauritius",
+        "platform": "youtube"
+      }
+    ],
+    "isFoiling": true
   }
 ]

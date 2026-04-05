@@ -59,13 +59,17 @@ const REGION_MAPPINGS: Record<
   },
   // Australia
   queensland: { name: "Queensland", countryId: "au", continentId: "OC" },
+  "sunshine-coast": { name: "Sunshine Coast", countryId: "au", continentId: "OC" },
+  "gold-coast": { name: "Gold Coast", countryId: "au", continentId: "OC" },
   "new-south-wales": {
     name: "New South Wales",
     countryId: "au",
     continentId: "OC",
   },
+  "nsw-north-coast": { name: "NSW North Coast", countryId: "au", continentId: "OC" },
   // New Zealand
   waikato: { name: "Waikato", countryId: "nz", continentId: "OC" },
+  "bay-of-plenty": { name: "Bay Of Plenty", countryId: "nz", continentId: "OC" },
   // El Salvador
   "san-salvador": { name: "San Salvador", countryId: "sv", continentId: "NA" },
   "costa-del-balsamo": {

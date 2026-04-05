@@ -48,6 +48,214 @@
     "coordinates": {
       "lat": -7.6982,
       "lng": -79.4422
-    }
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "huanchaco-point",
+    "name": "Huanchaco - El Elio",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Huanchaco",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 225,
+      "cardinal": "S-SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "World Surfing Reserve famous for its consistent long lefts. Ideal for longboarding with multiple mellow sections. Historic site where surfers still use traditional reed boats (caballitos de totora).",
+    "difficulty": "BEGINNER",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.9,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 22,
+      "winter": 18
+    },
+    "hazards": [
+      "Crowds",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -8.1167,
+      "lng": -79.1167
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "pacasmayo-point",
+    "name": "Pacasmayo",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Pacasmayo",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ENE",
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 190,
+      "max": 220,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "One of the longest left-hand point breaks in the world. Can connect for over a kilometer. Heavy groundswell needed to reach its full potential. Excellent for longboarding on medium swells.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 22,
+      "winter": 17
+    },
+    "hazards": [
+      "Strong currents",
+      "Rocks",
+      "Long paddle"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -7.4006,
+      "lng": -79.5714
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "pichilemu-la-puntilla",
+    "name": "Pichilemu - La Puntilla",
+    "continent": "South America",
+    "countryId": "cl",
+    "regionId": "chicama",
+    "location": "Pichilemu",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "LOW",
+    "description": "The 'Surf Capital of Chile'. La Puntilla is the town's premier longboarding spot, offering long, peeling left-handers that mellow out into the bay. Cold water, but world-class consistent swells.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Cold water",
+      "Rocks",
+      "Currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -34.3858,
+      "lng": -72.0044
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "saquarema-itauna",
+    "name": "Saquarema - Itaúna",
+    "continent": "South America",
+    "countryId": "br",
+    "regionId": "chicama",
+    "location": "Saquarema",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "N",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 150,
+      "max": 190,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "The 'Maracanã of Surfing'. Itaúna is a powerful, world-class left-hand point break that can hold massive swells. Its long walls are excellent for high-performance longboarding when conditions are right.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 24,
+      "winter": 19
+    },
+    "hazards": [
+      "Powerful waves",
+      "Crowds",
+      "Currents"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -22.9248,
+      "lng": -42.4851
+    },
+    "isLongboarding": true
   }
 ]

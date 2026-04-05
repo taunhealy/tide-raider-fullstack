@@ -4,9 +4,10 @@
     "name": "Noosa - First Point",
     "continent": "Oceania",
     "countryId": "au",
-    "regionId": "gold-coast",
-    "location": "North Coast",
+    "regionId": "sunshine-coast",
+    "location": "Sunshine Coast",
     "distanceFromCT": 0,
+    "isLongboarding": true,
     "optimalWindDirections": [
       "S"
     ],
@@ -172,8 +173,8 @@
     "name": "Crescent Head",
     "continent": "Oceania",
     "countryId": "au",
-    "regionId": "new-south-wales",
-    "location": "Port Macquarie",
+    "regionId": "nsw-north-coast",
+    "location": "New South Wales",
     "distanceFromCT": 0,
     "optimalWindDirections": [
       "W"
@@ -216,7 +217,8 @@
     "coordinates": {
       "lat": -31.1869,
       "lng": 152.9731
-    }
+    },
+    "isLongboarding": true
   },
   {
     "id": "arrawarra",
@@ -267,7 +269,8 @@
     "coordinates": {
       "lat": -30.0573,
       "lng": 153.1979
-    }
+    },
+    "isLongboarding": true
   },
   {
     "id": "emerald-beach",
@@ -777,5 +780,56 @@
         "name": "The Shack"
       }
     ]
+  },
+  {
+    "id": "mount-maunganui",
+    "name": "Mount Maunganui (The Mount)",
+    "continent": "Oceania",
+    "countryId": "nz",
+    "regionId": "bay-of-plenty",
+    "location": "Tauranga",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "SW",
+      "W"
+    ],
+    "optimalSwellDirections": {
+      "min": 0,
+      "max": 45,
+      "cardinal": "N-NE"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "MID",
+    "description": "Exposed beach break offering reliable waves. Known for its quality longboarding sections and scenic backdrop of 'The Mount'. Very popular with locals and visitors alike.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 14
+    },
+    "hazards": [
+      "Crowds",
+      "Rip currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -37.63,
+      "lng": 176.17
+    },
+    "isLongboarding": true
   }
 ]
