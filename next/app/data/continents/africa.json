@@ -503,8 +503,8 @@
     },
     "image": "https://images.unsplash.com/photo-1537045864092-892b7de76421?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bm9vcmRob2VrfGVufDB8fDB8fHww",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1385,
+      "lng": 18.3305
     },
     "videos": [
       {
@@ -567,8 +567,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.1995,
+      "lng": 18.3725
     },
     "videos": [
       {
@@ -1102,8 +1102,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.364,
+      "lng": 18.916
     },
     "videos": [
       {
@@ -1161,8 +1161,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.3424,
+      "lng": 18.8282
     },
     "videos": [
       {
@@ -1276,8 +1276,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -33.7842,
+      "lng": 18.4526
     }
   },
   {
@@ -1402,8 +1402,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.2356,
+      "lng": 18.8557
     }
   },
   {
@@ -1503,8 +1503,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -33.0956,
+      "lng": 18.0357
     },
     "isFoiling": true
   },
@@ -1850,8 +1850,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.205,
+      "lng": 18.361
     },
     "videos": [
       {
@@ -1957,8 +1957,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.0326,
+      "lng": 18.3357
     }
   },
   {
@@ -2007,8 +2007,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.138,
+      "lng": 18.324
     }
   },
   {
@@ -2059,8 +2059,8 @@
     "sheltered": true,
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1396,
+      "lng": 18.3287
     },
     "videos": [
       {
@@ -2133,8 +2133,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1156,
+      "lng": 18.3587
     },
     "videos": [
       {
@@ -2260,8 +2260,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1856,
+      "lng": 18.3617
     },
     "videos": [
       {
@@ -2385,8 +2385,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -33.344,
+      "lng": 18.156
     },
     "videos": [
       {
@@ -2447,8 +2447,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1556,
+      "lng": 18.3227
     },
     "videos": [
       {
@@ -2503,8 +2503,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1286,
+      "lng": 18.4527
     }
   },
   {
@@ -2555,8 +2555,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1326,
+      "lng": 18.3347
     },
     "videos": [
       {
@@ -2617,8 +2617,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -33.585,
+      "lng": 18.356
     }
   },
   {
@@ -2770,8 +2770,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.1426,
+      "lng": 18.3257
     }
   },
   {
@@ -2820,8 +2820,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -33.02,
+      "lng": 27.91
     }
   },
   {
@@ -2992,8 +2992,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.3496,
+      "lng": 18.4757
     },
     "videos": [
       {
@@ -3373,8 +3373,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -32.99,
+      "lng": 27.95
     }
   },
   {
@@ -4056,8 +4056,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -32.7126,
+      "lng": 17.9405
     },
     "videos": [
       {
@@ -4114,8 +4114,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -32.8122,
+      "lng": 17.8524
     }
   },
   {
@@ -4165,8 +4165,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -30.3167,
+      "lng": 17.2778
     },
     "videos": [
       {
@@ -4223,8 +4223,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -29.2567,
+      "lng": 16.8661
     }
   },
   {
@@ -4272,8 +4272,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -32.3168,
+      "lng": 18.3297
     }
   },
   {
@@ -4323,8 +4323,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -32.3217,
+      "lng": 18.3245
     }
   },
   {
@@ -4627,8 +4627,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.3476,
+      "lng": 18.4737
     }
   },
   {
@@ -4678,8 +4678,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.3526,
+      "lng": 18.4787
     }
   },
   {
@@ -4731,8 +4731,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.3926,
+      "lng": 18.4897
     }
   },
   {
@@ -5034,8 +5034,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.1578,
+      "lng": 18.8689
     }
   },
   {
@@ -5163,8 +5163,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1012,
-      "lng": 18.4987
+      "lat": -34.3426,
+      "lng": 18.4767
     }
   },
   {
@@ -5214,8 +5214,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.1333,
+      "lng": 18.3333
     },
     "videos": [
       {
@@ -5273,8 +5273,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.108,
+      "lng": 18.485
     }
   },
   {
@@ -5323,8 +5323,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.055,
+      "lng": 22.393
     }
   },
   {
@@ -5958,8 +5958,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.235,
+      "lng": 18.855
     }
   },
   {
@@ -6007,8 +6007,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.425,
+      "lng": 21.356
     }
   },
   {
@@ -6293,8 +6293,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.003,
+      "lng": 22.548
     },
     "videos": [
       {
@@ -6527,8 +6527,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -32.1709,
+      "lng": 18.3115
     }
   },
   {
@@ -7529,8 +7529,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.051,
+      "lng": 18.344
     },
     "videos": [
       {
@@ -11050,23 +11050,41 @@
     "location": "The Magic Bay",
     "distanceFromCT": 0,
     "isLongboarding": true,
-    "optimalWindDirections": ["NE", "E"],
+    "optimalWindDirections": [
+      "NE",
+      "E"
+    ],
     "optimalSwellDirections": {
       "min": 300,
       "max": 330,
       "cardinal": "NW"
     },
-    "bestSeasons": ["winter"],
+    "bestSeasons": [
+      "winter"
+    ],
     "optimalTide": "LOW",
     "description": "The Magic Bay in Imsouane is legendary in the longboarding world. It offers a right-hand wave that can peel for over 600 meters in a deep, protected bay. The wave is famously slow and easy to ride, making it the ultimate destination for traditional logging in Morocco.",
     "difficulty": "BEGINNER-INTERMEDIATE",
     "waveType": "POINT_BREAK",
-    "swellSize": { "min": 0.9, "max": 3 },
-    "idealSwellPeriod": { "min": 12, "max": 20 },
-    "waterTemp": { "summer": 21, "winter": 17 },
-    "hazards": ["Rocks at low tide"],
+    "swellSize": {
+      "min": 0.9,
+      "max": 3
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 17
+    },
+    "hazards": [
+      "Rocks at low tide"
+    ],
     "crimeLevel": "Low",
-    "sharkAttack": { "hasAttack": false },
+    "sharkAttack": {
+      "hasAttack": false
+    },
     "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
@@ -11075,7 +11093,10 @@
         "platform": "youtube"
       }
     ],
-    "coordinates": { "lat": 30.841, "lng": -9.821 }
+    "coordinates": {
+      "lat": 30.841,
+      "lng": -9.821
+    }
   },
   {
     "id": "ngor-island-dakar-senegal",
@@ -11086,23 +11107,42 @@
     "location": "Dakar",
     "distanceFromCT": 0,
     "isLongboarding": true,
-    "optimalWindDirections": ["NE", "N"],
+    "optimalWindDirections": [
+      "NE",
+      "N"
+    ],
     "optimalSwellDirections": {
       "min": 180,
       "max": 210,
       "cardinal": "SSW"
     },
-    "bestSeasons": ["winter"],
+    "bestSeasons": [
+      "winter"
+    ],
     "optimalTide": "ALL",
     "description": "Featured in 'The Endless Summer', NGor Island is Senegal's most famous wave. It's a high-quality right-hand reef break that offers long, consistent sections perfect for longboarding. The island atmosphere and clear water make it a unique West African destination.",
     "difficulty": "INTERMEDIATE",
     "waveType": "REEF_BREAK",
-    "swellSize": { "min": 0.9, "max": 3.5 },
-    "idealSwellPeriod": { "min": 10, "max": 16 },
-    "waterTemp": { "summer": 26, "winter": 18 },
-    "hazards": ["Sea urchins", "Strong currents"],
+    "swellSize": {
+      "min": 0.9,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 26,
+      "winter": 18
+    },
+    "hazards": [
+      "Sea urchins",
+      "Strong currents"
+    ],
     "crimeLevel": "Low",
-    "sharkAttack": { "hasAttack": false },
+    "sharkAttack": {
+      "hasAttack": false
+    },
     "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
@@ -11111,7 +11151,10 @@
         "platform": "youtube"
       }
     ],
-    "coordinates": { "lat": 14.754, "lng": -17.516 }
+    "coordinates": {
+      "lat": 14.754,
+      "lng": -17.516
+    }
   },
   {
     "id": "mahambo-east-coast-madagascar",
@@ -11122,23 +11165,43 @@
     "location": "East Coast",
     "distanceFromCT": 0,
     "isLongboarding": true,
-    "optimalWindDirections": ["W", "SW"],
+    "optimalWindDirections": [
+      "W",
+      "SW"
+    ],
     "optimalSwellDirections": {
       "min": 90,
       "max": 135,
       "cardinal": "E/SE"
     },
-    "bestSeasons": ["winter", "autumn"],
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
     "optimalTide": "MID_TO_HIGH",
     "description": "Mahambo is the surfing capital of Madagascar's East Coast. It features a very long, rolling reef break that is perfect for longboarders. The waves are generally mellow and consistent, breaking in warm, turquoise water surrounded by lush tropical vegetation.",
     "difficulty": "BEGINNER-INTERMEDIATE",
     "waveType": "REEF_BREAK",
-    "swellSize": { "min": 0.6, "max": 2.5 },
-    "idealSwellPeriod": { "min": 8, "max": 14 },
-    "waterTemp": { "summer": 28, "winter": 23 },
-    "hazards": ["Coral reef at low tide", "Remote healthcare"],
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 8,
+      "max": 14
+    },
+    "waterTemp": {
+      "summer": 28,
+      "winter": 23
+    },
+    "hazards": [
+      "Coral reef at low tide",
+      "Remote healthcare"
+    ],
     "crimeLevel": "Low",
-    "sharkAttack": { "hasAttack": false },
+    "sharkAttack": {
+      "hasAttack": false
+    },
     "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
@@ -11147,6 +11210,9 @@
         "platform": "youtube"
       }
     ],
-    "coordinates": { "lat": -17.483, "lng": 49.466 }
+    "coordinates": {
+      "lat": -17.483,
+      "lng": 49.466
+    }
   }
 ]

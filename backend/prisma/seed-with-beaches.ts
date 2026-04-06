@@ -11,8 +11,14 @@
 import * as dotenv from "dotenv";
 import path from "path";
 
-// Load environment variables from .env file
-dotenv.config({ path: path.join(__dirname, "../.env") });
+// Load environment variables, prioritizing .env.local if it exists
+const envLocalPath = path.join(__dirname, "../.env.local");
+const envPath = path.join(__dirname, "../.env");
+if (existsSync(envLocalPath)) {
+  dotenv.config({ path: envLocalPath });
+} else {
+  dotenv.config({ path: envPath });
+}
 
 import { PrismaClient } from "@prisma/client";
 import {

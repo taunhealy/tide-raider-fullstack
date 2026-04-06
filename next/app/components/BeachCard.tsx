@@ -401,17 +401,9 @@ const BeachCard = memo(function BeachCard({
                           {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
                             const [label, value] = condition.text.split(":");
                             return (
-                              <div key={idx} className="flex items-center justify-between">
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
-                                    {label}
-                                  </span>
-                                  <span className="font-primary text-[12px] font-semibold text-black leading-none">
-                                    {value}
-                                  </span>
-                                </div>
+                              <div key={idx} className="flex items-center gap-3">
                                 <div className={cn(
-                                  "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200",
+                                  "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0",
                                   condition.isMet 
                                     ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
                                     : "border-gray-100 bg-gray-50 text-gray-300"
@@ -425,6 +417,14 @@ const BeachCard = memo(function BeachCard({
                                       <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                   )}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                                    {label}
+                                  </span>
+                                  <span className="font-primary text-[12px] font-semibold text-black leading-none truncate">
+                                    {value}
+                                  </span>
                                 </div>
                               </div>
                             );
@@ -604,32 +604,32 @@ const BeachCard = memo(function BeachCard({
                       {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
                         const [label, value] = condition.text.split(":");
                         return (
-                          <div key={idx} className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
-                                {label}
-                              </span>
-                              <span className="font-primary text-[12px] font-semibold text-black leading-none">
-                                {value}
-                              </span>
-                            </div>
-                            <div className={cn(
-                              "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200",
-                              condition.isMet 
-                                ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
-                                : "border-gray-100 bg-gray-50 text-gray-300"
-                            )}>
-                              {condition.isMet ? (
-                                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
-                                  <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              ) : (
-                                <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
-                                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0",
+                            condition.isMet 
+                              ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
+                              : "border-gray-100 bg-gray-50 text-gray-300"
+                          )}>
+                            {condition.isMet ? (
+                              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
                           </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                              {label}
+                            </span>
+                            <span className="font-primary text-[12px] font-semibold text-black leading-none truncate">
+                              {value}
+                            </span>
+                          </div>
+                        </div>
                         );
                       })}
                     </div>

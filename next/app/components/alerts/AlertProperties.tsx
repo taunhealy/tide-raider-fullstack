@@ -16,23 +16,16 @@ interface AlertPropertiesProps {
 
 export function AlertProperties({ properties }: AlertPropertiesProps) {
   return (
-    <div className="mt-2 pt-2 border-t border-gray-200">
-
-      <div className="flex flex-wrap gap-2">
-        {properties.map((prop, index) => (
-          <PropertyDisplay key={index} property={prop} />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-2">
+      {properties.map((prop, index) => (
+        <PropertyDisplay key={index} property={prop} />
+      ))}
     </div>
   );
 }
 
 export function PropertyDisplay({ property }: { property: AlertProperty }) {
   const propName = property.property.toLowerCase();
-  const isWind = propName.includes("wind");
-  const isSwell = propName.includes("swell");
-  const bgColor = isWind || isSwell ? "bg-[var(--color-tertiary)]/10" : "bg-[var(--color-primary)]/5";
-  const textColor = "text-gray-900";
   
   // Safely parse optimalValue
   const optimalValue = property.optimalValue !== undefined && property.optimalValue !== null 
@@ -44,32 +37,33 @@ export function PropertyDisplay({ property }: { property: AlertProperty }) {
     : 0;
 
   const formattedValue = !isNaN(optimalValue) 
-    ? optimalValue.toFixed(2).replace(/\.?0+$/, "") 
+    ? optimalValue.toFixed(1).replace(/\.?0+$/, "") 
     : "0";
 
   return (
-    <div className={`flex items-center space-x-2 ${bgColor} p-2 rounded-md border border-[var(--color-tertiary)]/20`}>
-      {propName === "windspeed" && (
-        <span className={textColor}>{getWindEmoji(optimalValue)}</span>
-      )}
-      {propName === "swellheight" && (
-        <span className={textColor}>{getSwellEmoji(optimalValue)}</span>
-      )}
-      {propName === "winddirection" && <span className={textColor}>🧭</span>}
-      {propName === "swellperiod" && <span className={textColor}>⏱️</span>}
-      {propName === "swelldirection" && <span className={textColor}>🧭</span>}
-      <div>
-        <span className="text-gray-600 font-primary text-xs">
+    <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-100 shadow-sm transition-all hover:border-gray-200">
+      <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-sm border border-gray-100 shrink-0">
+        {propName === "windspeed" && getWindEmoji(optimalValue)}
+        {propName === "swellheight" && getSwellEmoji(optimalValue)}
+        {propName === "winddirection" && "🧭"}
+        {propName === "swellperiod" && "⏱️"}
+        {propName === "swelldirection" && "🧭"}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.1em] block leading-none mb-1">
           {formatPropertyName(property.property)}
         </span>
-        <p className={`font-medium ${textColor} font-primary text-sm`}>
-          {propName.includes("direction")
-            ? `${degreesToCardinal(optimalValue)} (${formattedValue}°)`
-            : `${formattedValue} ${getUnit(property.property)}`}
-        </p>
-        <span className="text-xs text-gray-500">
-          ±{range} {getUnit(property.property)}
-        </span>
+        <div className="flex items-baseline gap-2">
+          <p className="text-sm font-bold text-gray-900 leading-none">
+            {propName.includes("direction")
+              ? `${degreesToCardinal(optimalValue)} (${formattedValue}°)`
+              : `${formattedValue} ${getUnit(property.property)}`}
+          </p>
+          <span className="text-[10px] font-medium text-gray-400">
+            ±{range}{getUnit(property.property)}
+          </span>
+        </div>
       </div>
     </div>
   );

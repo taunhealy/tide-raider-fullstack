@@ -30,40 +30,48 @@ export async function GET() {
       }
     });
 
-    const mappedBeaches = beaches.map((beach: any) => {
-      const coords = typeof beach.coordinates === 'string' 
-        ? JSON.parse(beach.coordinates) 
-        : beach.coordinates;
-        
-      return {
-        id: beach.id,
-        name: beach.name,
-        location: beach.location,
-        coordinates: {
-          lat: Number(coords?.lat || 0),
-          lng: Number(coords?.lng || 0)
-        },
-        difficulty: beach.difficulty,
-        waveType: beach.waveType,
-        regionId: beach.regionId,
-        region: beach.region.name,
-        countryId: beach.countryId,
-        country: beach.country.name,
-        continentId: beach.country.continentId,
-        continent: beach.country.continent.name,
-        dailyScores: beach.beachDailyScores.reduce((acc: any, s: any) => {
-        const dateStr = s.date instanceof Date 
-          ? s.date.toISOString().split('T')[0] 
-          : new Date(s.date).toISOString().split('T')[0];
-        acc[dateStr] = {
-          date: dateStr,
-          rating: s.starRating
+    const mappedBeaches = beaches.map((beach: any, index: number) => {
+      try {
+        const coords = typeof beach.coordinates === 'string' 
+          ? JSON.parse(beach.coordinates) 
+          : beach.coordinates;
+          
+        return {
+          id: beach.id,
+          name: beach.name,
+          location: beach.location,
+          coordinates: {
+            lat: Number(coords?.lat || 0),
+            lng: Number(coords?.lng || 0)
+          },
+          difficulty: beach.difficulty,
+          waveType: beach.waveType,
+          regionId: beach.regionId,
+          region: beach.region?.name || "Unknown Region",
+          countryId: beach.countryId,
+          country: beach.country?.name || "Unknown Country",
+          continent: beach.continent || "Unknown Continent",
+          dailyScores: beach.beachDailyScores.reduce((acc: any, s: any) => {
+            try {
+              const dateStr = s.date instanceof Date 
+                ? s.date.toISOString().split('T')[0] 
+                : new Date(s.date).toISOString().split('T')[0];
+              acc[dateStr] = {
+                date: dateStr,
+                rating: s.starRating
+              };
+            } catch (e) {
+              console.warn(`[api/map-data] Error mapping score for beach ${beach.id}:`, e);
+            }
+            return acc;
+          }, {}),
+          rating: beach.beachDailyScores[0]?.starRating || 3 // Fallback for today
         };
-        return acc;
-      }, {}),
-        rating: beach.beachDailyScores[0]?.starRating || 3 // Fallback for today
-      };
-    });
+      } catch (e) {
+        console.error(`[api/map-data] Error mapping beach at index ${index} (${beach?.id || "unknown"}):`, e);
+        return null;
+      }
+    }).filter(Boolean);
 
     return NextResponse.json({ beaches: mappedBeaches });
   } catch (error) {

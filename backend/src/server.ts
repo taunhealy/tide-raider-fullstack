@@ -1,17 +1,24 @@
-import "./lib/prisma"; // Initialize prisma and optimize DATABASE_URL
+import path from "path";
+import dotenv from "dotenv";
+
+// Load environment variables immediately
+// .env.local has highest priority for local development
+const envLocalPath = path.join(process.cwd(), ".env.local");
+const envPath = path.join(process.cwd(), ".env");
+
+dotenv.config({ path: envPath }); // Load defaults
+dotenv.config({ path: envLocalPath, override: true }); // Override with local settings
+
+// Now initialize prisma and optimize DATABASE_URL
+import "./lib/prisma";
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
-
-// Load environment variables
-// Load .env.local first (local overrides), then .env (defaults)
-dotenv.config({ path: ".env.local" });
-dotenv.config(); // .env will override .env.local if both exist
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "4001", 10);

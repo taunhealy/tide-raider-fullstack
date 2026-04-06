@@ -54,110 +54,118 @@ export function AlertCard({
   onEdit,
 }: AlertCardProps) {
   return (
-    <Card
-      className="bg-[var(--color-bg-primary)] rounded-lg overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:border-[var(--color-border-medium)] h-full flex flex-col border border-[var(--color-border-light)] group"
+    <div
+      className={cn(
+        "relative group bg-white rounded-2xl transition-all duration-300 border border-gray-100 overflow-hidden h-full flex flex-col",
+        alert.active ? "shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]" : "opacity-75 grayscale-[0.5]"
+      )}
     >
-      <CardHeader className="pb-2 relative">
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+      {/* Header with Switch and Actions */}
+      <div className="p-5 pb-0 flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className={cn(
+               "w-2 h-2 rounded-full",
+               alert.active ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-gray-300"
+            )} />
+            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400">
+              {alert.active ? "Monitoring" : "Paused"}
+            </span>
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 truncate leading-tight">
+            {alert.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+              {alert.region?.name || alert.regionId}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center">
+                <div className="px-2 py-1.5">
                   <Switch
                     checked={alert.active}
                     onCheckedChange={(checked) =>
                       onToggleActive(alert.id, checked)
                     }
-                    className={cn(
-                      "data-[state=checked]:bg-[var(--color-tertiary)]",
-                      "data-[state=unchecked]:bg-gray-200"
-                    )}
+                    className="data-[state=checked]:bg-gray-900"
                     aria-label={
                       alert.active ? "Deactivate alert" : "Activate alert"
                     }
                   />
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="font-primary text-sm bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] border border-[var(--color-border-light)]">
-                {alert.active ? "Alert is active" : "Alert is inactive"}
+              <TooltipContent side="top" className="text-[10px] font-bold bg-gray-900 text-white border-none py-1 px-2">
+                {alert.active ? "Active" : "Disabled"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <div className="w-px h-4 bg-[var(--color-border-light)] mx-1" />
-          <Button
-            variant="ghost"
-            size="icon"
+          <div className="w-px h-4 bg-gray-200 mx-0.5" />
+          <button
             onClick={() => onEdit(alert.id)}
-            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]"
+            className="p-2 text-gray-400 hover:text-gray-900 hover:bg-white rounded-lg transition-all active:scale-95"
           >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
             onClick={() => onDelete(alert.id)}
-            className="h-8 w-8 text-[var(--color-text-secondary)] hover:text-red-600 hover:bg-red-50"
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all active:scale-95"
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <h3 className="text-lg font-primary font-bold text-[var(--color-text-primary)] flex items-center pr-24 truncate">
-          {alert.name}
-        </h3>
-        <p className="text-xs text-[var(--color-text-secondary)] font-primary font-medium uppercase tracking-wide">
-          {alert.region?.name || alert.regionId}
-        </p>
-      </CardHeader>
-      <CardContent className="flex-grow flex-1 pt-2">
-        <div className="text-sm space-y-4 font-primary h-full flex flex-col">
-          {/* Beach Badge */}
-          {alert.beach?.name && (
-            <div>
-               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border-light)] rounded-md text-sm font-medium text-[var(--color-text-primary)]">
-                <span className="text-[var(--color-tertiary)]">📍</span>
-                <span>{alert.beach.name}</span>
+      </div>
+
+      <div className="p-5 pt-4 flex-grow flex flex-col gap-4">
+        {/* Beach Badge */}
+        {alert.beach?.name && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 w-fit">
+            <span className="text-xs">📍</span>
+            <span className="text-[11px] font-semibold text-gray-700 tracking-tight">{alert.beach.name}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+           <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/50 border border-gray-100/50">
+             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Notify Via</span>
+             <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
+                <span>🔔</span>
+                {formatNotificationMethod(alert.notificationMethod)}
+             </div>
+           </div>
+
+           <div className="flex flex-col gap-1 p-3 rounded-xl bg-gray-50/50 border border-gray-100/50">
+             <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Sources</span>
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
+                 <span>📡</span>
+                 <span className="truncate">
+                   {alert.sources && alert.sources.length > 0
+                     ? Array.from(new Set(alert.sources))
+                         .map(formatSourceName)
+                         .join(", ")
+                     : "All Sources"}
+                 </span>
               </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-             <div className="flex flex-col gap-1 p-2 rounded-md bg-[var(--color-bg-secondary)]/50 border border-[var(--color-border-light)]/50">
-               <span className="text-xs text-[var(--color-text-secondary)] font-medium uppercase">Notify Via</span>
-               <div className="flex items-center gap-2 text-[var(--color-text-primary)] font-medium">
-                  <span>🔔</span>
-                  {formatNotificationMethod(alert.notificationMethod)}
-               </div>
-             </div>
-
-             <div className="flex flex-col gap-1 p-2 rounded-md bg-[var(--color-bg-secondary)]/50 border border-[var(--color-border-light)]/50">
-               <span className="text-xs text-[var(--color-text-secondary)] font-medium uppercase">Sources</span>
-                <div className="flex items-center gap-2 text-[var(--color-text-primary)] font-medium">
-                   <span>📡</span>
-                   <span>
-                     {alert.sources && alert.sources.length > 0
-                       ? Array.from(new Set(alert.sources))
-                           .map(formatSourceName)
-                           .join(", ")
-                       : "All"}
-                   </span>
-                </div>
-             </div>
-          </div>
-
-          <div className="pt-2 border-t border-[var(--color-border-light)] mt-auto">
-             <AlertConditions alert={alert} />
-          </div>
+           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="mt-auto pt-4 border-t border-gray-100">
+           <AlertConditions alert={alert} />
+        </div>
+      </div>
+    </div>
   );
 }
 
 function AlertConditions({ alert }: { alert: Alert }) {
   if (alert.alertType === AlertType.VARIABLES && alert.properties) {
     return (
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-[var(--color-text-secondary)] uppercase">Triggers When:</p>
+      <div className="space-y-4">
+        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Trigger Conditions</span>
         <AlertProperties properties={alert.properties} />
       </div>
     );
@@ -165,11 +173,11 @@ function AlertConditions({ alert }: { alert: Alert }) {
 
   if (alert.alertType === AlertType.RATING) {
     return (
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-[var(--color-text-secondary)] uppercase">Minimum Rating:</p>
-        <div className="flex items-center justify-between bg-[var(--color-bg-secondary)] p-2.5 rounded-lg border border-[var(--color-border-light)]">
+      <div className="space-y-4">
+        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Minimum Rating</span>
+        <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
           <BlueStarRating score={alert.starRating ?? 0} outOfFive={true} />
-          <span className="font-primary font-bold text-[var(--color-text-primary)] text-sm">{alert.starRating}+ Stars</span>
+          <span className="text-sm font-bold text-gray-900">{alert.starRating}+ Stars</span>
         </div>
       </div>
     );

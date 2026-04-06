@@ -5,12 +5,11 @@ import "ol/ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
 import { fromLonLat } from "ol/proj";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { Vector as VectorLayer } from "ol/layer";
-import { Vector as VectorSource, Cluster } from "ol/source";
+import { Vector as VectorSource, Cluster, XYZ } from "ol/source";
 import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import Overlay from "ol/Overlay";
 
@@ -73,8 +72,10 @@ export default function TideMap({
     return "#cbd5e1"; // gray-300 (Challenging/Quiet)
   };
 
+  const [isMapReady, setIsMapReady] = useState(false);
   const vectorSourceRef = useRef<VectorSource | null>(null);
   const clusterSourceRef = useRef<Cluster<Feature> | null>(null);
+  const prevBeachesCount = useRef(0);
 
   useEffect(() => {
     if (!mapElement.current) return;
@@ -82,7 +83,7 @@ export default function TideMap({
     // Initialize Sources
     const vectorSource = new VectorSource();
     const clusterSource = new Cluster({
-      distance: 25, // Restored to a more standard distance for better performance
+      distance: 25, 
       source: vectorSource,
     });
     vectorSourceRef.current = vectorSource;
@@ -93,7 +94,11 @@ export default function TideMap({
       target: mapElement.current,
       layers: [
         new TileLayer({
-          source: new OSM(),
+          source: new XYZ({
+            url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+            attributions: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+            crossOrigin: 'anonymous',
+          }),
         }),
         new VectorLayer({
           source: clusterSource,
@@ -163,17 +168,17 @@ export default function TideMap({
               image: new Icon({
                 anchor: [0.5, 1],
                 src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-                  <svg width="40" height="50" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="30" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
                     <circle cx="12" cy="10" r="7" fill="white"/>
                     <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${rating.toFixed(0)}</text>
                   </svg>
                 `)}`,
-                scale: 0.9,
+                scale: 0.8,
               }),
               text: new Text({
                 text: beach?.name,
-                offsetY: -40,
+                offsetY: -35,
                 font: "bold 11px Inter, sans-serif",
                 fill: new Fill({ color: "#111827" }),
                 stroke: new Stroke({ color: "#ffffff", width: 3 }),
@@ -201,6 +206,7 @@ export default function TideMap({
     initialMap.addOverlay(overlay);
 
     mapRef.current = initialMap;
+    setIsMapReady(true);
 
     initialMap.on("click", (evt) => {
       const feature = initialMap.forEachFeatureAtPixel(evt.pixel, (feat) => feat);
@@ -365,9 +371,20 @@ export default function TideMap({
         return feature;
       });
     } else {
-      features = beaches.map(beach => {
+      features = beaches
+        .filter(beach => beach.coordinates && (beach.coordinates.lat !== 0 || beach.coordinates.lng !== 0))
+        .map((beach, idx) => {
+        // Add a tiny deterministic jitter to separate markers at the EXACT same point
+        // Using a sunflower spiral layout based on index for neat separation at high zoom
+        // Only impacts horizontal alignment at 0.00005 degrees (~5 meters offset)
+        const angle = idx * 137.5 * (Math.PI / 180);
+        const radius = 0.00005 * Math.sqrt(idx);
+        
+        const jLng = beach.coordinates.lng + (radius * Math.cos(angle));
+        const jLat = beach.coordinates.lat + (radius * Math.sin(angle));
+
         const feature = new Feature({
-          geometry: new Point(fromLonLat([beach.coordinates.lng, beach.coordinates.lat])),
+          geometry: new Point(fromLonLat([jLng, jLat])),
         });
         feature.set("beach", beach);
         feature.set("type", "beach");
@@ -385,7 +402,6 @@ export default function TideMap({
     prevBeachesCount.current = beaches.length;
   }, [beaches, selectedDayIndex, currentZoom]);
 
-  const prevBeachesCount = useRef(beaches.length);
 
   return (
     <div className="relative w-full h-full">
