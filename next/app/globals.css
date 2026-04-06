@@ -635,38 +635,38 @@ body {
 }
 
 
-/* Jellyfish & Kelp Ocean Animations */
+/* Jellyfish & Kelp Ocean Animations - Anime Style */
 @keyframes jellyfish-blob {
   0%, 100% {
-    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+    transform: scale(1) translateY(0);
+  }
+  25% {
+    border-radius: 40% 60% 60% 40% / 60% 30% 70% 40%;
+    transform: scale(1.15, 0.85) translateY(2px); /* Squish */
   }
   50% {
-    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    border-radius: 70% 30% 50% 50% / 30% 60% 40% 70%;
+    transform: scale(0.85, 1.15) translateY(-6px); /* Stretch */
   }
-}
-
-@keyframes kelp-sway {
-  0%, 100% {
-    transform: translateY(0) rotate(-4deg) skewX(-2deg);
-  }
-  50% {
-    transform: translateY(-2px) rotate(4deg) skewX(2deg);
+  75% {
+    border-radius: 30% 70% 70% 30% / 70% 40% 60% 30%;
+    transform: scale(1.05) translateY(-2px); /* Overshoot */
   }
 }
 
 @keyframes float-fluid {
   0%, 100% {
-    transform: translateY(0) scale(1);
-    filter: drop-shadow(0 5px 15px rgba(96, 165, 250, 0.2));
+    filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.3));
   }
   50% {
-    transform: translateY(-5px) scale(1.05);
-    filter: drop-shadow(0 10px 20px rgba(96, 165, 250, 0.4));
+    filter: drop-shadow(0 0 25px rgba(28, 217, 255, 0.6));
   }
 }
 
 .animate-jellyfish {
-  animation: jellyfish-blob 6s ease-in-out infinite, float-fluid 4s ease-in-out infinite;
+  animation: jellyfish-blob 3.5s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite, 
+             float-fluid 5s ease-in-out infinite;
 }
 
 .animate-kelp {
