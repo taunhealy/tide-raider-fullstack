@@ -5,6 +5,8 @@ import TideMap from "@/app/components/map/TideMap";
 import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2 } from "lucide-react";
 import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components/ui/GradientButton";
 import { cn } from "@/app/lib/utils";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import WeatherForecastWidget from "@/app/components/sidebar/WeatherForecastWidget";
 
 interface Beach {
   id: string;
@@ -16,6 +18,7 @@ interface Beach {
   };
   difficulty: string;
   waveType: string;
+  regionId: string;
   region: string;
   countryId: string;
   country: string;
@@ -25,16 +28,24 @@ interface Beach {
 }
 
 export default function GlobalMapPage() {
+  const { filters, updateFilter } = useBeachFilters();
   const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"map" | "grid">("map");
+  
+  // Use selectedDayIndex but also sync it with filter
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [isLoggersOnly, setIsLoggersOnly] = useState(false);
-  const [isFoilingOnly, setIsFoilingOnly] = useState(false);
-  const [isHiddenGemsOnly, setIsHiddenGemsOnly] = useState(false);
+  
+  const isLoggersOnly = filters.isLongboarding || false;
+  const isFoilingOnly = filters.isFoiling || false;
+  const isHiddenGemsOnly = filters.isHiddenGem || false;
+
+  const setIsLoggersOnly = (val: boolean) => updateFilter("isLongboarding", val ? "true" : "");
+  const setIsFoilingOnly = (val: boolean) => updateFilter("isFoiling", val ? "true" : "");
+  const setIsHiddenGemsOnly = (val: boolean) => updateFilter("isHiddenGem", val ? "true" : "");
 
   const weekDays = useMemo(() => {
     const days = [];
@@ -60,6 +71,14 @@ export default function GlobalMapPage() {
     }
     return days;
   }, [beaches]);
+
+  // Update filter when selectedDayIndex changes
+  useEffect(() => {
+    const dateStr = weekDays[selectedDayIndex]?.dateStr;
+    if (dateStr) {
+      updateFilter("forecastDate", dateStr);
+    }
+  }, [selectedDayIndex, weekDays, updateFilter]);
 
   const selectedDateString = useMemo(() => {
     return weekDays[selectedDayIndex]?.dateStr || new Date().toISOString().split('T')[0];
@@ -299,11 +318,21 @@ export default function GlobalMapPage() {
               </div>
             </div>
           ) : viewMode === "map" ? (
-            <TideMap 
-              beaches={filteredBeaches} 
-              onBeachSelect={() => {}} 
-              selectedDayIndex={selectedDayIndex}
-            />
+            <div className="relative w-full h-full">
+              <div className="absolute top-6 left-6 z-30 w-72 pointer-events-auto">
+                <WeatherForecastWidget />
+              </div>
+              <TideMap 
+                beaches={filteredBeaches} 
+                onBeachSelect={(beach) => {
+                  updateFilter("regionId", beach.regionId);
+                }}
+                onRegionSelect={(regionId) => {
+                  updateFilter("regionId", regionId);
+                }}
+                selectedDayIndex={selectedDayIndex}
+              />
+            </div>
           ) : (
             <div className="absolute inset-0 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-max">
               {filteredBeaches.map(beach => (

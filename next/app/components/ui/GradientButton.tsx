@@ -40,8 +40,8 @@ const variantStyles: Record<GradientButtonVariant, { active: string; inactive: s
     inactive: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
   },
   "gray": {
-    active: "bg-gray-900 border-gray-900 text-white shadow-xl translate-y-[-1px]",
-    inactive: "bg-gray-50 border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-white transition-all",
+    active: "bg-gray-800 border-gray-800 text-white shadow-lg translate-y-[-1px]",
+    inactive: "bg-white border-gray-100 text-gray-900 hover:bg-gray-50 transition-colors",
   },
   "outline": {
     active: "border-2 border-purple-500 text-purple-500 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30",
@@ -74,7 +74,7 @@ export default function GradientButton({
   const sizeClass = sizeStyles[size];
   
   const baseStyles = `
-    rounded-lg font-medium transition-all duration-200
+    rounded-xl font-medium transition-all duration-200
     flex items-center justify-center gap-2
     disabled:opacity-50 disabled:cursor-not-allowed
     ${fullWidth ? "w-full" : ""}

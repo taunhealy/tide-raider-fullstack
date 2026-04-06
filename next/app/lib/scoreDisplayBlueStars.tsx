@@ -23,9 +23,11 @@ const StarIcon = ({
 export function BlueStarRating({
   score,
   outOfFive = false,
+  size = 16,
 }: {
   score: number;
   outOfFive?: boolean;
+  size?: number;
 }) {
   const scoreOutOfFive = outOfFive ? score : score / 2;
   const fullStars = Math.floor(scoreOutOfFive);
@@ -37,19 +39,19 @@ export function BlueStarRating({
         const rating = i + 1;
         if (rating <= fullStars) {
           return (
-            <StarIcon key={rating} className="text-[var(--color-tertiary)]" />
+            <StarIcon key={rating} size={size} className="text-[var(--color-tertiary)]" />
           );
         }
         if (hasHalfStar && rating === fullStars + 1) {
           return (
             <div key={rating} className="opacity-50">
-              <StarIcon className="text-[var(--color-tertiary)]" />
+              <StarIcon size={size} className="text-[var(--color-tertiary)]" />
             </div>
           );
         }
         return (
           <div key={rating} className="opacity-20">
-            <StarIcon className="text-[var(--color-tertiary)]" />
+            <StarIcon size={size} className="text-[var(--color-tertiary)]" />
           </div>
         );
       })}

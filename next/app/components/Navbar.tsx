@@ -172,7 +172,7 @@ export default function Navbar() {
               }}
               className="flex items-center transition-all duration-300"
             >
-              <span className="text-[20px] leading-[28px] font-bold tracking-[-1px] text-[var(--color-text-primary)] font-primary uppercase">
+              <span className="text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase">
                 TIDE RAIDER
               </span>
             </Link>

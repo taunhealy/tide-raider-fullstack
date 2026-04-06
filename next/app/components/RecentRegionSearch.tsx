@@ -165,25 +165,27 @@ export default function RecentRegionSearch({
             onClick={() => handleButtonClick(search)}
             disabled={loadingId !== null}
             className={cn(
-              "relative px-4 py-3 min-w-[120px] rounded-xl transition-all duration-300 overflow-hidden group/recent",
+              "relative px-4 py-2 w-fit rounded-xl transition-all duration-300 overflow-hidden group/recent",
               "border shadow-sm flex items-center justify-between gap-3",
               isLoading && "cursor-wait opacity-70",
               isSelected
-                ? "bg-gray-800 border-gray-800 text-white shadow-lg translate-y-[-1px]"
-                : "bg-white border-gray-100 text-gray-900 hover:bg-gray-50 transition-all"
+                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20 translate-y-[-1px]"
+                : "bg-gray-100 border-gray-100 text-gray-500 hover:bg-gray-200 transition-all font-semibold"
             )}
           >
             <span className={cn(
-              "text-xs font-bold truncate text-left relative z-10",
-              isSelected ? "text-white" : "text-gray-900"
+              "text-[10px] font-black uppercase tracking-widest truncate text-left relative z-10 font-primary",
+              isSelected ? "text-white" : "text-gray-500"
             )}>
               {search.region.name}
             </span>
             
             {count > 0 && (
               <span className={cn(
-                "text-[9px] font-bold px-1.5 py-0.5 rounded-md border relative z-10",
-                isSelected ? "bg-white/10 border-white/20 text-white" : "bg-gray-50 border-gray-100 text-gray-400"
+                "text-[9px] font-black px-1.5 py-0.5 rounded-lg border relative z-10",
+                isSelected 
+                  ? "bg-white/20 border-white/40 text-white" 
+                  : "bg-white border-gray-200 text-gray-400 group-hover/recent:bg-white"
               )}>
                 {count}
               </span>

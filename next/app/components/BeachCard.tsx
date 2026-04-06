@@ -19,6 +19,7 @@ import {
 import { MediaGrid } from "@/app/components/MediaGrid";
 import { useQueryClient } from "@tanstack/react-query";
 import type { LogEntry } from "@/app/types/raidlogs";
+import { format } from "date-fns";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
@@ -244,7 +245,6 @@ const BeachCard = memo(function BeachCard({
         transition-all 
         duration-300 
         hover:shadow-md
-        [&_.animate-in]:opacity-0
         w-full
         ${isLocalLoading ? "animate-pulse" : ""}
       `}
@@ -258,49 +258,10 @@ const BeachCard = memo(function BeachCard({
                 {/* Wave Type Icon and Beach Details */}
                 <div className="flex items-center gap-2 md:gap-3">
                   {/* Wave Type Icon with Tooltip */}
-                  <div
-                    className="relative min-w-[40px] w-10 h-10 md:min-w-[54px] md:w-14 md:h-14 rounded-full overflow-hidden bg-gray-100 border border-gray-200"
-                    onMouseEnter={() => setShowWaveTypeHint(true)}
-                    onMouseLeave={() => setShowWaveTypeHint(false)}
-                  >
-                    <Image
-                      src={
-                        beach.waveType &&
-                        WAVE_TYPE_ICONS[beach.waveType as WaveType]
-                          ? WAVE_TYPE_ICONS[beach.waveType as WaveType]
-                          : WAVE_TYPE_ICONS["Beach Break"]
-                      }
-                      alt={`${beach.waveType || "Default"} icon`}
-                      fill
-                      className="object-cover"
-                      placeholder="blur"
-                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
-                    />
-                    {beach.waveType && (
-                      <div
-                        className={`
-                        absolute bottom-full left-1/2 -translate-x-1/2 mb-2
-                        bg-black bg-opacity-50 
-                        px-3 py-1 rounded-md 
-                        text-white text-sm 
-                        transition-all duration-300 ease-in-out
-                        whitespace-nowrap
-                        ${
-                          showWaveTypeHint
-                            ? "opacity-100 translate-y-0"
-                            : "opacity-0 translate-y-2"
-                        }
-                      `}
-                        data-no-animation
-                      >
-                        {formatWaveType(beach.waveType)}
-                      </div>
-                    )}
-                  </div>
 
                   {/* Beach Information */}
                   <div>
-                    <h4 className="text-lg font-primary font-black text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in uppercase tracking-wider">
+                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 transition-all">
                       {beach.name}
                       {forecastData?.windSpeed &&
                         forecastData.windSpeed > 25 && (
@@ -319,8 +280,14 @@ const BeachCard = memo(function BeachCard({
                         </span>
                       )}
                     </h4>
-                    <h6 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mt-0.5">
-                      {formatRegionName(beach.region?.name, beach.regionId)}
+                    <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
+                        {formatWaveType(beach.waveType)}
+                      </span>
+                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                      <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
+                        {formatRegionName(beach.region?.name, beach.regionId)}
+                      </span>
                     </h6>
                   </div>
                 </div>
@@ -382,13 +349,24 @@ const BeachCard = memo(function BeachCard({
                       </div>
                     </div>
 
+                    {/* Latest Session Log */}
+                    {beachSessions[0] && (
+                      <div className="flex items-center gap-2 mt-3 font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
+                        <span className="text-gray-400 font-medium">Latest:</span>
+                        <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
+                        <span className="text-gray-400 font-normal ml-auto">
+                          {format(new Date(beachSessions[0].date), "MMM d")}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Add the Show/Hide Conditions button here - ALWAYS present */}
-                    <div className="text-sm flex flex-col gap-1 mt-3">
+                    <div className="flex flex-col gap-1 mt-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 font-primary text-[14px] w-fit"
+                        className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
                         onClick={() => setShowIdealConditions((v) => !v)}
                         aria-expanded={showIdealConditions}
                         aria-controls={`ideal-conditions-${beach.id}`}
@@ -399,75 +377,46 @@ const BeachCard = memo(function BeachCard({
                             : "Show Conditions"}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                          className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                         />
                       </Button>
                       <div
                         id={`ideal-conditions-${beach.id}`}
-                        className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-40 mt-2" : "max-h-0"}`}
+                        className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                       >
-                        <ul className="space-y-1.5">
-                          {getConditionReasons(
-                            beach,
-                            forecastData,
-                            false
-                          ).optimalConditions.map((condition, index, array) => (
-                            <li
-                              key={index}
-                              className={`flex items-center gap-2 md:gap-2 pb-2 ${
-                                index !== array.length - 1
-                                  ? "border-b border-gray-200"
-                                  : ""
-                              }`}
-                            >
-                              <span className="inline-flex items-center justify-left w-4 h-4">
-                                {condition.isMet ? (
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    className="w-4 h-4 text-[var(--color-tertiary)]"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                  >
-                                    <path
-                                      d="M20 6L9 17L4 12"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                ) : (
-                                  <svg
-                                    viewBox="0 0 24 24"
-                                    className="w-4 h-4 text-[var(--color-text-secondary)]"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                  >
-                                    <path
-                                      d="M18 6L6 18M6 6l12 12"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                )}
-                              </span>
-                              <span
-                                className={`text-xs md:text-sm ${
-                                  condition.isMet
-                                    ? "text-gray-800"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                <span className="font-medium md:font-semibold font-primary">
-                                  {condition.text.split(":")[0]}:
-                                </span>{" "}
-                                <span className="font-normal font-primary">
-                                  {condition.text.split(":")[1]}
-                                </span>
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
+                          {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
+                            const [label, value] = condition.text.split(":");
+                            return (
+                              <div key={idx} className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                                    {label}
+                                  </span>
+                                  <span className="font-primary text-[12px] font-semibold text-black leading-none">
+                                    {value}
+                                  </span>
+                                </div>
+                                <div className={cn(
+                                  "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200",
+                                  condition.isMet 
+                                    ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
+                                    : "border-gray-100 bg-gray-50 text-gray-300"
+                                )}>
+                                  {condition.isMet ? (
+                                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                      <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  ) : (
+                                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                      <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -476,9 +425,9 @@ const BeachCard = memo(function BeachCard({
                   <div className="text-sm flex flex-col gap-1">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="flex items-center gap-2 font-primary text-[14px] w-fit"
+                      className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
                       onClick={() => setShowIdealConditions((v) => !v)}
                       aria-expanded={showIdealConditions}
                       aria-controls={`ideal-conditions-${beach.id}`}
@@ -489,43 +438,31 @@ const BeachCard = memo(function BeachCard({
                           : "Show Conditions"}
                       </span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                        className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                       />
                     </Button>
                     <div
                       id={`ideal-conditions-${beach.id}`}
-                      className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-40 mt-2" : "max-h-0"}`}
+                      className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                     >
-                      <ul className="space-y-1">
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">Optimal Wind:</span>{" "}
-                          {beach.optimalWindDirections.join(", ")}
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">Wind Speed:</span>{" "}
-                          0-25kts
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Swell Direction:
-                          </span>{" "}
-                          {beach.optimalSwellDirections.min}° -{" "}
-                          {beach.optimalSwellDirections.max}°
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Wave Size:
-                          </span>{" "}
-                          {beach.swellSize.min}m - {beach.swellSize.max}m
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Swell Period:
-                          </span>{" "}
-                          {beach.idealSwellPeriod.min}s -{" "}
-                          {beach.idealSwellPeriod.max}s
-                        </li>
-                      </ul>
+                      <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
+                        {[
+                          { label: "Optimal Wind", value: beach.optimalWindDirections.join(", ") },
+                          { label: "Wind Speed", value: "0-25kts" },
+                          { label: "Optimal Swell Direction", value: `${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°` },
+                          { label: "Optimal Wave Size", value: `${beach.swellSize.min}m - ${beach.swellSize.max}m` },
+                          { label: "Optimal Swell Period", value: `${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s` }
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 mb-1">
+                              {item.label}
+                            </span>
+                            <span className="font-primary text-[12px] font-semibold text-black">
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -558,49 +495,10 @@ const BeachCard = memo(function BeachCard({
                 {/* Wave Type Icon and Beach Details */}
                 <div className="flex items-center gap-2 md:gap-3">
                   {/* Wave Type Icon with Tooltip */}
-                  <div
-                    className="relative min-w-[40px] w-10 h-10 md:min-w-[54px] md:w-14 md:h-14 rounded-full overflow-hidden bg-gray-100 border border-gray-200"
-                    onMouseEnter={() => setShowWaveTypeHint(true)}
-                    onMouseLeave={() => setShowWaveTypeHint(false)}
-                  >
-                    <Image
-                      src={
-                        beach.waveType &&
-                        WAVE_TYPE_ICONS[beach.waveType as WaveType]
-                          ? WAVE_TYPE_ICONS[beach.waveType as WaveType]
-                          : WAVE_TYPE_ICONS["Beach Break"]
-                      }
-                      alt={`${beach.waveType || "Default"} icon`}
-                      fill
-                      className="object-cover"
-                      placeholder="blur"
-                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhwAAAABJRU5ErkJggg=="
-                    />
-                    {beach.waveType && (
-                      <div
-                        className={`
-                        absolute bottom-full left-1/2 -translate-x-1/2 mb-2
-                        bg-black bg-opacity-50 
-                        px-3 py-1 rounded-md 
-                        text-white text-sm 
-                        transition-all duration-300 ease-in-out
-                        whitespace-nowrap
-                        ${
-                          showWaveTypeHint
-                            ? "opacity-100 translate-y-0"
-                            : "opacity-0 translate-y-2"
-                        }
-                      `}
-                        data-no-animation
-                      >
-                        {formatWaveType(beach.waveType)}
-                      </div>
-                    )}
-                  </div>
 
                   {/* Beach Information */}
                   <div>
-                    <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
+                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 transition-all">
                       {beach.name}
                       {forecastData?.windSpeed &&
                         forecastData.windSpeed > 25 && (
@@ -619,8 +517,14 @@ const BeachCard = memo(function BeachCard({
                         </span>
                       )}
                     </h4>
-                    <h6 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mt-0.5">
-                      {formatRegionName(beach.region?.name, beach.regionId)}
+                    <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
+                        {formatWaveType(beach.waveType)}
+                      </span>
+                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                      <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
+                        {formatRegionName(beach.region?.name, beach.regionId)}
+                      </span>
                     </h6>
                   </div>
                 </div>
@@ -683,78 +587,58 @@ const BeachCard = memo(function BeachCard({
                     </div>
 
                     {/* Current Conditions */}
-                    <div className="text-sm flex flex-col gap-1 border-t border-gray-200 pt-3 mt-3">
-                      <ul className="space-y-1.5">
-                        {getConditionReasons(
-                          beach,
-                          forecastData,
-                          false
-                        ).optimalConditions.map((condition, index, array) => (
-                          <li
-                            key={index}
-                            className={`flex items-center gap-2 md:gap-2 pb-2 ${
-                              index !== array.length - 1
-                                ? "border-b border-gray-200"
-                                : ""
-                            }`}
-                          >
-                            <span className="inline-flex items-center justify-center w-4 h-4">
+                    <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100 mt-3">
+                      {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
+                        const [label, value] = condition.text.split(":");
+                        return (
+                          <div key={idx} className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                                {label}
+                              </span>
+                              <span className="font-primary text-[12px] font-semibold text-black leading-none">
+                                {value}
+                              </span>
+                            </div>
+                            <div className={cn(
+                              "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200",
+                              condition.isMet 
+                                ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
+                                : "border-gray-100 bg-gray-50 text-gray-300"
+                            )}>
                               {condition.isMet ? (
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  className="w-4 h-4 text-[var(--color-tertiary)]"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                >
-                                  <path
-                                    d="M20 6L9 17L4 12"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
+                                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                  <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                               ) : (
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  className="w-4 h-4 text-[var(--color-text-secondary)]"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                >
-                                  <path
-                                    d="M18 6L6 18M6 6l12 12"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
+                                <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                               )}
-                            </span>
-                            <span
-                              className={`text-xs md:text-sm ${
-                                condition.isMet
-                                  ? "text-gray-800"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              <span className="font-medium md:font-semibold font-primary">
-                                {condition.text.split(":")[0]}:
-                              </span>{" "}
-                              <span className="font-normal font-primary">
-                                {condition.text.split(":")[1]}
-                              </span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
+                    {/* Latest Session Log */}
+                    {beachSessions[0] && (
+                      <div className="flex items-center gap-2 mt-3 font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
+                        <span className="text-gray-400 font-medium">Latest:</span>
+                        <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
+                        <span className="text-gray-400 font-normal ml-auto">
+                          {format(new Date(beachSessions[0].date), "MMM d")}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Add the Show/Hide Conditions button here - ALWAYS present */}
-                    <div className="text-sm flex flex-col gap-1 mt-3">
+                    <div className="flex flex-col gap-1 mt-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 font-primary text-[14px] w-fit"
+                        className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
                         onClick={() => setShowIdealConditions((v) => !v)}
                         aria-expanded={showIdealConditions}
                         aria-controls={`ideal-conditions-${beach.id}`}
@@ -765,43 +649,31 @@ const BeachCard = memo(function BeachCard({
                             : "Show Conditions"}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                          className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                         />
                       </Button>
                       <div
                         id={`ideal-conditions-${beach.id}`}
-                        className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-40 mt-2" : "max-h-0"}`}
+                        className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                       >
-                        <ul className="space-y-1">
-                          <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                            <span className="font-medium">Optimal Wind:</span>{" "}
-                            {beach.optimalWindDirections.join(", ")}
-                          </li>
-                          <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                            <span className="font-medium">Wind Speed:</span>{" "}
-                            0-25kts
-                          </li>
-                          <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                            <span className="font-medium">
-                              Optimal Swell Direction:
-                            </span>{" "}
-                            {beach.optimalSwellDirections.min}° -{" "}
-                            {beach.optimalSwellDirections.max}°
-                          </li>
-                          <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                            <span className="font-medium">
-                              Optimal Wave Size:
-                            </span>{" "}
-                            {beach.swellSize.min}m - {beach.swellSize.max}m
-                          </li>
-                          <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                            <span className="font-medium">
-                              Optimal Swell Period:
-                            </span>{" "}
-                            {beach.idealSwellPeriod.min}s -{" "}
-                            {beach.idealSwellPeriod.max}s
-                          </li>
-                        </ul>
+                        <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
+                          {[
+                            { label: "Optimal Wind", value: beach.optimalWindDirections.join(", ") },
+                            { label: "Wind Speed", value: "0-25kts" },
+                            { label: "Optimal Swell Direction", value: `${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°` },
+                            { label: "Optimal Wave Size", value: `${beach.swellSize.min}m - ${beach.swellSize.max}m` },
+                            { label: "Optimal Swell Period", value: `${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s` }
+                          ].map((item, idx) => (
+                            <div key={idx} className="flex flex-col">
+                              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 mb-1">
+                                {item.label}
+                              </span>
+                              <span className="font-primary text-[12px] font-semibold text-black">
+                                {item.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -810,9 +682,9 @@ const BeachCard = memo(function BeachCard({
                   <div className="text-sm flex flex-col gap-1">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="flex items-center gap-2 font-primary text-[14px] w-fit"
+                      className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
                       onClick={() => setShowIdealConditions((v) => !v)}
                       aria-expanded={showIdealConditions}
                       aria-controls={`ideal-conditions-${beach.id}`}
@@ -823,43 +695,31 @@ const BeachCard = memo(function BeachCard({
                           : "Show Conditions"}
                       </span>
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                        className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                       />
                     </Button>
                     <div
                       id={`ideal-conditions-${beach.id}`}
-                      className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-40 mt-2" : "max-h-0"}`}
+                      className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                     >
-                      <ul className="space-y-1">
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">Optimal Wind:</span>{" "}
-                          {beach.optimalWindDirections.join(", ")}
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">Wind Speed:</span>{" "}
-                          0-25kts
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Swell Direction:
-                          </span>{" "}
-                          {beach.optimalSwellDirections.min}° -{" "}
-                          {beach.optimalSwellDirections.max}°
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Wave Size:
-                          </span>{" "}
-                          {beach.swellSize.min}m - {beach.swellSize.max}m
-                        </li>
-                        <li className="text-xs md:text-sm flex items-center gap-1 font-primary text-gray-600">
-                          <span className="font-medium">
-                            Optimal Swell Period:
-                          </span>{" "}
-                          {beach.idealSwellPeriod.min}s -{" "}
-                          {beach.idealSwellPeriod.max}s
-                        </li>
-                      </ul>
+                      <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
+                        {[
+                          { label: "Optimal Wind", value: beach.optimalWindDirections.join(", ") },
+                          { label: "Wind Speed", value: "0-25kts" },
+                          { label: "Optimal Swell Direction", value: `${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°` },
+                          { label: "Optimal Wave Size", value: `${beach.swellSize.min}m - ${beach.swellSize.max}m` },
+                          { label: "Optimal Swell Period", value: `${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s` }
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 mb-1">
+                              {item.label}
+                            </span>
+                            <span className="font-primary text-[12px] font-semibold text-black">
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

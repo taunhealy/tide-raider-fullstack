@@ -104,7 +104,14 @@ export default function Footer() {
           <div className="flex items-center gap-8 text-[10px] font-black text-white/30 uppercase tracking-[0.1em]">
             <span>© {currentYear} Tide Raider</span>
             <div className="hidden md:block w-px h-3 bg-white/10" />
-            <span>Built by the Deep Sea team</span>
+            <a 
+              href="https://www.kealogic.dev" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-white/60 transition-colors"
+            >
+              Built by Kea Logic
+            </a>
           </div>
           
           <div className="flex gap-4">

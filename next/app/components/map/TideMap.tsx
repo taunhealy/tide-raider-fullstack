@@ -34,6 +34,7 @@ interface Beach {
 interface TideMapProps {
   beaches: Beach[];
   onBeachSelect: (beach: Beach) => void;
+  onRegionSelect: (regionId: string) => void;
   selectedDayIndex?: number;
   center?: [number, number];
   zoom?: number;
@@ -42,6 +43,7 @@ interface TideMapProps {
 export default function TideMap({ 
   beaches, 
   onBeachSelect, 
+  onRegionSelect,
   selectedDayIndex = 0,
   center = [18.47, -34.10], 
   zoom = 10 
@@ -71,8 +73,20 @@ export default function TideMap({
     return "#cbd5e1"; // gray-300 (Challenging/Quiet)
   };
 
+  const vectorSourceRef = useRef<VectorSource | null>(null);
+  const clusterSourceRef = useRef<Cluster<Feature> | null>(null);
+
   useEffect(() => {
     if (!mapElement.current) return;
+
+    // Initialize Sources
+    const vectorSource = new VectorSource();
+    const clusterSource = new Cluster({
+      distance: 25, // Restored to a more standard distance for better performance
+      source: vectorSource,
+    });
+    vectorSourceRef.current = vectorSource;
+    clusterSourceRef.current = clusterSource;
 
     // Initialize Map
     const initialMap = new Map({
@@ -80,6 +94,92 @@ export default function TideMap({
       layers: [
         new TileLayer({
           source: new OSM(),
+        }),
+        new VectorLayer({
+          source: clusterSource,
+          style: (feature) => {
+            const clusterFeatures = feature.get("features");
+            const size = clusterFeatures.length;
+            
+            if (!clusterFeatures || size === 0) return;
+
+            const representative = clusterFeatures[0];
+            const type = representative.get("type");
+            const manualLabel = representative.get("label");
+            const manualCount = representative.get("count");
+
+            const getRatingForBeach = (b: any) => {
+              const dateKey = selectedDateStringRef.current;
+              return b?.dailyScores?.[dateKey]?.rating ?? b?.rating ?? 3;
+            };
+
+            if (type === "continent" || type === "country") {
+              const items = representative.get("allBeaches") || [];
+              const ratings = items.map((b: any) => getRatingForBeach(b));
+              const avgRating = ratings.length > 0 
+                ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
+                : 3;
+
+              return new Style({
+                image: new CircleStyle({
+                  radius: type === "continent" ? 28 : 22,
+                  stroke: new Stroke({ color: "#fff", width: 2.5 }),
+                  fill: new Fill({ color: getBrandedColor(avgRating) }),
+                }),
+                text: new Text({
+                  text: `${manualLabel}\n${manualCount}`,
+                  fill: new Fill({ color: "#fff" }),
+                  font: `bold ${type === "continent" ? '12px' : '10px'} Inter, sans-serif`,
+                  textAlign: "center",
+                  offsetY: 2,
+                }),
+              });
+            }
+
+            if (size > 1) {
+              const ratings = clusterFeatures.map((f: any) => getRatingForBeach(f.get("beach")));
+              const avgRating = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
+
+              return new Style({
+                image: new CircleStyle({
+                  radius: 12 + Math.min(size, 6),
+                  stroke: new Stroke({ color: "#fff", width: 1.5 }),
+                  fill: new Fill({ color: getBrandedColor(avgRating) }),
+                }),
+                text: new Text({
+                  text: size.toString(),
+                  fill: new Fill({ color: "#fff" }),
+                  font: "bold 12px Inter, sans-serif",
+                }),
+              });
+            }
+            
+            // Single Marker Style
+            const beach = representative.get("beach");
+            const dateKey = selectedDateStringRef.current;
+            const rating = beach?.dailyScores?.[dateKey]?.rating ?? beach?.rating ?? 3;
+            
+            return new Style({
+              image: new Icon({
+                anchor: [0.5, 1],
+                src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+                  <svg width="40" height="50" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
+                    <circle cx="12" cy="10" r="7" fill="white"/>
+                    <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${rating.toFixed(0)}</text>
+                  </svg>
+                `)}`,
+                scale: 0.9,
+              }),
+              text: new Text({
+                text: beach?.name,
+                offsetY: -40,
+                font: "bold 11px Inter, sans-serif",
+                fill: new Fill({ color: "#111827" }),
+                stroke: new Stroke({ color: "#ffffff", width: 3 }),
+              }),
+            });
+          },
         }),
       ],
       view: new View({
@@ -89,110 +189,14 @@ export default function TideMap({
       controls: [],
     });
 
-    const vectorSource = new VectorSource();
-    const clusterSource = new Cluster({
-      distance: 10, // Reduced from 25 to show more individual beaches
-      source: vectorSource,
-    });
-
-    const vectorLayer = new VectorLayer({
-      source: clusterSource,
-      style: (feature) => {
-        const clusterFeatures = feature.get("features");
-        const size = clusterFeatures.length;
-        
-        // Check if our first feature is a manual cluster (Continent or Country)
-        const representative = clusterFeatures[0];
-        const type = representative.get("type");
-        const manualLabel = representative.get("label");
-        const manualCount = representative.get("count");
-
-        const getRatingForBeach = (b: any) => {
-          const dateKey = selectedDateStringRef.current;
-          return b?.dailyScores?.[dateKey]?.rating ?? b?.rating ?? 3;
-        };
-
-        if (type === "continent" || type === "country") {
-          const items = representative.get("allBeaches") || [];
-          const ratings = items.map((b: any) => getRatingForBeach(b));
-          const avgRating = ratings.length > 0 
-            ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
-            : 3;
-
-          return new Style({
-            image: new CircleStyle({
-              radius: type === "continent" ? 28 : 22,
-              stroke: new Stroke({ color: "#fff", width: 2.5 }),
-              fill: new Fill({ color: getBrandedColor(avgRating) }),
-            }),
-            text: new Text({
-              text: manualLabel + "\n" + manualCount,
-              fill: new Fill({ color: "#fff" }),
-              font: `bold ${type === "continent" ? '12px' : '10px'} Inter, sans-serif`,
-              textAlign: "center",
-              offsetY: 2,
-            }),
-          });
-        }
-
-        if (size > 1) {
-          // Automatic Proximity Cluster Style
-          const ratings = clusterFeatures.map((f: any) => getRatingForBeach(f.get("beach")));
-          const avgRating = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
-
-          return new Style({
-            image: new CircleStyle({
-              radius: 12 + Math.min(size, 6),
-              stroke: new Stroke({ color: "#fff", width: 1.5 }),
-              fill: new Fill({ color: getBrandedColor(avgRating) }),
-            }),
-            text: new Text({
-              text: size.toString(),
-              fill: new Fill({ color: "#fff" }),
-              font: "bold 12px Inter, sans-serif",
-            }),
-          });
-        }
-        
-        // Single Marker Style
-        const beach = representative.get("beach");
-        const dateKey = selectedDateStringRef.current;
-        const rating = beach?.dailyScores?.[dateKey]?.rating ?? beach?.rating ?? 3;
-        
-        return new Style({
-          image: new Icon({
-            anchor: [0.5, 1],
-            src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
-              <svg width="40" height="50" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
-                <circle cx="12" cy="10" r="7" fill="white"/>
-                <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${rating.toFixed(0)}</text>
-              </svg>
-            `)}`,
-            scale: 0.9,
-          }),
-          text: new Text({
-            text: beach?.name,
-            offsetY: -40,
-            font: "bold 11px Inter, sans-serif",
-            fill: new Fill({ color: "#111827" }),
-            stroke: new Stroke({ color: "#ffffff", width: 3 }),
-          }),
-        });
-      },
-    });
-
     initialMap.getView().on("change:resolution", () => {
-      const zoom = initialMap.getView().getZoom();
-      if (zoom !== undefined) setCurrentZoom(zoom);
+      const gZoom = initialMap.getView().getZoom();
+      if (gZoom !== undefined) setCurrentZoom(gZoom);
     });
-
-    initialMap.addLayer(vectorLayer);
 
     const overlay = new Overlay({
       element: popupRef.current!,
       autoPan: true,
-      // autoPanAnimation is removed as it's not a valid property in current OL versions or definitions
     });
     initialMap.addOverlay(overlay);
 
@@ -202,12 +206,19 @@ export default function TideMap({
       const feature = initialMap.forEachFeatureAtPixel(evt.pixel, (feat) => feat);
       if (feature) {
         const clusterFeatures = feature.get("features");
+        if (!clusterFeatures) return;
+        
         const representative = clusterFeatures[0];
         const type = representative.get("type");
 
         if (type === "continent" || type === "country") {
-          // Zoom into the center of this group
           const coords = (representative.getGeometry() as Point).getCoordinates();
+          
+          if (type === "country") {
+            const countryId = representative.get("countryId") || representative.get("beach")?.countryId;
+            if (countryId) onRegionSelect(countryId);
+          }
+
           initialMap.getView().animate({
             center: coords,
             zoom: type === "continent" ? 5 : 8,
@@ -217,10 +228,7 @@ export default function TideMap({
         }
 
         if (clusterFeatures.length > 1) {
-          // Zoom into proximity cluster
           const extent = new VectorSource({ features: clusterFeatures }).getExtent();
-          
-          // Check if all features have identical coordinates
           const firstCoord = (clusterFeatures[0].getGeometry() as Point).getCoordinates();
           const allSame = clusterFeatures.every((f: any) => {
             const coord = (f.getGeometry() as Point).getCoordinates();
@@ -252,6 +260,51 @@ export default function TideMap({
       }
     });
 
+    // Detect visible region on pan/zoom
+    let lastAutoRegion = "";
+    initialMap.on("moveend", () => {
+      const gZoom = initialMap.getView().getZoom();
+      const center = initialMap.getView().getCenter();
+      if (!center || !gZoom || gZoom < 4) return;
+
+      const extent = initialMap.getView().calculateExtent(initialMap.getSize());
+      const featuresInView = vectorSource.getFeaturesInExtent(extent);
+      
+      if (featuresInView.length > 0) {
+        let closestFeature = null;
+        let minDistance = Infinity;
+
+        featuresInView.forEach(f => {
+          const geom = f.getGeometry() as Point;
+          const coord = geom.getCoordinates();
+          const dx = coord[0] - center[0];
+          const dy = coord[1] - center[1];
+          const dist = dx*dx + dy*dy;
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestFeature = f;
+          }
+        });
+
+        if (closestFeature) {
+          const feature = closestFeature as Feature;
+          const type = feature.get("type");
+          let targetRegion = "";
+
+          if (type === "country" || type === "continent") {
+            targetRegion = feature.get("countryId") || feature.get("beach")?.countryId;
+          } else if (type === "beach") {
+            targetRegion = feature.get("beach")?.regionId || feature.get("beach")?.countryId;
+          }
+
+          if (targetRegion && targetRegion !== lastAutoRegion) {
+            lastAutoRegion = targetRegion;
+            onRegionSelect(targetRegion);
+          }
+        }
+      }
+    });
+
     initialMap.on("pointermove", (evt) => {
       const pixel = initialMap.getEventPixel(evt.originalEvent);
       const hit = initialMap.hasFeatureAtPixel(pixel);
@@ -262,19 +315,19 @@ export default function TideMap({
   }, []);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !vectorSourceRef.current) return;
 
-    const vectorLayer = mapRef.current.getLayers().getArray().find(l => l instanceof VectorLayer) as VectorLayer<Cluster<Feature>>;
-    const clusterSource = vectorLayer.getSource() as Cluster<Feature>;
-    const vectorSource = clusterSource.getSource();
-    vectorSource!.clear();
+    const vectorSource = vectorSourceRef.current;
+    vectorSource.clear();
+
+    if (!beaches || beaches.length === 0) return;
 
     let features: Feature[] = [];
 
     if (currentZoom < 4) {
-      // Group by Continent
       const continents: Record<string, Beach[]> = {};
       beaches.forEach(b => {
+        if (!b.continentId) return;
         if (!continents[b.continentId]) continents[b.continentId] = [];
         continents[b.continentId].push(b);
       });
@@ -292,9 +345,9 @@ export default function TideMap({
         return feature;
       });
     } else if (currentZoom < 7) {
-      // Group by Country
       const countries: Record<string, Beach[]> = {};
       beaches.forEach(b => {
+        if (!b.countryId) return;
         if (!countries[b.countryId]) countries[b.countryId] = [];
         countries[b.countryId].push(b);
       });
@@ -322,14 +375,12 @@ export default function TideMap({
       });
     }
 
-    vectorSource!.addFeatures(features);
-    
-    // Trigger layer redraw to use new selectedDayIndexRef value
-    vectorLayer.changed();
-    
-    if (features.length > 0 && beaches.length > prevBeachesCount.current) {
-      const extent = vectorSource!.getExtent();
-      mapRef.current.getView().fit(extent, { padding: [100, 100, 100, 100], maxZoom: 12 });
+    if (features.length > 0) {
+      vectorSource.addFeatures(features);
+      if (beaches.length > prevBeachesCount.current) {
+        const extent = vectorSource.getExtent();
+        mapRef.current.getView().fit(extent, { padding: [100, 100, 100, 100], maxZoom: 12 });
+      }
     }
     prevBeachesCount.current = beaches.length;
   }, [beaches, selectedDayIndex, currentZoom]);
