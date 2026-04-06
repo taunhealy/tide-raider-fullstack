@@ -482,109 +482,114 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 font-primary">
-      <div className="flex flex-col sm:flex-row gap-6">
-        <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6">Dashboard</h1>
+    <div className="min-h-screen bg-black text-gray-100 font-primary selection:bg-[var(--color-tertiary)]/30">
+      {/* Background Glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-[var(--color-tertiary)]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 -right-24 w-80 h-80 bg-blue-600/5 rounded-full blur-[100px]" />
+      </div>
 
-          <div className="flex flex-row sm:flex-row gap-2 sm:gap-4 mb-6 flex-wrap">
-            <Button
-              variant={activeTab === "account" ? "default" : "outline"}
-              onClick={() => setActiveTab("account")}
-              className="w-full sm:w-auto font-primary"
-            >
-              Account
-            </Button>
-            <Button
-              variant={activeTab === "billing" ? "default" : "outline"}
-              onClick={() => setActiveTab("billing")}
-              className="w-full sm:w-auto font-primary"
-            >
-              Billing
-            </Button>
-            <Button
-              variant={activeTab === "ads" ? "default" : "outline"}
-              onClick={() => setActiveTab("ads")}
-              className="w-full sm:w-auto font-primary"
-            >
-              Ads
-            </Button>
-            <Button
-              variant={activeTab === "alerts" ? "default" : "outline"}
-              onClick={() => setActiveTab("alerts")}
-              className="w-full sm:w-auto font-primary"
-            >
-              Alerts
-            </Button>
-            <Button
-              variant={activeTab === "notifications" ? "default" : "outline"}
-              onClick={() => setActiveTab("notifications")}
-              className="w-full sm:w-auto font-primary relative"
-            >
-              Notifications
-              <div className="absolute -top-2 -right-2">
-                <NotificationBadge />
-              </div>
-            </Button>
+      <div className="container mx-auto p-4 sm:p-8 relative z-10">
+        <div className="flex flex-col gap-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tighter mb-2">
+                Command Center
+              </h1>
+              <p className="text-gray-400 text-sm">Control your raids, alerts, and navigation data.</p>
+            </div>
           </div>
 
-          <div className="min-h-[400px] w-full max-w-full sm:min-w-[500px] sm:max-w-[500px]">
+          {/* Glass Tab Navigation */}
+          <div className="flex items-center gap-1 p-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl w-fit overflow-x-auto max-w-full no-scrollbar">
+            {[
+              { id: "account", label: "Account" },
+              { id: "billing", label: "Billing" },
+              { id: "ads", label: "Ads" },
+              { id: "alerts", label: "Alerts" },
+              { id: "notifications", label: "Messages" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 relative group
+                  ${activeTab === tab.id 
+                    ? "text-white bg-white/10" 
+                    : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                  }`}
+              >
+                {tab.label}
+                {tab.id === "notifications" && (
+                  <span className="ml-2 inline-flex items-center">
+                    <NotificationBadge />
+                  </span>
+                )}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-[var(--color-tertiary)] shadow-[0_0_8px_var(--color-tertiary)]" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="w-full max-w-4xl">
             {activeTab === "account" && (
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="username"
-                    className="block text-sm font-medium mb-2"
-                  >
-                    Username
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2 space-y-2 sm:space-y-0">
-                    {isLoadingUser ? (
-                      <div className="w-full h-[40px] bg-gray-200 animate-pulse rounded-md" />
-                    ) : (
-                      <input
-                        id="username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => {
-                          setUsername(e.target.value);
-                          setError(null);
-                        }}
-                        className="w-full p-2 border rounded-md"
-                        placeholder="Enter your username"
-                      />
-                    )}
-                    <Button
-                      onClick={handleUsernameUpdate}
-                      disabled={isLoading || isLoadingUser}
-                      variant="outline"
-                      className="max-w-[320px] sm:max-w-[540px]"
-                    >
-                      {isLoading ? "Updating..." : "Update"}
-                    </Button>
+              <div className="space-y-6">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 space-y-6">
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <label htmlFor="username" className="block text-xs font-black uppercase tracking-widest text-[var(--color-tertiary)] mb-3">
+                        Operator Handle
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                          {isLoadingUser ? (
+                            <div className="w-full h-[52px] bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+                          ) : (
+                            <input
+                              id="username"
+                              type="text"
+                              value={username}
+                              onChange={(e) => {
+                                setUsername(e.target.value);
+                                setError(null);
+                              }}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 outline-none transition-all focus:border-[var(--color-tertiary)] focus:ring-1 focus:ring-[var(--color-tertiary)]/50 placeholder:text-gray-600 font-bold"
+                              placeholder="Enter handle..."
+                            />
+                          )}
+                        </div>
+                        <Button
+                          onClick={handleUsernameUpdate}
+                          disabled={isLoading || isLoadingUser}
+                          className="px-8 bg-white text-black hover:bg-gray-200 font-black h-[52px] rounded-2xl transition-all"
+                        >
+                          {isLoading ? "SYNCING..." : "UPDATE"}
+                        </Button>
+                      </div>
+                      {error && <p className="text-sm text-red-500 mt-3 font-bold">× {error}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="userId" className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-3">
+                        Secure UID
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="userId"
+                          type="text"
+                          value={session?.user?.id || userData?.id || ""}
+                          className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-3.5 text-gray-500 font-mono text-sm"
+                          disabled
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <label
-                      htmlFor="userId"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      User ID
-                    </label>
-                    <input
-                      id="userId"
-                      type="text"
-                      value={session?.user?.id || userData?.id || ""}
-                      className="w-full p-2 border rounded-md bg-gray-100"
-                      disabled
-                      aria-label="User ID"
-                    />
-                  </div>
-                  {error && (
-                    <p className="text-sm text-red-600 mt-1">{error}</p>
-                  )}
                 </div>
 
-                <div className="mt-8">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8">
                   <RoleManager
                     userId={session?.user?.id}
                     initialRoles={userData?.roles || []}
@@ -602,208 +607,84 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-
-            {activeTab === "billing" && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg sm:text-xl font-semibold font-primary">
-                    Subscription Status
+              {activeTab === "billing" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xl font-black text-white uppercase tracking-tighter">
+                    Status Registry
                   </h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    title="Subscription sync"
+                  <button
                     onClick={handleSyncSubscription}
                     disabled={loadingStates.subscribe}
-                    className="font-primary"
+                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
                   >
-                    {loadingStates.subscribe ? "Syncing..." : "Sync Status"}
-                  </Button>
+                    {loadingStates.subscribe ? "SYNCING..." : "RESCAN STATUS"}
+                  </button>
                 </div>
-                {isLoadingDetails ? (
-                  <div className="p-4 text-center font-primary">
-                    Loading subscription details...
-                  </div>
-                ) : subscriptionData ? (
-                  <div className="p-6 border rounded-xl bg-white shadow-sm space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                          ${
-                            subscriptionData.status ===
-                            SubscriptionStatus.ACTIVE
-                              ? "bg-green-50 text-green-700"
-                              : subscriptionData.status ===
-                                  SubscriptionStatus.TRIAL
-                                ? "bg-blue-50 text-blue-700"
-                                : subscriptionData.status === "SUSPENDED"
-                                  ? "bg-yellow-50 text-yellow-700"
-                                  : subscriptionData.status === "CANCELLED" ||
-                                      subscriptionData.status === "EXPIRED"
-                                    ? "bg-red-50 text-red-700"
-                                    : "bg-gray-50 text-gray-700"
-                          }`}
-                        >
-                          {subscriptionData.status || "INACTIVE"}
-                        </span>
-                        {subscriptionData.status === SubscriptionStatus.TRIAL &&
-                          subscriptionData.trialEndDate && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 font-primary">
-                              Ends:{" "}
-                              {formatDate(
-                                subscriptionData.trialEndDate.toString()
-                              )}
-                            </span>
-                          )}
-                      </div>
 
-                      {(trialEndDate ||
-                        subscriptionData?.next_billing_time) && (
-                        <p className="text-sm text-gray-600 font-primary">
-                          {trialStatus === "active" ? (
-                            <>
-                              Trial ends on:{" "}
-                              {trialEndDate
-                                ? formatDate(trialEndDate.toString())
-                                : "N/A"}
-                            </>
-                          ) : subscriptionData?.status === "CANCELLED" ? (
-                            <>Subscription ended</>
-                          ) : (
-                            <>
-                              Next billing date:{" "}
-                              {formatDate(subscriptionData?.next_billing_time)}
-                            </>
-                          )}
-                        </p>
-                      )}
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-2">
+                  {isLoadingDetails ? (
+                    <div className="p-12 text-center text-gray-500 font-bold animate-pulse uppercase tracking-widest text-sm">
+                      Accessing encrypted billing data...
                     </div>
+                  ) : subscriptionData ? (
+                    <div className="space-y-1">
+                      {/* Subscription Header Card */}
+                      <div className="bg-white/5 rounded-[22px] p-6 sm:p-8 space-y-6 border border-white/5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <span className={`inline-flex items-center px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                ${subscriptionData.status === SubscriptionStatus.ACTIVE
+                                  ? "bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]"
+                                  : subscriptionData.status === SubscriptionStatus.TRIAL
+                                  ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                                  : "bg-gray-500/10 text-gray-400 border border-white/5"
+                                }`}>
+                                ● {subscriptionData.status || "INACTIVE"}
+                              </span>
+                              {(subscriptionData.status === SubscriptionStatus.TRIAL) && (
+                                <span className="text-[10px] uppercase font-black tracking-widest text-gray-500">
+                                  TRIAL PERIOD
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
+                              {subscriptionData.status === SubscriptionStatus.ACTIVE ? "Premium Raider" : "Standard Operator"}
+                            </h3>
+                          </div>
+                          
+                          <div className="text-left sm:text-right">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Billing Sequence</p>
+                            <p className="text-xl font-black text-white tabular-nums">
+                              {subscriptionData?.next_billing_time 
+                                ? formatDate(subscriptionData.next_billing_time)
+                                : "N/A"}
+                            </p>
+                          </div>
+                        </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                      {subscriptionData.status === SubscriptionStatus.ACTIVE ||
-                      subscriptionData.status === SubscriptionStatus.TRIAL ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            className="w-full sm:w-auto font-primary text-[12px]"
+                        <div className="flex flex-wrap gap-3 p-1 bg-black/40 rounded-2xl border border-white/5">
+                          <button
                             onClick={handleSyncSubscription}
                             disabled={loadingStates.subscribe}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl hover:bg-white/5 transition-all text-[10px] font-black uppercase tracking-widest group"
                           >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            {loadingStates.subscribe
-                              ? "Syncing..."
-                              : "Sync Status"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full sm:w-auto font-primary text-[12px]"
+                            <Bell className="w-3 h-3 group-hover:animate-bounce" />
+                            Force Sync
+                          </button>
+                          
+                          <button
                             onClick={() => handleSubscriptionAction("suspend")}
                             disabled={loadingStates.pause}
+                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl hover:bg-white/5 transition-all text-[10px] font-black uppercase tracking-widest"
                           >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                              />
-                            </svg>
-                            {loadingStates.pause
-                              ? "Processing..."
-                              : "Suspend Subscription"}
-                          </Button>
+                            Suspend
+                          </button>
 
-                          <Button
-                            variant="destructive"
-                            className="w-full sm:w-auto font-primary text-[12px]"
+                          <button
                             onClick={() => handleSubscriptionAction("cancel")}
                             disabled={loadingStates.unsubscribe}
-                          >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                            {loadingStates.unsubscribe
-                              ? "Cancelling..."
-                              : "Cancel Subscription"}
-                          </Button>
-                        </>
-                      ) : subscriptionData.status === "SUSPENDED" ||
-                        subscriptionData.status === "CANCELLED" ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            className="w-full sm:w-auto font-primary text-[12px]"
-                            onClick={handleSyncSubscription}
-                            disabled={loadingStates.subscribe}
-                          >
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                              />
-                            </svg>
-                            {loadingStates.subscribe
-                              ? "Syncing..."
-                              : "Sync Status"}
-                          </Button>
-                          <Button
-                            variant="default"
-                            className="w-full sm:w-auto font-primary"
-                            onClick={handleSubscribeWithLoading}
-                            disabled={loadingStates.subscribe}
-                          >
-                            {loadingStates.subscribe
-                              ? "Processing..."
-                              : "Resubscribe"}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          variant="default"
-                          className="w-full sm:w-auto font-primary"
-                          onClick={handleSubscribeWithLoading}
-                          disabled={loadingStates.subscribe}
-                        >
-                          {loadingStates.subscribe
-                            ? "Processing..."
-                            : "Subscribe Now"}
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ) : (
