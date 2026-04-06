@@ -38,13 +38,16 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden relative">
-                {/* Staggered Bubbles */}
-                <div className="absolute w-2 h-2 bg-gray-900/40 rounded-full animate-bubble bubble-delay-1" style={{ left: '25%' }} />
-                <div className="absolute w-3 h-3 bg-gray-900/60 rounded-full animate-bubble bubble-delay-2" style={{ left: '50%' }} />
-                <div className="absolute w-1.5 h-1.5 bg-gray-900/30 rounded-full animate-bubble bubble-delay-3" style={{ left: '70%' }} />
+              <div className="w-10 h-10 rounded-full border-[3px] border-white flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:border-[var(--color-tertiary)] overflow-hidden relative bg-gray-900/50">
+                {/* Aerial Swell Lines */}
+                <svg className="w-full h-full p-1.5" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 30C30 30 40 40 50 60C60 80 80 90 100 90" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-1 opacity-20" />
+                  <path d="M0 20C20 20 30 30 40 50C50 70 70 80 90 80" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-2 opacity-20" />
+                  <path d="M-10 10C10 10 20 20 30 40C40 60 60 70 80 70" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-3 opacity-20" />
+                </svg>
                 
-                <div className="w-5 h-5 bg-gray-900 rounded-md z-10" />
+                {/* Subtle Center Dot */}
+                <div className="absolute w-1 h-1 bg-white/20 rounded-full" />
               </div>
               <span className="text-xl font-black text-white uppercase tracking-tighter">Tide Raider</span>
             </Link>
