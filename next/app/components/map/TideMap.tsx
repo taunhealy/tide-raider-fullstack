@@ -63,7 +63,8 @@ export default function TideMap({
   const selectedDateStringRef = useRef("");
 
   // Particle System State
-  const particles = useRef<any[]>([]);
+  const windParticles = useRef<any[]>([]);
+  const swellParticles = useRef<any[]>([]);
   const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -88,26 +89,34 @@ export default function TideMap({
   const clusterSourceRef = useRef<Cluster<Feature> | null>(null);
   const prevBeachesCount = useRef(0);
 
-  // Initialize Particles
+  // Initialize Particles (Separate for Wind and Swell)
   useEffect(() => {
-    if (!showWindHeatmap && !showSwellHeatmap) {
-      particles.current = [];
-      return;
+    const createParticles = (count: number) => {
+      const p = [];
+      for (let i = 0; i < count; i++) {
+        p.push({
+          x: Math.random(),
+          y: Math.random(),
+          vx: 0,
+          vy: 0,
+          life: Math.random(),
+          size: Math.random() * 2 + 1
+        });
+      }
+      return p;
+    };
+
+    if (showWindHeatmap && windParticles.current.length === 0) {
+      windParticles.current = createParticles(800);
+    } else if (!showWindHeatmap) {
+      windParticles.current = [];
     }
 
-    const count = 200;
-    const newParticles = [];
-    for (let i = 0; i < count; i++) {
-      newParticles.push({
-        x: Math.random(), // relative to screen
-        y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.001,
-        vy: (Math.random() - 0.5) * 0.001,
-        life: Math.random(),
-        size: Math.random() * 2 + 1
-      });
+    if (showSwellHeatmap && swellParticles.current.length === 0) {
+      swellParticles.current = createParticles(600);
+    } else if (!showSwellHeatmap) {
+      swellParticles.current = [];
     }
-    particles.current = newParticles;
   }, [showWindHeatmap, showSwellHeatmap]);
 
   // Animation Loop
@@ -130,57 +139,74 @@ export default function TideMap({
       }
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const width = canvas.width;
-      const height = canvas.height;
+      const { width, height } = canvas;
+      const dateKey = selectedDateStringRef.current;
 
-      // Draw Particles
-      particles.current.forEach(p => {
-        // Move
-        p.life -= 0.005;
-        if (p.life <= 0) {
-          p.x = Math.random();
-          p.y = Math.random();
-          p.life = 1.0;
-        }
+      // Draw Wind Particles
+      if (showWindHeatmap) {
+        const validWind = beaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed);
+        const avgSpeed = validWind.length > 0 
+          ? validWind.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.windSpeed, 0) / validWind.length
+          : 15;
 
-        // Apply "Flow"
-        // Swell is typically West/South -> East/North in Western Cape
-        // Wind varies, but let's do a SE flow for now
-        if (showWindHeatmap) {
-          p.vx = -0.002; // SE to NW
-          p.vy = -0.001;
-        } else if (showSwellHeatmap) {
-          p.vx = 0.003; // SW to NE
-          p.vy = -0.002;
-        }
+        windParticles.current.forEach(p => {
+          p.life -= 0.005;
+          if (p.life <= 0) { 
+            // Respawn on the source side (Wind is SE to NW, so source is Right/Bottom)
+            if (Math.random() > 0.5) {
+              p.x = 1.0; p.y = Math.random(); 
+            } else {
+              p.x = Math.random(); p.y = 1.0;
+            }
+            p.life = 1.0; 
+          }
+          
+          p.vx = -0.00015 * (avgSpeed); 
+          p.vy = -0.0001 * (avgSpeed);
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
-        p.x += p.vx;
-        p.y += p.vy;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(34, 211, 238, ${p.life * 0.7})`; 
+          ctx.lineWidth = 1.2;
+          ctx.moveTo(p.x * width, p.y * height);
+          ctx.lineTo((p.x - p.vx * 100) * width, (p.y - p.vy * 100) * height);
+          ctx.stroke();
+        });
+      }
 
-        // Wrap
-        if (p.x < 0) p.x = 1;
-        if (p.x > 1) p.x = 0;
-        if (p.y < 0) p.y = 1;
-        if (p.y > 1) p.y = 0;
+      // Draw Swell Particles (TINY SLOW PIPS)
+      if (showSwellHeatmap) {
+        const validSwell = beaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight);
+        const avgHeight = validSwell.length > 0 
+          ? validSwell.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.swellHeight, 0) / validSwell.length
+          : 2.0;
 
-        const screenX = p.x * width;
-        const screenY = p.y * height;
+        swellParticles.current.forEach(p => {
+          p.life -= 0.002;
+          if (p.life <= 0) { 
+            // Respawn on the source side (Swell is SW to NE, so source is Left/Bottom)
+            if (Math.random() > 0.5) {
+              p.x = 0.0; p.y = Math.random(); 
+            } else {
+              p.x = Math.random(); p.y = 1.0;
+            }
+            p.life = 1.0; 
+          }
+          
+          p.vx = 0.0002 * (avgHeight); 
+          p.vy = -0.0001 * (avgHeight);
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
-        ctx.beginPath();
-        if (showWindHeatmap) {
-          ctx.strokeStyle = `rgba(34, 211, 238, ${p.life * 0.5})`; // cyan-400
-          ctx.lineWidth = 1;
-          ctx.moveTo(screenX, screenY);
-          ctx.lineTo(screenX - p.vx * 2000, screenY - p.vy * 2000);
-        } else {
-          ctx.strokeStyle = `rgba(99, 102, 241, ${p.life * 0.5})`; // indigo-400
-          ctx.lineWidth = 3;
-          ctx.moveTo(screenX, screenY);
-          ctx.lineTo(screenX - p.vx * 1500, screenY - p.vy * 1500);
-        }
-        ctx.stroke();
-      });
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(99, 102, 241, ${p.life * 0.6})`; 
+          ctx.lineWidth = 3.5;
+          ctx.moveTo(p.x * width, p.y * height);
+          ctx.lineTo((p.x - p.vx * 20) * width, (p.y - p.vy * 30) * height);
+          ctx.stroke();
+        });
+      }
 
       animationRef.current = requestAnimationFrame(render);
     };
@@ -283,7 +309,7 @@ export default function TideMap({
                 anchor: [0.5, 1],
                 src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
                   <svg width="30" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
+                    <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1"/>
                     <circle cx="12" cy="10" r="7" fill="white"/>
                     <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${Number(rating || 0).toFixed(0)}</text>
                   </svg>
@@ -528,7 +554,7 @@ export default function TideMap({
       <canvas 
         ref={canvasRef}
         className={cn(
-          "absolute inset-0 pointer-events-none transition-opacity duration-1000 mix-blend-screen",
+          "absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 mix-blend-screen z-[8]",
           (showWindHeatmap || showSwellHeatmap) ? "opacity-100" : "opacity-0"
         )}
       />

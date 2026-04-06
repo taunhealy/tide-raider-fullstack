@@ -6,82 +6,68 @@ const globalForPrisma = global as unknown as { prisma: any };
 
 // Optimize connection pool for Next.js Server Components
 // Use smaller pool since Next.js creates many instances
-let optimizedDatabaseUrl = process.env.DATABASE_URL;
-
-if (optimizedDatabaseUrl) {
-  try {
-    const url = new URL(optimizedDatabaseUrl);
-    
-    // Check if using Supabase pooler (port 6543) - PgBouncer doesn't support prepared statements
-    const isUsingPooler =
-      optimizedDatabaseUrl.includes(":6543") ||
-      optimizedDatabaseUrl.includes("pooler.supabase.com");
-
-    // CRITICAL: If using pooler, add pgbouncer=true to disable prepared statements
-    if (isUsingPooler && !url.searchParams.has("pgbouncer")) {
-      url.searchParams.set("pgbouncer", "true");
-      console.log("[prisma] ✅ Added pgbouncer=true for Supabase pooler in Next.js");
-    }
-
-    if (!url.searchParams.has("connection_limit")) {
-      // Conservative limit: 5 connections per Next.js instance
-      // Vercel typically runs 2-10 instances = 10-50 connections total
-      url.searchParams.set("connection_limit", "5");
-      url.searchParams.set("pool_timeout", "10");
-    }
-    optimizedDatabaseUrl = url.toString();
-  } catch (e) {
-    // URL parsing failed, use original
-  }
-}
-
 function getPrisma() {
+  const currentDatabaseUrl = process.env.DATABASE_URL;
+  let optimizedDatabaseUrl = currentDatabaseUrl;
+
+  if (optimizedDatabaseUrl) {
+    try {
+      const url = new URL(optimizedDatabaseUrl);
+      const isUsingPooler =
+        optimizedDatabaseUrl.includes(":6543") ||
+        optimizedDatabaseUrl.includes("pooler.supabase.com");
+
+      if (isUsingPooler && !url.searchParams.has("pgbouncer")) {
+        url.searchParams.set("pgbouncer", "true");
+        console.log("[prisma] ✅ Added pgbouncer=true for Supabase pooler in Next.js");
+      }
+
+      if (!url.searchParams.has("connection_limit")) {
+        url.searchParams.set("connection_limit", "5");
+        url.searchParams.set("pool_timeout", "10");
+      }
+      optimizedDatabaseUrl = url.toString();
+    } catch (e) {
+      // URL parsing failed
+    }
+  }
+
+  // Force re-initialization if the database URL changed (e.g. env.local reload)
+  if (globalForPrisma.prisma && globalForPrisma.prisma._lastUsedUrl !== optimizedDatabaseUrl) {
+    console.log("[prisma] ⚠️ DATABASE_URL changed, re-initializing client...");
+    prismaInstance = null;
+    delete globalForPrisma.prisma;
+  }
+
   if (prismaInstance) {
     return prismaInstance;
   }
 
-  // Skip Prisma initialization during build
-  // Vercel sets NEXT_PHASE during build, and we can also check for other build indicators
   if (process.env.NEXT_PHASE === "phase-production-build") {
-    // During build, Prisma client might not be available
-    // Return stub to allow build to complete
     return createStubPrisma();
   }
 
-  // Check if DATABASE_URL is set (but don't fail if it's not - might be using backend)
-  if (!process.env.DATABASE_URL) {
-    console.warn(
-      "[prisma] DATABASE_URL not set. Prisma operations will fail. Make sure DATABASE_URL is configured."
-    );
-    // Don't return stub here - let it try to initialize and fail with a better error
-  }
-
-  // Lazy import to avoid build-time errors
   try {
     if (!PrismaClient) {
-      // Use dynamic require with type assertion to avoid build-time type checking
       const prismaModule = require("@prisma/client") as any;
       if (!prismaModule || !prismaModule.PrismaClient) {
-        throw new Error(
-          "Prisma client not generated. Run: npm run prisma:generate"
-        );
+        throw new Error("Prisma client not generated.");
       }
       PrismaClient = prismaModule.PrismaClient;
     }
 
-    prismaInstance =
-      globalForPrisma.prisma ||
-      new PrismaClient({
-        log:
-          process.env.NODE_ENV === "development"
-            ? ["query", "error", "warn"]
-            : ["error"],
-        datasources: {
-          db: {
-            url: optimizedDatabaseUrl,
-          },
+    const newInstance = new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+      datasources: {
+        db: {
+          url: optimizedDatabaseUrl,
         },
-      });
+      },
+    });
+
+    // Store the URL used so we can detect changes
+    (newInstance as any)._lastUsedUrl = optimizedDatabaseUrl;
+    prismaInstance = newInstance;
 
     if (process.env.NODE_ENV !== "production") {
       globalForPrisma.prisma = prismaInstance;
@@ -89,26 +75,13 @@ function getPrisma() {
 
     return prismaInstance;
   } catch (error: any) {
-    // Sanitize error message to prevent exposing DATABASE_URL
     const sanitizeMessage = (msg: string | undefined) => {
       if (!msg) return msg;
-      // Remove any potential database URLs from error messages
       return msg.replace(/postgresql:\/\/[^\s]+/gi, "postgresql://[REDACTED]");
     };
-
-    // Log the actual error for debugging (sanitized)
     const sanitizedMessage = sanitizeMessage(error?.message);
     console.error("[prisma] Failed to initialize Prisma client:", sanitizedMessage);
-    console.error("[prisma] Error details:", {
-      message: sanitizedMessage,
-      code: error?.code,
-      hasDatabaseUrl: !!process.env.DATABASE_URL,
-      nodeEnv: process.env.NODE_ENV,
-    });
-    // Prisma client not available (e.g., during build or not generated)
-    throw new Error(
-      `Prisma client initialization failed: ${sanitizedMessage || "Unknown error"}. Make sure DATABASE_URL is set and Prisma client is generated (npm run prisma:generate).`
-    );
+    throw new Error(`Prisma client initialization failed: ${sanitizedMessage || "Unknown error"}`);
   }
 }
 

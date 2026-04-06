@@ -45,7 +45,7 @@ export default function WeatherForecastWidget() {
   // Store selected source in localStorage so it's shared across components
   // Initialize to default to ensure server and client render the same
   const [selectedSource, setSelectedSource] =
-    useState<ForecastSource>("WINDFINDER");
+    useState<ForecastSource>("WINDY");
 
   // Load from localStorage only after mount (client-side only)
   useEffect(() => {

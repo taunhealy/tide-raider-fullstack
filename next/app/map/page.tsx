@@ -40,6 +40,11 @@ export default function GlobalMapPage() {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [showWindHeatmap, setShowWindHeatmap] = useState(false);
   const [showSwellHeatmap, setShowSwellHeatmap] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const isLoggersOnly = filters.isLongboarding || false;
   const isFoilingOnly = filters.isFoiling || false;
@@ -312,7 +317,7 @@ export default function GlobalMapPage() {
         <main className="flex-1 relative bg-gray-100">
           {/* Weekday Filter Floating Bar */}
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-2xl border border-white/20">
-            {weekDays.map((option) => {
+            {mounted && weekDays.map((option) => {
               const isSelected = selectedDayIndex === option.index;
               return (
                 <button
