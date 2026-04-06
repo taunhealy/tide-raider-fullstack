@@ -12,6 +12,7 @@ import { Vector as VectorLayer } from "ol/layer";
 import { Vector as VectorSource, Cluster, XYZ } from "ol/source";
 import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import Overlay from "ol/Overlay";
+import { cn } from "@/app/lib/utils";
 
 interface Beach {
   id: string;
@@ -23,6 +24,7 @@ interface Beach {
   };
   difficulty: string;
   rating?: number;
+  regionId: string;
   region?: string;
   countryId: string;
   country: string;
@@ -37,6 +39,8 @@ interface TideMapProps {
   selectedDayIndex?: number;
   center?: [number, number];
   zoom?: number;
+  showWindHeatmap?: boolean;
+  showSwellHeatmap?: boolean;
 }
 
 export default function TideMap({ 
@@ -45,9 +49,12 @@ export default function TideMap({
   onRegionSelect,
   selectedDayIndex = 0,
   center = [18.47, -34.10], 
-  zoom = 10 
+  zoom = 10,
+  showWindHeatmap = false,
+  showSwellHeatmap = false
 }: TideMapProps) {
   const mapElement = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<Map | null>(null);
   const [popupBeach, setPopupBeach] = useState<Beach | null>(null);
   const [currentZoom, setCurrentZoom] = useState(zoom);
@@ -55,12 +62,16 @@ export default function TideMap({
   const selectedDayIndexRef = useRef(selectedDayIndex);
   const selectedDateStringRef = useRef("");
 
+  // Particle System State
+  const particles = useRef<any[]>([]);
+  const animationRef = useRef<number | null>(null);
+
   useEffect(() => {
     selectedDayIndexRef.current = selectedDayIndex;
     
     // Calculate the date string for the selected index
     const date = new Date();
-    date.setUTCDate(date.getUTCDate() + selectedDayIndex);
+    date.setUTCDate(new Date().getUTCDate() + selectedDayIndex);
     selectedDateStringRef.current = date.toISOString().split('T')[0];
   }, [selectedDayIndex]);
 
@@ -76,6 +87,109 @@ export default function TideMap({
   const vectorSourceRef = useRef<VectorSource | null>(null);
   const clusterSourceRef = useRef<Cluster<Feature> | null>(null);
   const prevBeachesCount = useRef(0);
+
+  // Initialize Particles
+  useEffect(() => {
+    if (!showWindHeatmap && !showSwellHeatmap) {
+      particles.current = [];
+      return;
+    }
+
+    const count = 200;
+    const newParticles = [];
+    for (let i = 0; i < count; i++) {
+      newParticles.push({
+        x: Math.random(), // relative to screen
+        y: Math.random(),
+        vx: (Math.random() - 0.5) * 0.001,
+        vy: (Math.random() - 0.5) * 0.001,
+        life: Math.random(),
+        size: Math.random() * 2 + 1
+      });
+    }
+    particles.current = newParticles;
+  }, [showWindHeatmap, showSwellHeatmap]);
+
+  // Animation Loop
+  useEffect(() => {
+    if (!showWindHeatmap && !showSwellHeatmap) return;
+    if (!canvasRef.current || !mapRef.current) return;
+
+    const ctx = canvasRef.current.getContext('2d');
+    if (!ctx) return;
+
+    const render = () => {
+      const canvas = canvasRef.current;
+      const map = mapRef.current;
+      if (!canvas || !map || !ctx) return;
+
+      // Update canvas size
+      if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Draw Particles
+      particles.current.forEach(p => {
+        // Move
+        p.life -= 0.005;
+        if (p.life <= 0) {
+          p.x = Math.random();
+          p.y = Math.random();
+          p.life = 1.0;
+        }
+
+        // Apply "Flow"
+        // Swell is typically West/South -> East/North in Western Cape
+        // Wind varies, but let's do a SE flow for now
+        if (showWindHeatmap) {
+          p.vx = -0.002; // SE to NW
+          p.vy = -0.001;
+        } else if (showSwellHeatmap) {
+          p.vx = 0.003; // SW to NE
+          p.vy = -0.002;
+        }
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap
+        if (p.x < 0) p.x = 1;
+        if (p.x > 1) p.x = 0;
+        if (p.y < 0) p.y = 1;
+        if (p.y > 1) p.y = 0;
+
+        const screenX = p.x * width;
+        const screenY = p.y * height;
+
+        ctx.beginPath();
+        if (showWindHeatmap) {
+          ctx.strokeStyle = `rgba(34, 211, 238, ${p.life * 0.5})`; // cyan-400
+          ctx.lineWidth = 1;
+          ctx.moveTo(screenX, screenY);
+          ctx.lineTo(screenX - p.vx * 2000, screenY - p.vy * 2000);
+        } else {
+          ctx.strokeStyle = `rgba(99, 102, 241, ${p.life * 0.5})`; // indigo-400
+          ctx.lineWidth = 3;
+          ctx.moveTo(screenX, screenY);
+          ctx.lineTo(screenX - p.vx * 1500, screenY - p.vy * 1500);
+        }
+        ctx.stroke();
+      });
+
+      animationRef.current = requestAnimationFrame(render);
+    };
+
+    animationRef.current = requestAnimationFrame(render);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [showWindHeatmap, showSwellHeatmap, isMapReady]);
 
   useEffect(() => {
     if (!mapElement.current) return;
@@ -351,7 +465,7 @@ export default function TideMap({
         feature.set("allBeaches", items);
         feature.set("type", "continent");
         return feature;
-      }).filter(Boolean);
+      }).filter(Boolean) as Feature[];
     } else if (currentZoom < 7) {
       const countries: Record<string, Beach[]> = {};
       beaches.forEach(b => {
@@ -373,7 +487,7 @@ export default function TideMap({
         feature.set("allBeaches", items);
         feature.set("type", "country");
         return feature;
-      }).filter(Boolean);
+      }).filter(Boolean) as Feature[];
     } else {
       features = beaches
         .filter(beach => beach.coordinates && (beach.coordinates.lat !== 0 || beach.coordinates.lng !== 0))
@@ -406,11 +520,19 @@ export default function TideMap({
     prevBeachesCount.current = beaches.length;
   }, [beaches, selectedDayIndex, currentZoom]);
 
-
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full group overflow-hidden">
       <div ref={mapElement} className="w-full h-full" />
       
+      {/* Particle Canvas */}
+      <canvas 
+        ref={canvasRef}
+        className={cn(
+          "absolute inset-0 pointer-events-none transition-opacity duration-1000 mix-blend-screen",
+          (showWindHeatmap || showSwellHeatmap) ? "opacity-100" : "opacity-0"
+        )}
+      />
+
       {/* Popup Overlay */}
       <div ref={popupRef} className={`absolute bg-white rounded-xl shadow-2xl p-4 min-w-[200px] border border-gray-100 transition-opacity ${popupBeach ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {popupBeach && (

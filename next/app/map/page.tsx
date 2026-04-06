@@ -38,6 +38,8 @@ export default function GlobalMapPage() {
   
   // Use selectedDayIndex but also sync it with filter
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [showWindHeatmap, setShowWindHeatmap] = useState(false);
+  const [showSwellHeatmap, setShowSwellHeatmap] = useState(false);
   
   const isLoggersOnly = filters.isLongboarding || false;
   const isFoilingOnly = filters.isFoiling || false;
@@ -239,6 +241,34 @@ export default function GlobalMapPage() {
 
             {/* Specialty Filters */}
             <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Tactical Overlays</label>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button
+                  onClick={() => setShowWindHeatmap(!showWindHeatmap)}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all transition-all duration-500",
+                    showWindHeatmap 
+                      ? "bg-cyan-950 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]" 
+                      : "bg-white border-gray-100 hover:border-gray-200"
+                  )}
+                >
+                  <Cloud className={cn("w-5 h-5 mb-1", showWindHeatmap ? "text-cyan-400" : "text-gray-400")} />
+                  <span className={cn("text-[9px] font-black uppercase tracking-widest", showWindHeatmap ? "text-cyan-400" : "text-gray-500")}>Wind Bloc</span>
+                </button>
+                <button
+                  onClick={() => setShowSwellHeatmap(!showSwellHeatmap)}
+                  className={cn(
+                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all transition-all duration-500",
+                    showSwellHeatmap 
+                      ? "bg-indigo-950 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)]" 
+                      : "bg-white border-gray-100 hover:border-gray-200"
+                  )}
+                >
+                  <Waves className={cn("w-5 h-5 mb-1", showSwellHeatmap ? "text-indigo-400" : "text-gray-400")} />
+                  <span className={cn("text-[9px] font-black uppercase tracking-widest", showSwellHeatmap ? "text-indigo-400" : "text-gray-500")}>Swell Surge</span>
+                </button>
+              </div>
+
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
               <div className="grid grid-cols-1 gap-2">
                 <LoggersButton
@@ -331,6 +361,8 @@ export default function GlobalMapPage() {
                   updateFilter("regionId", regionId);
                 }}
                 selectedDayIndex={selectedDayIndex}
+                showWindHeatmap={showWindHeatmap}
+                showSwellHeatmap={showSwellHeatmap}
               />
             </div>
           ) : (

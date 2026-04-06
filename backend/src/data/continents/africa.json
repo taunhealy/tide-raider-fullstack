@@ -1024,7 +1024,8 @@
     "location": "Elands Bay",
     "distanceFromCT": 220,
     "optimalWindDirections": [
-      "SE"
+      "SE",
+      "S"
     ],
     "optimalSwellDirections": {
       "min": 225,
@@ -4075,8 +4076,9 @@
       "S"
     ],
     "optimalSwellDirections": {
-      "min": 222.5,
-      "max": 270
+      "min": 220,
+      "max": 270,
+      "cardinal": "SW"
     },
     "bestSeasons": [
       "summer"
@@ -4108,8 +4110,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -32.71,
+      "lng": 17.9435
     }
   },
   {
