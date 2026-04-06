@@ -5,15 +5,27 @@ services:
     container_name: tide-raider-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: tide_raider
-      POSTGRES_PASSWORD: tide_raider_dev
-      POSTGRES_DB: tide_raider_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
-      - "5433:5432" # Using 5433 to avoid conflict with existing PostgreSQL
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tide_raider"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: tide-raider-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,16 +39,20 @@ services:
     ports:
       - "4001:4001"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=4001
-      - DATABASE_URL=postgresql://tide_raider:tide_raider_dev@postgres:5432/tide_raider_dev?schema=public
-      - BACKEND_URL=https://unelective-michael-hipshot.ngrok-free.dev
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgres?schema=public
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=true
+      - DOCKER=true
       - GOOGLE_CLIENT_ID=82632174665-tlmshrjeeahbb3giec045o009u8ag67j.apps.googleusercontent.com
       - GOOGLE_CLIENT_SECRET=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
-      - JWT_SECRET=your-secret-key-change-in-production
-      - NEXTAUTH_SECRET=your-secret-key-change-in-production
+      - JWT_SECRET=gdfdsddsadsadghhhhsdsdsdansa
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - ./src:/app/src:ro # Mount source for potential hot-reload (read-only)

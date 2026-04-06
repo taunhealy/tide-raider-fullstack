@@ -11,11 +11,7 @@ export async function GET() {
     const beaches = await prisma.beach.findMany({
       include: {
         region: true,
-        country: {
-          include: {
-            continent: true
-          }
-        },
+        country: true,
         beachDailyScores: {
           where: {
             date: {
@@ -50,9 +46,9 @@ export async function GET() {
           region: beach.region?.name || "Unknown Region",
           countryId: beach.countryId || "unknown",
           country: beach.country?.name || "Unknown Country",
-          continentId: beach.country?.continent?.id || beach.continent?.toLowerCase() || "unknown",
-          continent: beach.country?.continent?.name || beach.continent || "Unknown Continent",
-          dailyScores: beach.beachDailyScores.reduce((acc: any, s: any) => {
+          continentId: beach.country?.continentId || beach.continent?.toLowerCase() || "unknown",
+          continent: beach.continent || "Unknown Continent",
+          dailyScores: (beach.beachDailyScores || []).reduce((acc: any, s: any) => {
             try {
               const dateStr = s.date instanceof Date 
                 ? s.date.toISOString().split('T')[0] 

@@ -171,7 +171,7 @@ export default function TideMap({
                   <svg width="30" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
                     <circle cx="12" cy="10" r="7" fill="white"/>
-                    <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${rating.toFixed(0)}</text>
+                    <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${Number(rating || 0).toFixed(0)}</text>
                   </svg>
                 `)}`,
                 scale: 0.8,
@@ -338,8 +338,10 @@ export default function TideMap({
         continents[cId].push(b);
       });
       features = Object.entries(continents).map(([id, items]) => {
-        const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
-        const avgLng = items.reduce((sum, b) => sum + b.coordinates.lng, 0) / items.length;
+        const validItems = items.filter(b => b.coordinates && typeof b.coordinates.lat === 'number' && typeof b.coordinates.lng === 'number');
+        if (validItems.length === 0) return null;
+        const avgLat = validItems.reduce((sum, b) => sum + b.coordinates.lat, 0) / validItems.length;
+        const avgLng = validItems.reduce((sum, b) => sum + b.coordinates.lng, 0) / validItems.length;
         const feature = new Feature({
           geometry: new Point(fromLonLat([avgLng, avgLat])),
         });
@@ -349,7 +351,7 @@ export default function TideMap({
         feature.set("allBeaches", items);
         feature.set("type", "continent");
         return feature;
-      });
+      }).filter(Boolean);
     } else if (currentZoom < 7) {
       const countries: Record<string, Beach[]> = {};
       beaches.forEach(b => {
@@ -358,8 +360,10 @@ export default function TideMap({
         countries[cId].push(b);
       });
       features = Object.entries(countries).map(([id, items]) => {
-        const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
-        const avgLng = items.reduce((sum, b) => sum + b.coordinates.lng, 0) / items.length;
+        const validItems = items.filter(b => b.coordinates && typeof b.coordinates.lat === 'number' && typeof b.coordinates.lng === 'number');
+        if (validItems.length === 0) return null;
+        const avgLat = validItems.reduce((sum, b) => sum + b.coordinates.lat, 0) / validItems.length;
+        const avgLng = validItems.reduce((sum, b) => sum + b.coordinates.lng, 0) / validItems.length;
         const feature = new Feature({
           geometry: new Point(fromLonLat([avgLng, avgLat])),
         });
@@ -369,7 +373,7 @@ export default function TideMap({
         feature.set("allBeaches", items);
         feature.set("type", "country");
         return feature;
-      });
+      }).filter(Boolean);
     } else {
       features = beaches
         .filter(beach => beach.coordinates && (beach.coordinates.lat !== 0 || beach.coordinates.lng !== 0))
