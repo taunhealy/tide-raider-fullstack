@@ -657,10 +657,10 @@ export default function HeroSection({ data }: HeroProps) {
           {/* Tide Raider branding - centered on mobile */}
           <div ref={textRef} className="text-center z-10">
             <h1 className="text-4xl sm:text-5xl font-bold text-white font-primary tracking-tight">
-              Tide Raider
+              Go Further
             </h1>
             <p className="text-xs sm:text-sm text-white/90 font-primary mt-2 sm:mt-3 tracking-wide">
-              Go Further.
+              Get inspired to surf in new places.
             </p>
           </div>
 
@@ -679,10 +679,10 @@ export default function HeroSection({ data }: HeroProps) {
           {/* Left sidebar text - Tide Raider branding */}
           <div ref={textRef} className="flex-shrink-0 pr-4 lg:pr-8 z-10">
             <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white font-primary tracking-tight">
-              Tide Raider
+              Go Further
             </h1>
             <p className="text-sm md:text-base lg:text-lg text-white/90 font-primary mt-3 md:mt-4 tracking-wide">
-              Go Further.
+              Get inspired to surf in new places.
             </p>
           </div>
 
