@@ -7,23 +7,31 @@ const globalForPrisma = global as unknown as { prisma: any };
 // Optimize connection pool for Next.js Server Components
 // Use smaller pool since Next.js creates many instances
 let optimizedDatabaseUrl = process.env.DATABASE_URL;
-if (
-  optimizedDatabaseUrl &&
-  !optimizedDatabaseUrl.includes("?connection_limit")
-) {
+
+if (optimizedDatabaseUrl) {
   try {
     const url = new URL(optimizedDatabaseUrl);
+    
+    // Check if using Supabase pooler (port 6543) - PgBouncer doesn't support prepared statements
+    const isUsingPooler =
+      optimizedDatabaseUrl.includes(":6543") ||
+      optimizedDatabaseUrl.includes("pooler.supabase.com");
+
+    // CRITICAL: If using pooler, add pgbouncer=true to disable prepared statements
+    if (isUsingPooler && !url.searchParams.has("pgbouncer")) {
+      url.searchParams.set("pgbouncer", "true");
+      console.log("[prisma] ✅ Added pgbouncer=true for Supabase pooler in Next.js");
+    }
+
     if (!url.searchParams.has("connection_limit")) {
       // Conservative limit: 5 connections per Next.js instance
       // Vercel typically runs 2-10 instances = 10-50 connections total
       url.searchParams.set("connection_limit", "5");
       url.searchParams.set("pool_timeout", "10");
-      optimizedDatabaseUrl = url.toString();
     }
+    optimizedDatabaseUrl = url.toString();
   } catch (e) {
     // URL parsing failed, use original
-    // Don't log the error or URL to prevent exposing credentials
-    // Silently fall back to original URL
   }
 }
 
