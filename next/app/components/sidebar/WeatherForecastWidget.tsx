@@ -495,26 +495,33 @@ export default function WeatherForecastWidget() {
         ) : (
           // Grid Layout
           <div className="grid grid-cols-2 gap-4">
-            {/* Wind Direction */}
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center gap-1 group overflow-hidden relative">
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-600 opacity-20 group-hover:opacity-100 transition-opacity" />
-              <span className="text-[24px] font-black text-white tracking-tighter">
-                {degreesToCardinal(forecastData?.windDirection)}
-              </span>
-              <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] font-primary">
-                Wind {forecastData?.windSpeed}kts
+            {/* Wind Direction & Speed */}
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
+                Wind Speed
               </label>
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {degreesToCardinal(forecastData?.windDirection)}
+                </span>
+                <span className="block text-sm text-gray-300 font-primary">
+                  {forecastData?.windSpeed}kts
+                </span>
+              </div>
             </div>
 
             {/* Swell Height */}
-            <div className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col items-center justify-center gap-1 group overflow-hidden relative">
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-600 opacity-20 group-hover:opacity-100 transition-opacity" />
-              <span className="text-[24px] font-black text-white tracking-tighter">
-                {forecastData?.swellHeight}m
-              </span>
-              <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] font-primary">
+            <div className="bg-gray-800/80 backdrop-blur-sm p-4 rounded-lg border border-gray-700 shadow-md hover:shadow-lg transition-shadow duration-200 aspect-square flex flex-col relative group">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--color-tertiary)]/50 to-transparent"></div>
+              <label className="text-xs text-[var(--color-tertiary)] uppercase tracking-wide mb-2 font-primary font-medium">
                 Swell Height
               </label>
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <span className="text-2xl font-semibold text-white font-primary">
+                  {forecastData?.swellHeight}m
+                </span>
+              </div>
             </div>
 
             {/* Swell Period */}
