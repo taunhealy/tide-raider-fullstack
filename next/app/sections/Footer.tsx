@@ -38,12 +38,14 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-full border-[3px] border-white flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:border-[var(--color-tertiary)] overflow-hidden relative bg-gray-900/50">
-                {/* Aerial Swell Lines */}
-                <svg className="w-full h-full p-1.5" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 30C30 30 40 40 50 60C60 80 80 90 100 90" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-1 opacity-20" />
-                  <path d="M0 20C20 20 30 30 40 50C50 70 70 80 90 80" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-2 opacity-20" />
-                  <path d="M-10 10C10 10 20 20 30 40C40 60 60 70 80 70" stroke="white" strokeWidth="6" strokeLinecap="round" className="animate-swell-line swell-delay-3 opacity-20" />
+              <div className="w-10 h-10 rounded-full border-[3px] border-white flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:border-[var(--color-tertiary)] overflow-hidden relative bg-black/40">
+                {/* Parallel Swell Lines Surge */}
+                <svg className="w-full h-full p-2 animate-swell-set" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M-10 15C10 15 20 25 30 45C40 65 60 75 80 75" stroke="white" strokeWidth="7" strokeLinecap="round" className="opacity-40" />
+                  <path d="M0 25C20 25 30 35 40 55C50 75 70 85 90 85" stroke="white" strokeWidth="7" strokeLinecap="round" className="opacity-40" />
+                  <path d="M10 35C30 35 40 45 50 65C60 85 80 95 100 95" stroke="white" strokeWidth="7" strokeLinecap="round" className="opacity-40" />
+                  <path d="M-20 5C0 5 10 15 20 35C30 55 50 65 70 65" stroke="white" strokeWidth="7" strokeLinecap="round" className="opacity-40" />
+                  <path d="M-30 -5C-10 -5 0 5 10 25C20 45 40 55 60 55" stroke="white" strokeWidth="7" strokeLinecap="round" className="opacity-40" />
                 </svg>
                 
                 {/* Subtle Center Dot */}

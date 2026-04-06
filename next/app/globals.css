@@ -635,10 +635,10 @@ body {
 }
 
 
-/* Aerial Point-Break Swell Animations */
-@keyframes swell-surge {
+/* Synchronized Parallel Swell Animations */
+@keyframes swell-surge-group {
   0% {
-    transform: translate(-15%, -15%) scale(0.9);
+    transform: translate(-10%, -10%);
     opacity: 0;
   }
   20% {
@@ -648,18 +648,14 @@ body {
     opacity: 0.4;
   }
   100% {
-    transform: translate(15%, 15%) scale(1.1);
+    transform: translate(12%, 12%);
     opacity: 0;
   }
 }
 
-.animate-swell-line {
-  animation: swell-surge 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.animate-swell-set {
+  animation: swell-surge-group 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
-
-.swell-delay-1 { animation-delay: 0s; }
-.swell-delay-2 { animation-delay: 1.3s; }
-.swell-delay-3 { animation-delay: 2.6s; }
 
 .animate-kelp {
   animation: kelp-sway 5s ease-in-out infinite;

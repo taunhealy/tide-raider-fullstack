@@ -101,12 +101,14 @@ export class ScoreService {
         }
       }
 
-      // Wind strength scoring
+      // Wind strength scoring - More critical threshold
       if (!beach.sheltered) {
-        if (conditions.windSpeed > 35) {
-          score -= 2;
-        } else if (conditions.windSpeed > 25) {
+        if (conditions.windSpeed > 25) {
+          score -= 2.5; 
+        } else if (conditions.windSpeed > 15) {
           score -= 1.5;
+        } else if (conditions.windSpeed > 10) {
+          score -= 0.5;
         }
       }
 
