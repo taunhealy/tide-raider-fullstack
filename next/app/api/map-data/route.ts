@@ -48,10 +48,10 @@ export async function GET() {
           waveType: beach.waveType,
           regionId: beach.regionId,
           region: beach.region?.name || "Unknown Region",
-          countryId: beach.countryId,
+          countryId: beach.countryId || "unknown",
           country: beach.country?.name || "Unknown Country",
-          continentId: beach.country?.continent?.id || "unknown",
-          continent: beach.country?.continent?.name || "Unknown Continent",
+          continentId: beach.country?.continent?.id || beach.continent?.toLowerCase() || "unknown",
+          continent: beach.country?.continent?.name || beach.continent || "Unknown Continent",
           dailyScores: beach.beachDailyScores.reduce((acc: any, s: any) => {
             try {
               const dateStr = s.date instanceof Date 
@@ -66,7 +66,7 @@ export async function GET() {
             }
             return acc;
           }, {}),
-          rating: beach.beachDailyScores[0]?.starRating || 3 // Fallback for today
+          rating: beach.beachDailyScores?.[0]?.starRating || beach.rating || 3 // Fallback
         };
       } catch (e) {
         console.error(`[api/map-data] Error mapping beach at index ${index} (${beach?.id || "unknown"}):`, e);

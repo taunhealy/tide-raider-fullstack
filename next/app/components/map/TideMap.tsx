@@ -333,9 +333,9 @@ export default function TideMap({
     if (currentZoom < 4) {
       const continents: Record<string, Beach[]> = {};
       beaches.forEach(b => {
-        if (!b.continentId) return;
-        if (!continents[b.continentId]) continents[b.continentId] = [];
-        continents[b.continentId].push(b);
+        const cId = b.continentId || "unknown";
+        if (!continents[cId]) continents[cId] = [];
+        continents[cId].push(b);
       });
       features = Object.entries(continents).map(([id, items]) => {
         const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
@@ -353,9 +353,9 @@ export default function TideMap({
     } else if (currentZoom < 7) {
       const countries: Record<string, Beach[]> = {};
       beaches.forEach(b => {
-        if (!b.countryId) return;
-        if (!countries[b.countryId]) countries[b.countryId] = [];
-        countries[b.countryId].push(b);
+        const cId = b.countryId || "unknown";
+        if (!countries[cId]) countries[cId] = [];
+        countries[cId].push(b);
       });
       features = Object.entries(countries).map(([id, items]) => {
         const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
