@@ -633,3 +633,61 @@ body {
 .text-brand-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-[var(--color-tertiary)];
 }
+
+
+/* Jellyfish & Kelp Ocean Animations */
+@keyframes jellyfish-blob {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+@keyframes kelp-sway {
+  0%, 100% {
+    transform: translateY(0) rotate(-4deg) skewX(-2deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(4deg) skewX(2deg);
+  }
+}
+
+@keyframes float-fluid {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 5px 15px rgba(96, 165, 250, 0.2));
+  }
+  50% {
+    transform: translateY(-5px) scale(1.05);
+    filter: drop-shadow(0 10px 20px rgba(96, 165, 250, 0.4));
+  }
+}
+
+.animate-jellyfish {
+  animation: jellyfish-blob 6s ease-in-out infinite, float-fluid 4s ease-in-out infinite;
+}
+
+.animate-kelp {
+  animation: kelp-sway 5s ease-in-out infinite;
+}
+
+/* Shimmer Gradient Effect for Dark Surfaces */
+@keyframes shimmer-fast {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.bg-shimmer-dark {
+  background: linear-gradient(
+    90deg,
+    rgba(17, 24, 39, 1) 0%,
+    rgba(21, 28, 41, 1) 25%,
+    rgba(31, 41, 55, 1) 50%,
+    rgba(21, 28, 41, 1) 75%,
+    rgba(17, 24, 39, 1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-fast 12s linear infinite;
+}

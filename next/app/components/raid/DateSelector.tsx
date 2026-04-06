@@ -92,16 +92,16 @@ export default function DateSelector({
       {dateOptions.map((option: any) => {
         const isSelected = activeDate === option.value;
         return (
-          <button
-            key={option.value}
-            onClick={() => onDateSelect(option.value)}
-            className={cn(
-              "flex flex-col items-center min-w-[85px] px-4 py-2 rounded-xl transition-all relative group",
-              isSelected
-                ? "bg-gray-900 text-[#3b82f6] shadow-xl scale-105 z-10"
-                : "text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm"
-            )}
-          >
+            <button
+              key={option.value}
+              onClick={() => onDateSelect(option.value)}
+              className={cn(
+                "flex flex-col items-center min-w-[85px] px-4 py-2 rounded-xl transition-all relative group",
+                isSelected
+                  ? "bg-shimmer-dark text-[#3b82f6] shadow-xl scale-105 z-10"
+                  : "text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+              )}
+            >
             <span className="text-[10px] font-black uppercase tracking-tighter">
               {option.label}
             </span>
