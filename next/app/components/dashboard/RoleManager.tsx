@@ -93,46 +93,86 @@ export function RoleManager({
   };
 
   if (isLoading) {
-    return <div className="font-primary">Loading user information...</div>;
+    return (
+      <div className="flex items-center gap-3 p-6 text-gray-500 font-black uppercase tracking-widest text-xs animate-pulse">
+        <div className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+        Decrypting Role Registry...
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-primary text-lg font-medium">Manage Roles</h3>
-
-      <div className="grid grid-cols-2 gap-2">
-        {ROLE_OPTIONS.map((role) => (
-          <label
-            key={role.value}
-            className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
-          >
-            <input
-              type="checkbox"
-              value={role.value}
-              checked={roles.includes(role.value as UserRole)}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setRoles([...roles, role.value as UserRole]);
-                } else {
-                  setRoles(roles.filter((r) => r !== role.value));
-                }
-              }}
-              className="rounded border-gray-300"
-            />
-            <span className="font-primary text-[14px]">{role.label}</span>
-          </label>
-        ))}
+    <div className="space-y-8">
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-4 bg-[var(--color-tertiary)] shadow-[0_0_8px_var(--color-tertiary)]" />
+        <h3 className="text-sm font-black text-white uppercase tracking-[0.2em]">Access Grid</h3>
       </div>
 
-      <Button
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {ROLE_OPTIONS.map((role) => {
+          const isActive = roles.includes(role.value as UserRole);
+          return (
+            <label
+              key={role.value}
+              className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 cursor-pointer group select-none
+                ${isActive 
+                  ? "bg-[var(--color-tertiary)]/10 border-[var(--color-tertiary)]/30 shadow-[0_0_20px_rgba(96,165,250,0.05)]" 
+                  : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
+                }`}
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className={`text-[10px] font-black uppercase tracking-widest transition-colors
+                  ${isActive ? "text-[var(--color-tertiary)]" : "text-gray-500"}`}>
+                  System Role
+                </span>
+                <span className={`text-sm font-bold transition-colors
+                  ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-200"}`}>
+                  {role.label}
+                </span>
+              </div>
+              
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  value={role.value}
+                  checked={isActive}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setRoles([...roles, role.value as UserRole]);
+                    } else {
+                      setRoles(roles.filter((r) => r !== role.value));
+                    }
+                  }}
+                  className="sr-only"
+                />
+                <div className={`w-6 h-6 rounded-lg border transition-all duration-300 flex items-center justify-center
+                  ${isActive 
+                    ? "bg-[var(--color-tertiary)] border-[var(--color-tertiary)] shadow-[0_0_10px_var(--color-tertiary)]" 
+                    : "bg-black/40 border-white/10 group-hover:border-white/30"
+                  }`}>
+                  {isActive && (
+                    <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+
+      <button
         onClick={handleUpdate}
         disabled={isUpdating || !currentUserId}
-        isLoading={isUpdating}
-        variant="outline"
-        size="default"
+        className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-[0.98]
+          ${isUpdating 
+            ? "bg-white/10 text-gray-500 cursor-not-allowed" 
+            : "bg-white text-black hover:bg-gray-100 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+          }`}
       >
-        {isUpdating ? "Updating..." : "Update Roles"}
-      </Button>
+        {isUpdating ? "SYNCING REGISTRY..." : "UPDATE ROLES"}
+      </button>
     </div>
   );
 }
