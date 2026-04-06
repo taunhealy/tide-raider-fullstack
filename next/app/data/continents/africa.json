@@ -644,36 +644,39 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "Hout Bay",
-    "distanceFromCT": 40,
+    "distanceFromCT": 20,
     "optimalWindDirections": [
-      "SE",
-      "SSE"
+      "NE",
+      "E"
     ],
     "optimalSwellDirections": {
-      "min": 225,
-      "max": 240
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
     },
     "bestSeasons": [
       "winter"
     ],
-    "optimalTide": "HIGH",
-    "description": "Rarely works.",
+    "optimalTide": "LOW_TO_MID",
+    "description": "Powerful right-hand wedge off the harbour wall. Short, heavy, and very shallow. High performance wave when working.",
     "difficulty": "ADVANCED",
-    "waveType": "BEACH_BREAK",
+    "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 3.2,
-      "max": 20
+      "min": 1.5,
+      "max": 3.5
     },
     "idealSwellPeriod": {
       "min": 12,
-      "max": 24
+      "max": 18
     },
     "waterTemp": {
-      "summer": 16,
-      "winter": 12
+      "summer": 14,
+      "winter": 11
     },
     "hazards": [
-      "Potential theft."
+      "Rocks",
+      "Wall",
+      "Pollution"
     ],
     "crimeLevel": "Medium",
     "sharkAttack": {
@@ -681,8 +684,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": 0,
-      "lng": 0
+      "lat": -34.048,
+      "lng": 18.35
     }
   },
   {
@@ -3746,8 +3749,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -32.22,
+      "lng": 28.92
     }
   },
   {
@@ -4586,40 +4589,41 @@
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
-    "location": "Cape Peninsula",
-    "distanceFromCT": 40,
+    "location": "Mouille Point",
+    "distanceFromCT": 2,
     "optimalWindDirections": [
-      "SE"
+      "SE",
+      "S"
     ],
     "optimalSwellDirections": {
       "min": 225,
-      "max": 247.5,
-      "cardinal": "SW to WSW"
+      "max": 270,
+      "cardinal": "SW to W"
     },
     "bestSeasons": [
-      "winter"
+      "winter",
+      "spring"
     ],
     "optimalTide": "MID_TO_HIGH",
-    "description": "Powerful left-hand reef break that works only on big to massive swells. Wave wraps around and creates powerful sections along its 200m length. Located just inside a shipwreck with a critical takeoff. Despite being more protected than exposed breaks, experiences very strong currents. Inconsistent (3/10) but moderately crowded (5/10) when working. Requires solid swell to break but offers quality waves when conditions align.",
+    "description": "Powerful reef break located in Mouille Point, named after the 1899 shipwreck. Visible hull section serves as a takeoff marker. Powerful lefts that wrap around the reef.",
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "swellSize": {
-      "min": 1.8,
-      "max": 4.7
+      "min": 1.5,
+      "max": 4.5
     },
     "idealSwellPeriod": {
       "min": 12,
       "max": 18
     },
     "waterTemp": {
-      "summer": 16,
+      "summer": 15,
       "winter": 12
     },
     "hazards": [
       "Rocks",
-      "Strong currents",
       "Shipwreck",
-      "Critical takeoff"
+      "Strong currents"
     ],
     "crimeLevel": "Low",
     "sharkAttack": {
@@ -4627,8 +4631,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3476,
-      "lng": 18.4737
+      "lat": -33.8994,
+      "lng": 18.4069
     }
   },
   {

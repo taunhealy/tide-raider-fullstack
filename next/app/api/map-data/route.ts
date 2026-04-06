@@ -50,7 +50,8 @@ export async function GET() {
           region: beach.region?.name || "Unknown Region",
           countryId: beach.countryId,
           country: beach.country?.name || "Unknown Country",
-          continent: beach.continent || "Unknown Continent",
+          continentId: beach.country?.continent?.id || "unknown",
+          continent: beach.country?.continent?.name || "Unknown Continent",
           dailyScores: beach.beachDailyScores.reduce((acc: any, s: any) => {
             try {
               const dateStr = s.date instanceof Date 

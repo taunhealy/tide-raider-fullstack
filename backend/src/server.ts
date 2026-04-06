@@ -1,16 +1,5 @@
-import path from "path";
-import dotenv from "dotenv";
-
-// Load environment variables immediately
-// .env.local has highest priority for local development
-const envLocalPath = path.join(process.cwd(), ".env.local");
-const envPath = path.join(process.cwd(), ".env");
-
-dotenv.config({ path: envPath }); // Load defaults
-dotenv.config({ path: envLocalPath, override: true }); // Override with local settings
-
-// Now initialize prisma and optimize DATABASE_URL
-import "./lib/prisma";
+import "./setup"; // 1. Load envs first!
+import "./lib/prisma"; // 2. Now initialize prisma
 
 import express from "express";
 import cors from "cors";

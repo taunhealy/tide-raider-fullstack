@@ -24,8 +24,8 @@ const LoadingState = () => (
 
 const NoDataState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
-    <span className="text-gray-300 font-primary text-center">
-      No forecast data available. Awaiting region selection.
+    <span className="text-gray-300 font-primary text-center text-[14px]">
+      Dive in to see conditions. Zoom or select a region.
     </span>
   </div>
 );
@@ -259,7 +259,7 @@ export default function WeatherForecastWidget() {
           : selectedSource === "WINDGURU"
             ? "B"
             : "C";
-      return `No forecast data available for source ${sourceLabel}`;
+      return `No data for source ${sourceLabel}`;
     }
     return null;
   };
