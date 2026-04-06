@@ -38,8 +38,13 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden">
-                <div className="w-5 h-5 bg-gray-900 rounded-md animate-jellyfish" />
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden relative">
+                {/* Staggered Bubbles */}
+                <div className="absolute w-2 h-2 bg-gray-900/40 rounded-full animate-bubble bubble-delay-1" style={{ left: '25%' }} />
+                <div className="absolute w-3 h-3 bg-gray-900/60 rounded-full animate-bubble bubble-delay-2" style={{ left: '50%' }} />
+                <div className="absolute w-1.5 h-1.5 bg-gray-900/30 rounded-full animate-bubble bubble-delay-3" style={{ left: '70%' }} />
+                
+                <div className="w-5 h-5 bg-gray-900 rounded-md z-10" />
               </div>
               <span className="text-xl font-black text-white uppercase tracking-tighter">Tide Raider</span>
             </Link>
