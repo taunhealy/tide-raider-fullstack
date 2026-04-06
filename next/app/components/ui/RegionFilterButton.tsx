@@ -12,7 +12,6 @@ interface RegionFilterButtonProps {
 const getCountryFlag = (countryId?: string) => {
   if (!countryId) return "";
   const code = countryId.toUpperCase();
-  // Handle 2-letter ISO codes properly
   if (code.length !== 2) return "";
   return String.fromCodePoint(
     ...code.split("").map((char) => 127397 + char.charCodeAt(0))
@@ -27,59 +26,46 @@ export default function RegionFilterButton({
   count,
 }: RegionFilterButtonProps) {
   const flagEmoji = getCountryFlag(region.countryId);
-  const countryName = region.country?.name || region.countryId?.toUpperCase();
 
   return (
     <button
-      onClick={() => {
-        onClick(region);
-      }}
-      title={countryName ? `Region in ${countryName}` : undefined}
+      onClick={() => onClick(region)}
       disabled={isLoading}
       className={cn(
-        "px-3 py-1.5 text-sm rounded-full",
-        "bg-white border border-gray-200",
-        "hover:bg-[var(--color-bg-tertiary)]  transition-colors",
-        "font-primary text-[var(--color-text-primary)]",
-        "flex items-center gap-2",
-        "relative",
+        "relative px-4 py-2.5 rounded-xl transition-all duration-300 group/region",
+        "border flex items-center gap-3 w-fit",
         isLoading && "cursor-wait opacity-70",
-        isSelected && "bg-[var(--color-bg-tertiary)]  text-white"
+        isSelected
+          ? "bg-gray-800 border-gray-800 text-white shadow-lg"
+          : "bg-white border-gray-100 text-gray-900 hover:bg-gray-50 transition-colors"
       )}
     >
-      <span className="flex items-center gap-1.5 relative z-10">
+      <div className="flex items-center gap-2 overflow-hidden">
         {flagEmoji && (
           <span className={cn(
-            "text-base leading-none p-1 rounded-sm",
-            isSelected ? "bg-white/20" : "bg-gray-100"
-          )} aria-hidden="true">
+            "text-base leading-none p-1 rounded-lg shrink-0 transition-colors",
+            isSelected ? "bg-white/20" : "bg-gray-100 group-hover/region:bg-white"
+          )}>
             {flagEmoji}
           </span>
         )}
-        <span>
-          {region.name ||
-            region.id
-              ?.split("-")
-              .map(
-                (word) =>
-                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-              )
-              .join(" ")}
+        <span className="font-semibold truncate text-xs tracking-tight">
+          {region.name || region.id.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")}
         </span>
-      </span>
+      </div>
+
       {count > 0 && (
-        <span
-          className={cn(
-            "ml-2 text-xs rounded-full px-2 py-0.5",
-            isSelected ? "bg-white text-black" : "bg-gray-100 text-gray-600"
-          )}
-        >
+        <span className={cn(
+          "text-[9px] font-black px-1.5 py-0.5 rounded-lg shrink-0 transition-colors",
+          isSelected ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400 group-hover/region:bg-white"
+        )}>
           {count}
         </span>
       )}
+
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-t-transparent border-[var(--color-primary)] rounded-full animate-spin"></div>
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
+          <div className="w-4 h-4 border-2 border-gray-200 border-t-gray-900 rounded-full animate-spin" />
         </div>
       )}
     </button>

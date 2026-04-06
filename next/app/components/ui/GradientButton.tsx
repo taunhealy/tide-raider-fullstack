@@ -40,8 +40,8 @@ const variantStyles: Record<GradientButtonVariant, { active: string; inactive: s
     inactive: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
   },
   "gray": {
-    active: "bg-gray-700 dark:bg-gray-600 text-white shadow-lg",
-    inactive: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
+    active: "bg-gray-900 border-gray-900 text-white shadow-xl translate-y-[-1px]",
+    inactive: "bg-gray-50 border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-white transition-all",
   },
   "outline": {
     active: "border-2 border-purple-500 text-purple-500 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30",
@@ -125,7 +125,6 @@ export function HiddenGemsButton({
           />
         </svg>
       }
-      badge={active ? "Active" : undefined}
       {...props}
     >
       {children}
@@ -157,7 +156,6 @@ export function LoggersButton({
           <path d="M12 2v20" />
         </svg>
       }
-      badge={active ? "Active" : undefined}
       {...props}
     >
       {children}
@@ -189,7 +187,6 @@ export function FoilingButton({
           />
         </svg>
       }
-      badge={active ? "Active" : undefined}
       {...props}
     >
       {children}

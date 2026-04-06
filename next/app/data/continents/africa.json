@@ -11040,5 +11040,113 @@
       }
     ],
     "isFoiling": true
+  },
+  {
+    "id": "imsouane-magic-bay-morocco",
+    "name": "Imsouane",
+    "continent": "Africa",
+    "countryId": "ma",
+    "regionId": "souss-massa",
+    "location": "The Magic Bay",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "E"],
+    "optimalSwellDirections": {
+      "min": 300,
+      "max": 330,
+      "cardinal": "NW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "LOW",
+    "description": "The Magic Bay in Imsouane is legendary in the longboarding world. It offers a right-hand wave that can peel for over 600 meters in a deep, protected bay. The wave is famously slow and easy to ride, making it the ultimate destination for traditional logging in Morocco.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 3 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 21, "winter": 17 },
+    "hazards": ["Rocks at low tide"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=FjIu0Z5tK3A",
+        "title": "IMSOUANE | The Magic Bay of Morocco (Longboard Surfing)",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 30.841, "lng": -9.821 }
+  },
+  {
+    "id": "ngor-island-dakar-senegal",
+    "name": "NGor Island",
+    "continent": "Africa",
+    "countryId": "sn",
+    "regionId": "dakar",
+    "location": "Dakar",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "N"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "ALL",
+    "description": "Featured in 'The Endless Summer', NGor Island is Senegal's most famous wave. It's a high-quality right-hand reef break that offers long, consistent sections perfect for longboarding. The island atmosphere and clear water make it a unique West African destination.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.9, "max": 3.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 26, "winter": 18 },
+    "hazards": ["Sea urchins", "Strong currents"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=5rLzW8x9Z0E",
+        "title": "Surfing NGor Island - Dakar, Senegal",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 14.754, "lng": -17.516 }
+  },
+  {
+    "id": "mahambo-east-coast-madagascar",
+    "name": "Mahambo",
+    "continent": "Africa",
+    "countryId": "mg",
+    "regionId": "east-madagascar",
+    "location": "East Coast",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["W", "SW"],
+    "optimalSwellDirections": {
+      "min": 90,
+      "max": 135,
+      "cardinal": "E/SE"
+    },
+    "bestSeasons": ["winter", "autumn"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "Mahambo is the surfing capital of Madagascar's East Coast. It features a very long, rolling reef break that is perfect for longboarders. The waves are generally mellow and consistent, breaking in warm, turquoise water surrounded by lush tropical vegetation.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 28, "winter": 23 },
+    "hazards": ["Coral reef at low tide", "Remote healthcare"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=kYJ_Z4C_XkU",
+        "title": "Surfing Mahambo, Madagascar",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": -17.483, "lng": 49.466 }
   }
 ]

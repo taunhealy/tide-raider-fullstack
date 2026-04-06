@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // Handle 429 gracefully - return null (frontend handles null gracefully)
-        if (response.status === 429) {
-          console.warn("[forecast] Rate limited, returning null");
-          return NextResponse.json(null, { status: 200 });
-        }
+        const errorData = await response.json().catch(() => ({}));
         return NextResponse.json(
-          { error: "Failed to fetch forecast data" },
+          { 
+            error: errorData.error || "Failed to fetch surf conditions",
+            message: errorData.message,
+            details: errorData.details
+          },
           { status: response.status }
         );
       }

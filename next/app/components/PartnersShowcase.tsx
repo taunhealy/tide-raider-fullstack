@@ -29,7 +29,7 @@ export default function PartnersShowcase() {
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="heading-6 mb-4 font-primary">Our Partners</h3>
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mb-4">OUR PARTNERS</h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="animate-pulse">
@@ -50,7 +50,7 @@ export default function PartnersShowcase() {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="heading-6 font-primary">Our Partners</h3>
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">OUR PARTNERS</h3>
       </div>
 
       <div className="space-y-3">

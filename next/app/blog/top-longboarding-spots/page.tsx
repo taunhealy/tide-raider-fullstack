@@ -144,6 +144,33 @@ const spots = [
     highlight: "Hidden Lombok"
   },
   {
+    name: "Imsouane",
+    location: "Souss-Massa, Morocco",
+    country: "Morocco",
+    countryCode: "MA",
+    description: "The Magic Bay in Imsouane is legendary in the longboarding world. It offers a right-hand wave that can peel for over 600 meters in a deep, protected bay. The wave is famously slow and easy to ride, making it the ultimate destination for traditional logging in Morocco.",
+    videoUrl: "https://www.youtube.com/embed/FjIu0Z5tK3A",
+    highlight: "Moroccan Magic"
+  },
+  {
+    name: "NGor Island",
+    location: "Dakar, Senegal",
+    country: "Senegal",
+    countryCode: "SN",
+    description: "Featured in 'The Endless Summer', NGor Island is Senegal's most famous wave. It's a high-quality right-hand reef break that offers long, consistent sections perfect for longboarding. The island atmosphere and clear water make it a unique West African destination.",
+    videoUrl: "https://www.youtube.com/embed/5rLzW8x9Z0E",
+    highlight: "Senegal Classic"
+  },
+  {
+    name: "Mahambo",
+    location: "East Coast, Madagascar",
+    country: "Madagascar",
+    countryCode: "MG",
+    description: "The surfing capital of Madagascar's East Coast. It features a very long, rolling reef break that is perfect for longboarders. The waves break in warm, turquoise water surrounded by lush tropical vegetation.",
+    videoUrl: "https://www.youtube.com/embed/kYJ_Z4C_XkU",
+    highlight: "Madagascar Glide"
+  },
+  {
     name: "Muizenberg Beach",
     location: "Cape Town, South Africa",
     country: "South Africa",
@@ -292,7 +319,6 @@ const spots = [
 export default function LongboardingBlogPost() {
   return (
     <div className="bg-white min-h-screen">
-      <Navbar />
       
       {/* Hero Section */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">

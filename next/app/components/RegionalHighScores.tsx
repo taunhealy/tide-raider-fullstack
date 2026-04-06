@@ -226,8 +226,8 @@ function RegionalHighScoresContent({
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 font-primary">
-            Top Surf Breaks
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">
+            TOP SURF BREAKS
           </h3>
           <p className="text-xs text-gray-500 font-primary mt-1">
             Scores aggregated from all forecast sources
@@ -251,8 +251,8 @@ function RegionalHighScoresContent({
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 font-primary">
-          Top Surf Breaks
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">
+          TOP SURF BREAKS
         </h3>
         <p className="text-xs text-gray-500 font-primary mt-1">
           Scores aggregated from all forecast sources

@@ -81,6 +81,8 @@ export default function BlogForecastWidget({ beachName }: BlogForecastWidgetProp
   }
 
   const { forecast, scores } = data;
+  const hasForecast = forecast && Object.keys(forecast).length > 0;
+  
   const avgStarRating = scores.length > 0
     ? Math.round(scores.reduce((acc, s) => acc + s.starRating, 0) / scores.length)
     : 3;
@@ -107,32 +109,43 @@ export default function BlogForecastWidget({ beachName }: BlogForecastWidgetProp
         </div>
 
         {/* Right Side: Quick Stats */}
-        <div className="p-6 md:w-2/3 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-            <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Swell</span>
-            <div className="flex items-center">
-              <span className="text-sm mr-1 font-primary">{getSwellEmoji(forecast?.swellHeight || 0)}</span>
-              <span className="font-bold text-gray-900 text-sm whitespace-nowrap">{forecast?.swellHeight ?? '??'}m</span>
+        <div className="p-6 md:w-2/3">
+          {hasForecast ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+              <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Swell</span>
+                <div className="flex items-center">
+                  <span className="text-sm mr-1 font-primary">{getSwellEmoji(forecast?.swellHeight || 0)}</span>
+                  <span className="font-bold text-gray-900 text-sm whitespace-nowrap">{forecast?.swellHeight}m</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Period</span>
+                <div className="flex items-center">
+                  <span className="text-sm mr-1">⏱️</span>
+                  <span className="font-bold text-gray-900 text-sm">{forecast?.swellPeriod}s</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Wind</span>
+                <div className="flex items-center">
+                  <span className="text-sm mr-1 font-primary">{getWindEmoji(forecast?.windSpeed || 0)}</span>
+                  <span className="font-bold text-gray-900 text-sm">{forecast?.windSpeed}kt</span>
+                </div>
+              </div>
+              <div className={`flex flex-col items-center justify-center p-3 rounded-xl text-white shadow-lg ${scoreColor}`}>
+                <span className="text-[10px] uppercase font-bold text-white/80 mb-1 tracking-tighter">Rating</span>
+                <span className="font-bold text-xs">{scoreText}</span>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-            <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Period</span>
-            <div className="flex items-center">
-              <span className="text-sm mr-1">⏱️</span>
-              <span className="font-bold text-gray-900 text-sm">{forecast?.swellPeriod ?? '??'}s</span>
+          ) : (
+            <div className="h-full flex items-center justify-center border-2 border-dashed border-gray-100 rounded-2xl p-4">
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Real-time data pending</span>
+                <p className="text-[9px] text-gray-300">Background analytics currently deploying for this spot.</p>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-            <span className="text-[10px] uppercase font-bold text-gray-400 mb-1 tracking-tighter">Wind</span>
-            <div className="flex items-center">
-              <span className="text-sm mr-1 font-primary">{getWindEmoji(forecast?.windSpeed || 0)}</span>
-              <span className="font-bold text-gray-900 text-sm">{forecast?.windSpeed ?? '??'}kt</span>
-            </div>
-          </div>
-          <div className={`flex flex-col items-center justify-center p-3 rounded-xl text-white shadow-lg ${scoreColor}`}>
-            <span className="text-[10px] uppercase font-bold text-white/80 mb-1 tracking-tighter">Rating</span>
-            <span className="font-bold text-xs">{scoreText}</span>
-          </div>
+          )}
         </div>
       </div>
       

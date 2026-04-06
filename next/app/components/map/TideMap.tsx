@@ -1,0 +1,368 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import "ol/ol.css";
+import Map from "ol/Map";
+import View from "ol/View";
+import TileLayer from "ol/layer/Tile";
+import OSM from "ol/source/OSM";
+import { fromLonLat } from "ol/proj";
+import Feature from "ol/Feature";
+import Point from "ol/geom/Point";
+import { Vector as VectorLayer } from "ol/layer";
+import { Vector as VectorSource, Cluster } from "ol/source";
+import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
+import Overlay from "ol/Overlay";
+
+interface Beach {
+  id: string;
+  name: string;
+  location: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  difficulty: string;
+  rating?: number;
+  region?: string;
+  countryId: string;
+  country: string;
+  continentId: string;
+  continent: string;
+}
+
+interface TideMapProps {
+  beaches: Beach[];
+  onBeachSelect: (beach: Beach) => void;
+  selectedDayIndex?: number;
+  center?: [number, number];
+  zoom?: number;
+}
+
+export default function TideMap({ 
+  beaches, 
+  onBeachSelect, 
+  selectedDayIndex = 0,
+  center = [18.47, -34.10], 
+  zoom = 10 
+}: TideMapProps) {
+  const mapElement = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<Map | null>(null);
+  const [popupBeach, setPopupBeach] = useState<Beach | null>(null);
+  const [currentZoom, setCurrentZoom] = useState(zoom);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const selectedDayIndexRef = useRef(selectedDayIndex);
+  const selectedDateStringRef = useRef("");
+
+  useEffect(() => {
+    selectedDayIndexRef.current = selectedDayIndex;
+    
+    // Calculate the date string for the selected index
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + selectedDayIndex);
+    selectedDateStringRef.current = date.toISOString().split('T')[0];
+  }, [selectedDayIndex]);
+
+  const getBrandedColor = (r: number) => {
+    if (r >= 4.5) return "#1d4ed8"; // blue-700 (Peak)
+    if (r >= 3.8) return "#3b82f6"; // blue-500 (Excellent)
+    if (r >= 3.0) return "#60a5fa"; // blue-400 (Target Brand Color)
+    if (r >= 2.0) return "#93c5fd"; // blue-300 (Fair)
+    return "#cbd5e1"; // gray-300 (Challenging/Quiet)
+  };
+
+  useEffect(() => {
+    if (!mapElement.current) return;
+
+    // Initialize Map
+    const initialMap = new Map({
+      target: mapElement.current,
+      layers: [
+        new TileLayer({
+          source: new OSM(),
+        }),
+      ],
+      view: new View({
+        center: fromLonLat([center[0], center[1]]),
+        zoom: zoom,
+      }),
+      controls: [],
+    });
+
+    const vectorSource = new VectorSource();
+    const clusterSource = new Cluster({
+      distance: 10, // Reduced from 25 to show more individual beaches
+      source: vectorSource,
+    });
+
+    const vectorLayer = new VectorLayer({
+      source: clusterSource,
+      style: (feature) => {
+        const clusterFeatures = feature.get("features");
+        const size = clusterFeatures.length;
+        
+        // Check if our first feature is a manual cluster (Continent or Country)
+        const representative = clusterFeatures[0];
+        const type = representative.get("type");
+        const manualLabel = representative.get("label");
+        const manualCount = representative.get("count");
+
+        const getRatingForBeach = (b: any) => {
+          const dateKey = selectedDateStringRef.current;
+          return b?.dailyScores?.[dateKey]?.rating ?? b?.rating ?? 3;
+        };
+
+        if (type === "continent" || type === "country") {
+          const items = representative.get("allBeaches") || [];
+          const ratings = items.map((b: any) => getRatingForBeach(b));
+          const avgRating = ratings.length > 0 
+            ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
+            : 3;
+
+          return new Style({
+            image: new CircleStyle({
+              radius: type === "continent" ? 28 : 22,
+              stroke: new Stroke({ color: "#fff", width: 2.5 }),
+              fill: new Fill({ color: getBrandedColor(avgRating) }),
+            }),
+            text: new Text({
+              text: manualLabel + "\n" + manualCount,
+              fill: new Fill({ color: "#fff" }),
+              font: `bold ${type === "continent" ? '12px' : '10px'} Inter, sans-serif`,
+              textAlign: "center",
+              offsetY: 2,
+            }),
+          });
+        }
+
+        if (size > 1) {
+          // Automatic Proximity Cluster Style
+          const ratings = clusterFeatures.map((f: any) => getRatingForBeach(f.get("beach")));
+          const avgRating = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
+
+          return new Style({
+            image: new CircleStyle({
+              radius: 12 + Math.min(size, 6),
+              stroke: new Stroke({ color: "#fff", width: 1.5 }),
+              fill: new Fill({ color: getBrandedColor(avgRating) }),
+            }),
+            text: new Text({
+              text: size.toString(),
+              fill: new Fill({ color: "#fff" }),
+              font: "bold 12px Inter, sans-serif",
+            }),
+          });
+        }
+        
+        // Single Marker Style
+        const beach = representative.get("beach");
+        const dateKey = selectedDateStringRef.current;
+        const rating = beach?.dailyScores?.[dateKey]?.rating ?? beach?.rating ?? 3;
+        
+        return new Style({
+          image: new Icon({
+            anchor: [0.5, 1],
+            src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+              <svg width="40" height="50" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1.5"/>
+                <circle cx="12" cy="10" r="7" fill="white"/>
+                <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${rating.toFixed(0)}</text>
+              </svg>
+            `)}`,
+            scale: 0.9,
+          }),
+          text: new Text({
+            text: beach?.name,
+            offsetY: -40,
+            font: "bold 11px Inter, sans-serif",
+            fill: new Fill({ color: "#111827" }),
+            stroke: new Stroke({ color: "#ffffff", width: 3 }),
+          }),
+        });
+      },
+    });
+
+    initialMap.getView().on("change:resolution", () => {
+      const zoom = initialMap.getView().getZoom();
+      if (zoom !== undefined) setCurrentZoom(zoom);
+    });
+
+    initialMap.addLayer(vectorLayer);
+
+    const overlay = new Overlay({
+      element: popupRef.current!,
+      autoPan: true,
+      // autoPanAnimation is removed as it's not a valid property in current OL versions or definitions
+    });
+    initialMap.addOverlay(overlay);
+
+    mapRef.current = initialMap;
+
+    initialMap.on("click", (evt) => {
+      const feature = initialMap.forEachFeatureAtPixel(evt.pixel, (feat) => feat);
+      if (feature) {
+        const clusterFeatures = feature.get("features");
+        const representative = clusterFeatures[0];
+        const type = representative.get("type");
+
+        if (type === "continent" || type === "country") {
+          // Zoom into the center of this group
+          const coords = (representative.getGeometry() as Point).getCoordinates();
+          initialMap.getView().animate({
+            center: coords,
+            zoom: type === "continent" ? 5 : 8,
+            duration: 600
+          });
+          return;
+        }
+
+        if (clusterFeatures.length > 1) {
+          // Zoom into proximity cluster
+          const extent = new VectorSource({ features: clusterFeatures }).getExtent();
+          
+          // Check if all features have identical coordinates
+          const firstCoord = (clusterFeatures[0].getGeometry() as Point).getCoordinates();
+          const allSame = clusterFeatures.every((f: any) => {
+            const coord = (f.getGeometry() as Point).getCoordinates();
+            return coord[0] === firstCoord[0] && coord[1] === firstCoord[1];
+          });
+
+          if (allSame) {
+            initialMap.getView().animate({
+              center: firstCoord,
+              zoom: initialMap.getView().getZoom()! + 2,
+              duration: 500
+            });
+          } else {
+            initialMap.getView().fit(extent, { 
+              padding: [100, 100, 100, 100], 
+              duration: 600,
+              maxZoom: 16
+            });
+          }
+        } else {
+          const beach = representative.get("beach");
+          setPopupBeach(beach);
+          overlay.setPosition(evt.coordinate);
+          onBeachSelect(beach);
+        }
+      } else {
+        setPopupBeach(null);
+        overlay.setPosition(undefined);
+      }
+    });
+
+    initialMap.on("pointermove", (evt) => {
+      const pixel = initialMap.getEventPixel(evt.originalEvent);
+      const hit = initialMap.hasFeatureAtPixel(pixel);
+      initialMap.getTargetElement().style.cursor = hit ? "pointer" : "";
+    });
+
+    return () => initialMap.setTarget(undefined);
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const vectorLayer = mapRef.current.getLayers().getArray().find(l => l instanceof VectorLayer) as VectorLayer<Cluster<Feature>>;
+    const clusterSource = vectorLayer.getSource() as Cluster<Feature>;
+    const vectorSource = clusterSource.getSource();
+    vectorSource!.clear();
+
+    let features: Feature[] = [];
+
+    if (currentZoom < 4) {
+      // Group by Continent
+      const continents: Record<string, Beach[]> = {};
+      beaches.forEach(b => {
+        if (!continents[b.continentId]) continents[b.continentId] = [];
+        continents[b.continentId].push(b);
+      });
+      features = Object.entries(continents).map(([id, items]) => {
+        const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
+        const avgLng = items.reduce((sum, b) => sum + b.coordinates.lng, 0) / items.length;
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([avgLng, avgLat])),
+        });
+        feature.set("label", items[0].continent);
+        feature.set("count", items.length);
+        feature.set("beach", items[0]); 
+        feature.set("allBeaches", items);
+        feature.set("type", "continent");
+        return feature;
+      });
+    } else if (currentZoom < 7) {
+      // Group by Country
+      const countries: Record<string, Beach[]> = {};
+      beaches.forEach(b => {
+        if (!countries[b.countryId]) countries[b.countryId] = [];
+        countries[b.countryId].push(b);
+      });
+      features = Object.entries(countries).map(([id, items]) => {
+        const avgLat = items.reduce((sum, b) => sum + b.coordinates.lat, 0) / items.length;
+        const avgLng = items.reduce((sum, b) => sum + b.coordinates.lng, 0) / items.length;
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([avgLng, avgLat])),
+        });
+        feature.set("label", items[0].country);
+        feature.set("count", items.length);
+        feature.set("beach", items[0]);
+        feature.set("allBeaches", items);
+        feature.set("type", "country");
+        return feature;
+      });
+    } else {
+      features = beaches.map(beach => {
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([beach.coordinates.lng, beach.coordinates.lat])),
+        });
+        feature.set("beach", beach);
+        feature.set("type", "beach");
+        return feature;
+      });
+    }
+
+    vectorSource!.addFeatures(features);
+    
+    // Trigger layer redraw to use new selectedDayIndexRef value
+    vectorLayer.changed();
+    
+    if (features.length > 0 && beaches.length > prevBeachesCount.current) {
+      const extent = vectorSource!.getExtent();
+      mapRef.current.getView().fit(extent, { padding: [100, 100, 100, 100], maxZoom: 12 });
+    }
+    prevBeachesCount.current = beaches.length;
+  }, [beaches, selectedDayIndex, currentZoom]);
+
+  const prevBeachesCount = useRef(beaches.length);
+
+  return (
+    <div className="relative w-full h-full">
+      <div ref={mapElement} className="w-full h-full" />
+      
+      {/* Popup Overlay */}
+      <div ref={popupRef} className={`absolute bg-white rounded-xl shadow-2xl p-4 min-w-[200px] border border-gray-100 transition-opacity ${popupBeach ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {popupBeach && (
+          <div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Selected Break</span>
+            <h4 className="text-sm font-bold text-gray-900 mb-1">{popupBeach.name}</h4>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className={`w-2 h-2 rounded-full ${i < (popupBeach.rating || 0) ? 'bg-amber-400' : 'bg-gray-200'}`} />
+                ))}
+              </div>
+              <span className="text-[10px] text-gray-500 font-medium">{(popupBeach.rating || 0).toFixed(1)} Stars</span>
+            </div>
+            <button 
+              onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
+              className="w-full py-2 bg-gray-900 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Full Forecast →
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

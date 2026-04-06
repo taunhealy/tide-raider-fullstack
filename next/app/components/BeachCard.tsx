@@ -300,7 +300,7 @@ const BeachCard = memo(function BeachCard({
 
                   {/* Beach Information */}
                   <div>
-                    <h4 className="text-lg font-primary font-semibold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in">
+                    <h4 className="text-lg font-primary font-black text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 animate-in uppercase tracking-wider">
                       {beach.name}
                       {forecastData?.windSpeed &&
                         forecastData.windSpeed > 25 && (
@@ -319,7 +319,7 @@ const BeachCard = memo(function BeachCard({
                         </span>
                       )}
                     </h4>
-                    <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
+                    <h6 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mt-0.5">
                       {formatRegionName(beach.region?.name, beach.regionId)}
                     </h6>
                   </div>
@@ -619,7 +619,7 @@ const BeachCard = memo(function BeachCard({
                         </span>
                       )}
                     </h4>
-                    <h6 className="text-xs md:text-sm font-primary text-[var(--color-text-secondary)]">
+                    <h6 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mt-0.5">
                       {formatRegionName(beach.region?.name, beach.regionId)}
                     </h6>
                   </div>

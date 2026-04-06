@@ -26,7 +26,12 @@ interface BeachHeaderControlsProps {
   beaches: Beach[];
 }
 
-export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
+export default function BeachHeaderControls({
+  onSearch,
+  onRegionSelect,
+  currentRegion,
+  beaches,
+}: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -53,6 +58,7 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
             <DateSelector
               selectedDate={selectedDate}
               onDateSelect={handleDateSelect}
+              beaches={beaches}
             />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
@@ -64,7 +70,8 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                 
                 <div className="flex flex-col gap-3 w-full">
                   {/* Recent Regions Row */}
-                  <div className="w-full">
+                  <div className="w-full space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Location History</label>
                     <RecentRegionSearch regionCounts={regionCountsData} />
                   </div>
                   
@@ -89,8 +96,9 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                         const newValue = !filters.isLongboarding;
                         updateFilter("isLongboarding", newValue ? "true" : "");
                       }}
+                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      Loggers
+                      LOGGERS
                     </LoggersButton>
 
                     <FoilingButton
@@ -100,8 +108,9 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                         const newValue = !filters.isFoiling;
                         updateFilter("isFoiling", newValue ? "true" : "");
                       }}
+                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      Foiling
+                      FOILING
                     </FoilingButton>
 
                     <HiddenGemsButton
@@ -111,8 +120,9 @@ export default function BeachHeaderControls({}: BeachHeaderControlsProps) {
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");
                       }}
+                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      Hidden Gems
+                      HIDDEN GEMS
                     </HiddenGemsButton>
                   </div>
                 </div>

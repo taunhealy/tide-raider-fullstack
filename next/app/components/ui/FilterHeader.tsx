@@ -21,7 +21,7 @@ export function FilterHeader({
 }: FilterHeaderProps) {
   return (
     <div className="space-y-3">
-      <h4 className="font-medium text-[16px] text-gray-700 font-primary">
+      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">
         {title}
       </h4>
 

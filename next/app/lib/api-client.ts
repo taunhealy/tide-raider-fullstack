@@ -62,8 +62,11 @@ async function apiRequest<T>(
     }
 
     return await response.json();
-  } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error);
+  } catch (error: any) {
+    // Only log actual failures, not missing resources (404)
+    if (error?.response?.status !== 404) {
+      console.error(`API request failed: ${endpoint}`, error);
+    }
     throw error;
   }
 }

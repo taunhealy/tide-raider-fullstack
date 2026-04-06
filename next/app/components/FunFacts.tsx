@@ -41,13 +41,9 @@ export default function FunFacts() {
       )}
     >
       <h3
-        className={cn(
-          "heading-6",
-          " text-[var(--color-text-primary)]",
-          "mb-6 font-primary"
-        )}
+        className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary mb-6"
       >
-        Did You Know?
+        DID YOU KNOW?
       </h3>
       <div
         className={cn(

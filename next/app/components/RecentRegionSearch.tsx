@@ -165,27 +165,33 @@ export default function RecentRegionSearch({
             onClick={() => handleButtonClick(search)}
             disabled={loadingId !== null}
             className={cn(
-              "px-3 py-1.5 text-sm rounded-full",
-              "border border-gray-200",
-              "font-primary flex items-center gap-2",
+              "relative px-4 py-3 min-w-[120px] rounded-xl transition-all duration-300 overflow-hidden group/recent",
+              "border shadow-sm flex items-center justify-between gap-3",
               isLoading && "cursor-wait opacity-70",
               isSelected
-                ? "bg-[var(--color-bg-tertiary)] text-white border-transparent"
-                : "bg-white hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] transition-colors"
+                ? "bg-gray-800 border-gray-800 text-white shadow-lg translate-y-[-1px]"
+                : "bg-white border-gray-100 text-gray-900 hover:bg-gray-50 transition-all"
             )}
           >
-            {search.region.name}
+            <span className={cn(
+              "text-xs font-bold truncate text-left relative z-10",
+              isSelected ? "text-white" : "text-gray-900"
+            )}>
+              {search.region.name}
+            </span>
+            
             {count > 0 && (
-              <span
-                className={cn(
-                  "ml-2 text-xs rounded-full px-2 py-0.5",
-                  isSelected
-                    ? "bg-white text-black" // Active: grey bg, black text
-                    : "bg-gray-100 text-gray-600" // Inactive: lighter bg, gray text
-                )}
-              >
+              <span className={cn(
+                "text-[9px] font-bold px-1.5 py-0.5 rounded-md border relative z-10",
+                isSelected ? "bg-white/10 border-white/20 text-white" : "bg-gray-50 border-gray-100 text-gray-400"
+              )}>
                 {count}
               </span>
+            )}
+            
+            {/* Subtle background glow for selected state */}
+            {isSelected && (
+              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-400/10 blur-2xl rounded-full -mr-8 -mt-8" />
             )}
           </button>
         );

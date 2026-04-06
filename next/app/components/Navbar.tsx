@@ -15,6 +15,7 @@ import { useBackendAuth } from "../hooks/useBackendAuth";
 
 // Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
+  { href: "/map", label: "Map" },
   { href: "/raid", label: "Raid" },
   { href: "/raidlogs", label: "Logs" },
   { href: "/alerts", label: "Alerts" },
@@ -66,9 +67,9 @@ export default function Navbar() {
       <Button
         variant="outline"
         onClick={() => signOut()}
-        className="transition-all duration-300 font-primary"
+        className="transition-all duration-300 font-primary uppercase tracking-[2px] text-[10px] font-bold"
       >
-        Sign Out
+        SIGN OUT
       </Button>
     ) : (
       <Button
@@ -77,9 +78,9 @@ export default function Navbar() {
           e.preventDefault();
           handleSignIn(window.location.pathname);
         }}
-        className="transition-all duration-300 font-primary"
+        className="transition-all duration-300 font-primary uppercase tracking-[2px] text-[10px] font-bold"
       >
-        Sign In
+        SIGN IN
       </Button>
     );
   };
@@ -169,13 +170,10 @@ export default function Navbar() {
                 router.refresh();
                 setIsMenuOpen(false); // Close mobile menu if open
               }}
-              className="font-semibold hover:text-[var(--color-bg-tertiary)] transition-all duration-300"
+              className="flex items-center transition-all duration-300"
             >
-              <h6 className="heading-6 text-[var(--color-text-primary)]">
-                Tide Raider
-              </h6>
-              <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-blue-100 text-blue-700 rounded-md border border-blue-200">
-                Beta
+              <span className="text-[20px] leading-[28px] font-bold tracking-[-1px] text-[var(--color-text-primary)] font-primary uppercase">
+                TIDE RAIDER
               </span>
             </Link>
           )}

@@ -53,7 +53,7 @@ export default function RecentRaidLogs() {
   return (
     <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm border border-gray-200">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="heading-6 font-primary">Recent Sessions</h3>
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">RECENT SESSIONS</h3>
         <Link
           href="/raidlogs"
           className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary whitespace-nowrap"
