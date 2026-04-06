@@ -238,9 +238,9 @@ const BeachCard = memo(function BeachCard({
         group 
         bg-[var(--color-bg-primary)] 
         mt-3
-        rounded-lg 
-        shadow-sm 
-        border border-gray-200 
+        rounded-2xl 
+        shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),0_1px_4px_-1px_rgba(0,0,0,0.02)]
+        border border-gray-100
         overflow-hidden 
         transition-all 
         duration-300 
@@ -281,12 +281,12 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
-                        {formatWaveType(beach.waveType)}
-                      </span>
-                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
                       <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
                         {formatRegionName(beach.region?.name, beach.regionId)}
+                      </span>
+                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        {formatWaveType(beach.waveType)}
                       </span>
                     </h6>
                   </div>
@@ -330,11 +330,11 @@ const BeachCard = memo(function BeachCard({
                       <BlueStarRating score={score} />
 
                       <div
-                        className="flex items-center gap-2 relative px-2 py-1 border border-gray-200 rounded-md bg-gray-50"
+                        className="flex items-center gap-2 relative px-2.5 py-1.5 border border-gray-100 rounded-xl bg-white shadow-sm"
                         onMouseEnter={() => setShowRatingHint(true)}
                         onMouseLeave={() => setShowRatingHint(false)}
                       >
-                        <div>{scoreDisplay.emoji}</div>
+                        <div className="text-base">{scoreDisplay.emoji}</div>
 
                         <div
                           className={`
@@ -351,35 +351,48 @@ const BeachCard = memo(function BeachCard({
 
                     {/* Latest Session Log */}
                     {beachSessions[0] && (
-                      <div className="flex items-center gap-2 mt-3 font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
-                        <span className="text-gray-400 font-medium">Latest:</span>
-                        <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
-                        <span className="text-gray-400 font-normal ml-auto">
-                          {format(new Date(beachSessions[0].date), "MMM d")}
-                        </span>
+                      <div className="mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-3 md:-mx-6 md:px-6 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                            LATEST SURF LOG
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
+                            <span className="font-primary text-[11px] font-bold text-gray-400">
+                              / 5.0
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-primary text-[12px] font-semibold text-black leading-none mb-1">
+                            {format(new Date(beachSessions[0].date), "MMM d")}
+                          </div>
+                          <div className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none">
+                            DATE
+                          </div>
+                        </div>
                       </div>
                     )}
 
                     {/* Add the Show/Hide Conditions button here - ALWAYS present */}
-                    <div className="flex flex-col gap-1 mt-2">
-                      <Button
+                    <div className="flex flex-col gap-1 mt-3">
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-100 bg-white text-gray-900 hover:bg-gray-50 font-semibold text-[11px] tracking-tight shadow-sm transition-all duration-300 w-fit active:scale-95"
                         onClick={() => setShowIdealConditions((v) => !v)}
                         aria-expanded={showIdealConditions}
                         aria-controls={`ideal-conditions-${beach.id}`}
                       >
+                        <span className="uppercase tracking-widest text-[9px] text-gray-400">Conditions</span>
                         <span>
                           {showIdealConditions
-                            ? "Hide Conditions"
-                            : "Show Conditions"}
+                            ? "Hide"
+                            : "Show"}
                         </span>
                         <ChevronDown
-                          className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                          className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                         />
-                      </Button>
+                      </button>
                       <div
                         id={`ideal-conditions-${beach.id}`}
                         className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
@@ -518,12 +531,12 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
-                        {formatWaveType(beach.waveType)}
-                      </span>
-                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
                       <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
                         {formatRegionName(beach.region?.name, beach.regionId)}
+                      </span>
+                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                        {formatWaveType(beach.waveType)}
                       </span>
                     </h6>
                   </div>
@@ -623,35 +636,48 @@ const BeachCard = memo(function BeachCard({
 
                     {/* Latest Session Log */}
                     {beachSessions[0] && (
-                      <div className="flex items-center gap-2 mt-3 font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
-                        <span className="text-gray-400 font-medium">Latest:</span>
-                        <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
-                        <span className="text-gray-400 font-normal ml-auto">
-                          {format(new Date(beachSessions[0].date), "MMM d")}
-                        </span>
+                      <div className="mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-3 md:-mx-6 md:px-6 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                            LATEST SURF LOG
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
+                            <span className="font-primary text-[11px] font-bold text-gray-400">
+                              / 5.0
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-primary text-[12px] font-semibold text-black leading-none mb-1">
+                            {format(new Date(beachSessions[0].date), "MMM d")}
+                          </div>
+                          <div className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none">
+                            DATE
+                          </div>
+                        </div>
                       </div>
                     )}
 
                     {/* Add the Show/Hide Conditions button here - ALWAYS present */}
-                    <div className="flex flex-col gap-1 mt-2">
-                      <Button
+                    <div className="flex flex-col gap-1 mt-3">
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
+                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-100 bg-white text-gray-900 hover:bg-gray-50 font-semibold text-[11px] tracking-tight shadow-sm transition-all duration-300 w-fit active:scale-95"
                         onClick={() => setShowIdealConditions((v) => !v)}
                         aria-expanded={showIdealConditions}
                         aria-controls={`ideal-conditions-${beach.id}`}
                       >
+                        <span className="uppercase tracking-widest text-[9px] text-gray-400">Conditions</span>
                         <span>
                           {showIdealConditions
-                            ? "Hide Conditions"
-                            : "Show Conditions"}
+                            ? "Hide"
+                            : "Show"}
                         </span>
                         <ChevronDown
-                          className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                          className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                         />
-                      </Button>
+                      </button>
                       <div
                         id={`ideal-conditions-${beach.id}`}
                         className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
@@ -680,24 +706,23 @@ const BeachCard = memo(function BeachCard({
                 ) : (
                   // Show optimal conditions when no surf data is available
                   <div className="text-sm flex flex-col gap-1">
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2 p-0 h-auto font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black w-fit hover:bg-transparent"
+                      className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-100 bg-white text-gray-900 hover:bg-gray-50 font-semibold text-[11px] tracking-tight shadow-sm transition-all duration-300 w-fit active:scale-95"
                       onClick={() => setShowIdealConditions((v) => !v)}
                       aria-expanded={showIdealConditions}
                       aria-controls={`ideal-conditions-${beach.id}`}
                     >
+                      <span className="uppercase tracking-widest text-[9px] text-gray-400">Conditions</span>
                       <span>
                         {showIdealConditions
-                          ? "Hide Conditions"
-                          : "Show Conditions"}
+                          ? "Hide"
+                          : "Show"}
                       </span>
                       <ChevronDown
-                        className={`w-3 h-3 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
+                        className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${showIdealConditions ? "rotate-180" : ""}`}
                       />
-                    </Button>
+                    </button>
                     <div
                       id={`ideal-conditions-${beach.id}`}
                       className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}

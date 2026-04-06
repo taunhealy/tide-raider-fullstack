@@ -64,24 +64,22 @@ export default function Navbar() {
   // Simple function to render auth button consistently
   const AuthButton = () => {
     return session ? (
-      <Button
-        variant="outline"
+      <button
         onClick={() => signOut()}
-        className="transition-all duration-300 font-primary uppercase tracking-[2px] text-[10px] font-bold"
+        className="px-4 py-2 rounded-xl transition-all duration-300 border bg-white border-gray-100 text-gray-900 hover:bg-gray-50 font-semibold text-xs tracking-tight shadow-sm active:scale-95"
       >
-        SIGN OUT
-      </Button>
+        Sign Out
+      </button>
     ) : (
-      <Button
-        variant="outline"
+      <button
         onClick={(e) => {
           e.preventDefault();
           handleSignIn(window.location.pathname);
         }}
-        className="transition-all duration-300 font-primary uppercase tracking-[2px] text-[10px] font-bold"
+        className="px-4 py-2 rounded-xl transition-all duration-300 border bg-white border-gray-100 text-gray-900 hover:bg-gray-50 font-semibold text-xs tracking-tight shadow-sm active:scale-95"
       >
-        SIGN IN
-      </Button>
+        Sign In
+      </button>
     );
   };
 

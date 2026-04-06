@@ -15,18 +15,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     (typeof callbackUrlParam === "string" ? callbackUrlParam : null) || "/raid";
 
   return (
-    <div className="mt-6">
-      <div className=" max-w-md mx-auto mt-16 p-6 bg-white rounded-lg shadow-md font-primary">
-        <h1 className="text-2xl font-bold mb-4 text-center">Sign In</h1>
+    <div className="min-h-[calc(100vh-72px)] bg-[var(--color-bg-secondary)] flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8 md:p-10 transition-all hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]">
+        <div className="text-center mb-10">
+          <h1 className="font-primary text-[32px] font-bold tracking-[-0.05em] text-black mb-2">
+            Sign In
+          </h1>
+          <p className="font-primary text-[14px] text-gray-500 font-medium">
+            Welcome to the Tide Raider Intel platform
+          </p>
+        </div>
 
         <LoginButton callbackUrl={callbackUrl} />
 
-        <p className="font-primary mt-4 text-sm text-gray-600 text-center">
-          You&apos;ll be redirected to:
-        </p>
-        <p className="font-primary p-2 text-sm text-gray-300 text-center">
-          {callbackUrl}
-        </p>
       </div>
     </div>
   );

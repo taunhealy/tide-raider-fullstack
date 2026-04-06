@@ -96,9 +96,8 @@ export default function BeachHeaderControls({
                         const newValue = !filters.isLongboarding;
                         updateFilter("isLongboarding", newValue ? "true" : "");
                       }}
-                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      LOGGERS
+                      Loggers Only
                     </LoggersButton>
 
                     <FoilingButton
@@ -108,9 +107,8 @@ export default function BeachHeaderControls({
                         const newValue = !filters.isFoiling;
                         updateFilter("isFoiling", newValue ? "true" : "");
                       }}
-                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      FOILING
+                      Foiling Only
                     </FoilingButton>
 
                     <HiddenGemsButton
@@ -120,9 +118,8 @@ export default function BeachHeaderControls({
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");
                       }}
-                      className="uppercase tracking-wider font-black text-[10px]"
                     >
-                      HIDDEN GEMS
+                      Hidden Gems
                     </HiddenGemsButton>
                   </div>
                 </div>
