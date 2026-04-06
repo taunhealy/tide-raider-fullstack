@@ -279,9 +279,9 @@ export default function WeatherForecastWidget() {
       <div
         className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight}`}
         style={{
-          borderColor: "rgba(28, 217, 255, 0.4)",
+          borderColor: "rgba(96, 165, 250, 0.4)",
           boxShadow:
-            "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+            "0 0 20px rgba(96, 165, 250, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
         }}
         data-forecast-widget-mobile
       >
@@ -330,9 +330,9 @@ export default function WeatherForecastWidget() {
         <div
           className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2`}
           style={{
-            borderColor: "rgba(28, 217, 255, 0.4)",
+            borderColor: "rgba(96, 165, 250, 0.4)",
             boxShadow:
-              "0 0 20px rgba(28, 217, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
+              "0 0 20px rgba(96, 165, 250, 0.25), 0 8px 32px rgba(0, 0, 0, 0.15)",
           }}
         >
           <div className="flex items-center h-full px-3 gap-3 overflow-x-auto">
@@ -382,7 +382,7 @@ export default function WeatherForecastWidget() {
         <div
           className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2 flex items-center justify-center`}
           style={{
-            borderColor: "rgba(28, 217, 255, 0.4)",
+            borderColor: "rgba(96, 165, 250, 0.4)",
           }}
         >
           <span className="text-xs text-gray-400 font-primary">
@@ -393,7 +393,7 @@ export default function WeatherForecastWidget() {
         <div
           className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight} mt-2 flex items-center justify-center`}
           style={{
-            borderColor: "rgba(28, 217, 255, 0.4)",
+            borderColor: "rgba(96, 165, 250, 0.4)",
           }}
         >
           <span className="text-xs text-gray-400 font-primary">

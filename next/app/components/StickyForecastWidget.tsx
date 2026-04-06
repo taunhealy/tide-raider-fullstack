@@ -149,23 +149,23 @@ export default function StickyForecastWidget() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 bg-cyan-50 p-2 rounded-md flex-1">
-              <span className="text-cyan-800">
+            <div className="flex items-center space-x-2 bg-blue-50 p-2 rounded-md flex-1">
+              <span className="text-blue-800">
                 {getSwellEmoji(forecastData?.swellHeight ?? 0)}
               </span>
               <div>
                 <span className="text-gray-600 font-primary">Swell</span>
-                <p className="font-medium text-cyan-800 font-primary">
+                <p className="font-medium text-blue-800 font-primary">
                   {forecastData?.swellHeight ?? 0}m,{" "}
                   {degreesToCardinal(forecastData?.swellDirection ?? 0)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 bg-cyan-50 p-2 rounded-md flex-1">
-              <span className="text-cyan-800">⏱️</span>
+            <div className="flex items-center space-x-2 bg-blue-50 p-2 rounded-md flex-1">
+              <span className="text-blue-800">⏱️</span>
               <div>
                 <span className="text-gray-600 font-primary">Period</span>
-                <p className="font-medium text-cyan-800 font-primary">
+                <p className="font-medium text-blue-800 font-primary">
                   {forecastData?.swellPeriod ?? 0}s
                 </p>
               </div>

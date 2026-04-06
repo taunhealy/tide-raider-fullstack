@@ -16,9 +16,9 @@ const ForecastWidgetSkeleton = () => (
   <div
     className="bg-gray-50 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 p-6"
     style={{
-      borderColor: "rgba(28, 217, 255, 0.1)",
+      borderColor: "rgba(96, 165, 250, 0.1)",
       boxShadow:
-        "0 0 20px rgba(28, 217, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.05)",
+        "0 0 20px rgba(96, 165, 250, 0.1), 0 8px 32px rgba(0, 0, 0, 0.05)",
     }}
   >
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

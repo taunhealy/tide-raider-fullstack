@@ -11,7 +11,7 @@ export function FilterButton({ active, onClick, children }: FilterButtonProps) {
       onClick={onClick}
       className={`px-3 py-1 rounded-full text-sm font-primary ${
         active
-          ? "bg-cyan-600 text-white"
+          ? "bg-brand-3 text-white"
           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
       }`}
     >

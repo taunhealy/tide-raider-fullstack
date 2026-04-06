@@ -19,6 +19,20 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
+import dynamic from "next/dynamic";
+
+// Dynamic import for TideMap to avoid SSR issues if necessary
+const TideMap = dynamic(() => import("@/app/components/map/TideMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-gray-800/50 flex items-center justify-center rounded-xl border border-gray-700">
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-8 h-8 border-2 border-brand-3/30 border-t-brand-3 rounded-full animate-spin" />
+        <span className="text-[10px] font-black text-brand-3/50 uppercase tracking-[0.2em]">Tactical Sync...</span>
+      </div>
+    </div>
+  )
+});
 
 interface HeroProps {
   data: {
@@ -61,6 +75,26 @@ export default function HeroSection({ data }: HeroProps) {
   const featureIconRef = useRef<HTMLDivElement>(null);
   const featureCardRef = useRef<HTMLDivElement>(null);
   const dotsContainerRef = useRef<HTMLDivElement>(null);
+
+  const [beaches, setBeaches] = useState<any[]>([]);
+  const [loadingBeaches, setLoadingBeaches] = useState(true);
+
+  useEffect(() => {
+    async function fetchBeaches() {
+      try {
+        const res = await fetch("/api/map-data");
+        const data = await res.json();
+        if (data.beaches) {
+          setBeaches(data.beaches);
+        }
+      } catch (error) {
+        console.error("Error fetching hero map data:", error);
+      } finally {
+        setLoadingBeaches(false);
+      }
+    }
+    fetchBeaches();
+  }, []);
 
   const productFeatures: ProductFeature[] = [
     {
@@ -635,6 +669,8 @@ export default function HeroSection({ data }: HeroProps) {
           sizes="100vw"
           className="object-cover object-[center_bottom]"
         />
+        {/* Dark Overlay - 90% opacity */}
+        <div className="absolute inset-0 bg-gray-900/90 z-[1]"></div>
       </div>
 
       <div className="relative w-full h-full z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16">
@@ -652,47 +688,40 @@ export default function HeroSection({ data }: HeroProps) {
           ))}
         </div>
 
-        {/* Mobile Layout: Stacked - Tide Raider above features */}
-        <div className="flex flex-col items-center justify-center h-full gap-6 sm:gap-8 md:hidden pt-16 pb-8">
-          {/* Tide Raider branding - centered on mobile */}
-          <div ref={textRef} className="text-center z-10">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white font-primary tracking-tight">
+        <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full pt-16 pb-12">
+          {/* Main Centered Content */}
+          <div ref={textRef} className="text-center z-10 mb-8 md:mb-12">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white font-primary tracking-tighter uppercase mb-2 md:mb-4">
               Go Further
             </h1>
-            <p className="text-xs sm:text-sm text-white/90 font-primary mt-2 sm:mt-3 tracking-wide">
+            <p className="text-[11px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-bold uppercase tracking-[0.3em]">
               Get inspired to surf in new places.
             </p>
           </div>
 
-          {/* Product Feature Slider - centered on mobile */}
-          <div
-            className="w-full max-w-[300px] sm:max-w-[320px] z-10"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            {renderFeatureCard("relative w-full")}
-          </div>
-        </div>
-
-        {/* Desktop Layout: Side-by-side - Tide Raider on left, features on right */}
-        <div className="hidden md:flex items-center justify-between h-full w-full">
-          {/* Left sidebar text - Tide Raider branding */}
-          <div ref={textRef} className="flex-shrink-0 pr-4 lg:pr-8 z-10">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white font-primary tracking-tight">
-              Go Further
-            </h1>
-            <p className="text-sm md:text-base lg:text-lg text-white/90 font-primary mt-3 md:mt-4 tracking-wide">
-              Get inspired to surf in new places.
-            </p>
-          </div>
-
-          {/* Product Feature Slider - right side on desktop */}
-          <div
-            className="flex-shrink-0 z-10"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            {renderFeatureCard("relative w-[280px] md:w-[380px] lg:w-[420px]")}
+          {/* Centered Map Display - Zoomed into Kommetjie */}
+          <div className="w-full max-w-[350px] sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px] aspect-[16/10] md:aspect-[21/9] z-10 relative">
+            <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+               <TideMap 
+                 beaches={beaches} 
+                 selectedDayIndex={0}
+                 showWindHeatmap={true}
+                 showSwellHeatmap={true}
+                 onBeachSelect={() => {}}
+                 onRegionSelect={() => {}}
+                 center={[0, 0]}
+                 zoom={2}
+                 variant="hero"
+               />
+               <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-3xl"></div>
+            </div>
+            
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-brand-3/30 z-20 shadow-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-brand-3 animate-pulse"></div>
+                <span className="text-[10px] font-black text-white uppercase tracking-[0.25em]">Tactical Global Feed / Sector Alpha</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

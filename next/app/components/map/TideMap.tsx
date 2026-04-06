@@ -41,6 +41,7 @@ interface TideMapProps {
   zoom?: number;
   showWindHeatmap?: boolean;
   showSwellHeatmap?: boolean;
+  variant?: "hero" | "default";
 }
 
 export default function TideMap({ 
@@ -167,7 +168,7 @@ export default function TideMap({
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(34, 211, 238, ${p.life * 0.7})`; 
+          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.7})`; 
           ctx.lineWidth = 1.2;
           ctx.moveTo(p.x * width, p.y * height);
           ctx.lineTo((p.x - p.vx * 100) * width, (p.y - p.vy * 100) * height);
@@ -200,7 +201,7 @@ export default function TideMap({
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(99, 102, 241, ${p.life * 0.6})`; 
+          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.6})`; 
           ctx.lineWidth = 3.5;
           ctx.moveTo(p.x * width, p.y * height);
           ctx.lineTo((p.x - p.vx * 20) * width, (p.y - p.vy * 30) * height);
@@ -265,16 +266,16 @@ export default function TideMap({
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
                 : 3;
 
-              return new Style({
+            return new Style({
                 image: new CircleStyle({
                   radius: type === "continent" ? 28 : 22,
-                  stroke: new Stroke({ color: "#fff", width: 2.5 }),
+                  stroke: new Stroke({ color: "#fff", width: 2 }),
                   fill: new Fill({ color: getBrandedColor(avgRating) }),
                 }),
                 text: new Text({
                   text: `${manualLabel}\n${manualCount}`,
                   fill: new Fill({ color: "#fff" }),
-                  font: `bold ${type === "continent" ? '12px' : '10px'} Inter, sans-serif`,
+                  font: `900 ${type === "continent" ? '11px' : '9px'} Inter, sans-serif`,
                   textAlign: "center",
                   offsetY: 2,
                 }),
@@ -294,7 +295,7 @@ export default function TideMap({
                 text: new Text({
                   text: size.toString(),
                   fill: new Fill({ color: "#fff" }),
-                  font: "bold 12px Inter, sans-serif",
+                  font: "900 11px Inter, sans-serif",
                 }),
               });
             }
@@ -314,14 +315,14 @@ export default function TideMap({
                     <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${Number(rating || 0).toFixed(0)}</text>
                   </svg>
                 `)}`,
-                scale: 0.8,
+                scale: 0.75,
               }),
               text: new Text({
                 text: beach?.name,
-                offsetY: -35,
-                font: "bold 11px Inter, sans-serif",
-                fill: new Fill({ color: "#111827" }),
-                stroke: new Stroke({ color: "#ffffff", width: 3 }),
+                offsetY: -32,
+                font: "900 10px Inter, sans-serif",
+                fill: new Fill({ color: "#fff" }),
+                stroke: new Stroke({ color: "rgba(0,0,0,0.5)", width: 2 }),
               }),
             });
           },
@@ -560,24 +561,38 @@ export default function TideMap({
       />
 
       {/* Popup Overlay */}
-      <div ref={popupRef} className={`absolute bg-white rounded-xl shadow-2xl p-4 min-w-[200px] border border-gray-100 transition-opacity ${popupBeach ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div ref={popupRef} className={cn(
+        "absolute bg-brand-dark rounded-2xl p-5 min-w-[220px] transition-all duration-300",
+        popupBeach ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95 pointer-events-none"
+      )}>
         {popupBeach && (
-          <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Selected Break</span>
-            <h4 className="text-sm font-bold text-gray-900 mb-1">{popupBeach.name}</h4>
-            <div className="flex items-center gap-2 mb-2">
+          <div className="relative">
+            <span className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-[0.2em] mb-2 block">
+              Frequency Signal
+            </span>
+            <h4 className="text-[13px] font-black text-white uppercase tracking-tighter mb-1.5 leading-none">
+              {popupBeach.name}
+            </h4>
+            
+            <div className="flex items-center gap-2 mb-4">
               <div className="flex gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`w-2 h-2 rounded-full ${i < (popupBeach.rating || 0) ? 'bg-amber-400' : 'bg-gray-200'}`} />
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < (popupBeach.rating || 0) ? 'bg-[var(--color-tertiary)]' : 'bg-white/10'}`} />
                 ))}
               </div>
-              <span className="text-[10px] text-gray-500 font-medium">{(popupBeach.rating || 0).toFixed(1)} Stars</span>
+              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
+                {(popupBeach.rating || 0).toFixed(1)} Rating
+              </span>
             </div>
+
             <button 
               onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
-              className="w-full py-2 bg-gray-900 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-gray-800 transition-colors"
+              className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
             >
-              Full Forecast →
+              Access Intelligence
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </div>
         )}

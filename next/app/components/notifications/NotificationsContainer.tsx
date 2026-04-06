@@ -209,7 +209,7 @@ export default function NotificationsContainer() {
                 <div className={`p-3.5 rounded-2xl shrink-0 transition-transform group-hover:scale-110
                   ${notification.type === "ALERT"
                     ? notification.alertNotification?.success
-                      ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                      ? "bg-brand-3/10 text-brand-3 border border-brand-3/20"
                       : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                     : "bg-white/5 text-[var(--color-tertiary)] border border-white/10"
                   }`}>

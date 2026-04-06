@@ -38,13 +38,24 @@ export default function GlobalMapPage() {
   
   // Use selectedDayIndex but also sync it with filter
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [showWindHeatmap, setShowWindHeatmap] = useState(false);
-  const [showSwellHeatmap, setShowSwellHeatmap] = useState(false);
+  const [showWindHeatmap, setShowWindHeatmap] = useState(true);
+  const [showSwellHeatmap, setShowSwellHeatmap] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const savedWind = localStorage.getItem("showWindHeatmap");
+    const savedSwell = localStorage.getItem("showSwellHeatmap");
+    if (savedWind !== null) setShowWindHeatmap(savedWind === "true");
+    if (savedSwell !== null) setShowSwellHeatmap(savedSwell === "true");
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem("showWindHeatmap", String(showWindHeatmap));
+      localStorage.setItem("showSwellHeatmap", String(showSwellHeatmap));
+    }
+  }, [showWindHeatmap, showSwellHeatmap, mounted]);
   
   const isLoggersOnly = filters.isLongboarding || false;
   const isFoilingOnly = filters.isFoiling || false;
