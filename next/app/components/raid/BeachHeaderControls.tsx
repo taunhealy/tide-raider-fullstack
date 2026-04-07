@@ -61,6 +61,8 @@ export default function BeachHeaderControls({
               beaches={beaches}
             />
 
+            <div className="h-px bg-black/5 w-full" />
+
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
               <div className="flex flex-col w-full sm:w-auto flex-1 gap-3 min-w-0">
                 {/* Search Bar */}
@@ -68,12 +70,14 @@ export default function BeachHeaderControls({
                   <SearchBar />
                 </div>
                 
-                <div className="flex flex-col gap-3 w-full">
+                <div className="flex flex-col gap-4 w-full">
                   {/* Recent Regions Row */}
-                  <div className="w-full space-y-2">
+                  <div className="w-full space-y-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Location History</label>
                     <RecentRegionSearch regionCounts={regionCountsData} />
                   </div>
+                  
+                  <div className="h-px bg-black/5 w-full" />
                   
                   {/* Filters Row - Balanced and professional */}
                   <div className="flex flex-wrap items-center gap-2 px-1">

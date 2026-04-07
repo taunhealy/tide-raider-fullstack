@@ -53,10 +53,10 @@
 
     /* Background Colors */
     --color-bg-primary: var(--color-white);
-    --color-bg-secondary: #e6e6e6;
+    --color-bg-secondary: #f2f2f2;
     --color-bg-tertiary: var(--color-tertiary);
-    --color-bg-tan: #d1d1d1;
-    --color-border-tan: #d1d1d1;
+    --color-bg-tan: #f8f8f8;
+    --color-border-tan: #e8e8e8;
 
     /* Badge Colors */
     --color-badge: #d6b588;

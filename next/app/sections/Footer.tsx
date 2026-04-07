@@ -96,10 +96,12 @@ export default function Footer() {
               <input
                 type="email"
                 placeholder="Secure email"
+                suppressHydrationWarning
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-16 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all outline-none"
               />
               <button
                 type="submit"
+                suppressHydrationWarning
                 className="absolute right-2 top-2 bottom-2 px-4 bg-white text-gray-900 rounded-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-lg"
               >
                 <ArrowRight className="w-4 h-4" />

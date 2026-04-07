@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import gsap from "gsap";
 import type { UserSearch } from "@/app/types/regions";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
+import RegionFilterButton from "./ui/RegionFilterButton";
 
 interface RecentRegionSearchProps {
   className?: string;
@@ -159,43 +160,21 @@ export default function RecentRegionSearch({
         const count = regionCounts?.[search.region.id] || 0;
 
         return (
-          <button
+          <RegionFilterButton
             key={search.id}
-            data-region-id={search.region.id}
+            region={{
+              id: search.region.id,
+              regionId: search.region.id,
+              name: search.region.name,
+              countryId: search.region.country?.id || "",
+              country: search.region.country,
+              continent: search.region.continent || "",
+            }}
+            isSelected={isSelected}
+            isLoading={isLoading}
             onClick={() => handleButtonClick(search)}
-            disabled={loadingId !== null}
-            className={cn(
-              "relative px-4 py-2 w-fit rounded-xl transition-all duration-300 overflow-hidden group/recent",
-              "border shadow-sm flex items-center justify-between gap-3",
-              isLoading && "cursor-wait opacity-70",
-              isSelected
-                ? "bg-brand-3 border-brand-3 text-white shadow-lg shadow-brand-3/20 translate-y-[-1px]"
-                : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200 transition-all font-semibold"
-            )}
-          >
-            <span className={cn(
-              "text-[10px] font-black uppercase tracking-widest truncate text-left relative z-10 font-primary",
-              isSelected ? "text-white" : "text-gray-500"
-            )}>
-              {search.region.name}
-            </span>
-            
-            {count > 0 && (
-              <span className={cn(
-                "text-[9px] font-black px-1.5 py-0.5 rounded-lg border relative z-10",
-                isSelected 
-                  ? "bg-white/20 border-white/40 text-white" 
-                  : "bg-white border-gray-200 text-gray-400 group-hover/recent:bg-white"
-              )}>
-                {count}
-              </span>
-            )}
-            
-            {/* Subtle background glow for selected state */}
-            {isSelected && (
-              <div className="absolute top-0 right-0 w-16 h-16 bg-brand-3/10 blur-2xl rounded-full -mr-8 -mt-8" />
-            )}
-          </button>
+            count={count}
+          />
         );
       })}
     </div>

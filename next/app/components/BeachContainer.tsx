@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { cn } from "@/app/lib/utils";
 
 // Components
 import StickyForecastWidget from "./StickyForecastWidget";
@@ -249,7 +250,9 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-5 relative mt-5">
+            <div className="h-px bg-black/10 w-full mt-10" />
+
+            <div className="grid grid-cols-1 gap-5 relative mt-10">
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
               ) : isLoading && !data ? (
@@ -290,70 +293,72 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
-                    <div className="flex flex-wrap items-center justify-center gap-2 mt-8 mb-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex items-center gap-1"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        Previous
-                      </Button>
+                    <div className="flex flex-col items-center gap-4 mt-8 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="flex items-center gap-2 rounded-xl border-gray-200 hover:border-brand-3 hover:text-brand-3 transition-all h-10 px-4 group"
+                        >
+                          <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Previous</span>
+                        </Button>
 
-                      {/* Mobile Page Indicator */}
-                      <span className="text-sm font-medium text-gray-600 sm:hidden px-2">
-                        Page {currentPage} of {totalPages}
-                      </span>
+                        {/* Pagination Numbers */}
+                        <div className="flex items-center gap-1.5 p-1 bg-white/40 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm">
+                          {paginationRange.map((page, index) => {
+                            if (page === "...") {
+                              return (
+                                <span key={`ellipsis-${index}`} className="w-8 text-center text-gray-400 font-black">
+                                  ...
+                                </span>
+                              );
+                            }
 
-                      {/* Desktop Page Numbers */}
-                      <div className="hidden sm:flex items-center gap-1">
-                        {paginationRange.map((page, index) => {
-                          if (page === "...") {
+                            const isActive = currentPage === page;
                             return (
-                              <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
-                                ...
-                              </span>
+                              <button
+                                key={page}
+                                onClick={() => handlePageChange(Number(page))}
+                                className={cn(
+                                  "w-9 h-9 flex items-center justify-center rounded-xl text-[10px] font-black tracking-widest transition-all relative overflow-hidden",
+                                  isActive
+                                    ? "bg-brand-3 text-white shadow-lg shadow-brand-3/30 scale-105 z-10"
+                                    : "text-gray-500 hover:bg-white hover:shadow-sm"
+                                )}
+                              >
+                                {page}
+                                {Number(page) >= 2 && !user && (
+                                  <Lock className="w-2 h-2 absolute top-1 right-1 opacity-60" />
+                                )}
+                                {isActive && (
+                                  <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                                )}
+                              </button>
                             );
-                          }
+                          })}
+                        </div>
 
-                          return (
-                            <Button
-                              key={page}
-                              variant={currentPage === page ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => handlePageChange(Number(page))}
-                              className="w-8 h-8 p-0 relative"
-                            >
-                              {page}
-                              {Number(page) >= 2 && !user && (
-                                <Lock className="w-2 h-2 absolute top-0.5 right-0.5 text-gray-400" />
-                              )}
-                            </Button>
-                          );
-                        })}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="flex items-center gap-2 rounded-xl border-gray-200 hover:border-brand-3 hover:text-brand-3 transition-all h-10 px-4 group"
+                        >
+                          <span className="text-[10px] font-black uppercase tracking-widest">Next</span>
+                          <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                        </Button>
                       </div>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center gap-1"
-                      >
-                        Next
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Page Info */}
-                  {totalPages > 1 && (
-                    <div className="text-center text-sm text-gray-600 mb-4">
-                      Showing {startIndex + 1}-
-                      {Math.min(endIndex, sortedBeaches.length)} of{" "}
-                      {sortedBeaches.length} beaches
+                      {/* Page Info Badge */}
+                      <div className="inline-flex items-center px-4 py-1.5 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Showing <span className="text-gray-900">{startIndex + 1}-{Math.min(endIndex, sortedBeaches.length)}</span> of <span className="text-gray-900">{sortedBeaches.length}</span> beaches
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>

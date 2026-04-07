@@ -36,7 +36,7 @@ export default function RegionFilterButton({
         "border flex items-center gap-3 w-fit",
         isLoading && "cursor-wait opacity-70",
         isSelected
-          ? "bg-gray-800 border-gray-800 text-white shadow-lg"
+          ? "bg-brand-3 border-brand-3 text-white shadow-lg shadow-brand-3/20"
           : "bg-white border-gray-200 text-gray-900 hover:bg-gray-50 transition-colors"
       )}
     >
