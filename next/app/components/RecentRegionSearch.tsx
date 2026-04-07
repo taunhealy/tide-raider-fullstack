@@ -169,8 +169,8 @@ export default function RecentRegionSearch({
               "border shadow-sm flex items-center justify-between gap-3",
               isLoading && "cursor-wait opacity-70",
               isSelected
-                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20 translate-y-[-1px]"
-                : "bg-gray-100 border-gray-100 text-gray-500 hover:bg-gray-200 transition-all font-semibold"
+                ? "bg-brand-3 border-brand-3 text-white shadow-lg shadow-brand-3/20 translate-y-[-1px]"
+                : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200 transition-all font-semibold"
             )}
           >
             <span className={cn(
@@ -193,7 +193,7 @@ export default function RecentRegionSearch({
             
             {/* Subtle background glow for selected state */}
             {isSelected && (
-              <div className="absolute top-0 right-0 w-16 h-16 bg-blue-400/10 blur-2xl rounded-full -mr-8 -mt-8" />
+              <div className="absolute top-0 right-0 w-16 h-16 bg-brand-3/10 blur-2xl rounded-full -mr-8 -mt-8" />
             )}
           </button>
         );

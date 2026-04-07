@@ -25,7 +25,7 @@
     --line-height-normal: 1.5; /* Body text readability */
     --font-weight-light: 300; /* Subtle emphasis */
     --font-weight-normal: 400; /* Default weight */
-    --font-weight-bold: 700; /* Headings, strong text */
+    --font-weight-bold: 500; /* Headings, strong text */
     --font-weight-heading: 600; /* Existing heading weight */
 
     /* Shadow Variables */
@@ -53,8 +53,10 @@
 
     /* Background Colors */
     --color-bg-primary: var(--color-white);
-    --color-bg-secondary: #f7f7f7;
+    --color-bg-secondary: #e6e6e6;
     --color-bg-tertiary: var(--color-tertiary);
+    --color-bg-tan: #d1d1d1;
+    --color-border-tan: #d1d1d1;
 
     /* Badge Colors */
     --color-badge: #d6b588;

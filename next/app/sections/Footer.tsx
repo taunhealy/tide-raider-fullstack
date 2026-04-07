@@ -57,8 +57,7 @@ export default function Footer() {
               Level up your sessions with data-driven break intel. We track world-class spots to ensure you're always in the right place at the right time.
             </p>
             <div className="flex gap-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Global Sync Active</span>
+              <span className="text-[10px] font-black text-brand-3 uppercase tracking-[0.2em]">Go Further</span>
             </div>
           </div>
 

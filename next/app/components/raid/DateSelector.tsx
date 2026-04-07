@@ -88,7 +88,7 @@ export default function DateSelector({
   }
 
   return (
-    <div className={cn("flex flex-wrap gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-100 shadow-sm", className)}>
+    <div className={cn("flex flex-wrap gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200 shadow-sm", className)}>
       {dateOptions.map((option: any) => {
         const isSelected = activeDate === option.value;
         return (

@@ -240,7 +240,7 @@ const BeachCard = memo(function BeachCard({
         mt-3
         rounded-2xl 
         shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),0_1px_4px_-1px_rgba(0,0,0,0.02)]
-        border border-gray-100
+        border border-gray-200
         overflow-hidden 
         transition-all 
         duration-300 
@@ -404,9 +404,9 @@ const BeachCard = memo(function BeachCard({
                               <div key={idx} className="flex items-center gap-3">
                                 <div className={cn(
                                   "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0",
-                                  condition.isMet 
-                                    ? "border-blue-100 bg-blue-50 text-blue-600 shadow-sm" 
-                                    : "border-gray-100 bg-gray-50 text-gray-300"
+                                    condition.isMet 
+                                      ? "border-brand-3/20 bg-brand-3/10 text-brand-3 shadow-sm" 
+                                      : "border-gray-100 bg-gray-50 text-gray-300"
                                 )}>
                                   {condition.isMet ? (
                                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">

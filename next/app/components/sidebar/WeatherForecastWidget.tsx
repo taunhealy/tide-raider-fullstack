@@ -411,9 +411,9 @@ export default function WeatherForecastWidget() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-600/20 rounded flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+                <div className="w-1.5 h-1.5 bg-brand-3 rounded-full animate-pulse" />
               </div>
-              <h3 className="font-primary text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">
+              <h3 className="font-primary text-[10px] font-black text-brand-3 uppercase tracking-[0.2em]">
                 {forecastTitle}
               </h3>
             </div>
@@ -437,7 +437,7 @@ export default function WeatherForecastWidget() {
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDFINDER"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
               >
@@ -448,7 +448,7 @@ export default function WeatherForecastWidget() {
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDGURU"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
               >
@@ -459,7 +459,7 @@ export default function WeatherForecastWidget() {
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDY"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
               >

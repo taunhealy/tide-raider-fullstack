@@ -264,12 +264,12 @@ export default function GlobalMapPage() {
                   className={cn(
                     "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all transition-all duration-500",
                     showWindHeatmap 
-                      ? "bg-cyan-950 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]" 
+                      ? "bg-blue-950 border-brand-3 shadow-[0_0_15px_rgba(96,165,250,0.3)]" 
                       : "bg-white border-gray-100 hover:border-gray-200"
                   )}
                 >
-                  <Cloud className={cn("w-5 h-5 mb-1", showWindHeatmap ? "text-cyan-400" : "text-gray-400")} />
-                  <span className={cn("text-[9px] font-black uppercase tracking-widest", showWindHeatmap ? "text-cyan-400" : "text-gray-500")}>Wind Bloc</span>
+                  <Cloud className={cn("w-5 h-5 mb-1", showWindHeatmap ? "text-brand-3" : "text-gray-400")} />
+                  <span className={cn("text-[9px] font-black uppercase tracking-widest", showWindHeatmap ? "text-brand-3" : "text-gray-500")}>Wind Bloc</span>
                 </button>
                 <button
                   onClick={() => setShowSwellHeatmap(!showSwellHeatmap)}

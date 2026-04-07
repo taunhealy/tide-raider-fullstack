@@ -170,7 +170,7 @@ Add raid logs section to each card:
 ```tsx
 {/* Raid Logs Section */}
 <div className="mt-4 border-t pt-4">
-  <h4 className="font-semibold mb-2">Recent Sessions</h4>
+  <h4 className="font-regular mb-2">Recent Sessions</h4>
   {hiddenGem.logEntries.slice(0, 3).map(log => (
     <div key={log.id} className="flex items-center gap-2 mb-2">
       <img src={log.user.image} className="w-8 h-8 rounded-full" />

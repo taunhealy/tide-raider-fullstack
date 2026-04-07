@@ -691,17 +691,17 @@ export default function HeroSection({ data }: HeroProps) {
         <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full pt-16 pb-12">
           {/* Main Centered Content */}
           <div ref={textRef} className="text-center z-10 mb-8 md:mb-12">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white font-primary tracking-tighter uppercase mb-2 md:mb-4">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white font-primary uppercase mb-2 md:mb-4">
               Go Further
             </h1>
-            <p className="text-[11px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-bold uppercase tracking-[0.3em]">
+            <p className="text-[11px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.3em]">
               Get inspired to surf in new places.
             </p>
           </div>
 
-          {/* Centered Map Display - Zoomed into Kommetjie */}
-          <div className="w-full max-w-[350px] sm:max-w-[500px] md:max-w-[700px] lg:max-w-[900px] aspect-[16/10] md:aspect-[21/9] z-10 relative">
-            <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          {/* Centered Map Display - Responsive & Tactical */}
+          <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[1000px] aspect-[1/1] sm:aspect-[4/3] md:aspect-[21/9] z-10 relative px-2 sm:px-4">
+            <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                <TideMap 
                  beaches={beaches} 
                  selectedDayIndex={0}
@@ -713,15 +713,10 @@ export default function HeroSection({ data }: HeroProps) {
                  zoom={2}
                  variant="hero"
                />
-               <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-3xl"></div>
+               <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-2xl md:rounded-3xl"></div>
             </div>
             
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-brand-3/30 z-20 shadow-xl">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-brand-3 animate-pulse"></div>
-                <span className="text-[10px] font-black text-white uppercase tracking-[0.25em]">Tactical Global Feed / Sector Alpha</span>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>
