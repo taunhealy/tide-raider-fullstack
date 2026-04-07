@@ -284,33 +284,6 @@ export default function GlobalMapPage() {
                   <span className={cn("text-[9px] font-black uppercase tracking-widest", showSwellHeatmap ? "text-indigo-400" : "text-gray-500")}>Swell Surge</span>
                 </button>
               </div>
-
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
-              <div className="grid grid-cols-1 gap-2">
-                <LoggersButton
-                  active={isLoggersOnly}
-                  size="sm"
-                  onClick={() => setIsLoggersOnly(!isLoggersOnly)}
-                >
-                  Loggers Only
-                </LoggersButton>
-
-                <FoilingButton
-                  active={isFoilingOnly}
-                  size="sm"
-                  onClick={() => setIsFoilingOnly(!isFoilingOnly)}
-                >
-                  Foiling Only
-                </FoilingButton>
-
-                <HiddenGemsButton
-                  active={isHiddenGemsOnly}
-                  size="sm"
-                  onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
-                >
-                  Hidden Gems
-                </HiddenGemsButton>
-              </div>
             </div>
             <div className="p-4 bg-gray-900 rounded-2xl text-white shadow-2xl">
               <div className="flex items-center gap-2 mb-2">
@@ -365,8 +338,37 @@ export default function GlobalMapPage() {
             </div>
           ) : viewMode === "map" ? (
             <div className="relative w-full h-full">
-              <div className="absolute top-6 left-6 z-30 w-72 pointer-events-auto">
+              <div className="absolute top-6 left-6 z-30 flex flex-col gap-4 pointer-events-auto">
                 <WeatherForecastWidget />
+                
+                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl w-72">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
+                  <div className="flex flex-col gap-2">
+                    <LoggersButton
+                      active={isLoggersOnly}
+                      size="sm"
+                      onClick={() => setIsLoggersOnly(!isLoggersOnly)}
+                    >
+                      Loggers Only
+                    </LoggersButton>
+
+                    <FoilingButton
+                      active={isFoilingOnly}
+                      size="sm"
+                      onClick={() => setIsFoilingOnly(!isFoilingOnly)}
+                    >
+                      Foiling Only
+                    </FoilingButton>
+
+                    <HiddenGemsButton
+                      active={isHiddenGemsOnly}
+                      size="sm"
+                      onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
+                    >
+                      Hidden Gems
+                    </HiddenGemsButton>
+                  </div>
+                </div>
               </div>
               <TideMap 
                 beaches={filteredBeaches} 
