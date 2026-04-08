@@ -641,7 +641,7 @@ export default function HeroSection({ data }: HeroProps) {
 
   if (!data) {
     return (
-      <section className="relative w-full h-[100svh] min-h-[600px] overflow-hidden px-4 sm:px-6 md:px-8 lg:px-16 bg-gray-900">
+      <section className="relative w-full h-[100svh] lg:h-[calc(100svh-80px)] overflow-hidden px-4 sm:px-6 md:px-8 lg:px-16 bg-gray-900">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <div className="w-6 h-12 border-4 border-[var(--color-tertiary)]/30 border-t-[var(--color-tertiary)] rounded-full animate-spin mx-auto"></div>
@@ -657,7 +657,7 @@ export default function HeroSection({ data }: HeroProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[100svh] min-h-[600px] overflow-hidden z-[1]"
+      className="relative w-full h-[100svh] lg:h-[calc(100svh-80px)] overflow-hidden z-[1]"
     >
       {/* Background image - full screen cover, cropped from top to show surfer */}
       <div className="absolute inset-0 w-full h-full z-0">
@@ -688,19 +688,19 @@ export default function HeroSection({ data }: HeroProps) {
           ))}
         </div>
 
-        <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full pt-16 pb-12">
-          {/* Main Centered Content */}
-          <div ref={textRef} className="text-center z-10 mb-8 md:mb-12">
-            <h1 className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-4xl font-black text-white font-primary uppercase mb-2 md:mb-4">
+        <div className="relative flex flex-col lg:flex-row items-center justify-center h-full w-full gap-8 lg:gap-12 py-4">
+          {/* Main Content Side */}
+          <div ref={textRef} className="text-center lg:text-left z-10 lg:w-1/2 lg:max-w-[600px]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black text-white font-primary uppercase mb-2">
               Go Further
             </h1>
-            <p className="text-[10px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.1em] mb-6 md:mb-8">
+            <p className="text-xs sm:text-sm md:text-base text-white/50 font-primary font-regular mb-6 md:mb-8">
               Get inspired to explore new surf breaks.
             </p>
             
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
               <Link href="/raid">
-                <button className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95">
+                <button className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95">
                   Launch Raid
                 </button>
               </Link>
@@ -712,8 +712,8 @@ export default function HeroSection({ data }: HeroProps) {
             </div>
           </div>
 
-          {/* Centered Map Display - Responsive & Tactical */}
-          <div className="w-full max-w-[95%] sm:max-w-[90%] md:max-w-[1000px] aspect-[1/1] sm:aspect-[4/3] md:aspect-[21/9] z-10 relative px-2 sm:px-4">
+          {/* Map Side */}
+          <div className="w-full lg:w-1/2 max-w-[95%] lg:max-w-none aspect-[16/10] lg:aspect-[4/3] z-10 relative">
             <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                <TideMap 
                  beaches={beaches} 

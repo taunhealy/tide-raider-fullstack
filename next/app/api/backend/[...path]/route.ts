@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getBackendUrl } from "@/app/lib/api-config";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
+const BACKEND_URL = getBackendUrl();
 
 /**
  * Universal backend proxy
