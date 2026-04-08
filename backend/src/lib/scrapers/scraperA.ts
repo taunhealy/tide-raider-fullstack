@@ -5,6 +5,8 @@ import chromium from "@sparticuz/chromium";
 import { USER_AGENTS } from "../proxy/userAgents";
 import { ProxyManager } from "../proxy/proxyManager";
 import { createHash } from "crypto";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { BaseForecastData } from "../types";
 
 // Add at the top of the file
@@ -121,6 +123,7 @@ export async function scraperA(
     console.log("✅ Browser launched");
 
     const page = await browser.newPage();
+    page.on("console", (msg) => console.log(`[Browser] ${msg.text()}`));
     console.log("✅ New page created");
     
     // Force Desktop layout
@@ -203,153 +206,27 @@ export async function scraperA(
       });
     });
 
-    // 1. Reveal night hours
-    await page.evaluate(function () {
-      const btns = Array.from(document.querySelectorAll('button, a, span, div')).filter(function(el) {
-         const t = el.textContent?.trim().toLowerCase() || "";
-         return t.includes("night hours") || t.includes("show night");
+    // Ensure we can see night/early morning hours (for 05h-11h)
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button, a, div')).filter(el => {
+        const t = el.textContent.toLowerCase();
+        return t.includes("night hours") || t.includes("show night");
       }) as any[];
-      btns.forEach((b) => { if (typeof b.click === 'function') b.click(); });
+      if (btns.length > 0 && typeof btns[0].click === 'function') {
+        btns[0].click();
+      }
     });
     await new Promise(r => setTimeout(r, 2000));
 
     // Advanced extraction logic
-    const extractionScript = `
-      (function() {
-        // Modern Layout (fc-day blocks)
-        const fcDays = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], [class*="day-block"]'));
-        if (fcDays.length > 0) {
-           return fcDays.map(day => {
-              const header = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"]');
-              const dateText = header ? header.textContent.trim() : "";
-              
-              // Find all horizon tables which are the columns in modern fc-day layout
-              const columns = Array.from(day.querySelectorAll('.fc-table-horizon, [class*="column"], [class*="col"], [class*="cell-time"]'))
-                 .filter(el => {
-                    const t = el.textContent.trim();
-                    return t.includes('h') || el.className.includes('horizon');
-                 });
-              
-              const rows = columns.map(col => {
-                 const timeEl = col.querySelector('.cell-time, [class*="time"], [class*="ts"]') || col;
-                 const timeStr = timeEl.textContent.trim();
-                 
-                 const getVal = (cls) => {
-                    const el = col.querySelector('.' + cls) || col.querySelector('[class*="' + cls + '"]');
-                    return el ? el.textContent.trim().replace(/[^0-9.]/g, "") : "0";
-                 };
+    // @ts-ignore - __dirname is available in Node.js
+    const evalCodePath = join(__dirname, "windfinder-eval.js");
+    const evalCode = readFileSync(evalCodePath, "utf-8");
 
-                 // Support legacy and modern classes
-                 const wind = getVal('cell-ws') || getVal('wind');
-                 const wave = getVal('cell-wh') || getVal('wave') || getVal('waves-wrapper');
-                 const period = getVal('cell-wp') || getVal('period');
-                 const windDirEl = col.querySelector('.cell-wd title, [class*="wd"] title, .cell-wd, [class*="wd"]');
-                 const windDir = windDirEl ? (windDirEl.textContent || windDirEl.getAttribute('title') || "0").replace(/[^0-9.]/g, "") : "0";
-                 const swellDirEl = col.querySelector('.cell-waves-wrapper [class*="wd"] title, .cell-waves-wrapper [class*="wd"]');
-                 const swellDir = swellDirEl ? (swellDirEl.textContent || swellDirEl.getAttribute('title') || "0").replace(/[^0-9.]/g, "") : "0";
-
-                 return { 
-                    time: timeStr, 
-                    windSpeed: wind, 
-                    windDir: windDir, 
-                    waveHeight: wave, 
-                    wavePeriod: period, 
-                    swellDir: swellDir 
-                 };
-              }).filter(r => r.time.includes('h'));
-              
-              return { dateText, rows };
-           }).filter(d => d.dateText !== "");
-        }
-
-        // Legacy/Table Layout
-        const docNodes = Array.from(document.querySelectorAll('*'));
-        const dayContainers = Array.from(document.querySelectorAll('[class*="day-header"], [class*="_day_"], [class*="forecast-day"], .weathertable__header, [class*="_daylabel_"]'))
-           .filter(el => {
-              const t = el.textContent.trim();
-              return t.length > 5 && t.length < 50 && /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t);
-           });
-
-        if (dayContainers.length === 0) {
-           // Extreme Fallback
-           const headers = docNodes.filter(el => {
-              const t = el.textContent.trim();
-              return t.length > 5 && t.length < 45 && /(?:[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(t) && el.children.length <= 1;
-           });
-           dayContainers.push(...headers);
-        }
-
-        return dayContainers.map(header => {
-          const dateText = header.textContent.trim();
-          let block = header.parentElement;
-          
-          // Support both Grid Containers and Legacy Table Containers
-          while (block && block.querySelectorAll('[class*="_column_"], [class*="_col_"], .weathertable__cell').length < 5 && block !== document.body) {
-             block = block.parentElement;
-          }
-
-          if (block) {
-             // 1. Map Labels
-             const labels = Array.from(block.querySelectorAll('[class*="_label_"], [class*="_labelRow_"], .weathertable__label, .weathertable__row-label'))
-                .filter(el => el.textContent.trim() !== "");
-             
-             const labelMap = {};
-             labels.forEach((l, i) => {
-                const t = l.textContent.trim().toLowerCase();
-                if (t.includes('wind speed') || t.includes('wind speed') || t.includes('kts')) labelMap.wind = i;
-                if (t.includes('wave height') || t.includes('swell height') || t.includes('m')) labelMap.wave = i;
-                if (t.includes('wave period') || t.includes('s')) labelMap.period = i;
-             });
-
-             // 2. Extract Columns
-             const columns = Array.from(block.querySelectorAll('[class*="_column_"], [class*="_col_"], .weathertable__cell--time, .weathertable__column'))
-                .filter(el => {
-                   const t = el.textContent.trim();
-                   return t.includes('h') || el.querySelector('[class*="_time_"], .weathertable__time');
-                });
-
-             // If columns are just time headers (legacy), we might need to find the data row
-             // For legacy table, we often iterate rows. But most modern Windfinder is column-based or simulated column-based.
-             
-             const rows = columns.map(col => {
-                const timeEl = col.querySelector('[class*="_time_"], [class*="_header_"], .weathertable__time') || col;
-                const timeStr = timeEl.textContent.trim();
-                if (!timeStr.includes('h')) return null;
-
-                // Find the data container for this column
-                // In column-based grids, it's 'col'. In legacy tables, we might need a different lookup.
-                const vals = Array.from(col.querySelectorAll('[class*="_value_"], [class*="_cell_"], .weathertable__value, .weathertable__cell-value'));
-                
-                // If col has no values, look for the parent or adjacent that might have them
-                let dataSrc = (vals.length > 0) ? vals : [];
-                if (dataSrc.length === 0 && col.parentElement) {
-                   // This handles cases where time is in a header row and data is below
-                   // This is complex, but the grid logic handles most cases.
-                }
-
-                const getVal = (k) => {
-                   const idx = labelMap[k];
-                   return (typeof idx !== 'undefined' && dataSrc[idx]) ? dataSrc[idx].textContent.trim().replace(/[^\\d.]/g, "") : "0";
-                };
-
-                return { 
-                   time: timeStr, 
-                   windSpeed: getVal('wind'), 
-                   windDir: "0", 
-                   waveHeight: getVal('wave'), 
-                   wavePeriod: getVal('period'), 
-                   swellDir: "0" 
-                };
-             }).filter(Boolean);
-             
-             return { dateText, rows };
-          }
-          return { dateText, rows: [] };
-        });
-      })()
-    `;
-
-    const forecastDaysData = await page.evaluate(extractionScript) as any[];
+    const forecastDaysData = await page.evaluate(`
+      ${evalCode}
+      extractWindfinderData();
+    `) as any[];
 
     if (!forecastDaysData || forecastDaysData.length === 0 || forecastDaysData.every(d => d.rows.length === 0)) {
        console.error("❌ Failed to parse forecast days or rows.");
