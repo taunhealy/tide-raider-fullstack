@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import TideMap from "@/app/components/map/TideMap";
-import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2 } from "lucide-react";
+import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components/ui/GradientButton";
 import { cn } from "@/app/lib/utils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
@@ -41,6 +42,7 @@ export default function GlobalMapPage() {
   const [showWindHeatmap, setShowWindHeatmap] = useState(true);
   const [showSwellHeatmap, setShowSwellHeatmap] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -147,31 +149,31 @@ export default function GlobalMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-screen bg-white md:bg-gray-50 overflow-hidden">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-20">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
-            <MapIcon className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-900 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg">
+            <MapIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Global Break Intel</h1>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Live Conditions & Rating Map</p>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900 leading-tight">Global Intel</h1>
+            <p className="hidden md:block text-[10px] text-gray-400 font-bold uppercase tracking-widest">Live Conditions & Rating Map</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg md:rounded-xl">
           <button 
             onClick={() => setViewMode("map")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === "map" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "map" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <MapIcon className="w-4 h-4" /> Map View
+            <MapIcon className="w-3.5 h-3.5 md:w-4 md:h-4" /> Map
           </button>
           <button 
             onClick={() => setViewMode("grid")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === "grid" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "grid" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <List className="w-4 h-4" /> List View
+            <List className="w-3.5 h-3.5 md:w-4 md:h-4" /> List
           </button>
         </div>
       </div>
@@ -300,33 +302,35 @@ export default function GlobalMapPage() {
         {/* Main View Area */}
         <main className="flex-1 relative bg-gray-100">
           {/* Weekday Filter Floating Bar */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-2xl border border-white/20">
-            {mounted && weekDays.map((option) => {
-              const isSelected = selectedDayIndex === option.index;
-              return (
-                <button
-                  key={option.index}
-                  onClick={() => setSelectedDayIndex(option.index)}
-                  className={cn(
-                    "flex flex-col items-center min-w-[80px] px-4 py-2 rounded-xl transition-all border border-transparent group",
-                    loading && "cursor-wait opacity-70",
-                    isSelected
-                      ? "bg-gray-800 border-gray-800 text-white shadow-lg translate-y-[-1px]"
-                      : "bg-white border-gray-100 text-gray-900 hover:bg-gray-50 transition-all w-fit"
-                  )}
-                >
-                  <span className="text-[10px] font-black uppercase tracking-tighter">
-                    {option.label}
-                  </span>
-                  <span className={cn(
-                    "text-[9px] font-bold",
-                    isSelected ? "text-white" : "text-gray-400 group-hover:text-gray-500"
-                  )}>
-                    {option.date}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="absolute top-4 md:top-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 z-30 flex justify-center px-4">
+            <div className="flex gap-1 md:gap-2 bg-white/90 backdrop-blur-md p-1 md:p-1.5 rounded-xl md:rounded-2xl shadow-xl md:shadow-2xl border border-white/20 max-w-full overflow-x-auto no-scrollbar">
+              {mounted && weekDays.map((option) => {
+                const isSelected = selectedDayIndex === option.index;
+                return (
+                  <button
+                    key={option.index}
+                    onClick={() => setSelectedDayIndex(option.index)}
+                    className={cn(
+                      "flex flex-col items-center min-w-[60px] md:min-w-[80px] px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all border border-transparent group shrink-0",
+                      loading && "cursor-wait opacity-70",
+                      isSelected
+                        ? "bg-gray-800 border-gray-800 text-white shadow-lg md:translate-y-[-1px]"
+                        : "bg-white border-gray-100/50 text-gray-900 hover:bg-gray-50 transition-all"
+                    )}
+                  >
+                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-tighter">
+                      {option.label}
+                    </span>
+                    <span className={cn(
+                      "text-[8px] md:text-[9px] font-bold",
+                      isSelected ? "text-white/70" : "text-gray-400 group-hover:text-gray-500"
+                    )}>
+                      {option.date}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {loading ? (
@@ -338,7 +342,8 @@ export default function GlobalMapPage() {
             </div>
           ) : viewMode === "map" ? (
             <div className="relative w-full h-full">
-              <div className="absolute top-6 left-6 z-30 flex flex-col gap-4 pointer-events-auto">
+              {/* Floating Widgets - Hidden on mobile, moved to bottom drawer or separate toggle */}
+              <div className="absolute top-20 md:top-24 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
                 <WeatherForecastWidget />
                 
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl w-72">
@@ -427,6 +432,132 @@ export default function GlobalMapPage() {
           )}
         </main>
       </div>
+
+      {/* Mobile Filter Toggle */}
+      <div className="fixed bottom-6 right-6 z-40 md:hidden">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="w-14 h-14 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center border border-white/10 active:scale-95 transition-all"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Mobile Sidebar/Drawer */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden"
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-x-0 bottom-0 max-h-[90vh] bg-white rounded-t-[2.5rem] z-[101] md:hidden flex flex-col shadow-[0_-20px_40px_rgba(0,0,0,0.2)]"
+            >
+              <div className="relative p-6 flex-1 overflow-y-auto pb-10">
+                {/* Pull handle */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 rounded-full" />
+                
+                <div className="flex items-center justify-between mb-8 mt-2">
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">Filters</h2>
+                  <button 
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Reuse the same filter logic from Sidebar here or abstract into a component */}
+                  {/* Search */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Search Spots</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Enter beach or region..."
+                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Specialty Access */}
+                  <div className="space-y-3">
+                     <div className="mb-4">
+                        <WeatherForecastWidget />
+                     </div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
+                    <LoggersButton active={isLoggersOnly} onClick={() => setIsLoggersOnly(!isLoggersOnly)}>Loggers Only</LoggersButton>
+                    <FoilingButton active={isFoilingOnly} onClick={() => setIsFoilingOnly(!isFoilingOnly)}>Foiling Only</FoilingButton>
+                    <HiddenGemsButton active={isHiddenGemsOnly} onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}>Hidden Gems</HiddenGemsButton>
+                  </div>
+
+                  {/* Rating */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Rating Filter</label>
+                    <div className="flex justify-between gap-2">
+                      {[1, 2, 3, 4, 5].map(r => (
+                        <button 
+                          key={r}
+                          onClick={() => setMinRating(prev => prev === r ? 0 : r)}
+                          className={`flex-1 h-14 rounded-2xl border-2 flex items-center justify-center transition-all ${minRating === r ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-100'}`}
+                        >
+                          <span className="font-bold">{r}+</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Difficulty */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Experience Level</label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {["BEGINNER", "INTERMEDIATE", "ADVANCED"].map(d => (
+                        <button 
+                          key={d}
+                          onClick={() => toggleDifficulty(d)}
+                          className={`flex items-center justify-between p-4 rounded-2xl border-2 ${selectedDifficulty.includes(d) ? 'border-blue-600 bg-blue-50' : 'border-gray-100'}`}
+                        >
+                          <span className="text-xs font-bold">{d}</span>
+                          <div className={`w-5 h-5 rounded-full border-2 ${selectedDifficulty.includes(d) ? 'bg-blue-600 border-blue-600' : 'border-gray-100'}`} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                   {/* Tactical Overlays */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Tactical Overlays</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setShowWindHeatmap(!showWindHeatmap)} className={cn("p-4 rounded-2xl border-2 flex flex-col items-center", showWindHeatmap ? "bg-gray-900 text-white" : "border-gray-100 text-gray-400")}>
+                        <Cloud className="w-5 h-5 mb-2" />
+                        <span className="text-xs font-bold">Wind Bloc</span>
+                      </button>
+                      <button onClick={() => setShowSwellHeatmap(!showSwellHeatmap)} className={cn("p-4 rounded-2xl border-2 flex flex-col items-center", showSwellHeatmap ? "bg-gray-900 text-white" : "border-gray-100 text-gray-400")}>
+                        <Waves className="w-5 h-5 mb-2" />
+                        <span className="text-xs font-bold">Swell Surge</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -694,9 +694,22 @@ export default function HeroSection({ data }: HeroProps) {
             <h1 className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-4xl font-black text-white font-primary uppercase mb-2 md:mb-4">
               Go Further
             </h1>
-            <p className="text-[10px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.1em]">
+            <p className="text-[10px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.1em] mb-6 md:mb-8">
               Get inspired to explore new surf breaks.
             </p>
+            
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link href="/raid">
+                <button className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95">
+                  Launch Raid
+                </button>
+              </Link>
+              <Link href="/map">
+                <button className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-brand-3 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md">
+                  Explore Map
+                </button>
+              </Link>
+            </div>
           </div>
 
           {/* Centered Map Display - Responsive & Tactical */}
