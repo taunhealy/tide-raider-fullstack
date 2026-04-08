@@ -141,7 +141,7 @@ export async function scraperA(
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });
 
-    // Block unnecessary resources
+    /*
     await page.setRequestInterception(true);
     page.on("request", (request) => {
       if (["image", "font", "stylesheet"].includes(request.resourceType())) {
@@ -150,8 +150,9 @@ export async function scraperA(
         request.continue();
       }
     });
+    */
 
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
  
     // Handle Cookie Consent
     await page.evaluate(function () {
@@ -285,9 +286,13 @@ export async function scraperA(
             swellPeriod: Math.round(parseFloat(row.wavePeriod || "0")),
             swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
           };
-          forecasts.push(forecast);
-          console.log("📊 Forecast data:", forecast);
-          break; 
+          // Store or update the day's forecast, prioritizing later morning hours if earlier ones are incomplete
+          const existingIndex = forecasts.findIndex(f => f.date.getTime() === parsedDate.getTime());
+          if (existingIndex === -1) {
+            forecasts.push(forecast);
+          } else if (forecasts[existingIndex].swellDirection === 0 && forecast.swellDirection !== 0) {
+            forecasts[existingIndex] = forecast;
+          }
         }
       }
     }

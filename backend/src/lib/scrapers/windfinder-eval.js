@@ -1,4 +1,5 @@
 
+console.log("!!! WIND-EVAL INJECTED !!!");
 /**
  * Windfinder extraction script - Greediest Version
  */

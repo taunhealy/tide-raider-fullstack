@@ -691,11 +691,11 @@ export default function HeroSection({ data }: HeroProps) {
         <div className="relative flex flex-col items-center justify-center min-h-[80vh] w-full pt-16 pb-12">
           {/* Main Centered Content */}
           <div ref={textRef} className="text-center z-10 mb-8 md:mb-12">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white font-primary uppercase mb-2 md:mb-4">
+            <h1 className="text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-4xl font-black text-white font-primary uppercase mb-2 md:mb-4">
               Go Further
             </h1>
-            <p className="text-[11px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.3em]">
-              Get inspired to surf in new places.
+            <p className="text-[10px] sm:text-[12px] md:text-sm lg:text-base text-white/50 font-primary font-regular uppercase tracking-[0.1em]">
+              Get inspired to explore new surf breaks.
             </p>
           </div>
 

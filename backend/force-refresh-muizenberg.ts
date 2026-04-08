@@ -1,4 +1,5 @@
 
+import "dotenv/config";
 import { getLatestConditions } from './src/services/surfConditionsService';
 import { prisma } from './src/lib/prisma';
 

@@ -40,10 +40,12 @@ function getPrisma() {
   }
 
   // Force re-initialization if the database URL changed
-  if (globalForPrisma.prisma && (globalForPrisma.prisma as any)._lastUsedUrl !== optimizedDatabaseUrl) {
+  if (prismaInstance && (prismaInstance as any)._lastUsedUrl !== optimizedDatabaseUrl) {
     console.log("[prisma] ⚠️ DATABASE_URL changed, re-initializing backend client...");
     prismaInstance = null;
-    delete globalForPrisma.prisma;
+    if (globalForPrisma.prisma === prismaInstance) {
+      delete (globalForPrisma as any).prisma;
+    }
   }
 
   if (prismaInstance) {
