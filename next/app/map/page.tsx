@@ -149,7 +149,7 @@ export default function GlobalMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white md:bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-72px)] md:h-[calc(100vh-80px)] bg-white md:bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
@@ -162,18 +162,27 @@ export default function GlobalMapPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg md:rounded-xl">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-lg md:rounded-xl">
+            <button 
+              onClick={() => setViewMode("map")}
+              className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "map" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              <MapIcon className="w-3.5 h-3.5 md:w-4 md:h-4" /> Map
+            </button>
+            <button 
+              onClick={() => setViewMode("grid")}
+              className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "grid" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              <List className="w-3.5 h-3.5 md:w-4 md:h-4" /> List
+            </button>
+          </div>
+          
           <button 
-            onClick={() => setViewMode("map")}
-            className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "map" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            onClick={() => setIsSidebarOpen(true)}
+            className="md:hidden flex items-center justify-center w-9 h-9 bg-gray-900 text-white rounded-lg shadow-md active:scale-95 transition-all"
           >
-            <MapIcon className="w-3.5 h-3.5 md:w-4 md:h-4" /> Map
-          </button>
-          <button 
-            onClick={() => setViewMode("grid")}
-            className={`flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-bold transition-all ${viewMode === "grid" ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            <List className="w-3.5 h-3.5 md:w-4 md:h-4" /> List
+            <Filter className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -264,7 +273,7 @@ export default function GlobalMapPage() {
                 <button
                   onClick={() => setShowWindHeatmap(!showWindHeatmap)}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all transition-all duration-500",
+                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-500",
                     showWindHeatmap 
                       ? "bg-blue-950 border-brand-3 shadow-[0_0_15px_rgba(96,165,250,0.3)]" 
                       : "bg-white border-gray-100 hover:border-gray-200"
@@ -276,7 +285,7 @@ export default function GlobalMapPage() {
                 <button
                   onClick={() => setShowSwellHeatmap(!showSwellHeatmap)}
                   className={cn(
-                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all transition-all duration-500",
+                    "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-500",
                     showSwellHeatmap 
                       ? "bg-indigo-950 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)]" 
                       : "bg-white border-gray-100 hover:border-gray-200"
@@ -434,13 +443,14 @@ export default function GlobalMapPage() {
         </main>
       </div>
 
-      {/* Mobile Filter Toggle */}
+      {/* Mobile Filter Toggle FAB - Improved Style and Placement */}
       <div className="fixed bottom-6 right-6 z-40 md:hidden">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="w-14 h-14 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center border border-white/10 active:scale-95 transition-all"
+          className="w-14 h-14 bg-gray-900 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.3)] flex flex-col items-center justify-center border border-white/20 active:scale-90 transition-all group"
         >
-          <Filter className="w-6 h-6" />
+          <Filter className="w-5 h-5 mb-0.5 group-active:scale-110 transition-transform" />
+          <span className="text-[7px] font-black uppercase tracking-widest opacity-70">Filter</span>
         </button>
       </div>
 

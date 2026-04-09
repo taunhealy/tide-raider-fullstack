@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 import { scraperA } from "../lib/scrapers/scraperA";
 import { scraperB } from "../lib/scrapers/scraperB";
+import { ScoreService } from "./scoreService";
 
 function getTodayDate() {
   const date = new Date();
@@ -310,12 +311,33 @@ export async function getLatestConditions(
         const forecastDate = new Date(storedForecast.date);
         const todayDate = new Date(today);
         if (
-          forecastDate.getDate() === todayDate.getDate() &&
-          forecastDate.getMonth() === todayDate.getMonth() &&
-          forecastDate.getFullYear() === todayDate.getFullYear()
+          forecastDate.getUTCDate() === todayDate.getUTCDate() &&
+          forecastDate.getUTCMonth() === todayDate.getUTCMonth() &&
+          forecastDate.getUTCFullYear() === todayDate.getUTCFullYear()
         ) {
           storedTodayForecast = storedForecast;
         }
+      }
+    }
+
+    // After storing all forecasts, calculate scores for each day to ensure data integrity
+    console.log(`[getLatestConditions] 📊 Calculating scores for ${forecastsToStore.length} forecast days...`);
+    for (const scrapedForecast of forecastsToStore) {
+      try {
+        await ScoreService.calculateAndStoreScores(region.id, {
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
+          date: scrapedForecast.date,
+          source: source,
+        });
+      } catch (scoreError) {
+        console.error(
+          `[getLatestConditions] ❌ Failed to calculate scores for ${scrapedForecast.date.toISOString().split("T")[0]}:`,
+          scoreError
+        );
       }
     }
 

@@ -45,7 +45,7 @@ export default function WeatherForecastWidget() {
   // Store selected source in localStorage so it's shared across components
   // Initialize to default to ensure server and client render the same
   const [selectedSource, setSelectedSource] =
-    useState<ForecastSource>("WINDY");
+    useState<ForecastSource>("WINDFINDER");
 
   // Load from localStorage only after mount (client-side only)
   useEffect(() => {
@@ -109,16 +109,11 @@ export default function WeatherForecastWidget() {
         normalizedDate,
         source: selectedSource,
       });
-      // Only invalidate filtered-beaches when source changes (not on every date change)
-      // The forecast query will automatically refetch due to query key change
-      if (selectedSource) {
-        queryClient.invalidateQueries({
-          queryKey: ["filteredBeaches"],
-          exact: false, // Invalidate all filteredBeaches queries
-        });
-      }
+      // The forecast query will automatically refetch due to query key change.
+      // We no longer manually invalidate filteredBeaches here to prevent infinite-style refetch loops
+      // since useFilteredBeaches already depends on normalizedDate and selectedSource.
     }
-  }, [regionId, normalizedDate, selectedSource, queryClient, mounted]);
+  }, [regionId, normalizedDate, selectedSource, mounted]);
 
   // Only enable query after mount to prevent hydration issues
   const queryEnabled = mounted && !!regionId && !!normalizedDate;
