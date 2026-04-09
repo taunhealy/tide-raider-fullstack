@@ -1,0 +1,7 @@
+[
+  "﻿src/routes/raid-logs.ts(66,24): error TS2352: Conversion of type 'string | ParsedQs | (string | ParsedQs)[]' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\r",
+  "src/routes/raid-logs.ts(67,24): error TS2352: Conversion of type 'string | ParsedQs | (string | ParsedQs)[]' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\r",
+  "src/routes/raid-logs.ts(70,19): error TS2352: Conversion of type 'string | ParsedQs | (string | ParsedQs)[]' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\r",
+  "src/routes/raid-logs.ts(71,20): error TS2352: Conversion of type 'string | ParsedQs | (string | ParsedQs)[]' to type 'number' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\r",
+  "src/routes/raid-logs.ts(72,24): error TS2352: Conversion of type 'string | ParsedQs | (string | ParsedQs)[]' to type 'boolean' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\r"
+]

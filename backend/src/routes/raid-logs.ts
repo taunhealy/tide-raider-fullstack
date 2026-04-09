@@ -63,13 +63,13 @@ router.get(
             countries: countries
               ? (countries as string).split(",").filter(Boolean)
               : undefined,
-            minRating: minRating as number | undefined,
-            maxRating: maxRating as number | undefined,
+            minRating: minRating ? Number(minRating) : undefined,
+            maxRating: maxRating ? Number(maxRating) : undefined,
             startDate: startDate as string | undefined,
             endDate: endDate as string | undefined,
-            page: page as number | undefined,
-            limit: limit as number | undefined,
-            isPrivate: isPrivateParam as boolean | undefined,
+            page: page ? Number(page) : undefined,
+            limit: limit ? Number(limit) : undefined,
+            isPrivate: isPrivateParam !== undefined ? isPrivateParam === "true" : undefined,
             userId: filterUserId as string | undefined,
             beachId: beachId as string | undefined,
           },

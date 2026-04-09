@@ -359,9 +359,9 @@ export async function getLatestConditions(
       `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
     );
     console.log(
-      `[getLatestConditions] 📤 Returning forecast with source: ${storedTodayForecast.source}, windSpeed: ${storedTodayForecast.windSpeed}, swellHeight: ${storedTodayForecast.swellHeight}`
+      `[getLatestConditions] 📤 Returning forecast with source: ${storedTodayForecast!.source}, windSpeed: ${storedTodayForecast!.windSpeed}, swellHeight: ${storedTodayForecast!.swellHeight}`
     );
-    return storedTodayForecast;
+    return storedTodayForecast!;
   } catch (error) {
     console.error(
       `[getLatestConditions] ❌ Error scraping/storing forecast for ${region.id}:`,
