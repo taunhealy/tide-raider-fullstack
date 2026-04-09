@@ -48,6 +48,9 @@ export async function GET() {
           country: beach.country?.name || "Unknown Country",
           continentId: beach.country?.continentId || beach.continent?.toLowerCase() || "unknown",
           continent: beach.continent || "Unknown Continent",
+          isHiddenGem: beach.isHiddenGem || false,
+          isLongboarding: beach.isLongboarding || false,
+          isFoiling: beach.isFoiling || false,
           dailyScores: (beach.beachDailyScores || []).reduce((acc: any, s: any) => {
             try {
               const dateStr = s.date instanceof Date 

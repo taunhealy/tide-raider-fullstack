@@ -85,6 +85,34 @@ export class CronScheduler {
     console.log(`\n🕐 [${timestamp}] Starting scheduled cron job...`);
 
     try {
+      // Step 0: Clean up stale/future database records
+      console.log("🧹 Step 0: Cleaning up stale/future forecast records");
+      try {
+        const { prisma } = require("../lib/prisma");
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+        
+        // Remove anything older than 2 days
+        const pastDate = new Date(today);
+        pastDate.setDate(today.getDate() - 2);
+        
+        // Remove anything further than 10 days in the future
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + 10);
+
+        const deletedStale = await prisma.forecast.deleteMany({
+          where: {
+            OR: [
+              { date: { lt: pastDate } },
+              { date: { gt: futureDate } }
+            ]
+          }
+        });
+        console.log(`✅ Cleanup complete: Removed ${deletedStale.count} invalid/stale forecast records`);
+      } catch (cleanupError) {
+        console.error("❌ Cleanup failed:", cleanupError);
+      }
+
       // Step 1: Fetch and store surf conditions for all regions
       console.log("📊 Step 1: Fetching surf conditions for all regions");
       let regionResults;

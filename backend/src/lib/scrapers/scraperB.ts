@@ -78,7 +78,7 @@ const parseWindDirection = (value: string | null): number => {
     NNW: 337.5,
   };
 
-  if (cardinalMap[upperValue]) {
+  if (cardinalMap[upperValue] !== undefined) {
     return cardinalMap[upperValue];
   }
 

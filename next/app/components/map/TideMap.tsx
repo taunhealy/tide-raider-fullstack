@@ -171,7 +171,7 @@ export default function TideMap({
           ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.7})`; 
           ctx.lineWidth = 1.2;
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 100) * width, (p.y - p.vy * 100) * height);
+          ctx.lineTo((p.x - p.vx * 180) * width, (p.y - p.vy * 180) * height);
           ctx.stroke();
         });
       }
@@ -201,7 +201,7 @@ export default function TideMap({
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.6})`; 
+          ctx.strokeStyle = `rgba(168, 85, 247, ${p.life * 0.7})`; 
           ctx.lineWidth = 3.5;
           ctx.moveTo(p.x * width, p.y * height);
           ctx.lineTo((p.x - p.vx * 20) * width, (p.y - p.vy * 30) * height);

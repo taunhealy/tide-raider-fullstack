@@ -65,8 +65,9 @@ function extractWindfinderData() {
         return el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
       };
 
-      const windDirEl = col.querySelector('.cell-wd, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
-      const waveDirEl = col.querySelector('.cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]');
+      const windDirEl = col.querySelector('.cell-wd img, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
+      const waveDirEl = col.querySelector('.cell-wad img, .cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]') || 
+                        col.querySelector('img[src*="pointer-outline"]');
 
       const wDir = getDirFromEl(windDirEl);
       const sDir = getDirFromEl(waveDirEl);

@@ -296,6 +296,36 @@ export default function GlobalMapPage() {
                 Showing <span className="text-blue-400 font-bold">{filteredBeaches.length}</span> world-class breaks meeting your criteria for <span className="text-white font-bold">{selectedDayIndex === 0 ? "Today" : selectedDayIndex === 1 ? "Tomorrow" : `${selectedDayIndex} days out`}</span>.
               </p>
             </div>
+
+            {/* Specialty Access Moved to Sidebar */}
+            <div className="pt-6 border-t border-gray-100">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Specialty Access</label>
+              <div className="flex flex-col gap-2">
+                <LoggersButton
+                  active={isLoggersOnly}
+                  size="sm"
+                  onClick={() => setIsLoggersOnly(!isLoggersOnly)}
+                >
+                  Loggers Only
+                </LoggersButton>
+
+                <FoilingButton
+                  active={isFoilingOnly}
+                  size="sm"
+                  onClick={() => setIsFoilingOnly(!isFoilingOnly)}
+                >
+                  Foiling Only
+                </FoilingButton>
+
+                <HiddenGemsButton
+                  active={isHiddenGemsOnly}
+                  size="sm"
+                  onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
+                >
+                  Hidden Gems
+                </HiddenGemsButton>
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -345,35 +375,6 @@ export default function GlobalMapPage() {
               {/* Floating Widgets - Hidden on mobile, moved to bottom drawer or separate toggle */}
               <div className="absolute top-20 md:top-24 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
                 <WeatherForecastWidget />
-                
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-2xl w-72">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
-                  <div className="flex flex-col gap-2">
-                    <LoggersButton
-                      active={isLoggersOnly}
-                      size="sm"
-                      onClick={() => setIsLoggersOnly(!isLoggersOnly)}
-                    >
-                      Loggers Only
-                    </LoggersButton>
-
-                    <FoilingButton
-                      active={isFoilingOnly}
-                      size="sm"
-                      onClick={() => setIsFoilingOnly(!isFoilingOnly)}
-                    >
-                      Foiling Only
-                    </FoilingButton>
-
-                    <HiddenGemsButton
-                      active={isHiddenGemsOnly}
-                      size="sm"
-                      onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
-                    >
-                      Hidden Gems
-                    </HiddenGemsButton>
-                  </div>
-                </div>
               </div>
               <TideMap 
                 beaches={filteredBeaches} 

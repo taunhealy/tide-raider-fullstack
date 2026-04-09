@@ -164,6 +164,16 @@ export async function scraperA(
     });
     await new Promise(r => setTimeout(r, 2000));
 
+    // Try to switch to Superforecast tab if not active
+    await page.evaluate(() => {
+      const superForecastBtn = Array.from(document.querySelectorAll('a, button, [role="tab"]'))
+        .find(el => el.textContent?.toLowerCase().includes('superforecast')) as HTMLElement;
+      if (superForecastBtn && !superForecastBtn.classList.contains('active')) {
+        superForecastBtn.click();
+      }
+    });
+    await new Promise(r => setTimeout(r, 3000));
+
     // Wait until forecast data is actually on page
     console.log("⏳ Waiting for forecast data to load...");
     try {
