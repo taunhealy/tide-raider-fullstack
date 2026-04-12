@@ -9,8 +9,11 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Supabase environment variables in middleware");
+  // Resilience: Ensure URL starts with http to prevent [Error: Invalid supabaseUrl] crash
+  if (!supabaseUrl || !supabaseUrl.startsWith('http') || !supabaseKey) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("Invalid or missing Supabase environment variables in middleware");
+    }
     return supabaseResponse;
   }
 

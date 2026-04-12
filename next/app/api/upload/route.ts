@@ -15,15 +15,15 @@ export const runtime = "nodejs"; // Required for streaming bodies
 export async function POST(req: NextRequest) {
   try {
     const backendUrl = `${BACKEND_URL}/api/upload`;
-    console.log(`[upload-proxy] Forwarding upload to: ${backendUrl}`);
-
-    // Get auth token from cookies (supporting multiple session token names)
     const cookieStore = await cookies();
-    const authToken = (
-      cookieStore.get("auth-token")?.value || 
-      cookieStore.get("next-auth.session-token")?.value ||
-      cookieStore.get("__Secure-next-auth.session-token")?.value
-    )?.trim();
+    const rawToken = (
+      (await cookieStore.get("auth-token"))?.value || 
+      (await cookieStore.get("next-auth.session-token"))?.value ||
+      (await cookieStore.get("__Secure-next-auth.session-token"))?.value
+    );
+    
+    // Hardened Sanitation: Strip all non-printable/newline characters that break headers
+    const authToken = rawToken ? rawToken.replace(/[\x00-\x1F\x7F-\x9F]/g, "").trim() : undefined;
 
     // Prepare headers - MUST include Content-Type with boundary for multipart/form-data
     const headers = new Headers();
