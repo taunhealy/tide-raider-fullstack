@@ -21,6 +21,10 @@ const upload = multer({
   },
 });
 
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import { Agent as HttpAgent } from "http";
+import { Agent as HttpsAgent } from "https";
+
 // Configure R2/S3
 if (
   !process.env.R2_ACCOUNT_ID ||
@@ -33,6 +37,14 @@ if (
 }
 
 const r2Endpoint = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+
+// Custom agent to handle specific SSL issues (EPROTO alert 40)
+const httpsAgent = new HttpsAgent({
+  keepAlive: true,
+  minVersion: 'TLSv1.2',
+  servername: `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+});
+
 const s3 = new S3Client({
   region: "auto",
   endpoint: r2Endpoint,
@@ -40,6 +52,10 @@ const s3 = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
   },
+  requestHandler: new NodeHttpHandler({
+    httpsAgent,
+    httpAgent: new HttpAgent({ keepAlive: true }),
+  }),
 });
 
 // Helper to compress video

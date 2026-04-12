@@ -262,10 +262,10 @@ export async function getLatestConditions(
         
         // VALIDATION: Check if any forecast has missing direction data
         const hasMissingData = !results || results.length === 0 || 
-          results.some(f => f.swellDirection === 0 || f.windDirection === 0);
+          results.some(f => f.swellDirection === -1 || f.windDirection === -1);
         
         if (hasMissingData) {
-          console.log(`[getLatestConditions] ⚠️ Scraper returned missing data. Triggering Semantic Fallback...`);
+          console.log(`[getLatestConditions] ⚠️ Scraper returned missing data (-1). Triggering Semantic Fallback...`);
           const semanticResults = await PythonBridge.runSemanticScrape(url, id);
           if (semanticResults && semanticResults.length > 0) return semanticResults;
         }

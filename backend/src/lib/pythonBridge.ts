@@ -37,7 +37,13 @@ export class PythonBridge {
         }
 
         try {
-          const result = JSON.parse(stdout);
+          // Find the JSON block in the output (it might be surrounded by logs)
+          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error("No JSON found in scraper output");
+          }
+          
+          const result = JSON.parse(jsonMatch[0]);
           const forecasts: BaseForecastData[] = result.forecasts.map((f: any) => ({
             regionId: regionId,
             date: new Date(f.date),

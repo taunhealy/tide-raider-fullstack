@@ -5,7 +5,7 @@ console.log("!!! WIND-EVAL INJECTED !!!");
  */
 function extractWindfinderData() {
   const getDirFromEl = (el) => {
-    if (!el) return "0";
+    if (!el) return null;
     
     // Check for alt attribute (new discovery from user)
     const img = el.tagName === 'IMG' ? el : el.querySelector('img');
@@ -41,7 +41,7 @@ function extractWindfinderData() {
       if (regex.test(combined)) return Math.round(val).toString();
     }
     
-    return "0";
+    return null;
   };
 
   const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"]'));

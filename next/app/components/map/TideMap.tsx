@@ -49,7 +49,7 @@ export default function TideMap({
   onBeachSelect, 
   onRegionSelect,
   selectedDayIndex = 0,
-  center = [18.47, -34.10], 
+  center = [18.4233, -33.9249], 
   zoom = 10,
   showWindHeatmap = false,
   showSwellHeatmap = false
@@ -539,7 +539,11 @@ export default function TideMap({
 
     if (features.length > 0) {
       vectorSource.addFeatures(features);
-      if (beaches.length > prevBeachesCount.current) {
+      
+      // Only auto-fit on first load if we don't have a manual center override, 
+      // or if we're specifically looking at a region view (zoom 4-7).
+      // For general app load (zoom 10), we respect the Cape Town default center.
+      if (beaches.length > prevBeachesCount.current && currentZoom < 8) {
         const extent = vectorSource.getExtent();
         mapRef.current.getView().fit(extent, { padding: [100, 100, 100, 100], maxZoom: 12 });
       }

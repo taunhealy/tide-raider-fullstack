@@ -291,10 +291,10 @@ export async function scraperA(
             date: parsedDate,
             regionId: region,
             windSpeed: Math.round(parseFloat(row.windSpeed || "0")),
-            windDirection: parseFloat(row.windDir?.replace("°", "") || "0"),
+            windDirection: row.windDir !== null ? parseFloat(row.windDir.replace("°", "")) : -1,
             swellHeight: parseFloat(row.waveHeight || "0"),
             swellPeriod: Math.round(parseFloat(row.wavePeriod || "0")),
-            swellDirection: parseFloat(row.swellDir?.replace("°", "") || "0"),
+            swellDirection: row.swellDir !== null ? parseFloat(row.swellDir.replace("°", "")) : -1,
           };
           // Store or update the day's forecast, prioritizing later morning hours if earlier ones are incomplete
           const existingIndex = forecasts.findIndex(f => f.date.getTime() === parsedDate.getTime());

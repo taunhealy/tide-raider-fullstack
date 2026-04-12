@@ -1616,6 +1616,60 @@
     }
   },
   {
+    "id": "saldanha-point",
+    "name": "Saldanha Point",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Saldanha Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 150,
+    "optimalWindDirections": [
+      "SE",
+      "SSE",
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "Exposed point break in Saldanha Bay. Needs a massive swell (2.7m+) to wrap into the bay and provide clean lines. A true hidden gem for advanced surfers looking for power and length when the open coast is maxed out.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 2.7,
+      "max": 6.0
+    },
+    "idealSwellPeriod": {
+      "min": 13,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 15,
+      "winter": 11
+    },
+    "hazards": [
+      "Heavy waves",
+      "Rocks",
+      "Remote location"
+    ],
+    "rating": 4.5,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -33.028539,
+      "lng": 17.895375
+    }
+  },
+  {
     "id": "trekos",
     "name": "Trekos",
     "continent": "Africa",
@@ -1664,6 +1718,7 @@
       "hasAttack": false
     },
     "image": "",
+    "video": "https://www.youtube.com/watch?v=bg3WLh_9ePE",
     "coordinates": {
       "lat": -32.892693,
       "lng": 17.864115
@@ -1828,13 +1883,13 @@
     }
   },
   {
-    "id": "baby-lamb",
-    "name": "Baby Lamb",
+    "id": "little-lamb",
+    "name": "Little Lamb",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
     "location": "Lambert's Bay",
-    "isHiddenGem": false,
+    "isHiddenGem": true,
     "distanceFromCT": 260,
     "optimalWindDirections": [
       "E",
@@ -5232,6 +5287,7 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "Pringle Bay",
+    "isHiddenGem": true,
     "distanceFromCT": 250,
     "optimalWindDirections": [
       "NW"

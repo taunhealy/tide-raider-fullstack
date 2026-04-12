@@ -841,7 +841,7 @@ export default function RaidLogTable({
                         className="block hover:opacity-75 transition-opacity"
                       >
                         <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
-                          {entry.beach?.name || "No beach specified"}
+                          {entry.beach?.name || entry.beachName || "No beach specified"}
                         </h3>
                         <div className="space-y-1">
                           <p className="text-sm text-gray-500 font-primary">
@@ -1210,7 +1210,7 @@ export default function RaidLogTable({
                                 }}
                                 className="font-primary text-sm text-gray-900 hover:text-brand-3 transition-colors text-left"
                               >
-                                {entry.beach?.name || "No beach specified"}
+                                {entry.beach?.name || entry.beachName || "No beach specified"}
                               </button>
                             </div>
                           </td>

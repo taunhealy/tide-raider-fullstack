@@ -465,6 +465,7 @@ export class LogService {
           videoUrl: true,
           videoPlatform: true,
           userId: true,
+          beachName: true,
           region: {
             select: {
               id: true,

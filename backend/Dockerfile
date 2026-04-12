@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user (Cloud Run strongly recommends this)
@@ -80,6 +81,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrandr2 \
     python3 \
     python3-pip \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only what we need from the build stage
