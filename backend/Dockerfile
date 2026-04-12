@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxtst6 \
     wget \
     xdg-utils \
+    python3 \
+    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user (Cloud Run strongly recommends this)
@@ -36,8 +39,11 @@ WORKDIR /app
 
 # ───── Stage 1: Install all dependencies (including dev) ─────
 COPY package*.json ./
+COPY requirements.txt ./
 COPY prisma ./prisma/
 RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --legacy-peer-deps
+RUN pip install --break-system-packages -r requirements.txt
+RUN playwright install chromium
 
 # ───── Stage 2: Build the app ─────
 COPY . .
@@ -72,6 +78,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only what we need from the build stage

@@ -4,6 +4,7 @@ import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 import { scraperA } from "../lib/scrapers/scraperA";
 import { scraperB } from "../lib/scrapers/scraperB";
 import { ScoreService } from "./scoreService";
+import { PythonBridge } from "../lib/pythonBridge";
 
 function getTodayDate() {
   const date = new Date();
@@ -248,10 +249,39 @@ export async function getLatestConditions(
     console.log(
       `[getLatestConditions] 🌐 Scraping forecast for ${region.id} from ${sourceConfig.url} (source: ${source})`
     );
-    const scrapedForecasts = await sourceConfig.scraper(
-      sourceConfig.url,
-      configRegionId
-    );
+    
+    // PRIMARY: Use Legacy Scraper (TypeScript/Puppeteer)
+    let scrapedForecasts;
+    try {
+      console.log(`[getLatestConditions] 🔍 Running legacy scraper for ${region.id}...`);
+      scrapedForecasts = await sourceConfig.scraper(
+        sourceConfig.url,
+        configRegionId
+      );
+      
+      // VALIDATION: Check if any forecast has missing/corrupted direction data
+      const hasMissingData = !scrapedForecasts || scrapedForecasts.length === 0 || 
+        scrapedForecasts.some(f => f.swellDirection === 0 || f.windDirection === 0);
+      
+      if (hasMissingData) {
+        console.log(`[getLatestConditions] ⚠️ Legacy scraper returned missing direction data. Triggering Semantic Scraper (Gemini) fallback...`);
+        try {
+          const semanticResults = await PythonBridge.runSemanticScrape(sourceConfig.url, configRegionId);
+          if (semanticResults && semanticResults.length > 0) {
+            console.log(`[getLatestConditions] ✅ Semantic scraper (Gemini) successfully repaired the data.`);
+            scrapedForecasts = semanticResults;
+          }
+        } catch (semanticError) {
+          console.error(`[getLatestConditions] ❌ Semantic fallback failed:`, semanticError);
+          // Keep the legacy results if we have them, even if imperfect
+        }
+      }
+    } catch (legacyError) {
+      console.error(`[getLatestConditions] ❌ Legacy scraper failed entirely:`, legacyError);
+      // FINAL FALLBACK: Use Semantic Scraper
+      console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini as final fallback...`);
+      scrapedForecasts = await PythonBridge.runSemanticScrape(sourceConfig.url, configRegionId);
+    }
 
     if (!scrapedForecasts || scrapedForecasts.length === 0) {
       throw new Error(`Scraper returned empty array for ${region.id}`);
