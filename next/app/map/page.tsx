@@ -43,6 +43,10 @@ export default function GlobalMapPage() {
   const [showSwellHeatmap, setShowSwellHeatmap] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Map Navigation State
+  const [mapCenter, setMapCenter] = useState<[number, number]>([18.4233, -33.9249]);
+  const [mapZoom, setMapZoom] = useState(12);
 
   useEffect(() => {
     setMounted(true);
@@ -194,16 +198,137 @@ export default function GlobalMapPage() {
             {/* Search */}
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Search Spots</label>
-              <div className="relative">
+              <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
                   value={searchQuery}
+                  onFocus={() => {
+                    // Logic to show suggestions if needed
+                  }}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Enter beach or region..."
                   className="w-full bg-gray-50 border border-gray-100 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
                 />
+                
+                {/* Search Suggestions */}
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[100] opacity-0 group-focus-within:opacity-100 pointer-events-none group-focus-within:pointer-events-auto transition-all duration-300 translate-y-2 group-focus-within:translate-y-0">
+                  <div className="p-4 space-y-4">
+                    {/* Beach Results Suggestion (New) */}
+                    {searchQuery.length >= 2 && (
+                      <div>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Matches Found</span>
+                        <div className="flex flex-col gap-1">
+                          {beaches
+                            .filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .slice(0, 5)
+                            .map(beach => (
+                              <button 
+                                key={beach.id}
+                                onClick={() => {
+                                  setSearchQuery(beach.name);
+                                  setMapCenter([beach.coordinates.lng, beach.coordinates.lat]);
+                                  setMapZoom(14);
+                                }}
+                                className="flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 rounded-xl text-[12px] font-bold text-gray-700 transition-all group/item"
+                              >
+                                <div className="flex flex-col">
+                                  <span>{beach.name}</span>
+                                  <span className="text-[9px] text-gray-400 uppercase tracking-tighter">{beach.region}</span>
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-blue-500 transition-colors" />
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Popular Regions</span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {["Western Cape", "Eastern Cape", "KwaZulu-Natal"].map(region => (
+                          <button 
+                            key={region}
+                            onClick={() => setSearchQuery(region)}
+                            className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-[11px] font-bold text-gray-600 transition-all"
+                          >
+                            {region}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Tactical Categories</span>
+                      <div className="flex flex-col gap-1">
+                        <button 
+                          onClick={() => { setIsHiddenGemsOnly(true); setSearchQuery(""); }}
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-rose-50 rounded-lg text-[11px] font-bold text-gray-600 group/btn transition-all"
+                        >
+                          <div className="w-5 h-5 bg-rose-100 text-rose-600 rounded flex items-center justify-center group-hover/btn:bg-rose-600 group-hover/btn:text-white transition-colors">💎</div>
+                          Hidden Gems
+                        </button>
+                        <button 
+                          onClick={() => { setIsLoggersOnly(true); setSearchQuery(""); }}
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-amber-50 rounded-lg text-[11px] font-bold text-gray-600 group/btn transition-all"
+                        >
+                          <div className="w-5 h-5 bg-amber-100 text-amber-600 rounded flex items-center justify-center group-hover/btn:bg-amber-600 group-hover/btn:text-white transition-colors">🏄</div>
+                          Longboarding Only
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Active Badges */}
+              {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || isHiddenGemsOnly) && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-800 transition-all">
+                      {searchQuery} <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  {minRating > 0 && (
+                    <button onClick={() => setMinRating(0)} className="flex items-center gap-1.5 px-2 py-1 bg-blue-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-blue-500 transition-all">
+                      {minRating}+ Stars <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  {selectedDifficulty.map(d => (
+                    <button key={d} onClick={() => toggleDifficulty(d)} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-emerald-500 transition-all">
+                      {d} <X className="w-2 h-2" />
+                    </button>
+                  ))}
+                  {isLoggersOnly && (
+                    <button onClick={() => setIsLoggersOnly(false)} className="flex items-center gap-1.5 px-2 py-1 bg-amber-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-amber-500 transition-all">
+                      Loggers <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  {isFoilingOnly && (
+                    <button onClick={() => setIsFoilingOnly(false)} className="flex items-center gap-1.5 px-2 py-1 bg-purple-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-purple-500 transition-all">
+                      Foiling <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  {isHiddenGemsOnly && (
+                    <button onClick={() => setIsHiddenGemsOnly(false)} className="flex items-center gap-1.5 px-2 py-1 bg-rose-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-rose-500 transition-all">
+                      Gems <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setSearchQuery("");
+                      setMinRating(0);
+                      setSelectedDifficulty([]);
+                      setIsLoggersOnly(false);
+                      setIsFoilingOnly(false);
+                      setIsHiddenGemsOnly(false);
+                    }}
+                    className="text-[9px] font-black text-gray-400 uppercase tracking-tighter hover:text-gray-900 transition-all underline decoration-gray-200 underline-offset-4"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Rating Filter */}
@@ -393,6 +518,8 @@ export default function GlobalMapPage() {
                 onRegionSelect={(regionId) => {
                   updateFilter("regionId", regionId);
                 }}
+                center={mapCenter}
+                zoom={mapZoom}
                 selectedDayIndex={selectedDayIndex}
                 showWindHeatmap={showWindHeatmap}
                 showSwellHeatmap={showSwellHeatmap}

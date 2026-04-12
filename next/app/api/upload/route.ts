@@ -19,10 +19,11 @@ export async function POST(req: NextRequest) {
 
     // Get auth token from cookies (supporting multiple session token names)
     const cookieStore = await cookies();
-    const authToken = 
+    const authToken = (
       cookieStore.get("auth-token")?.value || 
       cookieStore.get("next-auth.session-token")?.value ||
-      cookieStore.get("__Secure-next-auth.session-token")?.value;
+      cookieStore.get("__Secure-next-auth.session-token")?.value
+    )?.trim();
 
     // Prepare headers - MUST include Content-Type with boundary for multipart/form-data
     const headers = new Headers();

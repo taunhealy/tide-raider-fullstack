@@ -78,15 +78,26 @@ export default function TideMap({
   }, [selectedDayIndex]);
 
   // Dynamic Center/Zoom Update
+  const prevCenterRef = useRef<[number, number]>(center);
+  const prevZoomRef = useRef<number>(zoom);
+
   useEffect(() => {
     if (!mapRef.current) return;
-    const view = mapRef.current.getView();
     
-    view.animate({
-      center: fromLonLat(center),
-      zoom: zoom,
-      duration: 800
-    });
+    // Only animate if values have actually changed (prevent array identity triggers)
+    const centerChanged = center[0] !== prevCenterRef.current[0] || center[1] !== prevCenterRef.current[1];
+    const zoomChanged = zoom !== prevZoomRef.current;
+    
+    if (centerChanged || zoomChanged) {
+      const view = mapRef.current.getView();
+      view.animate({
+        center: fromLonLat(center),
+        zoom: zoom,
+        duration: 800
+      });
+      prevCenterRef.current = center;
+      prevZoomRef.current = zoom;
+    }
   }, [center, zoom]);
 
   const getBrandedColor = (r: number) => {
