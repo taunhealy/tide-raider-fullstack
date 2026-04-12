@@ -222,7 +222,7 @@ router.post(
 
       // Upload to R2
       const command = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: sanitize(process.env.R2_BUCKET_NAME),
         Key: key,
         Body: body,
         ContentType: contentType,
@@ -233,7 +233,7 @@ router.post(
       console.log("[upload] Upload successful");
 
       // Construct the public URL
-      const fileUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
+      const fileUrl = `${sanitize(process.env.R2_PUBLIC_URL)}/${key}`;
 
       // Return appropriate field name based on file type
       if (file.mimetype.startsWith("video/") || fileType === "video") {
