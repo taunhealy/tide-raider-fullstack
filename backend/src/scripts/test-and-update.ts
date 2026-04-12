@@ -6,13 +6,13 @@ import path from "path";
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 async function main() {
-  const regionId = "western-cape"; 
+  const regionId = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : "western-cape"; 
   console.log(`--- Real-World Test: Semantic Scrape & DB Update for ${regionId} ---`);
   
   try {
-    // getLatestConditions(regionId, forceRefresh, source)
-    // We force refresh to trigger a new scrape
-    const result = await getLatestConditions(regionId, true, "WINDFINDER");
+    // getLatestConditions(regionId, forceRefresh, source, daysLimit)
+    // We force refresh and set 10 days to get the upcoming week+
+    const result = await getLatestConditions(regionId, true, "WINDFINDER", 10);
     
     if (result) {
       console.log("✅ Success! Database updated with fresh data.");

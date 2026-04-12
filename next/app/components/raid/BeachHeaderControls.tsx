@@ -24,6 +24,7 @@ interface BeachHeaderControlsProps {
   onRegionSelect: (regionId: LocationFilterType["regionId"]) => void;
   currentRegion: string;
   beaches: Beach[];
+  availableDates: string[];
 }
 
 export default function BeachHeaderControls({
@@ -31,6 +32,7 @@ export default function BeachHeaderControls({
   onRegionSelect,
   currentRegion,
   beaches,
+  availableDates,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -59,6 +61,7 @@ export default function BeachHeaderControls({
               selectedDate={selectedDate}
               onDateSelect={handleDateSelect}
               beaches={beaches}
+              availableDates={availableDates}
             />
 
             <div className="h-px bg-black/5 w-full" />

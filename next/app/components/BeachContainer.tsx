@@ -241,6 +241,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               onRegionSelect={handleRegionSelect}
               currentRegion={filters.regionId || ""}
               beaches={beaches}
+              availableDates={data?.availableDates || []}
             />
 
             {/* Subtle background refresh indicator */}

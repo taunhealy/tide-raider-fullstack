@@ -161,8 +161,8 @@ router.get(
         source: true,
       };
 
-      // Parallel queries: forecast lookup and score check
-      const [exactForecast, scoreCheck] = await Promise.all([
+      // Parallel queries: forecast lookup, score check, and available dates
+      const [exactForecast, scoreCheck, availableForecastDates] = await Promise.all([
         // Try exact match first
         prisma.forecast.findFirst({
           where: {
@@ -172,7 +172,7 @@ router.get(
           },
           select: forecastSelect,
         }),
-        // Check if scores exist (single query instead of count + findMany)
+        // Check if scores exist
         prisma.beachDailyScore.findFirst({
           where: {
             regionId,
@@ -184,7 +184,25 @@ router.get(
             beachId: true,
           },
         }),
+        // Get all unique dates with forecast data for this region and source
+        prisma.forecast.findMany({
+          where: {
+            regionId,
+            source: sourceParam,
+          },
+          select: {
+            date: true,
+          },
+          distinct: [Prisma.ForecastScalarFieldEnum.date],
+          orderBy: {
+            date: "asc",
+          },
+        }),
       ]);
+
+      const availableDates = availableForecastDates.map((f) => 
+        f.date.toISOString().split("T")[0]
+      );
 
       let forecast = exactForecast;
 
@@ -341,6 +359,7 @@ router.get(
         }),
         scores,
         forecast,
+        availableDates,
         totalCount: beaches.length,
       });
     } catch (error: any) {

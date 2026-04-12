@@ -14,13 +14,15 @@ interface DateSelectorProps {
   onDateSelect: (date: string) => void;
   className?: string;
   beaches?: any[];
+  availableDates?: string[];
 }
 
 export default function DateSelector({
   selectedDate,
   onDateSelect,
   className,
-  beaches = []
+  beaches = [],
+  availableDates = []
 }: DateSelectorProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -29,19 +31,21 @@ export default function DateSelector({
     setMounted(true);
   }, []);
 
-  // Generate date options (Today, Tomorrow, Day After, etc.)
+  // Generate date options from availableDates list
   const dateOptions = useMemo(() => {
-    if (!mounted) return [];
+    if (!mounted || availableDates.length === 0) return [];
 
-    const options: DateOption[] = [];
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
 
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setUTCDate(today.getUTCDate() + i);
-      const dateStr = date.toISOString().split("T")[0];
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(today.getUTCDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
+    return availableDates.map((dateStr) => {
+      const date = new Date(dateStr);
+      
       // Calculate how many beaches have a rating >= 3 for this day
       const scoreCount = beaches.reduce((acc, b: any) => {
         const rating = b.dailyScores?.[dateStr]?.rating ?? b.rating;
@@ -49,8 +53,8 @@ export default function DateSelector({
       }, 0);
 
       let label: string;
-      if (i === 0) label = "Today";
-      else if (i === 1) label = "Tomorrow";
+      if (dateStr === todayStr) label = "Today";
+      else if (dateStr === tomorrowStr) label = "Tomorrow";
       else {
         label = date.toLocaleDateString("en-US", {
           weekday: "short",
@@ -64,16 +68,15 @@ export default function DateSelector({
         timeZone: "UTC",
       });
 
-      options.push({
+      return {
         label,
         date,
         value: dateStr,
         scoreCount,
         subLabel
-      } as any);
-    }
-    return options;
-  }, [mounted, beaches]);
+      } as any;
+    });
+  }, [mounted, beaches, availableDates]);
 
   const activeDate = selectedDate || dateOptions[0]?.value || null;
 

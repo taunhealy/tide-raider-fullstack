@@ -5,6 +5,7 @@ import { scraperA } from "../lib/scrapers/scraperA";
 import { scraperB } from "../lib/scrapers/scraperB";
 import { ScoreService } from "./scoreService";
 import { PythonBridge } from "../lib/pythonBridge";
+import { BaseForecastData } from "../lib/types";
 
 function getTodayDate() {
   const date = new Date();
@@ -251,36 +252,67 @@ export async function getLatestConditions(
     );
     
     // PRIMARY: Use Legacy Scraper (TypeScript/Puppeteer)
-    let scrapedForecasts;
-    try {
-      console.log(`[getLatestConditions] 🔍 Running legacy scraper for ${region.id}...`);
-      scrapedForecasts = await sourceConfig.scraper(
-        sourceConfig.url,
-        configRegionId
-      );
-      
-      // VALIDATION: Check if any forecast has missing/corrupted direction data
-      const hasMissingData = !scrapedForecasts || scrapedForecasts.length === 0 || 
-        scrapedForecasts.some(f => f.swellDirection === 0 || f.windDirection === 0);
-      
-      if (hasMissingData) {
-        console.log(`[getLatestConditions] ⚠️ Legacy scraper returned missing direction data. Triggering Semantic Scraper (Gemini) fallback...`);
+    let scrapedForecasts: BaseForecastData[] = [];
+    
+    // Function to run a single scrape with semantic fallback
+    const runScrapeWithFallback = async (url: string, id: string): Promise<BaseForecastData[]> => {
+      try {
+        console.log(`[getLatestConditions] 🔍 Running scraper for ${url}...`);
+        let results = await sourceConfig.scraper(url, id);
+        
+        // VALIDATION: Check if any forecast has missing direction data
+        const hasMissingData = !results || results.length === 0 || 
+          results.some(f => f.swellDirection === 0 || f.windDirection === 0);
+        
+        if (hasMissingData) {
+          console.log(`[getLatestConditions] ⚠️ Scraper returned missing data. Triggering Semantic Fallback...`);
+          const semanticResults = await PythonBridge.runSemanticScrape(url, id);
+          if (semanticResults && semanticResults.length > 0) return semanticResults;
+        }
+        return results || [];
+      } catch (err) {
+        console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
         try {
-          const semanticResults = await PythonBridge.runSemanticScrape(sourceConfig.url, configRegionId);
-          if (semanticResults && semanticResults.length > 0) {
-            console.log(`[getLatestConditions] ✅ Semantic scraper (Gemini) successfully repaired the data.`);
-            scrapedForecasts = semanticResults;
-          }
-        } catch (semanticError) {
-          console.error(`[getLatestConditions] ❌ Semantic fallback failed:`, semanticError);
-          // Keep the legacy results if we have them, even if imperfect
+          console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini...`);
+          return await PythonBridge.runSemanticScrape(url, id) || [];
+        } catch (semanticErr) {
+          console.error(`[getLatestConditions] ❌ Semantic final fallback failed:`, semanticErr);
+          return [];
         }
       }
-    } catch (legacyError) {
-      console.error(`[getLatestConditions] ❌ Legacy scraper failed entirely:`, legacyError);
-      // FINAL FALLBACK: Use Semantic Scraper
-      console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini as final fallback...`);
-      scrapedForecasts = await PythonBridge.runSemanticScrape(sourceConfig.url, configRegionId);
+    };
+
+    try {
+      // 1. Fetch Superforecast (Day 1-3)
+      const superResults = await runScrapeWithFallback(sourceConfig.url, configRegionId);
+      
+      // 2. Fetch Regular Forecast (Day 1-10) if available
+      if (sourceConfig.forecastUrl) {
+        console.log(`[getLatestConditions] 🧪 Hybrid Mode: Fetching supplemental 10-day forecast...`);
+        const regularResults = await runScrapeWithFallback(sourceConfig.forecastUrl, configRegionId);
+        
+        // 3. Merge: Regular as base, Super as priority override
+        const forecastMap = new Map<string, BaseForecastData>();
+        
+        // Put regular results in map first (Day 1-10)
+        regularResults.forEach(f => {
+          const key = f.date.toISOString().split("T")[0];
+          forecastMap.set(key, f);
+        });
+        
+        // Overwrite with super results (Day 1-3)
+        superResults.forEach(f => {
+          const key = f.date.toISOString().split("T")[0];
+          forecastMap.set(key, f);
+        });
+        
+        scrapedForecasts = Array.from(forecastMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+      } else {
+        scrapedForecasts = superResults;
+      }
+    } catch (error) {
+      console.error(`[getLatestConditions] ❌ Hybrid scraping failed:`, error);
+      throw error;
     }
 
     if (!scrapedForecasts || scrapedForecasts.length === 0) {

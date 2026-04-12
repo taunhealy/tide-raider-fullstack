@@ -6,7 +6,8 @@ import { scraperC } from "./scraperC";
 interface RegionSourceConfig {
   regionId: string;
   sourceA: {
-    url: string;
+    url: string; // Defaults to Superforecast if available
+    forecastUrl?: string; // Optional Regular Forecast (10-day)
     scraper: (url: string, regionId: string) => Promise<BaseForecastData[]>;
   };
   sourceB?: {
@@ -24,6 +25,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "western-cape",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/muizenberg",
+      forecastUrl: "https://www.windfinder.com/forecast/muizenberg",
       scraper: scraperA,
     },
     sourceB: {
@@ -39,6 +41,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "eastern-cape",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/jeffreys_bay",
+      forecastUrl: "https://www.windfinder.com/forecast/jeffreys_bay",
       scraper: scraperA,
     },
     sourceB: {
@@ -54,6 +57,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "kwazulu-natal",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/durban_bluff",
+      forecastUrl: "https://www.windfinder.com/forecast/durban_bluff",
       scraper: scraperA,
     },
     sourceB: {
@@ -69,6 +73,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "northern-cape",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/port_nolloth",
+      forecastUrl: "https://www.windfinder.com/forecast/port_nolloth",
       scraper: scraperA,
     },
     sourceB: {
@@ -80,6 +85,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "swakopmund",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/swakopmund",
+      forecastUrl: "https://www.windfinder.com/forecast/swakopmund",
       scraper: scraperA,
     },
     sourceB: {
@@ -91,6 +97,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "inhambane-province",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/tofo",
+      forecastUrl: "https://www.windfinder.com/forecast/tofo",
       scraper: scraperA,
     },
     sourceB: {
@@ -102,6 +109,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "ponta-do-ouro",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/ponta_do_ouro",
+      forecastUrl: "https://www.windfinder.com/forecast/ponta_do_ouro",
       scraper: scraperA,
     },
     sourceB: {
@@ -113,6 +121,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "madagascar-south",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/anakao",
+      forecastUrl: "https://www.windfinder.com/forecast/anakao",
       scraper: scraperA,
     },
     sourceB: {
@@ -124,6 +133,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "madagascar-west",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/anakao",
+      forecastUrl: "https://www.windfinder.com/forecast/anakao",
       scraper: scraperA,
     },
     sourceB: {
@@ -135,6 +145,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "madagascar-east",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/farafangana",
+      forecastUrl: "https://www.windfinder.com/forecast/farafangana",
       scraper: scraperA,
     },
     sourceB: {
@@ -146,6 +157,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "mozambique",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/maputo_costa_do_sol",
+      forecastUrl: "https://www.windfinder.com/forecast/maputo_costa_do_sol",
       scraper: scraperA,
     },
     sourceB: {
@@ -161,6 +173,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "zambia",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/livingstone",
+      forecastUrl: "https://www.windfinder.com/forecast/livingstone",
       scraper: scraperA,
     },
     sourceB: {
@@ -172,6 +185,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "luanda-province",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/cabo_ledo",
+      forecastUrl: "https://www.windfinder.com/forecast/cabo_ledo",
       scraper: scraperA,
     },
     sourceB: {
@@ -187,6 +201,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "benguela",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/caota",
+      forecastUrl: "https://www.windfinder.com/forecast/caota",
       scraper: scraperA,
     },
     sourceB: {
@@ -198,6 +213,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "gabon-coast",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/cocobeach_estuaire_gabon",
+      forecastUrl: "https://www.windfinder.com/forecast/cocobeach_estuaire_gabon",
       scraper: scraperA,
     },
     sourceB: {
@@ -209,6 +225,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "liberia",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/monrovia_montserrado_liberia",
+      forecastUrl: "https://www.windfinder.com/forecast/monrovia_montserrado_liberia",
       scraper: scraperA,
     },
     sourceB: {
@@ -220,6 +237,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "bali",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/bali_uluwatu",
+      forecastUrl: "https://www.windfinder.com/forecast/bali_uluwatu",
       scraper: scraperA,
     },
     sourceB: {
@@ -235,6 +253,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "puntarenas-province",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/puntarenas",
+      forecastUrl: "https://www.windfinder.com/forecast/puntarenas",
       scraper: scraperA,
     },
     sourceB: {
@@ -246,6 +265,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "queensland",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/noosa_main_beach",
+      forecastUrl: "https://www.windfinder.com/forecast/noosa_main_beach",
       scraper: scraperA,
     },
     sourceB: {
@@ -257,6 +277,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "waikato",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/raglan_waikato_new_zealand",
+      forecastUrl: "https://www.windfinder.com/forecast/raglan_waikato_new_zealand",
       scraper: scraperA,
     },
     sourceB: {
@@ -268,6 +289,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "san-salvador",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/san_salvador_san_salvador_el_salvador",
+      forecastUrl: "https://www.windfinder.com/forecast/san_salvador_san_salvador_el_salvador",
       scraper: scraperA,
     },
     sourceB: {
@@ -279,6 +301,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "costa-del-balsamo",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/el_zonte",
+      forecastUrl: "https://www.windfinder.com/forecast/el_zonte",
       scraper: scraperA,
     },
     sourceB: {
@@ -290,6 +313,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "chicama",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/chicama",
+      forecastUrl: "https://www.windfinder.com/forecast/chicama",
       scraper: scraperA,
     },
     sourceB: {
@@ -301,6 +325,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "andalucia",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/fuentes_de_andalucia",
+      forecastUrl: "https://www.windfinder.com/forecast/fuentes_de_andalucia",
       scraper: scraperA,
     },
     sourceB: {
@@ -312,6 +337,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "granada",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/paripé",
+      forecastUrl: "https://www.windfinder.com/forecast/paripé",
       scraper: scraperA,
     },
     sourceB: {
@@ -323,6 +349,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "california",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/california_maryland_usa",
+      forecastUrl: "https://www.windfinder.com/forecast/california_maryland_usa",
       scraper: scraperA,
     },
     sourceB: {
@@ -334,6 +361,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "new-south-wales",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/bondi_beach",
+      forecastUrl: "https://www.windfinder.com/forecast/bondi_beach",
       scraper: scraperA,
     },
     sourceB: {
@@ -345,6 +373,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "scotland",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/oban_airport",
+      forecastUrl: "https://www.windfinder.com/forecast/oban_airport",
       scraper: scraperA,
     },
     sourceB: {
@@ -356,6 +385,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "suðuroy",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/vagur_suduroy_faroe_islands",
+      forecastUrl: "https://www.windfinder.com/forecast/vagur_suduroy_faroe_islands",
       scraper: scraperA,
     },
     sourceB: {
@@ -367,6 +397,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "streymoy",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/torshavn",
+      forecastUrl: "https://www.windfinder.com/forecast/torshavn",
       scraper: scraperA,
     },
     sourceB: {
@@ -378,6 +409,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "sandoy",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/kollafjordhur_streymoy_faroe_islands",
+      forecastUrl: "https://www.windfinder.com/forecast/kollafjordhur_streymoy_faroe_islands",
       scraper: scraperA,
     },
     sourceB: {
@@ -389,6 +421,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "central-morocco",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/taghazout",
+      forecastUrl: "https://www.windfinder.com/forecast/taghazout",
       scraper: scraperA,
     },
     sourceB: {
@@ -400,6 +433,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "morocco",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/taghazout",
+      forecastUrl: "https://www.windfinder.com/forecast/taghazout",
       scraper: scraperA,
     },
     sourceB: {
@@ -411,6 +445,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "choco",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/nuqui",
+      forecastUrl: "https://www.windfinder.com/forecast/nuqui",
       scraper: scraperA,
     },
     sourceB: {
@@ -422,6 +457,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "basque-country",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/mundaka",
+      forecastUrl: "https://www.windfinder.com/forecast/mundaka",
       scraper: scraperA,
     },
     sourceB: {
@@ -433,6 +469,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "cantabria",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/somo",
+      forecastUrl: "https://www.windfinder.com/forecast/somo",
       scraper: scraperA,
     },
     sourceB: {
@@ -444,6 +481,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     regionId: "asturias",
     sourceA: {
       url: "https://www.windfinder.com/weatherforecast/salinas",
+      forecastUrl: "https://www.windfinder.com/forecast/salinas",
       scraper: scraperA,
     },
     sourceB: {
