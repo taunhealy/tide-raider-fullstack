@@ -220,20 +220,37 @@ router.post(
           .json({ error: "File must be an image or video" });
       }
 
+      // Smart Bucket/Path Splitting
+      // If R2_BUCKET_NAME is "bucket/path", we use "bucket" as the bucket and prepended "path/" to the key
+      const rawBucket = sanitize(process.env.R2_BUCKET_NAME);
+      let bucketName = rawBucket;
+      let keyPrefix = "";
+
+      if (rawBucket.includes("/")) {
+        const parts = rawBucket.split("/");
+        bucketName = parts[0];
+        keyPrefix = parts.slice(1).join("/") + "/";
+        console.log(
+          `[upload] Smart-split bucket name: "${bucketName}", prefix: "${keyPrefix}"`
+        );
+      }
+
+      const finalKey = `${keyPrefix}${key}`;
+
       // Upload to R2
       const command = new PutObjectCommand({
-        Bucket: sanitize(process.env.R2_BUCKET_NAME),
-        Key: key,
+        Bucket: bucketName,
+        Key: finalKey,
         Body: body,
         ContentType: contentType,
       });
 
-      console.log(`[upload] Uploading to R2: ${key}`);
+      console.log(`[upload] Uploading to R2: ${finalKey} in bucket ${bucketName}`);
       await s3.send(command);
       console.log("[upload] Upload successful");
 
       // Construct the public URL
-      const fileUrl = `${sanitize(process.env.R2_PUBLIC_URL)}/${key}`;
+      const fileUrl = `${sanitize(process.env.R2_PUBLIC_URL)}/${finalKey}`;
 
       // Return appropriate field name based on file type
       if (file.mimetype.startsWith("video/") || fileType === "video") {
