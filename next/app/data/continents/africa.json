@@ -296,6 +296,58 @@
     "isFoiling": true
   },
   {
+    "id": "bloubergstrand",
+    "name": "Bloubergstrand",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Bloubergstrand",
+    "distanceFromCT": 30,
+    "optimalWindDirections": [
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach break that has reasonably consistent surf and can work at any time of the year. Offshore winds blow from the northeast. The beach breaks offer lefts and rights. When the surf is up, it can get quite busy in the water. Take care of jetskis.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rip currents",
+      "Crowds",
+      "Windsurfers"
+    ],
+    "rating": 3,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1571216447522-823ca55373a0?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -33.823939,
+      "lng": 18.476877
+    }
+  },
+  {
     "id": "sunset-beach",
     "name": "Sunset Beach",
     "continent": "Africa",
@@ -1014,6 +1066,168 @@
     ]
   },
   {
+    "id": "jocks-reef",
+    "name": "Jock's Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 95,
+    "optimalWindDirections": [
+      "NW",
+      "N",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 202.5,
+      "max": 247.5,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful reef break and hidden gem located in Betty's Bay. Requires a massive swell to come alive. Best on SW groundswells with offshore northerly winds. Recommended only for advanced surfers due to the power and remote nature of the break.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2.5,
+      "max": 6.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 22
+    },
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rocks",
+      "Heavy hold-downs",
+      "Sharks",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.35733,
+      "lng": 18.93464
+    }
+  },
+  {
+    "id": "kogelberg-reef",
+    "name": "Kogelberg Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 100,
+    "optimalWindDirections": [
+      "NW",
+      "N",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Formidable reef break located near the Kogelberg Nature Reserve boundary. This hidden gem reveals itself only on massive swells. Characteristics include thick kelp beds and powerful, heavy waves. Strictly for advanced surfers due to the isolation and power.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 3,
+      "max": 7
+    },
+    "idealSwellPeriod": {
+      "min": 14,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Heavy kelp",
+      "Rocks",
+      "Sharks",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.353528,
+      "lng": 18.98242
+    }
+  },
+  {
+    "id": "stony-beach",
+    "name": "Stony Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 98,
+    "optimalWindDirections": [
+      "N",
+      "NW",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 160,
+      "max": 240,
+      "cardinal": "S, SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach break in Betty's Bay that requires a massive S or SW swell to function properly. This hidden gem offers powerful peaks when conditions are right. Best with offshore northerly winds.",
+    "difficulty": "ADVANCED",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 2.5,
+      "max": 5.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Massive swell",
+      "Rocks",
+      "Strong rip currents",
+      "Sharks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.371,
+      "lng": 18.895
+    }
+  },
+  {
     "id": "pringle-bay",
     "name": "Pringle Bay",
     "continent": "Africa",
@@ -1176,8 +1390,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -33.7842,
-      "lng": 18.4526
+      "lat": -33.766810,
+      "lng": 18.444015  
     }
   },
   {
@@ -1247,6 +1461,629 @@
       }
     ],
     "isFoiling": true
+  },
+  {
+    "id": "captains",
+    "name": "Captains",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Melkbosstrand",
+    "distanceFromCT": 35,
+    "optimalWindDirections": [
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 250,
+      "cardinal": "WSW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed beach and reef break that has quite consistent surf. Summer offers the optimum conditions for surfing. The best wind direction is from the east. Tends to receive distant groundswells and the best swell direction is from the west southwest. The beach breaks offer lefts and rights. It very rarely gets crowded here. Submerged rocks are a hazard.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 17,
+      "winter": 13
+    },
+    "hazards": [
+      "Submerged rocks"
+    ],
+    "rating": 4,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -33.716572,
+      "lng": 18.440347
+    }
+  },
+  {
+    "id": "silwerstroom",
+    "name": "Silwerstroom",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Silwerstroomstrand",
+    "distanceFromCT": 45,
+    "optimalWindDirections": [
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 250,
+      "cardinal": "WSW"
+    },
+    "bestSeasons": [
+      "winter",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed break with quite reliable surf that can work at any time of the year. Offshore winds blow from the east northeast. Groundswells are more frequent than windswells and the best swell direction is from the west southwest. The beach break offers both left and right hand waves. Not likely to be crowded. Watch out for dangerous rips.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 17,
+      "winter": 13
+    },
+    "hazards": [
+      "Dangerous rips"
+    ],
+    "rating": 4,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -33.590801,
+      "lng": 18.359654
+    }
+  },
+  {
+    "id": "bakkies",
+    "name": "Bakkies",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Grotto Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 65,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 250,
+      "cardinal": "WSW"
+    },
+    "bestSeasons": [
+      "winter",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful reef break located in the Grotto Bay private nature reserve. A true hidden gem for advanced surfers. Best on SW swells with East to ENE winds. Requires a bit of a hike or local access. Watch for shallow reef and strong currents.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Shallow reef",
+      "Strong currents",
+      "Remote location"
+    ],
+    "rating": 4.5,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -33.489705,
+      "lng": 18.309299
+    }
+  },
+  {
+    "id": "trekos",
+    "name": "Trekos",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "West Coast",
+    "isHiddenGem": true,
+    "distanceFromCT": 140,
+    "optimalWindDirections": [
+      "SE",
+      "SSE",
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "Exposed point break on the West Coast. A true hidden gem that needs a large swell to work properly. Remote location, bring all supplies. Best on SW swells with SE winds. Offers long, powerful walls when the conditions align.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 2,
+      "max": 6
+    },
+    "idealSwellPeriod": {
+      "min": 13,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 15,
+      "winter": 11
+    },
+    "hazards": [
+      "Remote location",
+      "Rocks",
+      "Sharks"
+    ],
+    "rating": 4.5,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -32.892693,
+      "lng": 17.864115
+    }
+  },
+  {
+    "id": "light-house-duiker-eiland",
+    "name": "Light House (Duiker Eiland)",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "St Helena Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 160,
+    "optimalWindDirections": [
+      "SE",
+      "SSE",
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "Powerful point break located near the lighthouse at Duiker Eiland, St Helena Bay. A high-quality hidden gem for advanced surfers. Best on large SW groundswells with SE winds. Offers fast, hollow sections and long rides in the right conditions.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Remote location",
+      "Strong currents"
+    ],
+    "rating": 4.5,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -32.714838,
+      "lng": 17.922513
+    }
+  },
+  {
+    "id": "farmer-burgers",
+    "name": "Farmer Burgers",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "West Coast",
+    "isHiddenGem": true,
+    "distanceFromCT": 200,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "spring",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed reef break offering fairly consistent right-hand waves rated 4/5. Works best with WSW groundswell and ENE offshore winds. Clean groundswells are typical here. Despite being a quality wave, the spot can get crowded during optimal conditions. Careful navigation of rocks required.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 5.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Strong currents",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -32.172983,
+      "lng": 18.310436
+    }
+  },
+  {
+    "id": "donkins-point",
+    "name": "Donkins Point",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Donkins Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 270,
+    "optimalWindDirections": [
+      "E",
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 250
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful point break located in the Donkins Bay Private Nature Reserve. Requires a massive swell to wrap in and activate the long, peeling sections. An intermediate-level spot that offers incredible rides in the right conditions. Designated as a Hidden Gem due to its remote location and restricted access.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 3.0,
+      "max": 8.0
+    },
+    "idealSwellPeriod": {
+      "min": 13,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 15,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Remote location",
+      "Restricted access"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -31.932633,
+      "lng": 18.267669
+    }
+  },
+  {
+    "id": "baby-lamb",
+    "name": "Baby Lamb",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Lambert's Bay",
+    "isHiddenGem": false,
+    "distanceFromCT": 260,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "spring",
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Fun wedge break located at Lambert's Bay Beach. Unusual for the area, it requires a massive swell to reach its potential. Great for longboarding and bodyboarding when the size is right. Provides a more playful alternative to the heavier reef breaks nearby.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "WEDGE",
+    "swellSize": {
+      "min": 3.5,
+      "max": 6.0
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 13
+    },
+    "hazards": [
+      "Strong currents",
+      "Crowds at beach"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -32.088436,
+      "lng": 18.305794
+    }
+  },
+  {
+    "id": "malkop",
+    "name": "Malkop",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Lambert's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 260,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "Advanced reef break and hidden gem near Lambert's Bay. Needs a big swell to start working properly. Offers heavy, high-quality waves for experienced surfers. Less crowded than the main breaks but requires commitment and local knowledge.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2.0,
+      "max": 6.0
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Heavy hold-downs",
+      "Remote"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -32.113422,
+      "lng": 18.298389
+    }
+  },
+  {
+    "id": "malkoppan",
+    "name": "Malkoppan",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Lambert's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 260,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "Exposed reef break located at Malkoppan, near Lambert's Bay. Designated as a Hidden Gem, this advanced spot requires a big swell to come alive. Known for its power and consistency when the conditions align. Watch out for submerged rocks.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2.0,
+      "max": 5.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Heavy waves",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -32.130708,
+      "lng": 18.303108
+    }
+  },
+  {
+    "id": "papendorp",
+    "name": "Papendorp",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "West Coast",
+    "isHiddenGem": true,
+    "distanceFromCT": 300,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful point break and hidden gem located near Papendorp. Requires a medium-sized swell to start working optimally. Offers advanced surfers long, heavy rides in a remote and pristine setting. Best on SW groundswells with offshore winds.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.6,
+      "max": 3.8
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Rocks",
+      "Remote location",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -31.695083,
+      "lng": 18.180939
+    }
+  },
+  {
+    "id": "papendorp-cliff",
+    "name": "Papendorp Cliff",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "West Coast",
+    "isHiddenGem": true,
+    "distanceFromCT": 300,
+    "optimalWindDirections": [
+      "E",
+      "ENE"
+    ],
+    "optimalSwellDirections": {
+      "min": 225,
+      "max": 270
+    },
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "optimalTide": "ALL",
+    "description": "Heavy beach break located near the cliffs at Papendorp. Similar to Elands Bay, it requires a medium sized swell to produce its signature powerful A-frames. A beautiful and remote spot that rewards commitment and proper timing.",
+    "difficulty": "ADVANCED",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1.6,
+      "max": 3.8
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Heavy hold-downs",
+      "Remote location",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -31.659381,
+      "lng": 18.155050
+    }
   },
   {
     "id": "kogel-bay",
@@ -2287,6 +3124,69 @@
     "coordinates": {
       "lat": -33.344,
       "lng": 18.156
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?app=desktop&v=N-y_UZWMinU&ab_channel=ZacKruyer",
+        "title": "Surfing Winter West Coast of South Africa 2020 - Riders: @adinmasencamp @ducky_staples @dietakhaarman @mafooslombard @iaincampbell_ @robbie_berman @mark_reitz @teegan_c @jordy_maree @jordysmith88 ",
+        "platform": "youtube"
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=0fKS4ZLIH6Q&ab_channel=TheRegularGuy",
+        "title": "West Kegs - Perfect Tubes on South Africa's West Coast with Surfers, Dale Staples, Davey Van Zyl, Shane Sykes, Justin Sykes, Brian Furcy, Calvin Goor, Llewellyn Whittaker, Robbie Schofield and photographers, Alan van Gysen & Ian Thurtel",
+        "platform": "youtube"
+      }
+    ]
+  },
+  {
+    "id": "sixteen-mile-beach",
+    "name": "Sixteen Mile Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "West Coast",
+    "distanceFromCT": 30,
+    "optimalWindDirections": [
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 247.5,
+      "max": 270,
+      "cardinal": "WSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Beach break with multiple peaks. Can handle big swells. Best in morning offshore.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": {
+      "min": 1.3,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rip currents",
+      "Wind chop",
+      "Strong currents",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -33.180636,
+      "lng": 18.047076
     },
     "videos": [
       {
@@ -4172,8 +5072,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.3168,
-      "lng": 18.3297
+      "lat": -32.702194,
+      "lng": 17.965667
     }
   },
   {
@@ -4370,8 +5270,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.376533,
+      "lng": 18.826149
     }
   },
   {
@@ -4380,41 +5280,42 @@
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
-    "location": "Betty's Bay",
-    "distanceFromCT": 90,
+    "location": "Pringle Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 85,
     "optimalWindDirections": [
-      "E",
       "NE",
-      "SE"
+      "ENE",
+      "E"
     ],
     "optimalSwellDirections": {
-      "min": 180,
-      "max": 200,
-      "cardinal": "S to SW"
+      "min": 190,
+      "max": 240,
+      "cardinal": "SSW"
     },
     "bestSeasons": [
       "winter"
     ],
     "optimalTide": "ALL",
-    "description": "Right-hand reef break in Betty's Bay offering waves suitable for intermediate surfers. Works on all tides but conditions vary. Multiple sections with rocky bottom require careful navigation. Local knowledge beneficial due to strong local surf community presence.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "REEF_BREAK",
+    "description": "Hidden gem in Pringle Bay that requires a massive swell or a specific SSW direction to start working. Offers a unique and powerful wave when conditions align. Remote and pristine setting.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 2.1,
-      "max": 4.6
+      "min": 2.5,
+      "max": 6.5
     },
     "idealSwellPeriod": {
       "min": 12,
-      "max": 24
+      "max": 20
     },
     "waterTemp": {
-      "summer": 18,
+      "summer": 19,
       "winter": 14
     },
     "hazards": [
+      "Extreme swell",
       "Rocks",
-      "Rip currents",
-      "Localism"
+      "Strong currents"
     ],
     "crimeLevel": "Low",
     "sharkAttack": {
@@ -4422,8 +5323,62 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.380882,
+      "lng": 18.825951
+    }
+  },
+  {
+    "id": "seafarm-pringle-bay",
+    "name": "Seafarm Pringle Bay",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Pringle Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 88,
+    "optimalWindDirections": [
+      "NE",
+      "N",
+      "NW"
+    ],
+    "optimalSwellDirections": {
+      "min": 190,
+      "max": 240,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful reef break located in Pringle Bay. This hidden gem comes alive on massive swells. Features heavy waves and rocky bottom. Strictly for advanced surfers due to the power and remote location.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2.5,
+      "max": 6.0
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 22
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": [
+      "Massive swell",
+      "Rocks",
+      "Strong currents",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.38546,
+      "lng": 18.86074
     }
   },
   {
@@ -5918,7 +6873,7 @@
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
-    "location": "Overberg",
+    "location": "Wilderness",
     "distanceFromCT": 330,
     "optimalWindDirections": [
       "W"
@@ -5957,8 +6912,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -33.997986,
+      "lng": 22.561735
     }
   },
   {
@@ -6381,57 +7336,7 @@
       }
     ]
   },
-  {
-    "id": "farmer-burgers",
-    "name": "Farmer Burgers",
-    "continent": "Africa",
-    "countryId": "za",
-    "regionId": "western-cape",
-    "location": "West Coast",
-    "distanceFromCT": 200,
-    "optimalWindDirections": [
-      "E",
-      "ENE"
-    ],
-    "optimalSwellDirections": {
-      "min": 225,
-      "max": 270
-    },
-    "bestSeasons": [
-      "spring",
-      "summer"
-    ],
-    "optimalTide": "ALL",
-    "description": "Exposed reef break offering fairly consistent right-hand waves rated 4/5. Works best with WSW groundswell and ENE offshore winds. Clean groundswells are typical here. Despite being a quality wave, the spot can get crowded during optimal conditions. Careful navigation of rocks required.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 1.2,
-      "max": 5.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 16,
-      "winter": 12
-    },
-    "hazards": [
-      "Rocks",
-      "Strong currents",
-      "Remote location"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": -32.1709,
-      "lng": 18.3115
-    }
-  },
+
   {
     "id": "tofinho",
     "name": "Tofinho",
@@ -7081,8 +7986,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.8046,
-      "lng": 17.9891
+      "lat": -32.70165, 
+      "lng": 17.97115
     }
   },
   {
@@ -9952,6 +10857,60 @@
     "coordinates": {
       "lat": -34.3333,
       "lng": 19.0333
+    }
+  },
+  {
+    "id": "palmiet-reef",
+    "name": "Palmiet Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Kleinmond",
+    "isHiddenGem": true,
+    "distanceFromCT": 105,
+    "optimalWindDirections": [
+      "NW",
+      "N",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "Powerful reef break located near the Palmiet River mouth in Kleinmond. A hidden gem that works best on moderate to large swells. Features heavy sections and requires advanced skill level.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 4.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": [
+      "Rocks",
+      "Strong currents",
+      "Sharks",
+      "Isolated area"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.3427,
+      "lng": 19.0011
     }
   },
   {
