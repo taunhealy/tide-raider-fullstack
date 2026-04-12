@@ -50,7 +50,7 @@ export default function TideMap({
   onRegionSelect,
   selectedDayIndex = 0,
   center = [18.4233, -33.9249], 
-  zoom = 10,
+  zoom = 12,
   showWindHeatmap = false,
   showSwellHeatmap = false
 }: TideMapProps) {
@@ -76,6 +76,18 @@ export default function TideMap({
     date.setUTCDate(new Date().getUTCDate() + selectedDayIndex);
     selectedDateStringRef.current = date.toISOString().split('T')[0];
   }, [selectedDayIndex]);
+
+  // Dynamic Center/Zoom Update
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const view = mapRef.current.getView();
+    
+    view.animate({
+      center: fromLonLat(center),
+      zoom: zoom,
+      duration: 800
+    });
+  }, [center, zoom]);
 
   const getBrandedColor = (r: number) => {
     if (r >= 4.5) return "#1d4ed8"; // blue-700 (Peak)

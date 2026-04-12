@@ -12,6 +12,9 @@ import {
   MessageCircle,
   Eye,
   Video as VideoIcon,
+  LayoutGrid,
+  Table as TableIcon,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import {
@@ -23,7 +26,7 @@ import Image from "next/image";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useBeach } from "@/app/context/BeachContext";
@@ -40,7 +43,7 @@ import {
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
 import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
-import { LayoutGrid, Table as TableIcon } from "lucide-react";
+
 import {
   Pagination,
   PaginationContent,
@@ -414,21 +417,14 @@ function CommentsCell({
     router.push(`/raidlogs/${entry.id}`);
   };
 
-  const latestComment =
-    comments?.length > 0
-      ? [...comments].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )[0]
-      : null;
+  const latestComment = comments?.[comments.length - 1];
 
   return (
-    <div className="flex items-center justify-between w-full gap-2">
-      <div className="flex-1 truncate">{entry.comments}</div>
+    <div className="flex items-center gap-2 min-h-[20px]">
       {isLoading ? (
-        <div className="w-4 h-4 rounded-full bg-gray-200 animate-pulse" />
+        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
       ) : (
-        latestComment && (
+        comments && comments.length > 0 ? (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -440,16 +436,20 @@ function CommentsCell({
               <TooltipContent className="max-w-[300px]">
                 <div className="space-y-1">
                   <p className="text-sm font-medium">
-                    Latest comment (
-                    {format(new Date(latestComment.createdAt), "MMM d, yyyy")}):
+                    Latest comment ({latestComment ? format(new Date(latestComment.createdAt), "MMM d, yyyy") : ''}):
                   </p>
                   <p className="text-sm text-gray-600 break-words">
-                    {latestComment.text}
+                    {latestComment?.text}
                   </p>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+        ) : (
+          <MessageCircle
+            onClick={handleMessageClick}
+            className="w-4 h-4 shrink-0 text-gray-300 cursor-pointer hover:text-brand-3"
+          />
         )
       )}
     </div>
@@ -468,6 +468,14 @@ export default function RaidLogTable({
   nationality,
 }: QuestTableProps) {
   const { beaches } = useBeach();
+  const tableTopRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Reset page when entries change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [entries]);
+
   const {
     isGated,
     isLoggedOut,
@@ -496,7 +504,8 @@ export default function RaidLogTable({
   );
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  // Items per page
+
   const itemsPerPage = 9; // 3x3 grid
 
   const normalizedEntries = useMemo(() => {
@@ -608,8 +617,13 @@ export default function RaidLogTable({
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of the component
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Scroll to the top of the results container
+    const container = document.getElementById("raid-logs-container");
+    if (container) {
+      container.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   console.log("[RaidLogTable] Filtered entries:", filteredEntries);

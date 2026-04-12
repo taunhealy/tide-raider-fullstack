@@ -601,11 +601,11 @@
   },
   {
     "id": "mizata-el-salvador",
-    "name": "Mizata",
+    "name": "Hidden Point",
     "continent": "North America",
     "countryId": "sv",
     "regionId": "la-libertad",
-    "location": "La Libertad",
+    "location": "Mizata",
     "distanceFromCT": 0,
     "isLongboarding": true,
     "optimalWindDirections": ["NW", "N"],
@@ -616,7 +616,7 @@
     },
     "bestSeasons": ["all"],
     "optimalTide": "LOW_TO_MID",
-    "description": "Mizata is the quiet, secluded cousin of La Libertad's busier breaks. It features a fun right-hand point break that is far less crowded and offers a more relaxed pace, perfect for traditional longboarding and alternative crafts.",
+    "description": "A secluded right-hand point break that offers a much more relaxed pace than the busier breaks nearby. Perfect for traditional longboarding and aesthetic lines.",
     "difficulty": "INTERMEDIATE",
     "waveType": "POINT_BREAK",
     "swellSize": { "min": 0.9, "max": 2.5 },
@@ -628,7 +628,7 @@
     "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
-        "url": "https://www.youtube.com/watch?v=3Wn719iO7Zg",
+        "url": "https://www.youtube.com/watch?v=wFeWEYq14v4",
         "title": "Kai Ellice-Flint free surfing at Mizata - Traditional longboarding master class",
         "platform": "youtube"
       }
@@ -637,7 +637,7 @@
   },
   {
     "id": "popoyo-nicaragua",
-    "name": "Popoyo",
+    "name": "Offshore Mecca",
     "continent": "North America",
     "countryId": "ni",
     "regionId": "rivas",
@@ -652,7 +652,7 @@
     },
     "bestSeasons": ["all"],
     "optimalTide": "ALL",
-    "description": "Nicaragua's most consistent wave. Popoyo's main break is a mechanical A-frame over a rock/sand bottom. While it can be heavy, the outer peaks and the mellower days provide incredible, long walls for longboarders, all under the state's famous 300+ days of offshore winds.",
+    "description": "Nicaragua's consistency king. On mellower days, the outer peak provides incredible, long walls for longboarding under perpetual offshore winds.",
     "difficulty": "INTERMEDIATE",
     "waveType": "REEF_BREAK",
     "swellSize": { "min": 0.9, "max": 4 },
@@ -664,7 +664,7 @@
     "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
-        "url": "https://www.youtube.com/watch?v=v0L1h-Y7K0o",
+        "url": "https://www.youtube.com/watch?v=v_wJgeozZck",
         "title": "Longboard Surfing at Popoyo, Nicaragua",
         "platform": "youtube"
       }
@@ -673,11 +673,11 @@
   },
   {
     "id": "bocas-del-toro-panama",
-    "name": "Bocas Del Toro",
+    "name": "Tropical Peak",
     "continent": "North America",
     "countryId": "pa",
     "regionId": "bocas-del-toro",
-    "location": "Carenero",
+    "location": "Bocas Del Toro (Carenero)",
     "distanceFromCT": 0,
     "isLongboarding": true,
     "optimalWindDirections": ["SW", "W"],
@@ -688,7 +688,7 @@
     },
     "bestSeasons": ["winter"],
     "optimalTide": "MID",
-    "description": "Carenero in Bocas Del Toro is a Caribbean gem. It features a long, peeling left-hand point/reef break that is incredibly photogenic. The waves are often glassy and slow-breaking, making it a favorite for the traveling longboarding crowd.",
+    "description": "A stunning Caribbean point break. Carenero offers long, peeling lefts in crystal clear water, often providing glassy conditions perfect for longboarding.",
     "difficulty": "INTERMEDIATE",
     "waveType": "POINT_BREAK",
     "swellSize": { "min": 0.9, "max": 3 },
@@ -700,8 +700,8 @@
     "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
     "videos": [
       {
-        "url": "https://www.youtube.com/watch?v=z3m-uQz6I_0",
-        "title": "Surfing Black Rock, Bocas del Toro, PANAMA",
+        "url": "https://www.youtube.com/watch?v=Jqc4G6abadc",
+        "title": "Surfing con La Tropa de Carenero en Bocas del Toro @monolocosurfschool",
         "platform": "youtube"
       }
     ],
@@ -709,11 +709,11 @@
   },
   {
     "id": "la-punta-puerto-escondido-mexico",
-    "name": "La Punta",
+    "name": "Sunset Log",
     "continent": "North America",
     "countryId": "mx",
     "regionId": "oaxaca",
-    "location": "Puerto Escondido",
+    "location": "La Punta",
     "distanceFromCT": 0,
     "isLongboarding": true,
     "optimalWindDirections": ["NNW", "N"],
@@ -724,7 +724,7 @@
     },
     "bestSeasons": ["summer", "spring"],
     "optimalTide": "ALL",
-    "description": "The softer alternative to the heavy barrels of Zicatela. La Punta is a long, peeling left-hand point break that provides excellent sections for longboarding and intermediate surfers. It's famous for its vibrant community and incredible sunset sessions.",
+    "description": "The softer, more refined alternative to Zicatela. A long, peeling left-hand point break that provides excellent sections for style and noseriding.",
     "difficulty": "INTERMEDIATE",
     "waveType": "POINT_BREAK",
     "swellSize": { "min": 0.9, "max": 3.5 },
@@ -736,8 +736,8 @@
     "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
     "videos": [
       {
-        "url": "https://www.youtube.com/watch?v=_PVGlKyABOM",
-        "title": "LongBoarding en Puerto Escondido por Tamil Martino",
+        "url": "https://www.youtube.com/watch?v=b0uw85dj5ag",
+        "title": "Longboarding Endless Lefts Through the Sunset in Mexico - The Sunday Glide #34 : with Ben Considine",
         "platform": "youtube"
       }
     ],
