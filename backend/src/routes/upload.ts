@@ -25,6 +25,13 @@ import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 
+// Sanitize values to remove invisible/control characters that cause "Invalid character in header content" errors
+const sanitize = (val: string | undefined): string => {
+  if (!val) return "";
+  // Trim whitespace and remove invisible/control characters (newlines, carriage returns, etc)
+  return val.trim().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+};
+
 // Configure R2/S3
 if (
   !process.env.R2_ACCOUNT_ID ||
@@ -36,21 +43,22 @@ if (
   console.warn("Missing required R2 environment variables");
 }
 
-const r2Endpoint = `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+const r2AccountId = sanitize(process.env.R2_ACCOUNT_ID);
+const r2Endpoint = `https://${r2AccountId}.r2.cloudflarestorage.com`;
 
 // Custom agent to handle specific SSL issues (EPROTO alert 40)
 const httpsAgent = new HttpsAgent({
   keepAlive: true,
-  minVersion: 'TLSv1.2',
-  servername: `${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  minVersion: "TLSv1.2",
+  servername: `${r2AccountId}.r2.cloudflarestorage.com`,
 });
 
 const s3 = new S3Client({
   region: "auto",
   endpoint: r2Endpoint,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId: sanitize(process.env.R2_ACCESS_KEY_ID),
+    secretAccessKey: sanitize(process.env.R2_SECRET_ACCESS_KEY),
   },
   requestHandler: new NodeHttpHandler({
     httpsAgent,

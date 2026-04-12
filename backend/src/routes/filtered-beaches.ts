@@ -161,6 +161,11 @@ router.get(
         source: true,
       };
 
+      // Only show dates from 2 days ago onwards in the available dates list
+      const cutoffDate = new Date();
+      cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 2);
+      cutoffDate.setUTCHours(0, 0, 0, 0);
+
       // Parallel queries: forecast lookup, score check, and available dates
       const [exactForecast, scoreCheck, availableForecastDates] = await Promise.all([
         // Try exact match first
@@ -184,11 +189,12 @@ router.get(
             beachId: true,
           },
         }),
-        // Get all unique dates with forecast data for this region and source
+        // Get unique dates with forecast data for this region and source, restricted to 2 days ago onwards
         prisma.forecast.findMany({
           where: {
             regionId,
             source: sourceParam,
+            date: { gte: cutoffDate },
           },
           select: {
             date: true,

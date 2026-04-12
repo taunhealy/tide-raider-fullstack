@@ -24,8 +24,11 @@ export async function authenticateToken(
     // Get token from Authorization header or cookie
     // Priority: 1. Authorization header, 2. auth-token cookie (our JWT), 3. NextAuth cookies (for backward compatibility)
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.substring(7)
+    // Sanitize the header to remove hidden/control characters that cause "Invalid character in header content"
+    const sanitizedHeader = authHeader?.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+
+    const token = sanitizedHeader?.startsWith("Bearer ")
+      ? sanitizedHeader.substring(7)
       : (req as any).cookies?.["auth-token"] || // Our JWT cookie
         (req as any).cookies?.["next-auth.session-token"] ||
         (req as any).cookies?.["__Secure-next-auth.session-token"];
@@ -196,8 +199,11 @@ export async function optionalAuth(
   const authReq = req as AuthRequest;
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.substring(7)
+    // Sanitize the header to remove hidden/control characters
+    const sanitizedHeader = authHeader?.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+
+    const token = sanitizedHeader?.startsWith("Bearer ")
+      ? sanitizedHeader.substring(7)
       : req.cookies?.["auth-token"] || // Our JWT cookie
         req.cookies?.["next-auth.session-token"] ||
         req.cookies?.["__Secure-next-auth.session-token"];

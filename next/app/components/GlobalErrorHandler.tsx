@@ -15,19 +15,26 @@ export default function GlobalErrorHandler() {
       const errorSource = event.filename || event.message || "";
       const errorMessage = event.message || "";
 
-      // Check for null reference errors with addEventListener (including share-modal.js)
       const isNullAddEventListenerError =
         (errorMessage.includes("Cannot read properties of null") ||
           errorMessage.includes("Cannot read property") ||
           errorMessage.includes("Cannot read")) &&
         (errorMessage.includes("addEventListener") ||
+          errorMessage.includes("removeEventListener") ||
           errorSource.includes("share-modal") ||
-          errorSource.includes("share-modal.js"));
+          errorSource.includes("share-modal.js") ||
+          errorSource.includes("content_script.js") ||
+          errorSource.includes("installHook.js"));
 
-      if (isNullAddEventListenerError || errorSource.includes("share-modal")) {
+      if (
+        isNullAddEventListenerError ||
+        errorSource.includes("share-modal") ||
+        errorSource.includes("content_script.js") ||
+        errorSource.includes("codes.forEach")
+      ) {
         // Log the error but don't let it crash the app
         console.warn(
-          "[GlobalErrorHandler] Caught external script error:",
+          "[GlobalErrorHandler] Suppressing external script/extension error:",
           errorMessage,
           "Source:",
           errorSource
