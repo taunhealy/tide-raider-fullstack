@@ -17,9 +17,12 @@ export async function POST(req: NextRequest) {
     const backendUrl = `${BACKEND_URL}/api/upload`;
     console.log(`[upload-proxy] Forwarding upload to: ${backendUrl}`);
 
-    // Get auth token from cookies
+    // Get auth token from cookies (supporting multiple session token names)
     const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+    const authToken = 
+      cookieStore.get("auth-token")?.value || 
+      cookieStore.get("next-auth.session-token")?.value ||
+      cookieStore.get("__Secure-next-auth.session-token")?.value;
 
     // Prepare headers - MUST include Content-Type with boundary for multipart/form-data
     const headers = new Headers();

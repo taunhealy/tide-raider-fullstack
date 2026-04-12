@@ -2,7 +2,6 @@
   {
     "id": "chicama-el-point",
     "name": "Chicama - El Point",
-    "isLongboarding": true,
     "continent": "South America",
     "countryId": "pe",
     "regionId": "chicama",
@@ -49,107 +48,516 @@
     "coordinates": {
       "lat": -7.6982,
       "lng": -79.4422
-    }
+    },
+    "isLongboarding": true
   },
   {
-    "id": "nuqui-pizario",
-    "name": "Pico de Loro (Nuquí)",
+    "id": "huanchaco-point",
+    "name": "Huanchaco - El Elio",
     "continent": "South America",
-    "countryId": "co",
-    "regionId": "choco",
-    "location": "Nuquí",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Huanchaco",
     "distanceFromCT": 0,
     "optimalWindDirections": [
       "ENE",
       "E"
     ],
     "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 247.5,
-      "cardinal": "SW"
+      "min": 180,
+      "max": 225,
+      "cardinal": "S-SW"
     },
     "bestSeasons": [
-      "summer"
+      "winter"
     ],
     "optimalTide": "ALL",
-    "description": "Wild Pacific point break. Long, reeling lefts in an untouched jungle setting. Requires boat access and local expertise.",
-    "difficulty": "ADVANCED",
+    "description": "World Surfing Reserve famous for its consistent long lefts. Ideal for longboarding with multiple mellow sections. Historic site where surfers still use traditional reed boats (caballitos de totora).",
+    "difficulty": "BEGINNER",
     "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 1,
-      "max": 5
+      "min": 0.9,
+      "max": 2.5
     },
     "idealSwellPeriod": {
-      "min": 12,
+      "min": 10,
       "max": 18
     },
     "waterTemp": {
-      "summer": 28,
-      "winter": 26
+      "summer": 22,
+      "winter": 18
     },
     "hazards": [
-      "Remote location",
-      "Marine life",
-      "Strong currents"
+      "Crowds",
+      "Rocks"
     ],
-    "crimeLevel": "Medium",
+    "crimeLevel": "Low",
     "sharkAttack": {
       "hasAttack": false
     },
-    "image": "",
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
     "coordinates": {
-      "lat": 5.7167,
-      "lng": -77.2667
-    }
+      "lat": -8.1167,
+      "lng": -79.1167
+    },
+    "isLongboarding": true
   },
   {
-    "id": "cabo-marzo",
-    "name": "Cabo Marzo",
+    "id": "pacasmayo-point",
+    "name": "Pacasmayo",
     "continent": "South America",
-    "countryId": "co",
-    "regionId": "choco",
-    "location": "Choco",
+    "countryId": "pe",
+    "regionId": "chicama",
+    "location": "Pacasmayo",
     "distanceFromCT": 0,
     "optimalWindDirections": [
-      "N"
+      "ENE",
+      "E"
     ],
     "optimalSwellDirections": {
-      "min": 180,
-      "max": 225,
+      "min": 190,
+      "max": 220,
       "cardinal": "SW"
     },
     "bestSeasons": [
       "winter"
     ],
     "optimalTide": "ALL",
-    "description": "Powerful Pacific reef break. Extremely remote and heavy waves for experts only.",
-    "difficulty": "EXPERT",
-    "waveType": "REEF_BREAK",
+    "description": "One of the longest left-hand point breaks in the world. Can connect for over a kilometer. Heavy groundswell needed to reach its full potential. Excellent for longboarding on medium swells.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 2,
-      "max": 8
+      "min": 1.2,
+      "max": 4.5
     },
     "idealSwellPeriod": {
       "min": 12,
       "max": 20
     },
     "waterTemp": {
-      "summer": 28,
-      "winter": 26
+      "summer": 22,
+      "winter": 17
     },
     "hazards": [
-      "Remote location",
-      "Heavy waves",
-      "Rocks"
+      "Strong currents",
+      "Rocks",
+      "Long paddle"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -7.4006,
+      "lng": -79.5714
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "pichilemu-la-puntilla",
+    "name": "Pichilemu - La Puntilla",
+    "continent": "South America",
+    "countryId": "cl",
+    "regionId": "chicama",
+    "location": "Pichilemu",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "S",
+      "SE"
+    ],
+    "optimalSwellDirections": {
+      "min": 210,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "LOW",
+    "description": "The 'Surf Capital of Chile'. La Puntilla is the town's premier longboarding spot, offering long, peeling left-handers that mellow out into the bay. Cold water, but world-class consistent swells.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": [
+      "Cold water",
+      "Rocks",
+      "Currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -34.3858,
+      "lng": -72.0044
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "saquarema-itauna",
+    "name": "Saquarema - Itaúna",
+    "continent": "South America",
+    "countryId": "br",
+    "regionId": "chicama",
+    "location": "Saquarema",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "N",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 150,
+      "max": 190,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "ALL",
+    "description": "The 'Maracanã of Surfing'. Itaúna is a powerful, world-class left-hand point break that can hold massive swells. Its long walls are excellent for high-performance longboarding when conditions are right.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 18
+    },
+    "waterTemp": {
+      "summer": 24,
+      "winter": 19
+    },
+    "hazards": [
+      "Powerful waves",
+      "Crowds",
+      "Currents"
     ],
     "crimeLevel": "Medium",
     "sharkAttack": {
       "hasAttack": false
     },
-    "image": "",
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=600&auto=format&fit=crop&q=60",
     "coordinates": {
-      "lat": 6.4833,
-      "lng": -77.6833
+      "lat": -22.9248,
+      "lng": -42.4851
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "mancora-point",
+    "name": "Mancora",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "piura",
+    "location": "Mancora",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 281.25,
+      "max": 303.75,
+      "cardinal": "WNW"
+    },
+    "bestSeasons": [
+      "summer"
+    ],
+    "optimalTide": "ALL",
+    "description": "Warm water paradise. A long, peeling left-hand point break. Swell direction is from the West-northwest and the offshore wind direction is from the East-southeast.",
+    "difficulty": "BEGINNER",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 0.6,
+      "max": 2.5
+    },
+    "idealSwellPeriod": {
+      "min": 10,
+      "max": 16
+    },
+    "waterTemp": {
+      "summer": 26,
+      "winter": 22
+    },
+    "hazards": [
+      "Crowds",
+      "Kite surfers"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -4.1039,
+      "lng": -81.0472
+    },
+    "isLongboarding": true
+  },
+  {
+    "id": "lobitos-main",
+    "name": "Lobitos",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "piura",
+    "location": "Lobitos",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 191.25,
+      "max": 213.75,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "LOW",
+    "description": "High-performance left-hand point break. Swell direction is from the South-southwest and the offshore wind direction is from the East-southeast.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1,
+      "max": 3.5
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 21,
+      "winter": 17
+    },
+    "hazards": [
+      "Strong wind",
+      "Rocks",
+      "Cold water"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -4.4539,
+      "lng": -81.2828
+    }
+  },
+  {
+    "id": "cabo-blanco",
+    "name": "Cabo Blanco",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "piura",
+    "location": "Cabo Blanco",
+    "distanceFromCT": 0,
+    "optimalWindDirections": [
+      "ESE"
+    ],
+    "optimalSwellDirections": {
+      "min": 326.25,
+      "max": 348.75,
+      "cardinal": "NNW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "LOW",
+    "description": "The 'Pipeline of Peru.' Swell direction is from the North-northwest and the offshore wind direction is from the East-southeast.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.5,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 14,
+      "max": 22
+    },
+    "waterTemp": {
+      "summer": 24,
+      "winter": 20
+    },
+    "hazards": [
+      "Shallow reef",
+      "Heavy power",
+      "Locals"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -4.25,
+      "lng": -81.2333
+    }
+  },
+  {
+    "id": "punta-rocas",
+    "name": "Punta Rocas",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "lima",
+    "location": "Punta Hermosa",
+    "distanceFromCT": 45,
+    "optimalWindDirections": [
+      "E"
+    ],
+    "optimalSwellDirections": {
+      "min": 191.25,
+      "max": 213.75,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "One of the most consistent waves in the world. Swell direction is from the South-southwest and the offshore wind direction is from the East.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 6
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 20,
+      "winter": 15
+    },
+    "hazards": [
+      "Powerful waves",
+      "Strong currents",
+      "Rocks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -12.3333,
+      "lng": -76.8167
+    }
+  },
+  {
+    "id": "la-herradura-lima",
+    "name": "La Herradura",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "lima",
+    "location": "Chorrillos, Lima",
+    "distanceFromCT": 15,
+    "optimalWindDirections": [
+      "S"
+    ],
+    "optimalSwellDirections": {
+      "min": 191.25,
+      "max": 213.75,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID",
+    "description": "A legendary left-hand point break located right in the city. Swell direction is from the South-southwest and the offshore wind direction is from the South.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 2,
+      "max": 5
+    },
+    "idealSwellPeriod": {
+      "min": 14,
+      "max": 24
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": [
+      "Rocks",
+      "Locals",
+      "Strong currents",
+      "Pollution"
+    ],
+    "crimeLevel": "Medium",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -12.1667,
+      "lng": -77.0333
+    }
+  },
+  {
+    "id": "san-gallan-island",
+    "name": "San Gallán",
+    "continent": "South America",
+    "countryId": "pe",
+    "regionId": "paracas",
+    "location": "Pisco",
+    "distanceFromCT": 250,
+    "optimalWindDirections": [
+      "NNW"
+    ],
+    "optimalSwellDirections": {
+      "min": 168.75,
+      "max": 191.25,
+      "cardinal": "S"
+    },
+    "bestSeasons": [
+      "all"
+    ],
+    "optimalTide": "ALL",
+    "description": "A world-class right-hand barrel on a desert island. Swell direction is from the South and the offshore wind direction is from the North-northwest.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": {
+      "min": 1.2,
+      "max": 4
+    },
+    "idealSwellPeriod": {
+      "min": 12,
+      "max": 20
+    },
+    "waterTemp": {
+      "summer": 20,
+      "winter": 15
+    },
+    "hazards": [
+      "Remote location",
+      "Boat access only",
+      "Strong wind",
+      "Marine life"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=60",
+    "coordinates": {
+      "lat": -13.84,
+      "lng": -76.45
     }
   }
 ]

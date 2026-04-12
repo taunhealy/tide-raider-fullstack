@@ -314,470 +314,147 @@
     }
   },
   {
-    "id": "thurso-east",
-    "name": "Thurso East",
+    "id": "grand-plage-biarritz-france",
+    "name": "Grand Plage",
     "continent": "Europe",
-    "countryId": "gb",
-    "regionId": "scotland",
-    "location": "North Coast",
-    "distanceFromCT": 10200,
-    "optimalWindDirections": [
-      "S",
-      "SW",
-      "SE"
-    ],
-    "optimalSwellDirections": {
-      "min": 315,
-      "max": 360,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "winter",
-      "autumn"
-    ],
-    "optimalTide": "MID",
-    "description": "World-class right-hand reef break producing heavy, hollow barrels. One of Europe's premier cold-water waves. Best performance on large NW groundswells with South offshore winds. Breaks over a flat kelp-covered reef. High-performance wave that handles significant size.",
-    "difficulty": "ADVANCED",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 1,
-      "max": 5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 14,
-      "winter": 7
-    },
-    "hazards": [
-      "Cold water",
-      "Sharp reef",
-      "Crowds"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 58.5961,
-      "lng": -3.5186
-    }
-  },
-  {
-    "id": "el-palmar",
-    "name": "El Palmar",
-    "continent": "Europe",
-    "countryId": "es",
-    "regionId": "andalucia",
-    "location": "Costa de la Luz",
+    "countryId": "france",
+    "regionId": "biarritz",
+    "location": "Biarritz",
     "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "E",
-      "NE"
-    ],
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "SE"],
     "optimalSwellDirections": {
-      "min": 247.5,
-      "max": 292.5,
-      "cardinal": "W"
+      "min": 270,
+      "max": 315,
+      "cardinal": "West"
     },
-    "bestSeasons": [
-      "autumn",
-      "winter",
-      "spring"
-    ],
-    "optimalTide": "MID_TO_HIGH",
-    "description": "The capital of surfing in Andalucia. Very consistent beach break. Works best with West swells and Levante (Easterly) offshore winds. Long, rideable peaks for all levels.",
-    "difficulty": "INTERMEDIATE",
+    "bestSeasons": ["autumn", "spring"],
+    "optimalTide": "ALL (MID BEST)",
+    "description": "Grand Plage is the crown jewel of Biarritz surfing. This beach break offers a variety of peaks that are particularly suited for longboarding on smaller swells and mid-tides. It's where European surfing was born, and the elegance of the surfers here reflects that history. The wave is consistent and offers long, workable walls.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
     "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.5,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 14
-    },
-    "waterTemp": {
-      "summer": 22,
-      "winter": 16
-    },
-    "hazards": [
-      "Crowds",
-      "Strong currents"
-    ],
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 21, "winter": 13 },
+    "hazards": ["Strong currents", "Crowds"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 36.2333,
-      "lng": -6.0667
-    }
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=2620&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=jU_ZW0y5ihk",
+        "title": "Surfing Super Clean Beautiful Waves in Biarritz 4K",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.483, "lng": -1.564 }
   },
   {
-    "id": "tarifa",
-    "name": "Tarifa",
+    "id": "cote-des-basques-biarritz-france",
+    "name": "Côte des Basques",
     "continent": "Europe",
-    "countryId": "es",
-    "regionId": "andalucia",
-    "location": "Tarifa",
+    "countryId": "fr",
+    "regionId": "biarritz",
+    "location": "Biarritz",
     "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "E",
-      "NE"
-    ],
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "ENE"],
     "optimalSwellDirections": {
-      "min": 247.5,
-      "max": 292.5,
-      "cardinal": "W"
+      "min": 280,
+      "max": 310,
+      "cardinal": "WNW"
     },
-    "bestSeasons": [
-      "winter"
-    ],
-    "optimalTide": "ALL",
-    "description": "Southernmost point of Europe. Famed for wind but offers quality surf during Atlantic swells. Best on glassy or light Levante days.",
-    "difficulty": "INTERMEDIATE",
+    "bestSeasons": ["summer", "autumn"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Considered the cradle of surfing in Europe. Côte des Basques is a stunning beach break framed by cliffs and the Villa Belza. It's world-famous for its long, gentle waves that are ideal for longboarding. *Note: At high tide, the beach completely disappears against the rocks.*",
+    "difficulty": "BEGINNER-INTERMEDIATE",
     "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.5,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 14
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 16
-    },
-    "hazards": [
-      "Wind",
-      "Boat traffic"
-    ],
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 22, "winter": 12 },
+    "hazards": ["Rocks at high tide", "Crowds"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 36.0143,
-      "lng": -5.6044
-    }
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=lK2-wiGrhUg",
+        "title": "Biarritz Belza Classic 2025 – Longboard à la Côte des Basques",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.477, "lng": -1.568 }
   },
   {
-    "id": "mundaka",
-    "name": "Mundaka",
-    "continent": "Europe",
-    "countryId": "es",
-    "regionId": "basque-country",
-    "location": "Gernika",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "S",
-      "SW",
-      "SE"
-    ],
-    "optimalSwellDirections": {
-      "min": 292.5,
-      "max": 337.5,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "autumn",
-      "winter"
-    ],
-    "optimalTide": "LOW",
-    "description": "Widely considered the best river mouth wave in the world. A heavy, hollow left-hand barrel that can peel for 200 meters. Extremely sensitive to tide and sandbar conditions.",
-    "difficulty": "ADVANCED",
-    "waveType": "REEF_BREAK",
-    "isLongboarding": false,
-    "swellSize": {
-      "min": 1,
-      "max": 4
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 12
-    },
-    "hazards": [
-      "Heavy current",
-      "Sharp rocks",
-      "Crowds",
-      "Localism"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 43.4072,
-      "lng": -2.6975
-    }
-  },
-  {
-    "id": "somo",
-    "name": "Somo",
+    "id": "somo-beach-spain",
+    "name": "Somo Beach",
     "continent": "Europe",
     "countryId": "es",
     "regionId": "cantabria",
-    "location": "Santander",
+    "location": "Somo",
     "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "S",
-      "SE"
-    ],
+    "isLongboarding": true,
+    "optimalWindDirections": ["S", "SW"],
     "optimalSwellDirections": {
-      "min": 292.5,
-      "max": 360,
+      "min": 290,
+      "max": 330,
       "cardinal": "NW"
     },
-    "bestSeasons": [
-      "all"
-    ],
+    "bestSeasons": ["all"],
     "optimalTide": "ALL",
-    "description": "Very consistent beach break across from Santander. Multiple peaks along a long stretch of sand. Great for all levels and a major surf hub in Spain.",
-    "difficulty": "BEGINNER",
+    "description": "Located across the bay from Santander, Somo is one of Spain's most consistent beach breaks. It features miles of golden sand and multiple peaks. The wave is generally mellow and consistent, making it a hotspot for the Spanish longboarding and skate culture.",
+    "difficulty": "ALL_LEVELS",
     "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 21, "winter": 13 },
+    "hazards": ["Currents"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=F0vjr00cToY",
+        "title": "“First Light” | Sunrise Longboard Surf on the Northern Coast of Spain",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 43.458, "lng": -3.743 }
+  },
+  {
+    "id": "saunton-sands-uk",
+    "name": "Saunton Sands",
+    "continent": "Europe",
+    "countryId": "gb",
+    "regionId": "devon",
+    "location": "North Devon",
+    "distanceFromCT": 0,
     "isLongboarding": true,
-    "swellSize": {
-      "min": 0.5,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 15
-    },
-    "waterTemp": {
-      "summer": 20,
-      "winter": 12
-    },
-    "hazards": [
-      "Crowds",
-      "Beginners"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 43.4542,
-      "lng": -3.7431
-    }
-  },
-  {
-    "id": "rodiles",
-    "name": "Rodiles",
-    "continent": "Europe",
-    "countryId": "es",
-    "regionId": "asturias",
-    "location": "Villaviciosa",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "S",
-      "SW"
-    ],
+    "optimalWindDirections": ["E", "NE"],
     "optimalSwellDirections": {
-      "min": 292.5,
-      "max": 337.5,
-      "cardinal": "NW"
+      "min": 260,
+      "max": 300,
+      "cardinal": "W/NW"
     },
-    "bestSeasons": [
-      "autumn",
-      "winter"
-    ],
-    "optimalTide": "LOW",
-    "description": "Asturias' answer to Mundaka. A powerful left-hand river mouth barrel. Works best on large NW swells and S offshore winds. Surrounded by stunning pine forests.",
-    "difficulty": "ADVANCED",
-    "waveType": "REEF_BREAK",
-    "isLongboarding": false,
-    "swellSize": {
-      "min": 1,
-      "max": 3.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 19,
-      "winter": 12
-    },
-    "hazards": [
-      "Currents",
-      "Rocks",
-      "Crowds"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 43.5325,
-      "lng": -5.3783
-    }
-  },
-  {
-    "id": "salinas",
-    "name": "Salinas",
-    "continent": "Europe",
-    "countryId": "es",
-    "regionId": "asturias",
-    "location": "Castrillón",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "S",
-      "SE"
-    ],
-    "optimalSwellDirections": {
-      "min": 270,
-      "max": 360,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "all"
-    ],
+    "bestSeasons": ["winter", "autumn"],
     "optimalTide": "ALL",
-    "description": "The spiritual home of longboarding in Spain. A long beach break with multiple peaks. Very consistent and holds a famous annual longboard festival. Premium peeling lines.",
-    "difficulty": "BEGINNER",
+    "description": "Saunton Sands is the UK's premier longboarding beach. Known for its incredibly long, slow-breaking waves that can peel for hundreds of yards across the shallow sand banks. It's a vast, beautiful location that handles large crowds and offers some of the best logging in Northern Europe.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
     "waveType": "BEACH_BREAK",
-    "isLongboarding": true,
-    "swellSize": {
-      "min": 0.5,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 8,
-      "max": 14
-    },
-    "waterTemp": {
-      "summer": 19,
-      "winter": 12
-    },
-    "hazards": [
-      "Crowds",
-      "Rip currents"
-    ],
+    "swellSize": { "min": 0.6, "max": 3 },
+    "idealSwellPeriod": { "min": 8, "max": 16 },
+    "waterTemp": { "summer": 17, "winter": 9 },
+    "hazards": ["Long paddle out", "Cold water"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 43.5786,
-      "lng": -5.9553
-    }
-  },
-  {
-    "id": "cote-des-basques",
-    "name": "Cote des Basques",
-    "continent": "Europe",
-    "countryId": "fr",
-    "regionId": "basque-country",
-    "location": "Biarritz",
-    "isLongboarding": true,
-    "optimalWindDirections": [
-      "E",
-      "SE"
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=s5t-yL2Wk4Y",
+        "title": "Longboard Surfing at Saunton Sands 14 March 2022",
+        "platform": "youtube"
+      }
     ],
-    "optimalSwellDirections": {
-      "min": 270,
-      "max": 315,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "summer",
-      "autumn"
-    ],
-    "optimalTide": "MID",
-    "description": "The birthplace of European surfing. A stunning beach break under cliffs, legendary for its longboarding community and gentle, peeling waves.",
-    "difficulty": "BEGINNER",
-    "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 22,
-      "winter": 12
-    },
-    "hazards": [
-      "Crowds",
-      "Tide cutoff"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 43.4831,
-      "lng": -1.5631
-    }
-  },
-  {
-    "id": "lacanau-ocean",
-    "name": "Lacanau Ocean",
-    "continent": "Europe",
-    "countryId": "fr",
-    "regionId": "gironde",
-    "location": "Lacanau",
-    "isFoiling": true,
-    "optimalWindDirections": [
-      "E",
-      "NE"
-    ],
-    "optimalSwellDirections": {
-      "min": 270,
-      "max": 315,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "summer",
-      "autumn"
-    ],
-    "optimalTide": "MID",
-    "description": "Infinite stretch of sandbars. Famous for its heavy consistent beach breaks, but the long gutters and deep water sections make it a premier foiling destination in Europe.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 11
-    },
-    "hazards": [
-      "Rip currents",
-      "Crowds"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 44.9789,
-      "lng": -1.1983
-    }
+    "coordinates": { "lat": 51.104, "lng": -4.218 }
   }
 ]

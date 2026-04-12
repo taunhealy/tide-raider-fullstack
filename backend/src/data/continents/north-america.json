@@ -1,713 +1,746 @@
 [
   {
-    "id": "punta-roca",
-    "name": "Punta Roca",
-    "continent": "North America",
-    "countryId": "sv",
-    "regionId": "san-salvador",
-    "location": "La Libertad",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "NNE",
-      "N"
-    ],
-    "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 247.5,
-      "cardinal": "SSW"
-    },
-    "bestSeasons": [
-      "dry-season"
-    ],
-    "optimalTide": "MID",
-    "description": "World-class point break rated 4/5, known for its powerful, consistent waves. Features long, workable walls that can produce excellent barrels when conditions align. Best performance with SSW groundswells meeting NNE offshore winds. Wave faces typically range from 4-12ft breaking over reef. Popular spot that draws crowds during prime conditions. Local knowledge important for navigating hazards and respecting lineup priorities. Watch for exposed rocks, particularly during lower tides, and be mindful of local surfing etiquette.",
-    "difficulty": "ADVANCED",
-    "waveType": "POINT_BREAK",
-    "swellSize": {
-      "min": 1.4,
-      "max": 4
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 29,
-      "winter": 26
-    },
-    "hazards": [
-      "Rocks",
-      "Strong locals",
-      "Pollution",
-      "Crowds"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 13.4833,
-      "lng": -89.3667
-    }
-  },
-  {
-    "id": "pavones",
-    "name": "Pavones",
-    "continent": "North America",
-    "countryId": "cr",
-    "regionId": "puntarenas-province",
-    "location": "Puntarenas",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "E"
-    ],
-    "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 247.5,
-      "cardinal": "SW"
-    },
-    "bestSeasons": [
-      "wet-season"
-    ],
-    "optimalTide": "LOW",
-    "description": "Legendary left-hand point break rated 4/5, known for producing one of the longest rides in the world when conditions align. Despite inconsistent nature, delivers world-class waves during SW groundswells. Best performance with easterly offshore winds. Located in the sheltered Golfo Dulce region. Wave faces typically range from 3-10ft breaking over rocky bottom. Popular spot that draws crowds during prime conditions. Access requires significant travel but rewards with exceptional wave quality when working.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "POINT_BREAK",
-    "swellSize": {
-      "min": 1.5,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 30,
-      "winter": 28
-    },
-    "hazards": [
-      "Rocks",
-      "Remote location",
-      "Crowds",
-      "Inconsistent waves"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 8.4097,
-      "lng": -83.1328
-    },
-    "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=8AmSwojuEMQ&ab_channel=RawSurf",
-        "title": "Pavones Surfing",
-        "platform": "youtube"
-      }
-    ]
-  },
-  {
-    "id": "malibu",
-    "name": "Malibu",
+    "id": "waimea-bay",
+    "name": "Waimea Bay",
     "continent": "North America",
     "countryId": "us",
-    "regionId": "california",
-    "location": "LA County",
-    "isLongboarding": true,
-    "isFoiling": true,
+    "regionId": "hawaii",
+    "location": "North Shore, Oahu",
     "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "N"
-    ],
+    "optimalWindDirections": ["SE", "E", "ESE"],
     "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 247.5,
-      "cardinal": "SW"
+      "min": 300,
+      "max": 330,
+      "cardinal": "WNW-NW"
     },
-    "bestSeasons": [
-      "summer"
-    ],
+    "bestSeasons": ["winter"],
     "optimalTide": "ALL",
-    "description": "Exposed point break rated 4/5, offering very consistent surf throughout the year with optimal conditions during summer. Works best with Southwest groundswells meeting North offshore winds. One of California's most iconic breaks, known for its perfect peeling waves. Despite its quality, gets extremely crowded, especially during weekends and good conditions. Watch out for pollution after rain and rocks at certain sections.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "POINT_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 20,
-      "winter": 14
-    },
-    "hazards": [
-      "Crowds",
-      "Pollution",
-      "Rocks"
-    ],
+    "description": "The birthplace of big wave surfing. Massive, powerful walls that break over a deep rock shelf.",
+    "difficulty": "EXPERT",
+    "waveType": "BIG_WAVE",
+    "swellSize": { "min": 3, "max": 15 },
+    "idealSwellPeriod": { "min": 14, "max": 22 },
+    "waterTemp": { "summer": 27, "winter": 24 },
+    "hazards": ["Extreme power", "Rocks", "Crowds"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 34.0259,
-      "lng": -118.7798
-    }
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 21.642, "lng": -158.064 }
   },
   {
-    "id": "cardiff-reef",
-    "name": "Cardiff Reef",
+    "id": "pipeline",
+    "name": "Banzai Pipeline",
     "continent": "North America",
     "countryId": "us",
-    "regionId": "california",
-    "location": "San Diego County",
+    "regionId": "hawaii",
+    "location": "North Shore, Oahu",
     "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "E"
-    ],
+    "optimalWindDirections": ["SE", "E", "S"],
     "optimalSwellDirections": {
-      "min": 292.5,
-      "max": 292.5,
-      "cardinal": "WNW"
+      "min": 290,
+      "max": 320,
+      "cardinal": "WNW-NW"
     },
-    "bestSeasons": [
-      "winter"
-    ],
-    "optimalTide": "ALL",
-    "description": "Exposed reef break rated 2/5, offering very consistent surf throughout the year with optimal conditions during winter. Works best with West-northwest groundswells meeting East offshore winds. Features both left and right reef breaks, with lefts generally considered superior. Groundswells are more frequent than windswells. Despite its modest rating, can get crowded, especially during weekends and good conditions. Watch out for rocks and crowds in the lineup.",
-    "difficulty": "INTERMEDIATE",
+    "bestSeasons": ["winter"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "The world's deadliest and most famous barrel. Heavy, hollow tubes over a shallow, jagged reef.",
+    "difficulty": "EXPERT",
     "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 15
-    },
-    "hazards": [
-      "Rocks",
-      "Crowds"
-    ],
+    "swellSize": { "min": 1.2, "max": 6 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 27, "winter": 24 },
+    "hazards": ["Extremely shallow reef", "Crowds", "Localism"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 33.0147,
-      "lng": -117.2792
-    }
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 21.664, "lng": -158.053 }
   },
   {
-    "id": "el-zunzal",
-    "name": "El Zunzal",
-    "continent": "North America",
-    "countryId": "sv",
-    "regionId": "costa-del-balsamo",
-    "location": "Costa del Balsamo",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "NNE",
-      "N"
-    ],
-    "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 225,
-      "cardinal": "SSW"
-    },
-    "bestSeasons": [
-      "all"
-    ],
-    "optimalTide": "LOW",
-    "description": "Exposed point break rated 3/5, offering consistent surf throughout the year. Works best with South-southwest groundswells meeting North-northeast offshore winds. Located along the Costa del Balsamo coastline, this break receives primarily distant groundswells. Best performance during low tide. Despite its quality, can get crowded when conditions align. Exercise caution around rocks in the lineup and along the shore.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "POINT_BREAK",
-    "swellSize": {
-      "min": 1,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 29,
-      "winter": 27
-    },
-    "hazards": [
-      "Rocks",
-      "Crowds"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 13.4917,
-      "lng": -89.4417
-    },
-    "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=ed0EYodRfYo&ab_channel=DanHarmon",
-        "title": "Surfing in El Salvador (Surf City) || What’s it Actually Like!?",
-        "platform": "youtube"
-      }
-    ],
-    "coffeeShop": [
-      {
-        "name": "Zunzal Beach Cafe"
-      }
-    ]
-  },
-  {
-    "id": "punta-mango",
-    "name": "Punta Mango",
-    "continent": "North America",
-    "countryId": "sv",
-    "regionId": "costa-del-balsamo",
-    "location": "Costa del Balsamo",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "NNW",
-      "N"
-    ],
-    "optimalSwellDirections": {
-      "min": 168.75,
-      "max": 191.25,
-      "cardinal": "S"
-    },
-    "bestSeasons": [
-      "all"
-    ],
-    "optimalTide": "ALL",
-    "description": "Exposed point break rated 2/5, offering dependable surf throughout the year. Works best with South groundswells meeting North-northwest offshore winds. Located along the Costa del Balsamo coastline, this break receives primarily distant groundswells. One of the less crowded spots in El Salvador, making it a good option for those seeking to avoid crowds. Exercise caution around rocks in the lineup and along the shore.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "POINT_BREAK",
-    "swellSize": {
-      "min": 1,
-      "max": 3
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 30,
-      "winter": 27
-    },
-    "hazards": [
-      "Rocks"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 13.4333,
-      "lng": -88.3333
-    },
-    "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=jZoKbXl4acA&ab_channel=OSCAR",
-        "title": "Surfing Punta Mango - El Salvador",
-        "platform": "youtube"
-      }
-    ],
-    "coffeeShop": [
-      {
-        "name": "Mango Point Cafe"
-      }
-    ]
-  },
-  {
-    "id": "las-flores",
-    "name": "Las Flores",
-    "continent": "North America",
-    "countryId": "sv",
-    "regionId": "costa-del-balsamo",
-    "location": "Costa del Balsamo",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "N"
-    ],
-    "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 225,
-      "cardinal": "SSW"
-    },
-    "bestSeasons": [
-      "all"
-    ],
-    "optimalTide": "ALL",
-    "description": "Exposed beach and point break rated 3/5, offering fairly consistent surf throughout the year. Works best with South-southwest groundswells meeting North offshore winds, with some shelter from west winds. Groundswells are more common than windswells. Features predominantly left-breaking waves. Located along the Costa del Balsamo coastline in El Salvador, this break offers quality waves without the crowds, making it a hidden gem for those in the know. Exercise caution around dangerous rip currents in the area.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 1,
-      "max": 3.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 30,
-      "winter": 27
-    },
-    "hazards": [
-      "Rip currents"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 13.4917,
-      "lng": -89.3833
-    },
-    "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=jiIGy2gQiGE&ab_channel=ShaneReynolds",
-        "title": "Surfing Las Flores - El Salvador",
-        "platform": "youtube"
-      }
-    ],
-    "coffeeShop": [
-      {
-        "name": "Flores Beach Cafe"
-      }
-    ]
-  },
-  {
-    "id": "el-zonte",
-    "name": "El Zonte",
-    "continent": "North America",
-    "countryId": "sv",
-    "regionId": "costa-del-balsamo",
-    "location": "Costa del Balsamo",
-    "distanceFromCT": 0,
-    "optimalWindDirections": [
-      "NNE"
-    ],
-    "optimalSwellDirections": {
-      "min": 202.5,
-      "max": 225,
-      "cardinal": "SSW"
-    },
-    "bestSeasons": [
-      "all"
-    ],
-    "optimalTide": "HIGH",
-    "description": "Exposed reef, point and rivermouth break rated 3/5, offering very consistent surf throughout the year. Works best with South-southwest groundswells meeting North-northeast offshore winds. Most of the surf here comes from groundswells. Features a left-hand reef break. Located along the Costa del Balsamo coastline in El Salvador, this diverse break performs best around high tide when the tide is rising. Despite its quality, can get quite busy when conditions align. Exercise caution around rip currents and rocks in the lineup and along the shore.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 1,
-      "max": 3.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 29,
-      "winter": 27
-    },
-    "hazards": [
-      "Rip currents",
-      "Rocks",
-      "Crowds"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 13.4944,
-      "lng": -89.4444
-    },
-    "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=RjSN47ejLF4&ab_channel=SurfersofPanama",
-        "title": "Surfing El Zonte - El Salvador",
-        "platform": "youtube"
-      }
-    ],
-    "coffeeShop": [
-      {
-        "name": "Zonte Point Cafe"
-      }
-    ]
-  },
-  {
-    "id": "waikiki-queens",
-    "name": "Waikiki (Queens)",
-    "continent": "North America",
-    "countryId": "us",
-    "regionId": "oahu",
-    "location": "Honolulu",
-    "isLongboarding": true,
-    "optimalWindDirections": [
-      "NE",
-      "N",
-      "E"
-    ],
-    "optimalSwellDirections": {
-      "min": 157.5,
-      "max": 202.5,
-      "cardinal": "S"
-    },
-    "bestSeasons": [
-      "summer"
-    ],
-    "optimalTide": "ALL",
-    "description": "The birthplace of surfing. Perfectly peeling waves over a deep reef. One of the best waves in the world for longboarding.",
-    "difficulty": "BEGINNER",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 20
-    },
-    "waterTemp": {
-      "summer": 27,
-      "winter": 24
-    },
-    "hazards": [
-      "Extreme crowds",
-      "Beginners"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 21.2728,
-      "lng": -157.8242
-    }
-  },
-  {
-    "id": "sayulita-main",
-    "name": "Sayulita",
-    "continent": "North America",
-    "countryId": "mx",
-    "regionId": "nayarit",
-    "location": "Sayulita",
-    "isLongboarding": true,
-    "optimalWindDirections": [
-      "E",
-      "NE"
-    ],
-    "optimalSwellDirections": {
-      "min": 270,
-      "max": 315,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "winter",
-      "autumn",
-      "spring",
-      "summer"
-    ],
-    "optimalTide": "ALL",
-    "description": "Gentle, long-peeling waves perfect for longboarding in a tropical setting. Known for its consistency and vibrant surf culture.",
-    "difficulty": "BEGINNER",
-    "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 14
-    },
-    "waterTemp": {
-      "summer": 29,
-      "winter": 25
-    },
-    "hazards": [
-      "Rocks",
-      "Crowds"
-    ],
-    "crimeLevel": "Medium",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 20.8692,
-      "lng": -105.4411
-    }
-  },
-  {
-    "id": "san-onofre",
-    "name": "San Onofre (Sano)",
+    "id": "trestles",
+    "name": "Lower Trestles",
     "continent": "North America",
     "countryId": "us",
     "regionId": "california",
     "location": "San Clemente",
-    "isLongboarding": true,
-    "optimalWindDirections": [
-      "ENE",
-      "E"
-    ],
+    "distanceFromCT": 0,
+    "optimalWindDirections": ["NE", "E"],
     "optimalSwellDirections": {
       "min": 180,
-      "max": 225,
-      "cardinal": "S-SW"
+      "max": 210,
+      "cardinal": "SSW"
     },
-    "bestSeasons": [
-      "summer"
-    ],
-    "optimalTide": "MID",
-    "description": "California's classic longboard playground. Gentle, rolling peaks over a cobblestone reef. Extremely consistent and historical.",
-    "difficulty": "BEGINNER",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 14
-    },
-    "hazards": [
-      "Crowds",
-      "Rocks"
-    ],
+    "bestSeasons": ["summer"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "A high-performance cobblestone point break. Perfectly shaped A-frames that allow for progressive surfing.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 2.5 },
+    "idealSwellPeriod": { "min": 12, "max": 18 },
+    "waterTemp": { "summer": 20, "winter": 15 },
+    "hazards": ["Crowds", "Rocks"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 33.3711,
-      "lng": -117.5619
-    }
+    "sharkAttack": { "hasAttack": true },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 33.385, "lng": -117.593 }
   },
   {
-    "id": "outer-reefs-avalanche",
-    "name": "Outer Reefs (Avalanche)",
-    "continent": "North America",
-    "countryId": "us",
-    "regionId": "oahu-north-shore",
-    "location": "North Shore, Oahu",
-    "isFoiling": true,
-    "optimalWindDirections": [
-      "SE",
-      "E"
-    ],
-    "optimalSwellDirections": {
-      "min": 315,
-      "max": 345,
-      "cardinal": "NW"
-    },
-    "bestSeasons": [
-      "winter"
-    ],
-    "optimalTide": "ALL",
-    "description": "Massive deep-water reef break. Too big for surfing at times, but the rolling blue hills of Avalanche and Phantoms are the world's ultimate foiling proving ground. Ultra-high fidelity ride.",
-    "difficulty": "EXPERT",
-    "waveType": "REEF_BREAK",
-    "swellSize": {
-      "min": 2,
-      "max": 12
-    },
-    "idealSwellPeriod": {
-      "min": 14,
-      "max": 20
-    },
-    "waterTemp": {
-      "summer": 26,
-      "winter": 23
-    },
-    "hazards": [
-      "Massive waves",
-      "Long hold-downs",
-      "Shark risk"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": true
-    },
-    "image": "",
-    "coordinates": {
-      "lat": 21.6441,
-      "lng": -158.0645
-    }
-  },
-  {
-    "id": "bolsa-chica",
-    "name": "Bolsa Chica",
+    "id": "mavericks",
+    "name": "Mavericks",
     "continent": "North America",
     "countryId": "us",
     "regionId": "california",
-    "location": "Huntington Beach",
-    "isFoiling": true,
-    "optimalWindDirections": [
-      "ENE",
-      "E"
-    ],
+    "location": "Half Moon Bay",
+    "distanceFromCT": 0,
+    "optimalWindDirections": ["E", "SE"],
+    "optimalSwellDirections": {
+      "min": 280,
+      "max": 310,
+      "cardinal": "W-WNW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Cold water big wave pinnacle. Terrifying, massive peaks that break far offshore.",
+    "difficulty": "EXPERT",
+    "waveType": "BIG_WAVE",
+    "swellSize": { "min": 4, "max": 20 },
+    "idealSwellPeriod": { "min": 14, "max": 22 },
+    "waterTemp": { "summer": 14, "winter": 11 },
+    "hazards": ["Extreme cold", "Sharks", "Heavy hold-downs"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": true },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 37.491, "lng": -122.499 }
+  },
+  {
+    "id": "malibu-first-point",
+    "name": "Malibu First Point",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "Malibu",
+    "distanceFromCT": 0,
+    "optimalWindDirections": ["NE", "N"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 200,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "The quintessential longboarding wave. Perfect, reeling right-handers over a mellow cobblestone point.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 12, "max": 18 },
+    "waterTemp": { "summer": 20, "winter": 15 },
+    "hazards": ["Extreme crowds", "Localism"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 34.032, "lng": -118.677 }
+  },
+  {
+    "id": "st-augustine-pier",
+    "name": "St. Augustine Pier",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "florida",
+    "location": "St. Augustine",
+    "distanceFromCT": 0,
+    "optimalWindDirections": ["W", "NW"],
+    "optimalSwellDirections": {
+      "min": 45,
+      "max": 135,
+      "cardinal": "NE-SE"
+    },
+    "bestSeasons": ["autumn", "winter"],
+    "optimalTide": "ALL",
+    "description": "Reliable Florida beach break. Consistent peaks that work on almost any swell energy.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.3, "max": 1.5 },
+    "idealSwellPeriod": { "min": 6, "max": 12 },
+    "waterTemp": { "summer": 28, "winter": 16 },
+    "hazards": ["Stingrays", "Sharks (rare)", "Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": true },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "coordinates": { "lat": 29.858, "lng": -81.265 }
+  },
+  {
+    "id": "saladita-guerrero-mexico",
+    "name": "Saladita",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "guerrero",
+    "location": "Guerrero",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "NNE"],
     "optimalSwellDirections": {
       "min": 180,
       "max": 225,
-      "cardinal": "S-SW"
+      "cardinal": "SW"
     },
-    "bestSeasons": [
-      "all"
+    "bestSeasons": ["summer", "spring"],
+    "optimalTide": "ALL (MID-HIGH BEST)",
+    "description": "Known as the Chicama of Mexico, Saladita is a world-class longboarding machine. This peeling left-hand point break offers rides that continue for several hundred yards over a mellow cobblestone and sand reef. It's the ultimate destination for cross-stepping and heavy, traditional logs.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 3 },
+    "idealSwellPeriod": { "min": 10, "max": 20 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Heat", "Stingrays"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=60",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=GQ5vJARj0p8",
+        "title": "GOOD TIME | Longboard surfing in La Saladita, Mexico",
+        "platform": "youtube"
+      }
     ],
+    "coordinates": { "lat": 17.842, "lng": -101.597 }
+  },
+  {
+    "id": "scorpion-bay-mexico",
+    "name": "Scorpion Bay",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "baja-california-sur",
+    "location": "San Juanico",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["W", "NW"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "Scorpion Bay is a legendary right-hand point break that offers some of the longest waves in the world. It consists of multiple points that can connect on a large swell, providing a marathon ride for longboarders. The wave is famously mellow and perfect for traditional logging.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 4 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 24, "winter": 17 },
+    "hazards": ["Rocks", "Remote location"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=oMu93NtJqy0",
+        "title": "Swell At Scorpion Bay | Kassia Meador and Cliff Kapono",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 26.242, "lng": -112.477 }
+  },
+  {
+    "id": "salina-cruz-mexico",
+    "name": "Salina Cruz",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "oaxaca",
+    "location": "Salina Cruz",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["N", "NNE"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer", "spring"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Salina Cruz is hidden jewel in Oaxaca, offering a series of sand-bottomed right-hand points. While known for high-performance waves, spots like Punta Conejo and Playa Brasil offer incredibly long, workable walls that are a dream for longboarders on moderate swells.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 1, "max": 3 },
+    "idealSwellPeriod": { "min": 10, "max": 18 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Strong winds", "Heat"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=DXV29AEUilA",
+        "title": "Save Punta Conejo, One of the World's Best Surf Breaks",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 16.177, "lng": -95.201 }
+  },
+  {
+    "id": "nine-palms-mexico",
+    "name": "Nine Palms",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "baja-california-sur",
+    "location": "East Cape",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["N", "NW"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 200,
+      "cardinal": "S/SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "HIGH",
+    "description": "A classic East Cape right-hand point break. Nine Palms is known for its consistent, slow-breaking waves that provide excellent sections for noseriding. It's a favorite for the local and traveling longboarding community in Baja.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 28, "winter": 20 },
+    "hazards": ["Rocks", "Sea urchins"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=CwiGFOQtAjc",
+        "title": "Surfing Nine Palms in Baja, Mexico - East Cape Winter Swell",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 23.364, "lng": -109.431 }
+  },
+  {
+    "id": "punta-mita-anclote-mexico",
+    "name": "Punta Mita",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "nayarit",
+    "location": "Anclote",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "E"],
+    "optimalSwellDirections": {
+      "min": 270,
+      "max": 310,
+      "cardinal": "NW"
+    },
+    "bestSeasons": ["winter"],
     "optimalTide": "MID",
-    "description": "Huntington Beach's premiere foiling zone. The soft, mushy peaks at Bolsa Chica are the perfect canvas for long, efficient foil runs.",
+    "description": "El Anclote in Punta Mita is often called the 'Waikiki of Mexico'. It's a very mellow, slow-breaking right-hand reef break that is perfect for learning and longboarding. The water is warm and the vibes are relaxed.",
+    "difficulty": "BEGINNER",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 29, "winter": 26 },
+    "hazards": ["Boat traffic", "Shallow reef at low tide"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=QATjKGzHJOw",
+        "title": "Clasico El Anclote Highlights Surf Competition, Punta de Mita",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 20.771, "lng": -105.524 }
+  },
+  {
+    "id": "punta-roca-el-salvador",
+    "name": "Punta Roca",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "la-libertad",
+    "location": "La Libertad",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NW", "N"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer", "spring"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "While famous for being a high-performance right, Punta Roca on smaller days offers incredibly long, consistent walls that longboarders can navigate for hundreds of meters. It's the crown jewel of El Salvador.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 1, "max": 4 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Rocks", "Localism on big days"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=09fY36Tcj0M",
+        "title": "TYLER WARREN & TOMMY WITT: PUNTA ROCA EL SALVADOR LONGBOARDING",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 13.486, "lng": -89.324 }
+  },
+  {
+    "id": "playa-guiones-costa-rica",
+    "name": "Playa Guiones",
+    "continent": "North America",
+    "countryId": "cr",
+    "regionId": "nosara",
+    "location": "Nosara",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "ENE"],
+    "optimalSwellDirections": {
+      "min": 200,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": ["winter", "all"],
+    "optimalTide": "MID_TO_HIGH",
+    "description": "The perfect beach break for longboarding. Playa Guiones captures almost any swell and provides consistent, crumbling walls that go on for ages. It's the spiritual home of Costa Rican longboarding.",
+    "difficulty": "ALL_LEVELS",
+    "waveType": "BEACH_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 28, "winter": 28 },
+    "hazards": ["Crowds", "Strong sun"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=Y3-JqSWlS2U",
+        "title": "Playa Guiones, Nosara, Guanacaste. Costa Rica (4K)",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 9.941, "lng": -85.663 }
+  },
+  {
+    "id": "boca-barranca-costa-rica",
+    "name": "Boca Barranca",
+    "continent": "North America",
+    "countryId": "cr",
+    "regionId": "puntarenas",
+    "location": "Puntarenas",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["ENE", "N"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "One of the longest lefts in the world. Boca Barranca is a river mouth point break that can peel for over 500 meters. On its day, it's a longboarding paradise that will leave your legs burning.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 3 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["River runoff/pollution", "Crocodiles (rare but possible)"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=FzH7_p7XwRI",
+        "title": "Surfing Epic Lefts | Boca Barranca Longboarding in Costa Rica",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 9.944, "lng": -84.733 }
+  },
+  {
+    "id": "marias-rincon-puerto-rico",
+    "name": "Maria's",
+    "continent": "North America",
+    "countryId": "pr",
+    "regionId": "rincon",
+    "location": "Rincon",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "NE"],
+    "optimalSwellDirections": {
+      "min": 315,
+      "max": 360,
+      "cardinal": "NW"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "The center of the surfing universe in Puerto Rico. Maria's is a fun, playful right-hand reef break that offers multiple sections. It's a longboarding staple in Rincon, especially when the NW swells start rolling in.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.9, "max": 3.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 28, "winter": 26 },
+    "hazards": ["Rocks", "Sea urchins", "Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=iU2KKyAZo_E",
+        "title": "Rincon Surfing Marias, Puerto Rico (11/23/23)",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 18.358, "lng": -67.269 }
+  },
+  {
+    "id": "freights-bay-barbados",
+    "name": "Freights Bay",
+    "continent": "North America",
+    "countryId": "bb",
+    "regionId": "christ-church",
+    "location": "Christ Church",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "E"],
+    "optimalSwellDirections": {
+      "min": 160,
+      "max": 200,
+      "cardinal": "SE"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "ALL",
+    "description": "Freights Bay is the perfect, mellow left-hand point break. Tucked away in a beautiful cove, it offers long, gentle walls over a safe sand and reef bottom. It is widely considered the best longboarding spot in the Caribbean.",
+    "difficulty": "BEGINNER-INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Sea turtles (can hit them!)", "Crowds"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=Ibw1OuBsQAw",
+        "title": "Sunset Sessions Freights Bay Barbados Drone Video",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 13.047, "lng": -59.516 }
+  },
+  {
+    "id": "malibu-first-point-usa",
+    "name": "Malibu",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "First Point",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "N"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 200,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "The 'quintessential' longboarding wave. Malibu's First Point is the world standard for styling on a longboard. A perfect, peeling right-hand point break that has featured in countless films and defined the culture of California surfing.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.6, "max": 2.5 },
+    "idealSwellPeriod": { "min": 12, "max": 18 },
+    "waterTemp": { "summer": 19, "winter": 14 },
+    "hazards": ["EXTREME crowds", "Aggressive localism"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=bK38DSfXFBc",
+        "title": "Soleil Errico | Longboard Surfing at Malibu First Point, California",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 34.032, "lng": -118.677 }
+  },
+  {
+    "id": "doheny-state-beach-usa",
+    "name": "Doheny",
+    "continent": "North America",
+    "countryId": "us",
+    "regionId": "california",
+    "location": "Dana Point",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NE", "N"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
+    },
+    "bestSeasons": ["summer"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "Immortalized by the Beach Boys, Doheny is a very mellow beach and reef break. It's famous for being one of the most beginner-friendly and longboard-friendly spots in Southern California, offering slow, rolling waves.",
     "difficulty": "BEGINNER",
     "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 0.6,
-      "max": 2.5
-    },
-    "idealSwellPeriod": {
-      "min": 10,
-      "max": 16
-    },
-    "waterTemp": {
-      "summer": 21,
-      "winter": 14
-    },
-    "hazards": [
-      "Stingrays",
-      "Crowds"
-    ],
+    "swellSize": { "min": 0.6, "max": 2 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 20, "winter": 15 },
+    "hazards": ["Crowds", "Pollution after rain"],
     "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=sakG_Wzr8og",
+        "title": "Longboarding At Doheny State Beach 🏄‍♂️ stoked CA (GoPro 4K POV)",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 33.461, "lng": -117.683 }
+  },
+  {
+    "id": "mizata-el-salvador",
+    "name": "Hidden Point",
+    "continent": "North America",
+    "countryId": "sv",
+    "regionId": "la-libertad",
+    "location": "Mizata",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NW", "N"],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 210,
+      "cardinal": "SSW"
     },
-    "image": "",
-    "coordinates": {
-      "lat": 33.7022,
-      "lng": -118.053
-    }
+    "bestSeasons": ["all"],
+    "optimalTide": "LOW_TO_MID",
+    "description": "A secluded right-hand point break that offers a much more relaxed pace than the busier breaks nearby. Perfect for traditional longboarding and aesthetic lines.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 2.5 },
+    "idealSwellPeriod": { "min": 10, "max": 16 },
+    "waterTemp": { "summer": 29, "winter": 27 },
+    "hazards": ["Rocks"],
+    "crimeLevel": "Low",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1544910919-a403f5963952?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=wFeWEYq14v4",
+        "title": "Kai Ellice-Flint free surfing at Mizata - Traditional longboarding master class",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 13.511, "lng": -89.591 }
+  },
+  {
+    "id": "popoyo-nicaragua",
+    "name": "Offshore Mecca",
+    "continent": "North America",
+    "countryId": "ni",
+    "regionId": "rivas",
+    "location": "Popoyo",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["E", "ENE"],
+    "optimalSwellDirections": {
+      "min": 200,
+      "max": 240,
+      "cardinal": "SW"
+    },
+    "bestSeasons": ["all"],
+    "optimalTide": "ALL",
+    "description": "Nicaragua's consistency king. On mellower days, the outer peak provides incredible, long walls for longboarding under perpetual offshore winds.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "swellSize": { "min": 0.9, "max": 4 },
+    "idealSwellPeriod": { "min": 10, "max": 18 },
+    "waterTemp": { "summer": 28, "winter": 24 },
+    "hazards": ["Rocks", "Strong offshore winds"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=v_wJgeozZck",
+        "title": "Longboard Surfing at Popoyo, Nicaragua",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 11.458, "lng": -86.134 }
+  },
+  {
+    "id": "bocas-del-toro-panama",
+    "name": "Tropical Peak",
+    "continent": "North America",
+    "countryId": "pa",
+    "regionId": "bocas-del-toro",
+    "location": "Bocas Del Toro (Carenero)",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["SW", "W"],
+    "optimalSwellDirections": {
+      "min": 45,
+      "max": 70,
+      "cardinal": "NE"
+    },
+    "bestSeasons": ["winter"],
+    "optimalTide": "MID",
+    "description": "A stunning Caribbean point break. Carenero offers long, peeling lefts in crystal clear water, often providing glassy conditions perfect for longboarding.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 3 },
+    "idealSwellPeriod": { "min": 8, "max": 14 },
+    "waterTemp": { "summer": 29, "winter": 28 },
+    "hazards": ["Shallow reef", "Currents"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=1600&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=Jqc4G6abadc",
+        "title": "Surfing con La Tropa de Carenero en Bocas del Toro @monolocosurfschool",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 9.349, "lng": -82.234 }
+  },
+  {
+    "id": "la-punta-puerto-escondido-mexico",
+    "name": "Sunset Log",
+    "continent": "North America",
+    "countryId": "mx",
+    "regionId": "oaxaca",
+    "location": "La Punta",
+    "distanceFromCT": 0,
+    "isLongboarding": true,
+    "optimalWindDirections": ["NNW", "N"],
+    "optimalSwellDirections": {
+      "min": 170,
+      "max": 190,
+      "cardinal": "S"
+    },
+    "bestSeasons": ["summer", "spring"],
+    "optimalTide": "ALL",
+    "description": "The softer, more refined alternative to Zicatela. A long, peeling left-hand point break that provides excellent sections for style and noseriding.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "swellSize": { "min": 0.9, "max": 3.5 },
+    "idealSwellPeriod": { "min": 12, "max": 20 },
+    "waterTemp": { "summer": 30, "winter": 28 },
+    "hazards": ["Powerful currents on big swells", "Crowds"],
+    "crimeLevel": "Medium",
+    "sharkAttack": { "hasAttack": false },
+    "image": "https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=2620&auto=format&fit=crop",
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=b0uw85dj5ag",
+        "title": "Longboarding Endless Lefts Through the Sunset in Mexico - The Sunday Glide #34 : with Ben Considine",
+        "platform": "youtube"
+      }
+    ],
+    "coordinates": { "lat": 15.845, "lng": -97.051 }
   }
 ]

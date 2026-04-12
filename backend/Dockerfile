@@ -1,94 +1,59 @@
 # ─────────────────────────────────────────────────────────────
-# Tide Raider Backend – Optimized for Cloud Run (2025)
+# Tide Raider Backend – Highly Optimized for Build Efficiency
 # ─────────────────────────────────────────────────────────────
 FROM node:22-slim AS base
 
-# Install only the exact system dependencies needed for Chromium/Playwright
+# Install ALL system dependencies (Chromium, Python, FFmpeg) in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    libxss1 \
-    libxtst6 \
-    wget \
-    xdg-utils \
-    python3 \
-    python3-pip \
-    python3-venv \
-    ffmpeg \
+    ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 \
+    libatk1.0-0 libatspi2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 \
+    libgtk-3-0 libnspr4 libnss3 libxcomposite1 libxdamage1 libxfixes3 \
+    libxkbcommon0 libxrandr2 libxss1 libxtst6 wget xdg-utils \
+    python3 python3-pip python3-venv ffmpeg \
     && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user (Cloud Run strongly recommends this)
-RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 
-# ───── Stage 1: Install all dependencies (including dev) ─────
-COPY package*.json ./
-COPY requirements.txt ./
+# ───── Stage 1: Dependency Installation ─────
+# These layers change infrequently
+COPY package*.json requirements.txt ./
 COPY prisma ./prisma/
+
+# Install Node dependencies skipping heavy binaries
 RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --legacy-peer-deps
+
+# Install Python dependencies
 RUN pip install --break-system-packages -r requirements.txt
-RUN playwright install chromium
+
+# Install Playwright Chromium (this is a big layer, so keep it early)
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
+RUN npx playwright install chromium
 
 # ───── Stage 2: Build the app ─────
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate && \
-    npm run build && \
-    # Copy the raw .js eval files that are loaded at runtime
-    mkdir -p dist/lib/scrapers && \
-    cp src/lib/scrapers/windy-eval.js dist/lib/scrapers/windy-eval.js && \
-    cp src/lib/scrapers/windguru-eval.js dist/lib/scrapers/windguru-eval.js
+RUN npx prisma generate && npm run build
 
-# ───── Stage 3: Production slim image ─────
-FROM node:22-slim
+# ───── Stage 3: Production Release ─────
+# We use the base again to inherit system deps without re-running apt-get
+FROM base AS runner
 
-# Re-install only the minimal system deps needed at runtime
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    python3 \
-    python3-pip \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy only what we need from the build stage
-COPY --from=base /app /app
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
-ENV NODE_ENV=production \
+
+# Copy dependencies and built files
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/package.json ./package.json
+COPY --from=base /app/prisma ./prisma
+COPY --from=base /app/pw-browsers ./pw-browsers
+COPY --from=base /app/requirements.txt ./requirements.txt
+
+# Ensure playwright knows where the browser is
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers \
+    NODE_ENV=production \
     PORT=8080
 
 # Switch to non-root user
