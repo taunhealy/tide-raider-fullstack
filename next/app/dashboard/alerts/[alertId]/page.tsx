@@ -76,7 +76,7 @@ export default async function AlertDetailPage({
             {alert.active ? "Active" : "Inactive"}
           </p>
         </div>
-        <Link href={`/alerts/${alert.id}`}>
+        <Link href={`/alerts/${alert.id}/edit`}>
           <Button variant="outline" className="flex items-center gap-2">
             <Edit className="h-4 w-4" />
             Edit Alert

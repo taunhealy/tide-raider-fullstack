@@ -13,6 +13,9 @@ import { Vector as VectorSource, Cluster, XYZ } from "ol/source";
 import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import Overlay from "ol/Overlay";
 import { cn } from "@/app/lib/utils";
+import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon } from "lucide-react";
+import { getConditionReasons } from "@/app/lib/surfUtils";
+import { degreesToCardinal } from "@/app/lib/forecastUtils";
 
 interface Beach {
   id: string;
@@ -57,8 +60,9 @@ export default function TideMap({
   const mapElement = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<Map | null>(null);
-  const [popupBeach, setPopupBeach] = useState<Beach | null>(null);
+  const [popupBeach, setPopupBeach] = useState<any | null>(null);
   const [currentZoom, setCurrentZoom] = useState(zoom);
+  const [showConditions, setShowConditions] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const selectedDayIndexRef = useRef(selectedDayIndex);
   const selectedDateStringRef = useRef("");
@@ -426,6 +430,7 @@ export default function TideMap({
         }
       } else {
         setPopupBeach(null);
+        setShowConditions(false);
         overlay.setPosition(undefined);
       }
     });
@@ -592,37 +597,79 @@ export default function TideMap({
         "absolute bg-brand-dark rounded-xl md:rounded-2xl p-4 md:p-5 min-w-[180px] md:min-w-[220px] transition-all duration-300",
         popupBeach ? "opacity-100 translate-y-0 scale-90 md:scale-100" : "opacity-0 translate-y-4 scale-75 md:scale-95 pointer-events-none"
       )}>
-        {popupBeach && (
-          <div className="relative">
-            <span className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-[0.2em] mb-2 block">
-              Frequency Signal
-            </span>
-            <h4 className="text-[13px] font-black text-white uppercase tracking-tighter mb-1.5 leading-none">
-              {popupBeach.name}
-            </h4>
-            
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < (popupBeach.rating || 0) ? 'bg-[var(--color-tertiary)]' : 'bg-white/10'}`} />
-                ))}
-              </div>
-              <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
-                {(popupBeach.rating || 0).toFixed(1)} Rating
+        {popupBeach && (() => {
+          const dateKey = selectedDateStringRef.current;
+          const beachData = popupBeach;
+          const conditions = beachData.dailyScores?.[dateKey]?.conditions || null;
+          const rating = beachData.dailyScores?.[dateKey]?.rating ?? beachData.rating ?? 0;
+          
+          const conditionReasons = conditions ? getConditionReasons(beachData, conditions) : null;
+          
+          return (
+            <div className="relative">
+              <span className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-[0.2em] mb-2 block">
+                Frequency Signal
               </span>
-            </div>
+              <h4 className="text-[13px] font-black text-white uppercase tracking-tighter mb-1.5 leading-none">
+                {popupBeach.name}
+              </h4>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < rating ? 'bg-[var(--color-tertiary)]' : 'bg-white/10'}`} />
+                  ))}
+                </div>
+                <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
+                  {Number(rating).toFixed(1)} Rating
+                </span>
+              </div>
 
-            <button 
-              onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
-              className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
-            >
-              Access Intelligence
-              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
-                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        )}
+              <div className="space-y-2">
+                <button 
+                  onClick={() => setShowConditions(!showConditions)}
+                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+                >
+                  View Conditions
+                  {showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+                </button>
+
+                {showConditions && (
+                  <div className="mt-4 p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    {conditionReasons ? (
+                      <div className="space-y-2">
+                        {conditionReasons.optimalConditions.map((cond: any, idx: number) => (
+                          <div key={idx} className="flex items-start gap-2 group">
+                            {cond.isMet ? (
+                              <Check className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <X className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+                            )}
+                            <span className="text-[9px] font-bold text-white/70 leading-tight group-hover:text-white transition-colors">
+                              {cond.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[9px] text-white/30 font-bold text-center py-2 italic uppercase tracking-widest">
+                        No condition data
+                      </div>
+                    )}
+                    
+                    <button 
+                      onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
+                      className="w-full mt-2 py-2 border-t border-white/5 text-[8px] font-black text-[var(--color-tertiary)] uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-1 group"
+                    >
+                      Full Analysis
+                      <ChevronDown className="w-2 h-2 rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

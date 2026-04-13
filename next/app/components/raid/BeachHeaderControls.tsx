@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
@@ -48,6 +48,25 @@ export default function BeachHeaderControls({
   const handleDateSelect = (date: string) => {
     updateFilter("forecastDate", date);
   };
+
+  // Default to today if no date is in the URL
+  const [hasDefaulted, setHasDefaulted] = useState(false);
+  
+  useEffect(() => {
+    if (!selectedDate && availableDates.length > 0 && !hasDefaulted) {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0];
+      
+      if (availableDates.includes(todayStr)) {
+        handleDateSelect(todayStr);
+      } else {
+        // Fallback to the first available date (usually today or tomorrow)
+        handleDateSelect(availableDates[0]);
+      }
+      setHasDefaulted(true);
+    }
+  }, [selectedDate, availableDates, hasDefaulted]);
 
   return (
     <>

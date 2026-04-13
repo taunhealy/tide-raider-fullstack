@@ -28,7 +28,7 @@ export function MediaModal({
   initialImageIndex = 0,
 }: MediaModalProps) {
   // Support both single imageUrl and imageUrls array
-  const images = imageUrls || (imageUrl ? [imageUrl] : []);
+  const images = (imageUrls && imageUrls.length > 0) ? imageUrls : (imageUrl ? [imageUrl] : []);
   const [currentImageIndex, setCurrentImageIndex] = useState(initialImageIndex);
 
   // Update current image index when modal opens with a new initial index
@@ -38,19 +38,29 @@ export function MediaModal({
     }
   }, [isOpen, initialImageIndex]);
 
-  // Prevent body scroll when modal is open
+  // Keyboard navigation and prevent body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      // Scroll to top when modal opens
       window.scrollTo(0, 0);
-    } else {
-      document.body.style.overflow = "";
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "ArrowLeft" && images.length > 1) {
+          setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+        } else if (e.key === "ArrowRight" && images.length > 1) {
+          setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+        } else if (e.key === "Escape") {
+          onClose();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  }, [isOpen, images.length, onClose]);
 
   const handleEmbedVideo = () => {
     if (!videoUrl || !videoPlatform) return null;
@@ -103,13 +113,14 @@ export function MediaModal({
         {/* DialogTitle for accessibility - visually hidden but accessible to screen readers */}
         <DialogTitle className="sr-only">{getModalTitle()}</DialogTitle>
 
-        {/* Close Button - Video Player Style (Black/Cyan) */}
+        {/* Close Button - Enhanced visibility */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-30 p-2 text-white hover:text-[var(--color-tertiary)] transition-colors"
+          className="absolute top-6 right-6 z-[110] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all duration-200 backdrop-blur-sm group"
           aria-label="Close modal"
+          title="Close (Esc)"
         >
-          <X className="w-6 h-6 md:w-7 md:h-7" />
+          <X className="w-6 h-6 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
         </button>
 
         {/* Tide Raider Logo/Branding */}
@@ -138,10 +149,11 @@ export function MediaModal({
                         prev === 0 ? images.length - 1 : prev - 1
                       )
                     }
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-colors z-10"
+                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full p-4 transition-all duration-200 z-[110] backdrop-blur-sm group"
                     aria-label="Previous image"
+                    title="Previous (Left arrow)"
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
                   </button>
                   <button
                     onClick={() =>
@@ -149,10 +161,11 @@ export function MediaModal({
                         prev === images.length - 1 ? 0 : prev + 1
                       )
                     }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white rounded-full p-3 transition-colors z-10"
+                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full p-4 transition-all duration-200 z-[110] backdrop-blur-sm group"
                     aria-label="Next image"
+                    title="Next (Right arrow)"
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                     {images.map((_, index) => (

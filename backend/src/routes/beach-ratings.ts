@@ -543,6 +543,7 @@ router.get(
           source: true,
           score: true,
           starRating: true,
+          conditions: true,
         },
         orderBy: {
           source: "asc",
@@ -561,6 +562,7 @@ router.get(
         sourceName: sourceMap[score.source] || score.source,
         score: score.score,
         starRating: score.starRating || Math.max(1, Math.min(5, Math.floor(score.score / 2))),
+        conditions: score.conditions,
       }));
 
       return res.json({ scores: formattedScores });
