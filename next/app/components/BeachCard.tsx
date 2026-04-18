@@ -191,10 +191,13 @@ const BeachCard = memo(function BeachCard({
     : [];
 
   const renderRating = () => {
+    // Convert 0-10 score to 1-5 star rating consistent with backend logic
+    const starsToFill = Math.floor((score || 0) / 2);
+    
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((rating) => {
-          const filled = rating <= (score || 0);
+          const filled = rating <= starsToFill;
           return (
             <Star
               key={rating}

@@ -229,10 +229,15 @@ const StreamCard = ({ beachId, name, region, regionId, beachScores, forecastData
                 <div className="flex justify-between items-start mb-auto">
                    <div className="px-1.5 py-0.5 bg-brand-3/20 backdrop-blur-md rounded-lg border border-brand-3/30 flex items-center gap-1.5 shrink-0">
                       <Camera size={9} className="text-brand-3" />
-                      <span className="text-[7px] font-black text-white uppercase tracking-[0.1em]">Relay</span>
+                      <span className="text-[8px] font-black text-white uppercase tracking-[0.1em]">Log Entry</span>
                    </div>
-                   <div className="text-[7px] font-bold text-white px-1.5 py-0.5 bg-black/40 backdrop-blur-md rounded-lg whitespace-nowrap drop-shadow-sm">
-                      {formatDistanceToNow(new Date(latestLog.createdAt || latestLog.date || new Date()))} ago
+                   <div className="flex flex-col items-end gap-1">
+                      <div className="text-[9px] font-black text-white px-1.5 py-0.5 bg-black/40 backdrop-blur-md rounded-lg whitespace-nowrap drop-shadow-sm border border-white/5">
+                         {formatDistanceToNow(new Date(latestLog.createdAt || latestLog.date || new Date()))} ago
+                      </div>
+                      <div className="text-[7px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                         {format(new Date(latestLog.createdAt || latestLog.date || new Date()), "MMM dd")}
+                      </div>
                    </div>
                 </div>
                 
