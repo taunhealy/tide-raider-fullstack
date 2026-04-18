@@ -21,6 +21,7 @@
     "docker:logs": "docker-compose logs -f backend",
     "docker:logs:all": "docker-compose logs -f",
     "db:reset": "prisma migrate reset --force",
+    "stream:live": "tsx src/scripts/stream-to-youtube.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "fly:migrate": "fly ssh console -C 'cd /app && npx prisma migrate deploy' --app tide-raider-backend",

@@ -31,6 +31,9 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Hide the navbar entirely on the stream page
+  if (pathname === "/stream") return null;
+
   const [isActivatingTrial, setIsActivatingTrial] = useState(false);
   const [trialMessage, setTrialMessage] = useState<{
     type: "success" | "error";
