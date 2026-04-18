@@ -226,41 +226,63 @@ function ForecastInfo({
   }
 
   return (
-    <div className="space-y-1 text-xs font-primary">
-      {(hasWind || hasWindDirection) && (
-        <p className="text-gray-700">
-          {hasWind && forecast.windSpeed !== undefined && (
-            <>
-              {getWindEmoji(forecast.windSpeed)} {forecast.windSpeed}kts
-            </>
-          )}
-          {hasWindDirection && forecast.windDirection !== undefined && (
-            <span className="ml-1 text-gray-600">
-              {degreesToCardinal(forecast.windDirection)}
-            </span>
-          )}
-        </p>
-      )}
-      {(hasSwell || hasSwellPeriod || hasSwellDirection) && (
-        <p className="text-gray-700">
-          {hasSwell && forecast.swellHeight !== undefined && (
-            <>
-              {getSwellEmoji(forecast.swellHeight)} {Number(forecast.swellHeight).toFixed(2)}m
-            </>
-          )}
-          {hasSwellPeriod && forecast.swellPeriod !== undefined && (
-            <span className="ml-1 text-gray-600">
-              {hasSwell ? " @ " : ""}
-              {forecast.swellPeriod}s
-            </span>
-          )}
-          {hasSwellDirection && forecast.swellDirection !== undefined && (
-            <span className="ml-1 text-gray-600">
-              {degreesToCardinal(forecast.swellDirection)}
-            </span>
-          )}
-        </p>
-      )}
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {(hasWind || hasWindDirection) && (
+          <div className="inline-flex items-center bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-primary border border-blue-100">
+            {hasWind && (
+              <span className="font-medium mr-1">
+                {getWindEmoji(forecast!.windSpeed!)} {forecast!.windSpeed}kts
+              </span>
+            )}
+            {hasWindDirection && (
+              <span className="opacity-80">
+                {degreesToCardinal(forecast!.windDirection!)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {(hasSwell || hasSwellPeriod || hasSwellDirection) && (
+          <div className="inline-flex items-center bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-full text-xs font-primary border border-cyan-100">
+            {hasSwell && (
+              <span className="font-medium mr-1">
+                {getSwellEmoji(forecast!.swellHeight!)} {Number(forecast!.swellHeight).toFixed(1)}m
+              </span>
+            )}
+            {hasSwellPeriod && (
+              <span className="opacity-80">
+                @{forecast!.swellPeriod}s
+              </span>
+            )}
+            {hasSwellDirection && (
+              <span className="ml-1 opacity-80">
+                {degreesToCardinal(forecast!.swellDirection!)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Action Bell */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleAlertClick}
+                className={cn(
+                  "p-1 rounded-full hover:bg-gray-100 transition-colors",
+                  entry.hasAlert ? "text-[var(--color-alert-icon-rating)]" : "text-gray-300 hover:text-gray-600"
+                )}
+              >
+                <Bell className={cn("w-3.5 h-3.5", entry.hasAlert && "fill-current")} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">{getBellTooltipText()}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }
@@ -952,55 +974,13 @@ export default function RaidLogTable({
                   </div>
 
                   {/* Conditions - Right under star rating */}
-                  {entry.forecast && (
-                    <div className="bg-gray-50 p-2.5 rounded-lg space-y-1.5">
-                      <div className="flex flex-wrap gap-1.5">
-                        {typeof entry.forecast.windSpeed === "number" && (
-                          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                            <span className="mr-1">
-                              {getGatedEmoji(
-                                getWindEmoji(entry.forecast.windSpeed)
-                              )}
-                            </span>
-                            <span>{entry.forecast.windSpeed}kts</span>
-                          </div>
-                        )}
-
-                        {typeof entry.forecast.windDirection === "number" && (
-                          <div className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                            <span>
-                              {degreesToCardinal(entry.forecast.windDirection)}
-                            </span>
-                          </div>
-                        )}
-
-                        {typeof entry.forecast.swellHeight === "number" && (
-                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                            <span className="mr-1">
-                              {getGatedEmoji(
-                                getSwellEmoji(entry.forecast.swellHeight)
-                              )}
-                            </span>
-                            <span>{Number(entry.forecast.swellHeight).toFixed(2)}m</span>
-                          </div>
-                        )}
-
-                        {typeof entry.forecast.swellPeriod === "number" && (
-                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                            <span>{entry.forecast.swellPeriod}s</span>
-                          </div>
-                        )}
-
-                        {typeof entry.forecast.swellDirection === "number" && (
-                          <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full text-xs font-primary">
-                            <span>
-                              {degreesToCardinal(entry.forecast.swellDirection)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="bg-gray-50 p-2.5 rounded-lg">
+                    <ForecastInfo
+                      forecast={entry.forecast}
+                      entry={entry}
+                      hasAccess={hasAccess}
+                    />
+                  </div>
 
                   <div className="text-sm font-primary">
                     <div className="flex items-center gap-2 mb-2">

@@ -1098,6 +1098,7 @@ enum ForecastSource {
   WINDFINDER
   WINDGURU
   WINDY
+  OPENMETEO_ARCHIVE
 }
 
 enum SkillLevel {

@@ -9,7 +9,9 @@ export class PythonBridge {
     return new Promise((resolve, reject) => {
       console.log(`[PythonBridge] 🚀 Launching semantic scraper for ${regionId}...`);
       
-      const pythonProcess = spawn("python", [
+      const pythonCommand = process.platform === "win32" ? "python" : "python3";
+      
+      const pythonProcess = spawn(pythonCommand, [
         this.SCRAPER_PATH,
         "--url", url,
         "--region", regionId

@@ -288,6 +288,7 @@ export default function WeatherForecastWidget() {
           <div className="flex items-center gap-2 flex-1">
             <button
               onClick={() => setSelectedSource("WINDFINDER")}
+              suppressHydrationWarning
               className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
@@ -298,6 +299,7 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDGURU")}
+              suppressHydrationWarning
               className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
@@ -308,6 +310,7 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDY")}
+              suppressHydrationWarning
               className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
@@ -429,6 +432,7 @@ export default function WeatherForecastWidget() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setSelectedSource("WINDFINDER")}
+                suppressHydrationWarning
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDFINDER"
@@ -440,6 +444,7 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("WINDGURU")}
+                suppressHydrationWarning
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDGURU"
@@ -451,6 +456,7 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("WINDY")}
+                suppressHydrationWarning
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                   selectedSource === "WINDY"

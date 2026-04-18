@@ -16,6 +16,10 @@ import {
 
 const router = Router();
 
+router.get("/test-endpoint", (req, res) => {
+  res.json({ message: "Filtered Beaches Route is ACTIVE", timestamp: new Date().toISOString() });
+});
+
 // GET /api/filtered-beaches?regionId=xxx&searchQuery=xxx&...
 // Use dataRateLimiter for this endpoint as it's called frequently
 router.get(
@@ -23,6 +27,7 @@ router.get(
   dataRateLimiter,
   optionalAuth,
   async (req: Request, res: Response) => {
+    console.log("[filtered-beaches] Received request:", req.query);
     try {
       const regionIdParam = (req.query.regionId as string)?.toLowerCase();
       const searchQuery = req.query.searchQuery
@@ -32,44 +37,42 @@ router.get(
         (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") ||
         "WINDFINDER";
 
-      if (!regionIdParam) {
-        return res.status(400).json({ error: "regionId is required" });
-      }
+      let regionId: string | undefined = undefined;
 
-      // Resolve regionId to actual database region ID
-      let region = await prisma.region.findUnique({
-        where: { id: regionIdParam },
-      });
-
-      // If not found by ID, try to find by name (case-insensitive)
-      if (!region) {
-        const nameFromSlug = regionIdParam
-          .split("-")
-          .map(
-            (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(" ");
-
-        region = await prisma.region.findFirst({
-          where: {
-            OR: [
-              { id: regionIdParam },
-              { name: { equals: nameFromSlug, mode: "insensitive" } },
-              { name: { equals: regionIdParam, mode: "insensitive" } },
-              { name: { contains: regionIdParam, mode: "insensitive" } },
-              { name: { contains: nameFromSlug, mode: "insensitive" } },
-            ],
-          },
+      if (regionIdParam) {
+        // Resolve regionId to actual database region ID
+        let region = await prisma.region.findUnique({
+          where: { id: regionIdParam },
         });
-      }
 
-      if (!region) {
-        return res
-          .status(404)
-          .json({ error: `Region not found: ${regionIdParam}` });
-      }
+        // If not found by ID, try to find by name (case-insensitive)
+        if (!region) {
+          const nameFromSlug = regionIdParam
+            .split("-")
+            .map(
+              (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
 
-      const regionId = region.id;
+          region = await prisma.region.findFirst({
+            where: {
+              OR: [
+                { id: regionIdParam },
+                { name: { equals: nameFromSlug, mode: "insensitive" } },
+                { name: { equals: regionIdParam, mode: "insensitive" } },
+                { name: { contains: regionIdParam, mode: "insensitive" } },
+                { name: { contains: nameFromSlug, mode: "insensitive" } },
+              ],
+            },
+          });
+        }
+
+        if (region) {
+          regionId = region.id;
+        } else {
+          return res.status(404).json({ error: `Region not found: ${regionIdParam}` });
+        }
+      }
 
       // Handle array parameters properly
       const crimeLevelParam = req.query.crimeLevel as string | undefined;
@@ -78,7 +81,7 @@ router.get(
         : undefined;
 
       const whereClause: Prisma.BeachWhereInput = {
-        regionId,
+        ...(regionId && { regionId }),
         ...(searchQuery && {
           OR: [
             {
@@ -121,9 +124,27 @@ router.get(
         }),
       };
 
-      // Add isHiddenGem filter if specified
+      // Add isHiddenGem filter logic:
+      // If true, only show hidden gems (REQUIRES AUTHENTICATION).
+      // If false/missing, exclude hidden gems (include false and null).
       if (req.query.isHiddenGem === "true") {
-        whereClause.isHiddenGem = true;
+        if ((req as any).user) {
+          whereClause.isHiddenGem = true;
+        } else {
+          // User requested hidden gems but is not logged in - return 0 results
+          whereClause.id = "force-zero-results"; 
+        }
+      } else {
+        // Exclude true (include false and null)
+        // Using AND with OR to avoid clashing with other filters
+        whereClause.AND = [
+          {
+            OR: [
+              { isHiddenGem: false },
+              { isHiddenGem: null }
+            ]
+          }
+        ];
       }
 
       // Add isLongboarding filter if specified
@@ -169,16 +190,16 @@ router.get(
       // Parallel queries: forecast lookup, score check, and available dates
       const [exactForecast, scoreCheck, availableForecastDates] = await Promise.all([
         // Try exact match first
-        prisma.forecast.findFirst({
+        regionId ? prisma.forecast.findFirst({
           where: {
             regionId,
             date: targetDate,
             source: sourceParam,
           },
           select: forecastSelect,
-        }),
+        }) : Promise.resolve(null),
         // Check if scores exist
-        prisma.beachDailyScore.findFirst({
+        regionId ? prisma.beachDailyScore.findFirst({
           where: {
             regionId,
             date: targetDate,
@@ -188,11 +209,11 @@ router.get(
             score: true,
             beachId: true,
           },
-        }),
+        }) : Promise.resolve(null),
         // Get unique dates with forecast data for this region and source, restricted to 2 days ago onwards
         prisma.forecast.findMany({
           where: {
-            regionId,
+            ...(regionId && { regionId }),
             source: sourceParam,
             date: { gte: cutoffDate },
           },
@@ -213,7 +234,7 @@ router.get(
       let forecast = exactForecast;
 
       // If no exact forecast, try fallback (same source, most recent)
-      if (!forecast) {
+      if (!forecast && regionId) {
         forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
@@ -226,7 +247,7 @@ router.get(
       }
 
       // If still no forecast, trigger on-demand scraping as fallback
-      if (!forecast) {
+      if (!forecast && regionId) {
         console.log(
           `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
         );
@@ -299,7 +320,7 @@ router.get(
 
       // Step 2: Calculate scores only if they don't exist and we have forecast
       // Most common case: scores exist, so we skip this entirely (fast path)
-      if (forecast && !scoreCheck) {
+      if (forecast && !scoreCheck && regionId) {
         // Scores don't exist - calculate them synchronously so user sees them
         // This is rare (scores should already be in DB from cron jobs)
         try {
@@ -397,3 +418,4 @@ router.get(
 );
 
 export default router;
+// Triggering reload for proximity expansion support - check 1

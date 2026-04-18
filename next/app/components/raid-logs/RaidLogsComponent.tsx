@@ -166,6 +166,7 @@ export function RaidLogsComponent({
             <ActiveFilterBadges
               filters={filters}
               onFilterChange={handleFilterChange}
+              beaches={beaches}
             />
 
             {/* Add pagination info if needed */}

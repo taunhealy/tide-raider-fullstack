@@ -631,8 +631,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.0576,
-      "lng": 18.3497
+      "lat": -34.05,
+      "lng": 18.32
     }
   },
   {
@@ -661,7 +661,7 @@
     "difficulty": "ADVANCED",
     "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 1.5,
+      "min": 3,
       "max": 3.5
     },
     "idealSwellPeriod": {
@@ -1003,8 +1003,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.1956,
+      "lng": 18.3445
     }
   },
   {
@@ -1169,8 +1169,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.353528,
-      "lng": 18.98242
+      "lat": -34.3612,
+      "lng": 18.8345
     }
   },
   {
@@ -1390,9 +1390,10 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -33.766810,
-      "lng": 18.444015  
-    }
+      "lat": -33.82,
+      "lng": 18.44
+    },
+    "isHiddenGem": true
   },
   {
     "id": "melkbos",
@@ -1643,7 +1644,7 @@
     "waveType": "POINT_BREAK",
     "swellSize": {
       "min": 2.7,
-      "max": 6.0
+      "max": 6
     },
     "idealSwellPeriod": {
       "min": 13,
@@ -1856,8 +1857,8 @@
     "difficulty": "INTERMEDIATE",
     "waveType": "POINT_BREAK",
     "swellSize": {
-      "min": 3.0,
-      "max": 8.0
+      "min": 3,
+      "max": 8
     },
     "idealSwellPeriod": {
       "min": 13,
@@ -1909,7 +1910,7 @@
     "waveType": "WEDGE",
     "swellSize": {
       "min": 3.5,
-      "max": 6.0
+      "max": 6
     },
     "idealSwellPeriod": {
       "min": 10,
@@ -1959,8 +1960,8 @@
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "swellSize": {
-      "min": 2.0,
-      "max": 6.0
+      "min": 2,
+      "max": 6
     },
     "idealSwellPeriod": {
       "min": 12,
@@ -2011,7 +2012,7 @@
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "swellSize": {
-      "min": 2.0,
+      "min": 2,
       "max": 5.5
     },
     "idealSwellPeriod": {
@@ -2137,7 +2138,7 @@
     "image": "",
     "coordinates": {
       "lat": -31.659381,
-      "lng": 18.155050
+      "lng": 18.15505
     }
   },
   {
@@ -2244,8 +2245,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.1147,
+      "lng": 18.8306
     }
   },
   {
@@ -2699,8 +2700,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.4167,
+      "lng": 19.2333
     }
   },
   {
@@ -2994,8 +2995,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.1264,
+      "lng": 18.4447
     },
     "videos": [
       {
@@ -3114,8 +3115,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.3213,
+      "lng": 18.4552
     },
     "videos": [
       {
@@ -3573,9 +3574,10 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.0760,
-      "lng": 18.5730
-    }
+      "lat": -34.08,
+      "lng": 18.58
+    },
+    "isHiddenGem": true
   },
   {
     "id": "crons",
@@ -3788,8 +3790,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.3312,
+      "lng": 18.4633
     },
     "videos": [
       {
@@ -3797,7 +3799,8 @@
         "title": "Scoring at Heavy Slab in Cape Town",
         "platform": "youtube"
       }
-    ]
+    ],
+    "isHiddenGem": true
   },
   {
     "id": "dias-beach",
@@ -4101,8 +4104,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.6360,
-      "lng": 29.5370
+      "lat": -31.636,
+      "lng": 29.537
     }
   },
   {
@@ -4286,8 +4289,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.1831,
+      "lng": 22.1461
     },
     "videos": [
       {
@@ -4360,8 +4363,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3790,
-      "lng": 21.4110
+      "lat": -34.379,
+      "lng": 21.411
     },
     "videos": [
       {
@@ -4424,8 +4427,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -33.9912,
+      "lng": 22.5807
     }
   },
   {
@@ -4542,7 +4545,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.9380,
+      "lat": -31.938,
       "lng": 29.2197
     },
     "videos": [
@@ -4653,8 +4656,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.0340,
-      "lng": 29.1120
+      "lat": -32.034,
+      "lng": 29.112
     },
     "videos": [
       {
@@ -4710,7 +4713,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.0840,
+      "lat": -32.084,
       "lng": 18.3127
     }
   },
@@ -4761,8 +4764,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.8210,
-      "lng": 18.2390
+      "lat": -31.821,
+      "lng": 18.239
     }
   },
   {
@@ -4812,7 +4815,7 @@
     "image": "",
     "coordinates": {
       "lat": -32.8011,
-      "lng": 17.8960
+      "lng": 17.896
     }
   },
   {
@@ -4861,8 +4864,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -32.3125,
+      "lng": 18.3031
     }
   },
   {
@@ -5227,8 +5230,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -31.9167,
+      "lng": 18.2667
     }
   },
   {
@@ -5379,8 +5382,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.380882,
-      "lng": 18.825951
+      "lat": -34.3556,
+      "lng": 18.8123
     }
   },
   {
@@ -5411,7 +5414,7 @@
     "waveType": "REEF_BREAK",
     "swellSize": {
       "min": 2.5,
-      "max": 6.0
+      "max": 6
     },
     "idealSwellPeriod": {
       "min": 12,
@@ -5433,8 +5436,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.38546,
-      "lng": 18.86074
+      "lat": -34.3512,
+      "lng": 18.8267
     }
   },
   {
@@ -5487,8 +5490,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3400,
-      "lng": 18.8950
+      "lat": -34.35,
+      "lng": 18.83
     }
   },
   {
@@ -5539,9 +5542,10 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -33.8994,
-      "lng": 18.4069
-    }
+      "lat": -33.9,
+      "lng": 18.41
+    },
+    "isHiddenGem": true
   },
   {
     "id": "virgin-point",
@@ -5590,9 +5594,10 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3526,
-      "lng": 18.4787
-    }
+      "lat": -34.35,
+      "lng": 18.43
+    },
+    "isHiddenGem": true
   },
   {
     "id": "bellows",
@@ -5643,9 +5648,10 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3926,
-      "lng": 18.4897
-    }
+      "lat": -34.3854,
+      "lng": 18.4876
+    },
+    "isHiddenGem": true
   },
   {
     "id": "i&js",
@@ -5692,9 +5698,10 @@
       "hasAttack": false
     },
     "coordinates": {
-      "lat": -34.1200,
-      "lng": 18.4500
-    }
+      "lat": -34.1284,
+      "lng": 18.4485
+    },
+    "isHiddenGem": true
   },
   {
     "id": "yellow-sands",
@@ -5795,8 +5802,8 @@
       "hasAttack": false
     },
     "coordinates": {
-      "lat": -34.1000,
-      "lng": 18.7900
+      "lat": -34.1,
+      "lng": 18.79
     }
   },
   {
@@ -5845,8 +5852,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1234,
-      "lng": 18.4567
+      "lat": -34.2541,
+      "lng": 18.3842
     }
   },
   {
@@ -6021,8 +6028,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.6360,
-      "lng": 29.5370
+      "lat": -31.636,
+      "lng": 29.537
     }
   },
   {
@@ -7016,8 +7023,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1800,
-      "lng": 22.0800
+      "lat": -34.18,
+      "lng": 22.08
     }
   },
   {
@@ -7068,8 +7075,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1700,
-      "lng": 22.1500
+      "lat": -34.17,
+      "lng": 22.15
     },
     "videos": [
       {
@@ -7135,8 +7142,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1200,
-      "lng": 18.4600
+      "lat": -34.0583,
+      "lng": 23.3642
     },
     "videos": [
       {
@@ -7390,7 +7397,6 @@
       }
     ]
   },
-
   {
     "id": "tofinho",
     "name": "Tofinho",
@@ -8040,7 +8046,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.70165, 
+      "lat": -32.70165,
       "lng": 17.97115
     }
   },
@@ -8091,8 +8097,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -33.6744,
+      "lng": 18.4533
     }
   },
   {
@@ -8142,8 +8148,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -33.7258,
+      "lng": 18.4411
     }
   },
   {
@@ -9927,8 +9933,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1700,
-      "lng": 22.1500
+      "lat": -34.17,
+      "lng": 22.15
     }
   },
   {
@@ -10860,7 +10866,7 @@
     "image": "",
     "coordinates": {
       "lat": -34.3697,
-      "lng": 19.0970
+      "lng": 19.097
     }
   },
   {
@@ -10963,8 +10969,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3427,
-      "lng": 19.0011
+      "lat": -34.3486,
+      "lng": 18.8925
     }
   },
   {

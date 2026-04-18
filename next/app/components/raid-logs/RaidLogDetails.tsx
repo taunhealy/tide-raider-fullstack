@@ -34,6 +34,7 @@ import ForecastAlertForm from "@/app/components/alerts/ForecastAlertForm";
 import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
+import { ShurikenLoader } from "@/app/components/ui/ShurikenLoader";
 
 interface RaidLogDetailsProps {
   id: string;
@@ -139,10 +140,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="text-gray-600 font-primary mt-4">Loading session...</p>
+          <ShurikenLoader />
+          <p className="text-white/40 font-primary mt-32 tracking-widest text-xs uppercase animate-pulse">Synchronizing session intel...</p>
         </div>
       </div>
     );
@@ -227,7 +228,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
-        <div className="bg-brand-dark rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+        <div className="bg-brand-dark rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.05)] overflow-hidden border border-cyan-500/20 ring-1 ring-white/5">
           {/* Content Grid - Make video player bigger (2/3 width) */}
           <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
             {/* Main Content - 1/3 width if video exists, full width otherwise */}
@@ -237,7 +238,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               {/* Header with Beach and Rating */}
               <div className="space-y-3 md:space-y-4">
                 <div className="flex flex-wrap items-baseline gap-4">
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-primary font-black text-white uppercase tracking-tighter">
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-primary font-bold text-white tracking-tighter">
                     {entry.beach?.name || entry.beachName || "Unnamed Beach"}
                   </h1>
                   {Number(entry.surferRating) > 3 && (
@@ -301,19 +302,15 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       score={entry.surferRating || 0}
                       outOfFive={true}
                     />
-                    <span className="text-white/30 font-black text-sm">/ 5.0</span>
                   </div>
                 </div>
 
                 {/* Conditions Section - Improved to show all sources */}
                 <div className="space-y-6 pt-10">
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="font-primary text-xl lg:text-2xl font-black text-white uppercase tracking-tighter">
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
                       Conditions Data
                     </h2>
-                    <span className="text-[10px] font-black text-[var(--color-tertiary)] uppercase tracking-widest bg-[var(--color-tertiary)]/10 px-3 py-1 rounded-full border border-[var(--color-tertiary)]/20">
-                      Multi-Source Intel
-                    </span>
                   </div>
                   
                   <div className="flex flex-col gap-6">

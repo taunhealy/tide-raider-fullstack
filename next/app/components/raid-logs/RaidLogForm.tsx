@@ -95,9 +95,23 @@ export function RaidLogForm({
       enabled: needsHookFetch,
     });
 
-  // Priority: prop > context > hook
   const beaches = beachesProp || beachesFromContext || beachesFromHook || [];
   const isBeachesLoading = needsHookFetch && isBeachesLoadingFromHook;
+
+  // Debug: Log overall loading state
+  useEffect(() => {
+    if (isOpen) {
+      console.log("[RaidLogForm] Rendering state:", {
+        isAuthLoading,
+        isBeachesLoading,
+        needsHookFetch,
+        beachesCount: beaches.length,
+        hasUser: !!user,
+        authStatus
+      });
+    }
+  }, [isOpen, isAuthLoading, isBeachesLoading, beaches.length, user, authStatus, needsHookFetch]);
+
   const [selectedDate, setSelectedDate] = useState<string>(
     entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
   );
@@ -860,15 +874,18 @@ export function RaidLogForm({
     };
   }, [user, videoPreview]);
 
+  // Relaxed loading condition: if we have a user from props/session, don't block for auth
+  const shouldBlock = (isAuthLoading && !user && !userEmail) || (isBeachesLoading && beaches.length === 0);
+
   if (!isOpen) return null;
 
-  // If we have user data, proceed immediately (don't wait for status to update)
-  if (isAuthLoading || isBeachesLoading) {
+  if (shouldBlock) {
     // Show loader while auth or beaches are loading
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white p-6 rounded-lg">
-          <p className="font-primary">Loading...</p>
+        <div className="bg-white p-6 rounded-lg text-center">
+          <p className="font-primary font-semibold mb-2 text-[var(--color-primary)]">Loading Discovery Data...</p>
+          <p className="text-xs text-gray-500 font-primary">Fetching latest beach coordinates</p>
         </div>
       </div>
     );

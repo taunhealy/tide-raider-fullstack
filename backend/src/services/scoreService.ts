@@ -364,8 +364,18 @@ export class ScoreService {
         : {}),
       ...Object.entries(filters).reduce(
         (acc: Prisma.BeachWhereInput, [key, value]) => {
-          if (value) {
-            if (Array.isArray(value)) {
+          if (value !== undefined) {
+            if (key === "isHiddenGem") {
+              if (value === true) {
+                (acc as any).isHiddenGem = true;
+              } else {
+                (acc as any).AND = [
+                  {
+                    OR: [{ isHiddenGem: false }, { isHiddenGem: null }],
+                  },
+                ];
+              }
+            } else if (Array.isArray(value)) {
               // Handle enum case conversion for specific fields
               if (
                 [
@@ -379,7 +389,7 @@ export class ScoreService {
               } else {
                 (acc as any)[key] = { in: value };
               }
-            } else if (typeof value === "boolean") {
+            } else if (typeof value === "boolean" && key !== "isHiddenGem") {
               (acc as any)[key] = value;
             }
           }

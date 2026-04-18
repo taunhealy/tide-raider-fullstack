@@ -31,17 +31,82 @@ interface BeachContainerProps {
   initialData: BeachInitialData | null;
 }
 
+// Distance helper using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter, selectRegion } = useBeachFilters();
+  
+  // Sorting and Location state - Proximity active by default (100km)
+  const [maxDistance, setMaxDistance] = useState<number | null>(100);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
   const { data, isLoading, isFetching } = useFilteredBeaches({
-    initialData,
+    initialData: maxDistance !== null ? null : initialData, // Don't use initial regional data in proximity mode
     enabled: true,
+    ignoreRegion: maxDistance !== null
   });
   const { data: authData } = useBackendAuth();
   const user = authData?.user;
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const hasAutoRedirected = useRef(false);
+
+  // Request location on mount for proximity filtering
+  useEffect(() => {
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error("Error getting location on mount:", error);
+          setIsLocating(false);
+          // If proximity was active by default but location failed, we might want to disable it
+          // OR just leave it as 100 but distance calculations won't happen.
+        }
+      );
+    }
+  }, []);
+
+  const handleToggleProximityMode = () => {
+    if (userLocation) {
+      setMaxDistance(maxDistance === null ? 100 : null);
+    } else {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setMaxDistance(100); // Default to 100km when enabled
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setIsLocating(false);
+          alert("Could not get your location. Please check browser permissions.");
+        }
+      );
+    }
+  };
 
   // Auto-redirect to last selected region if no regionId in URL
   const { data: recentSearches } = useQuery({
@@ -155,22 +220,41 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   };
 
   const sortedBeaches = useMemo(() => {
-    return (
-      beaches?.sort((a: Beach, b: Beach) => {
-        const scoreA = beachScores[a.id]?.score ?? 0;
-        const scoreB = beachScores[b.id]?.score ?? 0;
-        const hasScoreA = a.id in beachScores;
-        const hasScoreB = b.id in beachScores;
+    if (!beaches) return [];
+    
+    let processedBeaches = beaches.map(b => {
+      const score = beachScores[b.id]?.score ?? 0;
+      let distance = null;
+      if (userLocation && b.coordinates?.lat && b.coordinates?.lng) {
+        distance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          b.coordinates.lat,
+          b.coordinates.lng
+        );
+      }
+      return { ...b, score, distance };
+    });
 
-        // Beaches with scores come before beaches without scores
-        if (hasScoreA && !hasScoreB) return -1;
-        if (!hasScoreA && hasScoreB) return 1;
+    // Apply distance filter if active
+    if (maxDistance !== null && userLocation) {
+      processedBeaches = processedBeaches.filter(b => 
+        b.distance !== null && b.distance <= maxDistance
+      );
+    }
 
-        // Both have scores or both don't - sort by score descending
-        return scoreB - scoreA;
-      }) ?? []
-    );
-  }, [beaches, beachScores]);
+    return processedBeaches.sort((a, b) => {
+      const hasScoreA = a.id in beachScores;
+      const hasScoreB = b.id in beachScores;
+
+      // Beaches with scores come before beaches without scores
+      if (hasScoreA && !hasScoreB) return -1;
+      if (!hasScoreA && hasScoreB) return 1;
+
+      // Both have scores or both don't - sort by score descending
+      return b.score - a.score;
+    });
+  }, [beaches, beachScores, maxDistance, userLocation]);
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedBeaches.length / itemsPerPage);
@@ -197,7 +281,11 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
   }, [totalPages, currentPage]);
 
-  // Reset to first page if current page is out of bounds
+  // Reset to first page if current page is out of bounds or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, maxDistance]);
+
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
@@ -242,6 +330,11 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               currentRegion={filters.regionId || ""}
               beaches={beaches}
               availableDates={data?.availableDates || []}
+              maxDistance={maxDistance}
+              onMaxDistanceChange={setMaxDistance}
+              onToggleProximity={handleToggleProximityMode}
+              isLocating={isLocating}
+              isAuthenticated={!!user}
             />
 
             {/* Subtle background refresh indicator */}
@@ -288,6 +381,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                         score={scoreValue} // Pass null if no score exists, or the numeric score
                         forecastData={beachForecastData} // Pass the regional forecast
                         isLoading={!hasScore && isLoading && !data} // Only show loading if no score AND no data at all
+                        distance={(beach as any).distance}
                       />
                     );
                   })}

@@ -33,17 +33,21 @@ function RegionalHighScoresContent({
   selectedRegion,
   onBeachClick,
 }: RegionalHighScoresProps) {
+  const [mounted, setMounted] = useState(false);
   // Use date strings for state: "YYYY-MM-DD"
   const [selectedDate, setSelectedDate] = useState<string>("");
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Calculate the 3 dates for tabs
-  // Recalculate daily to ensure "Today" is always current
   const dateTabs = useMemo(() => {
     const today = new Date();
     const tomorrow = addDays(today, 1);
     const dayAfter = addDays(today, 2);
 
-    const tabs = [
+    return [
       { id: format(today, "yyyy-MM-dd"), label: "Today" },
       { id: format(tomorrow, "yyyy-MM-dd"), label: "Tomorrow" },
       {
@@ -51,18 +55,14 @@ function RegionalHighScoresContent({
         label: format(dayAfter, "EEE, MMM d"),
       },
     ];
-
-    console.log("[RegionalHighScores] Date tabs calculated:", tabs);
-
-    return tabs;
-  }, []); // Empty deps is fine - we want it to recalculate on mount, and selectedDate changes will trigger new queries
+  }, []);
 
   // Initialize selectedDate with today once mounted
   useEffect(() => {
-    if (typeof window !== "undefined" && !selectedDate) {
+    if (mounted && !selectedDate && dateTabs.length > 0) {
       setSelectedDate(dateTabs[0].id);
     }
-  }, [dateTabs, selectedDate]);
+  }, [mounted, dateTabs, selectedDate]);
 
   // Debug: Log when selectedDate changes
   useEffect(() => {
@@ -221,8 +221,8 @@ function RegionalHighScoresContent({
   }, [data, selectedDate, apiBeaches, selectedRegion]);
 
   // Handle initial loading state - show skeleton while data is being fetched
-  // Show loading if query is loading OR if we don't have data yet (even if not loading, might be initial mount)
-  if (isLoading || (isFetching && !data)) {
+  // Show loading if not mounted (hydration safety), query is loading OR if we don't have data yet
+  if (!mounted || isLoading || (isFetching && !data)) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
         <div className="mb-4">

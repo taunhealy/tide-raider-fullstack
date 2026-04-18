@@ -27,6 +27,7 @@ async function apiRequest<T>(
     : endpoint;
 
   const url = `${API_BASE}${cleanEndpoint}`;
+  console.log(`[apiRequest] ${options.method || "GET"} ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -200,6 +201,20 @@ export const api = {
     });
     const query = queryParams.toString();
     return apiRequest<any>(`/api/filtered-beaches${query ? `?${query}` : ""}`);
+  },
+
+  getGlobalBeaches: async (params?: any) => {
+    const queryParams = new URLSearchParams();
+    Object.keys(params || {}).forEach((key) => {
+      const value = params[key];
+      if (value !== undefined && value !== null && value !== "")
+        queryParams.append(
+          key,
+          Array.isArray(value) ? value.join(",") : value.toString()
+        );
+    });
+    const query = queryParams.toString();
+    return apiRequest<any>(`/api/global-beaches${query ? `?${query}` : ""}`);
   },
 
   // Regions — NOW GOES THROUGH BACKEND (fixed!)

@@ -531,30 +531,65 @@ router.get(
       const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
       const endDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
-      const scores = await prisma.beachDailyScore.findMany({
-        where: {
-          beachId: beachId as string,
-          date: {
-            gte: targetDate,
-            lte: endDate,
+      const getScores = async () => {
+        return prisma.beachDailyScore.findMany({
+          where: {
+            beachId: beachId as string,
+            date: {
+              gte: targetDate,
+              lte: endDate,
+            },
           },
-        },
-        select: {
-          source: true,
-          score: true,
-          starRating: true,
-          conditions: true,
-        },
-        orderBy: {
-          source: "asc",
-        },
-      });
+          select: {
+            source: true,
+            score: true,
+            starRating: true,
+            conditions: true,
+          },
+          orderBy: {
+            source: "asc",
+          },
+        });
+      };
+
+      let scores = await getScores();
+
+      // Fallback: If no scores exist but forecasts DO exist, calculate them on the fly
+      if (scores.length === 0) {
+        const beach = await prisma.beach.findUnique({
+          where: { id: beachId as string },
+          select: { regionId: true }
+        });
+
+        if (beach) {
+          const forecasts = await prisma.forecast.findMany({
+            where: {
+              regionId: beach.regionId,
+              date: targetDate
+            }
+          });
+
+          if (forecasts.length > 0) {
+            console.log(`[beach-ratings/beach-scores] Auto-calculating scores for ${beachId} on ${date}`);
+            for (const forecast of forecasts) {
+              try {
+                await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
+              } catch (calcErr) {
+                console.error(`[beach-ratings/beach-scores] Failed calc for ${forecast.source}:`, calcErr);
+              }
+            }
+            // Re-fetch scores
+            scores = await getScores();
+          }
+        }
+      }
 
       // Map source names to display names
       const sourceMap: Record<string, string> = {
         WINDFINDER: "Source A",
         WINDGURU: "Source B",
         WINDY: "Source C",
+        OPENMETEO_ARCHIVE: "Archive Data"
       };
 
       const formattedScores = scores.map((score) => ({

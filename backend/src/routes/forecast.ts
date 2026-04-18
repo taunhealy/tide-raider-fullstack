@@ -105,24 +105,20 @@ router.get(
 
       const dateStr = targetDate.toISOString().split("T")[0];
 
-      // Try exact match only - no fallback to prevent returning wrong date data
+      // Try to find existing forecast - Use findFirst for better compatibility with Date objects
       let forecast;
       try {
-        forecast = await prisma.forecast.findUnique({
+        console.log(`[forecast] 🔍 Querying database for: regionId=${resolvedRegionId}, date=${dateStr}, source=${sourceParam}`);
+        forecast = await prisma.forecast.findFirst({
           where: {
-            date_regionId_source: {
-              date: targetDate,
-              regionId: resolvedRegionId,
-              source: sourceParam,
-            },
+            date: targetDate,
+            regionId: resolvedRegionId,
+            source: sourceParam,
           },
         });
       } catch (prismaError: any) {
         console.error("[forecast] Prisma query error:", {
-          error: prismaError,
-          message: prismaError?.message,
-          code: prismaError?.code,
-          meta: prismaError?.meta,
+          error: prismaError?.message,
           date: dateStr,
           regionId: resolvedRegionId,
           source: sourceParam,
@@ -130,10 +126,7 @@ router.get(
         return res.status(500).json({
           error: "Database query failed",
           message: "Failed to query forecast data from database",
-          details:
-            process.env.NODE_ENV === "development"
-              ? prismaError?.message
-              : undefined,
+          details: prismaError?.message
         });
       }
 
@@ -184,13 +177,11 @@ router.get(
               );
 
               // Query the forecast again after scraping
-              forecast = await prisma.forecast.findUnique({
+              forecast = await prisma.forecast.findFirst({
                 where: {
-                  date_regionId_source: {
-                    date: targetDate,
-                    regionId: resolvedRegionId,
-                    source: sourceParam,
-                  },
+                  date: targetDate,
+                  regionId: resolvedRegionId,
+                  source: sourceParam,
                 },
               });
 

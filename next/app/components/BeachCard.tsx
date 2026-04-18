@@ -38,6 +38,7 @@ interface BeachCardProps {
   onOpenModal?: (beachName: string) => void;
   onCloseModal?: () => void;
   isLoading: boolean;
+  distance?: number | null;
 }
 
 const ConditionsSkeleton = () => (
@@ -85,6 +86,7 @@ const BeachCard = memo(function BeachCard({
   score,
   forecastData,
   isLoading,
+  distance,
 }: BeachCardProps) {
   // Add enhanced debug logging
   console.log(`Rendering beach ${beach.name} with data:`, {
@@ -281,12 +283,26 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      {beach.location && (
+                        <>
+                          <span className="font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500">
+                            {beach.location}
+                          </span>
+                          <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                        </>
+                      )}
+                      {distance !== undefined && distance !== null && (
+                        <>
+                          <div className="flex items-center gap-1 px-1.5 py-0.5 bg-brand-3/5 rounded-md border border-brand-3/10">
+                            <span className="text-[10px] font-bold text-brand-3">
+                              {distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(1)}km`}
+                            </span>
+                          </div>
+                          <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                        </>
+                      )}
                       <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
                         {formatRegionName(beach.region?.name, beach.regionId)}
-                      </span>
-                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
-                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {formatWaveType(beach.waveType)}
                       </span>
                     </h6>
                   </div>
@@ -501,6 +517,13 @@ const BeachCard = memo(function BeachCard({
                   </ErrorBoundary>
                 </div>
               )}
+
+              {/* Wave Type Indicator - Bottom Right */}
+              <div className="absolute bottom-3 right-4 md:bottom-4 md:right-6">
+                <span className="font-primary text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 bg-gray-50/80 px-2 py-1 rounded-md border border-gray-100/50 backdrop-blur-[2px]">
+                  {formatWaveType(beach.waveType)}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="space-y-3 md:space-y-4">
@@ -531,12 +554,16 @@ const BeachCard = memo(function BeachCard({
                       )}
                     </h4>
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      {beach.location && (
+                        <>
+                          <span className="font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500">
+                            {beach.location}
+                          </span>
+                          <span className="opacity-20 text-[8px] mt-0.5">•</span>
+                        </>
+                      )}
                       <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
                         {formatRegionName(beach.region?.name, beach.regionId)}
-                      </span>
-                      <span className="opacity-20 text-[8px] mt-0.5">•</span>
-                      <span className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-                        {formatWaveType(beach.waveType)}
                       </span>
                     </h6>
                   </div>
@@ -770,6 +797,13 @@ const BeachCard = memo(function BeachCard({
                   </ErrorBoundary>
                 </div>
               )}
+
+              {/* Wave Type Indicator - Bottom Right */}
+              <div className="absolute bottom-3 right-12 md:bottom-4 md:right-14">
+                <span className="font-primary text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 bg-gray-50/80 px-2 py-1 rounded-md border border-gray-100/50 backdrop-blur-[2px]">
+                  {formatWaveType(beach.waveType)}
+                </span>
+              </div>
             </div>
           )}
         </div>

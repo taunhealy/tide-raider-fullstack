@@ -11,8 +11,8 @@ export function useBeaches(options?: { enabled?: boolean }) {
       return data.beaches;
     },
     enabled: options?.enabled !== false, // Default to true if not specified
-    staleTime: 10 * 60 * 1000, // 10 minutes - beaches don't change often
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours - beaches don't change often
+    gcTime: 1000 * 60 * 60 * 48, // 48 hours - keep in cache longer
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnMount: false, // Don't refetch on mount if data is fresh
     retry: 1, // Only retry once on failure

@@ -87,6 +87,7 @@ export default function GradientButton({
     <button
       className={baseStyles}
       disabled={disabled}
+      suppressHydrationWarning
       {...props}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}

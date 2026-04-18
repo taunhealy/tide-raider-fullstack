@@ -245,6 +245,23 @@ export default function NewRaidLogPage() {
   // Removed timeout error - let the fetch handle timeouts naturally
   // If fetch fails, it will set status to "unauthenticated" and redirect to login
 
+  // Add verbose diagnostic logging for stuck states
+  useEffect(() => {
+    if (authStatus === "loading") {
+      const timer = setInterval(() => {
+        const loadingDuration = loadingStartTimeRef.current ? Date.now() - loadingStartTimeRef.current : 0;
+        console.log("[NewRaidLogPage] 🕒 Still loading auth...", {
+          duration: `${Math.round(loadingDuration / 1000)}s`,
+          authStatus,
+          hasSession: !!session,
+          isProcessingToken,
+          hasUser: !!session?.user
+        });
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [authStatus, session, isProcessingToken]);
+
   // CRITICAL: If we have session data, proceed immediately (don't wait for status to update)
   // This check MUST come before any loading/error checks to prevent false errors
   // This prevents showing "Backend Not Available" when backend is clearly working

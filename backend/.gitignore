@@ -8,3 +8,5 @@ dist/
 *.pem
 
 .env
+# Instagram session (contains auth tokens — never commit)
+.ig-session.json

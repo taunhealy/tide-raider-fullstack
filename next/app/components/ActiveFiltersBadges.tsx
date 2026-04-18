@@ -4,12 +4,11 @@ import { X } from "lucide-react";
 import type { FilterConfig } from "@/app/types/raidlogs";
 import { useActiveFilters } from "@/app/hooks/useActiveFilters";
 import { useQuery } from "@tanstack/react-query";
-import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import type { Beach } from "@/app/types/beaches";
-
 interface ActiveFilterBadgesProps {
   filters: FilterConfig;
   onFilterChange: (filters: Partial<FilterConfig>) => void;
+  beaches?: Beach[];
 }
 
 // Using your existing CSS variables with hover states
@@ -21,6 +20,7 @@ const buttonClassName =
 export default function ActiveFiltersBadges({
   filters,
   onFilterChange,
+  beaches = [],
 }: ActiveFilterBadgesProps) {
   console.log("ActiveFilterBadges rendering");
 
@@ -31,12 +31,6 @@ export default function ActiveFiltersBadges({
     removeCountryFilter,
     removeRatingFilter,
   } = useActiveFilters(filters, onFilterChange);
-
-  const { data: filteredData } = useFilteredBeaches({
-    initialData: null,
-    enabled: true,
-  });
-  const beaches = filteredData?.beaches || [];
 
   const { data: regionCountsData } = useQuery({
     queryKey: ["region-counts"],

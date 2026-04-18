@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { fetchAllRegionsData } from "../services/regionDataService";
 import { processAllUserAlerts } from "../services/alertProcessor";
 import { prisma } from "../lib/prisma";
+import { getTopBeachesForStory, generateStoryImage } from "../services/storyImageService";
+import { InstagramService } from "../services/instagramService";
 
 const router = Router();
 
@@ -82,31 +84,44 @@ router.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// POST /api/cron/run-now - Manually trigger cron job (for testing/admin)
+// POST /api/cron/run-now - Trigger cron job (called by Google Cloud Scheduler)
+// IMPORTANT: Responds immediately with 202 and runs the job in the background.
+// This prevents Cloud Run's request timeout (60s default) from causing 503s
+// when the scraping job takes longer than the timeout window.
 router.post("/run-now", async (req: Request, res: Response) => {
-  try {
-    // Verify cron secret to prevent unauthorized access
-    const cronSecret = req.headers["x-cron-secret"];
-    if (cronSecret !== process.env.CRON_SECRET) {
-      console.warn("Unauthorized cron run-now attempt - invalid secret");
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const { getCronScheduler } = await import("../services/cronScheduler");
-    const scheduler = getCronScheduler();
-    const result = await scheduler.runNow();
-
-    return res.json({
-      message: "Cron job executed successfully",
-      ...result,
-    });
-  } catch (error) {
-    console.error("❌ Error running cron job:", error);
-    return res.status(500).json({
-      error: "Failed to run cron job",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+  // Verify cron secret to prevent unauthorized access
+  const cronSecret = req.headers["x-cron-secret"];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    console.warn("Unauthorized cron run-now attempt - invalid secret");
+    return res.status(401).json({ error: "Unauthorized" });
   }
+
+  const jobId = `cron-${Date.now()}`;
+  console.log(`[${jobId}] ✅ Cron trigger received. Dispatching background job...`);
+
+  // Respond immediately so Cloud Scheduler sees 2xx and stops retrying
+  res.status(202).json({
+    message: "Cron job accepted and running in background",
+    jobId,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Run the heavy work AFTER the response has been sent
+  setImmediate(async () => {
+    try {
+      console.log(`[${jobId}] 🚀 Background cron job starting...`);
+      const { getCronScheduler } = await import("../services/cronScheduler");
+      const scheduler = getCronScheduler();
+      const result = await scheduler.runNow();
+      console.log(`[${jobId}] ✅ Background cron job completed:`, {
+        duration: result.duration,
+        regionsSucceeded: result.regionResults?.regionsSucceeded,
+        regionsFailed: result.regionResults?.regionsFailed,
+      });
+    } catch (error) {
+      console.error(`[${jobId}] ❌ Background cron job failed:`, error);
+    }
+  });
 });
 
 // POST /api/cron/run-weekly - Trigger full weekly scrape
@@ -243,6 +258,94 @@ router.post("/process-payouts", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("❌ Payout Job Failed:", error);
     res.status(500).json({ error: "Payout failed" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/cron/post-ig-story
+// Triggered by a separate Google Cloud Scheduler job after the main cron.
+// Generates a daily story image for a region and posts it to Instagram.
+// Responds immediately with 202 — all work runs in background.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/post-ig-story", async (req: Request, res: Response) => {
+  const cronSecret = req.headers["x-cron-secret"];
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // regionId defaults to western-cape; caller can override via body
+  const regionId = (req.body?.regionId as string) || "western-cape";
+  const jobId = `ig-story-${Date.now()}`;
+
+  console.log(`[${jobId}] 📸 IG story trigger received for region: ${regionId}`);
+
+  // Respond immediately so Cloud Scheduler won't time out
+  res.status(202).json({
+    message: "Instagram story job accepted and running in background",
+    jobId,
+    regionId,
+    timestamp: new Date().toISOString(),
+  });
+
+  setImmediate(async () => {
+    try {
+      console.log(`[${jobId}] 🔍 Fetching top beaches for ${regionId}...`);
+      const storyData = await getTopBeachesForStory(regionId);
+
+      if (!storyData) {
+        console.warn(`[${jobId}] ⚠️ No story data available for ${regionId}, skipping post`);
+        return;
+      }
+
+      console.log(`[${jobId}] 🎨 Generating story image...`);
+      const imageBuffer = await generateStoryImage(storyData);
+
+      console.log(`[${jobId}] 🚀 Posting to Instagram...`);
+      await InstagramService.postStory(imageBuffer);
+
+      console.log(`[${jobId}] ✅ Instagram story posted successfully for ${regionId}`);
+    } catch (error) {
+      console.error(`[${jobId}] ❌ Instagram story job failed:`, error);
+
+      // If login failed due to bad session, clear it so next run fresh-logins
+      if (error instanceof Error && error.message.includes("session")) {
+        InstagramService.clearSession();
+      }
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/cron/preview-story?regionId=western-cape
+// Returns the story PNG directly so you can preview it in the browser.
+// No Instagram posting — purely for visual QA.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/preview-story", async (req: Request, res: Response) => {
+  // Only allow in non-production or with the cron secret for safety
+  const cronSecret = req.headers["x-cron-secret"];
+  const isDevMode = process.env.NODE_ENV !== "production";
+  if (!isDevMode && cronSecret !== process.env.CRON_SECRET) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  const regionId = (req.query.regionId as string) || "western-cape";
+
+  try {
+    const storyData = await getTopBeachesForStory(regionId);
+    if (!storyData) {
+      return res.status(404).json({ error: `No score data found for ${regionId} today` });
+    }
+
+    const imageBuffer = await generateStoryImage(storyData);
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", `inline; filename="story-${regionId}.png"`);
+    return res.send(imageBuffer);
+  } catch (error) {
+    console.error("[preview-story] ❌ Error:", error);
+    return res.status(500).json({
+      error: "Failed to generate preview",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 

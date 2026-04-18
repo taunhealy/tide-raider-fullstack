@@ -8,6 +8,7 @@ import api from "../lib/api-client";
 interface UseFilteredBeachesProps {
   initialData: BeachInitialData | null;
   enabled?: boolean;
+  ignoreRegion?: boolean;
 }
 
 // Update the response type to match BeachInitialData
@@ -16,6 +17,7 @@ interface UseFilteredBeachesResponse extends BeachInitialData {}
 export function useFilteredBeaches({
   initialData,
   enabled = true,
+  ignoreRegion = false,
 }: UseFilteredBeachesProps) {
   const { filters } = useBeachFilters();
   const queryClient = useQueryClient();
@@ -99,9 +101,10 @@ export function useFilteredBeaches({
       isFoiling: filters.isFoiling,
     };
 
-    return ["filteredBeaches", filterKey, selectedSource];
+    return ["filteredBeaches", filterKey, selectedSource, ignoreRegion];
   }, [
     filters.regionId,
+    ignoreRegion,
     filters.searchQuery,
     filters.optimalTide,
     filters.waveTypes,
@@ -182,7 +185,7 @@ export function useFilteredBeaches({
     },
     initialData: shouldUseInitialData,
     enabled: enabled && !!filters.regionId,
-    staleTime: 30 * 1000, // Data is fresh for 30 seconds - reduces unnecessary refetches
+    staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
     refetchOnMount: false, // Use cached data if available - faster loading
     refetchOnWindowFocus: false, // Don't refetch on window focus

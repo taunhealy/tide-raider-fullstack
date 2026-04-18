@@ -56,6 +56,7 @@
     "fluent-ffmpeg": "^2.1.3",
     "google-ads-api": "^17.1.0-rest-beta",
     "https-proxy-agent": "^7.0.6",
+    "instagram-private-api": "^1.46.1",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "messagebird": "^4.0.1",

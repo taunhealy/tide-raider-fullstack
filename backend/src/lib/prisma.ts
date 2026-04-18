@@ -29,7 +29,8 @@ function getPrisma() {
 
       if (!url.searchParams.has("connection_limit")) {
         url.searchParams.set("connection_limit", "10");
-        url.searchParams.set("pool_timeout", "10");
+        url.searchParams.set("pool_timeout", "30"); // Increased for Supabase stability
+        url.searchParams.set("connect_timeout", "30"); // Mitigates P1001 on slow networks
       }
 
       optimizedDatabaseUrl = url.toString();

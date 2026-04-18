@@ -55,6 +55,7 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
       <button
         onClick={handleLogin}
         disabled={isLoading}
+        suppressHydrationWarning
         className="w-fit mx-auto h-12 relative px-6 py-2.5 rounded-xl transition-all duration-300 border flex items-center gap-3 bg-white border-gray-100 text-gray-900 hover:bg-gray-50 group/login disabled:opacity-50 disabled:pointer-events-none"
       >
         {isLoading ? (

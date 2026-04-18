@@ -1,4 +1,5 @@
-import { MapPin } from "lucide-react";
+import { Map } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 interface GoogleMapsButtonProps {
   coordinates?: {
@@ -37,11 +38,13 @@ export default function GoogleMapsButton({
       href={googleMapsUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-tertiary)] ${className}`}
+      className={cn(
+        "flex items-center justify-center p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500",
+        className
+      )}
       title={`Open ${name} in Google Maps`}
     >
-      <MapPin className="w-4 h-4" />
-      <span>Map</span>
+      <Map className="w-4 h-4 md:w-5 md:h-5" />
     </a>
   );
 }

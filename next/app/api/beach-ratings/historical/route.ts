@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     );
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout (allow for local latency)
 
     let response;
     try {

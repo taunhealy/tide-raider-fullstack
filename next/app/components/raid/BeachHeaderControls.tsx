@@ -18,6 +18,8 @@ import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
 import LocationFilter from "../LocationFilter";
 import { useRegions } from "@/app/hooks/useRegions";
+import { cn } from "@/app/lib/utils";
+import { Slider } from "@/app/components/ui/slider";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -25,7 +27,81 @@ interface BeachHeaderControlsProps {
   currentRegion: string;
   beaches: Beach[];
   availableDates: string[];
+  maxDistance: number | null;
+  onMaxDistanceChange: (val: number | null) => void;
+  onToggleProximity: () => void;
+  isLocating: boolean;
+  isAuthenticated: boolean;
 }
+
+const ProximityFilterRow = ({ 
+  maxDistance, 
+  onChange, 
+  onToggle,
+  isLocating 
+}: { 
+  maxDistance: number | null; 
+  onChange: (val: number) => void;
+  onToggle: () => void;
+  isLocating: boolean;
+}) => (
+  <div className="mt-4 pt-4 border-t border-gray-100/60 flex flex-col gap-3">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <h5 className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+          Proximity
+        </h5>
+        {maxDistance !== null && (
+          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-3/10 text-brand-3 rounded-full">
+             <input
+              type="number"
+              value={maxDistance}
+              onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+              className="w-10 bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 appearance-none"
+              min={0}
+              max={100}
+            />
+            <span className="text-[10px] font-bold">km Radius</span>
+          </div>
+        )}
+      </div>
+      
+      <button
+        onClick={onToggle}
+        disabled={isLocating}
+        className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all font-primary text-[9px] font-black uppercase tracking-wider border",
+          maxDistance !== null 
+            ? "bg-brand-3 border-brand-3 text-white shadow-sm" 
+            : "bg-white border-gray-200 text-gray-400 hover:border-brand-3 hover:text-brand-3"
+        )}
+      >
+        <div className={cn(
+          "w-1.5 h-1.5 rounded-full",
+          maxDistance !== null ? "bg-white animate-pulse" : "bg-gray-300"
+        )} />
+        {isLocating ? "Locating..." : maxDistance !== null ? "Enabled" : "Enable Filter"}
+      </button>
+    </div>
+    
+    {maxDistance !== null && (
+      <div className="flex items-center gap-6 px-1">
+        <Slider
+          value={[Math.min(maxDistance, 100)]}
+          max={100}
+          min={5}
+          step={5}
+          onValueChange={(vals) => onChange(vals[0])}
+          className="flex-1"
+        />
+        <div className="flex flex-col items-end min-w-[40px]">
+          <span className="text-[12px] font-bold text-black">{maxDistance > 100 ? "100+" : `${maxDistance}km`}</span>
+          <span className="text-[8px] font-black uppercase tracking-tighter text-gray-400">MAX</span>
+        </div>
+      </div>
+    )}
+  </div>
+);
 
 export default function BeachHeaderControls({
   onSearch,
@@ -33,6 +109,11 @@ export default function BeachHeaderControls({
   currentRegion,
   beaches,
   availableDates,
+  maxDistance,
+  onMaxDistanceChange,
+  onToggleProximity,
+  isLocating,
+  isAuthenticated,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -41,6 +122,11 @@ export default function BeachHeaderControls({
   const searchParams = useSearchParams();
   const { data: regionCountsData } = useRegionCounts();
   const { filters, updateFilter } = useBeachFilters();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Get selected date from URL params or default to today
   const selectedDate = searchParams.get("forecastDate");
@@ -53,11 +139,14 @@ export default function BeachHeaderControls({
   const [hasDefaulted, setHasDefaulted] = useState(false);
   
   useEffect(() => {
-    if (!selectedDate && availableDates.length > 0 && !hasDefaulted) {
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split("T")[0];
-      
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
+
+    // Force Today if no date in URL OR if the date in URL is in the past
+    const isPastDate = selectedDate && selectedDate < todayStr;
+
+    if ((!selectedDate || isPastDate) && availableDates.length > 0 && !hasDefaulted) {
       if (availableDates.includes(todayStr)) {
         handleDateSelect(todayStr);
       } else {
@@ -110,7 +199,7 @@ export default function BeachHeaderControls({
                       className="lg:hidden flex items-center gap-2 bg-white"
                       onClick={() => setIsFilterOpen(true)}
                     >
-                      <Filter className="w-4 h-4" />
+                      <Filter xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" />
                       Filters
                     </Button>
 
@@ -141,13 +230,29 @@ export default function BeachHeaderControls({
                       active={!!filters.isHiddenGem}
                       size="sm"
                       onClick={() => {
+                        if (!isAuthenticated) {
+                          // Could trigger login modal here, but for now simple alert
+                          alert("Sign in to discover Hidden Gems");
+                          return;
+                        }
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");
                       }}
+                      className={cn(!isAuthenticated && "opacity-50 grayscale cursor-not-allowed")}
+                      title={!isAuthenticated ? "Sign in to view Hidden Gems" : "Show community hidden gems"}
                     >
                       Hidden Gems
                     </HiddenGemsButton>
                   </div>
+
+                  {isMounted && (
+                    <ProximityFilterRow 
+                      maxDistance={maxDistance}
+                      onChange={onMaxDistanceChange}
+                      onToggle={onToggleProximity}
+                      isLocating={isLocating}
+                    />
+                  )}
                 </div>
 
                 {/* Mobile Forecast Widget - Below Region Selection */}

@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/app/components/ui/Button";
 import dynamic from "next/dynamic";
 
 // Dynamic import for TideMap to avoid SSR issues if necessary
@@ -582,15 +581,11 @@ export default function HeroSection({ data }: HeroProps) {
 
             {/* Learn More Button - Gaming style */}
             <div className="mt-3 sm:mt-4 md:mt-6 lg:mt-8 text-center">
-              <Link href={productFeatures[currentFeature].link}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="font-primary text-xs sm:text-sm md:text-base bg-gradient-to-r from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/10 border-[var(--color-tertiary)] text-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/30 transition-all duration-300 uppercase tracking-wider font-semibold px-3 sm:px-4 py-1.5 sm:py-2"
-                  suppressHydrationWarning
-                >
-                  Explore
-                </Button>
+              <Link 
+                href={productFeatures[currentFeature].link}
+                className="inline-flex items-center justify-center font-primary text-xs sm:text-sm md:text-base bg-gradient-to-r from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)] text-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/30 transition-all duration-300 uppercase tracking-wider font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-md"
+              >
+                Explore
               </Link>
             </div>
           </motion.div>
@@ -699,15 +694,17 @@ export default function HeroSection({ data }: HeroProps) {
             </p>
             
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-              <Link href="/raid">
-                <button className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95">
-                  Launch Raid
-                </button>
+              <Link 
+                href="/raid"
+                className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95 transform-gpu flex items-center justify-center min-w-[140px]"
+              >
+                Launch Raid
               </Link>
-              <Link href="/map">
-                <button className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-brand-3 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md">
-                  Explore Map
-                </button>
+              <Link 
+                href="/map"
+                className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-brand-3 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md transform-gpu flex items-center justify-center min-w-[140px]"
+              >
+                Explore Map
               </Link>
             </div>
           </div>

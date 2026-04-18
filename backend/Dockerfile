@@ -18,6 +18,7 @@ WORKDIR /app
 # These layers change infrequently
 COPY package*.json requirements.txt ./
 COPY prisma ./prisma/
+COPY scripts ./scripts/
 
 # Install Node dependencies skipping heavy binaries
 RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --legacy-peer-deps
@@ -33,6 +34,8 @@ RUN npx playwright install chromium
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate && npm run build
+# Copy non-TS assets that TSC ignores to dist
+RUN mkdir -p dist/lib/scrapers && cp src/lib/scrapers/*.js dist/lib/scrapers/
 
 # ───── Stage 3: Production Release ─────
 # We use the base again to inherit system deps without re-running apt-get
@@ -50,6 +53,7 @@ COPY --from=base /app/package.json ./package.json
 COPY --from=base /app/prisma ./prisma
 COPY --from=base /app/pw-browsers ./pw-browsers
 COPY --from=base /app/requirements.txt ./requirements.txt
+COPY --from=base /app/scripts ./scripts
 
 # Ensure playwright knows where the browser is
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers \

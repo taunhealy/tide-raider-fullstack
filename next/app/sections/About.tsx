@@ -1,7 +1,6 @@
 // app/sections/About.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/app/components/ui/Button";
 import { urlForImage } from "@/app/lib/urlForImage";
 
 interface AboutProps {
@@ -65,10 +64,11 @@ export default function About({ data }: AboutProps) {
                 Tide Raider is a platform for travelling surfers and surf
                 photographers to explore, share and promote surf travel.
               </p>
-              <Link href="/raid">
-                <Button variant="default">
-                  <span>Start Raiding</span>
-                </Button>
+              <Link 
+                href="/raid"
+                className="inline-flex items-center justify-center rounded-md font-medium duration-300 ease-in-out px-4 py-2 bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 border border-[var(--color-tertiary)]"
+              >
+                <span>Start Raiding</span>
               </Link>
 
               <div className="mt-8 pt-6 border-t border-white backdrop-blur-sm">

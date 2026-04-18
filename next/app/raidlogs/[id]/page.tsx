@@ -136,7 +136,7 @@ export default async function RaidLogPage({
 }) {
   const { id } = await params;
   return (
-    <div className="bg-[var(--color-bg-secondary)] min-h-screen py-8">
+    <div className="bg-gray-950 min-h-screen py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <RaidLogDetails id={id} />
       </div>

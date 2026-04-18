@@ -12,6 +12,8 @@ import { rateLimiter } from "./middleware/rateLimiter";
 const app = express();
 const PORT = parseInt(process.env.PORT || "4001", 10);
 
+console.log(`[server] Backend source RELOADED at ${new Date().toISOString()}`);
+
 // Trust proxy (required for Fly.io and rate limiting)
 // Trust only the first proxy hop (Fly.io's proxy)
 app.set("trust proxy", 1);
