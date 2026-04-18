@@ -30,6 +30,7 @@ class ForecastData(BaseModel):
     swellHeight: float = Field(..., description="Swell/Wave height in meters")
     swellPeriod: float = Field(..., description="Swell period in seconds")
     swellDirection: float = Field(..., description="Swell/Wave direction in degrees (0-360)")
+    trend: Optional[str] = Field(None, description="A 1-sentence summary of how conditions change through the day (e.g. 'Wind picking up in afternoon')")
 
 class DailyForecastResponse(BaseModel):
     forecasts: List[ForecastData]
@@ -70,7 +71,8 @@ async def semantic_scrape(url: str, region_id: str):
             "For each day, identify the morning forecast (around 05:00 to 11:00). "
             "Focus specifically on accurate degrees for swellDirection and windDirection. "
             "If direction is shown as an arrow, use surrounding text (alt tags, titles, or descriptions) to find the degrees (0-360). "
-            "Ensure the output follows the requested JSON schema exactly."
+            "Ensure the output follows the requested JSON schema exactly. "
+            "For the 'trend' field, describe how the wind and swell evolve from morning to evening so we can understand the daily progression."
         )),
         ("user", "Extract the forecast from this content:\n\n{content}")
     ])

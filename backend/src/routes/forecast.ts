@@ -115,19 +115,22 @@ router.get(
             regionId: resolvedRegionId,
             source: sourceParam,
           },
+          select: {
+            id: true,
+            date: true,
+            regionId: true,
+            source: true,
+            windSpeed: true,
+            windDirection: true,
+            swellHeight: true,
+            swellPeriod: true,
+            swellDirection: true,
+          }
         });
       } catch (prismaError: any) {
-        console.error("[forecast] Prisma query error:", {
-          error: prismaError?.message,
-          date: dateStr,
-          regionId: resolvedRegionId,
-          source: sourceParam,
-        });
-        return res.status(500).json({
-          error: "Database query failed",
-          message: "Failed to query forecast data from database",
-          details: prismaError?.message
-        });
+        console.error("[forecast] Prisma query error (possibly missing column):", prismaError?.message);
+        // Fallback: Continue without a forecast object instead of 500-ing
+        forecast = null;
       }
 
       if (!forecast) {

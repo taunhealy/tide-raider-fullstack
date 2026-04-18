@@ -3,7 +3,11 @@ import { getLatestConditions } from "./surfConditionsService";
 import { ScoreService } from "./scoreService";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
 
-export async function fetchAllRegionsData(daysLimit?: number) {
+// Core South Africa regions that are always kept fresh by cron
+const CORE_REGIONS = ["western-cape", "eastern-cape"];
+const STALE_THRESHOLD_MS = 1000 * 60 * 60 * 6; // 6 hours
+
+export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string[]) {
   const results = {
     regionsProcessed: 0,
     regionsSucceeded: 0,
@@ -14,8 +18,11 @@ export async function fetchAllRegionsData(daysLimit?: number) {
   };
 
   try {
-    // Get all regions from database
+    // Get all regions from database or target specific ones
     const regions = await prisma.region.findMany({
+      where: regionIds && regionIds.length > 0
+        ? { id: { in: regionIds } }
+        : undefined,
       select: {
         id: true,
         name: true,
@@ -26,7 +33,7 @@ export async function fetchAllRegionsData(daysLimit?: number) {
 
     // Process regions in parallel chunks to speed up execution
     // Cloud Run has a 5 min timeout, so we need to be efficient
-    const CONCURRENCY = 1; // Process 1 region at a time to prevent memory overload
+    const CONCURRENCY = 5; // Process 5 regions at a time
     const chunks = [];
     
     for (let i = 0; i < regions.length; i += CONCURRENCY) {
@@ -168,6 +175,38 @@ export async function fetchAllRegionsData(daysLimit?: number) {
     return results;
   } catch (error) {
     console.error("Error in fetchAllRegionsData:", error);
-    throw error;
+  }
+}
+
+/**
+ * Ensures data for a specific region is fresh.
+ * If data is missing or older than STALE_THRESHOLD, it triggers a background scrape.
+ */
+export async function ensureRegionDataFresh(regionId: string) {
+  // If it's a core region, we assume cron is handling it
+  if (CORE_REGIONS.includes(regionId)) return;
+
+  try {
+    // 1. Check most recent forecast for this region
+    const latestForecast = await prisma.forecast.findFirst({
+      where: { regionId: regionId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const isStale = !latestForecast || (Date.now() - new Date(latestForecast.createdAt).getTime() > STALE_THRESHOLD_MS);
+
+    if (isStale) {
+      console.log(`📡 [Pulse] Region ${regionId} is stale or missing. Triggering background scrape...`);
+      // Start background scrape - we don't 'await' it to avoid blocking the user request
+      fetchAllRegionsData(3, [regionId]).catch(err => {
+        console.error(`❌ [Pulse] Background scrape failed for ${regionId}:`, err);
+      });
+      return { status: "fetching", message: "Synchronizing satellite data..." };
+    }
+
+    return { status: "fresh" };
+  } catch (err) {
+    console.error(`❌ [Pulse] Failed to verify freshness for ${regionId}:`, err);
+    return { status: "error" };
   }
 }

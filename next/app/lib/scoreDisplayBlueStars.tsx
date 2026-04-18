@@ -39,19 +39,22 @@ export function BlueStarRating({
         const rating = i + 1;
         if (rating <= fullStars) {
           return (
-            <StarIcon key={rating} size={size} className="text-[var(--color-tertiary)]" />
+            <StarIcon key={rating} size={size} className="text-[var(--color-tertiary)] drop-shadow-[0_0_8px_rgba(96,165,250,0.4)] transition-all duration-300" />
           );
         }
         if (hasHalfStar && rating === fullStars + 1) {
           return (
-            <div key={rating} className="opacity-50">
-              <StarIcon size={size} className="text-[var(--color-tertiary)]" />
+            <div key={rating} className="relative transition-all duration-300">
+               <StarIcon size={size} className="text-white/10" />
+               <div className="absolute inset-0 overflow-hidden w-1/2">
+                 <StarIcon size={size} className="text-[var(--color-tertiary)] opacity-70" />
+               </div>
             </div>
           );
         }
         return (
-          <div key={rating} className="opacity-20">
-            <StarIcon size={size} className="text-[var(--color-tertiary)]" />
+          <div key={rating} className="opacity-40 transition-all duration-300">
+            <StarIcon size={size} className="text-white/20" />
           </div>
         );
       })}

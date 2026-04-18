@@ -153,10 +153,11 @@ export async function getLatestConditions(
 
   // Check if forecast has missing or invalid direction data
   // 0 values indicate missing data, values > 360 indicate corrupted data (timestamps)
+  // Check if forecast has missing direction data (sentinel value -1)
   const hasMissingDirectionData =
     existingForecast &&
-    (existingForecast.windDirection === 0 ||
-      existingForecast.swellDirection === 0);
+    (existingForecast.windDirection === -1 ||
+      existingForecast.swellDirection === -1);
   const hasInvalidDirectionData =
     existingForecast &&
     (existingForecast.windDirection > 360 ||
@@ -354,6 +355,7 @@ export async function getLatestConditions(
           swellHeight: scrapedForecast.swellHeight,
           swellPeriod: scrapedForecast.swellPeriod,
           swellDirection: scrapedForecast.swellDirection,
+          trend: scrapedForecast.trend,
         },
         create: {
           id: randomUUID(),
@@ -365,6 +367,7 @@ export async function getLatestConditions(
           swellHeight: scrapedForecast.swellHeight,
           swellPeriod: scrapedForecast.swellPeriod,
           swellDirection: scrapedForecast.swellDirection,
+          trend: scrapedForecast.trend,
         },
       });
 
@@ -394,6 +397,7 @@ export async function getLatestConditions(
           swellDirection: scrapedForecast.swellDirection,
           date: scrapedForecast.date,
           source: source,
+          tide: scrapedForecast.tide,
         });
       } catch (scoreError) {
         console.error(

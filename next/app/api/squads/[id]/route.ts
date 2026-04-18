@@ -10,13 +10,14 @@ const BACKEND_URL = getBackendUrl();
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
-    const response = await fetch(`${BACKEND_URL}/api/squads/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/squads/${id}`, {
       headers: {
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
         Cookie: cookieStore.toString(),
@@ -49,14 +50,15 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/squads/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/squads/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -92,13 +94,14 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const { id } = await params;
+    const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
-    const response = await fetch(`${BACKEND_URL}/api/squads/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/squads/${id}`, {
       method: "DELETE",
       headers: {
         ...(authToken && { Authorization: `Bearer ${authToken}` }),

@@ -101,8 +101,10 @@ export class ScoreService {
         }
       }
 
-      // Wind strength scoring - More critical threshold
-      if (!beach.sheltered) {
+      // Wind strength scoring - Only penalize if NOT optimal wind (onshore/cross)
+      const isOptimalWind = beach.optimalWindDirections.includes(windCardinal);
+      
+      if (!isOptimalWind && !beach.sheltered) {
         if (conditions.windSpeed > 25) {
           score -= 2.5; 
         } else if (conditions.windSpeed > 15) {
@@ -110,6 +112,9 @@ export class ScoreService {
         } else if (conditions.windSpeed > 10) {
           score -= 0.5;
         }
+      } else if (conditions.windSpeed > 35) {
+        // Even if offshore, 35kts+ is too much
+        score -= 2;
       }
 
       // Wave size scoring
@@ -160,8 +165,18 @@ export class ScoreService {
         }
       }
 
-      // Swell period scoring
-      if (
+      // Swell period scoring - Wave type aware
+      const isBeachBreak = parsedBeach.waveType === "BEACH_BREAK";
+      const periodThreshold = isBeachBreak ? 9 : 12;
+
+      if (conditions.swellPeriod < (periodThreshold - 3)) {
+        // Severe penalty for very short swell period
+        score -= 2;
+        deductions.push(`Very short swell period: ${conditions.swellPeriod}s`);
+      } else if (conditions.swellPeriod < periodThreshold) {
+        // Slight penalty for moderate period
+        score -= 0.5;
+      } else if (
         !(
           conditions.swellPeriod >= parsedBeach.idealSwellPeriod.min &&
           conditions.swellPeriod <= parsedBeach.idealSwellPeriod.max
@@ -236,6 +251,7 @@ export class ScoreService {
             swellHeight: forecastData.swellHeight,
             swellDirection: forecastData.swellDirection,
             swellPeriod: forecastData.swellPeriod,
+            tide: (forecastData as any).tide || "",
           },
         };
       });

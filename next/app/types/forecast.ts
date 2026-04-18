@@ -12,6 +12,8 @@ export interface BaseForecastData {
   swellDirection: number;
   date: Date;
   regionId: string;
+  tide?: string;
+  trend?: string;
 }
 
 // Core forecast data that includes all fields from the database

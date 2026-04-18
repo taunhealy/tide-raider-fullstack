@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { optionalAuth, AuthRequest } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
+import { ensureRegionDataFresh } from "../services/regionDataService";
 
 const router = Router();
 
@@ -25,6 +26,13 @@ router.get(
           region: true,
         },
       });
+
+      // Synchronize data for the requested region if it's stale (Pulse Strategy)
+      if (regionId) {
+        ensureRegionDataFresh(regionId).catch(err => {
+          console.error(`[beaches] Failed to trigger pulse for ${regionId}:`, err);
+        });
+      }
 
       res.json({ beaches });
     } catch (error: any) {
@@ -238,6 +246,37 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Failed to fetch beach:", error);
     res.status(500).json({ error: "Failed to fetch beach" });
+  }
+});
+
+// GET /api/beaches/:id/rating?date=2024-04-18
+// Simplified endpoint for live dashboards
+router.get("/:id/rating", dataRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const dateParam = req.query.date as string || new Date().toISOString().split('T')[0];
+    const source = req.query.source as string || "WINDFINDER";
+
+    const [year, month, day] = dateParam.split("-").map(Number);
+    const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+
+    const scoreRecord = await prisma.beachDailyScore.findFirst({
+      where: {
+        beachId: id,
+        date: targetDate,
+        source: source
+      },
+      select: { score: true }
+    });
+
+    res.json({ 
+      beachId: id,
+      date: dateParam,
+      score: scoreRecord?.score ?? 0 
+    });
+  } catch (error) {
+    console.error("Failed to fetch beach rating:", error);
+    res.json({ score: 0 }); // Fail gracefully for dashboard
   }
 });
 

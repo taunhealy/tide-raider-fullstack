@@ -23,6 +23,7 @@ import squadsRouter from "./squads";
 import promoCodesRouter from "./promo-codes";
 import paypalRouter from "./paypal";
 import uploadRouter from "./upload";
+import intelligenceRouter from "./intelligence";
 
 const router = Router();
 
@@ -56,5 +57,6 @@ import partnersRouter from "./partners";
 router.use("/promo-codes", promoCodesRouter);
 router.use("/paypal", paypalRouter);
 router.use("/partners", partnersRouter);
+router.use("/intelligence", intelligenceRouter);
 
 export default router;

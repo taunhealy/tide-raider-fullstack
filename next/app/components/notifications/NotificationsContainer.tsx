@@ -242,7 +242,7 @@ export default function NotificationsContainer() {
                     <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-tertiary)] bg-[var(--color-tertiary)]/10 px-2 py-0.5 rounded-md border border-[var(--color-tertiary)]/20">
                       {notification.type}
                     </span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                    <span className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">
                       {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                     </span>
                   </div>

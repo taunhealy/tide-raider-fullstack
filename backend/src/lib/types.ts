@@ -34,4 +34,6 @@ export interface BaseForecastData {
   swellHeight: number;
   swellPeriod: number;
   swellDirection: number;
+  tide?: string;
+  trend?: string;
 }

@@ -143,7 +143,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center">
           <ShurikenLoader />
-          <p className="text-white/40 font-primary mt-32 tracking-widest text-xs uppercase animate-pulse">Synchronizing session intel...</p>
+          <p className="text-white/40 font-primary mt-32 tracking-wider text-xs font-bold animate-pulse">Synchronizing session intel...</p>
         </div>
       </div>
     );
@@ -228,7 +228,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
-        <div className="bg-brand-dark rounded-3xl shadow-[0_0_50px_rgba(6,182,212,0.05)] overflow-hidden border border-cyan-500/20 ring-1 ring-white/5">
+        <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
           {/* Content Grid - Make video player bigger (2/3 width) */}
           <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
             {/* Main Content - 1/3 width if video exists, full width otherwise */}
@@ -242,7 +242,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     {entry.beach?.name || entry.beachName || "Unnamed Beach"}
                   </h1>
                   {Number(entry.surferRating) > 3 && (
-                    <span className="bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[10px] px-3 py-1 rounded-full font-primary font-black uppercase tracking-widest border border-[var(--color-tertiary)]/30">
+                    <span className="bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-[var(--color-tertiary)]/30">
                       Top Rated
                     </span>
                   )}
@@ -259,7 +259,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
                 {/* Logger Info - positioned below location and above stars - Instagram style */}
                 <div className="space-y-3 pt-4">
-                  <h2 className="font-primary text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
+                  <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
                     Logger
                   </h2>
                   {entry.isAnonymous ? (
@@ -294,8 +294,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                 </div>
 
                 <div className="space-y-3 pt-4">
-                  <h2 className="font-primary text-[10px] text-white/40 font-black uppercase tracking-[0.2em]">
-                    Surf Session Rating
+                  <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
+                    Surf session rating
                   </h2>
                   <div className="flex items-center gap-3">
                     <BlueStarRating
@@ -359,7 +359,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                           return (
                             <div key={score.source} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
                               <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-primary text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                                <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
                                   {score.sourceName}
                                 </h3>
                                 <div className="flex items-center gap-1.5 translate-y-[-2px]">
@@ -376,7 +376,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                         <Wind className="w-4 h-4 text-[var(--color-tertiary)]" />
                                       </div>
                                       <div>
-                                        <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Wind</p>
+                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Wind</p>
                                         <p className="text-xs font-black text-white">
                                           {conditions.windSpeed != null ? `${conditions.windSpeed}kts` : "N/A"}
                                           {conditions.windDirection != null && (
@@ -394,7 +394,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                         <Waves className="w-4 h-4 text-[var(--color-tertiary)]" />
                                       </div>
                                       <div>
-                                        <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Swell</p>
+                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Swell</p>
                                         <p className="text-xs font-black text-white">
                                           {conditions.swellHeight != null ? `${Number(conditions.swellHeight).toFixed(1)}m` : "N/A"}
                                           {conditions.swellDirection != null && (
@@ -412,10 +412,23 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                         <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
                                       </div>
                                       <div>
-                                        <p className="text-[8px] font-black text-white/30 uppercase tracking-widest mb-0.5">Period</p>
+                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Period</p>
                                         <p className="text-xs font-black text-white">{conditions.swellPeriod != null ? `${conditions.swellPeriod}s` : "N/A"}</p>
                                       </div>
                                     </div>
+
+                                    {/* Tide */}
+                                    {conditions.tide && (
+                                      <div className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
+                                        <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
+                                          <Waves className="w-4 h-4 text-cyan-400" />
+                                        </div>
+                                        <div className="overflow-hidden">
+                                          <p className="text-[8px] font-bold text-cyan-400/40 tracking-widest mb-0.5">Tide</p>
+                                          <p className="text-[10px] font-black text-white truncate">{conditions.tide}</p>
+                                        </div>
+                                      </div>
+                                    )}
                                   </>
                                 ) : (
                                   <div className="h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
@@ -442,8 +455,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   <Calendar className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-tertiary)]" />
                 </div>
                 <div>
-                  <h2 className="font-primary text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">
-                    Session Date
+                  <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest mb-1">
+                    Session date
                   </h2>
                   <p className="text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter">
                     {format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
@@ -454,8 +467,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               {/* Comments Section */}
               {entry.comments && (
                 <div className="space-y-4 pt-4">
-                  <h2 className="font-primary text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
-                    Logger Comments
+                  <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                    Logger comments
                   </h2>
                   <div className="bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 opacity-5">
@@ -538,11 +551,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           {imageUrls.length > 0 && (
             <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/20">
               <div className="flex items-center gap-4 mb-8">
-                <h2 className="font-primary text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
+                <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
                   Session Album
                 </h2>
                 <div className="h-px flex-1 bg-white/5"></div>
-                <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">
+                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
                   {imageUrls.length} Files
                 </span>
               </div>
@@ -560,7 +573,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           {/* User Comments Section */}
           <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/40">
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-primary text-2xl md:text-3xl font-black text-white uppercase tracking-tighter">
+              <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
                 Tactical Discussion
               </h2>
               <div className="h-px flex-1 bg-white/5"></div>

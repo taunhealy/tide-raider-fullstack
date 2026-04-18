@@ -17,7 +17,8 @@ export async function GET() {
             date: {
               gte: today,
               lt: sevenDaysLater
-            }
+            },
+            source: 'WINDFINDER'
           },
           orderBy: {
             date: 'asc'

@@ -72,13 +72,58 @@ function extractWindfinderData() {
       const wDir = getDirFromEl(windDirEl);
       const sDir = getDirFromEl(waveDirEl);
 
+      // Extract Tide Info
+      let tideState = "";
+      let tideHeight = "";
+      let tidePeak = "";
+
+      const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"]'));
+      
+      // Helper to find row by label or data-row-name
+      const findRow = (name, labelText) => {
+        return rowEls.find(r => 
+          r.getAttribute('data-row-name') === name || 
+          r.querySelector('._label-cell, .row-label')?.textContent.toLowerCase().includes(labelText)
+        );
+      };
+
+      const typeRow = findRow('tide-type', 'tide type');
+      const heightRow = findRow('tide-height', 'tide height');
+      const peakRow = findRow('tide-time', 'time'); // Peak time row
+
+      const colIdx = columns.indexOf(col);
+
+      if (typeRow) {
+        const dataCells = Array.from(typeRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
+        const cell = dataCells[colIdx];
+        const icon = cell?.querySelector('._tide-icon, ._tide-type-icon, img');
+        const iconText = icon?.textContent || icon?.getAttribute('title') || "";
+        const cellClasses = cell?.className || "";
+        
+        if (cellClasses.includes('rising') || iconText.includes('↗') || iconText.includes('rising')) tideState = "Rising";
+        else if (cellClasses.includes('falling') || iconText.includes('↘') || iconText.includes('falling')) tideState = "Falling";
+        else if (cellClasses.includes('high') || iconText.includes('┍┑')) tideState = "High";
+        else if (cellClasses.includes('low') || iconText.includes('┕┙')) tideState = "Low";
+      }
+
+      if (heightRow) {
+        const dataCells = Array.from(heightRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
+        tideHeight = dataCells[colIdx]?.textContent.trim() || "";
+      }
+
+      if (peakRow) {
+        const dataCells = Array.from(peakRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
+        tidePeak = dataCells[colIdx]?.textContent.trim() || "";
+      }
+
       return {
         time: timeStr,
         windSpeed: getVal('cell-ws') || getVal('speed'),
         windDir: wDir,
         waveHeight: getVal('cell-wh') || getVal('height'),
         wavePeriod: getVal('cell-wp') || getVal('period'),
-        swellDir: sDir
+        swellDir: sDir,
+        tide: tideState ? `${tideState}${tideHeight ? ' (' + tideHeight + 'm)' : ''}${tidePeak ? ' Peak: ' + tidePeak : ''}` : ""
       };
     }).filter(r => r !== null);
 

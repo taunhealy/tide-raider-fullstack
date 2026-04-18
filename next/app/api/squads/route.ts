@@ -10,7 +10,7 @@ const BACKEND_URL = getBackendUrl();
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
     const response = await fetch(`${BACKEND_URL}/api/squads`, {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
     const body = await request.json();
 

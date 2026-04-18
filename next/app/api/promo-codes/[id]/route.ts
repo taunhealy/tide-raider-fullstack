@@ -15,10 +15,10 @@ const getBackendUrl = () => {
 // GET /api/promo-codes/[id] - Get a specific promo code
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const BACKEND_URL = getBackendUrl();
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
@@ -54,10 +54,10 @@ export async function GET(
 // PUT /api/promo-codes/[id] - Update a promo code
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
     const cookieStore = await cookies();
@@ -95,10 +95,10 @@ export async function PUT(
 // DELETE /api/promo-codes/[id] - Delete a promo code
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const BACKEND_URL = getBackendUrl();
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;

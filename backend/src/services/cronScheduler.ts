@@ -53,6 +53,25 @@ export class CronScheduler {
       "✅ Cron job scheduled: Once daily at 01:00 UTC (3am SAST)"
     );
 
+    // High frequency tactical sync for South Africa regions (Every 4 hours)
+    // Runs at: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+    const saHighFreqTask = cron.schedule(
+      "0 */4 * * *",
+      async () => {
+        console.log("🇿🇦 Running high-frequency tactical scrape for South Africa regions...");
+        // Scrape today and tomorrow (3 days) for South Africa regions
+        await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
+        await processAllUserAlerts();
+      },
+      {
+        timezone: "UTC",
+      }
+    );
+    this.tasks.push(saHighFreqTask);
+    console.log(
+      "✅ South Africa High-frequency tactical sync scheduled: Every 4 hours"
+    );
+
     // Optional: Run immediately on startup (useful for testing)
     if (process.env.RUN_CRON_ON_STARTUP === "true") {
       console.log("🚀 Running cron job immediately on startup...");
@@ -117,9 +136,11 @@ export class CronScheduler {
       console.log("📊 Step 1: Fetching surf conditions for all regions");
       let regionResults;
       try {
-        // Daily run: Fetch 7 days of data (users requested more than 2 days)
-        regionResults = await fetchAllRegionsData(7);
-        console.log("✅ Region data fetch completed:", {
+        // Limited Daily run: Only fetch 7 days for core South Africa regions
+        // All other regions are fetched 'On-Demand' when a user requests them
+        const coreRegions = ["western-cape", "eastern-cape"];
+        regionResults = await fetchAllRegionsData(7, coreRegions);
+        console.log("✅ Core region data fetch completed:", {
           regionsProcessed: regionResults.regionsProcessed,
           regionsSucceeded: regionResults.regionsSucceeded,
           regionsFailed: regionResults.regionsFailed,

@@ -594,7 +594,7 @@ export default function TideMap({
 
       {/* Popup Overlay */}
       <div ref={popupRef} className={cn(
-        "absolute bg-brand-dark rounded-xl md:rounded-2xl p-4 md:p-5 min-w-[180px] md:min-w-[220px] transition-all duration-300",
+        "absolute bg-brand-dark rounded-xl md:rounded-2xl p-4 md:p-5 min-w-[180px] md:min-w-[220px] transition-all duration-300 shadow-2xl border border-white/10 ring-1 ring-white/5",
         popupBeach ? "opacity-100 translate-y-0 scale-90 md:scale-100" : "opacity-0 translate-y-4 scale-75 md:scale-95 pointer-events-none"
       )}>
         {popupBeach && (() => {
@@ -607,10 +607,10 @@ export default function TideMap({
           
           return (
             <div className="relative">
-              <span className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-[0.2em] mb-2 block">
-                Frequency Signal
+              <span className="text-[9px] font-bold text-[var(--color-tertiary)] tracking-[0.2em] mb-2 block">
+                Beach Profile
               </span>
-              <h4 className="text-[13px] font-black text-white uppercase tracking-tighter mb-1.5 leading-none">
+              <h4 className="text-[15px] font-bold text-white tracking-tight mb-2 leading-none">
                 {popupBeach.name}
               </h4>
               
@@ -620,7 +620,7 @@ export default function TideMap({
                     <div key={i} className={`w-1.5 h-1.5 rounded-full ${i < rating ? 'bg-[var(--color-tertiary)]' : 'bg-white/10'}`} />
                   ))}
                 </div>
-                <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
+                <span className="text-[9px] text-gray-500 font-bold tracking-widest">
                   {Number(rating).toFixed(1)} Rating
                 </span>
               </div>
@@ -628,9 +628,9 @@ export default function TideMap({
               <div className="space-y-2">
                 <button 
                   onClick={() => setShowConditions(!showConditions)}
-                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-bold tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
                 >
-                  View Conditions
+                  View conditions
                   {showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                 </button>
 

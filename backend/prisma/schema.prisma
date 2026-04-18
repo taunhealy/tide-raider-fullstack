@@ -286,6 +286,20 @@ model BeachDailyScore {
   @@index([regionId, date, source])
 }
 
+model IntelligenceReport {
+  id        String   @id @default(cuid())
+  beachId   String
+  date      DateTime @db.Date
+  persona   String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  beach     Beach    @relation(fields: [beachId], references: [id])
+
+  @@unique([beachId, date, persona])
+  @@index([beachId, date])
+}
+
 model Beach {
   id                     String                  @id
   name                   String
@@ -331,6 +345,7 @@ model Beach {
   stories                Story[]
   properties             Property[]
   broadcasts             Broadcast[]
+  intelligenceReports    IntelligenceReport[]
 
   @@index([regionId])
   @@index([countryId])
@@ -451,6 +466,7 @@ model Forecast {
   swellHeight    Float          @default(0)
   swellPeriod    Int            @default(0)
   swellDirection Float          @default(0)
+  trend          String?
   alerts         Alert[]
   region         Region         @relation(fields: [regionId], references: [id])
   logEntries     LogEntry[]

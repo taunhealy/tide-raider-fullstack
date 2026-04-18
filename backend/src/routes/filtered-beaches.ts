@@ -158,7 +158,7 @@ router.get(
 
 
       // Get date from query params or default to today
-      const forecastDateParam = req.query.forecastDate as string | undefined;
+      const forecastDateParam = (req.query.forecastDate || req.query.date) as string | undefined;
       let targetDate: Date;
 
       if (forecastDateParam) {

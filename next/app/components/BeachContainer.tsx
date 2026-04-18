@@ -47,8 +47,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter, selectRegion } = useBeachFilters();
   
-  // Sorting and Location state - Proximity active by default (100km)
-  const [maxDistance, setMaxDistance] = useState<number | null>(100);
+  // Sorting and Location state - Proximity active by default (45km)
+  const [maxDistance, setMaxDistance] = useState<number | null>(45);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 

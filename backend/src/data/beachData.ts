@@ -1672,7 +1672,7 @@ export const beachData: Beach[] = [
     regionId: "western-cape",
     location: "Kommetjie",
     distanceFromCT: 30,
-    optimalWindDirections: ["N", "NE"],
+    optimalWindDirections: ["N", "NE", "NW"],
     optimalSwellDirections: {
       min: 220,
       max: 247.5,
@@ -2028,7 +2028,7 @@ export const beachData: Beach[] = [
     regionId: "western-cape",
     location: "Misty Cliffs",
     distanceFromCT: 30,
-    optimalWindDirections: ["NE", "E"],
+    optimalWindDirections: ["N", "NE", "NW"],
     optimalSwellDirections: {
       min: 220,
       max: 230,

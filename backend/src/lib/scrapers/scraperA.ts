@@ -295,13 +295,20 @@ export async function scraperA(
             swellHeight: parseFloat(row.waveHeight || "0"),
             swellPeriod: Math.round(parseFloat(row.wavePeriod || "0")),
             swellDirection: row.swellDir !== null ? parseFloat(row.swellDir.replace("°", "")) : -1,
+            tide: row.tide || "",
           };
           // Store or update the day's forecast, prioritizing later morning hours if earlier ones are incomplete
           const existingIndex = forecasts.findIndex(f => f.date.getTime() === parsedDate.getTime());
           if (existingIndex === -1) {
             forecasts.push(forecast);
-          } else if (forecasts[existingIndex].swellDirection === 0 && forecast.swellDirection !== 0) {
-            forecasts[existingIndex] = forecast;
+          } else {
+            // Update existing with more complete data or if later hour has tide info
+            const existing = forecasts[existingIndex];
+            if (existing.swellDirection === 0 && forecast.swellDirection !== 0) {
+              forecasts[existingIndex] = forecast;
+            } else if (!existing.tide && forecast.tide) {
+              existing.tide = forecast.tide;
+            }
           }
         }
       }
