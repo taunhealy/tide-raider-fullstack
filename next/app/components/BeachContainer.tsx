@@ -335,6 +335,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               onToggleProximity={handleToggleProximityMode}
               isLocating={isLocating}
               isAuthenticated={!!user}
+              isSubscribed={!!user?.isSubscribed}
             />
 
             {/* Subtle background refresh indicator */}

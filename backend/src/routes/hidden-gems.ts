@@ -16,6 +16,15 @@ router.get(
       const regionIdParam = (req.query.regionId as string)?.toLowerCase();
       const status = (req.query.status as HiddenGemStatus) || "APPROVED";
 
+      // 🚨 SUBSCRIPTION CHECK: Hidden Gems are for premium members only
+      if (!(req as any).user?.isSubscribed) {
+        return res.json({
+          hiddenGems: [],
+          totalCount: 0,
+          message: "Subscription required to view Hidden Gems"
+        });
+      }
+
       // Build where clause
       const whereClause: any = {
         status, // Only show approved by default
@@ -99,6 +108,11 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+
+      // 🚨 SUBSCRIPTION CHECK
+      if (!(req as any).user?.isSubscribed) {
+        return res.status(403).json({ error: "Subscription required to view this Hidden Gem" });
+      }
 
       const hiddenGem = await prisma.hiddenGem.findUnique({
         where: { id },

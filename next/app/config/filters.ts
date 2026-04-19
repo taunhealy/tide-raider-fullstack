@@ -95,4 +95,11 @@ export const FILTERS: FilterConfig[] = [
     urlParam: "isFoiling",
     beachProp: "isFoiling",
   },
+  {
+    key: "timeSlot",
+    type: "string",
+    label: "Time Slot",
+    urlParam: "timeSlot",
+    beachProp: "timeSlot" as any,
+  },
 ];

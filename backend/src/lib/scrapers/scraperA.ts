@@ -254,24 +254,29 @@ export async function scraperA(
     const parseDateFromText = (dateText: string): Date | null => {
       try {
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const cleanText = dateText.replace(/^(?:Today|Tomorrow),/, "Day,");
+        // Support formats like "Monday, 20 Apr" or "Apr 20"
+        const cleanText = dateText.replace(/^(?:Today|Tomorrow|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),/i, "Day,");
         const parts = cleanText.split(/[, ]+/).filter(Boolean);
-        let monthName = "", dayStr = "";
+        
+        let monthIndex = -1;
+        let day = NaN;
+
         for (let i = 0; i < parts.length; i++) {
-           if (monthNames.indexOf(parts[i]) !== -1) {
-              monthName = parts[i];
-              dayStr = parts[i+1];
-              break;
-           }
+          const mIdx = monthNames.findIndex(m => parts[i].startsWith(m));
+          if (mIdx !== -1) {
+            monthIndex = mIdx;
+            // Day could be before or after
+            const prev = parseInt(parts[i-1]);
+            const next = parseInt(parts[i+1]);
+            day = !isNaN(prev) ? prev : next;
+            break;
+          }
         }
-        const day = parseInt(dayStr);
-        const monthIndex = monthNames.indexOf(monthName);
+
         if (monthIndex !== -1 && !isNaN(day)) {
           let year = currentYear;
           if (currentMonth >= 10 && monthIndex <= 1) year = currentYear + 1;
           const parsedDate = new Date(Date.UTC(year, monthIndex, day, 0, 0, 0, 0));
-          const diff = (parsedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-          if (diff < -30) return new Date(Date.UTC(year + 1, monthIndex, day, 0, 0, 0, 0));
           return parsedDate;
         }
       } catch (error) { console.error("Error parsing date:", error); }
@@ -279,43 +284,111 @@ export async function scraperA(
     };
 
     for (const dayData of forecastDaysData) {
+      console.log(`📅 Day: ${dayData.dateText} found with ${dayData.rows?.length || 0} rows`);
       const parsedDate = parseDateFromText(dayData.dateText);
-      if (!parsedDate) continue;
+      if (!parsedDate) {
+        console.warn(`⚠️ Failed to parse date for: ${dayData.dateText}`);
+        continue;
+      }
       const dateStr = parsedDate.toISOString().split("T")[0];
       console.log(`🔍 Processing forecast for ${dayData.dateText} (${dateStr})...`);
+      
+      if (dayData.rows?.length > 0) {
+        console.log(`   Rows: ${dayData.rows.map(r => r.time).join(", ")}`);
+      }
 
-      for (const row of dayData.rows) {
-        const hour = parseInt(row.time?.toString().replace("h", "") || "0");
-        if (hour >= 5 && hour <= 11) {
-          const forecast: BaseForecastData = {
-            date: parsedDate,
-            regionId: region,
-            windSpeed: Math.round(parseFloat(row.windSpeed || "0")),
-            windDirection: row.windDir !== null ? parseFloat(row.windDir.replace("°", "")) : -1,
-            swellHeight: parseFloat(row.waveHeight || "0"),
-            swellPeriod: Math.round(parseFloat(row.wavePeriod || "0")),
-            swellDirection: row.swellDir !== null ? parseFloat(row.swellDir.replace("°", "")) : -1,
-            tide: row.tide || "",
-          };
-          // Store or update the day's forecast, prioritizing later morning hours if earlier ones are incomplete
-          const existingIndex = forecasts.findIndex(f => f.date.getTime() === parsedDate.getTime());
-          if (existingIndex === -1) {
-            forecasts.push(forecast);
-          } else {
-            // Update existing with more complete data or if later hour has tide info
-            const existing = forecasts[existingIndex];
-            if (existing.swellDirection === 0 && forecast.swellDirection !== 0) {
-              forecasts[existingIndex] = forecast;
-            } else if (!existing.tide && forecast.tide) {
-              existing.tide = forecast.tide;
+      // Flexible slot matching for Windfinder's 3-hour intervals (02, 05, 08, 11, 14, 17, 20, 23)
+      for (const row of (dayData.rows || [])) {
+        if (!row || !row.time) continue;
+        
+        const hourStr = row.time.toString().replace(/[^0-9]/g, "");
+        const hour = parseInt(hourStr);
+        if (isNaN(hour)) {
+          console.warn(`⚠️ Invalid hour: ${row.time}`);
+          continue;
+        }
+
+        let slot: "MORNING" | "NOON" | "EVENING" | null = null;
+        
+        // Map hours to slots (now with more flexibility for Superforecast)
+        if ([5, 6, 7, 8, 9].includes(hour)) {
+          slot = "MORNING";
+        } else if ([11, 12, 13, 14, 15].includes(hour)) {
+          slot = "NOON";
+        } else if ([17, 18, 19, 20, 21].includes(hour)) {
+          slot = "EVENING";
+        }
+
+        if (slot) {
+          const existingIdx = forecasts.findIndex(f => f.date.getTime() === parsedDate.getTime() && f.timeSlot === slot);
+          
+          if (existingIdx !== -1) {
+            const preferredHours = { MORNING: 8, NOON: 13, EVENING: 19 };
+            const target = preferredHours[slot];
+            const existingHour = (forecasts[existingIdx] as any).rawHour || 0;
+            
+            if (Math.abs(hour - target) < Math.abs(existingHour - target)) {
+              forecasts.splice(existingIdx, 1);
+            } else {
+              continue; 
             }
           }
+
+          const fDate = new Date(parsedDate.getTime());
+          
+          const windDirValue = (row.windDir && typeof row.windDir === 'string') 
+            ? (cardinalToDirection[row.windDir.toUpperCase()] ?? parseFloat(row.windDir.replace(/[^-0-9.]/g, ""))) 
+            : -1;
+          
+          const swellDirValue = (row.swellDir && typeof row.swellDir === 'string') 
+            ? (cardinalToDirection[row.swellDir.toUpperCase()] ?? parseFloat(row.swellDir.replace(/[^-0-9.]/g, ""))) 
+            : -1;
+
+          const forecast: BaseForecastData = {
+            date: fDate,
+            regionId: region,
+            timeSlot: slot,
+            windSpeed: Math.round(parseFloat(row.windSpeed || "0") || 0),
+            windDirection: isNaN(windDirValue) ? -1 : windDirValue,
+            swellHeight: parseFloat(row.waveHeight || "0") || 0,
+            swellPeriod: Math.round(parseFloat(row.wavePeriod || "0") || 0),
+            swellDirection: isNaN(swellDirValue) ? -1 : swellDirValue,
+            tide: row.tide || "",
+          };
+          (forecast as any).rawHour = hour;
+          forecasts.push(forecast);
+          console.log(`   ✅ Mapped ${hour}h -> ${slot}`);
         }
       }
     }
 
-    if (forecasts.length === 0) throw new Error("No morning forecast data found.");
-    console.log(`✅ Successfully scraped ${forecasts.length} forecast(s)`);
+    // Log a summary for debugging
+    const summary = forecasts.reduce((acc, f) => {
+      const d = f.date.toISOString().split('T')[0];
+      acc[d] = (acc[d] || []).concat(f.timeSlot);
+      return acc;
+    }, {});
+
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const scratchDir = path.join(process.cwd(), 'scratch');
+      if (!fs.existsSync(scratchDir)) fs.mkdirSync(scratchDir);
+      fs.writeFileSync(path.join(scratchDir, 'scrape_summary.json'), JSON.stringify({
+        count: forecasts.length,
+        daysFound: forecastDaysData.map(d => d.dateText),
+        summary
+      }, null, 2));
+    } catch (e) {}
+
+    if (forecasts.length === 0) {
+      console.error("❌ No forecasts could be mapped to slots.");
+      throw new Error("No forecast data found.");
+    }
+    
+    console.log(`✅ Successfully scraped ${forecasts.length} forecast(s) across ${new Set(forecasts.map(f => f.date.toISOString().split('T')[0])).size} days`);
+    console.log("Scrape Summary:", JSON.stringify(summary, null, 2));
+
     return forecasts;
   } catch (error) {
     console.error("\n❌ Scraping failed:", (error as Error).message);

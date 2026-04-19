@@ -271,6 +271,7 @@ model BeachDailyScore {
   score      Int      @default(0)
   conditions Json
   date       DateTime
+  timeSlot   TimeSlot @default(MORNING)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   starRating Int?
@@ -278,12 +279,12 @@ model BeachDailyScore {
   beach      Beach    @relation(fields: [beachId], references: [id])
   region     Region   @relation(fields: [regionId], references: [id])
 
-  @@unique([beachId, date, source])
+  @@unique([beachId, date, source, timeSlot])
   @@index([regionId])
   @@index([beachId, date])
   @@index([starRating])
   @@index([source])
-  @@index([regionId, date, source])
+  @@index([regionId, date, source, timeSlot])
 }
 
 model IntelligenceReport {
@@ -459,6 +460,7 @@ model Board {
 model Forecast {
   id             String         @id @default(uuid())
   date           DateTime       @db.Date
+  timeSlot       TimeSlot       @default(MORNING)
   regionId       String
   source         ForecastSource
   windSpeed      Int            @default(0)
@@ -471,7 +473,7 @@ model Forecast {
   region         Region         @relation(fields: [regionId], references: [id])
   logEntries     LogEntry[]
 
-  @@unique([date, regionId, source])
+  @@unique([date, regionId, source, timeSlot])
   @@index([regionId])
   @@index([source])
   @@index([date, regionId])
@@ -1115,6 +1117,12 @@ enum ForecastSource {
   WINDGURU
   WINDY
   OPENMETEO_ARCHIVE
+}
+
+enum TimeSlot {
+  MORNING
+  NOON
+  EVENING
 }
 
 enum SkillLevel {

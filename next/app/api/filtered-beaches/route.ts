@@ -42,6 +42,13 @@ export async function GET(request: Request) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        // Forward auth info
+        ...(request.headers.get("authorization") && {
+          "Authorization": request.headers.get("authorization") as string,
+        }),
+        ...(request.headers.get("cookie") && {
+          "Cookie": request.headers.get("cookie") as string,
+        }),
       },
     });
 

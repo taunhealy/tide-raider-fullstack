@@ -3,6 +3,12 @@
 import { Beach } from "./beaches";
 import { BeachScoreMap } from "./scores";
 
+export enum TimeSlot {
+  MORNING = "MORNING",
+  NOON = "NOON",
+  EVENING = "EVENING",
+}
+
 // Base forecast data with just the essential fields
 export interface BaseForecastData {
   windSpeed: number;
@@ -12,6 +18,7 @@ export interface BaseForecastData {
   swellDirection: number;
   date: Date;
   regionId: string;
+  timeSlot?: TimeSlot;
   tide?: string;
   trend?: string;
 }
@@ -24,6 +31,7 @@ export interface CoreForecastData extends BaseForecastData {
 // Forecast type matching the database schema (replaces Prisma Forecast)
 export interface Forecast extends CoreForecastData {
   source: "WINDFINDER" | "WINDGURU";
+  timeSlot: TimeSlot;
   createdAt?: Date;
   updatedAt?: Date;
 }

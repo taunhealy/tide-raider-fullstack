@@ -73,7 +73,7 @@ function extractWindguruData() {
           const hour = date.getUTCHours();
           timeColumns.push({ index, hour, unixtime, date });
           console.log(
-            `[scraperB] [page.evaluate] Time column ${index}: hour=${hour}, unixtime=${unixtime}, date=${date.toISOString()}`
+            `[scraperB] [page.evaluate] Time column ${index}: hour=${hour} (UTC), unixtime=${unixtime}, date=${date.toISOString()}`
           );
         } else {
           console.log(
@@ -581,17 +581,25 @@ function extractWindguruData() {
 
   console.log("[scraperB] [page.evaluate] ✅ All parameter rows found");
 
-  // Group time columns by date and find morning hours for each date
-  const forecastsByDate = {};
+  // Target hours for slots (SA is UTC+2, so Morning 6am = 4am UTC)
+  const targetHours = [
+    { hour: 4, slot: "MORNING" },
+    { hour: 10, slot: "NOON" },
+    { hour: 16, slot: "EVENING" }
+  ];
+
+  const results = [];
 
   console.log(
-    `[scraperB] [page.evaluate] Processing ${timeColumns.length} time columns...`
+    `[scraperB] [page.evaluate] Processing ${timeColumns.length} time columns for multi-slot extraction...`
   );
+
   for (let i = 0; i < timeColumns.length; i++) {
     const timeCol = timeColumns[i];
-    const dateKey = timeCol.date.toISOString().split("T")[0];
+    // Match the exact UTC hour for the slot
+    const target = targetHours.find(t => t.hour === timeCol.hour);
 
-    if (!forecastsByDate[dateKey]) {
+    if (target) {
       const colIndex = timeCol.index;
       const windSpeed = windSpeedRow[colIndex] || "";
       const windDir = windDirRow[colIndex] || "";
@@ -599,33 +607,22 @@ function extractWindguruData() {
       const wavePeriod = wavePeriodRow[colIndex] || "";
       const waveDir = waveDirRow[colIndex] || "";
 
-      console.log(
-        `[scraperB] [page.evaluate] Column ${colIndex} (${dateKey} ${timeCol.hour}:00):`,
-        {
-          windSpeed,
-          windDir,
-          waveHeight,
-          wavePeriod,
-          waveDir,
-        }
-      );
-
-      forecastsByDate[dateKey] = {
+      results.push({
         date: timeCol.date,
         hour: timeCol.hour,
+        timeSlot: target.slot,
         unixtime: timeCol.unixtime,
         windSpeed,
         windDir,
         waveHeight,
         wavePeriod,
         waveDir,
-      };
+      });
     }
   }
 
-  const result = Object.values(forecastsByDate);
   console.log(
-    `[scraperB] [page.evaluate] ✅ Extracted ${result.length} forecast(s)`
+    `[scraperB] [page.evaluate] ✅ Extracted ${results.length} forecast slot(s)`
   );
-  return result;
+  return results;
 }

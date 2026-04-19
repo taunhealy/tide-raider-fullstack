@@ -266,8 +266,14 @@ const BeachCard = memo(function BeachCard({
 
                   {/* Beach Information */}
                   <div>
-                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 transition-all">
+                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {beach.name}
+                      {beach.isHiddenGem && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[9px] font-black uppercase tracking-widest border border-brand-3/20">
+                          <Lock className="w-2.5 h-2.5 mr-1" />
+                          Hidden Gem
+                        </span>
+                      )}
                       {forecastData?.windSpeed &&
                         forecastData.windSpeed > 25 && (
                           <span title="Strong winds">🌪️</span>
@@ -537,8 +543,14 @@ const BeachCard = memo(function BeachCard({
 
                   {/* Beach Information */}
                   <div>
-                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center gap-2 transition-all">
+                    <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {beach.name}
+                      {beach.isHiddenGem && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[9px] font-black uppercase tracking-widest border border-brand-3/20">
+                          <Lock className="w-2.5 h-2.5 mr-1" />
+                          Hidden Gem
+                        </span>
+                      )}
                       {forecastData?.windSpeed &&
                         forecastData.windSpeed > 25 && (
                           <span title="Strong winds">🌪️</span>

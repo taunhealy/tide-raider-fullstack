@@ -26,9 +26,16 @@ export interface Region {
   // Add other region properties as needed
 }
 
+export enum TimeSlot {
+  MORNING = "MORNING",
+  NOON = "NOON",
+  EVENING = "EVENING",
+}
+
 export interface BaseForecastData {
   regionId: string;
   date: Date;
+  timeSlot?: TimeSlot;
   windSpeed: number;
   windDirection: number;
   swellHeight: number;

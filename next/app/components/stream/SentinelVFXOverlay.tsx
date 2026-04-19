@@ -113,13 +113,6 @@ export const SentinelVFXOverlay = () => {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       <div className="absolute inset-0 z-10">
          <div className="absolute inset-x-[-2%] inset-y-[-2%] border-[40px] border-black rounded-[100px] shadow-[inset_0_0_150px_rgba(0,0,0,0.9)] opacity-95" />
-         <div className="absolute top-12 left-12 flex flex-col gap-1 mix-blend-screen opacity-90">
-            <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-               <span className="text-white font-mono text-[10px] tracking-[0.4em] uppercase font-black">Field_Intel::REC</span>
-            </div>
-            <span className="text-white font-mono text-[9px] tracking-widest opacity-40 uppercase">Satellite_Uplink: 2.0_SECURE</span>
-         </div>
       </div>
     </div>
   );

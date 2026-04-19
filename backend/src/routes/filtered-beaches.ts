@@ -128,10 +128,10 @@ router.get(
       // If true, only show hidden gems (REQUIRES AUTHENTICATION).
       // If false/missing, exclude hidden gems (include false and null).
       if (req.query.isHiddenGem === "true") {
-        if ((req as any).user) {
+        if ((req as any).user?.isSubscribed) {
           whereClause.isHiddenGem = true;
         } else {
-          // User requested hidden gems but is not logged in - return 0 results
+          // User requested hidden gems but is not subscribed - return 0 results
           whereClause.id = "force-zero-results"; 
         }
       } else {
@@ -157,6 +157,8 @@ router.get(
       console.log("[filtered-beaches] whereClause:", JSON.stringify(whereClause, null, 2));
 
 
+      const timeSlotParam = (req.query.timeSlot as string) || "MORNING";
+
       // Get date from query params or default to today
       const forecastDateParam = (req.query.forecastDate || req.query.date) as string | undefined;
       let targetDate: Date;
@@ -169,6 +171,11 @@ router.get(
         targetDate.setUTCHours(0, 0, 0, 0);
       }
 
+      // Calculate distance from today for source switching logic
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
       // Step 1: Get forecast data and check scores in parallel for better performance
       const forecastSelect = {
         id: true,
@@ -178,6 +185,7 @@ router.get(
         swellPeriod: true,
         swellDirection: true,
         date: true,
+        timeSlot: true,
         regionId: true,
         source: true,
       };
@@ -195,6 +203,7 @@ router.get(
             regionId,
             date: targetDate,
             source: sourceParam,
+            timeSlot: timeSlotParam as any,
           },
           select: forecastSelect,
         }) : Promise.resolve(null),
@@ -204,6 +213,7 @@ router.get(
             regionId,
             date: targetDate,
             source: sourceParam,
+            timeSlot: timeSlotParam as any,
           },
           select: {
             score: true,
@@ -233,12 +243,13 @@ router.get(
 
       let forecast = exactForecast;
 
-      // If no exact forecast, try fallback (same source, most recent)
+      // If no exact forecast, try fallback (same source/slot, most recent)
       if (!forecast && regionId) {
         forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
             source: sourceParam,
+            timeSlot: timeSlotParam as any,
             date: { lte: targetDate },
           },
           orderBy: { date: "desc" },
@@ -249,20 +260,29 @@ router.get(
       // If still no forecast, trigger on-demand scraping as fallback
       if (!forecast && regionId) {
         console.log(
-          `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+          `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}/${timeSlotParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
         );
         console.log(
           `[filtered-beaches] ⏱️ Starting scrape at ${new Date().toISOString()}`
         );
 
         try {
-          // getLatestConditions will scrape if no data exists for today
-          // forceRefresh=false means it checks DB first, only scrapes if needed
+          // Calculate distance from today in days
+          let effectiveSource = sourceParam;
+          // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
+          if (sourceParam === "WINDFINDER" && diffDays > 3) {
+            console.log(`[filtered-beaches] 📅 Date is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
+            effectiveSource = "WINDGURU";
+          }
+
           const scrapeStartTime = Date.now();
           const scrapedForecast = await getLatestConditions(
             regionId,
             false, // Don't force refresh - only scrape if no data
-            sourceParam
+            effectiveSource,
+            undefined, // daysLimit
+            targetDate,
+            timeSlotParam
           );
           const scrapeDuration = Date.now() - scrapeStartTime;
 
@@ -277,17 +297,35 @@ router.get(
                 windSpeed: scrapedForecast.windSpeed,
                 swellHeight: scrapedForecast.swellHeight,
                 date: scrapedForecast.date,
+                timeSlot: scrapedForecast.timeSlot,
               }
             );
             // Query the forecast again after scraping
+            const finalSource = (sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam;
             forecast = await prisma.forecast.findFirst({
               where: {
                 regionId,
                 date: targetDate,
-                source: sourceParam,
+                source: finalSource,
+                timeSlot: timeSlotParam as any,
               },
               select: forecastSelect,
             });
+
+            // SECONDARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
+            if (!forecast && sourceParam === "WINDFINDER" && diffDays <= 3) {
+               console.log(`[filtered-beaches] 🔄 SECONDARY FALLBACK: Windfinder null, attempting WINDGURU...`);
+               await getLatestConditions(regionId, false, "WINDGURU");
+               forecast = await prisma.forecast.findFirst({
+                 where: {
+                   regionId,
+                   date: targetDate,
+                   source: "WINDGURU",
+                   timeSlot: timeSlotParam as any,
+                 },
+                 select: forecastSelect,
+               });
+            }
             console.log(
               `[filtered-beaches] 📊 Re-queried forecast after scraping:`,
               forecast ? "FOUND" : "NOT FOUND"
@@ -327,6 +365,7 @@ router.get(
           await ScoreService.calculateAndStoreScores(regionId, {
             ...forecast,
             date: targetDate,
+            timeSlot: timeSlotParam,
           });
         } catch (error) {
           console.error(`[filtered-beaches] Score calculation failed:`, error);
@@ -334,7 +373,7 @@ router.get(
         }
       }
 
-      // Step 3: Fetch beaches with their daily scores for the target date
+      // Step 3: Fetch beaches with their daily scores for the target date and slot
       const beaches = await prisma.beach.findMany({
         where: whereClause,
         include: {
@@ -342,12 +381,14 @@ router.get(
           beachDailyScores: {
             where: {
               date: targetDate,
-              source: sourceParam,
+              source: ((sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam) as any,
+              timeSlot: timeSlotParam as any,
             },
             select: {
               score: true,
               conditions: true,
               date: true,
+              timeSlot: true,
             },
           },
         },

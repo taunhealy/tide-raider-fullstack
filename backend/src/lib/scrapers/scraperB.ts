@@ -343,7 +343,8 @@ export async function scraperB(
       }
 
       const forecast: BaseForecastData = {
-        date: forecastDate, // Return Date object, not string
+        date: forecastDate, // Return Date object, normalized to UTC midnight
+        timeSlot: (data.timeSlot || "MORNING") as any,
         windSpeed: windSpeedMs,
         windDirection: windDirection,
         swellHeight: swellHeight,

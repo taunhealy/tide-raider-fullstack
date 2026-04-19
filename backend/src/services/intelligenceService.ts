@@ -13,6 +13,13 @@ export class IntelligenceService {
   private static readonly CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours (Daily persistence)
 
   static async getReport(beach: string, windSpeed: number, windDir: string, swellHeight: number, swellPeriod: number, swellDir: string, score: number, persona: string, date: string, trend?: string): Promise<string> {
+    
+    // 🛡️ STRICT WHITELIST: Only generate AI reports for Muizenberg to protect budget
+    const isWhitelisted = beach.toLowerCase().includes("muizenberg");
+    if (!isWhitelisted) {
+      return `Detailed AI intelligence is currently exclusive to prime sectors like Muizenberg. Observing standard buoy data for ${beach}: ${score}/10 conditions with ${windDir} winds.`;
+    }
+
     const cacheKey = `${beach}-${persona}-${date}`;
     const cached = this.cache[cacheKey];
 
@@ -22,75 +29,79 @@ export class IntelligenceService {
     }
 
     try {
-      // 1. Check Database first
-      let beachRef = null;
-      try {
-        beachRef = await prisma.beach.findFirst({
-           where: { name: { equals: beach, mode: 'insensitive' } }
-        });
-        
-        if (beachRef) {
-           const d = new Date(date);
-           d.setUTCHours(0, 0, 0, 0);
-           
-           // Use try-catch for the specific table query since it might be missing
-           try {
-              const dbReport = await (prisma as any).intelligenceReport.findUnique({
-                 where: {
-                    beachId_date_persona: {
-                       beachId: beachRef.id,
-                       date: d,
-                       persona: persona
-                    }
-                 }
-              });
-              
-              if (dbReport) {
-                 console.log(`[IntelligenceService] ✅ DB HIT for ${beach} (${persona})`);
-                 this.cache[cacheKey] = { report: dbReport.content, timestamp: Date.now() };
-                 return dbReport.content;
-              }
-           } catch (dbError) {
-              console.warn(`[IntelligenceService] ⚠️ IntelligenceReport table may be missing or inaccessible:`, (dbError as any).message);
-           }
-        }
-      } catch (beachError) {
-        console.warn(`[IntelligenceService] ⚠️ Could not look up beach reference:`, (beachError as any).message);
-      }
-
-      console.log(`[IntelligenceService] 🌐 Fetching NEW Gemini intel for ${beach}...`);
-      const report = await PythonBridge.generateIntelligenceReport(
-        beach, windSpeed, windDir, swellHeight, swellPeriod, swellDir, score, persona, trend
-      );
+      // 1. Check Database first (Daily Persistence)
+      let beachRef = await prisma.beach.findFirst({
+         where: { name: { equals: beach, mode: 'insensitive' } }
+      });
       
-      // 2. Save to Database (Best effort)
+      const reportDate = new Date(date);
+      reportDate.setUTCHours(0, 0, 0, 0);
+
       if (beachRef) {
          try {
-            const d = new Date(date);
-            d.setUTCHours(0, 0, 0, 0);
-            
-            await (prisma as any).intelligenceReport.upsert({
+            const dbReport = await prisma.intelligenceReport.findUnique({
                where: {
                   beachId_date_persona: {
                      beachId: beachRef.id,
-                     date: d,
+                     date: reportDate,
                      persona: persona
                   }
-               },
-               create: {
-                  beachId: beachRef.id,
-                  date: d,
-                  persona: persona,
-                  content: report
-               },
-               update: {
-                  content: report
                }
             });
-            console.log(`[IntelligenceService] 💾 Persisted intel to DB for ${beach}`);
-         } catch (saveError) {
-            console.warn(`[IntelligenceService] 💾 Failed to persist intel to DB (skipping):`, (saveError as any).message);
+            
+            if (dbReport) {
+               console.log(`[IntelligenceService] ✅ DB HIT for ${beach} (${persona})`);
+               this.cache[cacheKey] = { report: dbReport.content, timestamp: Date.now() };
+               return dbReport.content;
+            }
+         } catch (dbErr) {
+            console.warn("[IntelligenceService] DB lookup failed, proceeding to generation...");
          }
+      }
+
+      console.log(`[IntelligenceService] 🌐 Generating Daily Aggregate Intel for ${beach}...`);
+      
+      // 2. Fetch all 3 time-slots for this beach/day to provide context for the whole day
+      // This allows the AI to say "Starts clean, gets messy"
+      const dailyForecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: beachRef?.regionId || "western-cape",
+          date: reportDate,
+          source: "WINDFINDER"
+        }
+      });
+
+      // Format snapshots for AI context
+      const snapshots = ["MORNING", "NOON", "EVENING"].map(slot => {
+         const f = dailyForecasts.find(d => d.timeSlot === slot);
+         if (!f) return `${slot}: Data pending.`;
+         return `${slot}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°`;
+      }).join("\n");
+
+      // 3. Generate the report via Python/Gemini
+      // We pass the snapshots as the "Trend" to give it full context
+      const report = await PythonBridge.generateIntelligenceReport(
+        beach, windSpeed, windDir, swellHeight, swellPeriod, swellDir, score, persona, snapshots
+      );
+      
+      // 4. Save to Database for next time
+      if (beachRef) {
+         await prisma.intelligenceReport.upsert({
+            where: {
+               beachId_date_persona: {
+                  beachId: beachRef.id,
+                  date: reportDate,
+                  persona: persona
+               }
+            },
+            update: { content: report },
+            create: {
+               beachId: beachRef.id,
+               date: reportDate,
+               persona: persona,
+               content: report
+            }
+         }).catch(e => console.warn("[IntelligenceService] Failed to persist report:", e));
       }
       
       this.cache[cacheKey] = {
@@ -100,8 +111,8 @@ export class IntelligenceService {
       
       return report;
     } catch (error) {
-       console.error(`[IntelligenceService] ❌ Failed to generate AI report:`, error);
-       return `[CONNECTION ERROR] Intelligence relay scrambled. Conditions: ${score}/10 with ${windDir} winds. Stand by for backup sync.`;
+       console.error(`[IntelligenceService] ❌ AI failure:`, error);
+       return `Signal scrambled. Current Muizenberg readout: ${score}/10. Topology: Sand bottom, optimal on the pushing tide.`;
     }
   }
 }

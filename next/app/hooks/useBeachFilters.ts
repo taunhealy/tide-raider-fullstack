@@ -58,6 +58,8 @@ export const useBeachFilters = () => {
           acc[filter.key] = value === "true";
         } else if (filter.type === "number") {
           acc[filter.key] = value ? Number(value) : 0;
+        } else if (filter.type === "string") {
+          acc[filter.key] = value || "";
         }
         return acc;
       },

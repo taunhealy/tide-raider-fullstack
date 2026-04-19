@@ -13,13 +13,15 @@ import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
 import { HiddenGemsButton, LoggersButton, FoilingButton } from "@/app/components/ui/GradientButton";
-import { Filter } from "lucide-react";
+import { Filter, Lock } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
 import LocationFilter from "../LocationFilter";
 import { useRegions } from "@/app/hooks/useRegions";
 import { cn } from "@/app/lib/utils";
 import { Slider } from "@/app/components/ui/slider";
+import { TimeSlot } from "@/app/types/forecast";
+import TimeSlotSelector from "../stream/TimeSlotSelector";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -32,6 +34,7 @@ interface BeachHeaderControlsProps {
   onToggleProximity: () => void;
   isLocating: boolean;
   isAuthenticated: boolean;
+  isSubscribed: boolean;
 }
 
 const ProximityFilterRow = ({ 
@@ -114,6 +117,7 @@ export default function BeachHeaderControls({
   onToggleProximity,
   isLocating,
   isAuthenticated,
+  isSubscribed,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -134,6 +138,24 @@ export default function BeachHeaderControls({
   const handleDateSelect = (date: string) => {
     updateFilter("forecastDate", date);
   };
+
+  // Time Slot Intelligence
+  const [activeSlot, setActiveSlot] = useState<TimeSlot>(TimeSlot.MORNING);
+  const currentTimeSlotValue = (filters.timeSlot as TimeSlot) || TimeSlot.MORNING;
+
+  useEffect(() => {
+    // Synchronize current time with active slot
+    const hour = new Date().getHours();
+    let slot = TimeSlot.MORNING;
+    if (hour >= 11 && hour < 16) slot = TimeSlot.NOON;
+    else if (hour >= 16) slot = TimeSlot.EVENING;
+    setActiveSlot(slot);
+    
+    // Set initial default if not in URL
+    if (!filters.timeSlot) {
+       updateFilter("timeSlot", slot);
+    }
+  }, []);
 
   // Default to today if no date is in the URL
   const [hasDefaulted, setHasDefaulted] = useState(false);
@@ -164,13 +186,23 @@ export default function BeachHeaderControls({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"></div>
 
           <div className="flex flex-col gap-3">
-            {/* Date Selector - Above Search Bar */}
-            <DateSelector
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
-              beaches={beaches}
-              availableDates={availableDates}
-            />
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+               <DateSelector
+                 selectedDate={selectedDate}
+                 onDateSelect={handleDateSelect}
+                 beaches={beaches}
+                 availableDates={availableDates}
+               />
+               
+               <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Tactical Window</label>
+                 <TimeSlotSelector 
+                   selectedSlot={currentTimeSlotValue}
+                   onChange={(slot) => updateFilter("timeSlot", slot)}
+                   activeSlot={activeSlot}
+                 />
+               </div>
+            </div>
 
             <div className="h-px bg-black/5 w-full" />
 
@@ -199,7 +231,7 @@ export default function BeachHeaderControls({
                       className="lg:hidden flex items-center gap-2 bg-white"
                       onClick={() => setIsFilterOpen(true)}
                     >
-                      <Filter xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" />
+                      <Filter className="w-4 h-4" />
                       Filters
                     </Button>
 
@@ -231,17 +263,31 @@ export default function BeachHeaderControls({
                       size="sm"
                       onClick={() => {
                         if (!isAuthenticated) {
-                          // Could trigger login modal here, but for now simple alert
-                          alert("Sign in to discover Hidden Gems");
-                          return;
+                           // Trigger login
+                           alert("Sign in to discover Hidden Gems");
+                           return;
+                        }
+                        if (!isSubscribed) {
+                           // Trigger subscription modal or alert
+                           alert("Subscription required to access community Hidden Gems.");
+                           return;
                         }
                         const newValue = !filters.isHiddenGem;
                         updateFilter("isHiddenGem", newValue ? "true" : "");
                       }}
-                      className={cn(!isAuthenticated && "opacity-50 grayscale cursor-not-allowed")}
-                      title={!isAuthenticated ? "Sign in to view Hidden Gems" : "Show community hidden gems"}
+                      className={cn(
+                        (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale cursor-not-allowed"
+                      )}
+                      title={
+                        !isAuthenticated 
+                          ? "Sign in to view Hidden Gems" 
+                          : !isSubscribed 
+                            ? "Subscription required for Hidden Gems" 
+                            : "Show community hidden gems"
+                      }
                     >
                       Hidden Gems
+                      {(!isAuthenticated || !isSubscribed) && <Lock className="ml-2 w-3 h-3" />}
                     </HiddenGemsButton>
                   </div>
 

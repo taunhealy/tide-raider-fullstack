@@ -158,127 +158,76 @@ export async function processUserAlerts(userId: string, today: Date) {
           "Unknown location";
         const beachId = (alert.logEntry as any)?.beach?.id || alert.beachId;
 
-        // Find today's forecast for this alert's region and preferred sources
+        // Find today's forecasts for this alert's region and preferred sources
         const alertSources =
           alert.sources && alert.sources.length > 0
             ? alert.sources
             : ["WINDFINDER"]; // Default to WINDFINDER if not specified
 
-        // Find the first available forecast that matches one of the preferred sources
-        let todaysForecast = null;
-        for (const source of alertSources) {
-          todaysForecast = todaysForecasts.find(
-            (f) => f.regionId === alert.regionId && f.source === source
-          );
-          if (todaysForecast) break;
-        }
+        // Get all matching forecasts for today (across all time slots)
+        const matchingForecasts = todaysForecasts.filter(
+          (f) => f.regionId === alert.regionId && alertSources.includes(f.source as any)
+        );
 
-        // Only require forecast for VARIABLES alerts, not RATING alerts
-        if (
-          (alert.alertType as any) === AlertType.VARIABLES &&
-          !todaysForecast
-        ) {
-          console.log(
-            `No forecast found for region ${alert.regionId} today - skipping VARIABLES alert`
-          );
+        if (matchingForecasts.length === 0 && (alert.alertType as any) === AlertType.VARIABLES) {
+          console.log(`No forecast found for region ${alert.regionId} today - skipping VARIABLES alert`);
           continue;
         }
 
-        if ((alert.alertType as any) === AlertType.RATING && !todaysForecast) {
-          // This is expected for RATING alerts - they only need beach ratings, not forecasts
-          // Log at debug level to reduce noise in production logs
-          if (process.env.NODE_ENV === "development") {
-            console.log(
-              `[Alert Processor] No forecast found for region ${alert.regionId} today - continuing for RATING alert (forecast not required)`
-            );
-          }
+        // Define which ratings correspond to which forecasts
+        // For RATING alerts, we'll check all slots available in beachRatings
+        const targetSlots = matchingForecasts.map(f => f.timeSlot);
+        if (targetSlots.length === 0 && (alert.alertType as any) === AlertType.RATING) {
+          // If no forecasts recorded, check all slots that have ratings
+          const uniqueSlots = [...new Set(beachRatings.filter(br => br.beachId === beachId).map(br => (br as any).timeSlot))];
+          targetSlots.push(...(uniqueSlots as any[]));
         }
 
-        // Check if alert conditions are met
-        let shouldSendAlert = false;
-        const match: AlertMatch = {
-          alertId: alert.id,
-          alertName: alert.name,
-          region: alert.regionId,
-          timestamp: new Date(),
-          matchedProperties: [],
-          matchDetails: "",
-        };
+        // Track seen alerts to prevent duplicate notifications for same slot/source
+        const processedSlots = new Set<string>();
 
-        if (
-          (alert.alertType as any) === AlertType.VARIABLES &&
-          alert.properties &&
-          Array.isArray(alert.properties) &&
-          alert.properties.length > 0
-        ) {
-          // For variable-based alerts, check if all properties are within range
-          if (!todaysForecast) {
-            console.log(
-              `[Alert Processor] Skipping VARIABLES alert ${alert.name} - no forecast available`
-            );
-            continue;
-          }
+        // We inner-loop through target slots to check conditions for each
+        for (const slot of ["MORNING", "NOON", "EVENING"]) {
+          // Find the forecast and rating for this specific slot
+          const slotForecast = matchingForecasts.find(f => f.timeSlot === slot);
+          const slotRating = beachRatings.find(br => br.beachId === beachId && (br as any).timeSlot === slot);
 
-          shouldSendAlert = true; // Start with true and set to false if any property is out of range
+          if (!slotForecast && !slotRating) continue;
 
-          for (const prop of alert.properties) {
-            const propertyName = (prop as any).property;
-            const range = (prop as any).range;
+          let shouldSendAlert = false;
+          const match: AlertMatch = {
+            alertId: alert.id,
+            alertName: `${alert.name} (${slot})`,
+            region: alert.regionId,
+            timestamp: new Date(),
+            matchedProperties: [],
+            matchDetails: "",
+          };
 
-            // Get the reference value from the log entry's forecast
-            const forecast = (alert.logEntry as any)?.forecast;
-            const logValue = forecast?.[propertyName as keyof typeof forecast];
+          if ((alert.alertType as any) === AlertType.VARIABLES && slotForecast) {
+            shouldSendAlert = true;
+            for (const prop of alert.properties) {
+              const propertyName = (prop as any).property;
+              const range = (prop as any).range;
+              const logValue = (alert.logEntry as any)?.forecast?.[propertyName];
+              const forecastValue = slotForecast[propertyName as keyof typeof slotForecast];
 
-            // Get today's forecast value for this property
-            const forecastValue =
-              todaysForecast[propertyName as keyof typeof todaysForecast];
-
-            if (logValue !== undefined && forecastValue !== undefined) {
-              // Check if today's value is within range of the log value
-              const difference = Math.abs(
-                Number(forecastValue) - Number(logValue)
-              );
-              const withinRange = difference <= Number(range);
-
-              // Add to matched properties
-              match.matchedProperties.push({
-                property: propertyName,
-                logValue: logValue,
-                forecastValue: forecastValue,
-                difference: difference,
-                withinRange: withinRange,
-              });
-
-              // If any property is out of range, don't send alert
-              if (!withinRange) {
-                shouldSendAlert = false;
+              if (logValue !== undefined && forecastValue !== undefined) {
+                const difference = Math.abs(Number(forecastValue) - Number(logValue));
+                const withinRange = difference <= Number(range);
+                match.matchedProperties.push({
+                  property: propertyName,
+                  logValue: logValue,
+                  forecastValue: forecastValue,
+                  difference: difference,
+                  withinRange: withinRange,
+                });
+                if (!withinRange) shouldSendAlert = false;
               }
             }
-          }
-        } else if (
-          (alert.alertType as any) === AlertType.RATING &&
-          alert.starRating &&
-          beachId
-        ) {
-          // For rating-based alerts, check if beach rating meets criteria
-          console.log(
-            `[Alert Processor] Processing RATING alert: ${alert.name}, beachId=${beachId}, required starRating=${alert.starRating}`
-          );
-          const beachRating = beachRatings.find((br) => br.beachId === beachId);
-
-          if (beachRating) {
-            const currentStarRating = beachRating.starRating;
-
-            console.log(
-              `[Alert Processor] Checking Alert "${alert.name}" (ID: ${alert.id}):` +
-              `\n  - Target Beach: ${beachId} (${beachName})` +
-              `\n  - Required Rating: >= ${alert.starRating}` +
-              `\n  - Actual Rating: ${currentStarRating} (Score: ${beachRating.score})`
-            );
-
+          } else if ((alert.alertType as any) === AlertType.RATING && slotRating) {
+            const currentStarRating = slotRating.starRating;
             shouldSendAlert = currentStarRating >= alert.starRating!;
-
-            // Add to matched properties
             match.matchedProperties.push({
               property: "starRating",
               logValue: alert.starRating,
@@ -286,35 +235,15 @@ export async function processUserAlerts(userId: string, today: Date) {
               difference: Math.abs(currentStarRating - alert.starRating!),
               withinRange: shouldSendAlert,
             });
-
-            console.log(
-              `[Alert Processor] -> Comparison: ${currentStarRating} >= ${alert.starRating} ? ${shouldSendAlert}\n` +
-              `[Alert Processor] -> Result: ${shouldSendAlert ? "MATCHED ✅" : "NOT MATCHED ❌"}`
-            );
-          } else {
-            console.log(
-              `[Alert Processor] ❌ No rating found for beach ${beachId} (${beachName}) in loaded ratings.` +
-              `\n  - Available Beach IDs: ${beachRatings.map(b => b.beachId).join(', ')}` +
-              `\n  - Alert Beach ID: ${beachId}`
-            );
           }
-        } else if ((alert.alertType as any) === AlertType.RATING) {
-          console.log(
-            `[Alert Processor] RATING alert ${alert.name} skipped: starRating=${alert.starRating}, beachId=${beachId}`
-          );
-        }
 
-        // Send notification if conditions are met
-        if (shouldSendAlert) {
-          const { sendAlertNotification } = await import(
-            "./notificationService"
-          );
-          const success = await sendAlertNotification(
-            match,
-            alert as any,
-            beachName
-          );
-          if (success) result.notificationsSent++;
+          if (shouldSendAlert) {
+            const { sendAlertNotification } = await import("./notificationService");
+            // Check if we've already notified for this specific alert today for this slot
+            // To prevent spam if re-run, but for now we follow "all slots" literal
+            const success = await sendAlertNotification(match, alert as any, beachName);
+            if (success) result.notificationsSent++;
+          }
         }
       } catch (error) {
         console.error(`Error processing alert ${alert.id}:`, error);

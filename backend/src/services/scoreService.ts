@@ -215,7 +215,7 @@ export class ScoreService {
       | "swellPeriod"
       | "date"
       | "source"
-    >
+    > & { timeSlot: string }
   ) {
     let beaches: Beach[] = [];
     let scores: any[] = [];
@@ -242,6 +242,7 @@ export class ScoreService {
           beachId: beach.id,
           regionId,
           source: forecastData.source,
+          timeSlot: (forecastData as any).timeSlot || "MORNING",
           score: integerScore,
           starRating: starRating,
           date: forecastData.date,
@@ -257,15 +258,16 @@ export class ScoreService {
       });
 
       console.log(
-        `Attempting to upsert ${scores.length} scores for date ${forecastData.date}`
+        `Attempting to upsert ${scores.length} scores for date ${forecastData.date} (${forecastData.timeSlot})`
       );
 
-      // Delete existing scores for this region, date, and source
+      // Delete existing scores for this region, date, source AND timeSlot
       const deleteResult = await prisma.beachDailyScore.deleteMany({
         where: {
           regionId,
           date: forecastData.date,
           source: forecastData.source,
+          timeSlot: (forecastData as any).timeSlot || "MORNING",
         },
       });
 
@@ -292,9 +294,9 @@ export class ScoreService {
   }
 
   /**
-   * Get stored scores for a specific date, region, and source
+   * Get stored scores for a specific date, region, source and timeSlot
    */
-  static async getScores(regionId: string, date: Date, source?: string) {
+  static async getScores(regionId: string, date: Date, source?: string, timeSlot?: string) {
     const normalizedDate = new Date(date);
     normalizedDate.setUTCHours(0, 0, 0, 0);
 
@@ -303,6 +305,7 @@ export class ScoreService {
         regionId,
         date: normalizedDate,
         ...(source ? { source } : {}),
+        ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
       },
       include: {
         beach: true,
@@ -313,16 +316,22 @@ export class ScoreService {
   /**
    * Get region counts for beaches scoring 4 or higher (score >= 8)
    */
-  static async getRegionCounts(date: Date) {
+  static async getRegionCounts(date: Date, timeSlot?: string) {
     const normalizedDate = new Date(date);
     normalizedDate.setUTCHours(0, 0, 0, 0);
 
+    const whereClause: any = {
+      date: normalizedDate,
+      score: { gte: 8 },
+    };
+
+    if (timeSlot) {
+      whereClause.timeSlot = timeSlot as any;
+    }
+
     const regionCounts = await prisma.beachDailyScore.groupBy({
       by: ["regionId"],
-      where: {
-        date: normalizedDate,
-        score: { gte: 8 },
-      },
+      where: whereClause,
       _count: {
         beachId: true,
       },
@@ -359,6 +368,7 @@ export class ScoreService {
       sharkAttack?: string[];
       isHiddenGem?: boolean;
       source?: string;
+      timeSlot?: string;
     }>;
   }) {
     const normalizedDate = new Date(date);
@@ -381,6 +391,7 @@ export class ScoreService {
       ...Object.entries(filters).reduce(
         (acc: Prisma.BeachWhereInput, [key, value]) => {
           if (value !== undefined) {
+            if (key === "timeSlot" || key === "source") return acc; // Handled separately
             if (key === "isHiddenGem") {
               if (value === true) {
                 (acc as any).isHiddenGem = true;
@@ -415,6 +426,9 @@ export class ScoreService {
       ),
     };
 
+    // Determine the exact timeSlot to query
+    let queryTimeSlot: any = filters.timeSlot || "MORNING";
+
     // Get ALL beaches with their scores in a single query
     const beachesWithScores = await prisma.beach.findMany({
       where: whereClause,
@@ -423,6 +437,7 @@ export class ScoreService {
           where: {
             date: normalizedDate,
             regionId,
+            timeSlot: queryTimeSlot,
             ...(filters.source ? { source: filters.source } : {}),
           },
           orderBy: {

@@ -46,87 +46,78 @@ function extractWindfinderData() {
 
   const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"]'));
   
-  return daySections.map(day => {
-    const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"]');
-    if (!headerEl) return null;
-    const dateText = headerEl.textContent.trim().split('\n')[0];
-    
-    const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"]'))
-      .filter(el => /\d{2}h/.test(el.textContent));
-
-    const rows = columns.map(col => {
-      const timeEl = col.querySelector('.cell-ts, .forecast-hour, [class*="time"]') || col;
-      const timeStr = timeEl.textContent.trim().match(/\d{2}h/)?.[0] || "";
-      if (!timeStr) return null;
-
-      const getVal = (cls) => {
-        const el = col.querySelector('.' + cls) || col.querySelector(`[class*="${cls}"]`);
-        if (!el) return "0";
-        return el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
-      };
-
-      const windDirEl = col.querySelector('.cell-wd img, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
-      const waveDirEl = col.querySelector('.cell-wad img, .cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]') || 
-                        col.querySelector('img[src*="pointer-outline"]');
-
-      const wDir = getDirFromEl(windDirEl);
-      const sDir = getDirFromEl(waveDirEl);
-
-      // Extract Tide Info
-      let tideState = "";
-      let tideHeight = "";
-      let tidePeak = "";
-
-      const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"]'));
+    return daySections.map(day => {
+      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"]');
+      if (!headerEl) return null;
+      const dateText = headerEl.textContent.trim().split('\n')[0];
       
-      // Helper to find row by label or data-row-name
-      const findRow = (name, labelText) => {
-        return rowEls.find(r => 
-          r.getAttribute('data-row-name') === name || 
-          r.querySelector('._label-cell, .row-label')?.textContent.toLowerCase().includes(labelText)
-        );
-      };
+      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"]'))
+        .filter(el => /\d{2}h/.test(el.textContent));
 
-      const typeRow = findRow('tide-type', 'tide type');
-      const heightRow = findRow('tide-height', 'tide height');
-      const peakRow = findRow('tide-time', 'time'); // Peak time row
+      // Optimize: Index rows by label once per day
+      const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"], [class*="_row_"]'));
+      const rowMap = {};
+      rowEls.forEach(r => {
+        const label = r.querySelector('._label-cell, .row-label, [class*="label"]')?.textContent.toLowerCase() || "";
+        const name = r.getAttribute('data-row-name') || "";
+        if (name) rowMap[name] = r;
+        if (label) {
+           if (label.includes('wind speed') || label.includes('speed')) rowMap['wind-speed'] = r;
+           if (label.includes('wave height') || label.includes('swell height') || label.includes('height')) rowMap['wave-height'] = r;
+           if (label.includes('wave period') || label.includes('swell period') || label.includes('period')) rowMap['wave-period'] = r;
+           if (label.includes('tide type')) rowMap['tide-type'] = r;
+           if (label.includes('tide height')) rowMap['tide-height'] = r;
+           if (label.includes('time')) rowMap['tide-time'] = r;
+        }
+      });
 
-      const colIdx = columns.indexOf(col);
+      const rows = columns.map(col => {
+        const timeEl = col.querySelector('.cell-ts, .forecast-hour, [class*="time"]') || col;
+        const timeStr = timeEl.textContent.trim().match(/\d{2}h/)?.[0] || "";
+        if (!timeStr) return null;
 
-      if (typeRow) {
-        const dataCells = Array.from(typeRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
-        const cell = dataCells[colIdx];
-        const icon = cell?.querySelector('._tide-icon, ._tide-type-icon, img');
-        const iconText = icon?.textContent || icon?.getAttribute('title') || "";
-        const cellClasses = cell?.className || "";
-        
-        if (cellClasses.includes('rising') || iconText.includes('↗') || iconText.includes('rising')) tideState = "Rising";
-        else if (cellClasses.includes('falling') || iconText.includes('↘') || iconText.includes('falling')) tideState = "Falling";
-        else if (cellClasses.includes('high') || iconText.includes('┍┑')) tideState = "High";
-        else if (cellClasses.includes('low') || iconText.includes('┕┙')) tideState = "Low";
-      }
+        const colIdx = columns.indexOf(col);
 
-      if (heightRow) {
-        const dataCells = Array.from(heightRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
-        tideHeight = dataCells[colIdx]?.textContent.trim() || "";
-      }
+        const getVal = (cls, rowKey) => {
+          let el = col.querySelector('.' + cls) || col.querySelector(`[class*="${cls}"]`);
+          if (!el && rowKey && rowMap[rowKey]) {
+             const cells = Array.from(rowMap[rowKey].querySelectorAll('._cell, .cell, [class*="cell"]'));
+             el = cells[colIdx];
+          }
+          if (!el) return "0";
+          return el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
+        };
 
-      if (peakRow) {
-        const dataCells = Array.from(peakRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
-        tidePeak = dataCells[colIdx]?.textContent.trim() || "";
-      }
+        const windDirEl = col.querySelector('.cell-wd img, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
+        const waveDirEl = col.querySelector('.cell-wad img, .cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]') || 
+                          col.querySelector('img[src*="pointer-outline"]');
 
-      return {
-        time: timeStr,
-        windSpeed: getVal('cell-ws') || getVal('speed'),
-        windDir: wDir,
-        waveHeight: getVal('cell-wh') || getVal('height'),
-        wavePeriod: getVal('cell-wp') || getVal('period'),
-        swellDir: sDir,
-        tide: tideState ? `${tideState}${tideHeight ? ' (' + tideHeight + 'm)' : ''}${tidePeak ? ' Peak: ' + tidePeak : ''}` : ""
-      };
-    }).filter(r => r !== null);
+        const wDir = getDirFromEl(windDirEl);
+        const sDir = getDirFromEl(waveDirEl);
 
-    return { dateText, rows };
-  }).filter(d => d && d.rows.length > 0);
+        let tideState = "";
+        const typeRow = rowMap['tide-type'];
+        if (typeRow) {
+          const cells = Array.from(typeRow.querySelectorAll('._cell, .cell, [class*="cell"]'));
+          const cell = cells[colIdx];
+          const icon = cell?.querySelector('._tide-icon, ._tide-type-icon, img');
+          const iconText = icon?.textContent || icon?.getAttribute('title') || "";
+          const cellClasses = cell?.className || "";
+          if (cellClasses.includes('rising') || iconText.includes('↗')) tideState = "Rising";
+          else if (cellClasses.includes('falling') || iconText.includes('↘')) tideState = "Falling";
+        }
+
+        return {
+          time: timeStr,
+          windSpeed: getVal('cell-ws', 'wind-speed'),
+          windDir: wDir,
+          waveHeight: getVal('cell-wh', 'wave-height'),
+          wavePeriod: getVal('cell-wp', 'wave-period'),
+          swellDir: sDir,
+          tide: tideState || ""
+        };
+      }).filter(r => r !== null);
+
+      return { dateText, rows };
+    }).filter(d => d && d.rows.length > 0);
 }

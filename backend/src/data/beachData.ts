@@ -4091,8 +4091,8 @@ export const beachData: Beach[] = [
     },
     image: "",
     coordinates: {
-      lat: -34.1234,
-      lng: 18.4567,
+      lat: -34.3593611,
+      lng: 18.9267222,
     },
   },
   {

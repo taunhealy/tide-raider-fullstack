@@ -1,0 +1,25 @@
+{
+  "count": 9,
+  "daysFound": [
+    "Sunday, Apr 19",
+    "Monday, Apr 20",
+    "Tuesday, Apr 21"
+  ],
+  "summary": {
+    "2026-04-19": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-04-20": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-04-21": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ]
+  }
+}

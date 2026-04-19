@@ -13,448 +13,207 @@ function getTodayDate() {
   return date;
 }
 
+const pendingScrapes = new Map<string, Promise<any>>();
+
 export async function getLatestConditions(
   regionId: string,
   forceRefresh = false,
   source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER",
-  daysLimit?: number
+  daysLimit?: number,
+  targetDateParam?: Date,
+  timeSlotParam?: string
 ) {
-  // First, try to find region by ID (exact match, case-sensitive)
-  console.log(
-    `[getLatestConditions] 🔍 Looking up region by ID: "${regionId}"`
-  );
-  let region = await prisma.region.findUnique({
-    where: { id: regionId },
-  });
-
-  if (region) {
-    console.log(
-      `[getLatestConditions] ✅ Region found by ID: ${region.id} (${region.name})`
-    );
-  } else {
-    // Try lowercase version in case there's a case mismatch
-    const lowerRegionId = regionId.toLowerCase();
-    if (lowerRegionId !== regionId) {
-      console.log(
-        `[getLatestConditions] 🔍 Trying lowercase ID: "${lowerRegionId}"`
-      );
-      region = await prisma.region.findUnique({
-        where: { id: lowerRegionId },
-      });
-      if (region) {
-        console.log(
-          `[getLatestConditions] ✅ Region found by lowercase ID: ${region.id} (${region.name})`
-        );
-      }
-    }
-  }
-
-  // If not found by ID, try to find by name (case-insensitive)
-  // Handle slug format like "bali" -> "Bali" or "western-cape" -> "Western Cape"
-  if (!region) {
-    console.log(
-      `[getLatestConditions] ⚠️ Region not found by ID, trying name lookup...`
-    );
-    // Convert slug to title case for name matching
-    // "western-cape" -> "Western Cape", "bali" -> "Bali"
-    const nameFromSlug = regionId
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-
-    console.log(
-      `[getLatestConditions] 🔍 Searching for region with name variations:`,
-      {
-        original: regionId,
-        nameFromSlug,
-        searchPatterns: [
-          `id = "${regionId}"`,
-          `name = "${nameFromSlug}" (case-insensitive)`,
-          `name contains "${regionId}" (case-insensitive)`,
-          `name contains "${nameFromSlug}" (case-insensitive)`,
-        ],
-      }
-    );
-
-    region = await prisma.region.findFirst({
-      where: {
-        OR: [
-          { id: regionId },
-          { name: { equals: nameFromSlug, mode: "insensitive" } },
-          { name: { equals: regionId, mode: "insensitive" } },
-          { name: { contains: regionId, mode: "insensitive" } },
-          { name: { contains: nameFromSlug, mode: "insensitive" } },
-        ],
-      },
-    });
-
-    if (region) {
-      console.log(
-        `[getLatestConditions] ✅ Region found by name: ${region.id} (${region.name})`
-      );
-    } else {
-      // Log available regions for debugging
-      console.log("[DEBUG] About to query regions with findMany...");
-      console.log("[DEBUG] Prisma client instance:", !!prisma);
-      console.log("[DEBUG] Region ID being searched:", regionId);
-
-      try {
-        const allRegions = await prisma.region.findMany({
-          select: { id: true, name: true },
-          take: 20,
-        });
-        console.log("[DEBUG] Query executed successfully");
-        console.log("[DEBUG] Number of regions found:", allRegions.length);
-        console.log(
-          "[DEBUG] Query result:",
-          JSON.stringify(allRegions, null, 2)
-        );
-        console.log(
-          `[getLatestConditions] 🔍 Sample of available regions in database:`,
-          allRegions.map((r) => `${r.id} -> "${r.name}"`)
-        );
-      } catch (queryError: any) {
-        console.error("[DEBUG] Query failed with error:", queryError);
-        console.error("[DEBUG] Error message:", queryError.message);
-        console.error("[DEBUG] Error stack:", queryError.stack);
-      }
-    }
-  }
+  const configRegionId = regionId.toLowerCase();
+  const region = REGION_CONFIGS[configRegionId];
 
   if (!region) {
-    console.error(`[getLatestConditions] ❌ Invalid region ID: ${regionId}`);
-    throw new Error(`Invalid region ID: ${regionId}`);
+    throw new Error(`Region ${regionId} not found in configurations`);
   }
 
-  const today = getTodayDate();
+  const lookupDate = targetDateParam || getTodayDate();
+  lookupDate.setUTCHours(0, 0, 0, 0);
 
-  // Check for existing forecast with the requested source
-  console.log(
-    `[getLatestConditions] 🔍 Querying forecast for regionId: ${region.id}, date: ${today.toISOString()}, source: ${source}`
-  );
-  const existingForecast = await prisma.forecast.findFirst({
-    where: {
-      date: today,
-      regionId: region.id,
-      source: source,
-    },
-  });
+  // Determine active slot for return value fallback
+  const hour = new Date().getHours();
+  let activeSlot = "MORNING";
+  if (hour >= 11 && hour < 16) activeSlot = "NOON";
+  else if (hour >= 16) activeSlot = "EVENING";
 
-  console.log(`[getLatestConditions] 📊 Forecast query result:`, {
-    found: !!existingForecast,
-    regionId: region.id,
-    date: today.toISOString(),
-    source: source,
-    forceRefresh,
-    existingSource: existingForecast?.source,
-    windDirection: existingForecast?.windDirection,
-    swellDirection: existingForecast?.swellDirection,
-  });
-
-  // Check if forecast has missing or invalid direction data
-  // 0 values indicate missing data, values > 360 indicate corrupted data (timestamps)
-  // Check if forecast has missing direction data (sentinel value -1)
-  const hasMissingDirectionData =
-    existingForecast &&
-    (existingForecast.windDirection === -1 ||
-      existingForecast.swellDirection === -1);
-  const hasInvalidDirectionData =
-    existingForecast &&
-    (existingForecast.windDirection > 360 ||
-      existingForecast.swellDirection > 360);
-
-  if (
-    existingForecast &&
-    !forceRefresh &&
-    !hasMissingDirectionData &&
-    !hasInvalidDirectionData
-  ) {
-    console.log(
-      `[getLatestConditions] ✅ Found existing forecast for ${region.id} (source: ${source}, cached)`
-    );
-    return existingForecast;
-  }
-
-  // If forecast exists but has missing or invalid direction data, re-scrape
-  if (hasInvalidDirectionData) {
-    console.log(
-      `[getLatestConditions] ⚠️ Found existing forecast with invalid direction data (windDirection: ${existingForecast.windDirection}, swellDirection: ${existingForecast.swellDirection}), deleting and re-scraping...`
-    );
-    // Delete the invalid forecast so it gets replaced
-    await prisma.forecast.deleteMany({
+  // 1. Check database first (Internal Cache)
+  if (!forceRefresh) {
+    const existingForecast = await prisma.forecast.findFirst({
       where: {
-        date: today,
-        regionId: region.id,
+        regionId: region.regionId,
         source: source,
+        date: lookupDate,
+        timeSlot: (timeSlotParam as any) || activeSlot,
       },
     });
-  } else if (hasMissingDirectionData) {
-    console.log(
-      `[getLatestConditions] ⚠️ Found existing forecast with missing direction data (windDirection: ${existingForecast.windDirection}, swellDirection: ${existingForecast.swellDirection}), re-scraping...`
-    );
-  }
 
-  // Scrape new forecast
-  // Try to find config by region.id first, then by original regionId (slug format)
-  let regionConfig = REGION_CONFIGS[region.id] || REGION_CONFIGS[regionId];
-
-  // If still not found, try slug format variations
-  if (!regionConfig) {
-    const slugVariations = [
-      regionId.toLowerCase(),
-      regionId.replace(/\s+/g, "-").toLowerCase(),
-      region.name.toLowerCase().replace(/\s+/g, "-"),
-    ];
-
-    for (const slug of slugVariations) {
-      if (REGION_CONFIGS[slug]) {
-        regionConfig = REGION_CONFIGS[slug];
-        break;
-      }
-    }
-  }
-
-  if (!regionConfig) {
-    console.error(
-      `Missing region configuration for ${region.id} (tried: ${region.id}, ${regionId})`
-    );
-    return null;
-  }
-
-  // Use the region.id from database for storing forecast, but use config's regionId for scraping
-  const configRegionId = regionConfig.regionId || region.id;
-
-  // Determine which source to scrape
-  let sourceConfig;
-  let sourceName;
-  if (source === "WINDGURU") {
-    sourceConfig = regionConfig.sourceB;
-    sourceName = "sourceB";
-  } else if (source === "WINDY") {
-    sourceConfig = regionConfig.sourceC;
-    sourceName = "sourceC";
-  } else {
-    sourceConfig = regionConfig.sourceA;
-    sourceName = "sourceA";
-  }
-
-  if (!sourceConfig) {
-    console.error(
-      `[getLatestConditions] ❌ Source ${source} not configured for region ${region.id}. Available: sourceA=${!!regionConfig.sourceA}, sourceB=${!!regionConfig.sourceB}, sourceC=${!!regionConfig.sourceC}`
-    );
-    return null;
-  }
-
-  console.log(`[getLatestConditions] 🔧 Using ${sourceName} for ${source}`);
-
-  try {
-    console.log(
-      `[getLatestConditions] 🌐 Scraping forecast for ${region.id} from ${sourceConfig.url} (source: ${source})`
-    );
-    
-    // PRIMARY: Use Legacy Scraper (TypeScript/Puppeteer)
-    let scrapedForecasts: BaseForecastData[] = [];
-    
-    // Function to run a single scrape with semantic fallback
-    const runScrapeWithFallback = async (url: string, id: string): Promise<BaseForecastData[]> => {
-      try {
-        console.log(`[getLatestConditions] 🔍 Running scraper for ${url}...`);
-        let results = await sourceConfig.scraper(url, id);
-        
-        // VALIDATION: Check if any forecast has missing direction data
-        const hasMissingData = !results || results.length === 0 || 
-          results.some(f => f.swellDirection === -1 || f.windDirection === -1);
-        
-        if (hasMissingData) {
-          console.log(`[getLatestConditions] ⚠️ Scraper returned missing data (-1). Triggering Semantic Fallback...`);
-          const semanticResults = await PythonBridge.runSemanticScrape(url, id);
-          if (semanticResults && semanticResults.length > 0) return semanticResults;
-        }
-        return results || [];
-      } catch (err) {
-        console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
-        try {
-          console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini...`);
-          return await PythonBridge.runSemanticScrape(url, id) || [];
-        } catch (semanticErr) {
-          console.error(`[getLatestConditions] ❌ Semantic final fallback failed:`, semanticErr);
-          return [];
-        }
-      }
-    };
-
-    try {
-      // 1. Fetch Superforecast (Day 1-3)
-      const superResults = await runScrapeWithFallback(sourceConfig.url, configRegionId);
-      
-      // 2. Fetch Regular Forecast (Day 1-10) if available
-      if (sourceConfig.forecastUrl) {
-        console.log(`[getLatestConditions] 🧪 Hybrid Mode: Fetching supplemental 10-day forecast...`);
-        const regularResults = await runScrapeWithFallback(sourceConfig.forecastUrl, configRegionId);
-        
-        // 3. Merge: Regular as base, Super as priority override
-        const forecastMap = new Map<string, BaseForecastData>();
-        
-        // Put regular results in map first (Day 1-10)
-        regularResults.forEach(f => {
-          const key = f.date.toISOString().split("T")[0];
-          forecastMap.set(key, f);
-        });
-        
-        // Overwrite with super results (Day 1-3)
-        superResults.forEach(f => {
-          const key = f.date.toISOString().split("T")[0];
-          forecastMap.set(key, f);
-        });
-        
-        scrapedForecasts = Array.from(forecastMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
-      } else {
-        scrapedForecasts = superResults;
-      }
-    } catch (error) {
-      console.error(`[getLatestConditions] ❌ Hybrid scraping failed:`, error);
-      throw error;
-    }
-
-    if (!scrapedForecasts || scrapedForecasts.length === 0) {
-      throw new Error(`Scraper returned empty array for ${region.id}`);
-    }
-
-    console.log(
-      `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database...`
-    );
-
-    // Store all scraped forecasts (today, tomorrow, and day after tomorrow)
-    let storedTodayForecast = null;
-    
-    // Store scraped forecasts (limit if requested, e.g. Daily scrape)
-    const forecastsToStore = daysLimit 
-      ? scrapedForecasts.slice(0, daysLimit)
-      : scrapedForecasts;
-
-    for (const scrapedForecast of forecastsToStore) {
-      // Strip time from date
-      scrapedForecast.date.setUTCHours(0, 0, 0, 0);
-
+    if (existingForecast) {
       console.log(
-        `[getLatestConditions] 💾 Storing forecast for ${region.id} on ${scrapedForecast.date.toISOString().split("T")[0]}`
+        `[getLatestConditions] 📦 Using cached ${source} forecast for ${region.regionId} on ${lookupDate.toISOString().split("T")[0]} slot ${timeSlotParam || activeSlot}`
       );
-
-      // Store in database using the database region.id (not the config's regionId)
-      const storedForecast = await prisma.forecast.upsert({
-        where: {
-          date_regionId_source: {
-            date: scrapedForecast.date,
-            regionId: region.id, // Use database region ID
-            source: source, // Use the requested source
-          },
-        },
-        update: {
-          windSpeed: scrapedForecast.windSpeed,
-          windDirection: scrapedForecast.windDirection,
-          swellHeight: scrapedForecast.swellHeight,
-          swellPeriod: scrapedForecast.swellPeriod,
-          swellDirection: scrapedForecast.swellDirection,
-          trend: scrapedForecast.trend,
-        },
-        create: {
-          id: randomUUID(),
-          date: scrapedForecast.date,
-          regionId: region.id, // Use database region ID
-          source: source, // Use the requested source
-          windSpeed: scrapedForecast.windSpeed,
-          windDirection: scrapedForecast.windDirection,
-          swellHeight: scrapedForecast.swellHeight,
-          swellPeriod: scrapedForecast.swellPeriod,
-          swellDirection: scrapedForecast.swellDirection,
-          trend: scrapedForecast.trend,
-        },
-      });
-
-      // Keep track of today's forecast to return
-      if (!storedTodayForecast) {
-        const forecastDate = new Date(storedForecast.date);
-        const todayDate = new Date(today);
-        if (
-          forecastDate.getUTCDate() === todayDate.getUTCDate() &&
-          forecastDate.getUTCMonth() === todayDate.getUTCMonth() &&
-          forecastDate.getUTCFullYear() === todayDate.getUTCFullYear()
-        ) {
-          storedTodayForecast = storedForecast;
-        }
-      }
+      return existingForecast;
     }
-
-    // After storing all forecasts, calculate scores for each day to ensure data integrity
-    console.log(`[getLatestConditions] 📊 Calculating scores for ${forecastsToStore.length} forecast days...`);
-    for (const scrapedForecast of forecastsToStore) {
-      try {
-        await ScoreService.calculateAndStoreScores(region.id, {
-          windSpeed: scrapedForecast.windSpeed,
-          windDirection: scrapedForecast.windDirection,
-          swellHeight: scrapedForecast.swellHeight,
-          swellPeriod: scrapedForecast.swellPeriod,
-          swellDirection: scrapedForecast.swellDirection,
-          date: scrapedForecast.date,
-          source: source,
-          tide: scrapedForecast.tide,
-        });
-      } catch (scoreError) {
-        console.error(
-          `[getLatestConditions] ❌ Failed to calculate scores for ${scrapedForecast.date.toISOString().split("T")[0]}:`,
-          scoreError
-        );
-      }
-    }
-
-    // Return today's forecast - must be from database to ensure it has the source field
-    if (!storedTodayForecast) {
-      // If today's forecast wasn't found in scraped data, query the database for the first stored forecast
-      // This ensures we always return a forecast with the correct source field
-      const firstStoredForecast = await prisma.forecast.findFirst({
-        where: {
-          regionId: region.id,
-          source: source,
-          date: {
-            gte: today,
-          },
-        },
-        orderBy: {
-          date: "asc",
-        },
-      });
-
-      if (firstStoredForecast) {
-        console.log(
-          `[getLatestConditions] ⚠️ Today's forecast not in scraped data, returning first available forecast (${firstStoredForecast.date.toISOString().split("T")[0]})`
-        );
-        console.log(
-          `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
-        );
-        console.log(
-          `[getLatestConditions] 📤 Returning forecast with source: ${firstStoredForecast.source}, windSpeed: ${firstStoredForecast.windSpeed}, swellHeight: ${firstStoredForecast.swellHeight}`
-        );
-        return firstStoredForecast;
-      } else {
-        console.error(
-          `[getLatestConditions] ❌ No forecasts stored in database for ${region.id} (source: ${source})`
-        );
-        return null;
-      }
-    }
-
-    console.log(
-      `[getLatestConditions] ✅ Successfully stored ${scrapedForecasts.length} forecast(s) for ${region.id} (source: ${source})`
-    );
-    console.log(
-      `[getLatestConditions] 📤 Returning forecast with source: ${storedTodayForecast!.source}, windSpeed: ${storedTodayForecast!.windSpeed}, swellHeight: ${storedTodayForecast!.swellHeight}`
-    );
-    return storedTodayForecast!;
-  } catch (error) {
-    console.error(
-      `[getLatestConditions] ❌ Error scraping/storing forecast for ${region.id}:`,
-      error
-    );
-    throw error;
   }
+
+  // Determine URL based on source
+  let scrapeUrl = "";
+  if (source === "WINDFINDER") scrapeUrl = region.sourceA.url;
+  else if (source === "WINDGURU") scrapeUrl = region.sourceB?.url || "";
+  else if (source === "WINDY") scrapeUrl = region.sourceC?.url || "";
+
+  if (!scrapeUrl) {
+    throw new Error(`Scrape URL not configured for ${region.regionId} source ${source}`);
+  }
+
+  console.log(
+    `[getLatestConditions] 🔄 Fetching fresh conditions for ${region.regionId} - Source: ${source} - URL: ${scrapeUrl}`
+  );
+
+  const runScrapeWithFallback = async (url: string, id: string) => {
+    try {
+      if (source === "WINDFINDER") return await scraperA(url, id);
+      if (source === "WINDGURU") return await scraperB(url, id);
+      return [];
+    } catch (err) {
+      console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
+      try {
+        console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini...`);
+        return await PythonBridge.runSemanticScrape(url, id) || [];
+      } catch (semanticErr) {
+        console.error(`[getLatestConditions] ❌ Semantic final fallback failed:`, semanticErr);
+        return [];
+      }
+    }
+  };
+
+  const scrapeKey = `${regionId}-${source}`;
+  if (pendingScrapes.has(scrapeKey)) {
+    console.log(`[getLatestConditions] ⏳ Scrape already in progress for ${scrapeKey}, waiting for promise...`);
+    await pendingScrapes.get(scrapeKey);
+    
+    // After waiting, check DB again
+    const refreshedForecast = await prisma.forecast.findFirst({
+      where: {
+        date: lookupDate,
+        regionId: region.regionId,
+        source: source,
+        timeSlot: (timeSlotParam as any) || activeSlot,
+      }
+    });
+    if (refreshedForecast) return refreshedForecast;
+  }
+
+  const scrapePromise = (async () => {
+    return await runScrapeWithFallback(scrapeUrl, configRegionId);
+  })();
+
+  pendingScrapes.set(scrapeKey, scrapePromise);
+
+  let scrapedForecasts;
+  try {
+    scrapedForecasts = await scrapePromise;
+  } finally {
+    pendingScrapes.delete(scrapeKey);
+  }
+
+  if (!scrapedForecasts || scrapedForecasts.length === 0) {
+    throw new Error(`Scraper returned empty array for ${region.regionId}`);
+  }
+
+  console.log(
+    `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database...`
+  );
+
+  // Store all scraped forecasts
+  let requestedForecast = null;
+  
+  const forecastsToStore = daysLimit 
+    ? scrapedForecasts.slice(0, daysLimit)
+    : scrapedForecasts;
+
+  for (const scrapedForecast of forecastsToStore) {
+    // Create a NEW date object to avoid mutating shared references
+    const forecastDate = new Date(scrapedForecast.date);
+    forecastDate.setUTCHours(0, 0, 0, 0);
+    
+    const slot = (scrapedForecast as any).timeSlot || "MORNING";
+
+    console.log(
+      `[getLatestConditions] 💾 Upserting forecast for ${region.regionId} on ${forecastDate.toISOString().split("T")[0]} slot ${slot}`
+    );
+    
+    const storedForecast = await prisma.forecast.upsert({
+      where: {
+        date_regionId_source_timeSlot: {
+          date: forecastDate,
+          regionId: region.regionId,
+          source: source,
+          timeSlot: slot as any,
+        },
+      },
+      update: {
+        windSpeed: scrapedForecast.windSpeed,
+        windDirection: scrapedForecast.windDirection,
+        swellHeight: scrapedForecast.swellHeight,
+        swellPeriod: scrapedForecast.swellPeriod,
+        swellDirection: scrapedForecast.swellDirection,
+        trend: scrapedForecast.trend,
+      },
+      create: {
+        id: randomUUID(),
+        date: forecastDate,
+        regionId: region.regionId,
+        source: source,
+        timeSlot: slot as any,
+        windSpeed: scrapedForecast.windSpeed,
+        windDirection: scrapedForecast.windDirection,
+        swellHeight: scrapedForecast.swellHeight,
+        swellPeriod: scrapedForecast.swellPeriod,
+        swellDirection: scrapedForecast.swellDirection,
+        trend: scrapedForecast.trend,
+      },
+    });
+
+    // Match the exact record we need to return
+    const isTargetDate = forecastDate.getTime() === lookupDate.getTime();
+    const isTargetSlot = timeSlotParam ? storedForecast.timeSlot === timeSlotParam : storedForecast.timeSlot === activeSlot;
+
+    if (isTargetDate && isTargetSlot) {
+      requestedForecast = storedForecast;
+    }
+  }
+
+  // Mass Score Calculation: Run score updates for ALL scraped slots 
+  // This ensures that when the user toggles the UI, data is already ready.
+  console.log(`[getLatestConditions] 📊 Batch calculating scores for ${scrapedForecasts.length} slots...`);
+  for (const scrapedForecast of scrapedForecasts) {
+    try {
+      // Normalize date for score storage
+      const forecastDate = new Date(scrapedForecast.date);
+      forecastDate.setUTCHours(0, 0, 0, 0);
+
+      await ScoreService.calculateAndStoreScores(region.regionId, {
+        windSpeed: scrapedForecast.windSpeed,
+        windDirection: scrapedForecast.windDirection,
+        swellHeight: scrapedForecast.swellHeight,
+        swellPeriod: scrapedForecast.swellPeriod,
+        swellDirection: scrapedForecast.swellDirection,
+        date: forecastDate,
+        source: source,
+        timeSlot: scrapedForecast.timeSlot,
+      } as any);
+    } catch (scoreErr) {
+      console.error(`[getLatestConditions] ⚠️ Failed for slot ${scrapedForecast.timeSlot}:`, scoreErr);
+    }
+  }
+
+  if (!requestedForecast) {
+    console.log(`[getLatestConditions] ⚠️ Requested forecast (${lookupDate.toISOString().split('T')[0]} / ${timeSlotParam || activeSlot}) not found in scraped data.`);
+    return null;
+  }
+
+  return requestedForecast;
 }

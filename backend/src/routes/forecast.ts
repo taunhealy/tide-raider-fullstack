@@ -18,16 +18,17 @@ router.get(
       const regionId = req.query.regionId as string;
       const forceRefresh = req.query.forceRefresh === "true";
       const forecastDateParam = req.query.forecastDate as string | undefined;
-      const sourceParamRaw = req.query.source as string | undefined;
+      const timeSlotParam = (req.query.timeSlot as string) || "MORNING";
 
       if (!regionId) {
         return res.status(400).json({ error: "Region ID is required" });
       }
 
       // Validate and normalize source parameter
+      const sourceParamRaw = req.query.source as string | undefined;
       const validSources = ["WINDFINDER", "WINDGURU", "WINDY"] as const;
       const sourceParam: "WINDFINDER" | "WINDGURU" | "WINDY" =
-        sourceParamRaw && validSources.includes(sourceParamRaw as any)
+        sourceParamRaw && (validSources as readonly string[]).includes(sourceParamRaw)
           ? (sourceParamRaw as "WINDFINDER" | "WINDGURU" | "WINDY")
           : "WINDFINDER";
 
@@ -108,16 +109,18 @@ router.get(
       // Try to find existing forecast - Use findFirst for better compatibility with Date objects
       let forecast;
       try {
-        console.log(`[forecast] 🔍 Querying database for: regionId=${resolvedRegionId}, date=${dateStr}, source=${sourceParam}`);
+        console.log(`[forecast] 🔍 Querying database for: regionId=${resolvedRegionId}, date=${dateStr}, source=${sourceParam}, timeSlot=${timeSlotParam}`);
         forecast = await prisma.forecast.findFirst({
           where: {
             date: targetDate,
             regionId: resolvedRegionId,
             source: sourceParam,
+            timeSlot: timeSlotParam as any,
           },
           select: {
             id: true,
             date: true,
+            timeSlot: true,
             regionId: true,
             source: true,
             windSpeed: true,
@@ -135,7 +138,7 @@ router.get(
 
       if (!forecast) {
         console.log(
-          `[forecast] No forecast found for regionId: ${resolvedRegionId} (original: ${regionId}), date: ${dateStr}, source: ${sourceParam}`
+          `[forecast] No forecast found for regionId: ${resolvedRegionId} (original: ${regionId}), date: ${dateStr}, source: ${sourceParam}, timeSlot: ${timeSlotParam}`
         );
 
         // Check if this is today or a future date - if so, trigger scraping
@@ -156,12 +159,25 @@ router.get(
 
           try {
             const scrapeStartTime = Date.now();
-            // getLatestConditions will scrape if no data exists
-            // forceRefresh=false means it checks DB first, only scrapes if needed
+            // Calculate distance from today in days
+            const today = new Date();
+            today.setUTCHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            
+            let effectiveSource = sourceParam;
+            // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
+            if (sourceParam === "WINDFINDER" && diffDays > 3) {
+              console.log(`[forecast] 📅 Date ${dateStr} is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
+              effectiveSource = "WINDGURU";
+            }
+
             const scrapedForecast = await getLatestConditions(
               resolvedRegionId,
-              forceRefresh, // Use the forceRefresh parameter from request
-              sourceParam
+              forceRefresh,
+              effectiveSource,
+              undefined, // daysLimit
+              targetDate,
+              timeSlotParam
             );
             const scrapeDuration = Date.now() - scrapeStartTime;
 
@@ -180,13 +196,29 @@ router.get(
               );
 
               // Query the forecast again after scraping
+              const finalSource = (sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam;
               forecast = await prisma.forecast.findFirst({
                 where: {
                   date: targetDate,
                   regionId: resolvedRegionId,
-                  source: sourceParam,
+                  source: finalSource,
+                  timeSlot: timeSlotParam as any,
                 },
               });
+
+              // SECONDARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
+              if (!forecast && sourceParam === "WINDFINDER" && diffDays <= 3) {
+                 console.log(`[forecast] 🔄 SECONDARY FALLBACK: Windfinder null for ${dateStr}, attempting WINDGURU extraction...`);
+                 await getLatestConditions(resolvedRegionId, forceRefresh, "WINDGURU");
+                 forecast = await prisma.forecast.findFirst({
+                   where: {
+                     date: targetDate,
+                     regionId: resolvedRegionId,
+                     source: "WINDGURU",
+                     timeSlot: timeSlotParam as any,
+                   },
+                 });
+              }
 
               if (forecast) {
                 console.log(
@@ -196,20 +228,21 @@ router.get(
                 // Calculate scores for this forecast (if they don't exist)
                 // This ensures the highscores widget has data
                 try {
-                  // Check if scores already exist for this date/source
+                  // Check if scores already exist for this date/source/slot
                   const existingScores = await prisma.beachDailyScore.findFirst(
                     {
                       where: {
                         regionId: resolvedRegionId,
                         date: targetDate,
                         source: sourceParam,
+                        timeSlot: timeSlotParam as any,
                       },
                     }
                   );
 
                   if (!existingScores) {
                     console.log(
-                      `[forecast] 📊 Calculating scores for ${resolvedRegionId} (${sourceParam}) on ${dateStr}`
+                      `[forecast] 📊 Calculating scores for ${resolvedRegionId} (${sourceParam}/${timeSlotParam}) on ${dateStr}`
                     );
                     await ScoreService.calculateAndStoreScores(
                       resolvedRegionId,
@@ -221,7 +254,8 @@ router.get(
                         swellDirection: forecast.swellDirection,
                         date: forecast.date,
                         source: forecast.source,
-                      }
+                        timeSlot: forecast.timeSlot,
+                      } as any
                     );
                     console.log(
                       `[forecast] ✅ Scores calculated and stored for ${resolvedRegionId} (${sourceParam})`
@@ -267,10 +301,11 @@ router.get(
         // Return 404 if still no forecast found
         return res.status(404).json({
           error: `No forecast data found`,
-          message: `No forecast data available for ${sourceParam} on ${dateStr} in region ${region.name || resolvedRegionId}`,
+          message: `No forecast data available for ${sourceParam} on ${dateStr} (${timeSlotParam}) in region ${region.name || resolvedRegionId}`,
           regionId: resolvedRegionId,
           date: dateStr,
           source: sourceParam,
+          timeSlot: timeSlotParam,
         });
       }
 
