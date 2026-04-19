@@ -11,6 +11,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import api from "@/app/lib/api-client";
 
 // Register ScrollTrigger plugin
@@ -24,14 +25,17 @@ function generateId() {
 
 export default function StickyForecastWidget() {
   const widgetRef = useRef<HTMLDivElement>(null);
-  const searchParams = useSearchParams();
-  const regionId = searchParams.get("regionId");
-  const regionName = searchParams.get("region");
+  const { 
+    filters: { regionId, region: regionName, forecastDate, timeSlot } 
+  } = useBeachFilters();
+
+  const normalizedDate = forecastDate || new Date().toISOString().split("T")[0];
+  const normalizedTimeSlot = timeSlot || "MORNING";
 
   // Replace useFilteredBeaches with direct forecast query
   const { data: forecastData, isLoading } = useQuery({
-    queryKey: ["forecast", regionId],
-    queryFn: () => api.getForecast(regionId!),
+    queryKey: ["forecast", regionId, normalizedDate, normalizedTimeSlot],
+    queryFn: () => api.getForecast(regionId!, normalizedDate, "WINDFINDER", normalizedTimeSlot),
     enabled: !!regionId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,

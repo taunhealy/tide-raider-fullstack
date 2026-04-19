@@ -99,7 +99,7 @@ export default function DateSelector({
               key={option.value}
               onClick={() => onDateSelect(option.value)}
               className={cn(
-                "flex flex-col items-center min-w-[85px] px-4 py-2 rounded-xl transition-all relative group",
+                "flex flex-col items-center min-w-[75px] px-3 py-2 rounded-xl transition-all relative group",
                 isSelected
                   ? "bg-shimmer-dark text-[#3b82f6] shadow-xl scale-105 z-10"
                   : "text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm"

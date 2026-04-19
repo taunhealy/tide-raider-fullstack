@@ -34,7 +34,7 @@ export default function WeatherForecastWidget() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const {
-    filters: { regionId, forecastDate },
+    filters: { regionId, forecastDate, timeSlot },
   } = useBeachFilters();
   const { isSubscribed, hasActiveTrial } = useSubscription();
   const isPremium = isSubscribed || hasActiveTrial;
@@ -87,6 +87,9 @@ export default function WeatherForecastWidget() {
     return today.toISOString().split("T")[0];
   }, [forecastDate, mounted]);
 
+  // Normalize timeSlot - default to MORNING if not provided
+  const normalizedTimeSlot = timeSlot || "MORNING";
+
   // Debug: Log when normalizedDate changes
   useEffect(() => {
     console.log(
@@ -104,16 +107,17 @@ export default function WeatherForecastWidget() {
   // The query key change will automatically trigger a refetch, so we don't need to manually invalidate
   useEffect(() => {
     if (regionId && normalizedDate && mounted) {
-      console.log("[WeatherForecastWidget] Date or source changed:", {
+      console.log("[WeatherForecastWidget] Date, source or timeSlot changed:", {
         regionId,
         normalizedDate,
+        normalizedTimeSlot,
         source: selectedSource,
       });
       // The forecast query will automatically refetch due to query key change.
       // We no longer manually invalidate filteredBeaches here to prevent infinite-style refetch loops
       // since useFilteredBeaches already depends on normalizedDate and selectedSource.
     }
-  }, [regionId, normalizedDate, selectedSource, mounted]);
+  }, [regionId, normalizedDate, normalizedTimeSlot, selectedSource, mounted]);
 
   // Only enable query after mount to prevent hydration issues
   const queryEnabled = mounted && !!regionId && !!normalizedDate;
@@ -124,22 +128,24 @@ export default function WeatherForecastWidget() {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ["forecast", regionId, normalizedDate, selectedSource],
+    queryKey: ["forecast", regionId, normalizedDate, selectedSource, normalizedTimeSlot],
     queryFn: async () => {
       console.log(
         "[WeatherForecastWidget] ⚡ Query function called - Fetching forecast:",
         {
           regionId,
           normalizedDate,
+          normalizedTimeSlot,
           source: selectedSource,
-          url: `/api/forecast?regionId=${regionId}&forecastDate=${normalizedDate}&source=${selectedSource}`,
+          url: `/api/forecast?regionId=${regionId}&forecastDate=${normalizedDate}&source=${selectedSource}&timeSlot=${normalizedTimeSlot}`,
         }
       );
       try {
         const result = await api.getForecast(
           regionId!,
           normalizedDate,
-          selectedSource
+          selectedSource,
+          normalizedTimeSlot
         );
         console.log(
           "[WeatherForecastWidget] ✅ Forecast data received:",

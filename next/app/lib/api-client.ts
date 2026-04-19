@@ -171,11 +171,13 @@ export const api = {
   getForecast: async (
     regionId: string,
     forecastDate?: string,
-    source?: "WINDFINDER" | "WINDGURU" | "WINDY"
+    source?: "WINDFINDER" | "WINDGURU" | "WINDY",
+    timeSlot?: string
   ) => {
     const params = new URLSearchParams({ regionId });
     if (forecastDate) params.append("forecastDate", forecastDate);
     if (source) params.append("source", source);
+    if (timeSlot) params.append("timeSlot", timeSlot);
 
     try {
       return await apiRequest<any>(`/api/forecast?${params.toString()}`);

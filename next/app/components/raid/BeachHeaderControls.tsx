@@ -51,7 +51,7 @@ const ProximityFilterRow = ({
   <div className="mt-4 pt-4 border-t border-gray-100/60 flex flex-col gap-3">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <h5 className="font-primary text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+        <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">
           Proximity
         </h5>
         {maxDistance !== null && (
@@ -186,22 +186,26 @@ export default function BeachHeaderControls({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"></div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
-               <DateSelector
-                 selectedDate={selectedDate}
-                 onDateSelect={handleDateSelect}
-                 beaches={beaches}
-                 availableDates={availableDates}
-               />
+            <div className="flex flex-col items-start gap-5">
+                <div className="flex flex-col gap-3 w-full">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
+                  <DateSelector
+                    selectedDate={selectedDate}
+                    onDateSelect={handleDateSelect}
+                    beaches={beaches}
+                    availableDates={availableDates}
+                    className="w-full sm:w-auto"
+                  />
+                </div>
                
-               <div className="flex flex-col gap-2">
-                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Tactical Window</label>
-                 <TimeSlotSelector 
-                   selectedSlot={currentTimeSlotValue}
-                   onChange={(slot) => updateFilter("timeSlot", slot)}
-                   activeSlot={activeSlot}
-                 />
-               </div>
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Time</label>
+                  <TimeSlotSelector 
+                    selectedSlot={currentTimeSlotValue}
+                    onChange={(slot) => updateFilter("timeSlot", slot)}
+                    activeSlot={activeSlot}
+                  />
+                </div>
             </div>
 
             <div className="h-px bg-black/5 w-full" />
@@ -216,7 +220,7 @@ export default function BeachHeaderControls({
                 <div className="flex flex-col gap-4 w-full">
                   {/* Recent Regions Row */}
                   <div className="w-full space-y-3">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Location History</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Location History</label>
                     <RecentRegionSearch regionCounts={regionCountsData} />
                   </div>
                   

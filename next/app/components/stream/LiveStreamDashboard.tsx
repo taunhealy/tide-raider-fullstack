@@ -764,6 +764,7 @@ export default function LiveStreamDashboard() {
               selectedSlot={selectedSlot}
               onChange={setSelectedSlot}
               activeSlot={activeSlot}
+              orientation="vertical"
             />
           </div>
 
