@@ -3989,6 +3989,7 @@
       "NW",
       "W"
     ],
+    "isHiddenGem": true,
     "optimalSwellDirections": {
       "min": 225,
       "max": 315
