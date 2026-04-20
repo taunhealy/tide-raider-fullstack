@@ -91,7 +91,7 @@ export default function GradientButton({
       {...props}
     >
       {icon && <span className="flex-shrink-0">{icon}</span>}
-      <span>{children}</span>
+      <span className="flex items-center gap-1.5">{children}</span>
       {badge !== undefined && (
         <span className="ml-1 bg-white/20 px-2 py-0.5 rounded-full text-xs font-semibold">
           {badge}

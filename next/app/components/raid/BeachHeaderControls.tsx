@@ -318,9 +318,9 @@ export default function BeachHeaderControls({
                           >
                             Hidden Gems
                             {hiddenGemCount > 0 && (
-                              <div className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-brand-3 text-white text-[10px] font-black border border-white/20">
+                              <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-brand-3 text-white text-[10px] font-black border border-white/20 shadow-sm">
                                 {hiddenGemCount}
-                              </div>
+                              </span>
                             )}
                             {(!isAuthenticated || !isSubscribed) && <Lock className="ml-2 w-3 h-3" />}
                           </HiddenGemsButton>

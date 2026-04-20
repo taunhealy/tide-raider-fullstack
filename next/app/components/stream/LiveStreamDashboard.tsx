@@ -1,7 +1,7 @@
 "use client";
 // Forced Recompile: Sentinel System Upgrade
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import dynamic from 'next/dynamic';
@@ -556,26 +556,11 @@ export default function LiveStreamDashboard() {
       iso: d.toISOString().split("T")[0]
     };
   }), []);
+  
   const [isMuted, setIsMuted] = useState(true);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
-  // ========================================================================
-  // HEARTBEAT POLLING (REAL-TIME UPDATES)
-  // Keeps the stream data fresh 24/7 with minimal cost.
-  // ========================================================================
-  useEffect(() => {
-    const HEARTBEAT_INTERVAL = 24 * 60 * 60 * 1000; // Once every 24 hours
-    const interval = setInterval(() => {
-      fetchDashboardData();
-    }, HEARTBEAT_INTERVAL);
-    return () => clearInterval(interval);
-  }, [fetchDashboardData]);
 
   useEffect(() => {
     setMounted(true);
@@ -675,7 +660,7 @@ export default function LiveStreamDashboard() {
   }, [TARGET_BEACHES.length]);
 
   // 1. Logs & Social Sync (Stable - No Slot Dependence)
-  const { data: logData } = useQuery({
+  const { data: logData, refetch: refetchLogs } = useQuery({
     queryKey: ["logsSync"],
     queryFn: async () => {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4001';
@@ -697,7 +682,7 @@ export default function LiveStreamDashboard() {
   });
 
   // 2. Tactical Horizon Sync (Slot Dependent - Conditions & Scores)
-  const { data: tacticalData, isLoading: isTacticalLoading } = useQuery({
+  const { data: tacticalData, refetch: refetchTactical, isLoading: isTacticalLoading } = useQuery({
     queryKey: ["tacticalSync", dayIndex, selectedSlot], 
     queryFn: async () => {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4001';
@@ -739,6 +724,28 @@ export default function LiveStreamDashboard() {
     },
     refetchInterval: 1000 * 60 * 5,
   });
+
+  // --- DATA REFRESH LOGIC ---
+  const fetchDashboardData = useCallback(() => {
+    refetchLogs?.();
+    refetchTactical?.();
+  }, [refetchLogs, refetchTactical]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // ========================================================================
+  // HEARTBEAT POLLING (REAL-TIME UPDATES)
+  // Keeps the stream data fresh 24/7 with minimal cost.
+  // ========================================================================
+  useEffect(() => {
+    const HEARTBEAT_INTERVAL = 24 * 60 * 60 * 1000; // Once every 24 hours
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, HEARTBEAT_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   return (
     <>
