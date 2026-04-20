@@ -1563,6 +1563,63 @@
     }
   },
   {
+    "id": "black-rocks",
+    "name": "Black Rocks 🦈",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point Nature Reserve",
+    "isHiddenGem": true,
+    "distanceFromCT": 70,
+    "optimalWindDirections": [
+      "W",
+      "WNW",
+      "NW",
+      "NE"
+    ],
+    "optimalSwellDirections": {
+      "min": 180,
+      "max": 240,
+      "cardinal": "S/SW"
+    },
+    "bestSeasons": [
+      "winter"
+    ],
+    "optimalTide": "MID-HIGH",
+    "description": "A heavy and world-class reef break located on the False Bay side of the Cape Point Nature Reserve. It produces a powerful, barreling A-frame that can peel for over 100 meters across a shallow rock shelf. It requires a massive swell to wrap into the bay before it even starts working. When it does, it's capable of handling double to triple overhead conditions. The lineup is strictly localized and notoriously territorial; if more than a handful of people are out, expect to be frozen out.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "swellSize": {
+      "min": 2.5,
+      "max": 6
+    },
+    "idealSwellPeriod": {
+      "min": 13,
+      "max": 22
+    },
+    "waterTemp": {
+      "summer": 19,
+      "winter": 15
+    },
+    "hazards": [
+      "Shallow rock shelf",
+      "Heavy hold-downs",
+      "Extreme localism",
+      "Great White sharks",
+      "Strong currents"
+    ],
+    "rating": 4.8,
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": true
+    },
+    "image": "",
+    "coordinates": {
+      "lat": -34.309867,
+      "lng": 18.461750
+    }
+  },
+  {
     "id": "bakkies",
     "name": "Bakkies",
     "continent": "Africa",
@@ -3100,6 +3157,7 @@
       "min": 12,
       "max": 24
     },
+    "isHiddenGem": true,
     "waterTemp": {
       "summer": 18,
       "winter": 14
@@ -5852,8 +5910,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.2541,
-      "lng": 18.3842
+      "lat": -34.261555,
+      "lng": 18.379611
     }
   },
   {

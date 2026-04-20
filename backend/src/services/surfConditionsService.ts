@@ -130,9 +130,12 @@ export async function getLatestConditions(
   // Store all scraped forecasts
   let requestedForecast = null;
   
-  const forecastsToStore = daysLimit 
-    ? scrapedForecasts.slice(0, daysLimit)
-    : scrapedForecasts;
+  // Correctly handle daysLimit by filtering unique dates instead of record count
+  let forecastsToStore = scrapedForecasts;
+  if (daysLimit) {
+    const dates = [...new Set(scrapedForecasts.map(f => f.date.toISOString().split('T')[0]))].slice(0, daysLimit);
+    forecastsToStore = scrapedForecasts.filter(f => dates.includes(f.date.toISOString().split('T')[0]));
+  }
 
   for (const scrapedForecast of forecastsToStore) {
     // Create a NEW date object to avoid mutating shared references
@@ -142,7 +145,7 @@ export async function getLatestConditions(
     const slot = (scrapedForecast as any).timeSlot || "MORNING";
 
     console.log(
-      `[getLatestConditions] 💾 Upserting forecast for ${region.regionId} on ${forecastDate.toISOString().split("T")[0]} slot ${slot}`
+      `[getLatestConditions] 💾 Upserting forecast for ${region.regionId} on ${forecastDate.toISOString().split("T")[0]} slot ${slot} - Tide: ${scrapedForecast.tide || 'MISSING'}`
     );
     
     const storedForecast = await prisma.forecast.upsert({
@@ -161,6 +164,7 @@ export async function getLatestConditions(
         swellPeriod: scrapedForecast.swellPeriod,
         swellDirection: scrapedForecast.swellDirection,
         trend: scrapedForecast.trend,
+        tide: scrapedForecast.tide,
       },
       create: {
         id: randomUUID(),
@@ -174,6 +178,7 @@ export async function getLatestConditions(
         swellPeriod: scrapedForecast.swellPeriod,
         swellDirection: scrapedForecast.swellDirection,
         trend: scrapedForecast.trend,
+        tide: scrapedForecast.tide,
       },
     });
 

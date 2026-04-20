@@ -123,17 +123,12 @@ export async function scraperA(
     console.log("✅ Browser launched");
 
     const page = await browser.newPage();
-    page.on("console", (msg) => console.log(`[Browser] ${msg.text()}`));
-    console.log("✅ New page created");
-    
-    // Force Desktop layout
-    await page.setViewport({ width: 1440, height: 900 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setViewport({ width: 1280, height: 1000 });
 
     page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
 
-    await page.setUserAgent(
-      USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
-    );
+
 
     // Anti-bot measures
     await page.evaluateOnNewDocument(() => {
@@ -151,39 +146,44 @@ export async function scraperA(
       }
     });
     */
-
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
+    console.log(`[scraperA] 🌐 Navigating to ${url}...`);
+    let navigationSuccessful = false;
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+      navigationSuccessful = true;
+    } catch (e) {
+      console.log("⚠️ Superforecast navigate timeout, trying basic forecast fallback...");
+      try {
+        const basicUrl = url.includes('weatherforecast') ? url.replace('weatherforecast', 'forecast') : url;
+        await page.goto(basicUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        navigationSuccessful = true;
+      } catch (e2) {
+        console.error("❌ Both primary and fallback URLs failed.");
+      }
+    }
  
-    // Handle Cookie Consent
+    // Handle Cookie Consent (Aggressive)
     await page.evaluate(function () {
-      const btns = Array.from(document.querySelectorAll('button, a, span')).filter(function(el) {
-         const t = el.textContent?.trim().toLowerCase() || "";
-         return t === 'accept' || t === 'agree' || t.includes('allow all') || t.includes('accept all');
-      }) as any[];
-      btns.forEach(b => { if (typeof b.click === 'function') b.click(); });
+      const selectors = ['#ok', '#accept', '.accept', '[id*="consent"]', '[class*="consent"]', 'button'];
+      selectors.forEach(s => {
+        const els = Array.from(document.querySelectorAll(s));
+        els.forEach((el: any) => {
+          const t = el.textContent?.toLowerCase() || "";
+          if (t.includes('accept') || t.includes('agree') || t.includes('consent')) {
+            el.click();
+          }
+        });
+      });
     });
     await new Promise(r => setTimeout(r, 2000));
 
-    // Try to switch to Superforecast tab if not active
-    await page.evaluate(() => {
-      const superForecastBtn = Array.from(document.querySelectorAll('a, button, [role="tab"]'))
-        .find(el => el.textContent?.toLowerCase().includes('superforecast')) as HTMLElement;
-      if (superForecastBtn && !superForecastBtn.classList.contains('active')) {
-        superForecastBtn.click();
-      }
-    });
-    await new Promise(r => setTimeout(r, 3000));
-
-    // Wait until forecast data is actually on page
-    console.log("⏳ Waiting for forecast data to load...");
+    // Wait for ANY forecast row
+    console.log("⏳ Waiting for forecast rows...");
     try {
-      await page.waitForFunction(() => {
-        const text = document.body.innerText;
-        return /(?:Today|Tomorrow|[A-Za-z]+),\s+[A-Za-z]+\s+\d+/.test(text) && /\d{2}h/i.test(text);
-      }, { timeout: 30000 });
-      console.log("✅ Forecast data detected on page");
+      await page.waitForSelector('.forecast-row, [class*="row"]', { timeout: 15000 });
+      console.log("✅ Forecast rows detected");
     } catch (e) {
-      console.log("⚠️ Timeout waiting for forecast pattern, proceeding anyway...");
+      console.log("⚠️ Rows not found by selector, continuing...");
     }
 
     const bodyText = await page.evaluate(() => document.body.innerText);
@@ -234,10 +234,16 @@ export async function scraperA(
     const evalCodePath = join(__dirname, "windfinder-eval.js");
     const evalCode = readFileSync(evalCodePath, "utf-8");
 
-    const forecastDaysData = await page.evaluate(`
-      ${evalCode}
-      extractWindfinderData();
-    `) as any[];
+    let forecastDaysData: any[] = [];
+    try {
+      forecastDaysData = await page.evaluate(`
+        ${evalCode}
+        extractWindfinderData();
+      `) as any[];
+    } catch (evalErr) {
+      console.error("❌ JavaScript error during windfinder extraction:", evalErr);
+      throw evalErr;
+    }
 
     if (!forecastDaysData || forecastDaysData.length === 0 || forecastDaysData.every(d => d.rows.length === 0)) {
        console.error("❌ Failed to parse forecast days or rows.");
@@ -245,6 +251,7 @@ export async function scraperA(
     }
 
     console.log(`✅ Found ${forecastDaysData.length} forecast day container(s) on the page`);
+    console.log(`📊 Tide Data Sample:`, forecastDaysData[0].rows.map(r => `${r.time}: ${r.tide || 'none'}`).join(', '));
 
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -325,9 +332,22 @@ export async function scraperA(
           if (existingIdx !== -1) {
             const preferredHours = { MORNING: 8, NOON: 13, EVENING: 19 };
             const target = preferredHours[slot];
-            const existingHour = (forecasts[existingIdx] as any).rawHour || 0;
+            const existingForecast = forecasts[existingIdx] as any;
+            const existingHasTide = !!existingForecast.tide;
+            const currentHasTide = !!row.tide;
+            const existingHour = existingForecast.rawHour || 0;
             
-            if (Math.abs(hour - target) < Math.abs(existingHour - target)) {
+            // Priority: 1. Has Tide, 2. Closer to target hour
+            let shouldReplace = false;
+            if (currentHasTide && !existingHasTide) {
+              shouldReplace = true;
+            } else if (currentHasTide === existingHasTide) {
+              if (Math.abs(hour - target) < Math.abs(existingHour - target)) {
+                shouldReplace = true;
+              }
+            }
+
+            if (shouldReplace) {
               forecasts.splice(existingIdx, 1);
             } else {
               continue; 
@@ -344,6 +364,10 @@ export async function scraperA(
             ? (cardinalToDirection[row.swellDir.toUpperCase()] ?? parseFloat(row.swellDir.replace(/[^-0-9.]/g, ""))) 
             : -1;
 
+          const tideValue = row.tide 
+            ? (row.tideHeight ? `${row.tide} (${row.tideHeight}m)` : row.tide)
+            : (row.tideHeight ? `${row.tideHeight}m` : "");
+
           const forecast: BaseForecastData = {
             date: fDate,
             regionId: region,
@@ -353,11 +377,11 @@ export async function scraperA(
             swellHeight: parseFloat(row.waveHeight || "0") || 0,
             swellPeriod: Math.round(parseFloat(row.wavePeriod || "0") || 0),
             swellDirection: isNaN(swellDirValue) ? -1 : swellDirValue,
-            tide: row.tide || "",
+            tide: tideValue,
           };
           (forecast as any).rawHour = hour;
           forecasts.push(forecast);
-          console.log(`   ✅ Mapped ${hour}h -> ${slot}`);
+          console.log(`   ✅ Mapped ${hour}h -> ${slot} - Tide: ${row.tide || 'NONE'}`);
         }
       }
     }

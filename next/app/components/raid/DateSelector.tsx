@@ -99,18 +99,28 @@ export default function DateSelector({
               key={option.value}
               onClick={() => onDateSelect(option.value)}
               className={cn(
-                "flex flex-col items-center min-w-[75px] px-3 py-2 rounded-xl transition-all relative group",
+                "flex flex-col items-center min-w-[75px] px-3 py-2 transition-all relative group rounded-lg overflow-hidden",
                 isSelected
-                  ? "bg-shimmer-dark text-[#3b82f6] shadow-xl scale-105 z-10"
-                  : "text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm"
+                  ? "bg-white border border-black/10 shadow-sm scale-[1.02] z-10"
+                  : "text-gray-500 hover:bg-white/50 border border-transparent"
               )}
             >
-            <span className="text-[10px] font-black uppercase tracking-tighter">
+            {/* Selection indicator bar */}
+            {isSelected && (
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-1 bg-brand-3" 
+              />
+            )}
+
+            <span className={cn(
+              "font-black uppercase tracking-[0.2em] transition-colors text-[7px]",
+              isSelected ? "text-brand-3" : "text-gray-400 group-hover:text-gray-600"
+            )}>
               {option.label}
             </span>
             <span className={cn(
-              "text-[9px] font-bold",
-              isSelected ? "text-gray-500" : "text-gray-400 group-hover:text-gray-500"
+              "font-black tabular-nums transition-colors text-[11px]",
+              isSelected ? "text-black" : "text-gray-400 group-hover:text-gray-500"
             )}>
               {option.subLabel}
             </span>

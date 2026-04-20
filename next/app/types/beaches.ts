@@ -212,5 +212,6 @@ export interface BeachInitialData {
   beaches: Beach[];
   forecast: ForecastData;
   availableDates?: string[];
+  hiddenGemCount?: number;
   totalCount: number;
 }

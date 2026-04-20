@@ -469,6 +469,7 @@ model Forecast {
   swellPeriod    Int            @default(0)
   swellDirection Float          @default(0)
   trend          String?
+  tide           String?
   alerts         Alert[]
   region         Region         @relation(fields: [regionId], references: [id])
   logEntries     LogEntry[]

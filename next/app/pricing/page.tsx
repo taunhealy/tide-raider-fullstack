@@ -183,7 +183,7 @@ export default function PricingPage() {
                       "text-[32px] font-semibold text-[var(--color-text-primary)] font-primary"
                     )}
                   >
-                    R30
+                    R45
                   </span>
                   <span className="text-main text-[var(--color-text-secondary)]">
                     per month

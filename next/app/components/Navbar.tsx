@@ -176,6 +176,9 @@ export default function Navbar() {
               <span className="text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase">
                 TIDE RAIDER
               </span>
+              <span className="ml-2 px-1.5 py-0.5 bg-blue-600 text-[8px] font-black text-white rounded uppercase tracking-widest">
+                BETA
+              </span>
             </Link>
           )}
 

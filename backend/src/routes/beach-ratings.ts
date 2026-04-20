@@ -46,6 +46,7 @@ router.get(
   optionalAuth,
   async (req: Request, res: Response) => {
     try {
+      console.log(`[beach-ratings/historical] 📥 FULL QUERY:`, req.query);
       const { regionId, period } = req.query;
 
       if (!regionId) {
@@ -221,27 +222,41 @@ router.get(
       const beachesWithScores = beaches.map((beach) => {
         const scores = beach.beachDailyScores;
 
-        // Aggregate scores across all sources
-        const totalScore = scores.reduce(
-          (sum, score) => sum + (score.score || 0),
-          0
-        );
+        // Average scores across sources for each unique date, then sum those averages
+        const scoresByDate: Record<string, number[]> = {};
+        scores.forEach(score => {
+          const d = score.date.toISOString().split('T')[0];
+          if (!scoresByDate[d]) scoresByDate[d] = [];
+          scoresByDate[d].push(score.score || 0);
+        });
 
-        // Count unique date appearances (not source appearances)
-        const uniqueDates = new Set(
-          scores.map((score) => score.date.toISOString().split("T")[0])
-        );
-        const appearances = uniqueDates.size;
+        // Sum of daily averages
+        const dayCount = Object.keys(scoresByDate).length;
+        if (beach.name.includes("Muizenberg")) {
+          console.log(`[beach-ratings/historical] 🔍 DEBUG Muizenberg:`, {
+            dateCount: dayCount,
+            dates: Object.keys(scoresByDate),
+            scoresPerDay: Object.fromEntries(Object.entries(scoresByDate).map(([k, v]) => [k, v.length]))
+          });
+        }
+        const totalScore = dayCount > 0 
+          ? Object.values(scoresByDate).reduce(
+              (sum, dayScores) => sum + (dayScores.reduce((a, b) => a + b, 0) / dayScores.length),
+              0
+            ) / dayCount
+          : 0;
 
-        // For latest score, get the sum of all sources for the most recent date
+        const appearances = Object.keys(scoresByDate).length;
+
+        // For latest score, average all sources for the most recent date
         const latestDate = scores.length > 0 ? scores[0].date : null;
         const latestScores = latestDate
           ? scores.filter((s) => s.date.getTime() === latestDate.getTime())
           : [];
-        const latestScore = latestScores.reduce(
-          (sum, score) => sum + (score.score || 0),
-          0
-        );
+        
+        const latestScore = latestScores.length > 0
+          ? latestScores.reduce((sum, score) => sum + (score.score || 0), 0) / latestScores.length
+          : 0;
 
         return {
           id: beach.id,
@@ -250,6 +265,7 @@ router.get(
           totalScore: totalScore,
           appearances,
           latestScore: latestScore,
+          sourceCount: scores.length
         };
       });
 
@@ -314,6 +330,7 @@ router.get(
                     swellDirection: forecast.swellDirection,
                     date: forecast.date,
                     source: forecast.source,
+                    timeSlot: forecast.timeSlot,
                   });
                 }
               } catch (scoreError: any) {

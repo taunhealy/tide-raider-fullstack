@@ -21,10 +21,8 @@ import { SubscriptionStatus } from "@/app/types/subscription";
 import { ActiveSubscriptionView } from "@/app/components/subscription/ActiveSubscriptionView";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { RoleManager } from "@/app/components/dashboard/RoleManager";
 import { Bell } from "lucide-react";
-import NotificationBadge from "@/app/components/notifications/NotificationBadge";
-import NotificationsContainer from "@/app/components/notifications/NotificationsContainer";
+import { cn } from "@/app/lib/utils";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -43,7 +41,7 @@ export default function DashboardPage() {
     }
   }, [session]);
   const [activeTab, setActiveTab] = useState<
-    "account" | "billing" | "ads" | "alerts" | "notifications"
+    "account" | "billing" | "ads" | "alerts"
   >("account");
   const [username, setUsername] = useState<string>("");
   const queryClient = useQueryClient();
@@ -482,8 +480,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 font-primary selection:bg-[var(--color-tertiary)]/30 overflow-x-hidden">
-      {/* Background Glows */}
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary selection:bg-[var(--color-tertiary)]/20 overflow-x-hidden">
+      {/* Subtle Background Glows */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--color-tertiary)]/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px]" />
@@ -493,42 +491,35 @@ export default function DashboardPage() {
         {/* Left Column: Operation Controls */}
         <div className="flex-1 p-4 sm:p-8 lg:p-12 space-y-10 max-w-5xl">
           <header>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-2 rounded-full bg-[var(--color-tertiary)] shadow-[0_0_8px_var(--color-tertiary)] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-tertiary)]">System Active</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-tertiary)]">System Live</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter">
-              Command <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">Center</span>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+              Command <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Center</span>
             </h1>
-            <p className="text-gray-400 mt-2 max-w-md font-medium">Manage your global surf intelligence, billing sequences, and localized alerts.</p>
+            <p className="text-slate-500 mt-3 max-w-md font-medium text-lg italic">Manage your surf intelligence, billing, and system settings.</p>
           </header>
 
           {/* Navigation Matrix */}
-          <nav className="flex items-center gap-1 p-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl w-fit">
+          <nav className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-2xl w-fit shadow-sm">
             {[
               { id: "account", label: "Identity" },
-              { id: "billing", label: "Registry" },
-              { id: "ads", label: "Broadcasts" },
-              { id: "alerts", label: "Sensors" },
-              { id: "notifications", label: "Signals" }
+              { id: "billing", label: "Subscriptions" },
+              { id: "alerts", label: "Alerts" }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 relative
                   ${activeTab === tab.id 
-                    ? "text-white bg-white/10 shadow-[inset_0_0_12px_rgba(255,255,255,0.05)]" 
-                    : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                    ? "text-brand-3 bg-brand-3/5" 
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
                   }`}
               >
                 {tab.label}
-                {tab.id === "notifications" && (
-                  <span className="ml-2 inline-flex items-center scale-90 translate-y-[-1px]">
-                    <NotificationBadge />
-                  </span>
-                )}
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[var(--color-tertiary)] shadow-[0_0_10px_var(--color-tertiary)]" />
+                  <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-3 shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
                 )}
               </button>
             ))}
@@ -537,95 +528,130 @@ export default function DashboardPage() {
           <main className="min-h-[500px]">
             {activeTab === "account" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-10 space-y-8">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm">
                   <div className="grid gap-8">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-tertiary)] mb-4">Operator Handle</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Operator Handle</label>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <input
                           type="text"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
-                          className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-[var(--color-tertiary)] focus:ring-1 focus:ring-[var(--color-tertiary)]/30 transition-all text-white font-bold"
+                          className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
                           placeholder="Assign handle..."
                         />
                         <button
                           onClick={handleUsernameUpdate}
-                          className="px-10 bg-white text-black font-black uppercase tracking-tighter rounded-2xl hover:bg-gray-200 transition-all active:scale-95 py-4"
+                          className="px-10 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-slate-800 transition-all active:scale-95 py-4 shadow-lg shadow-slate-900/10"
                         >
                           Update
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-4">Secure UID</label>
-                      <div className="bg-black/20 border border-white/5 rounded-2xl px-6 py-4 text-gray-500 font-mono text-xs flex items-center justify-between">
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Secure UID</label>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-400 font-mono text-xs flex items-center justify-between">
                         {session?.user?.id || "UNASSIGNED"}
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-10">
-                  <RoleManager
-                    userId={session?.user?.id}
-                    initialRoles={userData?.roles || []}
-                    onUpdate={async () => {
-                      queryClient.invalidateQueries({ queryKey: ["user", session?.user?.id] });
-                      router.refresh();
-                    }}
-                  />
-                </div>
               </div>
             )}
 
             {activeTab === "billing" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-2">
-                  <div className="bg-black/40 rounded-[26px] p-6 sm:p-10 border border-white/5">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-slate-900">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-2 shadow-sm">
+                  <div className="bg-white rounded-[26px] p-6 sm:p-10 border border-slate-100">
                     <div className="flex flex-col sm:flex-row justify-between gap-8 mb-10">
                       <div className="space-y-2">
-                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border
+                        <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border
                           ${subscriptionData?.status === SubscriptionStatus.ACTIVE 
-                            ? "bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]" 
-                            : "bg-gray-500/10 text-gray-400 border-white/10"}`}>
-                          ● {subscriptionData?.status || "INACTIVE"}
+                            ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                            : "bg-slate-100 text-slate-500 border-slate-200"}`}>
+                          ● {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Active" : "Standard Plan"}
                         </span>
-                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">
-                          {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Elite Raider" : "Standard Ops"}
+                        <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                          {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Premium Member" : "Free Member"}
                         </h3>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Sequence Renewal</p>
-                        <p className="text-2xl font-black text-white tabular-nums">
-                          {subscriptionData?.next_billing_time ? formatDate(subscriptionData.next_billing_time) : "-- -- --"}
+                        <p className="text-sm text-slate-500 font-medium font-primary">
+                          {subscriptionData?.status === SubscriptionStatus.ACTIVE 
+                            ? "You've got full access to all our surf tools." 
+                            : "You're on our basic free plan."}
                         </p>
+                      </div>
+                      
+                      <div className="text-left sm:text-right font-primary">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Price</p>
+                        <p className="text-2xl font-black text-slate-900 tabular-nums">
+                          {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "R45" : "R0"}
+                          <span className="text-xs text-slate-500 ml-1">/ month</span>
+                        </p>
+                        {subscriptionData?.next_billing_time && (
+                          <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
+                            Next payment: {formatDate(subscriptionData.next_billing_time)}
+                          </p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1.5 bg-black/40 rounded-2xl border border-white/5 mb-8">
-                      <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white/5 transition-all text-[10px] font-black uppercase tracking-widest">
-                        <Bell className="w-3 h-3" /> Sync
+                    {/* Features in Plain English */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 border-t border-slate-100 pt-8 font-primary">
+                      <div className="space-y-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">Membership Perks</h4>
+                        <ul className="space-y-3">
+                          {[
+                            "Surf alerts via WhatsApp & Email",
+                            "Access to local 'Hidden Gems'",
+                            "Detailed weather & swell data",
+                            "Custom alerts for your favorite spots"
+                          ].map((feature, i) => (
+                            <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
+                              <div className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                subscriptionData?.status === SubscriptionStatus.ACTIVE ? "bg-green-500" : "bg-slate-300"
+                              )} />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">About your plan</h4>
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                          <p className="text-xs text-slate-500 leading-relaxed font-primary">
+                            {subscriptionData?.status === SubscriptionStatus.ACTIVE 
+                              ? "Your Premium membership is active. You can use all our surf forecasting tools and set as many alerts as you like."
+                              : "You're currently using our standard free plan. Upgrade to Premium if you want to get automated alerts and see our curated list of hidden surf spots."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 mb-8 font-primary">
+                      <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
+                         Update My Info
                       </button>
-                      <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white/5 transition-all text-[10px] font-black uppercase tracking-widest">
-                        Suspend
+                      <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
+                        Pause Subscription
                       </button>
-                      <button onClick={() => handleSubscriptionAction("cancel")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-red-500/10 text-gray-500 hover:text-red-400 transition-all text-[10px] font-black uppercase tracking-widest">
-                        Offline
+                      <button onClick={() => handleSubscriptionAction("cancel")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-red-50 text-red-500 transition-all text-[10px] font-black uppercase tracking-widest border border-transparent">
+                        Cancel Subscription
                       </button>
                     </div>
 
                     {subscriptionData?.status !== SubscriptionStatus.ACTIVE && (
-                      <div className="p-8 bg-gradient-to-br from-[var(--color-tertiary)]/20 to-blue-600/20 border border-[var(--color-tertiary)]/30 rounded-[26px] group relative overflow-hidden">
-                        <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                      <div className="p-8 bg-gradient-to-br from-brand-3/5 to-slate-50 border border-brand-3/20 rounded-[26px] group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                          <div className="text-center md:text-left">
-                            <h4 className="text-xl font-black text-white uppercase tracking-widest mb-1 italic">Go Further</h4>
-                            <p className="text-sm text-gray-400">Unlock global satellite telemetry and deep forecast metadata.</p>
+                          <div className="text-center md:text-left font-primary">
+                            <h4 className="text-xl font-bold text-slate-900  mb-1 italic">Ready for more?</h4>
+                            <p className="text-sm text-slate-500">R45 a month. No commitments, cancel whenever you want.</p>
                           </div>
-                          <button onClick={handleSubscribeWithLoading} className="w-full md:w-auto px-10 py-4 bg-white text-black font-black uppercase tracking-tighter hover:scale-105 transition-all rounded-xl">
-                            Upgrade
+                          <button onClick={handleSubscribeWithLoading} className="w-full md:w-auto px-10 py-4 bg-brand-3 text-white font-black uppercase tracking-tighter hover:scale-105 transition-all rounded-xl font-primary shadow-lg shadow-brand-3/20">
+                            Go Premium
                           </button>
                         </div>
                       </div>
@@ -635,74 +661,49 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {activeTab === "ads" && (
-              <div className="grid gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Link href="/dashboard/ads" className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-[26px] p-8 hover:bg-white/10 transition-all flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Broadcast Manager</h3>
-                    <p className="text-sm text-gray-500">View and refine your global visibility campaigns.</p>
-                  </div>
-                  <ChevronRightIcon className="w-6 h-6 text-gray-600 group-hover:text-[var(--color-tertiary)] transition-colors" />
-                </Link>
-                <Link href="/advertising" className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-[26px] p-8 hover:bg-white/10 transition-all flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">New Deployment</h3>
-                    <p className="text-sm text-gray-500">Initiate a new advertising raid for your brand.</p>
-                  </div>
-                  <ChevronRightIcon className="w-6 h-6 text-gray-600 group-hover:text-[var(--color-tertiary)] transition-colors" />
-                </Link>
-              </div>
-            )}
-
             {activeTab === "alerts" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Link href="/dashboard/alerts" className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-[26px] p-8 hover:bg-white/10 transition-all flex items-center justify-between">
+                <Link href="/dashboard/alerts" className="group bg-white border border-slate-200 rounded-[26px] p-8 hover:bg-slate-50 transition-all flex items-center justify-between shadow-sm">
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Sensor Array</h3>
-                    <p className="text-sm text-gray-500">Configure real-time automated condition triggers.</p>
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">My Alerts</h3>
+                    <p className="text-sm text-slate-500">Configure real-time automated condition triggers.</p>
                   </div>
-                  <ChevronRightIcon className="w-6 h-6 text-gray-600 group-hover:text-[var(--color-tertiary)] transition-colors" />
+                  <ChevronRightIcon className="w-6 h-6 text-slate-300 group-hover:text-brand-3 transition-colors" />
                 </Link>
-                <div className="bg-[var(--color-tertiary)]/5 border border-[var(--color-tertiary)]/20 rounded-[26px] p-8">
-                  <p className="text-sm text-[var(--color-tertiary)] font-medium leading-relaxed">
-                    Sensors track wave height, period, and incident light to notify you the moment 
+                <div className="bg-slate-50 border border-slate-100 rounded-[26px] p-8">
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed font-primary">
+                    Alerts track wave height, period, and incident light to notify you the moment 
                     your preferred conditions are met across the global network.
                   </p>
                 </div>
               </div>
             )}
-
-            {activeTab === "notifications" && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden">
-                <NotificationsContainer />
-              </div>
-            )}
           </main>
         </div>
 
-        {/* Right Column: Satellite Feed Preview */}
-        <div className="hidden lg:block w-[450px] sticky top-0 h-screen border-l border-white/10 overflow-hidden group">
-          <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-black/20 to-black pointer-events-none" />
+        {/* Right Column: Feed Preview */}
+        <div className="hidden lg:block w-[450px] sticky top-0 h-screen border-l border-slate-100 overflow-hidden group bg-slate-50">
+          <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-white/10 to-white/80 pointer-events-none" />
           <div className="absolute bottom-12 left-12 z-20 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Live Satellite Uplink</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Live Satellite Uplink</span>
             </div>
-            <div className="p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 italic">Location Lock</p>
-              <p className="text-sm font-bold text-white uppercase tracking-tighter">Pacific Sector 7-G</p>
+            <div className="p-4 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Location Lock</p>
+              <p className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Pacific Sector 7-G</p>
             </div>
           </div>
           
           {data?.heroImage?.image ? (
             <Image
               src={urlForImage(data.heroImage.image).url()}
-              alt={data.heroImage.alt || "Command Background"}
+              alt={data.heroImage.alt || "Background"}
               fill
-              className="object-cover transition-transform duration-[10s] group-hover:scale-110"
+              className="object-cover transition-transform duration-[10s] group-hover:scale-110 opacity-80"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black" />
+            <div className="w-full h-full bg-slate-100" />
           )}
         </div>
       </div>

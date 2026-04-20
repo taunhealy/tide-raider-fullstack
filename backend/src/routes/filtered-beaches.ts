@@ -188,12 +188,16 @@ router.get(
         timeSlot: true,
         regionId: true,
         source: true,
+        trend: true,
+        tide: true,
       };
 
-      // Only show dates from 2 days ago onwards in the available dates list
-      const cutoffDate = new Date();
-      cutoffDate.setUTCDate(cutoffDate.getUTCDate() - 2);
-      cutoffDate.setUTCHours(0, 0, 0, 0);
+      // Limit UI to 3 days behind and 7 days ahead (10 days total)
+      const pastLimit = new Date(today);
+      pastLimit.setUTCDate(today.getUTCDate() - 3);
+
+      const futureLimit = new Date(today);
+      futureLimit.setUTCDate(today.getUTCDate() + 7);
 
       // Parallel queries: forecast lookup, score check, and available dates
       const [exactForecast, scoreCheck, availableForecastDates] = await Promise.all([
@@ -220,12 +224,16 @@ router.get(
             beachId: true,
           },
         }) : Promise.resolve(null),
-        // Get unique dates with forecast data for this region and source, restricted to 2 days ago onwards
+        // Get unique dates with forecast data for this region, restricted to our 10-day tactical window
+        // We include both sources so users can see the full week populated by Windguru
         prisma.forecast.findMany({
           where: {
             ...(regionId && { regionId }),
-            source: sourceParam,
-            date: { gte: cutoffDate },
+            source: { in: ["WINDFINDER", "WINDGURU"] },
+            date: { 
+              gte: pastLimit,
+              lte: futureLimit
+            },
           },
           select: {
             date: true,
@@ -419,6 +427,19 @@ router.get(
         {}
       );
 
+      // Get hidden gem count for the indicator (beaches with score >= 8 and isHiddenGem = true)
+      const hiddenGemCount = await prisma.beachDailyScore.count({
+        where: {
+          regionId: regionId as string,
+          date: targetDate,
+          timeSlot: timeSlotParam as any,
+          score: { gte: 8 },
+          beach: {
+            isHiddenGem: true
+          }
+        }
+      });
+
       // Return response
       return res.json({
         beaches: beaches.map((beach) => {
@@ -428,6 +449,7 @@ router.get(
         scores,
         forecast,
         availableDates,
+        hiddenGemCount,
         totalCount: beaches.length,
       });
     } catch (error: any) {

@@ -128,6 +128,8 @@ router.get(
             swellHeight: true,
             swellPeriod: true,
             swellDirection: true,
+            trend: true,
+            tide: true,
           }
         });
       } catch (prismaError: any) {

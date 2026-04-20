@@ -66,11 +66,16 @@ export default function TideMap({
   const popupRef = useRef<HTMLDivElement>(null);
   const selectedDayIndexRef = useRef(selectedDayIndex);
   const selectedDateStringRef = useRef("");
+  const beachesRef = useRef(beaches);
 
   // Particle System State
   const windParticles = useRef<any[]>([]);
   const swellParticles = useRef<any[]>([]);
   const animationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    beachesRef.current = beaches;
+  }, [beaches]);
 
   useEffect(() => {
     selectedDayIndexRef.current = selectedDayIndex;
@@ -79,6 +84,8 @@ export default function TideMap({
     const date = new Date();
     date.setUTCDate(new Date().getUTCDate() + selectedDayIndex);
     selectedDateStringRef.current = date.toISOString().split('T')[0];
+    
+    console.log(`[TideMap] 📅 Day changed to index ${selectedDayIndex}, key: ${selectedDateStringRef.current}`);
   }, [selectedDayIndex]);
 
   // Dynamic Center/Zoom Update
@@ -169,28 +176,41 @@ export default function TideMap({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const { width, height } = canvas;
       const dateKey = selectedDateStringRef.current;
+      const currentBeaches = beachesRef.current;
 
       // Draw Wind Particles
       if (showWindHeatmap) {
-        const validWind = beaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed);
-        const avgSpeed = validWind.length > 0 
-          ? validWind.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.windSpeed, 0) / validWind.length
-          : 15;
+        const validWind = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed !== undefined);
+        
+        let avgSpeed = 15;
+        let avgVX = -0.00015;
+        let avgVY = -0.0001;
+
+        if (validWind.length > 0) {
+          avgSpeed = validWind.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.windSpeed, 0) / validWind.length;
+          
+          // Calculate average direction vector
+          let sumVX = 0;
+          let sumVY = 0;
+          validWind.forEach((b: any) => {
+            const deg = b.dailyScores[dateKey].conditions.windDirection || 0;
+            const rad = (deg * Math.PI) / 180;
+            sumVX += Math.sin(rad);
+            sumVY += -Math.cos(rad);
+          });
+          avgVX = (sumVX / validWind.length) * 0.0003;
+          avgVY = (sumVY / validWind.length) * 0.0003;
+        }
 
         windParticles.current.forEach(p => {
           p.life -= 0.005;
           if (p.life <= 0) { 
-            // Respawn on the source side (Wind is SE to NW, so source is Right/Bottom)
-            if (Math.random() > 0.5) {
-              p.x = 1.0; p.y = Math.random(); 
-            } else {
-              p.x = Math.random(); p.y = 1.0;
-            }
+            p.x = Math.random(); p.y = Math.random();
             p.life = 1.0; 
           }
           
-          p.vx = -0.00015 * (avgSpeed); 
-          p.vy = -0.0001 * (avgSpeed);
+          p.vx = avgVX * (avgSpeed / 10 + 0.5); 
+          p.vy = avgVY * (avgSpeed / 10 + 0.5);
           p.x += p.vx; p.y += p.vy;
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
@@ -198,32 +218,44 @@ export default function TideMap({
           ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.7})`; 
           ctx.lineWidth = 1.2;
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 180) * width, (p.y - p.vy * 180) * height);
+          ctx.lineTo((p.x - p.vx * 150) * width, (p.y - p.vy * 150) * height);
           ctx.stroke();
         });
       }
 
       // Draw Swell Particles (TINY SLOW PIPS)
       if (showSwellHeatmap) {
-        const validSwell = beaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight);
-        const avgHeight = validSwell.length > 0 
-          ? validSwell.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.swellHeight, 0) / validSwell.length
-          : 2.0;
+        const validSwell = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight !== undefined);
+        
+        let avgHeight = 2.0;
+        let avgVX = 0.0002;
+        let avgVY = -0.0001;
+
+        if (validSwell.length > 0) {
+          avgHeight = validSwell.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.swellHeight, 0) / validSwell.length;
+          
+          // Calculate average direction vector (Coming FROM angle rad, move AWAY from it)
+          let sumVX = 0;
+          let sumVY = 0;
+          validSwell.forEach((b: any) => {
+            const deg = b.dailyScores[dateKey].conditions.swellDirection || 0;
+            const rad = (deg * Math.PI) / 180;
+            sumVX += -Math.sin(rad);
+            sumVY += Math.cos(rad);
+          });
+          avgVX = (sumVX / validSwell.length) * 0.0002;
+          avgVY = (sumVY / validSwell.length) * 0.0002;
+        }
 
         swellParticles.current.forEach(p => {
           p.life -= 0.002;
           if (p.life <= 0) { 
-            // Respawn on the source side (Swell is SW to NE, so source is Left/Bottom)
-            if (Math.random() > 0.5) {
-              p.x = 0.0; p.y = Math.random(); 
-            } else {
-              p.x = Math.random(); p.y = 1.0;
-            }
+            p.x = Math.random(); p.y = Math.random();
             p.life = 1.0; 
           }
           
-          p.vx = 0.0002 * (avgHeight); 
-          p.vy = -0.0001 * (avgHeight);
+          p.vx = avgVX * (avgHeight / 2 + 0.2); 
+          p.vy = avgVY * (avgHeight / 2 + 0.2);
           p.x += p.vx; p.y += p.vy;
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 

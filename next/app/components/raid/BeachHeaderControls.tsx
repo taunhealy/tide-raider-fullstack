@@ -22,6 +22,10 @@ import { cn } from "@/app/lib/utils";
 import { Slider } from "@/app/components/ui/slider";
 import { TimeSlot } from "@/app/types/forecast";
 import TimeSlotSelector from "../stream/TimeSlotSelector";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/app/components/ui/tooltip";
+import Link from "next/link";
+import TideSlot from "./TideSlot";
+import { Forecast } from "@/app/types/forecast";
 
 interface BeachHeaderControlsProps {
   onSearch: (value: string) => void;
@@ -35,6 +39,8 @@ interface BeachHeaderControlsProps {
   isLocating: boolean;
   isAuthenticated: boolean;
   isSubscribed: boolean;
+  forecast?: Forecast | null;
+  hiddenGemCount?: number;
 }
 
 const ProximityFilterRow = ({ 
@@ -118,6 +124,8 @@ export default function BeachHeaderControls({
   isLocating,
   isAuthenticated,
   isSubscribed,
+  forecast,
+  hiddenGemCount = 0,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -127,9 +135,22 @@ export default function BeachHeaderControls({
   const { data: regionCountsData } = useRegionCounts();
   const { filters, updateFilter } = useBeachFilters();
   const [isMounted, setIsMounted] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<string>("WINDFINDER");
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Get initial source from localStorage
+    const savedSource = typeof window !== 'undefined' ? localStorage.getItem("forecastSource") : null;
+    if (savedSource) setSelectedSource(savedSource);
+
+    // Listen for source changes
+    const handleSourceChange = (e: any) => {
+      setSelectedSource(e.detail);
+    };
+
+    window.addEventListener("forecastSourceChanged", handleSourceChange as EventListener);
+    return () => window.removeEventListener("forecastSourceChanged", handleSourceChange as EventListener);
   }, []);
 
   // Get selected date from URL params or default to today
@@ -157,7 +178,7 @@ export default function BeachHeaderControls({
     }
   }, []);
 
-  // Default to today if no date is in the URL
+  // Default date windowing logic
   const [hasDefaulted, setHasDefaulted] = useState(false);
   
   useEffect(() => {
@@ -165,14 +186,21 @@ export default function BeachHeaderControls({
     today.setUTCHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
 
-    // Force Today if no date in URL OR if the date in URL is in the past
-    const isPastDate = selectedDate && selectedDate < todayStr;
+    const pastLimit = new Date(today);
+    pastLimit.setUTCDate(today.getUTCDate() - 3);
+    const pastLimitStr = pastLimit.toISOString().split("T")[0];
 
-    if ((!selectedDate || isPastDate) && availableDates.length > 0 && !hasDefaulted) {
+    const futureLimit = new Date(today);
+    futureLimit.setUTCDate(today.getUTCDate() + 7);
+    const futureLimitStr = futureLimit.toISOString().split("T")[0];
+
+    // Force Today if no date in URL OR if the date in URL is outside our 10-day tactical window
+    const isOutOfBounds = selectedDate && (selectedDate < pastLimitStr || selectedDate > futureLimitStr);
+
+    if ((!selectedDate || isOutOfBounds) && availableDates.length > 0 && !hasDefaulted) {
       if (availableDates.includes(todayStr)) {
         handleDateSelect(todayStr);
       } else {
-        // Fallback to the first available date (usually today or tomorrow)
         handleDateSelect(availableDates[0]);
       }
       setHasDefaulted(true);
@@ -198,13 +226,24 @@ export default function BeachHeaderControls({
                   />
                 </div>
                
-                <div className="flex flex-col gap-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Time</label>
-                  <TimeSlotSelector 
-                    selectedSlot={currentTimeSlotValue}
-                    onChange={(slot) => updateFilter("timeSlot", slot)}
-                    activeSlot={activeSlot}
-                  />
+                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-5">
+                   <div className="flex flex-col gap-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Time</label>
+                    <TimeSlotSelector 
+                      selectedSlot={currentTimeSlotValue}
+                      onChange={(slot) => updateFilter("timeSlot", slot)}
+                      activeSlot={activeSlot}
+                    />
+                  </div>
+
+                  {isMounted && selectedSource === "WINDFINDER" && (
+                    <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] px-1 text-gray-400/80">
+                        Tide
+                      </label>
+                      <TideSlot tide={forecast?.tide} />
+                    </div>
+                  )}
                 </div>
             </div>
 
@@ -262,37 +301,47 @@ export default function BeachHeaderControls({
                       Foiling Only
                     </FoilingButton>
 
-                    <HiddenGemsButton
-                      active={!!filters.isHiddenGem}
-                      size="sm"
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                           // Trigger login
-                           alert("Sign in to discover Hidden Gems");
-                           return;
-                        }
-                        if (!isSubscribed) {
-                           // Trigger subscription modal or alert
-                           alert("Subscription required to access community Hidden Gems.");
-                           return;
-                        }
-                        const newValue = !filters.isHiddenGem;
-                        updateFilter("isHiddenGem", newValue ? "true" : "");
-                      }}
-                      className={cn(
-                        (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale cursor-not-allowed"
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={cn("flex", (!isAuthenticated || !isSubscribed) && "cursor-not-allowed")}>
+                          <HiddenGemsButton
+                            active={!!filters.isHiddenGem}
+                            size="sm"
+                            disabled={!isAuthenticated || !isSubscribed}
+                            onClick={() => {
+                              const newValue = !filters.isHiddenGem;
+                              updateFilter("isHiddenGem", newValue ? "true" : "");
+                            }}
+                            className={cn(
+                              (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale pointer-events-none"
+                            )}
+                          >
+                            Hidden Gems
+                            {hiddenGemCount > 0 && (
+                              <div className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-brand-3 text-white text-[10px] font-black border border-white/20">
+                                {hiddenGemCount}
+                              </div>
+                            )}
+                            {(!isAuthenticated || !isSubscribed) && <Lock className="ml-2 w-3 h-3" />}
+                          </HiddenGemsButton>
+                        </div>
+                      </TooltipTrigger>
+                      {(!isAuthenticated || !isSubscribed) && (
+                        <TooltipContent side="top" className="bg-black text-white border-white/10 p-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-[11px] uppercase tracking-wider">Subscription Access Required</span>
+                            <p className="text-[10px] text-gray-400">Hidden Gems are reserved for subscribers.</p>
+                            <Link 
+                              href="/pricing" 
+                              className="text-[10px] text-brand-3 font-black uppercase tracking-widest mt-1 hover:underline flex items-center gap-1"
+                            >
+                              Subscribe to unlock
+                              <div className="w-1 h-1 rounded-full bg-brand-3 animate-pulse" />
+                            </Link>
+                          </div>
+                        </TooltipContent>
                       )}
-                      title={
-                        !isAuthenticated 
-                          ? "Sign in to view Hidden Gems" 
-                          : !isSubscribed 
-                            ? "Subscription required for Hidden Gems" 
-                            : "Show community hidden gems"
-                      }
-                    >
-                      Hidden Gems
-                      {(!isAuthenticated || !isSubscribed) && <Lock className="ml-2 w-3 h-3" />}
-                    </HiddenGemsButton>
+                    </Tooltip>
                   </div>
 
                   {isMounted && (

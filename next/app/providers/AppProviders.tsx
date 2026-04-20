@@ -8,6 +8,7 @@ import { BeachProvider } from "@/app/context/BeachContext";
 
 import { SubscriptionProvider } from "./SubscriptionProvider";
 import GlobalErrorHandler from "@/app/components/GlobalErrorHandler";
+import { TooltipProvider } from "@/app/components/ui/tooltip";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +38,12 @@ export default function AppProviders({
       <SessionProvider session={null} refetchInterval={0} basePath="/api/auth">
         <SubscriptionProvider>
           <BeachProvider initialBeaches={initialBeaches}>
-            <GlobalErrorHandler />
-            {children}
-            <Toaster position="top-right" />
-            <ReactQueryDevtools initialIsOpen={false} />
+            <TooltipProvider>
+              <GlobalErrorHandler />
+              {children}
+              <Toaster position="top-right" />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </TooltipProvider>
           </BeachProvider>
         </SubscriptionProvider>
       </SessionProvider>

@@ -9,6 +9,7 @@ import { addDays, format } from "date-fns";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { Lock } from "lucide-react";
 import Link from "next/link";
+import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 
 interface RegionalHighScoresProps {
   beaches: Beach[];
@@ -128,11 +129,6 @@ function RegionalHighScoresContent({
       }
 
       const url = `/api/beach-ratings/historical?regionId=${selectedRegion.toLowerCase()}&date=${selectedDate}`;
-      console.log(`[RegionalHighScores] 🔍 FETCHING: ${url}`);
-      console.log(
-        `[RegionalHighScores] Query key: ["regionalHighScores", "${selectedRegion}", "${selectedDate}"]`
-      );
-
       const fetchStartTime = Date.now();
       const response = await fetch(url);
 
@@ -156,7 +152,8 @@ function RegionalHighScoresContent({
         return { beaches: [] };
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { beaches: BeachWithScore[] };
+      console.log(`[RegionalHighScores] 📝 RAW API RESPONSE for ${selectedRegion} on ${selectedDate}:`, data);
       const fetchDuration = Date.now() - fetchStartTime;
 
       // Detailed logging for debugging
@@ -360,26 +357,15 @@ function RegionalHighScoresContent({
                           beach.name
                         )}
                       </h4>
-                      <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
-                        {isLocked
-                          ? "Premium content"
-                          : `${Math.round(beach.totalScore)} total points${
-                              beach.appearances > 1
-                                ? ` over ${beach.appearances} days`
-                                : ""
-                            }`}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-medium text-[12px] font-primary ${
-                        isLocked ? "bg-gray-400" : "bg-[var(--color-tertiary)]"
-                      }`}
-                    >
-                      {isLocked ? (
-                        <Lock className="w-3 h-3 text-white" />
-                      ) : (
-                        roundedScore
-                      )}
+                      <div className="mt-1">
+                        {isLocked ? (
+                          <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
+                            Premium content
+                          </p>
+                        ) : (
+                          <BlueStarRating score={beach.totalScore} size={12} />
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

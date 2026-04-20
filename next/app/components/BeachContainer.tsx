@@ -336,6 +336,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               isLocating={isLocating}
               isAuthenticated={!!user}
               isSubscribed={!!user?.isSubscribed}
+              forecast={forecast}
+              hiddenGemCount={data?.hiddenGemCount}
             />
 
             {/* Subtle background refresh indicator */}

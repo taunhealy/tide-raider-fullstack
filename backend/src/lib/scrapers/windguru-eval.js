@@ -581,11 +581,11 @@ function extractWindguruData() {
 
   console.log("[scraperB] [page.evaluate] ✅ All parameter rows found");
 
-  // Target hours for slots (SA is UTC+2, so Morning 6am = 4am UTC)
-  const targetHours = [
-    { hour: 4, slot: "MORNING" },
-    { hour: 10, slot: "NOON" },
-    { hour: 16, slot: "EVENING" }
+  // Target slots with their ideal UTC hours (SA is UTC+2)
+  const targetSlotsConfig = [
+    { slot: "MORNING", ideal: 4, range: [3, 6] },   // 5am - 8am local
+    { slot: "NOON",    ideal: 10, range: [8, 12] },  // 10am - 2pm local
+    { slot: "EVENING", ideal: 16, range: [14, 18] }  // 4pm - 8pm local
   ];
 
   const results = [];
@@ -594,31 +594,47 @@ function extractWindguruData() {
     `[scraperB] [page.evaluate] Processing ${timeColumns.length} time columns for multi-slot extraction...`
   );
 
-  for (let i = 0; i < timeColumns.length; i++) {
-    const timeCol = timeColumns[i];
-    // Match the exact UTC hour for the slot
-    const target = targetHours.find(t => t.hour === timeCol.hour);
+  // Group columns by date to ensure we only pick one slot per day
+  const groupedByDate = {};
+  timeColumns.forEach(col => {
+    const d = col.date.toISOString().split('T')[0];
+    if (!groupedByDate[d]) groupedByDate[d] = [];
+    groupedByDate[d].push(col);
+  });
 
-    if (target) {
-      const colIndex = timeCol.index;
-      const windSpeed = windSpeedRow[colIndex] || "";
-      const windDir = windDirRow[colIndex] || "";
-      const waveHeight = waveHeightRow[colIndex] || "";
-      const wavePeriod = wavePeriodRow[colIndex] || "";
-      const waveDir = waveDirRow[colIndex] || "";
+  for (const dateStr in groupedByDate) {
+    const cols = groupedByDate[dateStr];
+    
+    targetSlotsConfig.forEach(config => {
+      // Find columns in range for this slot
+      const candidates = cols.filter(c => c.hour >= config.range[0] && c.hour <= config.range[1]);
+      
+      if (candidates.length > 0) {
+        // Pick the one closest to ideal hour
+        const bestCol = candidates.reduce((prev, curr) => {
+          return Math.abs(curr.hour - config.ideal) < Math.abs(prev.hour - config.ideal) ? curr : prev;
+        });
 
-      results.push({
-        date: timeCol.date,
-        hour: timeCol.hour,
-        timeSlot: target.slot,
-        unixtime: timeCol.unixtime,
-        windSpeed,
-        windDir,
-        waveHeight,
-        wavePeriod,
-        waveDir,
-      });
-    }
+        const colIndex = bestCol.index;
+        const windSpeed = windSpeedRow[colIndex] || "";
+        const windDir = windDirRow[colIndex] || "";
+        const waveHeight = waveHeightRow[colIndex] || "";
+        const wavePeriod = wavePeriodRow[colIndex] || "";
+        const waveDir = waveDirRow[colIndex] || "";
+
+        results.push({
+          date: bestCol.date,
+          hour: bestCol.hour,
+          timeSlot: config.slot,
+          unixtime: bestCol.unixtime,
+          windSpeed,
+          windDir,
+          waveHeight,
+          wavePeriod,
+          waveDir,
+        });
+      }
+    });
   }
 
   console.log(
