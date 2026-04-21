@@ -24,11 +24,13 @@ import promoCodesRouter from "./promo-codes";
 import paypalRouter from "./paypal";
 import uploadRouter from "./upload";
 import intelligenceRouter from "./intelligence";
+import preferencesRouter from "./preferences";
 
 const router = Router();
 
 router.use("/upload", uploadRouter);
 router.use("/camping", campingRouter);
+router.use("/preferences", preferencesRouter);
 
 // Mount route handlers
 router.use("/auth", authRouter);

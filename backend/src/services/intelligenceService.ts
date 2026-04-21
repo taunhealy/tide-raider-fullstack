@@ -115,4 +115,74 @@ export class IntelligenceService {
        return `Signal scrambled. Current Muizenberg readout: ${score}/10. Topology: Sand bottom, optimal on the pushing tide.`;
     }
   }
+  
+  static async generateWeeklyReport(personaOverride?: string): Promise<{ report: string, presenterName: string }> {
+    try {
+      console.log(`[IntelligenceService] 📅 Generating Weekly Strategic Intel for Muizenberg...`);
+      
+      const beach = "Muizenberg";
+      const beachRef = await prisma.beach.findFirst({
+         where: { name: { contains: beach, mode: 'insensitive' } }
+      });
+
+      if (!beachRef) throw new Error("Muizenberg master record not found");
+
+      const startDate = new Date();
+      startDate.setUTCHours(0, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 7);
+
+      // Fetch 7 days of NOON forecasts (prime slot for summary)
+      const weeklyForecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: beachRef.regionId,
+          date: {
+            gte: startDate,
+            lte: endDate
+          },
+          timeSlot: "NOON",
+          source: "WINDFINDER"
+        },
+        orderBy: { date: 'asc' }
+      });
+
+      if (weeklyForecasts.length === 0) {
+        return "Intelligence stream interrupted. Forecast data for the upcoming week is currently being processed.";
+      }
+
+      // Format data for AI context
+      const context = weeklyForecasts.map(f => {
+         const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+         return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°`;
+      }).join("\n");
+
+      // 3. Pick a persona based on a cycle (e.g., day of month) or override
+      const { getPersonaByCycle } = await import("../constants/intelligence");
+      const activePersona = getPersonaByCycle(new Date().getDate());
+      const persona = personaOverride || activePersona.id;
+
+      console.log(`[IntelligenceService] 🎭 Selected Persona: ${persona} ${personaOverride ? '(Override)' : `(${activePersona.name})`}`);
+
+      const report = await PythonBridge.generateIntelligenceReport(
+        beach, 
+        weeklyForecasts[0].windSpeed, 
+        weeklyForecasts[0].windDirection.toString(), 
+        weeklyForecasts[0].swellHeight, 
+        weeklyForecasts[0].swellPeriod, 
+        weeklyForecasts[0].swellDirection.toString(), 
+        0, // score doesn't matter for summary
+        persona, 
+        `Weekly Outlook Context:\n${context}`,
+        "weekly"
+      );
+      
+      return { report, presenterName: activePersona.name };
+    } catch (error) {
+       console.error(`[IntelligenceService] ❌ Weekly AI failure:`, error);
+       return { 
+         report: "Strategic systems offline. Monitor your local buoy data for the latest swell updates.",
+         presenterName: "Tide Raider Central"
+       };
+    }
+  }
 }

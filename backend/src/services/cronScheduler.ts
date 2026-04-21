@@ -71,6 +71,20 @@ export class CronScheduler {
     console.log(
       "✅ South Africa High-frequency tactical sync scheduled: Every 4 hours"
     );
+ 
+    // Sunday Morning Newsletter (Run every Sunday at 07:00 UTC / 9:00 AM SAST)
+    const newsletterTask = cron.schedule(
+      "0 7 * * 0",
+      async () => {
+        console.log("📬 Dispatching Sunday Morning Newsletter...");
+        await this.runNewsletterJob();
+      },
+      {
+        timezone: "UTC",
+      }
+    );
+    this.tasks.push(newsletterTask);
+    console.log("✅ Weekly Newsletter scheduled: Every Sunday at 07:00 UTC");
 
     // Optional: Run immediately on startup (useful for testing)
     if (process.env.RUN_CRON_ON_STARTUP === "true") {
@@ -146,14 +160,60 @@ export class CronScheduler {
           regionsFailed: regionResults.regionsFailed,
         });
       } catch (error) {
-        console.error("❌ Failed to fetch region data:", error);
-        // Continue to alerts even if region fetch fails
-        regionResults = {
-          regionsProcessed: 0,
-          regionsSucceeded: 0,
-          regionsFailed: 0,
-          errors: [error instanceof Error ? error.message : "Unknown error"],
-        };
+      }
+ 
+      // Step 1.5: Process User Subscription Life Cycle (Trial Expirations)
+      console.log("⚓ Step 1.5: Processing trial expirations");
+      try {
+        const { prisma } = require("../lib/prisma");
+        const { sendEmail } = await import("../lib/email");
+        const { trialExpiredTemplate } = await import("../lib/emailTemplates");
+        
+        const now = new Date();
+        
+        // Find users whose trial has ended but hasn't been processed yet
+        const expiredTrials = await prisma.user.findMany({
+          where: {
+            hasActiveTrial: true,
+            trialEndDate: {
+              lt: now
+            },
+            hasTrialEnded: false
+          }
+        });
+
+        if (expiredTrials.length > 0) {
+          console.log(`🔌 Detected ${expiredTrials.length} expired trials. Processing...`);
+          
+          for (const user of expiredTrials) {
+            try {
+              // 1. Send Email
+              await sendEmail(
+                user.email,
+                "Your Tactical Trial has Concluded ⚓",
+                trialExpiredTemplate(user.name)
+              );
+              
+              // 2. Update Database
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  hasActiveTrial: false,
+                  hasTrialEnded: true,
+                  subscriptionStatus: "EXPIRED_TRIAL"
+                }
+              });
+              
+              console.log(`✅ Trial expiration processed for user: ${user.id}`);
+            } catch (userError) {
+              console.error(`❌ Failed to process trial expiration for user ${user.id}:`, userError);
+            }
+          }
+        } else {
+          console.log("✅ No new trial expirations to process.");
+        }
+      } catch (trialError) {
+        console.error("❌ Trial expiration processing failed:", trialError);
       }
 
       // Step 2: Process alerts for all users
@@ -246,6 +306,113 @@ export class CronScheduler {
        const duration = Date.now() - startTime;
        console.error(`❌ Weekly scrape failed after ${duration}ms:`, error);
        throw error;
+    }
+  }
+
+  /**
+   * Run the weekly newsletter job
+   * Generates AI report and sends to all opted-in users
+   */
+  async runNewsletterJob() {
+    const startTime = Date.now();
+    console.log("📨 Starting Newsletter Broadcast...");
+
+    try {
+      const { prisma } = require("../lib/prisma");
+      const { sendEmail } = await import("../lib/email");
+      const { weeklyNewsletterTemplate } = await import("../lib/emailTemplates");
+      const { IntelligenceService } = await import("./intelligenceService");
+      const { generateUnsubscribeToken } = await import("../lib/tokens");
+      
+      const CATEGORY = "WEEKLY_INTEL";
+
+      console.log("🧠 Generating AI Intelligence Report...");
+      const { report: aiReport, presenterName } = await IntelligenceService.generateWeeklyReport();
+      
+      // 2. Get the date range string (Next 7 days)
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(startDate.getDate() + 7);
+      const weekDates = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
+      // 3. Create an EmailBlast record (logging the start)
+      const blast = await prisma.emailBlast.create({
+        data: {
+          name: `Weekly Tactical Intel: ${weekDates}`,
+          category: CATEGORY,
+          metadata: { aiReportSummary: aiReport.substring(0, 100) }
+        }
+      });
+
+      // 4. Find all opted-in users
+      // A user is opted in IF they don't have an opt-out record for this category
+      const subscribers = await prisma.user.findMany({
+        where: {
+          notificationPreferences: {
+            none: {
+              category: CATEGORY,
+              isOptedIn: false
+            }
+          }
+        },
+        select: { id: true, email: true, name: true }
+      });
+
+      console.log(`📣 Sending intelligence to ${subscribers.length} subscribers...`);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      const backendUrl = process.env.BACKEND_URL || "http://localhost:4001";
+
+      for (const user of subscribers) {
+        try {
+          // Generate unique unsubscribe token
+          const token = generateUnsubscribeToken(user.id, CATEGORY);
+          const unsubscribeUrl = `${backendUrl}/api/preferences/unsubscribe?token=${token}`;
+          const subject = `Weekly Tactical Intelligence: Muizenberg [${weekDates}] 🛰️`;
+
+          const success = await sendEmail(
+            user.email,
+            subject,
+            weeklyNewsletterTemplate(user.name, aiReport, weekDates, unsubscribeUrl, presenterName)
+          );
+          
+          if (success) successCount++;
+          else failCount++;
+        } catch (err) {
+          console.error(`❌ Failed to send newsletter to ${user.email}:`, err);
+          failCount++;
+        }
+      }
+
+      // 5. Update blast record with stats
+      await prisma.emailBlast.update({
+        where: { id: blast.id },
+        data: {
+          metadata: {
+            ...((blast.metadata as object) || {}),
+            successCount,
+            failCount,
+            totalSubscribers: subscribers.length,
+            durationMs: Date.now() - startTime
+          }
+        }
+      });
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ Newsletter Broadcast Complete: ${successCount} sent, ${failCount} failed. Total time: ${duration}ms`);
+      
+      return {
+        success: true,
+        sent: successCount,
+        failed: failCount,
+        duration: `${duration}ms`,
+        blastId: blast.id
+      };
+    } catch (error) {
+      console.error("❌ Newsletter Job Failed:", error);
+      throw error;
     }
   }
 }

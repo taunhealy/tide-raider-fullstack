@@ -1,0 +1,189 @@
+/**
+ * Standard Email Layout Wrapper
+ */
+const emailLayout = (title: string, content: string, unsubscribeUrl?: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #000000;
+      padding: 40px 24px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .header-logo {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+    .header-logo span { color: #60a5fa; }
+    .content {
+      padding: 40px 32px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: #000000;
+      letter-spacing: -0.02em;
+    }
+    .text {
+      font-size: 16px;
+      color: #4b5563;
+      margin-bottom: 24px;
+    }
+    .button-container {
+      margin: 32px 0;
+      text-align: center;
+    }
+    .button {
+      background-color: #60a5fa;
+      color: #000000 !important;
+      padding: 16px 32px;
+      border-radius: 99px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .footer {
+      padding: 32px;
+      text-align: center;
+      background-color: #fafafa;
+      border-top: 1px solid #eeeeee;
+    }
+    .footer p {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .footer a {
+      color: #9ca3af;
+      text-decoration: underline;
+    }
+    .highlight-box {
+      background-color: #f0fdfa;
+      border-left: 4px solid #60a5fa;
+      padding: 20px;
+      margin: 24px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <div class="header-logo">TIDE <span>RAIDER</span></div>
+    </div>
+    <div class="content">
+      <h1 class="title">${title}</h1>
+      ${content}
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} Tide Raider Maritime Intelligence</p>
+      <p>Muizenberg, Cape Town</p>
+      ${unsubscribeUrl ? `
+        <p style="margin-top: 16px;">
+          You are receiving this because you opted in to maritime intelligence updates.
+          <br>
+          <a href="${unsubscribeUrl}">Unsubscribe</a> from this list.
+        </p>
+      ` : ""}
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+/**
+ * Trial Started Email
+ */
+export const trialStartedTemplate = (userName: string) => emailLayout(
+  "Welcome to the Tactical Feed 🌊",
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">Your 7-day tactical trial has been activated. You now have full access to our premium maritime intelligence pipeline, including:</p>
+  <div class="highlight-box">
+    <ul style="list-style-type: none; padding: 0;">
+      <li style="margin-bottom: 10px;">💎 <strong>Hidden Gems:</strong> Uncover the best uncrowded surf breaks.</li>
+      <li style="margin-bottom: 10px;">📊 <strong>Historical Scoring:</strong> See which spots are performing best over time.</li>
+      <li style="margin-bottom: 10px;">⚡ <strong>Tactical Alerts:</strong> Get notified the moment your ideal conditions hit the water.</li>
+    </ul>
+  </div>
+  <p class="text">The next 7 days are about getting you into the best waves of your life.</p>
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raid" class="button">Access Tactical Feed</a>
+  </div>
+  `
+);
+
+/**
+ * Trial Expired Email
+ */
+export const trialExpiredTemplate = (userName: string) => emailLayout(
+  "Your Tactical Trial has Concluded ⚓",
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">Your 1-week tactical trial has come to an end. We hope you've enjoyed having the edge on the water.</p>
+  <div class="highlight-box">
+    <p style="font-weight: 700; color: #000000; margin-bottom: 8px;">Don't lose your advantage:</p>
+    <p class="text" style="font-size: 14px; margin-bottom: 0;">Upgrade to a full subscription now to maintain access to Hidden Gems, Tactical Alerts, and the full Maritime Intelligence pipeline.</p>
+  </div>
+  <p class="text">Keep tracking, keep raiding.</p>
+  <div class="button-container">
+    <a href="https://www.tideraider.com/pricing" class="button">Upgrade to Premium</a>
+  </div>
+  `
+);
+
+/**
+ * Weekly Newsletter Template
+ */
+export const weeklyNewsletterTemplate = (userName: string, aiReport: string, weekDates: string, unsubscribeUrl: string, presenterName: string = "Tide Raider Central") => emailLayout(
+  `Weekly Tactical Intelligence: Muizenberg [${weekDates}] 🛰️`,
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">Here is your tactical overview for the upcoming week in the Western Cape.</p>
+  
+  <div class="highlight-box" style="background-color: #000000; border-left: 4px solid #60a5fa; color: #ffffff; padding: 24px;">
+    <h3 style="color: #60a5fa; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">AI SECTOR ANALYSIS: MUIZENBERG</h3>
+    <div style="font-family: 'Courier New', Courier, monospace; line-height: 1.8; color: #e5e7eb; font-size: 14px;">
+      ${aiReport.replace(/\n/g, '<br>')}
+    </div>
+    <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); pt-16px; font-weight: bold; color: #60a5fa; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+      Signing off, ${presenterName}
+    </div>
+  </div>
+
+  <p class="text">Our intelligence suggests several prime windows opening up. Head over to the dashboard for the full breakdown of all regional sectors.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raid" class="button">View Full Dashboard</a>
+  </div>
+  `,
+  unsubscribeUrl
+);

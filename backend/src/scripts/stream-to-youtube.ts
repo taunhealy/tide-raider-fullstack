@@ -65,18 +65,20 @@ async function startStream() {
     "-f", "lavfi",
     "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", 
     "-c:v", "libx264",
-    "-preset", "ultrafast",
+    "-preset", "veryfast", // Better compression/quality tradeoff than ultrafast
     "-tune", "zerolatency", 
     "-pix_fmt", "yuv420p",
-    "-b:v", "2000k", 
-    "-g", "30",
+    "-b:v", "3500k", 
+    "-maxrate", "3500k",
+    "-bufsize", "7000k",
+    "-g", "30", // Keyframe every 2 seconds at 15fps
     "-c:a", "aac",
     "-b:a", "128k",
     "-f", "flv",
     RTMP_URL
   ];
 
-  console.log("🔥 INITIATING STABLE-SENTINEL HANDSHAKE...");
+  console.log("🔥 INITIATING HIGH-FIDELITY HANDSHAKE...");
   const ffmpegProcess = spawn(ffmpegPath, ffmpegParams);
 
   // STABLE FRAME PUMP: Recursive loop for maximum reliability
@@ -86,7 +88,7 @@ async function startStream() {
         const start = Date.now();
         const screenshot = await page.screenshot({ 
            type: "jpeg", 
-           quality: 40, // Lean for high-speed pipe
+           quality: 70, // Higher detail for text/logs
            clip: { x: 0, y: 0, width: 1280, height: 720 } 
         });
         ffmpegProcess.stdin.write(screenshot);

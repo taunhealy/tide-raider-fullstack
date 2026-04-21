@@ -171,13 +171,17 @@ export async function authenticateToken(
       return res.status(401).json({ error: "User not found" });
     }
 
+    // Calculate active trial status based on date
+    const now = new Date();
+    const hasActiveTrial = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > now;
+
     // Attach user to request
     authReq.user = {
       id: user.id,
       email: user.email || undefined,
       name: user.name || undefined,
       isSubscribed: user.subscriptionStatus === "ACTIVE",
-      hasActiveTrial: user.hasActiveTrial || false,
+      hasActiveTrial: hasActiveTrial || false,
     };
 
     next();
@@ -229,16 +233,21 @@ export async function optionalAuth(
                 name: true,
                 subscriptionStatus: true,
                 hasActiveTrial: true,
+                trialEndDate: true,
               },
             });
 
             if (user) {
+              // Calculate active trial status based on date
+              const now = new Date();
+              const hasActiveTrial = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > now;
+
               authReq.user = {
                 id: user.id,
                 email: user.email || undefined,
                 name: user.name || undefined,
                 isSubscribed: user.subscriptionStatus === "ACTIVE",
-                hasActiveTrial: user.hasActiveTrial || false,
+                hasActiveTrial: hasActiveTrial || false,
               };
             }
           }

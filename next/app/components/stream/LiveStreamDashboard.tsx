@@ -6,10 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import dynamic from 'next/dynamic';
 
-const SentinelVFXOverlay = dynamic(() => import('./SentinelVFXOverlay').then(m => m.SentinelVFXOverlay), { 
-  ssr: false,
-  loading: () => <div className="fixed inset-0 pointer-events-none z-[200] bg-black/20" />
-});
 import { cn } from "@/app/lib/utils";
 import { Radio, Music, Wind, Droplets, Waves, Clock, Camera, User, Volume2, VolumeX, Quote } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
@@ -552,12 +548,13 @@ export default function LiveStreamDashboard() {
     const d = new Date();
     d.setDate(d.getDate() + i);
     return {
-      label: i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(d, "EEE d MMM"),
-      iso: d.toISOString().split("T")[0]
+      label: i === 0 ? `Today (${format(d, "MMM d")})` : i === 1 ? `Tomorrow (${format(d, "MMM d")})` : format(d, "EEE d MMM"),
+      iso: format(d, "yyyy-MM-dd")
     };
   }), []);
   
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showAutoPlayOverlay, setShowAutoPlayOverlay] = useState(false);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -617,7 +614,13 @@ export default function LiveStreamDashboard() {
 
   useEffect(() => {
     if (!isMuted && audioRef.current && playlist.length > 0) {
-      audioRef.current.play().catch(console.error);
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          console.warn("Autoplay blocked. Showing interaction overlay.");
+          setShowAutoPlayOverlay(true);
+        });
+      }
     }
   }, [currentTrackIndex, isMuted, playlist]);
   // --- CONSOLIDATED ROTATION ENGINE ---
@@ -750,6 +753,19 @@ export default function LiveStreamDashboard() {
   return (
     <>
       <div className="fixed inset-0 bg-gray-950 overflow-hidden flex flex-col font-primary selection:bg-brand-3 selection:text-white">
+        {showAutoPlayOverlay && (
+          <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center">
+            <button 
+              onClick={() => {
+                setShowAutoPlayOverlay(false);
+                if (audioRef.current) audioRef.current.play();
+              }}
+              className="px-10 py-5 bg-brand-3 rounded-full text-black font-black uppercase tracking-[0.5em] text-xl shadow-[0_0_50px_rgba(28,217,255,0.4)] hover:scale-110 transition-all hover:bg-white animate-pulse"
+            >
+              Start Dashboard
+            </button>
+          </div>
+        )}
         <div className="absolute inset-0 z-0 opacity-[0.12] pointer-events-none">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-brand-3/10 via-transparent to-transparent" />
         </div>
@@ -917,7 +933,6 @@ export default function LiveStreamDashboard() {
             </footer>
           </div>
         </div>
-        <SentinelVFXOverlay />
       </div>
     </>
   );

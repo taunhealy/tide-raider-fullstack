@@ -69,9 +69,9 @@ export class PythonBridge {
     });
   }
 
-  static async generateIntelligenceReport(beach: string, windSpeed: number, windDir: string, swellHeight: number, swellPeriod: number, swellDir: string, score: number, persona: string, trend?: string): Promise<string> {
+  static async generateIntelligenceReport(beach: string, windSpeed: number, windDir: string, swellHeight: number, swellPeriod: number, swellDir: string, score: number, persona: string, trend?: string, mode: string = "daily"): Promise<string> {
     return new Promise((resolve, reject) => {
-      console.log(`[PythonBridge] 🧠 Generating ${persona} intel for ${beach}...`);
+      console.log(`[PythonBridge] 🧠 Generating ${mode} ${persona} intel for ${beach}...`);
       
       const pythonCommand = process.platform === "win32" ? "python" : "python3";
       
@@ -85,7 +85,8 @@ export class PythonBridge {
         "--swell_dir", swellDir,
         "--score", score.toString(),
         "--persona", persona,
-        "--trend", trend || ""
+        "--trend", trend || "",
+        "--mode", mode
       ]);
 
       let stdout = "";

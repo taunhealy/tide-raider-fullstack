@@ -1,7 +1,6 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { BeachProvider } from "@/app/context/BeachContext";
@@ -42,7 +41,6 @@ export default function AppProviders({
               <GlobalErrorHandler />
               {children}
               <Toaster position="top-right" />
-              <ReactQueryDevtools initialIsOpen={false} />
             </TooltipProvider>
           </BeachProvider>
         </SubscriptionProvider>

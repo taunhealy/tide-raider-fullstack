@@ -322,7 +322,7 @@ export default function BeachHeaderControls({
                                 {hiddenGemCount}
                               </span>
                             )}
-                            {(!isAuthenticated || !isSubscribed) && <Lock className="ml-2 w-3 h-3" />}
+                            {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3" />}
                           </HiddenGemsButton>
                         </div>
                       </TooltipTrigger>

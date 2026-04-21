@@ -34,7 +34,7 @@ router.post(
 
       // Calculate trial end date (7 days from now)
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      trialEndDate.setDate(trialEndDate.getDate() + 7);
 
       // Update user with trial information
       const updatedUser = await prisma.user.update({
@@ -61,6 +61,20 @@ router.post(
       notifyAdminNewTrial(updatedUser).catch((err) =>
         console.error("Failed to send admin notification:", err)
       );
+
+      // Send welcome email to user (async, don't wait)
+      try {
+        const { sendEmail } = await import("../lib/email");
+        const { trialStartedTemplate } = await import("../lib/emailTemplates");
+        
+        sendEmail(
+          updatedUser.email,
+          "Welcome to the Tactical Feed 🌊",
+          trialStartedTemplate(updatedUser.name)
+        ).catch(err => console.error("Failed to send trial welcome email:", err));
+      } catch (err) {
+        console.error("Context error for welcome email:", err);
+      }
 
       return res.json({
         success: true,
@@ -228,6 +242,20 @@ router.post(
       notifyAdminNewTrial(result).catch((err) =>
         console.error("Failed to send admin notification:", err)
       );
+
+      // Send welcome email to user (async, don't wait)
+      try {
+        const { sendEmail } = await import("../lib/email");
+        const { trialStartedTemplate } = await import("../lib/emailTemplates");
+        
+        sendEmail(
+          result.email,
+          "Welcome to the Tactical Feed 🌊",
+          trialStartedTemplate(result.name)
+        ).catch(err => console.error("Failed to send trial welcome email:", err));
+      } catch (err) {
+        console.error("Context error for welcome email:", err);
+      }
 
       return res.json({
         success: true,

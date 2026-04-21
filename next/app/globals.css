@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide Next.js and Tanstack DevTools from the Stream */
+#__next-build-watcher, 
+.nextjs-static-indicator,
+.tanstack-query-devtools,
+[data-nextjs-toast],
+[data-nextjs-dialog] {
+  display: none !important;
+}
+
 /* Hide scrollbar but maintain functionality */
 .no-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */

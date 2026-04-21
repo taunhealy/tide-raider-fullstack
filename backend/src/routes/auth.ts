@@ -642,6 +642,10 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
     }
 
     const isSubscribed = user.subscriptionStatus === "ACTIVE";
+    
+    // Check if trial is still active based on date
+    const now = new Date();
+    const hasActiveTrial = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > now;
 
     // Log subscription status for debugging
     console.log("[auth/me] User subscription status:", {
@@ -649,7 +653,7 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
       email: user.email,
       subscriptionStatus: user.subscriptionStatus,
       isSubscribed,
-      hasActiveTrial: user.hasActiveTrial,
+      hasActiveTrial,
       trialEndDate: user.trialEndDate,
     });
 
@@ -660,7 +664,7 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         name: user.name,
         image: user.image,
         isSubscribed,
-        hasActiveTrial: user.hasActiveTrial || false,
+        hasActiveTrial,
         trialEndDate: user.trialEndDate,
       },
     });

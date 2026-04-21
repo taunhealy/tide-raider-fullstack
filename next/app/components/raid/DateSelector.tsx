@@ -84,7 +84,7 @@ export default function DateSelector({
     return (
       <div className={cn("flex flex-wrap gap-2", className)}>
         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <div key={i} className="h-12 w-20 bg-gray-100 animate-pulse rounded-xl" />
+          <div key={i} className="h-12 w-20 bg-gray-300 animate-pulse rounded-xl" />
         ))}
       </div>
     );

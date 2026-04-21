@@ -574,7 +574,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/40">
             <div className="flex items-center gap-4 mb-8">
               <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
-                Tactical Discussion
+                Discussion
               </h2>
               <div className="h-px flex-1 bg-white/5"></div>
             </div>

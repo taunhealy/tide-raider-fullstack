@@ -196,7 +196,7 @@ export default function PricingPage() {
                   {[
                     "Set alerts to get notifications for your ideal surf conditions (Whatsapp/Email)",
                     "Cancel anytime",
-                    "1-month free trial",
+                    "1-week free trial",
                   ].map((feature) => (
                     <li
                       key={feature}

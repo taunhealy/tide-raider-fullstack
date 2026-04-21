@@ -305,12 +305,8 @@ function RegionalHighScoresContent({
                 const displayScore = beach.totalScore;
                 const roundedScore = Math.round(displayScore);
 
-                // Lock the first 5 items for all time periods for non-premium users
-                // This consistently locks the top locations regardless of time period
-                // Only lock if subscription status has been loaded and user is not premium
-                // If user is premium (subscribed or has trial), NO gates at all
-                // All surf breaks are now unlocked for everyone
-                const isLocked = false;
+                // Lock the first 5 items for non-premium users
+                const isLocked = index < 5 && !isPremium && !isSubscribed && !hasActiveTrial;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {
@@ -346,11 +342,11 @@ function RegionalHighScoresContent({
                           <>
                             <Lock className="w-3 h-3 text-amber-700" />
                             <Link
-                              href="/checkout"
-                              className="text-amber-900 hover:text-amber-800 transition-colors font-primary text-xs font-medium"
+                              href="/pricing"
+                              className="text-amber-700 hover:text-amber-600 transition-colors font-primary text-[10px] font-black uppercase tracking-wider"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              Subscribe to Unlock
+                              Locked Content — Click to Unlock
                             </Link>
                           </>
                         ) : (
@@ -359,8 +355,8 @@ function RegionalHighScoresContent({
                       </h4>
                       <div className="mt-1">
                         {isLocked ? (
-                          <p className="text-[12px] text-[var(--color-text-secondary)] font-primary">
-                            Premium content
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                            Subscription Required
                           </p>
                         ) : (
                           <BlueStarRating score={beach.totalScore} size={12} />

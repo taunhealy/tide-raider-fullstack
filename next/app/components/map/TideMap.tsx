@@ -189,36 +189,55 @@ export default function TideMap({
         if (validWind.length > 0) {
           avgSpeed = validWind.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.windSpeed, 0) / validWind.length;
           
-          // Calculate average direction vector
+          // Calculate average direction vector (Meteorological: FROM direction, so we move AWAY)
           let sumVX = 0;
           let sumVY = 0;
           validWind.forEach((b: any) => {
             const deg = b.dailyScores[dateKey].conditions.windDirection || 0;
             const rad = (deg * Math.PI) / 180;
-            sumVX += Math.sin(rad);
-            sumVY += -Math.cos(rad);
+            // Movement is AWAY from the bearing
+            sumVX += -Math.sin(rad); 
+            sumVY += Math.cos(rad);
           });
-          avgVX = (sumVX / validWind.length) * 0.0003;
-          avgVY = (sumVY / validWind.length) * 0.0003;
+          avgVX = (sumVX / validWind.length) * 0.0004;
+          avgVY = (sumVY / validWind.length) * 0.0004;
         }
 
-        windParticles.current.forEach(p => {
-          p.life -= 0.005;
+        const time = Date.now() * 0.002;
+        windParticles.current.forEach((p, i) => {
+          p.life -= 0.004;
           if (p.life <= 0) { 
-            p.x = Math.random(); p.y = Math.random();
+            // Spawn on the windward edge instead of randomly
+            const edge = Math.random();
+            if (Math.abs(avgVX) > Math.abs(avgVY)) {
+              p.x = avgVX > 0 ? 0 : 1;
+              p.y = edge;
+            } else {
+              p.x = edge;
+              p.y = avgVY > 0 ? 0 : 1;
+            }
             p.life = 1.0; 
           }
           
-          p.vx = avgVX * (avgSpeed / 10 + 0.5); 
-          p.vy = avgVY * (avgSpeed / 10 + 0.5);
+          const speedMod = (avgSpeed / 10 + 0.5);
+          // Snake/Wiggle logic: Apply subtle perpendicular oscillation
+          const wiggle = Math.sin(time + i * 0.1) * 0.0008;
+          const perpX = -avgVY;
+          const perpY = avgVX;
+
+          p.vx = (avgVX * speedMod) + (perpX * wiggle); 
+          p.vy = (avgVY * speedMod) + (perpY * wiggle);
+          
           p.x += p.vx; p.y += p.vy;
+          // Loop around edges
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.7})`; 
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.6})`; 
+          // Thickness proportional to knots: ~1.0 at 10kts, ~2.5 at 25kts
+          ctx.lineWidth = Math.min(Math.max(0.8, avgSpeed / 12), 3.5);
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 150) * width, (p.y - p.vy * 150) * height);
+          ctx.lineTo((p.x - p.vx * 100) * width, (p.y - p.vy * 100) * height);
           ctx.stroke();
         });
       }

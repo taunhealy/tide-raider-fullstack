@@ -261,6 +261,24 @@ router.post("/process-payouts", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/cron/run-newsletter - Trigger Sunday Weekly Newsletter
+router.post("/run-newsletter", async (req: Request, res: Response) => {
+  try {
+    const cronSecret = req.headers["x-cron-secret"];
+    if (cronSecret !== process.env.CRON_SECRET) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    console.log("📬 Manual Newsletter trigger received...");
+    const { getCronScheduler } = await import("../services/cronScheduler");
+    const result = await getCronScheduler().runNewsletterJob();
+    return res.json(result);
+  } catch (error) {
+    console.error("❌ Newsletter job failed:", error);
+    return res.status(500).json({ error: "Newsletter job failed" });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/cron/post-ig-story
 // Triggered by a separate Google Cloud Scheduler job after the main cron.
