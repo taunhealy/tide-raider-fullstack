@@ -58,6 +58,18 @@ export const createAlertSchema = z
       message: "Star rating is required for RATING alerts",
       path: ["starRating"],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.notificationMethod === "whatsapp" || data.notificationMethod === "both") {
+        return /^\+\d{7,15}$/.test(data.contactInfo);
+      }
+      return true;
+    },
+    {
+      message: "WhatsApp number must start with + and contain only digits (e.g., +27821234567)",
+      path: ["contactInfo"],
+    }
   );
 
 export const updateAlertSchema = z.object({
@@ -86,7 +98,20 @@ export const updateAlertSchema = z.object({
   beachId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   sources: z.array(z.enum(["WINDFINDER", "WINDGURU", "WINDY"])).optional(),
-});
+}).refine(
+  (data) => {
+    if (data.notificationMethod === "whatsapp" || data.notificationMethod === "both") {
+      if (data.contactInfo) {
+        return /^\+\d{7,15}$/.test(data.contactInfo);
+      }
+    }
+    return true;
+  },
+  {
+    message: "WhatsApp number must start with + and contain only digits (e.g., +27821234567)",
+    path: ["contactInfo"],
+  }
+);
 
 export const getAlertParamsSchema = z.object({
   id: z.string().uuid("Invalid alert ID"),

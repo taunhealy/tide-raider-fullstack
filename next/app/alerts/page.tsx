@@ -30,6 +30,7 @@ export default function AlertsPage() {
           
           <Link href="/alerts/new">
             <button 
+              suppressHydrationWarning
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-900 bg-gray-900 text-white hover:bg-gray-800 font-bold text-sm tracking-tight shadow-xl transition-all duration-300 active:scale-95"
             >
               <Bell className="h-4 w-4" />

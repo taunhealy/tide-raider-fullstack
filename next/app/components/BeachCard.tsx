@@ -5,7 +5,17 @@ import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { useHandleSubscribe } from "@/app/hooks/useHandleSubscribe";
 import { useState, useEffect, useRef, memo } from "react";
-import { InfoIcon, Eye, ChevronDown, Lock } from "lucide-react";
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  Info, 
+  Lock, 
+  Star, 
+  InfoIcon, 
+  Eye, 
+  Sparkles 
+} from "lucide-react";
+import AIReportModal from "./beach/AIReportModal";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import GoogleMapsButton from "@/app/components/GoogleMapsButton";
@@ -21,7 +31,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { LogEntry } from "@/app/types/raidlogs";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Star } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import gsap from "gsap";
 import type { Beach } from "@/app/types/beaches";
@@ -148,6 +157,7 @@ const BeachCard = memo(function BeachCard({
   const [isRegionSupported, setIsRegionSupported] = useState(true);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [showIdealConditions, setShowIdealConditions] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   // Use score directly instead of looking it up
   const scoreDisplay = getScoreDisplay(score ?? 0);
@@ -327,6 +337,21 @@ const BeachCard = memo(function BeachCard({
                       location={beach.location}
                       className="hidden md:flex"
                     />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAIModalOpen(true);
+                      }}
+                      className="p-1.5 md:p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors group/ai relative"
+                      aria-label="AI Weekly Report"
+                    >
+                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 text-[6px] text-white items-center justify-center font-bold">AI</span>
+                      </span>
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -598,6 +623,21 @@ const BeachCard = memo(function BeachCard({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
+                        setIsAIModalOpen(true);
+                      }}
+                      className="p-1.5 md:p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors group/ai relative"
+                      aria-label="AI Weekly Report"
+                    >
+                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 text-[6px] text-white items-center justify-center font-bold">AI</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleOpenModal();
                       }}
                       className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -854,6 +894,16 @@ const BeachCard = memo(function BeachCard({
           onClose={handleCloseModal}
           isSubscribed={isSubscribed}
           onSubscribe={handleSubscribe}
+        />
+      )}
+
+      {/* AI Report Modal */}
+      {isAIModalOpen && (
+        <AIReportModal
+          beach={beach}
+          isOpen={isAIModalOpen}
+          onClose={() => setIsAIModalOpen(false)}
+          date={searchParams.get("date") || new Date().toISOString().split("T")[0]}
         />
       )}
     </ErrorBoundary>

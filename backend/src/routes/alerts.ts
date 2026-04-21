@@ -134,6 +134,15 @@ router.post(
       }
 
       const alert = await AlertService.createAlert(authReq.user.id, req.body);
+
+      // Sync WhatsApp number to user profile if provided and it's a WhatsApp alert
+      if ((req.body.notificationMethod === 'whatsapp' || req.body.notificationMethod === 'both') && req.body.contactInfo) {
+        await prisma.user.update({
+          where: { id: authReq.user.id },
+          data: { whatsappNumber: req.body.contactInfo }
+        }).catch(err => console.error("[alerts] Failed to sync whatsappNumber to user profile:", err));
+      }
+
       return res.json(alert);
     } catch (error) {
       console.error("Alert creation error details:", error);
@@ -406,6 +415,15 @@ router.put(
       await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
 
       const updatedAlert = await AlertService.updateAlert(alertId, req.body);
+
+      // Sync WhatsApp number to user profile if updated
+      if ((req.body.notificationMethod === 'whatsapp' || req.body.notificationMethod === 'both') && req.body.contactInfo) {
+        await prisma.user.update({
+          where: { id: authReq.user.id },
+          data: { whatsappNumber: req.body.contactInfo }
+        }).catch(err => console.error("[alerts] Failed to sync whatsappNumber to user profile during update:", err));
+      }
+
       return res.json(updatedAlert);
     } catch (error) {
       if (error instanceof Error && error.message.includes("not found")) {
@@ -434,6 +452,14 @@ router.patch("/:id", authenticateToken, async (req: Request, res: Response) => {
     await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
 
     const updatedAlert = await AlertService.updateAlert(alertId, req.body);
+
+    // Sync WhatsApp number to user profile if updated in patch
+    if ((req.body.notificationMethod === 'whatsapp' || req.body.notificationMethod === 'both') && req.body.contactInfo) {
+      await prisma.user.update({
+        where: { id: authReq.user.id },
+        data: { whatsappNumber: req.body.contactInfo }
+      }).catch(err => console.error("[alerts] Failed to sync whatsappNumber to user profile during patch:", err));
+    }
 
     // Delete alert checks when alert is updated
     await AlertService.deleteAlertChecks(alertId);

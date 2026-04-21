@@ -20,6 +20,7 @@ const NAVIGATION_ITEMS = [
   { href: "/raidlogs", label: "Logs" },
   { href: "/alerts", label: "Alerts" },
   { href: "/blog", label: "Blog" },
+  { href: "/pricing", label: "Pricing" },
 ] as const;
 
 export default function Navbar() {

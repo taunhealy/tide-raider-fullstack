@@ -15,6 +15,7 @@ interface DateSelectorProps {
   className?: string;
   beaches?: any[];
   availableDates?: string[];
+  isLoading?: boolean;
 }
 
 export default function DateSelector({
@@ -22,7 +23,8 @@ export default function DateSelector({
   onDateSelect,
   className,
   beaches = [],
-  availableDates = []
+  availableDates = [],
+  isLoading = false
 }: DateSelectorProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -80,11 +82,21 @@ export default function DateSelector({
 
   const activeDate = selectedDate || dateOptions[0]?.value || null;
 
-  if (!mounted || dateOptions.length === 0) {
+  if (!mounted || (dateOptions.length === 0 && !isLoading)) {
     return (
       <div className={cn("flex flex-wrap gap-2", className)}>
         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <div key={i} className="h-12 w-20 bg-gray-300 animate-pulse rounded-xl" />
+          <div key={i} className="h-12 w-[75px] bg-gray-200 animate-pulse rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={cn("flex flex-wrap gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200 shadow-sm", className)}>
+        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div key={i} className="h-12 w-[75px] bg-gray-200/50 animate-pulse rounded-lg" />
         ))}
       </div>
     );

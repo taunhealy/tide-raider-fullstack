@@ -30,6 +30,8 @@ export function useSubscriptionDetails() {
         trialEndDate: data?.trialEndDate || null,
         hasTrialEnded: data?.hasTrialEnded || false,
         next_billing_time: data?.next_billing_time || null,
+        referralCode: data?.referralCode || null,
+        credits: data?.credits || 0,
       };
     },
     refetchOnWindowFocus: false,

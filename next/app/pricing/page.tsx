@@ -2,7 +2,7 @@
 
 import { Button } from "../components/ui/Button";
 import { useHandleSubscribe } from "../hooks/useHandleSubscribe";
-import { Check } from "lucide-react";
+import { Check, Sparkles, Zap, Loader2, CreditCard, Star, ArrowRight, ShieldCheck, Waves, Users, Plus, Mail, Send, MessageSquare } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import Image from "next/image";
 import { client } from "@/app/lib/sanity";
@@ -12,43 +12,25 @@ import { useSubscription } from "../context/SubscriptionContext";
 import { toast } from "sonner";
 import { useSubscriptionDetails } from "../hooks/useSubscriptionDetails";
 import { SubscriptionStatus } from "@/app/types/subscription";
-
-function ImageSkeleton() {
-  return (
-    <div className="relative w-[510px] h-[340px] overflow-hidden rounded-md bg-gray-200 animate-pulse">
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"
-        style={{
-          backgroundSize: "400% 100%",
-        }}
-      />
-    </div>
-  );
-}
-
-interface PricingData {
-  title: string;
-  subtitle: string;
-  pricingImage: string;
-  price: number;
-  priceSubtext: string;
-  features: string[];
-}
+import Link from "next/link";
+import { Input } from "../components/ui/input";
+import { MEMBERSHIP_PERKS } from "../constants/perks";
 
 export default function PricingPage() {
   const handleSubscribe = useHandleSubscribe();
-  const [data, setData] = useState<PricingData | null>(null);
-  const [imageLoading, setImageLoading] = useState(true);
-  const { isSubscribed, hasActiveTrial, trialStatus } = useSubscription();
+  const [data, setData] = useState<any>(null);
+  const { isSubscribed } = useSubscription();
   const [loadingStates, setLoadingStates] = useState({
     subscribe: false,
     unsubscribe: false,
+    sendingInvites: false,
   });
+  const [isToppingUp, setIsToppingUp] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const { data: subscriptionDetails } = useSubscriptionDetails();
-  const isActiveSubscription =
-    subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
-  const subscriptionData = subscriptionDetails;
+
+  // Invite State
+  const [emails, setEmails] = useState<string[]>([""]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,46 +43,27 @@ export default function PricingPage() {
   const handleSubscribeWithLoading = async () => {
     setLoadingStates((prev) => ({ ...prev, subscribe: true }));
     try {
-      // If eligible for trial, start trial
-      if (
-        !subscriptionData?.hasTrialEnded &&
-        !subscriptionData?.hasActiveTrial
-      ) {
+      if (!subscriptionDetails?.hasTrialEnded && !subscriptionDetails?.hasActiveTrial) {
         const response = await fetch("/api/subscriptions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "start-trial",
-            promoCode,
-          }),
+          body: JSON.stringify({ action: "start-trial", promoCode }),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to start trial");
-        }
-
-        // Refresh the page after successful trial start
+        if (!response.ok) throw new Error("Failed to start trial");
         window.location.reload();
         return;
       }
 
-      // Otherwise, create PayPal subscription
       const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          promoCode,
-        }),
+        body: JSON.stringify({ action: "create", promoCode }),
       });
       const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      if (data.url) window.location.href = data.url;
     } catch (error) {
-      console.error("Subscription action failed:", error);
-      toast.error("Failed to process request. Please try again.");
+      console.error("Subscription conversion failed:", error);
+      toast.error("Process Error", { description: "Failed to initialize secure checkout." });
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }
@@ -112,127 +75,154 @@ export default function PricingPage() {
       const response = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "cancel",
-          subscriptionId: subscriptionData?.id,
-        }),
+        body: JSON.stringify({ action: "cancel", subscriptionId: subscriptionDetails?.id }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to cancel subscription");
-      }
-
+      if (!response.ok) throw new Error("Failed to cancel subscription");
       window.location.reload();
     } catch (error) {
-      console.error("Error unsubscribing:", error);
-      toast.error("Failed to unsubscribe. Please try again.");
+      toast.error("Cancellation Error", { description: "Failed to update subscription status." });
     } finally {
       setLoadingStates((prev) => ({ ...prev, unsubscribe: false }));
     }
   };
 
+  const handleTopUp = async () => {
+    setIsToppingUp(true);
+    try {
+      const response = await fetch("/api/paypal/create-credit-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed order creation");
+      const data = await response.json();
+      if (data.approvalUrl) window.location.href = data.approvalUrl;
+    } catch (err: any) {
+      toast.error("Payment Error", { description: "Could not initialize PayPal top-up." });
+      setIsToppingUp(false);
+    }
+  };
+
+  const handleEmailChange = (index: number, value: string) => {
+    const newEmails = [...emails];
+    newEmails[index] = value;
+    setEmails(newEmails);
+  };
+
+  const addEmailField = () => {
+    setEmails([...emails, ""]);
+  };
+
+  const sendInvites = async () => {
+    const validEmails = emails.filter(email => email.trim() !== "" && email.includes("@"));
+    if (validEmails.length === 0) {
+      toast.error("Input Required", { description: "Please enter at least one valid email address." });
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, sendingInvites: true }));
+    try {
+      const referralLink = `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode}`;
+      const response = await fetch("/api/user/invite-squad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: validEmails, referralLink }),
+      });
+
+      if (!response.ok) throw new Error("Invite failed");
+
+      toast.success("SQUAD RECRUITED", { 
+        description: `Invitations sent successfully to ${validEmails.length === 1 ? '1 friend' : validEmails.length + ' friends'}!`,
+        icon: "📨"
+      });
+      setEmails([""]);
+    } catch (error) {
+      toast.error("Comms Failure", { description: "Failed to send email invites." });
+    } finally {
+      setLoadingStates(prev => ({ ...prev, sendingInvites: false }));
+    }
+  };
+
+  const shareViaWhatsApp = () => {
+    const link = `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode}`;
+    navigator.clipboard.writeText(link);
+    const text = `🌊 Join the raid on Tide Raider! Get real-time surf alerts and deep intelligence for the Western Cape. Use my link to join the squad: ${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+    toast.success("LINK SECURED", { description: "Invite link copied & WhatsApp opened." });
+  };
+
   const getButtonText = () => {
-    if (loadingStates.subscribe) return "Processing...";
-    if (loadingStates.unsubscribe) return "Cancelling...";
-
-    // If subscription is active, show unsubscribe
-    if (subscriptionDetails?.status === SubscriptionStatus.ACTIVE) {
-      return "Unsubscribe";
-    }
-
-    // If trial has ended, show Subscribe Now
-    if (subscriptionDetails?.hasTrialEnded) {
-      return "Subscribe Now";
-    }
-
-    // If trial is active, show Subscribe Now
-    if (subscriptionDetails?.hasActiveTrial) {
-      return "Subscribe Now";
-    }
-
-    // Default to Start Free Trial
-    return "Start Free Trial";
+    if (loadingStates.subscribe) return "PROCESSING...";
+    if (loadingStates.unsubscribe) return "CANCELING...";
+    if (subscriptionDetails?.status === SubscriptionStatus.ACTIVE) return "CANCEL MEMBERSHIP";
+    if (subscriptionDetails?.hasTrialEnded) return "RE-ACTIVATE NOW";
+    if (subscriptionDetails?.hasActiveTrial) return "UPGRADE NOW";
+    return "START FREE TRIAL";
   };
 
   return (
-    <div className="bg-[var(--color-bg-primary)]">
-      <div className="container px-4 md:pl-[81px] py-8 md:py-[54px]">
+    <div className="bg-white min-h-screen pb-32 text-black font-['Inter',_sans-serif]">
+      <div className="container px-4 md:pl-[81px] py-16 md:py-24 max-w-7xl">
         <div className="md:pl-[54px]">
-          <div className="mb-8 md:mb-[54px] border-b border-[var(--color-border-light)] pb-5 md:pb-[54px]">
-            <h3 className="heading-3 text-[var(--color-text-primary)] mb-4 md:mb-[16px]">
-              Simple, transparent pricing
-            </h3>
-            <p className="text-large text-[var(--color-text-secondary)] text-left">
-              Get unlimited access to Alerts features.
+          {/* Header Section */}
+          <div className="mb-16 md:mb-20 border-b border-gray-100 pb-10">
+            <h1 className="text-[32px] leading-[40px] font-bold tracking-tight text-black mb-4">
+              Simple Pricing
+            </h1>
+            <p className="text-[16px] leading-[24px] font-normal text-black opacity-60">
+              Get notifications when your ideal surf conditions hit.
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-8 md:gap-[54px] items-center md:items-start">
-            <div className="w-full md:max-w-[540px] bg-[var(--color-bg-secondary)] roundfed-md shadow-sm border border-[var(--color-border-light)] overflow-hidden">
-              <div className="px-[32px] py-[32px] bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-light)]">
-                <h5
-                  className={cn(
-                    "text-[var(--color-text-primary)] mb-[8px] font-primary"
-                  )}
-                >
-                  Tide Raider Membership
-                </h5>
-                <div className="flex items-baseline gap-[8px]">
-                  <span
-                    className={cn(
-                      "text-[32px] font-semibold text-[var(--color-text-primary)] font-primary"
-                    )}
-                  >
-                    R45
-                  </span>
-                  <span className="text-main text-[var(--color-text-secondary)]">
-                    per month
-                  </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Membership Card */}
+            <div className="group relative bg-[#F8F9FA] rounded-3xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-gray-100">
+              <div className="p-8 border-b border-gray-100">
+                <div className="flex justify-between items-start mb-6">
+                   <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white">
+                      <Waves className="w-6 h-6" />
+                   </div>
+                   <div className="bg-white border border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-normal tracking-normal text-black">
+                      Unlimited Alerts
+                   </div>
+                </div>
+                <h2 className="text-[24px] leading-[32px] font-bold text-black mb-2">Full Membership</h2>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[40px] leading-[48px] font-black text-black">R45</span>
+                  <span className="text-[10px] leading-[15px] font-normal text-black opacity-40 uppercase tracking-widest">/ Month</span>
                 </div>
               </div>
 
-              <div className="px-[32px] py-[32px] bg-white">
-                <ul className="space-y-[16px] mb-[32px]">
-                  {[
-                    "Set alerts to get notifications for your ideal surf conditions (Whatsapp/Email)",
-                    "Cancel anytime",
-                    "1-week free trial",
-                  ].map((feature) => (
-                    <li
-                      key={feature}
-                      className={cn("flex items-start gap-[8px]")}
-                    >
-                      <Check className="h-5 w-5 text-[var(--color-text-primary)] mt-[2px]" />
-                      <span className="text-main text-[var(--color-text-secondary)] font-primary">
-                        {feature}
+              <div className="p-8 flex-grow bg-white">
+                <ul className="space-y-6 mb-10">
+                  {MEMBERSHIP_PERKS.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-4">
+                      <div className={cn("p-1.5 rounded-lg bg-gray-50 border border-gray-100", feature.color)}>
+                        <feature.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[16px] leading-[24px] font-normal text-black">
+                        {feature.text}
                       </span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="space-y-4">
-                  {!isSubscribed && (
-                    <div className="flex gap-2">
+                <div className="mt-auto space-y-4">
+                   {!isSubscribed && (
+                    <div className="relative">
                       <input
                         type="text"
-                        placeholder="Promo Code"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="ENTER PROMO CODE"
+                        className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 text-[10px] font-normal text-black uppercase tracking-widest focus:outline-none focus:border-black transition-all placeholder:text-gray-300"
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
                       />
                     </div>
                   )}
                   <Button
-                    variant="outline"
-                    className={cn("w-full font-primary")}
-                    onClick={
-                      isSubscribed
-                        ? handleUnsubscribe
-                        : handleSubscribeWithLoading
-                    }
-                    disabled={
-                      loadingStates.subscribe || loadingStates.unsubscribe
-                    }
+                    onClick={isSubscribed ? handleUnsubscribe : handleSubscribeWithLoading}
+                    disabled={loadingStates.subscribe || loadingStates.unsubscribe}
+                    className="w-full h-14 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[12px] shadow-sm transition-all active:scale-[0.98]"
                   >
                     {getButtonText()}
                   </Button>
@@ -240,29 +230,178 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {data?.pricingImage ? (
-              <div className="relative w-full md:w-[510px] h-[240px] md:h-[340px] overflow-hidden rounded-md">
-                <div className="absolute inset-0 bg-[var(--color-tertiary)]" />
-                <Image
-                  src={data.pricingImage}
-                  alt="Surfing waves"
-                  fill
-                  className="object-cover opacity-70"
-                  priority
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQrJiEkKic0Ly4vLy4vNDk2ODU4Ni8vQUFBQC8vRUVFRUVFRUVFRUVFRUX/2wBDAR0XFyAeIB4gHh4gIB4lICAgICUmJSAgICUvJSUlJSUlLyUlJSUlJSUlJSUlJSUlJSUlJSUlJSX/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                />
+            {/* AI Top-Up Card */}
+            <div className="relative bg-[#F8F9FA] rounded-3xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-gray-100">
+              <div className="p-8 border-b border-gray-100">
+                 <div className="flex justify-between items-start mb-6">
+                   <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center text-white">
+                      <Sparkles className="w-6 h-6" />
+                   </div>
+                   <div className="bg-white border border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-normal tracking-normal text-black">
+                      Intelligence Top-Up
+                   </div>
+                </div>
+                <h2 className="text-[24px] leading-[32px] font-bold text-black mb-2">AI Report Bundle</h2>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[40px] leading-[48px] font-black text-black">R100</span>
+                  <span className="text-[10px] leading-[15px] font-normal text-black opacity-40 uppercase tracking-widest">/ One-Time</span>
+                </div>
               </div>
-            ) : (
-              <div className="relative w-full md:w-[510px] h-[240px] md:h-[340px] overflow-hidden rounded-md bg-gray-200">
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer"
-                  style={{
-                    backgroundSize: "400% 100%",
-                  }}
-                />
+
+              <div className="p-8 flex-grow bg-white">
+                 <ul className="space-y-6 mb-10">
+                  {[
+                    { text: "100 Strategic AI Surf Reports", icon: Zap, color: "text-purple-600" },
+                    { text: "Deep-dive 7-day outlooks", icon: ArrowRight, color: "text-purple-600" },
+                    { text: "Share reports with your crew via WhatsApp", icon: Check, color: "text-purple-600" },
+                    { text: "Credits never expire, use anytime", icon: ShieldCheck, color: "text-emerald-600" },
+                  ].map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-4">
+                      <div className={cn("p-1.5 rounded-lg bg-gray-50 border border-gray-100", feature.color)}>
+                        <feature.icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[16px] leading-[24px] font-normal text-black">
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  onClick={handleTopUp}
+                  disabled={isToppingUp}
+                  className="w-full h-14 bg-white border border-gray-200 text-black hover:bg-gray-50 rounded-xl font-bold uppercase tracking-widest text-[12px] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {isToppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4 text-purple-600" />}
+                  BUY 100 CREDITS
+                </Button>
+                <p className="mt-4 text-center text-[10px] leading-[15px] font-normal text-gray-400 uppercase tracking-widest">
+                   No Subscription Required
+                </p>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Affiliate Section */}
+          <div className="mt-24" id="affiliate">
+             <div className="relative rounded-3xl bg-gray-50 p-10 md:p-16 overflow-hidden border border-gray-100">
+                <div className="relative z-10 flex flex-col xl:flex-row items-center gap-16">
+                  <div className="flex-1 space-y-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white border border-gray-200 text-black text-[10px] leading-[15px] font-normal tracking-normal uppercase">
+                       <Users className="w-3.5 h-3.5" /> Affiliate Program
+                    </div>
+                    <h2 className="text-[32px] md:text-[40px] leading-[40px] md:leading-[48px] font-bold text-black tracking-tight">
+                      Invite Friends. <br/>
+                      <span className="text-gray-400">Receive 30 Credits.</span>
+                    </h2>
+                    <p className="text-[16px] leading-[24px] font-normal text-black opacity-60 max-w-lg">
+                      Help grow the community. For every friend who signs up using your link, we'll credit your account with 30 AI credits instantly.
+                    </p>
+                    
+                    <div className="space-y-6">
+                      {/* Invite Link Block */}
+                      <div className="bg-white rounded-2xl p-6 border border-gray-200 flex flex-col md:flex-row items-center gap-6 shadow-sm">
+                        <div className="flex-1 w-full min-w-0">
+                          <p className="text-[10px] leading-[15px] font-black text-black opacity-20 uppercase tracking-[0.25em] mb-2">YOUR INVITE LINK</p>
+                          <div className="bg-gray-50 border border-gray-100 rounded-lg px-4 h-12 flex items-center">
+                             <code className="text-black text-[14px] font-mono truncate w-full opacity-60">
+                                {typeof window !== 'undefined' ? `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode || '...'}` : 'INITIALIZING...'}
+                             </code>
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={() => {
+                            const link = `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode}`;
+                            navigator.clipboard.writeText(link);
+                            toast.success("LINK COPIED", { description: "Your custom invite link is ready to share." });
+                          }}
+                          className="w-full md:w-auto h-12 px-8 bg-black text-white hover:bg-gray-800 font-bold uppercase tracking-widest text-[10px] rounded-lg shadow-sm transition-all active:scale-[0.98]"
+                        >
+                          Copy Link
+                        </Button>
+                      </div>
+
+                      {/* Email Invites Block */}
+                      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                           <p className="text-[10px] leading-[15px] font-black text-black opacity-20 uppercase tracking-[0.25em]">QUICK INVITE VIA EMAIL</p>
+                           <button 
+                             onClick={addEmailField}
+                             className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 uppercase tracking-widest"
+                           >
+                             <Plus className="w-3 h-3" /> Add Another
+                           </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {emails.map((email, idx) => (
+                            <div key={idx} className="flex gap-2">
+                               <div className="relative flex-1">
+                                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                                  <Input 
+                                    value={email}
+                                    onChange={(e) => handleEmailChange(idx, e.target.value)}
+                                    placeholder="friend@email.com"
+                                    className="h-11 pl-10 rounded-xl border-gray-100 bg-gray-50 text-[14px]"
+                                  />
+                               </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex justify-start">
+                          <Button 
+                            onClick={sendInvites}
+                            disabled={loadingStates.sendingInvites}
+                            className="h-10 px-8 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 shadow-sm transition-all active:scale-95"
+                          >
+                            {loadingStates.sendingInvites ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            SEND INVITES
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* WhatsApp Share Button */}
+                      <div className="flex justify-start">
+                        <Button 
+                          onClick={shareViaWhatsApp}
+                          className="h-12 px-10 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-lg shadow-green-100 transition-all active:scale-95"
+                        >
+                          <MessageSquare className="w-4 h-4 fill-current" />
+                          SHARE VIA WHATSAPP
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 w-full xl:w-[320px]">
+                     {[
+                        { title: "COPY", text: "Get your unique invite link from this block.", icon: ArrowRight },
+                        { title: "SHARE", text: "Send it to your local surf squad on WhatsApp.", icon: Zap },
+                        { title: "REWARD", text: "Receive 30 AI credits automatically when they join.", icon: Sparkles }
+                     ].map((step, idx) => (
+                        <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm transition-all hover:translate-x-1">
+                           <div className="flex items-center gap-4 mb-2">
+                              <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center text-white font-bold text-[10px]">{idx + 1}</div>
+                              <p className="text-[12px] leading-[15px] font-black text-black uppercase tracking-widest">{step.title}</p>
+                           </div>
+                           <p className="text-[14px] leading-[20px] font-normal text-black opacity-40">{step.text}</p>
+                        </div>
+                     ))}
+                  </div>
+                </div>
+             </div>
+          </div>
+
+          <div className="mt-20 py-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8 opacity-40">
+             <div className="flex items-center gap-6">
+                <span className="text-[10px] font-black uppercase tracking-widest">Secured by PayPal</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">PayFast Protection</span>
+             </div>
+             <div className="flex items-center gap-6">
+                <Link href="/terms" className="text-[10px] font-black uppercase tracking-widest hover:text-black transition-colors">Terms</Link>
+                <Link href="/privacy" className="text-[10px] font-black uppercase tracking-widest hover:text-black transition-colors">Privacy</Link>
+             </div>
           </div>
         </div>
       </div>

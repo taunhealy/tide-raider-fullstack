@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { notifyAdminNewUser } from "../lib/adminNotifications";
+import { generateUniqueReferralCode, rewardReferrer } from "../lib/referrals";
 
 const router = Router();
 
@@ -58,9 +59,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
             : process.env.NODE_ENV === "production"
               ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-              : `http://localhost:4001/api/auth/google/callback`,
+              : `http://localhost:4005/api/auth/google/callback`,
+        passReqToCallback: true,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (req, accessToken, refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value;
           const name = profile.displayName;
@@ -80,6 +82,26 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           });
 
           if (!user) {
+            // Get referrer code from cookie or state
+            let referrerCode = req.cookies?.["referral-code"];
+            
+            // Backup: check state parameter if cookie is missing
+            if (!referrerCode) {
+              const state = req.query.state as string;
+              if (state && state.includes("ref=")) {
+                const match = state.match(/ref=([^&#?]+)/);
+                if (match) referrerCode = match[1];
+              }
+            }
+
+            let referrer = null;
+            if (referrerCode) {
+              referrer = await prisma.user.findUnique({ where: { referralCode: referrerCode } });
+              console.log(`[auth] 🔗 Found potential referrer: ${referrer?.id} from code: ${referrerCode}`);
+            }
+
+            const myReferralCode = await generateUniqueReferralCode(name || email);
+
             user = await prisma.user.create({
               data: {
                 email,
@@ -88,9 +110,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 hasActiveTrial: false,
                 subscriptionStatus: null,
                 subscriptionEndsAt: null,
+                referralCode: myReferralCode,
+                referredById: referrer?.id || null,
               },
             });
-            console.log(`[auth] ✅ Created new user: ${user.id}`);
+            console.log(`[auth] ✅ Created new user: ${user.id} with referral code ${myReferralCode}`);
+
+            // Reward referrer if exists
+            if (referrer) {
+              await rewardReferrer(referrer.id, 10);
+              // Clear the referral cookie
+              res.clearCookie("referral-code", { path: "/" });
+            }
 
             // Notify admin of new user signup (async, don't wait)
             notifyAdminNewUser({
@@ -214,7 +245,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.NODE_ENV === "production"
         ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-        : `http://localhost:4001/api/auth/google/callback`;
+        : `http://localhost:4005/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
   const clientID = process.env.GOOGLE_CLIENT_ID?.trim() || "NOT SET";
@@ -471,6 +502,16 @@ router.post("/login", async (req: Request, res: Response) => {
     });
 
     if (!user) {
+      // Get referrer code from request or cookie
+      const referrerCodeInput = req.body.referralCode || req.cookies?.["referral-code"];
+      let referrer = null;
+      
+      if (referrerCodeInput) {
+        referrer = await prisma.user.findUnique({ where: { referralCode: referrerCodeInput } });
+      }
+
+      const myReferralCode = await generateUniqueReferralCode(name || email);
+
       // Create new user
       user = await prisma.user.create({
         data: {
@@ -480,9 +521,17 @@ router.post("/login", async (req: Request, res: Response) => {
           hasActiveTrial: false,
           subscriptionStatus: null,
           subscriptionEndsAt: null,
+          referralCode: myReferralCode,
+          referredById: referrer?.id || null,
         },
       });
-      console.log(`[auth] ✅ Created new user: ${user.id}`);
+      console.log(`[auth] ✅ Created new user: ${user.id} with referral code ${myReferralCode}`);
+
+      // Reward referrer if exists
+      if (referrer) {
+        await rewardReferrer(referrer.id, 30);
+        res.clearCookie("referral-code", { path: "/" });
+      }
 
       // Notify admin of new user signup (async, don't wait)
       notifyAdminNewUser({
@@ -634,11 +683,25 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         subscriptionStatus: true,
         hasActiveTrial: true,
         trialEndDate: true,
+        referralCode: true,
+        credits: true,
+        whatsappNumber: true,
       },
     });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    // Proactively generate referral code if missing
+    if (!user.referralCode) {
+      const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { referralCode: newCode }
+      });
+      (user as any).referralCode = newCode;
+      console.log(`[auth/me] 🎁 Generated new referral code for user: ${newCode}`);
     }
 
     const isSubscribed = user.subscriptionStatus === "ACTIVE";
@@ -666,6 +729,9 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         isSubscribed,
         hasActiveTrial,
         trialEndDate: user.trialEndDate,
+        referralCode: user.referralCode,
+        credits: user.credits,
+        whatsappNumber: user.whatsappNumber,
       },
     });
   } catch (error) {
@@ -685,24 +751,29 @@ router.put("/me", authenticateToken, async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { name } = req.body;
+    const { name, whatsappNumber } = req.body;
 
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: "Name cannot be empty" });
+    const data: any = {};
+    if (name && name.trim()) data.name = name.trim();
+    if (whatsappNumber !== undefined) data.whatsappNumber = whatsappNumber;
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: "Nothing to update" });
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: authReq.user.id },
-      data: { name: name.trim() },
+      data,
       select: {
         id: true,
         email: true,
         name: true,
         image: true,
+        whatsappNumber: true,
       },
     });
 
-    res.json({ name: updatedUser.name });
+    res.json(updatedUser);
   } catch (error) {
     console.error("[auth] ❌ Update user error:", error);
     res.status(500).json({ error: "Failed to update user" });

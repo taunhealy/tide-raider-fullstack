@@ -8,7 +8,8 @@ export function getPlainTextMessage(
   alertMatch: AlertMatch,
   beachName: string,
   regionName: string,
-  forecastDate: Date
+  forecastDate: Date,
+  alertSources: string[] = []
 ): string {
   const date = new Date(forecastDate);
   const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
@@ -55,6 +56,18 @@ export function getPlainTextMessage(
     return value.toString();
   };
 
+  // Map source names to tactical aliases
+  const mapSourceToAlias = (sources: string[]): string => {
+    if (sources.length === 0) return "Global Intelligence";
+    return sources.map(s => {
+      const source = s.toUpperCase();
+      if (source === "WINDFINDER") return "Source A";
+      if (source === "MSW" || source === "MAGICSEAWEED") return "Source B";
+      if (source === "SURFLINE") return "Source C";
+      return s;
+    }).join(", ");
+  };
+
   // Build details from matchedProperties
   const details = alertMatch.matchedProperties
     .filter((p) => p.withinRange)
@@ -63,26 +76,37 @@ export function getPlainTextMessage(
       const currentValue = formatPropertyValue(p.property, p.forecastValue);
       const requiredValue = formatPropertyValue(p.property, p.logValue);
 
-      if (p.property === "starRating") {
-        return `${propertyName}: ${currentValue} (minimum required: ${requiredValue})`;
-      }
       return `${propertyName}: ${currentValue} (target: ${requiredValue})`;
     })
-    .join(", ");
+    .join("\n");
 
-  return `🌊 Alert Triggered!
+  return `*Tide Raider*
+🌊 *Alert Triggered!*
 
-📍 Location Details:
-• Beach: ${beachName}
-• Region: ${regionName}
-• Day: ${dayName}
-• Date: ${dateString}
+*Location Details*
+Beach:
+${beachName}
 
-✅ Conditions Met:
-Surf conditions at ${beachName} have met your alert criteria: ${details}
+Region:
+${regionName}
+
+Day:
+${dayName}
+
+Date:
+${dateString}
+
+Alert Sources:
+${mapSourceToAlias(alertSources)}
+
+*✅ Conditions Met*
+Surf conditions at ${beachName} have met your alert criteria:
+
+${details}
 
 ---
-Tide Raider - https://www.tideraider.com`;
+*Tide Raider Intelligence*
+🛰️ https://www.tideraider.com`;
 }
 
 interface Alert {
@@ -98,6 +122,9 @@ interface Alert {
   logEntry?: any;
   beach?: any;
   sources?: string[];
+  user?: {
+    email: string;
+  };
 }
 
 export async function sendAlertNotification(
@@ -230,8 +257,18 @@ export async function sendAlertNotification(
             regionName,
             forecastDate
           );
-          // Try Unipile first
-          if (process.env.UNIPILE_API_KEY) {
+          // Try Evolution API first (Kea Logic preferred)
+          if (process.env.EVOLUTION_BASE_URL && process.env.EVOLUTION_API_KEY) {
+            const { sendWhatsAppMessageEvolution } = await import(
+              "../lib/whatsapp"
+            );
+            sendSuccess = await sendWhatsAppMessageEvolution(
+              alert.contactInfo,
+              plainTextMsg
+            );
+          }
+          // Fallback to Unipile
+          else if (process.env.UNIPILE_API_KEY) {
             const { sendWhatsAppMessageUnipile } = await import(
               "../lib/whatsapp"
             );
@@ -275,9 +312,17 @@ export async function sendAlertNotification(
             forecastDate
           );
 
-          // Try Unipile first, then WaSenderAPI, then MessageBird
+          // Try Evolution API first, then Unipile, then WaSenderAPI, then MessageBird
           let whatsappSuccess = false;
-          if (process.env.UNIPILE_API_KEY) {
+          if (process.env.EVOLUTION_BASE_URL && process.env.EVOLUTION_API_KEY) {
+            const { sendWhatsAppMessageEvolution } = await import(
+              "../lib/whatsapp"
+            );
+            whatsappSuccess = await sendWhatsAppMessageEvolution(
+              alert.contactInfo,
+              plainTextMsgBoth
+            );
+          } else if (process.env.UNIPILE_API_KEY) {
             const { sendWhatsAppMessageUnipile } = await import(
               "../lib/whatsapp"
             );
@@ -306,16 +351,18 @@ export async function sendAlertNotification(
           console.log(
             `📧 Sending email notification (both method) for alert ${alert.id}:`,
             {
-              to: alert.contactInfo,
+              to: alert.user?.email || "Unknown Email",
               subject: alertMatch.alertName,
               alertName: alert.name,
             }
           );
-          const emailSuccess = await sendEmailBoth(
-            alert.contactInfo,
-            alertMatch.alertName,
-            message
-          );
+          const emailSuccess = alert.user?.email 
+            ? await sendEmailBoth(
+                alert.user.email,
+                alertMatch.alertName,
+                message
+              )
+            : false;
           console.log(
             `📧 Email send result (both method) for alert ${alert.id}: ${emailSuccess ? "SUCCESS" : "FAILED"}`
           );
@@ -368,7 +415,6 @@ function createNotificationMessage(
   forecastDate: Date,
   alertSources: string[] = []
 ) {
-  // Format the date
   const date = new Date(forecastDate);
   const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
   const dateString = date.toLocaleDateString("en-US", {
@@ -377,7 +423,6 @@ function createNotificationMessage(
     year: "numeric",
   });
 
-  // Format property names for display
   const formatPropertyName = (property: string): string => {
     const propertyMap: Record<string, string> = {
       starRating: "Star Rating",
@@ -392,256 +437,132 @@ function createNotificationMessage(
     return propertyMap[property] || property;
   };
 
-  // Format property values for display
-  const formatPropertyValue = (
-    property: string,
-    value: string | number
-  ): string => {
-    if (property === "starRating") {
-      const rating =
-        typeof value === "number" ? value : parseInt(value.toString());
-      return `${rating} ${rating === 1 ? "star" : "stars"}`;
-    }
-    if (property === "windSpeed" || property === "swellHeight") {
-      return `${value}`;
-    }
-    if (property === "windDirection" || property === "swellDirection") {
-      return `${value}°`;
-    }
-    if (property === "swellPeriod") {
-      return `${value}s`;
-    }
+  const formatPropertyValue = (property: string, value: string | number): string => {
+    if (property === "starRating") return `${value} stars`;
+    if (property === "windSpeed" || property === "swellHeight") return `${value}`;
+    if (property === "windDirection" || property === "swellDirection") return `${value}°`;
+    if (property === "swellPeriod") return `${value}s`;
     return value.toString();
   };
 
-  // Build details from matchedProperties
+  const mapSourceToAlias = (sources: string[]): string => {
+    if (sources.length === 0) return "Global Intelligence";
+    return sources.map(s => {
+      const source = s.toUpperCase();
+      if (source === "WINDFINDER") return "Source A";
+      if (source === "MSW" || source === "MAGICSEAWEED") return "Source B";
+      if (source === "SURFLINE") return "Source C";
+      return s;
+    }).join(", ");
+  };
+
   const details = alertMatch.matchedProperties
     .filter((p) => p.withinRange)
     .map((p) => {
       const propertyName = formatPropertyName(p.property);
       const currentValue = formatPropertyValue(p.property, p.forecastValue);
       const requiredValue = formatPropertyValue(p.property, p.logValue);
-
-      if (p.property === "starRating") {
-        return `${propertyName}: ${currentValue} (minimum required: ${requiredValue})`;
-      }
-      return `${propertyName}: ${currentValue} (target: ${requiredValue})`;
+      return `• ${propertyName}: ${currentValue} (target: ${requiredValue})`;
     })
-    .join(", ");
+    .join("<br>");
 
-  // Create HTML email template matching Tide Raider design system
   const htmlMessage = `
     <!DOCTYPE html>
     <html>
     <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-          line-height: 1.5;
-          color: #1a1a1a;
-          background-color: #ffffff;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        .email-container {
-          max-width: 600px;
-          margin: 0 auto;
-          background-color: #ffffff;
-        }
-        .header {
-          background-color: #ffffff;
-          padding: 32px 24px 24px;
-          text-align: left;
-          border-bottom: 1px solid #e5e7eb;
-        }
-        .header-logo {
-          font-size: 20px;
-          font-weight: 600;
-          color: #000000;
-          letter-spacing: -0.02em;
-          margin-bottom: 8px;
-        }
-        .header-title {
-          font-size: 24px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin-top: 16px;
-          line-height: 1.2;
-        }
-        .content {
-          background-color: #f7f7f7;
-          padding: 24px;
-        }
-        .info-section {
-          background-color: #ffffff;
-          padding: 20px;
-          margin-bottom: 16px;
-          border-radius: 8px;
-          border: 1px solid #e5e7eb;
-        }
-        .info-section h2 {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin: 0 0 16px 0;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          font-size: 12px;
-        }
-        .info-row {
-          display: flex;
-          margin: 12px 0;
-          padding-bottom: 12px;
-          border-bottom: 1px solid #f7f7f7;
-        }
-        .info-row:last-child {
-          border-bottom: none;
-          padding-bottom: 0;
-          margin-bottom: 0;
-        }
-        .info-label {
-          font-weight: 400;
-          min-width: 100px;
-          color: #4b5563;
-          font-size: 14px;
-        }
-        .info-value {
-          color: #1a1a1a;
-          font-weight: 500;
-          font-size: 14px;
-        }
-        .conditions {
-          background-color: #ffffff;
-          padding: 20px;
-          border-radius: 8px;
-          border: 1px solid #e5e7eb;
-          border-left: 4px solid #1cd9ff;
-          margin-top: 16px;
-        }
-        .conditions h3 {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1a1a1a;
-          margin: 0 0 12px 0;
-        }
-        .conditions p {
-          font-size: 14px;
-          color: #1a1a1a;
-          line-height: 1.6;
-          margin: 8px 0;
-        }
-        .conditions strong {
-          color: #1a1a1a;
-          font-weight: 600;
-        }
-        .footer {
-          background-color: #ffffff;
-          text-align: center;
-          padding: 24px;
-          border-top: 1px solid #e5e7eb;
-        }
-        .footer p {
-          font-size: 12px;
-          color: #4b5563;
-          margin: 4px 0;
-          line-height: 1.5;
-        }
-        .footer a {
-          color: #1cd9ff;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        .footer a:hover {
-          text-decoration: underline;
-        }
-        .divider {
-          height: 1px;
-          background-color: #e5e7eb;
-          margin: 24px 0;
-        }
-        @media only screen and (max-width: 600px) {
-          .email-container {
-            width: 100% !important;
-          }
-          .content {
-            padding: 16px !important;
-          }
-          .info-section, .conditions {
-            padding: 16px !important;
-          }
-        }
+        body { font-family: 'Inter', sans-serif; color: #1e293b; background: #f8fafc; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .header { padding: 32px; border-bottom: 1px solid #f1f5f9; }
+        .brand { font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; }
+        .title { font-size: 24px; font-weight: 800; color: #0f172a; }
+        .content { padding: 32px; background: #fcfdfe; }
+        .section-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin: 24px 0 8px; }
+        .data-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .data-value { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
+        .conditions { background: #f8fafc; padding: 20px; border-radius: 16px; border-left: 4px solid #0ea5e9; margin-top: 24px; }
+        .footer { padding: 24px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
       </style>
     </head>
     <body>
-      <div class="email-container">
+      <div class="container">
         <div class="header">
-          <div class="header-logo">Tide Raider</div>
-          <div class="header-title">🌊 Alert Triggered!</div>
+          <div class="brand">Tide Raider</div>
+          <div class="title">🌊 Alert Triggered!</div>
         </div>
         <div class="content">
-          <div class="info-section">
-            <h2>Location Details</h2>
-            <div class="info-row">
-              <span class="info-label">Beach:</span>
-              <span class="info-value">${beachName}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Region:</span>
-              <span class="info-value">${regionName}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Day:</span>
-              <span class="info-value">${dayName}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Date:</span>
-              <span class="info-value">${dateString}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Alert Sources:</span>
-              <span class="info-value">${alertSources.length > 0 ? alertSources.join(", ") : "All Sources"}</span>
-            </div>
-          </div>
+          <div class="section-label">Location Details</div>
+          <div class="data-label">Beach:</div><div class="data-value">${beachName}</div>
+          <div class="data-label">Region:</div><div class="data-value">${regionName}</div>
+          <div class="data-label">Day:</div><div class="data-value">${dayName}</div>
+          <div class="data-label">Date:</div><div class="data-value">${dateString}</div>
+          <div class="data-label">Alert Sources:</div><div class="data-value">${mapSourceToAlias(alertSources)}</div>
           
           <div class="conditions">
-            <h3>✅ Conditions Met</h3>
-            <p>Surf conditions at <strong>${beachName}</strong> have met your alert criteria:</p>
-            <p><strong>${details}</strong></p>
+            <div class="section-label" style="margin-top: 0; color: #0ea5e9;">✅ Conditions Met</div>
+            <p style="font-size: 14px; margin-bottom: 12px;">Surf conditions at <strong>${beachName}</strong> have met your criteria:</p>
+            <p style="font-size: 14px; color: #334155; line-height: 1.6;">${details}</p>
           </div>
         </div>
         <div class="footer">
-          <p>This is an automated alert from Tide Raider</p>
-          <p>Visit <a href="https://www.tideraider.com">tideraider.com</a> to manage your alerts</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-
+          Tide Raider Intelligence • 🛰️ https://www.tideraider.com
   // Plain text version for non-HTML clients
   const plainTextMessage = `
+Tide Raider
 🌊 Alert Triggered!
 
-Location Details:
-- Beach: ${beachName}
-- Region: ${regionName}
-- Day: ${dayName}
-- Date: ${dateString}
-- Alert Sources: ${alertSources.length > 0 ? alertSources.join(", ") : "All Sources"}
+Location Details
+Beach:
+${beachName}
 
-✅ Conditions Met:
-Surf conditions at ${beachName} have met your alert criteria: ${details}
+Region:
+${regionName}
+
+Day:
+${dayName}
+
+Date:
+${dateString}
+
+Alert Sources:
+${mapSourceToAlias(alertSources)}
+
+✅ Conditions Met
+Surf conditions at ${beachName} have met your alert criteria:
+
+${details.replace(/<br>/g, "\n").replace(/• /g, "")}
 
 ---
-This is an automated alert from Tide Raider
-Visit https://www.tideraider.com to manage your alerts
+Tide Raider Intelligence
+🛰️ https://www.tideraider.com
+  `.trim();
+
+  return htmlMessage;
+}
+Location Details
+Beach:
+${beachName}
+
+Region:
+${regionName}
+
+Day:
+${dayName}
+
+Date:
+${dateString}
+
+Alert Sources:
+${mapSourceToAlias(alertSources)}
+
+✅ Conditions Met
+Surf conditions at ${beachName} have met your alert criteria:
+
+${details}
+
+---
+Tide Raider Intelligence
+🛰️ https://www.tideraider.com
   `.trim();
 
   // Return HTML for email, plain text for other methods

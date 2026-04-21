@@ -10,6 +10,7 @@ import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { Lock } from "lucide-react";
 import Link from "next/link";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
+import { Button } from "@/app/components/ui/Button";
 
 interface RegionalHighScoresProps {
   beaches: Beach[];
@@ -325,48 +326,75 @@ function RegionalHighScoresContent({
                 return (
                   <div
                     key={beach.id}
-                    className={`flex items-center gap-3 p-2 transition-colors ${
+                    className={cn(
+                      "flex items-center gap-3 p-3 transition-all relative overflow-hidden group",
                       isLocked
-                        ? ""
-                        : "hover:bg-[var(--color-bg-hover)] cursor-pointer"
-                    } ${
-                      index < 9
+                        ? "bg-amber-50/20 grayscale-[0.5]"
+                        : "hover:bg-[var(--color-bg-hover)] cursor-pointer",
+                      index < apiBeaches.length - 1
                         ? "border-b border-[var(--color-border-light)]"
                         : ""
-                    }`}
+                    )}
                     onClick={isLocked ? undefined : () => onBeachClick?.(beach)}
                   >
+                    <div className="flex-shrink-0 w-6 text-[10px] font-black text-gray-400 font-primary">
+                      #{index + 1}
+                    </div>
+                    
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-[var(--color-text-primary)] truncate font-primary flex items-center gap-2">
+                      <h4 className="font-bold text-[var(--color-text-primary)] truncate font-primary flex items-center gap-2">
                         {isLocked ? (
-                          <>
-                            <Lock className="w-3 h-3 text-amber-700" />
-                            <Link
-                              href="/pricing"
-                              className="text-amber-700 hover:text-amber-600 transition-colors font-primary text-[10px] font-black uppercase tracking-wider"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Locked Content — Click to Unlock
-                            </Link>
-                          </>
+                          <div className="flex items-center gap-2">
+                            <span className="blur-[4px] select-none text-gray-400 text-xs">TOP SECRET BREAK</span>
+                            <div className="bg-amber-100 p-1 rounded">
+                              <Lock className="w-2.5 h-2.5 text-amber-700" />
+                            </div>
+                          </div>
                         ) : (
                           beach.name
                         )}
                       </h4>
                       <div className="mt-1">
                         {isLocked ? (
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                            Subscription Required
-                          </p>
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <div key={i} className="w-2 h-2 rounded-full bg-amber-100" />
+                            ))}
+                          </div>
                         ) : (
                           <BlueStarRating score={beach.totalScore} size={12} />
                         )}
                       </div>
                     </div>
+
+                    {isLocked && (
+                      <Link
+                        href="/pricing#affiliate"
+                        className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="bg-amber-600 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded shadow-lg">
+                          UNLOCK NOW
+                        </span>
+                      </Link>
+                    )}
                   </div>
                 );
               })}
           </div>
+          
+          {!isPremium && apiBeaches.length >= 5 && (
+            <div className="mt-4 p-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl text-center space-y-3 shadow-lg shadow-blue-100">
+              <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest">Premium Content</p>
+              <h5 className="text-white text-xs font-bold leading-tight">Unlock the Top 5 <br/>Regional Breaks</h5>
+              <Button 
+                asChild
+                className="w-full h-8 bg-white text-blue-900 hover:bg-blue-50 text-[10px] font-black rounded-lg shadow-sm"
+              >
+                <Link href="/pricing#affiliate">UPGRADE TO UNLOCK</Link>
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>

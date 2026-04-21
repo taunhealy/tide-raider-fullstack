@@ -143,6 +143,18 @@ model User {
   
   notificationPreferences UserNotificationPreference[]
 
+  // Referral System
+  referralCode         String?             @unique
+  referredById         String?
+  referredBy           User?               @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals            User[]              @relation("UserReferrals")
+
+  // Credits System
+  credits              Int                 @default(5)
+
+  // WhatsApp Number for Alerts
+  whatsappNumber       String?
+
   // Squads
   squads Squad[]
   promoCodeUsages PromoCodeUsage[]

@@ -240,6 +240,8 @@ function AlertFormBody({
   onLogEntrySelect?: (logEntry: LogEntry | null) => void;
 }) {
   const { alert, updateAlert, mode, setMode, beachDetails } = useAlert();
+  const { data: authData } = useBackendAuth();
+  
   // Add state for search
   const [logEntrySearchTerm, setLogEntrySearchTerm] = useState("");
   const debouncedLogEntrySearch = useDebounce(logEntrySearchTerm, 300);
@@ -250,6 +252,42 @@ function AlertFormBody({
 
   // Track which logEntry we've already processed to prevent infinite loops
   const processedLogEntryId = useRef<string | null>(null);
+
+  // Auto-populate contact info from user profile if empty
+  useEffect(() => {
+    if (!authData?.user || !updateAlert) return;
+    
+    const updates: any = {};
+    const currentMethod = alert.notificationMethod;
+    const currentContact = alert.contactInfo;
+
+    // Only auto-populate if contactInfo is currently empty
+    if (!currentContact) {
+      if (currentMethod === 'email' && authData.user.email) {
+        updates.contactInfo = authData.user.email;
+      } else if ((currentMethod === 'whatsapp' || currentMethod === 'both') && authData.user.whatsappNumber) {
+        updates.contactInfo = authData.user.whatsappNumber;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      console.log("[ForecastAlertForm] Auto-populating contact info:", updates);
+      updateAlert(updates);
+    }
+  }, [authData?.user?.id, alert.notificationMethod, alert.contactInfo, updateAlert]);
+
+  // Helper to sanitize WhatsApp number
+  const sanitizeWhatsApp = (value: string) => {
+    // Remove all spaces and non-digit characters except +
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // Ensure it starts with + if it has digits
+    if (cleaned.length > 0 && !cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned;
+    }
+    
+    return cleaned;
+  };
 
   // Debug logging for log entries
   useEffect(() => {
@@ -407,20 +445,146 @@ function AlertFormBody({
         />
       </div>
 
-      {/* Contact Information */}
-      <div className="space-y-4">
-        <Label>Email Address *</Label>
-        <Input
-          value={alert.contactInfo || ""}
-          onChange={(e) => updateAlert({ contactInfo: e.target.value })}
-          className="font-primary"
-          placeholder="Email address (e.g., user@example.com)"
-          type="email"
-          required
-        />
-        <p className="text-sm text-gray-500">
-          Enter your email address for alert notifications
-        </p>
+      {/* Notification Method & Contact Information */}
+      <div className="space-y-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+      {/* Notification Channels */}
+      <div className="space-y-6 p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-black uppercase tracking-widest text-slate-400">Channels</Label>
+            <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">
+              Select at least one
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {/* Email Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const current = alert.notificationMethod;
+                const isEmailActive = current === 'email' || current === 'both';
+                const isWhatsAppActive = current === 'whatsapp' || current === 'both';
+                
+                if (isEmailActive && !isWhatsAppActive) {
+                  toast.info("Keeping Email active as your primary channel", {
+                    description: "Enable WhatsApp before disabling Email if you want to switch."
+                  });
+                  return;
+                }
+                
+                const next = isEmailActive ? 'whatsapp' : (isWhatsAppActive ? 'both' : 'email');
+                updateAlert({ notificationMethod: next as any });
+              }}
+              className={cn(
+                "group relative flex flex-col items-center justify-center gap-2 p-5 rounded-3xl border-2 transition-all duration-300 font-black tracking-tight uppercase overflow-hidden",
+                (alert.notificationMethod === 'email' || alert.notificationMethod === 'both')
+                  ? "border-slate-900 bg-slate-900 text-white shadow-xl shadow-slate-200 scale-[1.02]"
+                  : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-300"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs">Email</span>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all duration-500",
+                  (alert.notificationMethod === 'email' || alert.notificationMethod === 'both') 
+                    ? "bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)] scale-125" 
+                    : "bg-slate-300"
+                )} />
+              </div>
+              <span className={cn(
+                "text-[9px] font-bold opacity-60",
+                (alert.notificationMethod === 'email' || alert.notificationMethod === 'both') ? "text-slate-300" : "text-slate-400"
+              )}>
+                {(alert.notificationMethod === 'email' || alert.notificationMethod === 'both') ? "Active" : "Inactive"}
+              </span>
+            </button>
+
+            {/* WhatsApp Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const current = alert.notificationMethod;
+                const isEmailActive = current === 'email' || current === 'both';
+                const isWhatsAppActive = current === 'whatsapp' || current === 'both';
+                
+                if (isWhatsAppActive && !isEmailActive) {
+                  toast.info("Keeping WhatsApp active", {
+                    description: "Enable Email before disabling WhatsApp if you want to switch."
+                  });
+                  return;
+                }
+                
+                const next = isWhatsAppActive ? 'email' : (isEmailActive ? 'both' : 'whatsapp');
+                updateAlert({ notificationMethod: next as any });
+              }}
+              className={cn(
+                "group relative flex flex-col items-center justify-center gap-2 p-5 rounded-3xl border-2 transition-all duration-300 font-black tracking-tight uppercase overflow-hidden",
+                (alert.notificationMethod === 'whatsapp' || alert.notificationMethod === 'both')
+                  ? "border-green-600 bg-green-600 text-white shadow-xl shadow-green-100 scale-[1.02]"
+                  : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-300"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs">WhatsApp</span>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all duration-500",
+                  (alert.notificationMethod === 'whatsapp' || alert.notificationMethod === 'both') 
+                    ? "bg-green-300 shadow-[0_0_8px_rgba(134,239,172,0.8)] scale-125" 
+                    : "bg-slate-300"
+                )} />
+              </div>
+              <span className={cn(
+                "text-[9px] font-bold opacity-60",
+                (alert.notificationMethod === 'whatsapp' || alert.notificationMethod === 'both') ? "text-green-100" : "text-slate-400"
+              )}>
+                {(alert.notificationMethod === 'whatsapp' || alert.notificationMethod === 'both') ? "Active" : "Inactive"}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+          {(alert.notificationMethod === "email" || alert.notificationMethod === "both") && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="font-bold text-slate-700">Account Email</Label>
+                <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                  <div className="w-1 h-1 rounded-full bg-slate-400" />
+                  <span className="text-[9px] text-slate-500 uppercase font-black">Verified & Locked</span>
+                </div>
+              </div>
+              <Input
+                value={authData?.user?.email || "Fetching email..."}
+                readOnly
+                disabled
+                className="bg-slate-50/80 border-slate-100 cursor-not-allowed text-slate-600 font-bold tracking-tight"
+                placeholder="No email found on account"
+              />
+              <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                Alerts are dispatched to your verified primary address. To change this, update your profile settings.
+              </p>
+            </div>
+          )}
+
+          {(alert.notificationMethod === "whatsapp" || alert.notificationMethod === "both") && (
+            <div className="space-y-2">
+              <Label className="font-bold text-slate-700">WhatsApp Number *</Label>
+              <Input
+                value={alert.contactInfo || ""}
+                onChange={(e) => updateAlert({ contactInfo: sanitizeWhatsApp(e.target.value) })}
+                className="font-primary bg-white border-slate-200 focus:border-green-500 focus:ring-green-500/10 placeholder:text-slate-300"
+                placeholder="+27 (0) ... "
+                required
+              />
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <p className="text-[10px] text-slate-400 italic font-medium">Use international format (e.g. +2782...)</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       </div>
 
       {/* Forecast Sources */}

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
+import { generateUniqueReferralCode, rewardReferrer } from "../lib/referrals";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
@@ -110,12 +111,27 @@ export async function authenticateToken(
 
       if (decoded.email) {
         try {
+          // Get referrer from cookie
+          const referrerCode = (req as any).cookies?.["referral-code"];
+          let referrerId = null;
+          if (referrerCode) {
+            const referrer = await prisma.user.findUnique({ where: { referralCode: referrerCode } });
+            if (referrer) {
+              referrerId = referrer.id;
+              await rewardReferrer(referrer.id, 10);
+            }
+          }
+
+          const myReferralCode = await generateUniqueReferralCode(decoded.name || decoded.email);
+
           // Try to create user with email and ID from token
           user = await prisma.user.create({
             data: {
               id: userId,
               email: decoded.email,
               name: decoded.name || decoded.email.split("@")[0], // Use email prefix if no name
+              referralCode: myReferralCode,
+              referredById: referrerId,
             },
             select: {
               id: true,

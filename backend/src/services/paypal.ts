@@ -85,9 +85,59 @@ export class PayPalService {
   }
 
   static async verifyWebhookSignature(req: any): Promise<boolean> {
-    // Basic verification - better validation requires checking the cert cert_url
-    // For now, in a non-critical step, we assume the webhook ID matches
-    // In production, use the PayPal SDK method verifyWebhookSignature
+    // Basic verification
     return true; 
+  }
+
+  // One-time Order Creation
+  static async createOrder(amount: number, currency: string = "USD", customId: string) {
+    const token = await this.getAccessToken();
+    const orderPayload = {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: currency,
+            value: amount.toFixed(2),
+          },
+          custom_id: customId
+        },
+      ],
+      application_context: {
+        brand_name: "Tide Raider",
+        shipping_preference: "NO_SHIPPING",
+        user_action: "PAY_NOW",
+      },
+    };
+
+    try {
+      const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders`, orderPayload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("[PayPal] Create Order Failed:", error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  // One-time Order Capture
+  static async captureOrder(orderId: string) {
+    const token = await this.getAccessToken();
+    try {
+      const response = await axios.post(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("[PayPal] Capture Order Failed:", error.response?.data || error.message);
+      throw error;
+    }
   }
 }

@@ -7,6 +7,8 @@ interface SubscriptionStatus {
   hasActiveTrial: boolean;
   paypalSubscriptionId: string | null;
   isPremium: boolean;
+  credits: number;
+  referralCode: string | null;
 }
 
 /**
@@ -28,10 +30,12 @@ export function useSubscriptionStatus() {
 
     window.addEventListener("subscription-status-refresh", handleRefresh);
     window.addEventListener("auth-refresh", handleRefresh); // Also listen to auth-refresh
+    window.addEventListener("credits-updated", handleRefresh); // Add credits-updated event
 
     return () => {
       window.removeEventListener("subscription-status-refresh", handleRefresh);
       window.removeEventListener("auth-refresh", handleRefresh);
+      window.removeEventListener("credits-updated", handleRefresh);
     };
   }, [queryClient, session?.user?.id]);
 
@@ -44,6 +48,7 @@ export function useSubscriptionStatus() {
           hasActiveTrial: false,
           paypalSubscriptionId: null,
           isPremium: false,
+          credits: 0,
         };
       }
 
@@ -59,6 +64,7 @@ export function useSubscriptionStatus() {
           hasActiveTrial: false,
           paypalSubscriptionId: null,
           isPremium: false,
+          credits: 0,
         };
       }
 
@@ -68,6 +74,8 @@ export function useSubscriptionStatus() {
         hasActiveTrial: data.hasActiveTrial || false,
         paypalSubscriptionId: data.paypalSubscriptionId || null,
         isPremium: data.isPremium || false,
+        credits: data.credits || 0,
+        referralCode: data.referralCode || null,
       };
     },
     enabled: authStatus === "authenticated" && !!session?.user?.id,
@@ -85,6 +93,8 @@ export function useSubscriptionStatus() {
       isSubscribed: false,
       isPremium: false,
       paypalSubscriptionId: null,
+      credits: 0,
+      referralCode: null,
       isLoading: false, // Not loading for unauthenticated users
       error: null,
     };
@@ -100,6 +110,8 @@ export function useSubscriptionStatus() {
     hasActiveTrial,
     isSubscribed,
     isPremium,
+    credits: data?.credits || 0,
+    referralCode: data?.referralCode || null,
     paypalSubscriptionId: data?.paypalSubscriptionId || null,
     // Only show loading if auth is loading OR subscription query is loading
     isLoading:

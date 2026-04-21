@@ -1,5 +1,5 @@
 // next/app/contexts/AlertContext.tsx
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from "react";
 import {
   Alert,
   AlertProperty as PrismaAlertProperty,
@@ -246,10 +246,10 @@ export function AlertProvider({
         beachDetails,
 
         // Actions
-        updateAlert: (data: Partial<Prisma.AlertCreateInput>) =>
-          dispatch({ type: "UPDATE_ALERT", payload: data }),
-        setMode: (mode: "logEntry" | "beachVariables" | "starRating") =>
-          dispatch({ type: "SET_MODE", payload: mode }),
+        updateAlert: useCallback((data: Partial<Prisma.AlertCreateInput>) =>
+          dispatch({ type: "UPDATE_ALERT", payload: data }), []),
+        setMode: useCallback((mode: "logEntry" | "beachVariables" | "starRating") =>
+          dispatch({ type: "SET_MODE", payload: mode }), []),
 
         // Mutations
         createAlert,
@@ -269,7 +269,7 @@ export function AlertProvider({
               optimalValue: Number(prop.optimalValue),
             }))
           : [],
-        removeProperty: (index: number) => {
+        removeProperty: useCallback((index: number) => {
           const newProperties = Array.isArray(state.alert.properties?.create)
             ? [...state.alert.properties.create]
             : [];
@@ -278,8 +278,8 @@ export function AlertProvider({
             type: "UPDATE_ALERT",
             payload: { properties: { create: newProperties } },
           });
-        },
-        updateProperty: (params: {
+        }, [state.alert.properties]),
+        updateProperty: useCallback((params: {
           index: number;
           key: "property" | "range" | "optimalValue";
           value: ForecastProperty | number;
@@ -295,7 +295,7 @@ export function AlertProvider({
             type: "UPDATE_ALERT",
             payload: { properties: { create: newProperties } },
           });
-        },
+        }, [state.alert.properties]),
       }}
     >
       {children}

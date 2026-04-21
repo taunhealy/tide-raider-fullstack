@@ -41,6 +41,7 @@ interface BeachHeaderControlsProps {
   isSubscribed: boolean;
   forecast?: Forecast | null;
   hiddenGemCount?: number;
+  isLoading?: boolean;
 }
 
 const ProximityFilterRow = ({ 
@@ -126,6 +127,7 @@ export default function BeachHeaderControls({
   isSubscribed,
   forecast,
   hiddenGemCount = 0,
+  isLoading = false,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -223,6 +225,7 @@ export default function BeachHeaderControls({
                     beaches={beaches}
                     availableDates={availableDates}
                     className="w-full sm:w-auto"
+                    isLoading={isLoading}
                   />
                 </div>
                
@@ -233,6 +236,7 @@ export default function BeachHeaderControls({
                       selectedSlot={currentTimeSlotValue}
                       onChange={(slot) => updateFilter("timeSlot", slot)}
                       activeSlot={activeSlot}
+                      isLoading={isLoading}
                     />
                   </div>
 

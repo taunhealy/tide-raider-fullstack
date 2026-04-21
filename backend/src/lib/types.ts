@@ -11,6 +11,7 @@ export interface User {
   isSubscribed?: boolean;
   hasActiveTrial?: boolean;
   trialEndDate?: Date | null;
+  whatsappNumber?: string | null;
 }
 
 export interface Beach {

@@ -23,9 +23,20 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
       // Pass full frontend URL in state so backend knows where to redirect
       const frontendUrl =
         typeof window !== "undefined" ? window.location.origin : "";
-      const fullCallbackUrl = callbackUrl.startsWith("http")
+      
+      let fullCallbackUrl = callbackUrl.startsWith("http")
         ? callbackUrl
         : `${frontendUrl}${callbackUrl}`;
+
+      // Append referral code to state if exists
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get("ref") || document.cookie.split("; ").find(row => row.startsWith("referral-code="))?.split("=")[1];
+      
+      if (refCode) {
+        fullCallbackUrl += (fullCallbackUrl.includes("?") ? "&" : "?") + `ref=${refCode}`;
+        console.log(`[LoginButton] 🔗 Injecting referral code into state: ${refCode}`);
+      }
+
       const state = encodeURIComponent(fullCallbackUrl);
 
       const BACKEND_URL = getBackendUrl();

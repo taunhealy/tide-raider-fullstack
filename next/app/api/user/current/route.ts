@@ -122,6 +122,8 @@ export async function GET() {
       trialEndDate: userData.user?.trialEndDate || null,
       subscriptionStatus,
       paypalSubscriptionId,
+      referralCode: userData.user?.referralCode || null,
+      credits: userData.user?.credits || 0,
     });
   } catch (error) {
     console.error("[user/current] Error:", error);

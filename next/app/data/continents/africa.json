@@ -2662,28 +2662,30 @@
     "location": "Kommetjie",
     "distanceFromCT": 30,
     "optimalWindDirections": [
-      "N",
-      "NE"
+      "SE",
+      "NW"
     ],
     "optimalSwellDirections": {
-      "min": 220,
-      "max": 247.5,
-      "cardinal": "SW"
+      "min": 195,
+      "max": 225,
+      "cardinal": "SSW-SW"
     },
     "bestSeasons": [
-      "winter"
+      "winter",
+      "autumn",
+      "spring"
     ],
     "optimalTide": "ALL",
-    "description": "Consistent beach break offering multiple peaks across 1km stretch. Main peak provides powerful A-frames with both left and right options up to 100m long. Wave shape varies significantly with tide - steeper on low, more forgiving on high. Best performance on 4-6ft SW swell with SE winds under 15 knots. Morning sessions typically offer cleanest conditions before thermal winds increase. Multiple rip channels between sandbars aid paddle-outs but create strong currents - maintain position using land markers. Winter brings bigger swells and better winds, while summer offers reliable smaller waves. Popular local spot - respect peak hierarchy especially on good days. Limited parking near beach access. Watch for exposed rocks at low tide on southern end. Strong currents can develop with outgoing tide.",
+    "description": "Consistent beach break offering multiple peaks across 1km stretch. Best performance on 4-6ft SW swell with SE winds under 15 knots.",
     "difficulty": "INTERMEDIATE",
     "waveType": "BEACH_BREAK",
     "swellSize": {
-      "min": 1.4,
-      "max": 4.5
+      "min": 1.2,
+      "max": 5
     },
     "idealSwellPeriod": {
       "min": 12,
-      "max": 24
+      "max": 18
     },
     "waterTemp": {
       "summer": 18,
@@ -3072,27 +3074,30 @@
     "location": "Misty Cliffs",
     "distanceFromCT": 30,
     "optimalWindDirections": [
-      "NE",
-      "E"
+      "SE",
+      "NW"
     ],
     "optimalSwellDirections": {
-      "min": 220,
-      "max": 230
+      "min": 195,
+      "max": 225,
+      "cardinal": "SSW-SW"
     },
     "bestSeasons": [
-      "winter"
+      "winter",
+      "autumn",
+      "spring"
     ],
     "optimalTide": "LOW_TO_MID",
-    "description": "Best at low to mid tide. Strong currents. Theft area, be careful.",
+    "description": "Best at low to mid tide. Strong currents. Works best on SSW groundswells with SE or NW winds.",
     "difficulty": "ADVANCED",
     "waveType": "BEACH_BREAK",
     "swellSize": {
-      "min": 1.1,
-      "max": 3
+      "min": 1.2,
+      "max": 5
     },
     "idealSwellPeriod": {
       "min": 12,
-      "max": 24
+      "max": 18
     },
     "waterTemp": {
       "summer": 16,

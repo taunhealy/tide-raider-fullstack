@@ -15,14 +15,14 @@ interface WhatsAppServiceResponse {
 }
 
 export class WhatsAppService {
-  private twilioAccountSid: string | undefined;
-  private twilioAuthToken: string | undefined;
-  private twilioWhatsAppNumber: string | undefined;
+  private baseUrl: string | undefined;
+  private apiKey: string | undefined;
+  private instanceName: string | undefined;
 
   constructor() {
-    this.twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-    this.twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    this.twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER; // Format: whatsapp:+14155238886
+    this.baseUrl = process.env.EVOLUTION_BASE_URL;
+    this.apiKey = process.env.EVOLUTION_API_KEY;
+    this.instanceName = process.env.EVOLUTION_INSTANCE_NAME || "KeaLogic";
   }
 
   /**
@@ -52,20 +52,16 @@ export class WhatsAppService {
   }
 
   /**
-   * Send WhatsApp message via Twilio
+   * Send WhatsApp message via Evolution API
    */
   async sendMessage({
     to,
     message,
   }: SendWhatsAppMessageParams): Promise<WhatsAppServiceResponse> {
     // Validate required environment variables
-    if (
-      !this.twilioAccountSid ||
-      !this.twilioAuthToken ||
-      !this.twilioWhatsAppNumber
-    ) {
+    if (!this.baseUrl || !this.apiKey) {
       console.error(
-        "[WhatsAppService] Missing Twilio configuration. Please set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_NUMBER"
+        "[WhatsAppService] Missing Evolution API configuration. Please set EVOLUTION_BASE_URL and EVOLUTION_API_KEY"
       );
       return {
         success: false,
@@ -73,38 +69,37 @@ export class WhatsAppService {
       };
     }
 
-    // Format and validate phone number
-    const formattedPhone = this.formatPhoneNumber(to);
-    if (!this.validatePhoneNumber(formattedPhone)) {
-      return {
-        success: false,
-        error: `Invalid phone number format: ${to}. Please use E.164 format (e.g., +1234567890)`,
-      };
-    }
-
-    // Ensure phone number has whatsapp: prefix for Twilio
-    const whatsappTo = formattedPhone.startsWith("whatsapp:")
-      ? formattedPhone
-      : `whatsapp:${formattedPhone}`;
+    // Format phone number (remove non-digits)
+    const cleanNumber = to.replace(/\D/g, "");
 
     try {
-      // Dynamic import to avoid loading Twilio if not needed
-      const twilio = require("twilio");
-      const client = twilio(this.twilioAccountSid, this.twilioAuthToken);
-
-      const twilioMessage = await client.messages.create({
-        from: this.twilioWhatsAppNumber,
-        to: whatsappTo,
-        body: message,
+      const url = `${this.baseUrl.replace(/\/$/, "")}/message/sendText/${this.instanceName}`;
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": this.apiKey,
+        },
+        body: JSON.stringify({
+          number: cleanNumber,
+          text: message,
+          linkPreview: false
+        }),
       });
 
-      console.log(
-        `[WhatsAppService] Message sent successfully. SID: ${twilioMessage.sid}`
-      );
+      if (!response.ok) {
+        const error = await response.text();
+        return {
+          success: false,
+          error: `Evolution API Error: ${response.status} - ${error}`
+        };
+      }
 
+      const data = await response.json();
       return {
         success: true,
-        messageId: twilioMessage.sid,
+        messageId: data.key?.id || "sent",
       };
     } catch (error: any) {
       console.error("[WhatsAppService] Error sending message:", error);

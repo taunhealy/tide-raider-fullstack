@@ -7,6 +7,8 @@ import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
 // Removed NextAuth imports - we use backend auth now
 import { AuthCallbackHandler } from "./components/AuthCallbackHandler";
+import { ReferralTracker } from "./components/ReferralTracker";
+import { Suspense } from "react";
 
 // Load all weights explicitly for Inter
 const inter = Inter({
@@ -99,6 +101,9 @@ export default async function RootLayout({
       >
 
         <AuthCallbackHandler />
+        <Suspense fallback={null}>
+          <ReferralTracker />
+        </Suspense>
         <AppProviders session={session} initialBeaches={beaches}>
           <NewsBannerWrapper />
           <Navbar />

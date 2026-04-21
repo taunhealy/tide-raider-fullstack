@@ -35,6 +35,7 @@ export function BeachSearchInput({
   const debouncedSearch = useDebounce(searchTerm, 300);
   const searchRef = useRef<HTMLDivElement>(null);
   const ignoreBlurRef = useRef(false);
+  const justSelectedRef = useRef(false);
 
   // Update local search term when controlled value changes
   useEffect(() => {
@@ -97,15 +98,22 @@ export function BeachSearchInput({
       beaches &&
       beaches.length > 0 &&
       debouncedSearch.length >= minSearchLength &&
-      isFocused
+      isFocused &&
+      !justSelectedRef.current
     ) {
       setShowDropdown(true);
-    } else {
+    } else if (!isFocused || debouncedSearch.length < minSearchLength) {
       setShowDropdown(false);
+    }
+    
+    // Reset the flag after the effect has run
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
     }
   }, [beaches, debouncedSearch, isFocused, minSearchLength]);
 
   const handleBeachSelect = (beach: Beach) => {
+    justSelectedRef.current = true;
     ignoreBlurRef.current = true;
     setSearchTerm(beach.name);
     setShowDropdown(false);

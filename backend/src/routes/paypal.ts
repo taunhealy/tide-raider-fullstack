@@ -8,6 +8,38 @@ const router = Router();
 const BASE_PRICE = 4.00;
 const PLAN_ID = process.env.PAYPAL_PLAN_ID || "P-DEFAULT_PLAN_ID";
 
+// GET /api/paypal/subscription-status
+router.get("/subscription-status", authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user?.id },
+      select: {
+        subscriptionStatus: true,
+        hasActiveTrial: true,
+        paypalSubscriptionId: true,
+        credits: true,
+        trialEndDate: true
+      }
+    });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Calculate trial active status
+    const isTrialActive = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > new Date();
+
+    res.json({
+      subscriptionStatus: user.subscriptionStatus,
+      hasActiveTrial: user.hasActiveTrial,
+      isTrialActive,
+      paypalSubscriptionId: user.paypalSubscriptionId,
+      isPremium: user.subscriptionStatus?.toUpperCase() === "ACTIVE" || isTrialActive,
+      credits: user.credits || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch status" });
+  }
+});
+
 // POST /api/paypal/create-subscription
 router.post("/create-subscription", authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -119,12 +151,13 @@ router.post("/webhook", async (req: Request, res: Response) => {
           if (customId) {
              const metadata = JSON.parse(customId);
              
-             // Activate User
+             // Activate User and grant 30 Monthly Credits
              await prisma.user.update({
                where: { id: metadata.userId },
                data: {
                  subscriptionStatus: "ACTIVE",
-                 paypalSubscriptionId: billingAgreementId
+                 paypalSubscriptionId: billingAgreementId,
+                 credits: { increment: 30 }
                }
              });
 
@@ -163,6 +196,66 @@ router.post("/webhook", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("[PayPal] Webhook Error:", error);
     res.status(500).send();
+  }
+});
+
+// POST /api/paypal/create-credit-order
+router.post("/create-credit-order", authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    // 100 credits for R100 (~$5.50 USD)
+    const AMOUNT = 5.50; 
+    const CURRENCY = "USD";
+    const CREDITS_TO_ADD = 100;
+
+    const order = await PayPalService.createOrder(AMOUNT, CURRENCY, JSON.stringify({
+      userId,
+      credits: CREDITS_TO_ADD,
+      type: "CREDIT_PURCHASE"
+    }));
+
+    res.json({
+      orderId: order.id,
+      approvalUrl: order.links.find((l: any) => l.rel === "approve").href
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create credit order" });
+  }
+});
+
+// POST /api/paypal/capture-credit-order
+router.post("/capture-credit-order", authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ error: "Order ID required" });
+
+    const capture = await PayPalService.captureOrder(orderId);
+
+    if (capture.status === "COMPLETED") {
+       const purchaseUnit = capture.purchase_units[0];
+       const customId = purchaseUnit.payments.captures[0].custom_id || purchaseUnit.custom_id;
+       
+       if (customId) {
+          const metadata = JSON.parse(customId);
+          if (metadata.type === "CREDIT_PURCHASE") {
+             const user = await prisma.user.update({
+               where: { id: metadata.userId },
+               data: {
+                 credits: { increment: metadata.credits }
+               }
+             });
+             
+             return res.json({ success: true, credits: user.credits });
+          }
+       }
+    }
+
+    res.status(400).json({ error: "Order not completed" });
+  } catch (error) {
+    console.error("[PayPal] Capture Error:", error);
+    res.status(500).json({ error: "Failed to capture order" });
   }
 });
 

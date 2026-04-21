@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface User {
   id: string;
@@ -10,6 +10,7 @@ interface User {
   isSubscribed?: boolean;
   hasActiveTrial?: boolean;
   trialEndDate?: Date | null;
+  whatsappNumber?: string | null;
 }
 
 interface AuthState {
@@ -106,8 +107,8 @@ export function useBackendAuth() {
       }
       globalLastFetchTime = now;
 
-      // Create a shared promise for this fetch
-      const fetchPromise = (async (): Promise<AuthState> => {
+      // Create the promise and set it IMMEDIATELY so other components wait for it
+      const currentFetchPromise = (async () => {
         const fetchStartTime = Date.now();
         try {
           // Use Next.js API route (same domain = cookies work)
@@ -181,6 +182,7 @@ export function useBackendAuth() {
               console.log("[useBackendAuth] User data fetched:", {
                 userId: data.user?.id,
                 email: data.user?.email,
+                whatsappNumber: data.user?.whatsappNumber,
                 isSubscribed: data.user?.isSubscribed,
                 hasActiveTrial: data.user?.hasActiveTrial,
                 trialEndDate: data.user?.trialEndDate,
@@ -288,12 +290,12 @@ export function useBackendAuth() {
         }
       })();
 
-      // Set pending promise so other components can wait for this fetch
-      globalAuthCache.pendingPromise = fetchPromise;
+      // Set pending promise IMMEDIATELY so other components can wait for this fetch
+      globalAuthCache.pendingPromise = currentFetchPromise;
 
       // Add a safety timeout to ensure loading state is cleared even if promise hangs
       const safetyTimeout = setTimeout(() => {
-        if (globalAuthCache.pendingPromise === fetchPromise) {
+        if (globalAuthCache.pendingPromise === currentFetchPromise) {
           console.warn(
             "[useBackendAuth] Safety timeout - clearing pending promise after 15 seconds"
           );
@@ -318,29 +320,32 @@ export function useBackendAuth() {
       }, 15000); // 15 second safety timeout
 
       // Clear safety timeout when promise resolves
-      fetchPromise.finally(() => {
+      currentFetchPromise.finally(() => {
         clearTimeout(safetyTimeout);
+        // Only clear if this is still the current pending promise
+        if (globalAuthCache.pendingPromise === currentFetchPromise) {
+          globalAuthCache.pendingPromise = null;
+        }
       });
 
-      return fetchPromise;
+      return currentFetchPromise;
     }
 
     // Only do initial fetch once per component mount
-    // Bypass throttle for initial fetch to ensure it always runs
+    // But check global cache first to prevent flooding on simultaneous mounts
     if (!hasInitialFetch.current) {
-      console.log(
-        "[useBackendAuth] Starting initial fetch (bypassing throttle)"
-      );
-      fetchUser(true)
-        .then((result) => {
-          console.log("[useBackendAuth] Initial fetch completed:", {
-            hasUser: !!result.user,
-            loading: result.loading,
-          });
-        })
-        .catch((error) => {
+      const now = Date.now();
+      const hasValidCache = globalAuthCache.state && (now - globalAuthCache.timestamp < CACHE_DURATION_MS);
+      
+      if (hasValidCache) {
+        console.log("[useBackendAuth] Syncing mount with valid global cache");
+        setAuthState(globalAuthCache.state!);
+      } else {
+        console.log(
+          "[useBackendAuth] Starting initial fetch (bypassing throttle)"
+        );
+        fetchUser(true).catch((error) => {
           console.error("[useBackendAuth] Initial fetch error:", error);
-          // Ensure loading state is cleared even on error
           if (mounted) {
             setAuthState({
               user: null,
@@ -349,6 +354,7 @@ export function useBackendAuth() {
             });
           }
         });
+      }
       hasInitialFetch.current = true;
     }
 
@@ -489,14 +495,20 @@ export function useBackendAuth() {
     }
   };
 
-  return {
-    data: authState.user ? { user: authState.user } : null,
-    status: authState.loading
+  // Memoize the return value to prevent infinite render loops in components
+  // that use the session/data object in dependency arrays
+  return React.useMemo(() => {
+    const status = authState.loading
       ? "loading"
       : authState.user
         ? "authenticated"
-        : "unauthenticated",
-    signOut,
-    refetch,
-  };
+        : "unauthenticated";
+
+    return {
+      data: authState.user ? { user: authState.user } : null,
+      status,
+      signOut,
+      refetch,
+    };
+  }, [authState.loading, authState.user]);
 }

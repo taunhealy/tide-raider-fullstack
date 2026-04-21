@@ -23,6 +23,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { MEMBERSHIP_PERKS } from "../constants/perks";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -601,18 +602,13 @@ export default function DashboardPage() {
                       <div className="space-y-4">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">Membership Perks</h4>
                         <ul className="space-y-3">
-                          {[
-                            "Surf alerts via WhatsApp & Email",
-                            "Access to local 'Hidden Gems'",
-                            "Detailed weather & swell data",
-                            "Custom alerts for your favorite spots"
-                          ].map((feature, i) => (
+                          {MEMBERSHIP_PERKS.map((feature, i) => (
                             <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
                               <div className={cn(
                                 "w-1.5 h-1.5 rounded-full",
                                 subscriptionData?.status === SubscriptionStatus.ACTIVE ? "bg-green-500" : "bg-slate-300"
                               )} />
-                              {feature}
+                              {feature.text}
                             </li>
                           ))}
                         </ul>
@@ -623,8 +619,8 @@ export default function DashboardPage() {
                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                           <p className="text-xs text-slate-500 leading-relaxed font-primary">
                             {subscriptionData?.status === SubscriptionStatus.ACTIVE 
-                              ? "Your Premium membership is active. You can use all our surf forecasting tools and set as many alerts as you like."
-                              : "You're currently using our standard free plan. Upgrade to Premium if you want to get automated alerts and see our curated list of hidden surf spots."}
+                              ? "Your Premium membership is active. You can use all our surf forecasting tools, set unlimited alerts, and use your 30 monthly AI credits for strategic intelligence."
+                              : "You're currently using our standard free plan. Upgrade to Premium to unlock automated alerts, hidden surf spots, and monthly AI intelligence credits."}
                           </p>
                         </div>
                       </div>
