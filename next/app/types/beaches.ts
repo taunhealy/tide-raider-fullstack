@@ -165,6 +165,14 @@ export interface Beach {
   bestMonthOfYear?: string;
   isLongboarding?: boolean;
   isFoiling?: boolean;
+  logEntries?: {
+    id: string;
+    date: string | Date;
+    surferRating: number;
+    comments?: string;
+    imageUrl?: string;
+    surferName?: string;
+  }[];
 }
 
 export interface AdSlot {

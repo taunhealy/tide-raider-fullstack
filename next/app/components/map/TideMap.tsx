@@ -199,13 +199,16 @@ export default function TideMap({
             sumVX += -Math.sin(rad); 
             sumVY += Math.cos(rad);
           });
-          avgVX = (sumVX / validWind.length) * 0.0004;
-          avgVY = (sumVY / validWind.length) * 0.0004;
+          
+          // Normalize the direction first, then scale for consistent speed
+          const mag = Math.sqrt(sumVX * sumVX + sumVY * sumVY) || 1;
+          avgVX = (sumVX / mag) * 0.0006;
+          avgVY = (sumVY / mag) * 0.0006;
         }
 
-        const time = Date.now() * 0.002;
+        const time = Date.now() * 0.003;
         windParticles.current.forEach((p, i) => {
-          p.life -= 0.004;
+          p.life -= 0.005;
           if (p.life <= 0) { 
             // Spawn on the windward edge instead of randomly
             const edge = Math.random();
@@ -219,11 +222,13 @@ export default function TideMap({
             p.life = 1.0; 
           }
           
-          const speedMod = (avgSpeed / 10 + 0.5);
+          const speedMod = (avgSpeed / 10 + 0.3);
           // Snake/Wiggle logic: Apply subtle perpendicular oscillation
-          const wiggle = Math.sin(time + i * 0.1) * 0.0008;
-          const perpX = -avgVY;
-          const perpY = avgVX;
+          // Normalize perp vector to keep wiggle magnitude independent of speed
+          const wiggle = Math.sin(time + i * 0.1) * 0.0012;
+          const mag = Math.sqrt(avgVX * avgVX + avgVY * avgVY) || 1;
+          const perpX = (-avgVY / mag);
+          const perpY = (avgVX / mag);
 
           p.vx = (avgVX * speedMod) + (perpX * wiggle); 
           p.vy = (avgVY * speedMod) + (perpY * wiggle);
@@ -233,11 +238,10 @@ export default function TideMap({
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.6})`; 
-          // Thickness proportional to knots: ~1.0 at 10kts, ~2.5 at 25kts
-          ctx.lineWidth = Math.min(Math.max(0.8, avgSpeed / 12), 3.5);
+          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.5})`; 
+          ctx.lineWidth = Math.min(Math.max(0.8, avgSpeed / 10), 3.0);
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 100) * width, (p.y - p.vy * 100) * height);
+          ctx.lineTo((p.x - p.vx * 120) * width, (p.y - p.vy * 120) * height);
           ctx.stroke();
         });
       }
@@ -247,7 +251,7 @@ export default function TideMap({
         const validSwell = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight !== undefined);
         
         let avgHeight = 2.0;
-        let avgVX = 0.0002;
+        let avgVX = 0.0003;
         let avgVY = -0.0001;
 
         if (validSwell.length > 0) {
@@ -262,27 +266,30 @@ export default function TideMap({
             sumVX += -Math.sin(rad);
             sumVY += Math.cos(rad);
           });
-          avgVX = (sumVX / validSwell.length) * 0.0002;
-          avgVY = (sumVY / validSwell.length) * 0.0002;
+          const mag = Math.sqrt(sumVX * sumVX + sumVY * sumVY) || 1;
+          avgVX = (sumVX / mag) * 0.00025;
+          avgVY = (sumVY / mag) * 0.00025;
         }
 
         swellParticles.current.forEach(p => {
-          p.life -= 0.002;
+          p.life -= 0.003;
           if (p.life <= 0) { 
             p.x = Math.random(); p.y = Math.random();
             p.life = 1.0; 
           }
           
-          p.vx = avgVX * (avgHeight / 2 + 0.2); 
-          p.vy = avgVY * (avgHeight / 2 + 0.2);
+          const speedMod = (avgHeight / 2 + 0.3);
+          p.vx = avgVX * speedMod; 
+          p.vy = avgVY * speedMod;
           p.x += p.vx; p.y += p.vy;
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(168, 85, 247, ${p.life * 0.7})`; 
-          ctx.lineWidth = 3.5;
+          ctx.strokeStyle = `rgba(129, 140, 248, ${p.life * 0.4})`; // Indigo-400
+          ctx.lineWidth = 2.5;
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 20) * width, (p.y - p.vy * 30) * height);
+          // Unified tail multiplier to prevent directional skewing
+          ctx.lineTo((p.x - p.vx * 40) * width, (p.y - p.vy * 40) * height);
           ctx.stroke();
         });
       }

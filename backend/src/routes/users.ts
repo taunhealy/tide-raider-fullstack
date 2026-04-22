@@ -29,6 +29,7 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
         createdAt: true,
         skillLevel: true,
         nationality: true,
+        credits: true,
         _count: {
           select: {
             boards: true,
@@ -219,11 +220,12 @@ router.put(
 );
 
 // POST /api/users/invite-squad - Send email invites
-router.post("/invite-squad", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/invite-squad", authenticateToken, async (req: Request, res: Response): Promise<any> => {
   try {
+    const authReq = req as AuthRequest;
     const { emails, referralLink } = req.body;
-    const userId = req.user?.id;
-    const userName = req.user?.name || "A Tide Raider friend";
+    const userId = authReq.user?.id;
+    const userName = authReq.user?.name || "A Tide Raider friend";
 
     if (!emails || !Array.isArray(emails) || !referralLink) {
       return res.status(400).json({ error: "Emails array and referralLink are required" });

@@ -75,7 +75,8 @@ export default function DateSelector({
         date,
         value: dateStr,
         scoreCount,
-        subLabel
+        subLabel,
+        isToday: dateStr === todayStr
       } as any;
     });
   }, [mounted, beaches, availableDates]);
@@ -106,15 +107,18 @@ export default function DateSelector({
     <div className={cn("flex flex-wrap gap-2 bg-white/50 backdrop-blur-sm p-1.5 rounded-2xl border border-gray-200 shadow-sm", className)}>
       {dateOptions.map((option: any) => {
         const isSelected = activeDate === option.value;
+        const isToday = option.isToday;
+        
         return (
             <button
               key={option.value}
               onClick={() => onDateSelect(option.value)}
               className={cn(
-                "flex flex-col items-center min-w-[75px] px-3 py-2 transition-all relative group rounded-lg overflow-hidden",
+                "flex flex-col items-center min-w-[75px] px-3 py-2 transition-all relative group rounded-lg overflow-hidden border",
                 isSelected
-                  ? "bg-white border border-black/10 shadow-sm scale-[1.02] z-10"
-                  : "text-gray-500 hover:bg-white/50 border border-transparent"
+                  ? "bg-white border-black/10 shadow-sm scale-[1.02] z-10"
+                  : "text-gray-500 hover:bg-white/50 border-transparent",
+                isToday && !isSelected && "border-slate-300 bg-slate-100/40 shadow-inner"
               )}
             >
             {/* Selection indicator bar */}

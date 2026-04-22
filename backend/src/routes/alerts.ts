@@ -94,7 +94,7 @@ router.post(
   "/",
   authenticateToken,
   validate({ body: createAlertSchema }),
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response): Promise<any> => {
     try {
       const authReq = req as AuthRequest;
       if (!authReq.user?.id) {
@@ -113,24 +113,27 @@ router.post(
       const isPremium =
         user?.subscriptionStatus === "ACTIVE" || user?.hasActiveTrial === true;
 
-      // Check alert limit: Free users can only have 1 alert
-      if (!isPremium) {
-        const existingAlerts = await prisma.alert.count({
-          where: {
-            userId: authReq.user.id,
-            active: true,
-          },
-        });
+      // Enforce strict tier-based mission limits (1/10/100)
+      const alertLimit = user?.subscriptionStatus === "ACTIVE" 
+        ? 100 
+        : (user?.hasActiveTrial ? 10 : 1);
 
-        if (existingAlerts >= 1) {
-          return res.status(403).json({
-            error: "Alert limit reached",
-            message:
-              "Free users can only have 1 active alert. Upgrade to premium for unlimited alerts.",
-            code: "ALERT_LIMIT_REACHED",
-            requiresUpgrade: true,
-          });
-        }
+      const existingAlerts = await prisma.alert.count({
+        where: {
+          userId: authReq.user.id,
+          active: true,
+        },
+      });
+
+      if (existingAlerts >= alertLimit) {
+        return res.status(403).json({
+          error: "Alert limit reached",
+          message: `${user?.subscriptionStatus === "ACTIVE" ? "Premium" : (user?.hasActiveTrial ? "Trial" : "Free")} users are limited to ${alertLimit} active alert(s). Upgrade for more slots.`,
+          code: "ALERT_LIMIT_REACHED",
+          requiresUpgrade: true,
+          limit: alertLimit,
+          current: existingAlerts,
+        });
       }
 
       const alert = await AlertService.createAlert(authReq.user.id, req.body);

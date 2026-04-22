@@ -59,7 +59,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
             : process.env.NODE_ENV === "production"
               ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-              : `http://localhost:4005/api/auth/google/callback`,
+              : `http://localhost:4001/api/auth/google/callback`,
         passReqToCallback: true,
       },
       async (req, accessToken, refreshToken, profile, done) => {
@@ -118,9 +118,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
             // Reward referrer if exists
             if (referrer) {
-              await rewardReferrer(referrer.id, 10);
-              // Clear the referral cookie
-              res.clearCookie("referral-code", { path: "/" });
+              await rewardReferrer(referrer.id, 30);
             }
 
             // Notify admin of new user signup (async, don't wait)
@@ -245,7 +243,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.NODE_ENV === "production"
         ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-        : `http://localhost:4005/api/auth/google/callback`;
+        : `http://localhost:4001/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
   const clientID = process.env.GOOGLE_CLIENT_ID?.trim() || "NOT SET";
@@ -388,6 +386,9 @@ router.get(
         path: "/",
         domain: isProduction ? undefined : undefined, // Let browser set domain
       });
+
+      // Clear the referral cookie if it exists
+      res.clearCookie("referral-code", { path: "/" });
 
       console.log(
         `[auth] ✅ OAuth successful, redirecting to frontend with cookie for user: ${user.id}`

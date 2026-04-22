@@ -16,17 +16,19 @@ import { groq } from "next-sanity";
 import { useSubscriptionDetails } from "../hooks/useSubscriptionDetails";
 import { formatDate } from "../lib/utils";
 import { useSubscriptionManagement } from "../hooks/useSubscriptionManagement";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SubscriptionStatus } from "@/app/types/subscription";
 import { ActiveSubscriptionView } from "@/app/components/subscription/ActiveSubscriptionView";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Zap, Sparkles } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { MEMBERSHIP_PERKS } from "../constants/perks";
+import AIReportsView from "../components/raid/AIReportsView";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useBackendAuth();
   const { trialStatus, trialEndDate } = useSubscription();
 
@@ -42,8 +44,16 @@ export default function DashboardPage() {
     }
   }, [session]);
   const [activeTab, setActiveTab] = useState<
-    "account" | "billing" | "ads" | "alerts"
+    "account" | "billing" | "ads" | "alerts" | "credits" | "intelligence"
   >("account");
+
+  // Synchronize tab from URL if present
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["account", "billing", "ads", "alerts", "credits", "intelligence"].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
   const [username, setUsername] = useState<string>("");
   const queryClient = useQueryClient();
   const handleSubscribe = useHandleSubscribe();
@@ -499,14 +509,16 @@ export default function DashboardPage() {
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Command <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Center</span>
             </h1>
-            <p className="text-slate-500 mt-3 max-w-md font-medium text-lg italic">Manage your surf intelligence, billing, and system settings.</p>
+            <p className="text-slate-500 mt-3 max-w-lg font-medium text-lg">Manage your surf intelligence, billing, and system settings.</p>
           </header>
 
           {/* Navigation Matrix */}
-          <nav className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-2xl w-fit shadow-sm">
+          <nav className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-2xl w-full sm:w-fit shadow-sm overflow-x-auto no-scrollbar scroll-smooth">
             {[
               { id: "account", label: "Identity" },
               { id: "billing", label: "Subscriptions" },
+              { id: "credits", label: "Intelligence Credits" },
+              { id: "intelligence", label: "Intelligence Archive" },
               { id: "alerts", label: "Alerts" }
             ].map((tab) => (
               <button
@@ -646,13 +658,53 @@ export default function DashboardPage() {
                             <h4 className="text-xl font-bold text-slate-900  mb-1 italic">Ready for more?</h4>
                             <p className="text-sm text-slate-500">R45 a month. No commitments, cancel whenever you want.</p>
                           </div>
-                          <button onClick={handleSubscribeWithLoading} className="w-full md:w-auto px-10 py-4 bg-brand-3 text-white font-black uppercase tracking-tighter hover:scale-105 transition-all rounded-xl font-primary shadow-lg shadow-brand-3/20">
+                          <button onClick={handleSubscribeWithLoading} className="w-full md:w-auto px-10 py-4 bg-brand-3 text-white font-black uppercase tracking-tighter hover:bg-brand-3/90 transition-all rounded-xl font-primary shadow-lg shadow-brand-3/20">
                             Go Premium
                           </button>
                         </div>
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "credits" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm">
+                   <div className="flex flex-col md:flex-row items-center justify-between gap-8 pb-8 border-b border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                           <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Available Balance</span>
+                        </div>
+                        <h3 className="text-4xl font-black text-slate-900 tracking-tight">
+                           {session?.user?.credits ?? 0} <span className="text-xl text-slate-400 font-bold ml-1">Credits</span>
+                        </h3>
+                      </div>
+                      
+                      <Link href="/pricing" className="w-full md:w-auto">
+                        <button className="w-full md:w-auto px-10 py-4 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-black transition-all active:scale-95 shadow-lg shadow-slate-900/10 flex items-center justify-center gap-3">
+                           <Zap className="w-4 h-4 fill-current text-white" />
+                           Buy More Credits
+                        </button>
+                      </Link>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                      <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">What are AI Credits?</h4>
+                         <p className="text-sm text-slate-600 leading-relaxed font-primary">
+                            Credits empower our AI Surf Reporting engine. One tactical deep-dive report costs 2 credits (R2), generated from real-time data across wind, swell, and tide sensors.
+                         </p>
+                      </div>
+                      <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Strategic Intelligence</h4>
+                         <p className="text-sm text-slate-600 leading-relaxed font-primary">
+                            Use your credits to run "Window Lock" analysis on any spot. This finds the precise 2-hour window where conditions hit high-fidelity synergy.
+                         </p>
+                      </div>
+                   </div>
                 </div>
               </div>
             )}
@@ -671,6 +723,23 @@ export default function DashboardPage() {
                     Alerts track wave height, period, and incident light to notify you the moment 
                     your preferred conditions are met across the global network.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "intelligence" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm min-h-[600px]">
+                  <div className="flex flex-col gap-2 mb-4">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                      <Sparkles className="w-8 h-8 text-brand-3" />
+                      Intelligence Archive
+                    </h2>
+                    <p className="text-slate-500 text-sm font-medium border-b border-slate-100 pb-6 mb-2">
+                       Historical strategic profiles and strike-window analysis briefings.
+                    </p>
+                  </div>
+                  <AIReportsView />
                 </div>
               </div>
             )}

@@ -18,8 +18,8 @@ import { MEMBERSHIP_PERKS } from "../constants/perks";
 
 export default function PricingPage() {
   const handleSubscribe = useHandleSubscribe();
+  const { isSubscribed, session, isLoading: isAuthLoading } = useSubscription();
   const [data, setData] = useState<any>(null);
-  const { isSubscribed } = useSubscription();
   const [loadingStates, setLoadingStates] = useState({
     subscribe: false,
     unsubscribe: false,
@@ -27,7 +27,22 @@ export default function PricingPage() {
   });
   const [isToppingUp, setIsToppingUp] = useState(false);
   const [promoCode, setPromoCode] = useState("");
-  const { data: subscriptionDetails } = useSubscriptionDetails();
+  const { data: subscriptionDetails, isLoading: isDetailsLoading } = useSubscriptionDetails();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Redirect to login if user is not authenticated and not loading
+  useEffect(() => {
+    if (!isAuthLoading && !session) {
+      // Redirect to signin if they're definitely not logged in
+      // This ensures we always have a user context for the referral link and subscription hooks
+      const callbackUrl = encodeURIComponent(window.location.pathname);
+      window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
+    }
+  }, [session, isAuthLoading]);
 
   // Invite State
   const [emails, setEmails] = useState<string[]>([""]);
@@ -38,6 +53,43 @@ export default function PricingPage() {
       setData(pricingData);
     };
     fetchData();
+  }, []);
+
+  // Handle PayPal Credit Capture on Return
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get("token");
+    const status = urlParams.get("status");
+
+    if (status === "success" && orderId) {
+      const captureOrder = async () => {
+        toast.promise(
+          fetch("/api/paypal/capture-credit-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId }),
+          }).then(async (res) => {
+            if (!res.ok) throw new Error("Capture failed");
+            return res.json();
+          }),
+          {
+            loading: "Finalizing your credits...",
+            success: (data) => {
+              window.history.replaceState({}, '', window.location.pathname);
+              // Dispatch events to trigger targeted UI refreshes without full reload
+              window.dispatchEvent(new CustomEvent("credits-updated"));
+              window.dispatchEvent(new CustomEvent("auth-refresh"));
+              return "Credits Added! Your balance has been updated.";
+            },
+            error: "Payment Capture Failed. Please contact support.",
+          }
+        );
+      };
+      captureOrder();
+    } else if (status === "cancel") {
+      toast.error("Payment Cancelled", { description: "Your credit top-up was not completed." });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   const handleSubscribeWithLoading = async () => {
@@ -234,7 +286,7 @@ export default function PricingPage() {
             <div className="relative bg-[#F8F9FA] rounded-3xl border border-gray-100 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:shadow-gray-100">
               <div className="p-8 border-b border-gray-100">
                  <div className="flex justify-between items-start mb-6">
-                   <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center text-white">
+                   <div className="w-12 h-12 rounded-xl bg-blue-400 flex items-center justify-center text-white shadow-lg shadow-blue-50">
                       <Sparkles className="w-6 h-6" />
                    </div>
                    <div className="bg-white border border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-normal tracking-normal text-black">
@@ -251,10 +303,10 @@ export default function PricingPage() {
               <div className="p-8 flex-grow bg-white">
                  <ul className="space-y-6 mb-10">
                   {[
-                    { text: "100 Strategic AI Surf Reports", icon: Zap, color: "text-purple-600" },
-                    { text: "Deep-dive 7-day outlooks", icon: ArrowRight, color: "text-purple-600" },
-                    { text: "Share reports with your crew via WhatsApp", icon: Check, color: "text-purple-600" },
-                    { text: "Credits never expire, use anytime", icon: ShieldCheck, color: "text-emerald-600" },
+                    { text: "50 Strategic AI Surf Reports", icon: Zap, color: "text-blue-400" },
+                    { text: "Deep-dive 7-day outlooks", icon: ArrowRight, color: "text-blue-400" },
+                    { text: "Share reports with your crew via WhatsApp", icon: Check, color: "text-blue-400" },
+                    { text: "Credits never expire, use anytime", icon: ShieldCheck, color: "text-blue-400" },
                   ].map((feature, idx) => (
                     <li key={idx} className="flex items-center gap-4">
                       <div className={cn("p-1.5 rounded-lg bg-gray-50 border border-gray-100", feature.color)}>
@@ -270,9 +322,9 @@ export default function PricingPage() {
                 <Button
                   onClick={handleTopUp}
                   disabled={isToppingUp}
-                  className="w-full h-14 bg-white border border-gray-200 text-black hover:bg-gray-50 rounded-xl font-bold uppercase tracking-widest text-[12px] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full h-14 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[12px] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                 >
-                  {isToppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4 text-purple-600" />}
+                  {isToppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                   BUY 100 CREDITS
                 </Button>
                 <p className="mt-4 text-center text-[10px] leading-[15px] font-normal text-gray-400 uppercase tracking-widest">
@@ -305,7 +357,7 @@ export default function PricingPage() {
                           <p className="text-[10px] leading-[15px] font-black text-black opacity-20 uppercase tracking-[0.25em] mb-2">YOUR INVITE LINK</p>
                           <div className="bg-gray-50 border border-gray-100 rounded-lg px-4 h-12 flex items-center">
                              <code className="text-black text-[14px] font-mono truncate w-full opacity-60">
-                                {typeof window !== 'undefined' ? `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode || '...'}` : 'INITIALIZING...'}
+                                {mounted ? `${window.location.origin}/raid?ref=${subscriptionDetails?.referralCode || '...'}` : 'INITIALIZING...'}
                              </code>
                           </div>
                         </div>
@@ -349,32 +401,29 @@ export default function PricingPage() {
                           ))}
                         </div>
 
-                        <div className="flex justify-start">
+                         <div className="flex flex-col sm:flex-row gap-3 pt-4">
                           <Button 
                             onClick={sendInvites}
                             disabled={loadingStates.sendingInvites}
-                            className="h-10 px-8 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 shadow-sm transition-all active:scale-95"
+                            className="h-11 flex-1 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] gap-2 shadow-sm transition-all active:scale-95"
                           >
                             {loadingStates.sendingInvites ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                            SEND INVITES
+                            SEND MAIL INVITES
+                          </Button>
+                          
+                          <Button 
+                            onClick={shareViaWhatsApp}
+                            className="h-11 flex-1 bg-white border border-gray-200 text-black hover:bg-gray-50 rounded-xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-sm transition-all active:scale-95"
+                          >
+                            <MessageSquare className="w-4 h-4 fill-current" />
+                            SHARE VIA WHATSAPP
                           </Button>
                         </div>
-                      </div>
-
-                      {/* WhatsApp Share Button */}
-                      <div className="flex justify-start">
-                        <Button 
-                          onClick={shareViaWhatsApp}
-                          className="h-12 px-10 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black uppercase tracking-widest text-[10px] gap-3 shadow-lg shadow-green-100 transition-all active:scale-95"
-                        >
-                          <MessageSquare className="w-4 h-4 fill-current" />
-                          SHARE VIA WHATSAPP
-                        </Button>
-                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-4 w-full xl:w-[320px]">
+                <div className="flex flex-col gap-4 w-full xl:w-[320px]">
                      {[
                         { title: "COPY", text: "Get your unique invite link from this block.", icon: ArrowRight },
                         { title: "SHARE", text: "Send it to your local surf squad on WhatsApp.", icon: Zap },

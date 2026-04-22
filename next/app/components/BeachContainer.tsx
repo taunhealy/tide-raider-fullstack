@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
@@ -44,24 +44,52 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
+import AIReportModal from "./beach/AIReportModal";
+
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter, selectRegion } = useBeachFilters();
+  const searchParams = useSearchParams();
   
   // Sorting and Location state - Proximity active by default (45km)
   const [maxDistance, setMaxDistance] = useState<number | null>(45);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
+  // Deep Link Modal State
+  const [deepLinkedBeach, setDeepLinkedBeach] = useState<Beach | null>(null);
+  const [isDeepLinkModalOpen, setIsDeepLinkModalOpen] = useState(false);
+
   const { data, isLoading, isFetching } = useFilteredBeaches({
     initialData: maxDistance !== null ? null : initialData, // Don't use initial regional data in proximity mode
     enabled: true,
-    ignoreRegion: maxDistance !== null
+    ignoreRegion: maxDistance !== null || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("beachId"))
   });
   const { data: authData } = useBackendAuth();
   const user = authData?.user;
   const queryClient = useQueryClient();
   const pathname = usePathname();
+  const router = useRouter();
   const hasAutoRedirected = useRef(false);
+
+  // Handle Intelligence Deep Links
+  useEffect(() => {
+    const beachId = searchParams.get("beachId");
+    const reportId = searchParams.get("report");
+
+    if (beachId && reportId && data?.beaches) {
+      const targetBeach = data.beaches.find((b: Beach) => 
+        b.id === beachId || 
+        b.name.toLowerCase() === beachId.toLowerCase() ||
+        b.id.toLowerCase() === beachId.toLowerCase() ||
+        b.name.toLowerCase().includes(beachId.toLowerCase())
+      );
+      
+      if (targetBeach && !isDeepLinkModalOpen) {
+        setDeepLinkedBeach(targetBeach);
+        setIsDeepLinkModalOpen(true);
+      }
+    }
+  }, [searchParams, data?.beaches]);
 
   // Request location on mount for proximity filtering
   useEffect(() => {
@@ -153,30 +181,32 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             continent: mostRecentSearch.region.continent || "",
           };
 
-          // Use selectRegion to update URL properly
-          selectRegion(selectedRegion);
+          // Use selectRegion logic but combine with timeSlot
+          const params = new URLSearchParams(window.location.search);
+          const formattedRegionId = selectedRegion.id.toLowerCase().replace(/\s+/g, "-");
+          params.set("regionId", formattedRegionId);
+          
+          if (!params.get("timeSlot")) {
+            params.set("timeSlot", "MORNING");
+          }
+          
+          router.push(`${pathname}?${params.toString()}`, { scroll: false });
           hasAutoRedirected.current = true;
         }
       } else if (recentSearches !== undefined) {
         // No recent searches - default to Western Cape for first-time visitors
-        const defaultRegion = {
-          id: "western-cape",
-          regionId: "western-cape",
-          name: "Western Cape",
-          countryId: "za",
-          country: {
-            id: "za",
-            name: "South Africa",
-            continentId: "AF",
-          },
-          continent: "Africa",
-        };
+        const params = new URLSearchParams(window.location.search);
+        params.set("regionId", "western-cape");
         
-        selectRegion(defaultRegion);
+        if (!params.get("timeSlot")) {
+          params.set("timeSlot", "MORNING");
+        }
+        
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
         hasAutoRedirected.current = true;
       }
     }
-  }, [filters.regionId, recentSearches, selectRegion, pathname]);
+  }, [filters.regionId, recentSearches, pathname, router]);
 
   // Track region searches when regionId changes
   const { mutate: trackSearch } = useMutation({
@@ -208,14 +238,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
   const beaches = data?.beaches || [];
   const beachScores = data?.scores || {};
-  const forecast = data?.forecast ?? null; // Regional forecast
-  const totalCount = data?.totalCount || 0; // Added totalCount
+  const forecast = (data?.forecast as any) ?? null;
+  const totalCount = data?.totalCount || 0;
 
   const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
     updateFilter("regionId", regionId || "");
-    // Reset to first page when region changes
     setCurrentPage(1);
-    // Invalidate the query cache to force refetch
     queryClient.invalidateQueries({ queryKey: ["filteredBeaches"] });
   };
 
@@ -236,7 +264,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       return { ...b, score, distance };
     });
 
-    // Apply distance filter if active
     if (maxDistance !== null && userLocation) {
       processedBeaches = processedBeaches.filter(b => 
         b.distance !== null && b.distance <= maxDistance
@@ -247,41 +274,32 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       const hasScoreA = a.id in beachScores;
       const hasScoreB = b.id in beachScores;
 
-      // Beaches with scores come before beaches without scores
       if (hasScoreA && !hasScoreB) return -1;
       if (!hasScoreA && hasScoreB) return 1;
 
-      // Both have scores or both don't - sort by score descending
       return b.score - a.score;
     });
   }, [beaches, beachScores, maxDistance, userLocation]);
 
-  // Calculate pagination
   const totalPages = Math.ceil(sortedBeaches.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentBeaches = sortedBeaches.slice(startIndex, endIndex);
 
-  // Generate pagination numbers
   const paginationRange = useMemo(() => {
     const maxVisible = 7;
-    
     if (totalPages <= maxVisible) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-
     if (currentPage <= 4) {
       return [1, 2, 3, 4, 5, "...", totalPages];
     }
-    
     if (currentPage >= totalPages - 3) {
       return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
     }
-    
     return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
   }, [totalPages, currentPage]);
 
-  // Reset to first page if current page is out of bounds or filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, maxDistance]);
@@ -294,26 +312,13 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
   const handlePageChange = (page: number) => {
     if (page >= 2 && !user) {
-      // Redirect to login if trying to access page 2 or more while not logged in
       const targetUrl = `${pathname}?page=${page}`;
       window.location.href = `/login?callbackUrl=${encodeURIComponent(targetUrl)}`;
       return;
     }
     setCurrentPage(page);
-    // Scroll to top of beach list
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  useEffect(() => {
-    if (initialData) {
-      console.log("Initial data received:", {
-        beachCount: initialData.beaches?.length || 0,
-        hasScores: Boolean(initialData.scores),
-        hasForecast: Boolean(initialData.forecast),
-        forecastDetails: initialData.forecast,
-      });
-    }
-  }, [initialData]);
 
   return (
     <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 lg:p-8 xl:p-12 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
@@ -341,7 +346,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               isLoading={isLoading || isFetching}
             />
 
-            {/* Subtle background refresh indicator */}
             {isFetching && data && !isLoading && (
               <div className="text-xs text-gray-500 text-center py-2 font-primary">
                 Refreshing data...
@@ -354,7 +358,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               {!filters.regionId ? (
                 <EmptyState message="Select a region to view beaches" />
               ) : isLoading && !data ? (
-                // Only show loading spinner when there's no data at all
                 <div className="flex flex-col items-center justify-center py-12">
                   <LoadingIndicator />
                   <p className="text-gray-600 font-primary mt-4">
@@ -367,10 +370,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                 <div>
                   {currentBeaches.map((beach: Beach) => {
                     const score = beachScores[beach.id]?.score ?? 0;
-                    // Directly use the regional forecast
-                    const beachForecastData = forecast; // Renamed to avoid confusion
-
-                    // Check if score actually exists in the scores object, not just if it's 0
+                    const beachForecastData = forecast;
                     const hasScore = beach.id in beachScores;
                     const scoreValue = hasScore
                       ? score !== null && score !== undefined
@@ -382,15 +382,14 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                       <BeachCard
                         key={beach.id}
                         beach={beach}
-                        score={scoreValue} // Pass null if no score exists, or the numeric score
-                        forecastData={beachForecastData} // Pass the regional forecast
-                        isLoading={!hasScore && isLoading && !data} // Only show loading if no score AND no data at all
+                        score={scoreValue}
+                        forecastData={beachForecastData}
+                        isLoading={!hasScore && isLoading && !data}
                         distance={(beach as any).distance}
                       />
                     );
                   })}
 
-                  {/* Pagination Controls */}
                   {totalPages > 1 && (
                     <div className="flex flex-col items-center gap-4 mt-8 mb-4">
                       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -405,7 +404,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                           <span className="text-[10px] font-black uppercase tracking-widest">Previous</span>
                         </Button>
 
-                        {/* Pagination Numbers */}
                         <div className="flex items-center gap-1.5 p-1 bg-white/40 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-sm">
                           {paginationRange.map((page, index) => {
                             if (page === "...") {
@@ -469,6 +467,23 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       </div>
 
       <StickyForecastWidget />
+
+      {deepLinkedBeach && (
+        <AIReportModal
+          isOpen={isDeepLinkModalOpen}
+          onClose={() => {
+            setIsDeepLinkModalOpen(false);
+            // Optional: Clear URL params to prevent re-opening on refresh
+            const params = new URLSearchParams(searchParams);
+            params.delete("report");
+            params.delete("beachId");
+            router.replace(`${pathname}?${params}`, { scroll: false });
+          }}
+          beach={deepLinkedBeach}
+          reportId={searchParams.get("report") || undefined}
+          date={new Date().toISOString()}
+        />
+      )}
     </div>
   );
 }

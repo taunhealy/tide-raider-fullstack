@@ -1,8 +1,8 @@
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "./useBackendAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useHandleTrial() {
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const queryClient = useQueryClient();
 
   return useMutation({

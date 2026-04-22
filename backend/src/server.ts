@@ -122,8 +122,8 @@ app.use("/api", apiRouter);
 app.use(errorHandler);
 
 // Start server
-// Use 127.0.0.1 for local dev (avoids IPv6 issues), 0.0.0.0 for production (Fly.io)
-const HOST = process.env.NODE_ENV === "production" || process.env.DOCKER === "true" ? "0.0.0.0" : "127.0.0.1";
+// Use 0.0.0.0 to listen on all interfaces (avoids IPv4/IPv6 localhost issues)
+const HOST = "0.0.0.0";
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || "development"}`);

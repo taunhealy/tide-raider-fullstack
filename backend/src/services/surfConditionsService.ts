@@ -5,7 +5,25 @@ import { scraperA } from "../lib/scrapers/scraperA";
 import { scraperB } from "../lib/scrapers/scraperB";
 import { ScoreService } from "./scoreService";
 import { PythonBridge } from "../lib/pythonBridge";
-import { BaseForecastData } from "../lib/types";
+import { sendEmail } from "../lib/email"; // Added for failure alerts
+
+const ADMIN_EMAIL = "taunhealy@gmail.com";
+
+async function sendScrapeFailureAlert(regionId: string, source: string, error: string, url: string) {
+  const subject = `⚠️ TACTICAL ALERT: Scraper Failure [${regionId}]`;
+  const html = `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ff4444; border-radius: 10px;">
+      <h2 style="color: #cc0000;">🛰️ Intelligence Signal Lost</h2>
+      <p><strong>Region:</strong> ${regionId}</p>
+      <p><strong>Source:</strong> ${source}</p>
+      <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
+      <p><strong>Error:</strong> ${error}</p>
+      <hr/>
+      <p style="font-size: 12px; color: #666;">This is an automated tactical alert from Tide Raider Backend.</p>
+    </div>
+  `;
+  await sendEmail(ADMIN_EMAIL, subject, html);
+}
 
 function getTodayDate() {
   const date = new Date();
@@ -81,9 +99,15 @@ export async function getLatestConditions(
       console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
       try {
         console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini...`);
-        return await PythonBridge.runSemanticScrape(url, id) || [];
+        const semanticResults = await PythonBridge.runSemanticScrape(url, id);
+        if (semanticResults && semanticResults.length > 0) return semanticResults;
+        throw new Error("Semantic scrape returned no data");
       } catch (semanticErr) {
-        console.error(`[getLatestConditions] ❌ Semantic final fallback failed:`, semanticErr);
+        console.error(`[getLatestConditions] ❌ ALL SCRAPE FALLBACKS FAILED for ${url}:`, semanticErr);
+        
+        // Final tactical alert to admin
+        await sendScrapeFailureAlert(regionId, source, (semanticErr as Error).message, url);
+        
         return [];
       }
     }

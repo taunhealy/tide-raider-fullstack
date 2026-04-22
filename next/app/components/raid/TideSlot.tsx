@@ -41,7 +41,7 @@ const TideSlot: React.FC<TideSlotProps> = ({ tide }) => {
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 pointer-events-none" />
 
         {/* Hover Tooltip */}
-        <div className="absolute px-2 py-4 bg-black/50 text-white text-[8px] font-regular tracking-widest rounded-md border border-white/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-95 group-hover:scale-100 whitespace-nowrap z-[110] shadow-2xl bottom-full mb-3 left-1/2 -translate-x-1/2 backdrop-blur-md">
+        <div className="absolute px-2 py-4 bg-black/50 text-white text-[8px] font-regular tracking-widest rounded-md border border-white/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[110] shadow-2xl bottom-full mb-3 left-1/2 -translate-x-1/2 backdrop-blur-md">
           Current Trend: {tide || "No Data Available"}
         </div>
       </div>

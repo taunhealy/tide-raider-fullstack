@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/Button";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ import NationalitySelector from "@/app/components/profile/NationalitySelector";
 // Server component
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const [activeTab, setActiveTab] = useState<"account" | "logs">("account");
   const [avatarUrl, setAvatarUrl] = useState("");
 

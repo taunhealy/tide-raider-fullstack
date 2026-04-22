@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: cookieStore.toString(),
       },
       body: JSON.stringify(body),
     });

@@ -27,7 +27,11 @@ export const getBackendUrl = (): string => {
 
   // In development, use localhost backend (or env URL if set)
   if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
+    // If envUrl is localhost, convert to 127.0.0.1 for server-side stability
+    if (envUrl?.includes("localhost")) {
+      return envUrl.replace("localhost", "127.0.0.1");
+    }
+    return envUrl || "http://127.0.0.1:4005";
   }
 
   // In production, always use Cloud Run backend (never localhost)

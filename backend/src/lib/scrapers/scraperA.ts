@@ -148,20 +148,40 @@ export async function scraperA(
     */
     console.log(`[scraperA] 🌐 Navigating to ${url}...`);
     let navigationSuccessful = false;
-    try {
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
-      navigationSuccessful = true;
-    } catch (e) {
-      console.log("⚠️ Superforecast navigate timeout, trying basic forecast fallback...");
+    let attempts = 0;
+    let currentUrl = url;
+
+    while (attempts < 2 && !navigationSuccessful) {
       try {
-        const basicUrl = url.includes('weatherforecast') ? url.replace('weatherforecast', 'forecast') : url;
-        await page.goto(basicUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-        navigationSuccessful = true;
-      } catch (e2) {
-        console.error("❌ Both primary and fallback URLs failed.");
+        attempts++;
+        await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        
+        // Check if we actually see forecast rows
+        const hasRows = await page.evaluate(() => {
+          return !!document.querySelector('.forecast-row, [class*="row"], .forecast-tab');
+        });
+
+        if (hasRows) {
+          navigationSuccessful = true;
+          console.log(`✅ Forecast detected on attempt ${attempts}`);
+        } else {
+          throw new Error("No forecast rows detected in DOM");
+        }
+      } catch (e) {
+        console.log(`⚠️ Attempt ${attempts} failed for ${currentUrl}: ${e.message}`);
+        if (attempts < 2) {
+          console.log("🔄 Retrying with Basic Forecast fallback URL...");
+          currentUrl = currentUrl.includes('weatherforecast') ? currentUrl.replace('weatherforecast', 'forecast') : currentUrl;
+          // Clean up URL if it has params that break basic forecast
+          if (currentUrl.includes('?')) currentUrl = currentUrl.split('?')[0];
+        }
       }
     }
  
+    if (!navigationSuccessful) {
+      throw new Error("Failed to load forecast data after fallback attempts.");
+    }
+
     // Handle Cookie Consent (Aggressive)
     await page.evaluate(function () {
       const selectors = ['#ok', '#accept', '.accept', '[id*="consent"]', '[class*="consent"]', 'button'];
@@ -170,37 +190,17 @@ export async function scraperA(
         els.forEach((el: any) => {
           const t = el.textContent?.toLowerCase() || "";
           if (t.includes('accept') || t.includes('agree') || t.includes('consent')) {
-            el.click();
+            try { el.click(); } catch(e) {}
           }
         });
       });
     });
     await new Promise(r => setTimeout(r, 2000));
 
-    // Wait for ANY forecast row
-    console.log("⏳ Waiting for forecast rows...");
-    try {
-      await page.waitForSelector('.forecast-row, [class*="row"]', { timeout: 15000 });
-      console.log("✅ Forecast rows detected");
-    } catch (e) {
-      console.log("⚠️ Rows not found by selector, continuing...");
-    }
-
     const bodyText = await page.evaluate(() => document.body.innerText);
-    console.log("✅ Page loaded. Body text length:", bodyText.length);
+    console.log("✅ Page content ready. Text length:", bodyText.length);
 
-    // Modernize wait selector
-    try {
-      console.log("✅ Found forecast container");
-    } catch (e) {
-      console.log("⚠️ Container selector failed, attempting fallback...");
-    }
-
-
-    // ... scroll logic ... (kept same)
-
-
-    // Auto-scroll
+    // Auto-scroll to trigger lazy loading
     await page.evaluate(async function () {
       await new Promise<void>(function (resolve) {
         let totalHeight = 0;
@@ -224,7 +224,7 @@ export async function scraperA(
         return t.includes("night hours") || t.includes("show night");
       }) as any[];
       if (btns.length > 0 && typeof btns[0].click === 'function') {
-        btns[0].click();
+        try { btns[0].click(); } catch(e) {}
       }
     });
     await new Promise(r => setTimeout(r, 2000));

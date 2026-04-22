@@ -140,6 +140,7 @@ export function useFilteredBeaches({
         isFoiling?: string;
         timeSlot?: string;
         source?: "WINDFINDER" | "WINDGURU" | "WINDY";
+        ignoreRegion?: boolean;
       } = {};
 
       if (filters.regionId) params.regionId = filters.regionId;
@@ -178,6 +179,7 @@ export function useFilteredBeaches({
       if (filters.isFoiling) params.isFoiling = "true";
       if (filters.timeSlot) params.timeSlot = filters.timeSlot;
       params.source = selectedSource; // Pass the selected source
+      params.ignoreRegion = ignoreRegion; // Pass ignoreRegion flag
 
       if (process.env.NODE_ENV === "development") {
         console.log(
@@ -190,7 +192,7 @@ export function useFilteredBeaches({
       return await api.getFilteredBeaches(params);
     },
     initialData: shouldUseInitialData,
-    enabled: enabled && !!filters.regionId,
+    enabled: enabled && (!!filters.regionId || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("beachId"))),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
     refetchOnMount: false, // Use cached data if available - faster loading

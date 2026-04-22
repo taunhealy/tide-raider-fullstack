@@ -58,8 +58,13 @@ export class WhatsAppService {
     to,
     message,
   }: SendWhatsAppMessageParams): Promise<WhatsAppServiceResponse> {
+    // Refresh configuration from environment to handle runtime updates without restart
+    const baseUrl = process.env.EVOLUTION_BASE_URL || this.baseUrl;
+    const apiKey = process.env.EVOLUTION_API_KEY || this.apiKey;
+    const instanceName = process.env.EVOLUTION_INSTANCE_NAME || this.instanceName || "KeaLogic";
+
     // Validate required environment variables
-    if (!this.baseUrl || !this.apiKey) {
+    if (!baseUrl || !apiKey) {
       console.error(
         "[WhatsAppService] Missing Evolution API configuration. Please set EVOLUTION_BASE_URL and EVOLUTION_API_KEY"
       );
@@ -73,18 +78,24 @@ export class WhatsAppService {
     const cleanNumber = to.replace(/\D/g, "");
 
     try {
-      const url = `${this.baseUrl.replace(/\/$/, "")}/message/sendText/${this.instanceName}`;
+      const url = `${baseUrl.replace(/\/$/, "")}/message/sendText/${instanceName}`;
       
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": this.apiKey,
+          "apikey": apiKey,
         },
         body: JSON.stringify({
           number: cleanNumber,
-          text: message,
-          linkPreview: false
+          textMessage: {
+            text: message
+          },
+          options: {
+            delay: 1200,
+            presence: "composing",
+            linkPreview: false
+          }
         }),
       });
 
@@ -96,7 +107,7 @@ export class WhatsAppService {
         };
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
       return {
         success: true,
         messageId: data.key?.id || "sent",

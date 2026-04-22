@@ -112,6 +112,61 @@ router.get(
   }
 );
 
+/**
+ * GET /api/raid-logs/bulk-latest
+ * Fetches the most recent log entry for a list of beaches.
+ * Used to populate map markers with recent intelligence in one shot.
+ */
+router.get(
+  "/bulk-latest",
+  dataRateLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { beachIds } = req.query;
+      
+      if (!beachIds || typeof beachIds !== "string") {
+        return res.status(400).json({ error: "beachIds query parameter (comma-separated) is required" });
+      }
+
+      const idList = beachIds.split(",").filter(Boolean);
+      
+      if (idList.length === 0) return res.json({ logs: {} });
+
+      // Fetch the latest entry for each beach in parallel
+      const logPromises = idList.map(beachId => 
+        prisma.logEntry.findFirst({
+          where: { beachId, isPrivate: false, isAnonymous: false },
+          orderBy: { date: 'desc' },
+          select: {
+            id: true,
+            date: true,
+            beachId: true,
+            surferRating: true,
+            imageUrl: true,
+            comments: true,
+            beachName: true
+          }
+        })
+      );
+
+      const results = await Promise.all(logPromises);
+      
+      // Map results back to beachId keys for easy frontend lookup
+      const logsMap: Record<string, any> = {};
+      results.forEach(log => {
+        if (log && log.beachId) {
+          logsMap[log.beachId] = log;
+        }
+      });
+
+      return res.json({ logs: logsMap });
+    } catch (error) {
+      console.error("❌ Bulk logs error:", error);
+      res.status(500).json({ error: "Failed to fetch bulk intelligence" });
+    }
+  }
+);
+
 // POST /api/raid-logs - Create a new log entry
 router.post(
   "/",

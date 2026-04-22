@@ -105,8 +105,9 @@ export async function sendWhatsAppMessageEvolution(
       },
       body: JSON.stringify({
         number: cleanNumber,
-        text: message,
-        linkPreview: false 
+        textMessage: {
+          text: message
+        }
       }),
     });
 
@@ -150,6 +151,13 @@ export async function sendWhatsAppBoth(
   // 3. Fallback to WaSenderAPI
   if (process.env.WASENDERAPI_TOKEN) {
     const success = await sendWhatsAppMessage(to, message);
+    if (success) return true;
+  }
+
+  // 4. Fallback to MessageBird
+  if (process.env.MESSAGEBIRD_API_KEY) {
+    const { sendWhatsAppMessage: sendMessageBird } = await import("./messagebird");
+    const success = await sendMessageBird(to, message);
     if (success) return true;
   }
 

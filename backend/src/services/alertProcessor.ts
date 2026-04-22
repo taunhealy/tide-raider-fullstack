@@ -261,8 +261,9 @@ export async function processUserAlerts(userId: string, today: Date) {
 /**
  * Process alerts for all users with active alerts
  * Used by cron jobs to check all users at once
+ * @param isAccelerated If true, only process Premium/Trial users (high-frequency pulse)
  */
-export async function processAllUserAlerts() {
+export async function processAllUserAlerts(isAccelerated = false) {
   const results = {
     usersProcessed: 0,
     alertsChecked: 0,
@@ -275,7 +276,8 @@ export async function processAllUserAlerts() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get all users with active alerts
+    // Get users with active alerts
+    // If accelerated, only get students with ACTIVE subscription or TRIAL
     const usersWithAlerts = await prisma.user.findMany({
       where: {
         alerts: {
@@ -283,15 +285,28 @@ export async function processAllUserAlerts() {
             active: true,
           },
         },
+        ...(isAccelerated && {
+          OR: [
+            { subscriptionStatus: "ACTIVE" },
+            { 
+              hasActiveTrial: true,
+              trialEndDate: {
+                gt: new Date()
+              }
+            },
+          ],
+        }),
       },
       select: {
         id: true,
         name: true,
         email: true,
+        subscriptionStatus: true,
+        hasActiveTrial: true,
       },
     });
 
-    console.log(`Found ${usersWithAlerts.length} users with active alerts`);
+    console.log(`[Heartbeat] ${isAccelerated ? 'Accelerated' : 'Full'} Mode: Found ${usersWithAlerts.length} users to process`);
 
     // Process alerts for each user
     for (const user of usersWithAlerts) {

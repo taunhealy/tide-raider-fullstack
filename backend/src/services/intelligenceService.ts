@@ -1,5 +1,6 @@
 import { PythonBridge } from "../lib/pythonBridge";
 import { prisma } from "../lib/prisma";
+import { ScoreService } from "./scoreService";
 
 interface IntelCache {
   [key: string]: {
@@ -34,13 +35,13 @@ export class IntelligenceService {
       reportDate.setUTCHours(0, 0, 0, 0);
 
       if (beachRef) {
-         const dbReport = await prisma.intelligenceReport.findUnique({
+         const dbReport = await prisma.intelligenceReport.findFirst({
             where: {
-               beachId_date_persona: {
-                  beachId: beachRef.id,
-                  date: reportDate,
-                  persona: persona
-               }
+              beachId: beachRef.id,
+              userId: null, // Global cache reports have no user ID
+              date: reportDate,
+              persona: persona,
+              isWeekly: false
             }
          });
          
@@ -71,18 +72,22 @@ export class IntelligenceService {
       if (beachRef) {
          await prisma.intelligenceReport.upsert({
             where: {
-               beachId_date_persona: {
+               intel_history_unique: {
                   beachId: beachRef.id,
+                  userId: null,
                   date: reportDate,
-                  persona: persona
+                  persona: persona,
+                  isWeekly: false
                }
             },
             update: { content: report },
             create: {
                beachId: beachRef.id,
+               userId: null,
                date: reportDate,
                persona: persona,
-               content: report
+               content: report,
+               isWeekly: false
             }
          });
       }
@@ -145,12 +150,22 @@ export class IntelligenceService {
 
     const context = weeklyForecasts.map(f => {
        const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-       return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°`;
+       const score = typeof ScoreService !== 'undefined' ? (ScoreService.calculateScore(beachRef as any, f as any) || 0) : 0;
+       return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, ALGO_SCORE: ${score.toFixed(1)}/10`;
     }).join("\n");
 
     const { getPersonaByCycle } = await import("../constants/intelligence");
     const activePersona = getPersonaByCycle(new Date().getDate());
     const persona = personaOverride || activePersona.id;
+
+    // Construct Spot Rules to guide the AI with specific expertise
+    const spotRules = `
+    SPOT DNA & OPTIMAL CONDITIONS for ${beachRef.name}:
+    - Optimal Wind: ${beachRef.optimalWindDirections.join(", ")}
+    - Optimal Swell: ${beachRef.optimalSwellDirections.min}° to ${beachRef.optimalSwellDirections.max}°
+    - Ideal Tide: ${beachRef.idealTide || "Incoming Mid-to-High"}
+    - Spot Knowledge: ${beachRef.description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
+    `;
 
     const report = await PythonBridge.generateIntelligenceReport(
       beachRef.name, 
@@ -161,9 +176,35 @@ export class IntelligenceService {
       weeklyForecasts[0].swellDirection.toString(), 
       0, 
       persona, 
-      `Weekly Outlook Context (7-Day Forecast):\n${context}`,
+      `Weekly Outlook Context (7-Day Forecast):\n${context}\n\n${spotRules}`,
       "weekly"
     );
+
+    // 5. Save report to history
+    await prisma.intelligenceReport.upsert({
+      where: {
+        intel_history_unique: {
+          beachId,
+          userId,
+          date: startDate,
+          persona,
+          isWeekly: true
+        }
+      },
+      update: { 
+        content: report,
+        weekEndDate: endDate
+      },
+      create: {
+        beachId,
+        userId,
+        date: startDate,
+        persona,
+        content: report,
+        isWeekly: true,
+        weekEndDate: endDate
+      }
+    });
 
     return { 
       report, 

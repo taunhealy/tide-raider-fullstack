@@ -174,9 +174,9 @@ export default function BeachHeaderControls({
     else if (hour >= 16) slot = TimeSlot.EVENING;
     setActiveSlot(slot);
     
-    // Set initial default if not in URL
+    // Set initial default to MORNING if not in URL
     if (!filters.timeSlot) {
-       updateFilter("timeSlot", slot);
+       updateFilter("timeSlot", TimeSlot.MORNING);
     }
   }, []);
 

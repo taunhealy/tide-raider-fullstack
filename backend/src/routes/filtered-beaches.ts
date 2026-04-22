@@ -171,10 +171,17 @@ router.get(
         targetDate.setUTCHours(0, 0, 0, 0);
       }
 
-      // Calculate distance from today for source switching logic
+      // 🚨 CRITICAL FIX: Calculate source switching BEFORE the cache check
       const today = new Date();
       today.setUTCHours(0, 0, 0, 0);
       const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Determine the "True Source" based on date depth
+      // Windfinder (Superforecast) only goes 3 days deep.
+      let effectiveSource = sourceParam;
+      if (sourceParam === "WINDFINDER" && diffDays > 3) {
+        effectiveSource = "WINDGURU";
+      }
 
       // Step 1: Get forecast data and check scores in parallel for better performance
       const forecastSelect = {
@@ -201,12 +208,12 @@ router.get(
 
       // Parallel queries: forecast lookup, score check, and available dates
       const [exactForecast, scoreCheck, availableForecastDates] = await Promise.all([
-        // Try exact match first
+        // Try exact match with the EFFECTIVE source first
         regionId ? prisma.forecast.findFirst({
           where: {
             regionId,
             date: targetDate,
-            source: sourceParam,
+            source: effectiveSource as any,
             timeSlot: timeSlotParam as any,
           },
           select: forecastSelect,
@@ -216,7 +223,7 @@ router.get(
           where: {
             regionId,
             date: targetDate,
-            source: sourceParam,
+            source: effectiveSource as any,
             timeSlot: timeSlotParam as any,
           },
           select: {
@@ -224,8 +231,7 @@ router.get(
             beachId: true,
           },
         }) : Promise.resolve(null),
-        // Get unique dates with forecast data for this region, restricted to our 10-day tactical window
-        // We include both sources so users can see the full week populated by Windguru
+        // Get available dates
         prisma.forecast.findMany({
           where: {
             ...(regionId && { regionId }),
@@ -245,18 +251,54 @@ router.get(
         }),
       ]);
 
+      let forecast = exactForecast;
+
+      // 🔄 CROSS-SOURCE FALLBACK (Alternative Provider)
+      if (!forecast && regionId) {
+        const alternateSource = effectiveSource === "WINDFINDER" ? "WINDGURU" : "WINDFINDER";
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            date: targetDate,
+            source: alternateSource as any,
+            timeSlot: timeSlotParam as any,
+          },
+          select: forecastSelect,
+        });
+        if (forecast) {
+          console.log(`[filtered-beaches] 🔀 Using alternate source ${alternateSource} cache to prevent reload.`);
+        }
+      }
+
+      // 🕒 SLOT FALLBACK (Same Day, Different Time)
+      // If we have data for the day but just not this specific slot, don't re-scrape!
+      if (!forecast && regionId) {
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId,
+            date: targetDate,
+            source: effectiveSource as any,
+          },
+          orderBy: {
+            // Find the closest available slot
+            timeSlot: "asc" 
+          },
+          select: forecastSelect,
+        });
+        if (forecast) {
+          console.log(`[filtered-beaches] 🕒 Using slot fallback for ${targetDate.toISOString().split('T')[0]} to prevent reload.`);
+        }
+      }
       const availableDates = availableForecastDates.map((f) => 
         f.date.toISOString().split("T")[0]
       );
-
-      let forecast = exactForecast;
 
       // If no exact forecast, try fallback (same source/slot, most recent)
       if (!forecast && regionId) {
         forecast = await prisma.forecast.findFirst({
           where: {
             regionId,
-            source: sourceParam,
+            source: effectiveSource as any,
             timeSlot: timeSlotParam as any,
             date: { lte: targetDate },
           },
@@ -381,26 +423,57 @@ router.get(
         }
       }
 
-      // Step 3: Fetch beaches with their daily scores for the target date and slot
-      const beaches = await prisma.beach.findMany({
-        where: whereClause,
-        include: {
-          region: true,
-          beachDailyScores: {
-            where: {
-              date: targetDate,
-              source: ((sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam) as any,
-              timeSlot: timeSlotParam as any,
+      // Step 3: Fetch beaches and hidden gem count in parallel
+      // Use the actual source we found the forecast for (respecting fallbacks)
+      const dataMappingSource = forecast?.source || ((sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam);
+
+      const [beaches, hiddenGemCount] = await Promise.all([
+        prisma.beach.findMany({
+          where: whereClause,
+          include: {
+            region: true,
+            beachDailyScores: {
+              where: {
+                date: targetDate,
+                source: dataMappingSource as any,
+                timeSlot: timeSlotParam as any,
+              },
+              select: {
+                score: true,
+                conditions: true,
+                date: true,
+                timeSlot: true,
+              },
             },
-            select: {
-              score: true,
-              conditions: true,
-              date: true,
-              timeSlot: true,
-            },
+            // Fetch the single latest public log entry to eliminate frontend N+1 fetches
+            logEntries: {
+              where: { isPrivate: false, isAnonymous: false },
+              orderBy: { date: 'desc' },
+              take: 1,
+              select: {
+                id: true,
+                date: true,
+                surferRating: true,
+                comments: true,
+                imageUrl: true,
+                surferName: true
+              }
+            }
           },
-        },
-      });
+        }),
+        prisma.beachDailyScore.count({
+          where: {
+            regionId: regionId as string,
+            date: targetDate,
+            source: dataMappingSource as any,
+            timeSlot: timeSlotParam as any,
+            score: { gte: 8 },
+            beach: {
+              isHiddenGem: true
+            }
+          }
+        })
+      ]);
 
       // Transform scores into a flat dictionary
       const scores = beaches.reduce(
@@ -426,19 +499,6 @@ router.get(
         },
         {}
       );
-
-      // Get hidden gem count for the indicator (beaches with score >= 8 and isHiddenGem = true)
-      const hiddenGemCount = await prisma.beachDailyScore.count({
-        where: {
-          regionId: regionId as string,
-          date: targetDate,
-          timeSlot: timeSlotParam as any,
-          score: { gte: 8 },
-          beach: {
-            isHiddenGem: true
-          }
-        }
-      });
 
       // Return response
       return res.json({

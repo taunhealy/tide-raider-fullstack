@@ -226,6 +226,17 @@ const BeachCard = memo(function BeachCard({
 
   const isModalOpen = searchParams.get("beach") === beach.name;
 
+  // Auto-open AI modal if deep-linked via URL (report history)
+  useEffect(() => {
+    const reportId = searchParams.get("report");
+    const reportBeachId = searchParams.get("beachId");
+    
+    // Support matching by ID (from history page) or Name (from regular UI)
+    if (reportId && (reportBeachId === beach.id || searchParams.get("beachName") === beach.name)) {
+      setIsAIModalOpen(true);
+    }
+  }, [searchParams, beach.id, beach.name]);
+
   const handleOpenModal = (e?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e?.stopPropagation();
     const params = new URLSearchParams(searchParams);
@@ -236,7 +247,22 @@ const BeachCard = memo(function BeachCard({
   const handleCloseModal = () => {
     const params = new URLSearchParams(searchParams);
     params.delete("beach");
+    params.delete("report");
+    params.delete("beachId");
+    params.delete("beachName");
     router.replace(`${pathname}?${params}`, { scroll: false });
+  };
+
+  const handleCloseAIModal = () => {
+    setIsAIModalOpen(false);
+    // Also clear URL params if we were deep-linked
+    if (searchParams.get("report")) {
+      const params = new URLSearchParams(searchParams);
+      params.delete("report");
+      params.delete("beachId");
+      params.delete("beachName");
+      router.replace(`${pathname}?${params}`, { scroll: false });
+    }
   };
 
   if (isLocalLoading) {
@@ -259,6 +285,7 @@ const BeachCard = memo(function BeachCard({
         overflow-hidden 
         transition-all 
         duration-300 
+        hover:bg-slate-50/50
         hover:shadow-md
         w-full
         ${isLocalLoading ? "animate-pulse" : ""}
@@ -544,6 +571,7 @@ const BeachCard = memo(function BeachCard({
                           name: beach.region?.name || "",
                           country: beach.country,
                         },
+                        logEntries: beach.logEntries,
                       }}
                       videos={beach.videos}
                       isLocked={isLocked}
@@ -845,6 +873,7 @@ const BeachCard = memo(function BeachCard({
                           name: beach.region?.name || "",
                           country: beach.country,
                         },
+                        logEntries: beach.logEntries,
                       }}
                       videos={beach.videos}
                       isLocked={isLocked}
@@ -902,8 +931,9 @@ const BeachCard = memo(function BeachCard({
         <AIReportModal
           beach={beach}
           isOpen={isAIModalOpen}
-          onClose={() => setIsAIModalOpen(false)}
+          onClose={handleCloseAIModal}
           date={searchParams.get("date") || new Date().toISOString().split("T")[0]}
+          reportId={searchParams.get("report") || undefined}
         />
       )}
     </ErrorBoundary>

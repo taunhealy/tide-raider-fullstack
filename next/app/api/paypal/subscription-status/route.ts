@@ -61,6 +61,8 @@ export async function GET(req: NextRequest) {
       hasActiveTrial,
       paypalSubscriptionId: null, // Not returned by /api/auth/me
       isPremium,
+      credits: userData.credits || 0,
+      referralCode: userData.referralCode || null,
       // Additional info that might be useful
       trialEndDate: userData.trialEndDate,
       hasTrialEnded: false, // Not returned by /api/auth/me

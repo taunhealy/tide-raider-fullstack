@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ForecastAlertModal from "@/app/components/alerts/ForecastAlertForm";
 import { RandomLoader } from "@/app/components/ui/random-loader";
@@ -91,167 +91,100 @@ export default function NewAlertPage() {
     }
   }, [searchParams, session?.user]);
 
+  const isMounted = useRef(true);
+
+  // Sync isMounted ref
   useEffect(() => {
-    // Check alert limit and fetch log entries when component mounts
-    let mounted = true;
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-    const checkAlertLimit = async () => {
+  const checkAlertLimit = async () => {
+    if (!session?.user) return;
+    
+    try {
+      // Calculate alert limit based on subscription tier
+      const isSubscribed = session.user.isSubscribed || session.user.subscriptionStatus === "ACTIVE";
+      const hasTrial = session.user.hasActiveTrial === true;
+      const alertLimit = isSubscribed ? 100 : (hasTrial ? 10 : 1);
+
+      console.log("[NewAlertPage] Tier Limit Check:", { isSubscribed, hasTrial, alertLimit });
+
+      // Fetch current active alerts
       try {
-        // Check if user is premium - refresh auth state first if needed
-        const isUserPremium =
-          session?.user?.isSubscribed || session?.user?.hasActiveTrial;
+        const alerts = await api.getAlerts() as any[];
+        const activeAlerts = Array.isArray(alerts)
+          ? alerts.filter((alert: any) => alert.active !== false)
+          : [];
 
-        console.log("[NewAlertPage] Premium check:", {
-          isSubscribed: session?.user?.isSubscribed,
-          hasActiveTrial: session?.user?.hasActiveTrial,
-          isUserPremium,
-        });
-
-        if (isUserPremium) {
-          setIsPremium(true);
-          setAlertLimitReached(false);
-          // Premium users can create unlimited alerts, so fetch logs
-          if (mounted) {
-            console.log("[NewAlertPage] Fetching log entries...");
-            try {
-              // Add timeout to prevent hanging
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Request timeout")), 10000)
-              );
-              const data = (await Promise.race([
-                api.getLogs(),
-                timeoutPromise,
-              ])) as any[];
-              console.log(
-                "[NewAlertPage] Log entries fetched:",
-                data?.length || 0,
-                "entries"
-              );
-              console.log("[NewAlertPage] First log entry sample:", data?.[0]);
-              setLogEntries(Array.isArray(data) ? data : []);
-            } catch (error) {
-              console.error("[NewAlertPage] Error fetching logs:", error);
-              setLogEntries([]);
-            }
-            setHasFetchedLogs(true);
+        if (activeAlerts.length >= alertLimit) {
+          if (isMounted.current) {
+            setAlertLimitReached(true);
+            setIsPremium(isSubscribed); 
           }
-        } else {
-          // Check alert count for free users
-          try {
-            // Add timeout to prevent hanging
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Request timeout")), 10000)
-            );
-            const alerts = (await Promise.race([
-              api.getAlerts(),
-              timeoutPromise,
-            ])) as any[];
-            const activeAlerts = Array.isArray(alerts)
-              ? alerts.filter((alert: any) => alert.active !== false)
-              : [];
-
-            if (activeAlerts.length >= 1) {
-              if (mounted) {
-                setAlertLimitReached(true);
-                setIsPremium(false);
-              }
-              return;
-            }
-          } catch (error) {
-            console.error("[NewAlertPage] Error checking alerts:", error);
-            // Continue to fetch logs even if alert check fails
-          }
-
-          // Limit not reached, fetch log entries
-          if (mounted) {
-            console.log("[NewAlertPage] Fetching log entries...");
-            try {
-              // Add timeout to prevent hanging
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Request timeout")), 10000)
-              );
-              const data = (await Promise.race([
-                api.getLogs(),
-                timeoutPromise,
-              ])) as any[];
-              console.log(
-                "[NewAlertPage] Log entries fetched:",
-                data?.length || 0,
-                "entries"
-              );
-              console.log("[NewAlertPage] First log entry sample:", data?.[0]);
-              setLogEntries(Array.isArray(data) ? data : []);
-            } catch (error) {
-              console.error("[NewAlertPage] Error fetching logs:", error);
-              setLogEntries([]);
-            }
-            setHasFetchedLogs(true);
-          }
+          return;
         }
       } catch (error) {
-        console.error("[NewAlertPage] Error checking alert limit:", error);
-        if (mounted) {
-          setLogEntries([]);
-          setHasFetchedLogs(true);
-        }
-      } finally {
-        if (mounted) {
-          // Ensure loading is set to false even if there were errors
-          setIsLoading(false);
-        }
+        console.error("[NewAlertPage] Error checking alerts:", error);
       }
-    };
 
-    // If we have session data, proceed immediately (don't wait for status to update)
-    if (session?.user) {
-      // User is authenticated - check limit and fetch logs
-      if (!hasFetchedLogs) {
-        // Set loading to false immediately so page can render
-        // checkAlertLimit will run in background
-        setIsLoading(false);
-        checkAlertLimit();
-      } else {
+      // Limit not reached, fetch log entries
+      if (isMounted.current) {
+        setIsPremium(isSubscribed || hasTrial);
+        setAlertLimitReached(false);
+        try {
+          const data = await api.getLogs() as any[];
+          if (isMounted.current) {
+            setLogEntries(Array.isArray(data) ? data : []);
+          }
+        } catch (error) {
+          console.error("[NewAlertPage] Error fetching logs:", error);
+          if (isMounted.current) setLogEntries([]);
+        }
+        setHasFetchedLogs(true);
+      }
+    } catch (error) {
+      console.error("[NewAlertPage] Error in checkAlertLimit:", error);
+    } finally {
+      if (isMounted.current) {
         setIsLoading(false);
       }
-      return () => {
-        mounted = false;
-      };
     }
+  };
 
-    // If auth is still loading and we don't have session data, show loader
-    if (authStatus === "loading" && !session?.user) {
-      // Still loading auth state - keep showing loader
-      return;
+  // Redirect to login if user is not authenticated and not loading
+  useEffect(() => {
+    if (authStatus === "unauthenticated" && !session) {
+      const callbackUrl = encodeURIComponent(window.location.pathname + (window.location.search || ""));
+      window.location.href = `/auth/signin?callbackUrl=${callbackUrl}`;
     }
+  }, [authStatus, session]);
 
-    // Auth finished loading but no user - redirect to login
-    if (
-      authStatus === "unauthenticated" ||
-      (!session?.user && authStatus !== "loading")
-    ) {
-      // User is not authenticated, redirect to login with callback URL
-      setIsLoading(false); // Set loading to false before redirect
-      router.push(`/login?callbackUrl=${encodeURIComponent("/alerts/new")}`);
-      return;
+  // Fetch individual log if logId is present
+  useEffect(() => {
+    const logId = searchParams.get("logId");
+    if (logId && session?.user) {
+      api.getLog(logId).then(logEntry => {
+        if (isMounted.current) {
+          setSelectedLogEntry(logEntry as LogEntry);
+        }
+      }).catch(err => {
+        console.error("[NewAlertPage] Error fetching log:", err);
+        toast.error("Failed to load specific log entry.");
+      });
     }
+  }, [searchParams, session?.user]);
 
-    // If we reach here and don't have session, set loading to false
-    // This handles edge cases where auth status is undefined or in an unexpected state
-    if (!session?.user && authStatus !== "loading") {
+  // Main initialization effect
+  useEffect(() => {
+    if (session?.user && !hasFetchedLogs) {
+      checkAlertLimit();
+    } else if (authStatus !== "loading" && !session?.user) {
       setIsLoading(false);
     }
-
-    return () => {
-      mounted = false;
-    };
-  }, [
-    authStatus,
-    session?.user,
-    session?.user?.isSubscribed,
-    session?.user?.hasActiveTrial,
-    hasFetchedLogs,
-    router,
-  ]);
+  }, [session?.user, authStatus, hasFetchedLogs]);
 
   // Listen for auth refresh events (triggered after subscription sync)
   useEffect(() => {

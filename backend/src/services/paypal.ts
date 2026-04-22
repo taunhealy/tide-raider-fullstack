@@ -107,6 +107,8 @@ export class PayPalService {
         brand_name: "Tide Raider",
         shipping_preference: "NO_SHIPPING",
         user_action: "PAY_NOW",
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing?status=success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing?status=cancel`,
       },
     };
 

@@ -53,24 +53,56 @@ export class CronScheduler {
       "✅ Cron job scheduled: Once daily at 01:00 UTC (3am SAST)"
     );
 
-    // High frequency tactical sync for South Africa regions (Every 4 hours)
-    // Runs at: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
-    const saHighFreqTask = cron.schedule(
-      "0 */4 * * *",
+    // Dynamic Heartbeat Accelerator (1-hour tactical pulse)
+    // Automatically scales to high-frequency when active subscribers are present
+    const heartbeatTask = cron.schedule(
+      "0 * * * *",
       async () => {
-        console.log("🇿🇦 Running high-frequency tactical scrape for South Africa regions...");
-        // Scrape today and tomorrow (3 days) for South Africa regions
-        await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
-        await processAllUserAlerts();
+        try {
+          const now = new Date();
+          // Skip if it's the 01:00 slot (handled by the main daily task)
+          if (now.getUTCHours() === 1) return;
+
+          const { prisma } = require("../lib/prisma");
+          const { processAllUserAlerts } = await import("./alertProcessor");
+          
+          const subscriberCount = await prisma.user.count({
+            where: {
+              OR: [
+                { subscriptionStatus: "ACTIVE" },
+                { hasActiveTrial: true },
+              ],
+            },
+          });
+
+          if (subscriberCount === 0) {
+            // Low-cost mode: only run every 4 hours if no active subscribers
+            if (now.getUTCHours() % 4 === 0) {
+              console.log("[cron] 💓 Maintenance: Running 4-hour background sync (no active subscribers)");
+              await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
+              await processAllUserAlerts();
+            }
+            return;
+          }
+
+          console.log(`[cron] 💓 Heartbeat: Pulsing for ${subscriberCount} active subscribers`);
+          
+          // Tactical Sync: Refresh forecast data every 4 hours
+          if (now.getUTCHours() % 4 === 0) {
+            await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
+          }
+
+          await processAllUserAlerts(true); // Accelerated mode (filters for active users)
+        } catch (error) {
+          console.error("❌ [cron] Heartbeat accelerator failed:", error);
+        }
       },
       {
         timezone: "UTC",
       }
     );
-    this.tasks.push(saHighFreqTask);
-    console.log(
-      "✅ South Africa High-frequency tactical sync scheduled: Every 4 hours"
-    );
+    this.tasks.push(heartbeatTask);
+    console.log("✅ Dynamic Heartbeat Accelerator active: 1h Pulse (Dynamic Scaling)");
  
     // Sunday Morning Newsletter (Run every Sunday at 07:00 UTC / 9:00 AM SAST)
     const newsletterTask = cron.schedule(

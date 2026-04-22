@@ -24,12 +24,23 @@ export async function generateUniqueReferralCode(name?: string): Promise<string>
 /**
  * Reward a referrer with AI credits
  */
-export async function rewardReferrer(referrerId: string, credits: number = 10) {
+export async function rewardReferrer(referrerId: string, credits: number = 30) {
   try {
     const user = await prisma.user.update({
       where: { id: referrerId },
       data: {
         credits: { increment: credits }
+      }
+    });
+
+    // Create a notification for the referrer
+    await prisma.notification.create({
+      data: {
+        userId: referrerId,
+        type: "RECRUITMENT",
+        title: "Recruitment Successful 🎯",
+        message: `A new tactical analyst has joined via your intel link. +${credits} Intelligence Credits added to your balance.`,
+        read: false
       }
     });
 

@@ -9,8 +9,11 @@ interface User {
   name?: string | null;
   image?: string | null;
   isSubscribed?: boolean;
+  subscriptionStatus?: string;
   hasActiveTrial?: boolean;
   trialEndDate?: Date | null;
+  whatsappNumber?: string | null;
+  referralCode?: string;
 }
 
 interface BackendSession {

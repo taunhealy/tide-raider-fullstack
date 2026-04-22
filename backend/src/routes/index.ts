@@ -55,10 +55,12 @@ router.use("/test-email", testEmailRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
 router.use("/squads", squadsRouter);
 import partnersRouter from "./partners";
+import newsletterRouter from "./newsletter";
 
 router.use("/promo-codes", promoCodesRouter);
 router.use("/paypal", paypalRouter);
 router.use("/partners", partnersRouter);
 router.use("/intelligence", intelligenceRouter);
+router.use("/newsletter", newsletterRouter);
 
 export default router;

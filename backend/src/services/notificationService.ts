@@ -174,19 +174,21 @@ export async function sendAlertNotification(
       alertRecord?.forecastDate || logEntry?.date || new Date();
 
     // Check for existing notification first
+    // Deduplicate by alertId AND alertName (the name includes the time slot like "(MORNING)")
     const existingNotification = await prisma.alertNotification.findFirst({
       where: {
         alertId: alert.id,
+        alertName: alertMatch.alertName,
         createdAt: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)), // Today
           lt: new Date(new Date().setHours(24, 0, 0, 0)),
         },
-        success: true,
+        success: true, 
       },
     });
 
     if (existingNotification) {
-      console.log("Notification already sent today (successfully), skipping");
+      console.log(`[Notification] ⏭️ Already sent ${alertMatch.alertName} today, skipping.`);
       return true;
     }
 
@@ -255,49 +257,12 @@ export async function sendAlertNotification(
             alertMatch,
             resolvedBeachName,
             regionName,
-            forecastDate
+            forecastDate,
+            alert.sources || []
           );
-          // Try Evolution API first (Kea Logic preferred)
-          if (process.env.EVOLUTION_BASE_URL && process.env.EVOLUTION_API_KEY) {
-            const { sendWhatsAppMessageEvolution } = await import(
-              "../lib/whatsapp"
-            );
-            sendSuccess = await sendWhatsAppMessageEvolution(
-              alert.contactInfo,
-              plainTextMsg
-            );
-          }
-          // Fallback to Unipile
-          else if (process.env.UNIPILE_API_KEY) {
-            const { sendWhatsAppMessageUnipile } = await import(
-              "../lib/whatsapp"
-            );
-            sendSuccess = await sendWhatsAppMessageUnipile(
-              alert.contactInfo,
-              plainTextMsg
-            );
-          }
-          // Fallback to WaSenderAPI
-          else if (process.env.WASENDERAPI_TOKEN) {
-            const { sendWhatsAppMessage } = await import("../lib/whatsapp");
-            sendSuccess = await sendWhatsAppMessage(
-              alert.contactInfo,
-              plainTextMsg
-            );
-          }
-          // Fallback to MessageBird
-          else if (process.env.MESSAGEBIRD_API_KEY) {
-            const { sendWhatsAppMessage } = await import("../lib/messagebird");
-            sendSuccess = await sendWhatsAppMessage(
-              alert.contactInfo,
-              plainTextMsg
-            );
-          } else {
-            console.error(
-              "No WhatsApp provider configured. Set UNIPILE_API_KEY, WASENDERAPI_TOKEN, or MESSAGEBIRD_API_KEY"
-            );
-            sendSuccess = false;
-          }
+          
+          const { sendWhatsAppBoth } = await import("../lib/whatsapp");
+          sendSuccess = await sendWhatsAppBoth(alert.contactInfo, plainTextMsg);
           break;
         case "app":
           // Notification record already created above
@@ -309,44 +274,17 @@ export async function sendAlertNotification(
             alertMatch,
             resolvedBeachName,
             regionName,
-            forecastDate
+            forecastDate,
+            alert.sources || []
           );
 
-          // Try Evolution API first, then Unipile, then WaSenderAPI, then MessageBird
-          let whatsappSuccess = false;
-          if (process.env.EVOLUTION_BASE_URL && process.env.EVOLUTION_API_KEY) {
-            const { sendWhatsAppMessageEvolution } = await import(
-              "../lib/whatsapp"
-            );
-            whatsappSuccess = await sendWhatsAppMessageEvolution(
-              alert.contactInfo,
-              plainTextMsgBoth
-            );
-          } else if (process.env.UNIPILE_API_KEY) {
-            const { sendWhatsAppMessageUnipile } = await import(
-              "../lib/whatsapp"
-            );
-            whatsappSuccess = await sendWhatsAppMessageUnipile(
-              alert.contactInfo,
-              plainTextMsgBoth
-            );
-          } else if (process.env.WASENDERAPI_TOKEN) {
-            const { sendWhatsAppMessage: sendWhatsAppBoth } = await import(
-              "../lib/whatsapp"
-            );
-            whatsappSuccess = await sendWhatsAppBoth(
-              alert.contactInfo,
-              plainTextMsgBoth
-            );
-          } else if (process.env.MESSAGEBIRD_API_KEY) {
-            const { sendWhatsAppMessage: sendWhatsAppBoth } = await import(
-              "../lib/messagebird"
-            );
-            whatsappSuccess = await sendWhatsAppBoth(
-              alert.contactInfo,
-              plainTextMsgBoth
-            );
-          }
+          const { sendWhatsAppBoth: sendWhatsAppBothShared } = await import(
+            "../lib/whatsapp"
+          );
+          let whatsappSuccess = await sendWhatsAppBothShared(
+            alert.contactInfo,
+            plainTextMsgBoth
+          );
 
           console.log(
             `📧 Sending email notification (both method) for alert ${alert.id}:`,
@@ -506,66 +444,11 @@ function createNotificationMessage(
         </div>
         <div class="footer">
           Tide Raider Intelligence • 🛰️ https://www.tideraider.com
-  // Plain text version for non-HTML clients
-  const plainTextMessage = `
-Tide Raider
-🌊 Alert Triggered!
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
-Location Details
-Beach:
-${beachName}
-
-Region:
-${regionName}
-
-Day:
-${dayName}
-
-Date:
-${dateString}
-
-Alert Sources:
-${mapSourceToAlias(alertSources)}
-
-✅ Conditions Met
-Surf conditions at ${beachName} have met your alert criteria:
-
-${details.replace(/<br>/g, "\n").replace(/• /g, "")}
-
----
-Tide Raider Intelligence
-🛰️ https://www.tideraider.com
-  `.trim();
-
-  return htmlMessage;
-}
-Location Details
-Beach:
-${beachName}
-
-Region:
-${regionName}
-
-Day:
-${dayName}
-
-Date:
-${dateString}
-
-Alert Sources:
-${mapSourceToAlias(alertSources)}
-
-✅ Conditions Met
-Surf conditions at ${beachName} have met your alert criteria:
-
-${details}
-
----
-Tide Raider Intelligence
-🛰️ https://www.tideraider.com
-  `.trim();
-
-  // Return HTML for email, plain text for other methods
-  // For WhatsApp and other text-based methods, we'll need to extract plain text
   return htmlMessage;
 }

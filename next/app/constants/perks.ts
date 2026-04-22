@@ -4,31 +4,31 @@ export const MEMBERSHIP_PERKS = [
   { 
     text: "Unlimited WhatsApp & Email surf alerts", 
     icon: Zap, 
-    color: "text-blue-500" 
+    color: "text-black" 
   },
   { 
     text: "Access to local 'Hidden Gems' & Break rankings", 
     icon: Star, 
-    color: "text-amber-500" 
+    color: "text-black" 
   },
   { 
     text: "30 AI Intelligence Credits per month", 
     icon: Sparkles, 
-    color: "text-purple-500" 
+    color: "text-black" 
   },
   { 
     text: "Detailed weather & swell data insights", 
     icon: Check, 
-    color: "text-gray-900" 
+    color: "text-black" 
   },
   { 
     text: "Custom alerts for your favorite spots", 
     icon: Bell, 
-    color: "text-blue-600" 
+    color: "text-black" 
   },
   { 
     text: "Cancel anytime, no strings attached", 
     icon: Check, 
-    color: "text-emerald-500" 
+    color: "text-black" 
   },
 ];

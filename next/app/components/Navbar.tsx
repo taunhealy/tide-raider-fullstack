@@ -177,7 +177,7 @@ export default function Navbar() {
               <span className="text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase">
                 TIDE RAIDER
               </span>
-              <span className="ml-2 px-1.5 py-0.5 bg-blue-600 text-[8px] font-black text-white rounded uppercase tracking-widest">
+              <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest">
                 BETA
               </span>
             </Link>
@@ -258,6 +258,13 @@ export default function Navbar() {
                         onClick={() => setIsProfileOpen(false)}
                       >
                         Profile
+                      </Link>
+                      <Link
+                        href="/dashboard?tab=intelligence"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-primary"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        AI Reports
                       </Link>
                     </div>
                   )}
@@ -347,6 +354,19 @@ export default function Navbar() {
                       )}
                     >
                       Profile
+                    </Link>
+                    <div className="border-t border-[var(--color-border-light)] mt-3" />
+                  </li>
+                  <li className="px-2 py-3">
+                    <Link
+                      href="/dashboard?tab=intelligence"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={cn(
+                        "block font-primary text-[var(--color-text-primary)] hover:text-[var(--color-text-primary)] hover:font-semibold",
+                        "transition-all duration-300"
+                      )}
+                    >
+                      AI Reports
                     </Link>
                     <div className="border-t border-[var(--color-border-light)] mt-3" />
                   </li>

@@ -10,6 +10,7 @@ export interface AuthRequest extends Request {
     name?: string;
     isSubscribed?: boolean;
     hasActiveTrial?: boolean;
+    credits?: number;
   };
   // Remove the cookies property - it's already provided by Express/cookie-parser
 }

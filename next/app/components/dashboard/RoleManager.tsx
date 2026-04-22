@@ -3,7 +3,7 @@ import { UserRole } from "@prisma/client";
 import { ROLE_OPTIONS } from "@/app/lib/users/constants";
 import { Button } from "@/app/components/ui/Button";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 
 interface RoleManagerProps {
   userId?: string;
@@ -19,7 +19,7 @@ export function RoleManager({
   const [roles, setRoles] = useState<UserRole[]>(initialRoles || []);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { data: session } = useSession();
+  const { data: session } = useBackendAuth();
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(
     userId
   );

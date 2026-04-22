@@ -31,6 +31,7 @@ interface MediaGridProps {
       name: string;
       country?: { name: string };
     };
+    logEntries?: any[]; // The pre-fetched log entry from the parent API
     // Simplified service relationships
     coffeeShops?: { name: string }[];
     shapers?: { name: string; url?: string }[];
@@ -44,43 +45,41 @@ function MediaGridBase({
   beach,
   isLocked = false,
 }: MediaGridProps) {
-  // Fetch latest log entry for this beach
-  // Only fetch if we don't have videos (to reduce unnecessary requests)
-  // Use enabled flag to conditionally fetch
+  // Use the pre-fetched log if available from the parent API, otherwise fetch it.
+  // We check for Array.isArray so that even an empty list [] prevents a re-fetch.
+  const hasLogEntries = Array.isArray(beach.logEntries);
+  const initialLogData = hasLogEntries ? beach.logEntries : undefined;
+
+  // Fetch latest log entry only if not provided by backend parent
   const {
     data: latestLogEntry,
     isLoading: isLoadingLog,
     error: logError,
   } = useQuery<LogEntry[]>({
-    queryKey: ["raid-logs", beach.name],
+    queryKey: ["raid-logs", beach.id, beach.name],
     queryFn: async () => {
+      // If we already have the log from the parent API, return it immediately
+      if (initialLogData) return initialLogData;
+
       try {
         const response = await fetch(
           `/api/raid-logs?beachId=${beach.id}&limit=1`
         );
         if (!response.ok) {
-          // Don't throw error for 429 or other rate limit errors - just return empty
-          if (response.status === 429) {
-            console.warn(`[MediaGrid] Rate limited for beach ${beach.name}`);
-            return [];
-          }
-          // For other errors, also return empty array instead of throwing
           return [];
         }
         const data = await response.json();
         return data.entries || [];
       } catch (err) {
-        // Silently fail - log entries are optional
         return [];
       }
     },
-    enabled: true, // Keep enabled but with better caching
-    retry: 0, // Don't retry to avoid hitting rate limits
-    staleTime: 1000 * 60 * 10, // 10 minutes - cache longer to reduce requests
-    gcTime: 1000 * 60 * 60, // Keep in cache for 1 hour
+    initialData: initialLogData,
+    enabled: !hasLogEntries, // Only run the query if we don't already have the log array
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false,
   });
 
   // Ensure videos is always an array and has the correct shape
@@ -223,7 +222,7 @@ function MediaGridBase({
                     <img
                       src={latestLogEntry[0].imageUrl}
                       alt="Surf session"
-                      className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-300"
+                      className="object-cover w-full h-full duration-300"
                     />
                   </div>
                 )}
@@ -293,8 +292,8 @@ function MediaGridBase({
                 <div
                   className={`absolute inset-0 flex items-center justify-center ${
                     isLocked
-                      ? "opacity-90 scale-95"
-                      : "opacity-90 scale-95 group-hover/card:scale-100 group-hover/card:opacity-50 transition-all duration-300"
+                      ? "opacity-90"
+                      : "opacity-90 group-hover/card:opacity-50 transition-all duration-300"
                   }`}
                 >
                   <div className="w-12 h-12 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center shadow-lg">

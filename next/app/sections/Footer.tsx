@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Mail, ArrowRight, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -83,30 +85,19 @@ export default function Footer() {
             ))}
           </div>
 
-          {/* Newsletter Column */}
+          {/* Intelligence Trial Column */}
           <div className="md:col-span-4 space-y-6">
-            <h6 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-30">Newsletter</h6>
+            <h6 className="text-[10px] font-black text-white uppercase tracking-[0.3em] opacity-30">Strategic AI</h6>
             <p className="text-sm font-bold text-gray-400">
-              Get weekly intel on upcoming swells and new spots.
+               Test our AI Surf Reporting for Muizenberg. Real-time data, synthesized instantly.
             </p>
-            <form className="relative group">
-              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                <Mail className="w-4 h-4 text-gray-500 group-focus-within:text-white transition-colors" />
-              </div>
-              <input
-                type="email"
-                placeholder="Secure email"
-                suppressHydrationWarning
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-16 text-sm text-white focus:outline-none focus:border-white/20 focus:ring-4 focus:ring-white/5 transition-all outline-none"
-              />
-              <button
-                type="submit"
-                suppressHydrationWarning
-                className="absolute right-2 top-2 bottom-2 px-4 bg-white text-gray-900 rounded-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center shadow-lg"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
+            <Link 
+              href="/raid?beachId=muizenberg-beach&report=latest"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-gray-100 active:scale-95 transition-all shadow-xl shadow-white/5"
+            >
+              Test AI Intelligence
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
 
@@ -127,7 +118,7 @@ export default function Footer() {
           
           <div className="flex gap-4">
              <div className="px-3 py-1.5 bg-white/5 rounded-lg border border-white/5">
-               <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">v2.4.0 Global</span>
+                <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">v2.4.0 Global</span>
              </div>
           </div>
         </div>

@@ -164,6 +164,9 @@ model User {
   ownedPromoCodes      PromoCode[]         @relation("PartnerPromoCodes")
   commissionsReceived  Commission[]        @relation("PartnerCommissions")
   commissionsGenerated Commission[]        @relation("ReferredCommissions")
+  
+  // AI Reports History
+  intelligenceReports  IntelligenceReport[]
 
   @@index([email])
   @@index([skillLevel])
@@ -302,17 +305,22 @@ model BeachDailyScore {
 }
 
 model IntelligenceReport {
-  id        String   @id @default(cuid())
-  beachId   String
-  date      DateTime @db.Date
-  persona   String
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  beach     Beach    @relation(fields: [beachId], references: [id])
+  id          String   @id @default(cuid())
+  beachId     String
+  userId      String?  // Linked to who generated it (optional for global cache)
+  date        DateTime @db.Date
+  persona     String
+  content     String   @db.Text
+  isWeekly    Boolean  @default(false)
+  weekEndDate DateTime? @db.Date // End range for weekly reports
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  beach       Beach    @relation(fields: [beachId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
 
-  @@unique([beachId, date, persona])
+  @@unique([beachId, userId, date, persona, isWeekly], name: "intel_history_unique")
   @@index([beachId, date])
+  @@index([userId])
 }
 
 model Beach {
