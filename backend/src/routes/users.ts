@@ -37,6 +37,8 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
             boards: true,
             stories: true,
             favorites: true,
+            logEntries: true,
+            intelligenceReports: true,
           },
         },
       },

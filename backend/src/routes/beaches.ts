@@ -81,75 +81,46 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
     }
 
     const sanitizedTerm = term.trim().slice(0, 100);
+    const termWithoutSpaces = sanitizedTerm.replace(/\s+/g, "");
 
-    const whereClause: any = {
-      OR: [
-        { name: { contains: sanitizedTerm, mode: "insensitive" } },
-        { location: { contains: sanitizedTerm, mode: "insensitive" } },
-      ],
-    };
+    // Use raw SQL for space-agnostic matching (e.g. "Innerkom" matches "Inner Kom")
+    // We fetch IDs first, then use Prisma for the full include/relation logic
+    const matchingBeaches = await prisma.$queryRaw<any[]>`
+      SELECT id FROM "Beach"
+      WHERE REPLACE(name, ' ', '') ILIKE ${'%' + termWithoutSpaces + '%'}
+      OR name ILIKE ${'%' + sanitizedTerm + '%'}
+      OR location ILIKE ${'%' + sanitizedTerm + '%'}
+      LIMIT 20
+    `;
 
-    if (regionId) {
-      whereClause.regionId = regionId;
+    const matchingIds = matchingBeaches.map(b => b.id);
+
+    if (matchingIds.length === 0) {
+      return res.json([]);
     }
 
-    // First search for beaches in the current region
-    let regionBeaches: any[] = [];
-    if (regionId) {
-      try {
-        regionBeaches = await prisma.beach.findMany({
-          where: { ...whereClause, regionId },
-          include: {
-            region: true,
-            country: true,
-          },
-          take: 5,
-          orderBy: { name: "asc" },
-        });
-      } catch (regionError) {
-        console.error(
-          "[beaches/search] Error searching region beaches:",
-          regionError
-        );
+    // Fetch full beach objects with relations
+    const beaches = await prisma.beach.findMany({
+      where: {
+        id: { in: matchingIds }
+      },
+      include: {
+        region: true,
+        country: true,
       }
-    }
+    });
 
-    // If we don't have enough results from the current region, search all regions
-    let otherBeaches: any[] = [];
-    if (regionBeaches.length < 5) {
-      try {
-        const allBeaches = await prisma.beach.findMany({
-          where: {
-            OR: [
-              { name: { contains: sanitizedTerm, mode: "insensitive" } },
-              { location: { contains: sanitizedTerm, mode: "insensitive" } },
-            ],
-            ...(regionId && regionBeaches.length > 0
-              ? { regionId: { not: regionId } }
-              : {}),
-          },
-          include: {
-            region: true,
-            country: true,
-          },
-          take: 10,
-          orderBy: { name: "asc" },
-        });
-
-        otherBeaches = allBeaches.slice(0, 5 - regionBeaches.length);
-      } catch (allBeachesError) {
-        console.error(
-          "[beaches/search] Error searching all beaches:",
-          allBeachesError
-        );
+    // Sort results to prioritize the requested region and then by name
+    const sortedResults = beaches.sort((a, b) => {
+      if (regionId) {
+        if (a.regionId === regionId && b.regionId !== regionId) return -1;
+        if (a.regionId !== regionId && b.regionId === regionId) return 1;
       }
-    }
+      return a.name.localeCompare(b.name);
+    }).slice(0, 10);
 
-    // Combine results, prioritizing the current region
-    const combinedResults = [...regionBeaches, ...otherBeaches];
-
-    console.log(`[beaches/search] Returning ${combinedResults.length} results`);
-    return res.json(combinedResults);
+    console.log(`[beaches/search] Returning ${sortedResults.length} results`);
+    return res.json(sortedResults);
   } catch (error) {
     console.error("[beaches/search] Unexpected error:", error);
     return res.json([]);

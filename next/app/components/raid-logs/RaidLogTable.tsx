@@ -358,14 +358,26 @@ function TableSkeleton() {
 }
 
 const normalizeLogEntry = (entry: LogEntry): LogEntry => {
+  let formattedDate = "Unknown Date";
+  try {
+    if (entry.date) {
+      const date = new Date(entry.date);
+      if (!isNaN(date.getTime())) {
+        formattedDate = format(date, "yyyy-MM-dd");
+      }
+    }
+  } catch (e) {
+    console.error("Error formatting date for log entry:", entry.id, e);
+  }
+
   return {
     ...entry,
-    date: format(new Date(entry.date), "yyyy-MM-dd"),
+    date: formattedDate,
     isPrivate: entry.isPrivate ?? false,
     isAnonymous: entry.isAnonymous ?? false,
-    hasAlert: entry.alerts?.length > 0,
+    hasAlert: Array.isArray(entry.alerts) && entry.alerts.length > 0,
     isMyAlert: false,
-    alertId: entry.alerts?.[0]?.id ?? "",
+    alertId: Array.isArray(entry.alerts) && entry.alerts.length > 0 ? entry.alerts[0].id : "",
   };
 };
 

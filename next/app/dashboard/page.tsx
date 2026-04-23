@@ -791,15 +791,23 @@ export default function DashboardPage() {
             {activeTab === "intelligence" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm min-h-[600px]">
-                  <div className="flex flex-col gap-2 mb-4">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                      <Sparkles className="w-8 h-8 text-brand-3" />
-                      Intelligence Archive
-                    </h2>
-                    <p className="text-slate-500 text-sm font-medium border-b border-slate-100 pb-6 mb-2">
-                       Historical strategic profiles and strike-window analysis briefings.
-                    </p>
-                  </div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6 mb-2">
+                      <div>
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                          <Sparkles className="w-8 h-8 text-brand-3" />
+                          Intelligence Archive
+                        </h2>
+                        <p className="text-slate-500 text-sm font-medium">
+                           Historical strategic profiles and strike-window analysis briefings.
+                        </p>
+                      </div>
+                      <Link href="/fast-forecast">
+                        <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-2xl px-8 py-6 h-auto font-black uppercase tracking-tighter shadow-lg shadow-slate-200 flex items-center gap-2">
+                          <Zap className="w-4 h-4 fill-current text-white" />
+                          Generate New Report
+                        </Button>
+                      </Link>
+                    </div>
                   <AIReportsView />
                 </div>
               </div>

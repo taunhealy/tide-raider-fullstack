@@ -149,12 +149,12 @@ export default function ProfilePage() {
                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Mission Stats</h3>
                <div className="space-y-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-slate-300">Total Interventions</span>
-                    <span className="text-lg font-black">{userData?._count?.logs || 0}</span>
+                    <span className="text-sm font-medium text-slate-300">Total Logs</span>
+                    <span className="text-lg font-black">{userData?._count?.logEntries || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-slate-300">System Favorites</span>
-                    <span className="text-lg font-black">{userData?._count?.favorites || 0}</span>
+                    <span className="text-sm font-medium text-slate-300">Total AI Reports</span>
+                    <span className="text-lg font-black">{userData?._count?.intelligenceReports || 0}</span>
                   </div>
                   <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-2">
                      <div className="h-full bg-brand-3 w-3/4 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />

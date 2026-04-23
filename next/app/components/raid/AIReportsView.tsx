@@ -80,8 +80,8 @@ export default function AIReportsView() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-gray-100 shadow-sm bg-white">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm bg-white">
+        <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr className="bg-gray-50/50 border-bottom border-gray-100">
               <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Date Range</th>
