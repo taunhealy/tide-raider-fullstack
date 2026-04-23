@@ -45,16 +45,21 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  const [selectedDays, setSelectedDays] = useState(7);
+  const creditCost = selectedDays <= 1 ? 1 : 4;
+
   // Sync prop changes and user profile data to internal state
   useEffect(() => {
     setActiveReportId(reportId);
   }, [reportId]);
 
+  // Auto-populate contact fields from session when modal opens
   useEffect(() => {
-    if (session?.user?.whatsappNumber) {
-      setTargetWhatsApp(session.user.whatsappNumber);
+    if (isOpen && session?.user) {
+      if (session.user.email) setTargetEmail(session.user.email);
+      if (session.user.whatsappNumber) setTargetWhatsApp(session.user.whatsappNumber);
     }
-  }, [session?.user?.whatsappNumber]);
+  }, [isOpen, session?.user?.email, session?.user?.whatsappNumber]);
 
   // Fetch chronological sequence for this beach
   useEffect(() => {
@@ -163,12 +168,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     new Date(existingReportDate).toDateString() === new Date().toDateString() : 
     true;
 
-  // Initialize email from session
-  useEffect(() => {
-    if (session?.user?.email) {
-      setTargetEmail(session.user.email);
-    }
-  }, [session?.user?.email]);
+
 
   // Reset report when modal closes
   useEffect(() => {
@@ -177,13 +177,18 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       setExistingReportDate(null);
       setActiveReportId(reportId);
       setReportSequence([]);
+      setSelectedDays(7);
     }
   }, [isOpen, reportId]);
 
   const handleGenerate = async () => {
-    if (credits < 2) {
+    if (credits < creditCost) {
       toast.error("Insufficient Credits", {
-        description: "You need at least 2 credits to generate a Weekly Strategic Report."
+        description: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : ''} to generate this report.`,
+        action: {
+          label: "Top Up",
+          onClick: () => window.location.href = "/pricing"
+        }
       });
       return;
     }
@@ -196,7 +201,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         body: JSON.stringify({
           beachId: beach.id,
           date,
-          persona: "ADVANCED"
+          persona: "BRO",
+          days: selectedDays
         }),
       });
 
@@ -210,7 +216,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       window.dispatchEvent(new CustomEvent("credits-updated"));
       
       toast.success("Analysis Ready", {
-        description: "Your Weekly Strategic Report has been compiled."
+        description: `Your ${selectedDays === 7 ? 'Weekly' : selectedDays + '-Day'} Strategic Report has been compiled.`
       });
     } catch (err: any) {
       toast.error("Process Failed", {
@@ -254,7 +260,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       // Calculate date range for the header
       const start = existingReportDate || new Date();
       const end = new Date(start);
-      end.setDate(end.getDate() + 6);
+      end.setDate(end.getDate() + (selectedDays - 1));
       
       const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const dateRange = `${formatDate(start)} - ${formatDate(end)}`;
@@ -332,7 +338,9 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               <div>
                 <h2 className="text-[20px] leading-[24px] font-bold text-black tracking-tight">{beach.name}</h2>
                 <div className="flex items-center gap-2">
-                  <p className="text-[10px] leading-[15px] font-normal text-black opacity-40 uppercase tracking-widest">Weekly Strategic Analysis</p>
+                  <p className="text-[10px] leading-[15px] font-normal text-black opacity-40 uppercase tracking-widest">
+                    {selectedDays === 7 ? 'Weekly' : selectedDays + '-Day'} Strategic Analysis
+                  </p>
                   {reportSequence.length > 1 && (
                     <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-gray-200">
                       <button 
@@ -361,7 +369,11 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           </div>
           <div className="bg-white border border-gray-200 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
              <Zap className="w-3.5 h-3.5 text-blue-400 fill-current" />
-             <span className="text-[12px] font-bold text-black">{credits} <span className="opacity-40 font-normal">Credits</span></span>
+             {isCreditsLoading ? (
+               <div className="w-8 h-4 bg-gray-200 animate-pulse rounded" />
+             ) : (
+               <span className="text-[12px] font-bold text-black">{credits} <span className="opacity-40 font-normal">Credits</span></span>
+             )}
           </div>
         </div>
 
@@ -383,30 +395,61 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <div>
                   <h3 className="text-[16px] leading-[22px] font-bold text-black mb-1">Expert AI Guidance</h3>
                   <p className="text-[14px] leading-[20px] font-normal text-black opacity-60">
-                    Get a complete 7-day outlook synthesized from raw forecast data. We'll identify the best windows for your specific break and give you gear advice for the week ahead.
+                    Get a complete outlook synthesized from raw forecast data. We'll identify the best windows for your specific break and give you gear advice for the time ahead.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/30">
-                  <p className="text-[10px] leading-[15px] font-normal text-black opacity-20 uppercase tracking-widest mb-1">Forecast Period</p>
-                  <p className="text-[16px] font-bold text-black">7 Days Ahead</p>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Select Duration</label>
+                  <div className="flex gap-2">
+                    {[
+                      { label: "1 Day", value: 1, credits: 1 },
+                      { label: "3 Days", value: 3, credits: 4 },
+                      { label: "1 Week", value: 7, credits: 4 }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setSelectedDays(opt.value)}
+                        className={cn(
+                          "flex-1 py-3 px-4 rounded-full border text-[11px] font-bold uppercase tracking-widest transition-all relative overflow-visible",
+                          selectedDays === opt.value
+                            ? "bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-100 scale-[1.05]"
+                            : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                        )}
+                      >
+                        {opt.label}
+                        <span className={cn(
+                          "absolute -top-2 -right-1 px-1.5 py-0.5 rounded-md text-[7px] font-medium tracking-tight border shadow-sm transition-all bg-white border-gray-100 text-black"
+                        )}>
+                          {opt.credits} credit{opt.credits > 1 ? 's' : ''}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/30">
-                  <p className="text-[10px] leading-[15px] font-normal text-black opacity-20 uppercase tracking-widest mb-1">Intelligence Cost</p>
-                  <p className="text-[16px] font-bold text-black">2 Credits (R2)</p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/30">
+                    <p className="text-[10px] leading-[15px] font-normal text-black opacity-20 uppercase tracking-widest mb-1">Forecast Period</p>
+                    <p className="text-[16px] font-bold text-black">{selectedDays} Day{selectedDays > 1 ? 's' : ''} Ahead</p>
+                  </div>
+                  <div className="border border-gray-100 rounded-2xl p-5 bg-gray-50/30">
+                    <p className="text-[10px] leading-[15px] font-normal text-black opacity-20 uppercase tracking-widest mb-1">Intelligence Cost</p>
+                    <p className="text-[16px] font-bold text-black">{creditCost} Credit{creditCost > 1 ? 's' : ''}</p>
+                  </div>
                 </div>
               </div>
 
-              {credits < 2 && (
+              {credits < creditCost && (
                 <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-4">
                   <div className="flex items-center gap-3">
                      <ShieldAlert className="w-4 h-4 text-amber-600" />
                      <h4 className="text-[12px] font-black text-black uppercase tracking-widest">Balance Required</h4>
                   </div>
                   <p className="text-[14px] leading-[20px] font-normal text-black opacity-60">
-                    Your account balance is currently zero. Top up your credits or invite friends to generate this report.
+                    Your account balance is currently {isCreditsLoading ? "..." : credits}. Top up your credits or invite friends to generate this report.
                   </p>
                   <div className="flex gap-2 pt-2">
                     <Button 
@@ -444,7 +487,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                   </div>
                   <Button 
                     onClick={handleGenerate}
-                    disabled={isGenerating || credits < 2}
+                    disabled={isGenerating || isCreditsLoading || credits < creditCost}
                     className="h-10 px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest gap-2 shadow-sm min-w-[160px]"
                   >
                     {isGenerating ? (
@@ -545,7 +588,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 </Button>
                 <Button 
                   onClick={handleGenerate} 
-                  disabled={isGenerating || credits < 2}
+                  disabled={isGenerating || isCreditsLoading || credits < creditCost}
                   className="flex-1 sm:flex-none h-12 px-8 bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[12px] shadow-lg shadow-gray-200 transition-all active:scale-95 disabled:opacity-30 flex items-center justify-center gap-3 min-w-[200px]"
                 >
                   {isGenerating ? (

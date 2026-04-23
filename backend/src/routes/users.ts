@@ -30,6 +30,8 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
         skillLevel: true,
         nationality: true,
         credits: true,
+        email: true,
+        whatsappNumber: true,
         _count: {
           select: {
             boards: true,
@@ -65,7 +67,7 @@ router.put(
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      const { bio, name, link } = req.body;
+      const { bio, name, link, whatsappNumber, email } = req.body;
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -73,6 +75,8 @@ router.put(
           ...(bio !== undefined && { bio: bio.trim() }),
           ...(name !== undefined && { name: name.trim() }),
           ...(link !== undefined && { link: link.trim() }),
+          ...(whatsappNumber !== undefined && { whatsappNumber: whatsappNumber.trim() }),
+          ...(email !== undefined && { email: email.trim() }),
         },
         select: {
           id: true,
@@ -81,6 +85,7 @@ router.put(
           link: true,
           image: true,
           email: true,
+          whatsappNumber: true,
         },
       });
 

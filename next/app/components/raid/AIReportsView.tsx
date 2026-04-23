@@ -11,8 +11,8 @@ interface IntelligenceReport {
   id: string;
   beachId: string;
   date: string;
-  isWeekly: boolean;
-  weekEndDate?: string;
+  duration: number;
+  endDate?: string;
   createdAt: string;
   beach: {
     name: string;
@@ -96,10 +96,10 @@ export default function AIReportsView() {
                   <div className="flex flex-col">
                     <span className="text-[11px] font-bold text-black flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5 text-brand-3" />
-                      {format(new Date(report.date), "MMM dd")} - {report.weekEndDate ? format(new Date(report.weekEndDate), "MMM dd") : "Next 7 Days"}
+                      {format(new Date(report.date), "MMM dd")} {report.duration > 1 && report.endDate ? `- ${format(new Date(report.endDate), "MMM dd")}` : ""}
                     </span>
                     <span className="text-[10px] text-gray-400 font-medium mt-0.5">
-                      Generated {format(new Date(report.createdAt), "HH:mm, MMM dd")}
+                      Tactical Intel [{format(new Date(report.date), "MMM dd")}{report.duration > 1 && report.endDate ? ` - ${format(new Date(report.endDate), "MMM dd")}` : ""}]
                     </span>
                   </div>
                 </td>

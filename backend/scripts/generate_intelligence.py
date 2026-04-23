@@ -29,7 +29,8 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
         temperature=0.7
     )
     
-    if mode == "weekly":
+    if mode in ["weekly", "tactical"]:
+        duration_label = "7-Day" if mode == "weekly" else "3-Day"
         system_prompt = (
             "You are a Precision Surf Intelligence AI assigned to a specific maritime asset in the Western Cape. "
             "MISSION CRITICAL: You must only report on the beach break specified in the USER PROMPT. Do not include data for neighboring beaches in the same sector. "
@@ -38,12 +39,13 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
             "1. IDENTIFIER: Every report must start with the exact phrase: 'TACTICAL BRIEFING: [BEACH NAME]'.\n"
             "2. ASSET ISOLATION: Focus strictly on the unique topology and requirements of this specific spot. If the Spot DNA says it needs a Mid-Tide, do not suggest Low-Tide even if nearby spots use it.\n"
             "3. VERIFIED RATINGS: You must assign Star Ratings (⭐⭐⭐⭐⭐/5) to the 2-3 best 'Strike Windows'. These MUST correlate with 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐). Do not invent stars; use the algorithm score provided.\n"
-            "4. TONE: {persona}. (Pirate = Grit, MC = Flow, Bro = Stoke, Strategist = Tactical).\n\n"
+            "4. TEMPORAL INTEGRITY: You must ONLY report on dates and windows provided in the 'Provided Forecast Data'. Do not mention any dates or operational windows that are not present in the context. Do not use external knowledge of the spot's forecast.\n"
+            "5. TONE: {persona}. (Pirate = Grit, MC = Flow, Bro = Stoke, Strategist = Tactical).\n\n"
             
             "Format: 3-4 specialized maritime paragraphs. No markdown. No bolding. No hashtags. Absolute precision required."
         )
         user_prompt = (
-            f"Generate a {persona} Weekly Strategic Outlook EXCLUSIVELY for the following asset:\n"
+            f"Generate a {persona} {duration_label} Strategic Outlook EXCLUSIVELY for the following asset:\n"
             f"TARGET ASSET: {beach_name}\n"
             f"Provided Forecast Data:\n{daily_snapshots or 'Data pending'}"
         )

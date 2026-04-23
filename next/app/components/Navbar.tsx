@@ -15,10 +15,12 @@ import { useBackendAuth } from "../hooks/useBackendAuth";
 
 // Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
-  { href: "/map", label: "Map" },
+  
   { href: "/raid", label: "Raid" },
-  { href: "/raidlogs", label: "Logs" },
+  { href: "/fast-forecast", label: "AI Forecast" },
+  { href: "/logs", label: "Logs" },
   { href: "/alerts", label: "Alerts" },
+  { href: "/map", label: "Map" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
 ] as const;

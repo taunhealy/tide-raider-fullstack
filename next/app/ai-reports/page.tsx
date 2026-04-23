@@ -22,8 +22,8 @@ interface IntelligenceReport {
   id: string;
   beachId: string;
   date: string;
-  weekEndDate?: string;
-  isWeekly: boolean;
+  duration: number;
+  endDate?: string;
   persona: string;
   content: string;
   createdAt: string;
@@ -123,7 +123,9 @@ export default function AIReportsPage() {
                         </div>
                         <div>
                           <p className="font-bold text-[14px] text-black group-hover:text-black transition-colors">{report.beach.name}</p>
-                          <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest">{report.isWeekly ? "Strategic Weekly" : "Tactical Daily"}</p>
+                          <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest">
+                            Tactical Intel [{format(new Date(report.date), "MMM d")}{report.duration > 1 && report.endDate ? ` - ${format(new Date(report.endDate), "MMM d")}` : ""}]
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -132,8 +134,8 @@ export default function AIReportsPage() {
                         <Calendar className="w-4 h-4 text-black opacity-20" />
                         <p className="text-[12px] font-semibold text-black/70">
                           {format(new Date(report.date), "MMM d")}
-                          {report.isWeekly && report.weekEndDate && ` — ${format(new Date(report.weekEndDate), "MMM d, yyyy")}`}
-                          {!report.isWeekly && `, ${format(new Date(report.date), "yyyy")}`}
+                          {report.duration > 1 && report.endDate && ` — ${format(new Date(report.endDate), "MMM d, yyyy")}`}
+                          {report.duration <= 1 && `, ${format(new Date(report.date), "yyyy")}`}
                         </p>
                       </div>
                     </td>

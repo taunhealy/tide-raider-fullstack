@@ -39,7 +39,7 @@ router.get("/report", async (req, res) => {
  */
 router.post("/weekly", authenticateToken, async (req, res: Response) => {
   const authReq = req as AuthRequest;
-  const { beachId, date, persona } = req.body;
+  const { beachId, date, persona, days = 7 } = req.body;
   const userId = authReq.user?.id;
 
   if (!beachId || !date || !userId) {
@@ -47,21 +47,23 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
   }
 
   try {
-    const result = await IntelligenceService.getWeeklyReportForBeach(
+    const result = await IntelligenceService.getTimedReportForBeach(
       beachId,
       date,
       userId,
+      parseInt(days as string),
       persona
     );
 
     res.json(result);
   } catch (error: any) {
-    console.error("[IntelligenceRoute] Weekly report error:", error);
+    console.error("[IntelligenceRoute] Intelligence report error:", error);
     
     if (error.message === "INSUFFICIENT_CREDITS") {
+      const creditCost = parseInt(days as string) <= 3 ? 1 : 2;
       return res.status(402).json({ 
         error: "Insufficient credits", 
-        message: "You need at least 2 credits to generate a Weekly Strategic Report." 
+        message: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : '' } to generate this ${days}-day report.` 
       });
     }
 
@@ -69,7 +71,7 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
       return res.status(404).json({ error: "Beach not found" });
     }
 
-    res.status(500).json({ error: "Failed to generate weekly tactical intelligence" });
+    res.status(500).json({ error: "Failed to generate tactical intelligence" });
   }
 });
 

@@ -13,7 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "clean": "rm -rf .next",
+    "clean": "powershell -Command \"if (Test-Path .next) { Remove-Item -Recurse -Force .next }\"",
     "build:clean": "npm run clean && npm run build",
     "prisma-seed": "tsx prisma/seed.ts"
   },

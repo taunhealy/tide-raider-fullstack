@@ -99,10 +99,11 @@ export function BeachSearchInput({
       beaches.length > 0 &&
       debouncedSearch.length >= minSearchLength &&
       isFocused &&
-      !justSelectedRef.current
+      !justSelectedRef.current &&
+      searchTerm !== selectedBeach?.name
     ) {
       setShowDropdown(true);
-    } else if (!isFocused || debouncedSearch.length < minSearchLength) {
+    } else if (!isFocused || debouncedSearch.length < minSearchLength || searchTerm === selectedBeach?.name) {
       setShowDropdown(false);
     }
     
@@ -110,7 +111,7 @@ export function BeachSearchInput({
     if (justSelectedRef.current) {
       justSelectedRef.current = false;
     }
-  }, [beaches, debouncedSearch, isFocused, minSearchLength]);
+  }, [beaches, debouncedSearch, isFocused, minSearchLength, searchTerm, selectedBeach]);
 
   const handleBeachSelect = (beach: Beach) => {
     justSelectedRef.current = true;
@@ -151,16 +152,17 @@ export function BeachSearchInput({
     <div className={cn("space-y-2", className)} ref={searchRef}>
       {/* Selected Beach Badge */}
       {showSelectedBadge && selectedBeach && (
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-md text-sm font-medium text-amber-900">
+        <div className="flex items-center gap-2 mb-2 animate-in fade-in slide-in-from-left-2 duration-300">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#fdf6e9] border border-gray-100 rounded-full text-[12px] font-bold regular tracking-normal text-[#855e32] shadow-sm">
+            <span className="opacity-40">Target:</span>
             <span>{selectedBeach.name}</span>
             <button
               type="button"
               onClick={handleClear}
-              className="ml-1 hover:bg-amber-100 rounded-full p-0.5 transition-colors"
+              className="ml-1 hover:bg-[#855e32]/10 rounded-full p-1 transition-all group"
               aria-label="Remove beach"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
             </button>
           </div>
         </div>
@@ -215,7 +217,7 @@ export function BeachSearchInput({
                 >
                   <div className="font-medium font-primary">{beach.name}</div>
                   <div className="text-sm text-gray-500 font-primary">
-                    {beach.region?.name}, {beach.countryId}
+                    {beach.location ? `${beach.location}, ` : ""}{beach.region?.name}, {beach.countryId}
                   </div>
                 </button>
               ))}

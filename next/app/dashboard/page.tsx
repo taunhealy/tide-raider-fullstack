@@ -25,6 +25,7 @@ import { Bell, Zap, Sparkles } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { MEMBERSHIP_PERKS } from "../constants/perks";
 import AIReportsView from "../components/raid/AIReportsView";
+import { ClientProfileLogs } from "../components/ClientProfileLogs";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -44,17 +45,18 @@ export default function DashboardPage() {
     }
   }, [session]);
   const [activeTab, setActiveTab] = useState<
-    "account" | "billing" | "ads" | "alerts" | "credits" | "intelligence"
+    "account" | "billing" | "ads" | "alerts" | "credits" | "intelligence" | "logs"
   >("account");
 
   // Synchronize tab from URL if present
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && ["account", "billing", "ads", "alerts", "credits", "intelligence"].includes(tab)) {
+    if (tab && ["account", "billing", "ads", "alerts", "credits", "intelligence", "logs"].includes(tab)) {
       setActiveTab(tab as any);
     }
   }, [searchParams]);
   const [username, setUsername] = useState<string>("");
+  const [whatsappNumber, setWhatsappNumber] = useState<string>("");
   const queryClient = useQueryClient();
   const handleSubscribe = useHandleSubscribe();
   const { mutate: handleTrial, isPending: isTrialLoading } = useMutation({
@@ -139,7 +141,10 @@ export default function DashboardPage() {
     if (userData?.name) {
       setUsername(userData.name);
     }
-  }, [userData?.name]);
+    if (userData?.whatsappNumber) {
+      setWhatsappNumber(userData.whatsappNumber);
+    }
+  }, [userData?.name, userData?.whatsappNumber]);
 
   const { data } = useQuery({
     queryKey: ["dashboard"],
@@ -150,6 +155,15 @@ export default function DashboardPage() {
           alt
         }
       }`);
+    },
+  });
+
+  const { data: beaches = [] } = useQuery({
+    queryKey: ["beaches"],
+    queryFn: async () => {
+      const res = await fetch("/api/beaches");
+      if (!res.ok) throw new Error("Failed to fetch beaches");
+      return res.json();
     },
   });
 
@@ -169,9 +183,9 @@ export default function DashboardPage() {
     return () => channel.close();
   }, [queryClient, router, session?.user?.id]);
 
-  const handleUsernameUpdate = async () => {
+  const handleProfileUpdate = async () => {
     if (!username.trim()) {
-      setError("Username cannot be empty");
+      setError("Handle cannot be empty");
       return;
     }
 
@@ -179,34 +193,36 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/user/update-username", {
-        method: "POST",
+      const response = await fetch("/api/auth/me", {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: username }),
+        body: JSON.stringify({ 
+          name: username,
+          whatsappNumber: whatsappNumber 
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update username");
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
       const data = await response.json();
       setUsername(data.name);
-      toast.success("Username updated successfully!");
+      setWhatsappNumber(data.whatsappNumber || "");
+      toast.success("Tactical identity synchronized!");
 
       // Invalidate user queries
       await queryClient.invalidateQueries({
         queryKey: ["user", session?.user?.id],
       });
 
-      // Refresh auth state to update session with new name
+      // Refresh auth state
       await refetchAuth();
       window.dispatchEvent(new Event("auth-refresh"));
-
-      // Refresh the page data
       router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Update failed";
+      const message = err instanceof Error ? err.message : "Synchronization failed";
       setError(message);
       toast.error(message);
     } finally {
@@ -516,10 +532,11 @@ export default function DashboardPage() {
           <nav className="flex items-center gap-1 p-1 bg-white border border-slate-200 rounded-2xl w-full sm:w-fit shadow-sm overflow-x-auto no-scrollbar scroll-smooth">
             {[
               { id: "account", label: "Identity" },
-              { id: "billing", label: "Subscriptions" },
-              { id: "credits", label: "Intelligence Credits" },
-              { id: "intelligence", label: "Intelligence Archive" },
-              { id: "alerts", label: "Alerts" }
+              { id: "intelligence", label: "Intelligence" },
+              { id: "alerts", label: "Alerts" },
+              { id: "logs", label: "Logs" },
+              { id: "credits", label: "Credits" },
+              { id: "billing", label: "Subscriptions" }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -543,24 +560,43 @@ export default function DashboardPage() {
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm">
                   <div className="grid gap-8">
-                    <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Operator Handle</label>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <input
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
-                          placeholder="Assign handle..."
-                        />
-                        <button
-                          onClick={handleUsernameUpdate}
-                          className="px-10 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-slate-800 transition-all active:scale-95 py-4 shadow-lg shadow-slate-900/10"
-                        >
-                          Update
-                        </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Operator Handle</label>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
+                            placeholder="Assign handle..."
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">WhatsApp Relay</label>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            value={whatsappNumber}
+                            onChange={(e) => setWhatsappNumber(e.target.value)}
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
+                            placeholder="+27..."
+                          />
+                        </div>
                       </div>
                     </div>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={handleProfileUpdate}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto px-12 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-slate-800 transition-all active:scale-95 py-4 shadow-lg shadow-slate-900/10 disabled:opacity-50"
+                      >
+                        {isLoading ? "Synchronizing..." : "Update Tactical Identity"}
+                      </button>
+                    </div>
+
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Secure UID</label>
                       <div className="bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-slate-400 font-mono text-xs flex items-center justify-between">
@@ -568,6 +604,25 @@ export default function DashboardPage() {
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "logs" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 shadow-sm">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Mission Logs</h2>
+                      <p className="text-sm text-slate-500">Historical record of all tactical interventions.</p>
+                    </div>
+                  </div>
+                  <div className="w-full overflow-x-auto">
+                    <ClientProfileLogs userId={session?.user?.id || ""} beaches={beaches} />
                   </div>
                 </div>
               </div>
@@ -678,9 +733,15 @@ export default function DashboardPage() {
                            <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Available Balance</span>
                         </div>
-                        <h3 className="text-4xl font-black text-slate-900 tracking-tight">
-                           {session?.user?.credits ?? 0} <span className="text-xl text-slate-400 font-bold ml-1">Credits</span>
-                        </h3>
+                         <h3 className="text-4xl font-black text-slate-900 tracking-tight">
+                            {isLoadingUser ? (
+                              <div className="inline-block w-24 h-10 bg-slate-100 animate-pulse rounded-lg align-middle" />
+                            ) : (
+                              <>
+                                {userData?.credits ?? 0} <span className="text-xl text-slate-400 font-bold ml-1">Credits</span>
+                              </>
+                            )}
+                         </h3>
                       </div>
                       
                       <Link href="/pricing" className="w-full md:w-auto">

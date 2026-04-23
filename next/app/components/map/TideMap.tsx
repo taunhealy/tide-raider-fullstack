@@ -206,6 +206,11 @@ export default function TideMap({
           avgVY = (sumVY / mag) * 0.0006;
         }
 
+        // Calculate perpendicular vector for wiggling once per frame
+        const vMag = Math.sqrt(avgVX * avgVX + avgVY * avgVY) || 1;
+        const perpX = (-avgVY / vMag);
+        const perpY = (avgVX / vMag);
+
         const time = Date.now() * 0.003;
         windParticles.current.forEach((p, i) => {
           p.life -= 0.005;
@@ -223,25 +228,42 @@ export default function TideMap({
           }
           
           const speedMod = (avgSpeed / 10 + 0.3);
-          // Snake/Wiggle logic: Apply subtle perpendicular oscillation
-          // Normalize perp vector to keep wiggle magnitude independent of speed
-          const wiggle = Math.sin(time + i * 0.1) * 0.0012;
-          const mag = Math.sqrt(avgVX * avgVX + avgVY * avgVY) || 1;
-          const perpX = (-avgVY / mag);
-          const perpY = (avgVX / mag);
-
-          p.vx = (avgVX * speedMod) + (perpX * wiggle); 
-          p.vy = (avgVY * speedMod) + (perpY * wiggle);
           
-          p.x += p.vx; p.y += p.vy;
+          // Move particle in a straightish direction
+          p.x += avgVX * speedMod;
+          p.y += avgVY * speedMod;
+          
           // Loop around edges
           if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
+          // Draw a wiggly path instead of a straight segment
+          const segmentCount = 10;
+          const tailScale = 150; // Total length of the tail
+          
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.5})`; 
-          ctx.lineWidth = Math.min(Math.max(0.8, avgSpeed / 10), 3.0);
+          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.45})`; 
+          ctx.lineWidth = Math.min(Math.max(1.0, avgSpeed / 8), 2.5);
+          ctx.lineCap = "round";
           ctx.moveTo(p.x * width, p.y * height);
-          ctx.lineTo((p.x - p.vx * 120) * width, (p.y - p.vy * 120) * height);
+          
+          for (let j = 1; j <= segmentCount; j++) {
+            const t = j / segmentCount;
+            // The segment follows the base velocity backwards
+            const posX = p.x - (avgVX * speedMod) * t * tailScale;
+            const posY = p.y - (avgVY * speedMod) * t * tailScale;
+            
+            // Apply a wiggle offset at each point along the tail
+            // Multi-frequency sine for a more organic 'wiggly' look
+            const segmentWiggle = (
+              Math.sin(time + i * 0.5 - t * 6) * 0.0012 +
+              Math.sin(time * 0.5 + i * 0.2 - t * 3) * 0.0006
+            );
+            
+            const wx = posX + (perpX * segmentWiggle);
+            const wy = posY + (perpY * segmentWiggle);
+            
+            ctx.lineTo(wx * width, wy * height);
+          }
           ctx.stroke();
         });
       }

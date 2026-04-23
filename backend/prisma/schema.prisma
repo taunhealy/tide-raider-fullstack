@@ -311,14 +311,14 @@ model IntelligenceReport {
   date        DateTime @db.Date
   persona     String
   content     String   @db.Text
-  isWeekly    Boolean  @default(false)
-  weekEndDate DateTime? @db.Date // End range for weekly reports
+  duration    Int      @default(7)
+  endDate     DateTime? @db.Date // End range for multi-day reports
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   beach       Beach    @relation(fields: [beachId], references: [id])
   user        User?    @relation(fields: [userId], references: [id])
 
-  @@unique([beachId, userId, date, persona, isWeekly], name: "intel_history_unique")
+  @@unique([beachId, userId, date, persona, duration], name: "intel_history_unique")
   @@index([beachId, date])
   @@index([userId])
 }

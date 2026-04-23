@@ -19,17 +19,6 @@ export async function GET(req: NextRequest) {
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
-    // Log for debugging (only in development)
-    if (process.env.NODE_ENV === "development") {
-      console.log("[auth/me] Auth token present:", !!authToken);
-      console.log("[auth/me] Backend URL:", BACKEND_URL);
-      console.log("[auth/me] NODE_ENV:", process.env.NODE_ENV);
-      console.log(
-        "[auth/me] NEXT_PUBLIC_API_URL:",
-        process.env.NEXT_PUBLIC_API_URL
-      );
-    }
-
     // Check cache first
     const cacheKey = authToken || "no-token";
     const cached = authCache.get(cacheKey);
@@ -43,53 +32,15 @@ export async function GET(req: NextRequest) {
       : cookieStore.toString();
 
     // Forward request to backend with cookies
-    // Add timeout to prevent hanging when backend is not available
-    // Reduced to 5 seconds for faster feedback in development
-    const timeoutMs = process.env.NODE_ENV === "development" ? 5000 : 15000;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    let response;
-    try {
-      const backendUrl = `${BACKEND_URL}/api/auth/me`;
-      if (process.env.NODE_ENV === "development") {
-        console.log("[auth/me] Fetching from backend:", backendUrl);
-      }
-      response = await fetch(backendUrl, {
-        headers: {
-          ...(authToken && { Authorization: `Bearer ${authToken}` }),
-          ...(cookieHeader && { Cookie: cookieHeader }),
-        },
-        credentials: "include",
-        // Add cache control to prevent Next.js from caching
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (process.env.NODE_ENV === "development") {
-        console.log("[auth/me] Backend response status:", response.status);
-      }
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId);
-      // Handle connection errors (backend not running, network issues, etc.)
-      const isConnectionError =
-        fetchError.name === "AbortError" ||
-        fetchError.code === "ECONNREFUSED" ||
-        (fetchError.cause && fetchError.cause.code === "ECONNREFUSED") ||
-        fetchError.message?.includes("ECONNREFUSED") ||
-        fetchError.message?.includes("fetch failed");
-
-      if (isConnectionError) {
-        console.warn("[auth/me] Backend not available, returning null user", {
-          error: fetchError.message,
-          code: fetchError.code || fetchError.cause?.code,
-        });
-        const data = { user: null };
-        authCache.set(cacheKey, { data, timestamp: Date.now() });
-        return NextResponse.json(data, { status: 200 });
-      }
-      throw fetchError; // Re-throw other errors
-    }
+    const backendUrl = `${BACKEND_URL}/api/auth/me`;
+    const response = await fetch(backendUrl, {
+      headers: {
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        ...(cookieHeader && { Cookie: cookieHeader }),
+      },
+      credentials: "include",
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -97,18 +48,6 @@ export async function GET(req: NextRequest) {
         authCache.set(cacheKey, { data, timestamp: Date.now() });
         return NextResponse.json(data, { status: 200 });
       }
-      // Handle 429 gracefully - return cached data if available
-      if (response.status === 429) {
-        console.warn(
-          "[auth/me] Rate limited, returning cached data if available"
-        );
-        if (cached) {
-          return NextResponse.json(cached.data);
-        }
-        // Return null user if no cache
-        return NextResponse.json({ user: null }, { status: 200 });
-      }
-      // Don't cache other errors
       return NextResponse.json(
         { error: "Failed to fetch user" },
         { status: response.status }
@@ -116,11 +55,48 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    // Cache successful responses
     authCache.set(cacheKey, { data, timestamp: Date.now() });
     return NextResponse.json(data);
   } catch (error) {
-    console.error("[auth/me] Error:", error);
+    console.error("[auth/me] GET Error:", error);
     return NextResponse.json({ user: null }, { status: 200 });
+  }
+}
+
+/**
+ * PUT /api/auth/me
+ * Proxy to backend /api/auth/me to update current user
+ */
+export async function PUT(req: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token")?.value;
+    const body = await req.json();
+
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken && { Authorization: `Bearer ${authToken}` }),
+        Cookie: authToken ? `auth-token=${authToken}` : cookieStore.toString(),
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return NextResponse.json(error, { status: response.status });
+    }
+
+    const data = await response.json();
+    
+    // Invalidate cache for this user
+    const cacheKey = authToken || "no-token";
+    authCache.delete(cacheKey);
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("[auth/me] PUT Error:", error);
+    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
   }
 }
