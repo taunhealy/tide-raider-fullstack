@@ -213,3 +213,53 @@ export const newsletterWelcomeTemplate = (userName: string) => emailLayout(
   </div>
   `
 );
+
+/**
+ * Subscription Activated Email
+ */
+export const subscriptionActivatedTemplate = (userName: string, planName: string = "Premium Tactical") => emailLayout(
+  "Premium Intelligence Activated 🛰️",
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">Your ${planName} subscription is now active. You have successfully unlocked the full power of the Tide Raider intelligence pipeline.</p>
+  
+  <div class="highlight-box">
+    <p style="font-weight: 700; color: #000000; margin-bottom: 8px;">Your Premium Access Includes:</p>
+    <ul style="list-style-type: none; padding: 0;">
+      <li style="margin-bottom: 10px;">🌊 <strong>Unlimited Tactical Alerts:</strong> Track every sector with zero limits.</li>
+      <li style="margin-bottom: 10px;">💎 <strong>Full Hidden Gems Access:</strong> Every secret spot, revealed.</li>
+      <li style="margin-bottom: 10px;">📊 <strong>Advanced Analytics:</strong> Deep-dive into historical data and AI scoring.</li>
+      <li style="margin-bottom: 10px;">💬 <strong>WhatsApp Priority:</strong> Real-time intelligence delivered to your phone.</li>
+    </ul>
+  </div>
+
+  <p class="text">We've added 30 monthly credits to your account for on-demand intelligence reports.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raid" class="button">Access Tactical Dashboard</a>
+  </div>
+  <p class="text" style="font-size: 12px; text-align: center;">Need help? Reply to this email or visit our support center.</p>
+  `
+);
+
+/**
+ * Subscription Cancelled Email
+ */
+export const subscriptionCancelledTemplate = (userName: string) => emailLayout(
+  "Subscription Cancelled ⚓",
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">As requested, your Tide Raider Premium subscription has been cancelled. You will still have access to premium features until the end of your current billing period.</p>
+  
+  <div class="highlight-box" style="background-color: #fff7ed; border-left: 4px solid #f97316;">
+    <p style="font-weight: 700; color: #9a3412; margin-bottom: 8px;">What happens next?</p>
+    <p class="text" style="font-size: 14px; margin-bottom: 0;">Once your billing period ends, your account will revert to the Free tier. You'll lose access to Tactical Alerts, Hidden Gems, and advanced AI reporting.</p>
+  </div>
+
+  <p class="text">We're sorry to see you go. If there's anything we could have done better, please let us know by replying to this email.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/pricing" class="button">Reactivate Subscription</a>
+  </div>
+  `
+);

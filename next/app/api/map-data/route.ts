@@ -79,6 +79,10 @@ export async function GET() {
           isHiddenGem: beach.isHiddenGem || false,
           isLongboarding: beach.isLongboarding || false,
           isFoiling: beach.isFoiling || false,
+          optimalWindDirections: beach.optimalWindDirections || [],
+          optimalSwellDirections: beach.optimalSwellDirections || { min: 0, max: 360 },
+          swellSize: beach.swellSize || { min: 0, max: 10 },
+          idealSwellPeriod: beach.idealSwellPeriod || { min: 0, max: 25 },
           dailyScores: dailyScores,
           rating: Object.values(dailyScores as any)[0]?.rating || beach.rating || 3
         };

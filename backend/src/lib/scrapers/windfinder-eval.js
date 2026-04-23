@@ -110,15 +110,17 @@ function extractWindfinderData() {
           else if (t.includes('Low tide')) tideState = "Low";
         }
 
-        // Fallback: Check icons or titles
+        // Fallback: Check icons or titles with more specific patterns
         if (!tideState) {
-           const tideIcon = col.querySelector('svg, img[src*="tide"], img[src*="wave"]');
+           const tideIcon = col.querySelector('svg, img[src*="tide"], img[src*="wave"], [class*="icon-tide"]');
            const alt = tideIcon?.getAttribute('alt')?.toLowerCase() || "";
            const titleText = col.querySelector('[title]')?.getAttribute('title')?.toLowerCase() || "";
-           if (alt.includes('rising') || titleText.includes('rising')) tideState = "Rising";
-           else if (alt.includes('falling') || titleText.includes('falling')) tideState = "Falling";
-           else if (alt.includes('high') || titleText.includes('high')) tideState = "High";
-           else if (alt.includes('low') || titleText.includes('low')) tideState = "Low";
+           const classes = tideIcon?.className?.toLowerCase() || "";
+
+           if (alt.includes('rising') || titleText.includes('rising') || classes.includes('rising')) tideState = "Rising";
+           else if (alt.includes('falling') || titleText.includes('falling') || classes.includes('falling')) tideState = "Falling";
+           else if (alt.includes('high') || titleText.includes('high') || classes.includes('high')) tideState = "High";
+           else if (alt.includes('low') || titleText.includes('low') || classes.includes('low')) tideState = "Low";
         }
 
         const tideHeight = getVal('cell-wp', 'tide-height');

@@ -3,6 +3,8 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
 import axios from "axios";
 import { PayPalService } from "../services/paypal";
+import { sendEmail } from "../lib/email";
+import { subscriptionActivatedTemplate, subscriptionCancelledTemplate } from "../lib/emailTemplates";
 
 const router = Router();
 const BASE_PRICE = 4.00;
@@ -37,6 +39,70 @@ router.get("/subscription-status", authenticateToken, async (req: AuthRequest, r
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch status" });
+  }
+});
+
+// POST /api/paypal/sync - Sync subscription status from PayPal
+router.post("/sync", authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { subscriptionId } = req.body;
+
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    // Link subscription ID if provided
+    if (subscriptionId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { paypalSubscriptionId: subscriptionId }
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { paypalSubscriptionId: true, email: true, name: true, subscriptionStatus: true }
+    });
+
+    if (!user?.paypalSubscriptionId) {
+      return res.status(400).json({ error: "No subscription ID found for user" });
+    }
+
+    const accessToken = await PayPalService.getAccessToken();
+    const response = await axios.get(
+      `${process.env.PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'}/v1/billing/subscriptions/${user.paypalSubscriptionId}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    const paypalStatus = response.data.status;
+    let dbStatus = "INACTIVE";
+
+    if (paypalStatus === "ACTIVE") dbStatus = "ACTIVE";
+    else if (paypalStatus === "SUSPENDED") dbStatus = "SUSPENDED";
+    else if (paypalStatus === "CANCELLED" || paypalStatus === "EXPIRED") dbStatus = "INACTIVE";
+    else if (paypalStatus === "APPROVAL_PENDING" || paypalStatus === "APPROVED") dbStatus = "PENDING";
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { subscriptionStatus: dbStatus }
+    });
+
+    // If it just became active, send email
+    if (dbStatus === "ACTIVE" && user.subscriptionStatus !== "ACTIVE") {
+      await sendEmail(
+        user.email,
+        "Premium Intelligence Activated 🛰️",
+        subscriptionActivatedTemplate(user.name || "Explorer")
+      );
+    }
+
+    res.json({
+      success: true,
+      status: dbStatus,
+      paypalStatus: paypalStatus
+    });
+  } catch (error) {
+    console.error("[PayPal] Sync Error:", error);
+    res.status(500).json({ error: "Failed to sync subscription" });
   }
 });
 
@@ -128,68 +194,82 @@ router.post("/create-subscription", authenticateToken, async (req: Request, res:
 router.post("/webhook", async (req: Request, res: Response) => {
   try {
     const event = req.body;
+    console.log(`[PayPal Webhook] Received event: ${event.event_type}`);
     
-    // 1. Verify Webhook Signature (Simplified)
-    // In production, use verifyWebhookSignature from service
+    // In production, verify signature here...
+
+    const resource = event.resource;
+    let subscriptionId = resource.billing_agreement_id || resource.id;
 
     if (event.event_type === "PAYMENT.SALE.COMPLETED") {
-       const resource = event.resource;
-       // Logic to extract Custom ID is tricky in Payemnt Sale usually it's in the Billing Agreement
-       // We might need to fetch the Subscription details using billing_agreement_id
-       const billingAgreementId = resource.billing_agreement_id;
-       
-       if (billingAgreementId) {
-          // Fetch Subscription to get Metadata (custom_id)
-          const accessToken = await PayPalService['getAccessToken'](); // Make public in service
+       if (subscriptionId) {
+          const accessToken = await PayPalService.getAccessToken();
           const subResponse = await axios.get(
-            `${process.env.PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'}/v1/billing/subscriptions/${billingAgreementId}`,
+            `${process.env.PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'}/v1/billing/subscriptions/${subscriptionId}`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
           
-          const customId = subResponse.data.custom_id; // "{ userId: '...', promoCode: '...', partnerId: '...' }"
+          const customId = subResponse.data.custom_id;
           
           if (customId) {
              const metadata = JSON.parse(customId);
              
-             // Activate User and grant 30 Monthly Credits
-             await prisma.user.update({
-               where: { id: metadata.userId },
-               data: {
-                 subscriptionStatus: "ACTIVE",
-                 paypalSubscriptionId: billingAgreementId,
-                 credits: { increment: 30 }
-               }
-             });
+             const user = await prisma.user.findUnique({ where: { id: metadata.userId } });
+             if (!user) return res.status(404).send();
 
-             // AUTOMATED PARTNER PAYOUT
-             if (metadata.partnerId) {
-               // Calculate Commission (20% of SALE amount)
-               const saleAmount = parseFloat(resource.amount.total);
-               const commissionAmount = saleAmount * 0.20;
-
-               const partner = await prisma.user.findUnique({
-                 where: { id: metadata.partnerId },
-                 include: { partnerProfile: true }
+             // Only activate if not already active to avoid duplicate emails
+             if (user.subscriptionStatus !== "ACTIVE") {
+               await prisma.user.update({
+                 where: { id: metadata.userId },
+                 data: {
+                   subscriptionStatus: "ACTIVE",
+                   paypalSubscriptionId: subscriptionId,
+                   credits: { increment: 30 }
+                 }
                });
-               
-               if (partner && partner.partnerProfile?.paypalEmail) {
-                  console.log(`[PayPal] Initiating Payout of $${commissionAmount} to ${partner.partnerProfile.paypalEmail}`);
-                  
-                  // Record Commission as PENDING (to be paid out monthly via Cron)
-                  await prisma.commission.create({
-                    data: {
-                      partnerId: partner.id,
-                      referredUserId: metadata.userId,
-                      amount: commissionAmount,
-                      status: "PENDING"
-                    }
-                  });
-                  
-                  console.log(`[PayPal] Commission of $${commissionAmount} recorded for partner ${partner.partnerProfile.paypalEmail} (Pending Monthly Payout)`);
-               }
+
+               await sendEmail(
+                 user.email,
+                 "Premium Intelligence Activated 🛰️",
+                 subscriptionActivatedTemplate(user.name || "Explorer")
+               );
+             }
+
+             // Handle Partner Payouts...
+             if (metadata.partnerId) {
+                const saleAmount = parseFloat(resource.amount.total);
+                const commissionAmount = saleAmount * 0.20;
+                await prisma.commission.create({
+                  data: {
+                    partnerId: metadata.partnerId,
+                    referredUserId: metadata.userId,
+                    amount: commissionAmount,
+                    status: "PENDING"
+                  }
+                });
              }
           }
        }
+    } else if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+      const user = await prisma.user.findFirst({
+        where: { paypalSubscriptionId: subscriptionId }
+      });
+
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { subscriptionStatus: "CANCELLED" }
+        });
+
+        await sendEmail(
+          user.email,
+          "Subscription Cancelled ⚓",
+          subscriptionCancelledTemplate(user.name || "Explorer")
+        );
+      }
+    } else if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
+      // Handled similarly to SALE.COMPLETED if we want to be safe
+      // But usually SALE.COMPLETED is the one that confirms money is received
     }
 
     res.status(200).send();
@@ -261,13 +341,28 @@ router.post("/capture-credit-order", authenticateToken, async (req: AuthRequest,
 
 // POST /api/paypal/cancel
 router.post("/cancel", authenticateToken, async (req: Request, res: Response) => {
-  // ... existing cancel logic (simplified for brevity, can keep previous logic)
     const authReq = req as AuthRequest;
-    // ... basic DB update logic
-    await prisma.user.update({
-        where: { id: authReq.user?.id },
-        data: { subscriptionStatus: "CANCELLED" }
+    const userId = authReq.user?.id;
+    
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
     });
+
+    if (user) {
+      await prisma.user.update({
+          where: { id: userId },
+          data: { subscriptionStatus: "CANCELLED" }
+      });
+
+      await sendEmail(
+        user.email,
+        "Subscription Cancelled ⚓",
+        subscriptionCancelledTemplate(user.name || "Explorer")
+      );
+    }
+    
     res.json({ success: true });
 });
 

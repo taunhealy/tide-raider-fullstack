@@ -8,6 +8,10 @@ import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components
 import { cn } from "@/app/lib/utils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import WeatherForecastWidget from "@/app/components/sidebar/WeatherForecastWidget";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import Link from "next/link";
+import { Lock, Cloud } from "lucide-react";
+import AIReportModal from "@/app/components/beach/AIReportModal";
 
 interface Beach {
   id: string;
@@ -30,6 +34,10 @@ interface Beach {
 
 export default function GlobalMapPage() {
   const { filters, updateFilter } = useBeachFilters();
+  const { data: authData } = useBackendAuth();
+  const user = authData?.user;
+  const isSubscribed = user?.isSubscribed || user?.hasActiveTrial || false;
+
   const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +55,10 @@ export default function GlobalMapPage() {
   // Map Navigation State
   const [mapCenter, setMapCenter] = useState<[number, number]>([18.4233, -33.9249]);
   const [mapZoom, setMapZoom] = useState(12);
+
+  // AI Report Modal State
+  const [reportBeach, setReportBeach] = useState<any | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -372,6 +384,50 @@ export default function GlobalMapPage() {
               </div>
             </div>
 
+            {/* Hidden Gems Gated Filter */}
+            <div className="p-4 bg-white rounded-2xl border-2 border-gray-100 space-y-3 relative overflow-hidden group">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block">Exclusive Spots</label>
+                {!isSubscribed && (
+                   <span className="flex items-center gap-1 text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-amber-100">
+                     <Lock className="w-2.5 h-2.5" />
+                     Premium
+                   </span>
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                <HiddenGemsButton
+                  active={isHiddenGemsOnly && isSubscribed}
+                  size="sm"
+                  disabled={!isSubscribed}
+                  onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
+                  className={cn(
+                    "w-full justify-between h-12 px-4",
+                    !isSubscribed && "opacity-50 grayscale pointer-events-none"
+                  )}
+                >
+                  <span className="text-[11px]">Reveal Hidden Gems</span>
+                  {!isSubscribed && <Lock className="w-3 h-3" />}
+                </HiddenGemsButton>
+
+                {!isSubscribed && (
+                  <div className="pt-2 border-t border-gray-50">
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                      Unlock 150+ crowd-free "Hidden Gems" only visible to Intelligence subscribers.
+                    </p>
+                    <Link 
+                      href="/pricing" 
+                      className="inline-flex items-center gap-1.5 text-[9px] font-black text-brand-3 uppercase tracking-widest hover:underline group/cta"
+                    >
+                      Subscribe to unlock
+                      <ChevronRight className="w-2.5 h-2.5 group-hover/cta:translate-x-0.5 transition-transform" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Difficulty Filter */}
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Experience Level</label>
@@ -450,14 +506,6 @@ export default function GlobalMapPage() {
                 >
                   Foiling Only
                 </FoilingButton>
-
-                <HiddenGemsButton
-                  active={isHiddenGemsOnly}
-                  size="sm"
-                  onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
-                >
-                  Hidden Gems
-                </HiddenGemsButton>
               </div>
             </div>
           </div>
@@ -521,6 +569,10 @@ export default function GlobalMapPage() {
                 center={mapCenter}
                 zoom={mapZoom}
                 selectedDayIndex={selectedDayIndex}
+                onAIReportClick={(beach) => {
+                  setReportBeach(beach);
+                  setIsReportModalOpen(true);
+                }}
                 showWindHeatmap={showWindHeatmap}
                 showSwellHeatmap={showSwellHeatmap}
               />
@@ -696,6 +748,16 @@ export default function GlobalMapPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* AI Report Modal */}
+      {reportBeach && (
+        <AIReportModal
+          beach={reportBeach}
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          date={selectedDateString}
+        />
+      )}
     </div>
   );
 }

@@ -303,8 +303,8 @@ export default function PricingPage() {
               <div className="p-8 flex-grow bg-white">
                  <ul className="space-y-6 mb-10">
                   {[
-                    { text: "50 Strategic AI Surf Reports", icon: Zap, color: "text-blue-400" },
-                    { text: "Deep-dive 7-day outlooks", icon: ArrowRight, color: "text-blue-400" },
+                    { text: "100 AI Intelligence Credits", icon: Zap, color: "text-blue-400" },
+                    { text: "Daily, Tactical or Weekly outlooks", icon: ArrowRight, color: "text-blue-400" },
                     { text: "Share reports with your crew via WhatsApp", icon: Check, color: "text-blue-400" },
                     { text: "Credits never expire, use anytime", icon: ShieldCheck, color: "text-blue-400" },
                   ].map((feature, idx) => (

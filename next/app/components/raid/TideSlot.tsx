@@ -29,10 +29,12 @@ const TideSlot: React.FC<TideSlotProps> = ({ tide }) => {
           <div className="flex items-center gap-2">
             {isRising && <TrendingUp className="w-3 h-3 gap-2 text-emerald-400" />}
             {isFalling && <TrendingDown className="w-3 h-3 text-amber-400" />}
-            {!isRising && !isFalling && !tide && <LoadingSpinner size="sm" />}
-            {!isRising && !isFalling && tide && <Circle className="w-3 h-3 text-white/40" />}
+            {!isRising && !isFalling && !tide && tide !== "" && <LoadingSpinner size="sm" />}
+            {!isRising && !isFalling && (tide === "" || (tide && !isRising && !isFalling)) && (
+              <Circle className="w-3 h-3 text-white/40" />
+            )}
             <span className="font-regular text-[10px] text-white tracking-tighter">
-              {tide}
+              {tide === "" ? "N/A" : tide}
             </span>
           </div>
         </div>

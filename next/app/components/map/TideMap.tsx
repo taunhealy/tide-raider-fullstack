@@ -13,7 +13,7 @@ import { Vector as VectorSource, Cluster, XYZ } from "ol/source";
 import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import Overlay from "ol/Overlay";
 import { cn } from "@/app/lib/utils";
-import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon } from "lucide-react";
+import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon, Cloud } from "lucide-react";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 
@@ -33,12 +33,18 @@ interface Beach {
   country: string;
   continentId: string;
   continent: string;
+  optimalWindDirections: string[];
+  optimalSwellDirections: { min: number; max: number };
+  swellSize: { min: number; max: number };
+  idealSwellPeriod: { min: number; max: number };
+  dailyScores?: Record<string, any>;
 }
 
 interface TideMapProps {
   beaches: Beach[];
   onBeachSelect: (beach: Beach) => void;
   onRegionSelect: (regionId: string) => void;
+  onAIReportClick: (beach: Beach) => void;
   selectedDayIndex?: number;
   center?: [number, number];
   zoom?: number;
@@ -51,6 +57,7 @@ export default function TideMap({
   beaches, 
   onBeachSelect, 
   onRegionSelect,
+  onAIReportClick,
   selectedDayIndex = 0,
   center = [18.4233, -33.9249], 
   zoom = 12,
@@ -182,9 +189,9 @@ export default function TideMap({
       if (showWindHeatmap) {
         const validWind = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed !== undefined);
         
-        let avgSpeed = 15;
-        let avgVX = -0.00015;
-        let avgVY = -0.0001;
+        let avgSpeed = 0;
+        let avgVX = 0;
+        let avgVY = 0;
 
         if (validWind.length > 0) {
           avgSpeed = validWind.reduce((acc, b: any) => acc + b.dailyScores[dateKey].conditions.windSpeed, 0) / validWind.length;
@@ -206,66 +213,68 @@ export default function TideMap({
           avgVY = (sumVY / mag) * 0.0006;
         }
 
-        // Calculate perpendicular vector for wiggling once per frame
-        const vMag = Math.sqrt(avgVX * avgVX + avgVY * avgVY) || 1;
-        const perpX = (-avgVY / vMag);
-        const perpY = (avgVX / vMag);
+        // Only draw if we have speed
+        if (avgSpeed > 0) {
+          // Calculate perpendicular vector for wiggling once per frame
+          const vMag = Math.sqrt(avgVX * avgVX + avgVY * avgVY) || 1;
+          const perpX = (-avgVY / vMag);
+          const perpY = (avgVX / vMag);
 
-        const time = Date.now() * 0.003;
-        windParticles.current.forEach((p, i) => {
-          p.life -= 0.005;
-          if (p.life <= 0) { 
-            // Spawn on the windward edge instead of randomly
-            const edge = Math.random();
-            if (Math.abs(avgVX) > Math.abs(avgVY)) {
-              p.x = avgVX > 0 ? 0 : 1;
-              p.y = edge;
-            } else {
-              p.x = edge;
-              p.y = avgVY > 0 ? 0 : 1;
+          const time = Date.now() * 0.003;
+          windParticles.current.forEach((p, i) => {
+            p.life -= 0.005;
+            if (p.life <= 0) { 
+              // Spawn on the windward edge instead of randomly
+              const edge = Math.random();
+              if (Math.abs(avgVX) > Math.abs(avgVY)) {
+                p.x = avgVX > 0 ? 0 : 1;
+                p.y = edge;
+              } else {
+                p.x = edge;
+                p.y = avgVY > 0 ? 0 : 1;
+              }
+              p.life = 1.0; 
             }
-            p.life = 1.0; 
-          }
-          
-          const speedMod = (avgSpeed / 10 + 0.3);
-          
-          // Move particle in a straightish direction
-          p.x += avgVX * speedMod;
-          p.y += avgVY * speedMod;
-          
-          // Loop around edges
-          if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
+            
+            const speedMod = (avgSpeed / 10 + 0.3);
+            
+            // Move particle in a straightish direction
+            p.x += avgVX * speedMod;
+            p.y += avgVY * speedMod;
+            
+            // Loop around edges
+            if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0; if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
 
-          // Draw a wiggly path instead of a straight segment
-          const segmentCount = 10;
-          const tailScale = 150; // Total length of the tail
-          
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.45})`; 
-          ctx.lineWidth = Math.min(Math.max(1.0, avgSpeed / 8), 2.5);
-          ctx.lineCap = "round";
-          ctx.moveTo(p.x * width, p.y * height);
-          
-          for (let j = 1; j <= segmentCount; j++) {
-            const t = j / segmentCount;
-            // The segment follows the base velocity backwards
-            const posX = p.x - (avgVX * speedMod) * t * tailScale;
-            const posY = p.y - (avgVY * speedMod) * t * tailScale;
+            // Draw a wiggly path instead of a straight segment
+            const segmentCount = 10;
+            const tailScale = 150; // Total length of the tail
             
-            // Apply a wiggle offset at each point along the tail
-            // Multi-frequency sine for a more organic 'wiggly' look
-            const segmentWiggle = (
-              Math.sin(time + i * 0.5 - t * 6) * 0.0012 +
-              Math.sin(time * 0.5 + i * 0.2 - t * 3) * 0.0006
-            );
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(96, 165, 250, ${p.life * 0.45})`; 
+            ctx.lineWidth = Math.min(Math.max(1.0, avgSpeed / 8), 2.5);
+            ctx.lineCap = "round";
+            ctx.moveTo(p.x * width, p.y * height);
             
-            const wx = posX + (perpX * segmentWiggle);
-            const wy = posY + (perpY * segmentWiggle);
-            
-            ctx.lineTo(wx * width, wy * height);
-          }
-          ctx.stroke();
-        });
+            for (let j = 1; j <= segmentCount; j++) {
+              const t = j / segmentCount;
+              // The segment follows the base velocity backwards
+              const posX = p.x - (avgVX * speedMod) * t * tailScale;
+              const posY = p.y - (avgVY * speedMod) * t * tailScale;
+              
+              // Apply a wiggle offset at each point along the tail
+              const segmentWiggle = (
+                Math.sin(time + i * 0.5 - t * 6) * 0.0012 +
+                Math.sin(time * 0.5 + i * 0.2 - t * 3) * 0.0006
+              );
+              
+              const wx = posX + (perpX * segmentWiggle);
+              const wy = posY + (perpY * segmentWiggle);
+              
+              ctx.lineTo(wx * width, wy * height);
+            }
+            ctx.stroke();
+          });
+        }
       }
 
       // Draw Swell Particles (TINY SLOW PIPS)
@@ -737,13 +746,22 @@ export default function TideMap({
                       </div>
                     )}
                     
-                    <button 
-                      onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
-                      className="w-full mt-2 py-2 border-t border-white/5 text-[8px] font-black text-[var(--color-tertiary)] uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-1 group"
-                    >
-                      Full Analysis
-                      <ChevronDown className="w-2 h-2 rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
-                    </button>
+                    <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
+                        className="py-2.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-1 group"
+                      >
+                        Details
+                        <ChevronDown className="w-2 h-2 rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={() => onAIReportClick(popupBeach)}
+                        className="py-2.5 bg-brand-3 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-brand-3/20 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        AI Report
+                        <Cloud className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
