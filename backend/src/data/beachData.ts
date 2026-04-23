@@ -398,6 +398,49 @@ export const beachData: Beach[] = [
   },
 
   {
+    id: "pebbles",
+    name: "Pebbles",
+    continent: "Africa",
+    countryId: "za",
+    regionId: "western-cape",
+    location: "Bakoven",
+    distanceFromCT: 15,
+    optimalWindDirections: ["SE", "ESE", "E"],
+    optimalSwellDirections: {
+      min: 220,
+      max: 250,
+      cardinal: "SW",
+    },
+    bestSeasons: ["winter"],
+    optimalTide: "LOW_TO_MID",
+    description:
+      "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It’s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
+    difficulty: "ADVANCED",
+    waveType: "BEACH_BREAK",
+    swellSize: {
+      min: 1.8,
+      max: 5.0,
+    },
+    idealSwellPeriod: {
+      min: 13,
+      max: 24,
+    },
+    waterTemp: {
+      summer: 15,
+      winter: 12,
+    },
+    hazards: ["Rocks", "Strong currents", "Heavy waves"],
+    crimeLevel: "Low",
+    sharkAttack: {
+      hasAttack: false,
+    },
+    image: "",
+    coordinates: {
+      lat: -33.9726,
+      lng: 18.3714,
+    },
+  },
+  {
     id: "llandudno",
     name: "Llandudno",
     continent: "Africa",
