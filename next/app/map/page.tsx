@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import TideMap from "@/app/components/map/TideMap";
-import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2, X } from "lucide-react";
+import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2, X, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components/ui/GradientButton";
 import { cn } from "@/app/lib/utils";
@@ -10,7 +10,7 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import WeatherForecastWidget from "@/app/components/sidebar/WeatherForecastWidget";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import Link from "next/link";
-import { Lock, Cloud } from "lucide-react";
+
 import AIReportModal from "@/app/components/beach/AIReportModal";
 
 interface Beach {
