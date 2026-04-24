@@ -15,6 +15,10 @@ interface AlertPropertiesProps {
 
 
 export function AlertProperties({ properties }: AlertPropertiesProps) {
+  if (!Array.isArray(properties)) {
+    return null;
+  }
+
   return (
     <div className="grid grid-cols-1 gap-2">
       {properties.map((prop, index) => (

@@ -53,6 +53,8 @@ export function AlertCard({
   onDelete,
   onEdit,
 }: AlertCardProps) {
+  if (!alert) return null;
+
   return (
     <div
       className={cn(
@@ -73,11 +75,11 @@ export function AlertCard({
             </span>
           </div>
           <h3 className="text-lg font-bold text-gray-900 truncate leading-tight">
-            {alert.name}
+            {alert.name || "Unnamed Alert"}
           </h3>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-              {alert.region?.name || alert.regionId}
+              {alert.region?.name || alert.regionId || "No Region"}
             </span>
           </div>
         </div>
@@ -88,7 +90,7 @@ export function AlertCard({
               <TooltipTrigger asChild>
                 <div className="px-2 py-1.5">
                   <Switch
-                    checked={alert.active}
+                    checked={!!alert.active}
                     onCheckedChange={(checked) =>
                       onToggleActive(alert.id, checked)
                     }
@@ -143,7 +145,7 @@ export function AlertCard({
               <div className="flex items-center gap-2 text-xs font-bold text-gray-900">
                  <span>📡</span>
                  <span className="truncate">
-                   {alert.sources && alert.sources.length > 0
+                   {Array.isArray(alert.sources) && alert.sources.length > 0
                      ? Array.from(new Set(alert.sources))
                          .map(formatSourceName)
                          .join(", ")
@@ -162,7 +164,9 @@ export function AlertCard({
 }
 
 function AlertConditions({ alert }: { alert: Alert }) {
-  if (alert.alertType === AlertType.VARIABLES && alert.properties) {
+  if (!alert) return null;
+
+  if (alert.alertType === AlertType.VARIABLES && Array.isArray(alert.properties)) {
     return (
       <div className="space-y-4">
         <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Trigger Conditions</span>
@@ -177,7 +181,7 @@ function AlertConditions({ alert }: { alert: Alert }) {
         <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.15em] leading-none">Minimum Rating</span>
         <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
           <BlueStarRating score={alert.starRating ?? 0} outOfFive={true} />
-          <span className="text-sm font-bold text-gray-900">{alert.starRating}+ Stars</span>
+          <span className="text-sm font-bold text-gray-900">{alert.starRating || 0}+ Stars</span>
         </div>
       </div>
     );

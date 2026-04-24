@@ -287,9 +287,15 @@ export function AlertProvider({
           const newProperties = Array.isArray(state.alert.properties?.create)
             ? [...state.alert.properties.create]
             : [];
+          
+          let value = params.value;
+          if (params.key === "optimalValue" || params.key === "range") {
+            value = Number(params.value) || 0;
+          }
+
           newProperties[params.index] = {
             ...newProperties[params.index],
-            [params.key]: params.value,
+            [params.key]: value,
           };
           dispatch({
             type: "UPDATE_ALERT",

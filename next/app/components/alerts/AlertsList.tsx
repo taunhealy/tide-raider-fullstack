@@ -83,7 +83,14 @@ export function AlertsList() {
     );
   }
 
-  if (!alerts || alerts.length === 0) {
+  if (!Array.isArray(alerts) || alerts.length === 0) {
+    return <EmptyAlertsState />;
+  }
+
+  // Filter out any potential invalid alert entries to prevent crashes
+  const validAlerts = alerts.filter(alert => alert && typeof alert === 'object' && alert.id);
+
+  if (validAlerts.length === 0) {
     return <EmptyAlertsState />;
   }
 
@@ -93,7 +100,7 @@ export function AlertsList() {
 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {alerts.map((alert) => (
+        {validAlerts.map((alert) => (
           <AlertCard
             key={alert.id}
             alert={alert as any}

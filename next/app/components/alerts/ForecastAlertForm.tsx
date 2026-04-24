@@ -365,39 +365,39 @@ function AlertFormBody({
       const forecast = logEntry.forecast;
       const properties: Omit<Prisma.AlertPropertyCreateInput, "alert">[] = [];
 
-      if (forecast.windSpeed !== undefined) {
+      if (typeof forecast.windSpeed === 'number' && forecast.windSpeed !== null) {
         properties.push({
           property: "windSpeed",
           range: 2, // Default range
-          optimalValue: forecast.windSpeed,
+          optimalValue: Number(forecast.windSpeed),
         });
       }
-      if (forecast.windDirection !== undefined) {
+      if (typeof forecast.windDirection === 'number' && forecast.windDirection !== null) {
         properties.push({
           property: "windDirection",
           range: 22.5, // Default range
-          optimalValue: forecast.windDirection,
+          optimalValue: Number(forecast.windDirection),
         });
       }
-      if (forecast.swellHeight !== undefined) {
+      if (typeof forecast.swellHeight === 'number' && forecast.swellHeight !== null) {
         properties.push({
           property: "swellHeight",
           range: 0.5, // Allow precise matching for exact forecast values
-          optimalValue: forecast.swellHeight,
+          optimalValue: Number(forecast.swellHeight),
         });
       }
-      if (forecast.swellPeriod !== undefined) {
+      if (typeof forecast.swellPeriod === 'number' && forecast.swellPeriod !== null) {
         properties.push({
           property: "swellPeriod",
           range: 2, // Default range
-          optimalValue: forecast.swellPeriod,
+          optimalValue: Number(forecast.swellPeriod),
         });
       }
-      if (forecast.swellDirection !== undefined) {
+      if (typeof forecast.swellDirection === 'number' && forecast.swellDirection !== null) {
         properties.push({
           property: "swellDirection",
           range: 22.5, // Default range
-          optimalValue: forecast.swellDirection,
+          optimalValue: Number(forecast.swellDirection),
         });
       }
 
