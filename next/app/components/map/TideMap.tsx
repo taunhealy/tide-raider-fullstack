@@ -17,7 +17,7 @@ import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon,
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 
-interface Beach {
+export interface Beach {
   id: string;
   name: string;
   location: string;
@@ -26,9 +26,10 @@ interface Beach {
     lng: number;
   };
   difficulty: string;
+  waveType: string;
   rating?: number;
   regionId: string;
-  region?: string;
+  region: string;
   countryId: string;
   country: string;
   continentId: string;

@@ -103,18 +103,19 @@ export function useSubscriptionStatus() {
   }
 
   // For authenticated users, use query data
-  const isSubscribed = data ? data.subscriptionStatus === "ACTIVE" : false;
-  const hasActiveTrial = data ? data.hasActiveTrial : false;
+  const subscriptionData = data as SubscriptionStatus | undefined;
+  const isSubscribed = subscriptionData ? subscriptionData.subscriptionStatus === "ACTIVE" : false;
+  const hasActiveTrial = subscriptionData ? subscriptionData.hasActiveTrial : false;
   const isPremium = isSubscribed || hasActiveTrial;
 
   return {
-    subscriptionStatus: data?.subscriptionStatus || null,
+    subscriptionStatus: subscriptionData?.subscriptionStatus || null,
     hasActiveTrial,
     isSubscribed,
     isPremium,
-    credits: data?.credits || 0,
-    referralCode: data?.referralCode || null,
-    paypalSubscriptionId: data?.paypalSubscriptionId || null,
+    credits: subscriptionData?.credits || 0,
+    referralCode: subscriptionData?.referralCode || null,
+    paypalSubscriptionId: subscriptionData?.paypalSubscriptionId || null,
     // Only show loading if auth is loading OR subscription query is loading
     isLoading:
       authStatus === "loading" || (authStatus === "authenticated" && isLoading),

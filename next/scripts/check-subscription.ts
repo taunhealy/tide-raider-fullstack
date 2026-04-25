@@ -15,7 +15,7 @@ async function checkSubscription() {
     });
 
     console.log('\n=== User Subscription Status ===\n');
-    users.forEach(user => {
+    users.forEach((user: any) => {
       const isSubscribed = user.subscriptionStatus === 'ACTIVE';
       console.log(`Email: ${user.email}`);
       console.log(`Name: ${user.name}`);

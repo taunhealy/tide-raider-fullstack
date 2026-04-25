@@ -719,6 +719,7 @@ export default function HeroSection({ data }: HeroProps) {
                  showSwellHeatmap={true}
                  onBeachSelect={() => {}}
                  onRegionSelect={() => {}}
+                 onAIReportClick={() => {}}
                  center={[0, 0]}
                  zoom={2}
                  variant="hero"

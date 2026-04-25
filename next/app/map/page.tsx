@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import TideMap from "@/app/components/map/TideMap";
+import TideMap, { Beach } from "@/app/components/map/TideMap";
 import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2, X, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components/ui/GradientButton";
@@ -13,24 +13,6 @@ import Link from "next/link";
 
 import AIReportModal from "@/app/components/beach/AIReportModal";
 
-interface Beach {
-  id: string;
-  name: string;
-  location: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  difficulty: string;
-  waveType: string;
-  regionId: string;
-  region: string;
-  countryId: string;
-  country: string;
-  continentId: string;
-  continent: string;
-  rating: number;
-}
 
 export default function GlobalMapPage() {
   const { filters, updateFilter } = useBeachFilters();
