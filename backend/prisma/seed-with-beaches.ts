@@ -829,22 +829,47 @@ async function main() {
       console.log("4. Skipping beach creation (beachData not available)");
     }
 
-    // 5. Create user
-    console.log("5. Creating or finding a user...");
-    let user = await prisma.user.findFirst();
+    // 5. Create users with credits
+    console.log("5. Creating or finding users with credits...");
+    
+    // Seed Tide Raider production user
+    await prisma.user.upsert({
+      where: { email: "admin@tideraider.com" },
+      update: { credits: 300 },
+      create: {
+        id: "cmnhjq35d000cs60fxss02p4o",
+        name: "Tide Raider",
+        email: "admin@tideraider.com",
+        roles: ["SURFER"],
+        credits: 300,
+        subscriptionStatus: "ACTIVE",
+        subscriptionEndsAt: new Date("2030-01-01"),
+      },
+    });
+    console.log("✓ Seeded Tide Raider admin user with 300 credits");
+
+    // Seed Taunhealy account with 300 credits
+    await prisma.user.upsert({
+      where: { email: "taunhealy@gmail.com" },
+      update: { credits: 300 },
+      create: {
+        id: "cmn4owtab0000s60f0dosfbck",
+        name: "Taun",
+        email: "taunhealy@gmail.com",
+        roles: ["SURFER"],
+        credits: 300,
+        subscriptionStatus: "ACTIVE",
+        subscriptionEndsAt: new Date("2030-01-01"),
+      },
+    });
+    console.log("✓ Seeded Taunhealy user with 300 credits");
+
+    let user = await prisma.user.findFirst({
+      where: { email: "taunhealy@gmail.com" }
+    });
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          name: "Demo User",
-          email: "demo@example.com",
-          roles: ["SURFER"],
-          skillLevel: "INTERMEDIATE",
-        },
-      });
-      console.log("✓ Created new user:", user.id);
-    } else {
-      console.log("✓ Found existing user:", user.id);
+      user = await prisma.user.findFirst();
     }
 
     // 6. Create log entries (if beaches exist)

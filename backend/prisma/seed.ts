@@ -526,10 +526,26 @@ async function main() {
     console.log(`  - Errors: ${errorCount}`);
     console.log(`  - Total in beachData: ${beachData.length}`);
 
-    console.log("5. Creating or finding a user...");
+    console.log("5. Creating or finding users...");
     let user;
     try {
-      // Try to find an existing user
+      // Seed Tide Raider production user
+      await prisma.user.upsert({
+        where: { email: "admin@tideraider.com" },
+        update: { credits: 300 },
+        create: {
+          id: "cmnhjq35d000cs60fxss02p4o",
+          name: "Tide Raider",
+          email: "admin@tideraider.com",
+          roles: ["SURFER"],
+          credits: 300,
+          subscriptionStatus: "ACTIVE",
+          subscriptionEndsAt: new Date("2030-01-01"),
+        },
+      });
+      console.log("✓ Seeded Tide Raider admin user with 300 credits");
+
+      // Try to find an existing user for other seeding tasks
       user = await prisma.user.findFirst();
 
       if (!user) {
@@ -547,7 +563,7 @@ async function main() {
         console.log("✓ Found existing user:", user.id);
       }
     } catch (error) {
-      console.error("Failed to create/find user:", error);
+      console.error("Failed to create/find users:", error);
       throw error;
     }
 

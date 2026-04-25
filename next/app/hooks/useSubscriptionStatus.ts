@@ -41,7 +41,7 @@ export function useSubscriptionStatus() {
 
   const { data, isLoading, error } = useQuery<SubscriptionStatus>({
     queryKey: ["subscriptionStatus", session?.user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<SubscriptionStatus> => {
       if (!session?.user?.id) {
         return {
           subscriptionStatus: null,
@@ -49,6 +49,7 @@ export function useSubscriptionStatus() {
           paypalSubscriptionId: null,
           isPremium: false,
           credits: 0,
+          referralCode: null,
         };
       }
 
@@ -65,6 +66,7 @@ export function useSubscriptionStatus() {
           paypalSubscriptionId: null,
           isPremium: false,
           credits: 0,
+          referralCode: null,
         };
       }
 
@@ -79,10 +81,10 @@ export function useSubscriptionStatus() {
       };
     },
     enabled: authStatus === "authenticated" && !!session?.user?.id,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 30, // Consider data fresh for 30 seconds
     gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
-    refetchOnMount: false, // Don't refetch on every mount
-    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: true, // Refetch on mount to ensure fresh data
+    refetchOnWindowFocus: true, // Refetch when window is focused
   });
 
   // For unauthenticated users, immediately return default values (not loading)
@@ -101,8 +103,8 @@ export function useSubscriptionStatus() {
   }
 
   // For authenticated users, use query data
-  const isSubscribed = data?.subscriptionStatus === "ACTIVE";
-  const hasActiveTrial = data?.hasActiveTrial || false;
+  const isSubscribed = data ? data.subscriptionStatus === "ACTIVE" : false;
+  const hasActiveTrial = data ? data.hasActiveTrial : false;
   const isPremium = isSubscribed || hasActiveTrial;
 
   return {

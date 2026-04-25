@@ -53,9 +53,7 @@ export async function GET(req: NextRequest) {
     const isSubscribed = userData.isSubscribed || false;
     const isPremium = isSubscribed || hasActiveTrial;
 
-    // -------------------------------------------------
-    // 4️⃣ Return subscription status
-    // -------------------------------------------------
+    console.log(`[paypal/subscription-status] Returning credits: ${userData.credits || 0} for user: ${userData.id}`);
     return NextResponse.json({
       subscriptionStatus: isSubscribed ? "ACTIVE" : null,
       hasActiveTrial,

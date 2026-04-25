@@ -55,6 +55,7 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
+    console.log(`[auth/me] Proxy returning user: ${data.user?.id}, email: ${data.user?.email}, credits: ${data.user?.credits}`);
     authCache.set(cacheKey, { data, timestamp: Date.now() });
     return NextResponse.json(data);
   } catch (error) {

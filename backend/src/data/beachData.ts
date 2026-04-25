@@ -2819,6 +2819,7 @@ export const beachData: Beach[] = [
     countryId: "za",
     regionId: "western-cape",
     location: "False Bay",
+    isHiddenGem: true,
     distanceFromCT: 35,
     optimalWindDirections: ["ENE", "NE", "NW"],
     optimalSwellDirections: {

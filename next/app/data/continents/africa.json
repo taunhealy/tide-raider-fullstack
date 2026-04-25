@@ -1668,7 +1668,7 @@
     "image": "",
     "coordinates": {
       "lat": -34.309867,
-      "lng": 18.461750
+      "lng": 18.46175
     }
   },
   {
@@ -4040,21 +4040,22 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "False Bay",
+    "isHiddenGem": true,
     "distanceFromCT": 35,
     "optimalWindDirections": [
       "ENE",
-      "NE"
+      "NE",
+      "NW"
     ],
-    "isHiddenGem": true,
     "optimalSwellDirections": {
       "min": 170,
-      "max": 210,
+      "max": 190,
       "cardinal": "S"
     },
     "bestSeasons": [
       "winter"
     ],
-    "optimalTide": "Low_to_Mid",
+    "optimalTide": "LOW_TO_MID",
     "description": "Protected beach break in False Bay, works best with NW winds. Good for beginners on smaller days.",
     "difficulty": "BEGINNER",
     "waveType": "BEACH_BREAK",

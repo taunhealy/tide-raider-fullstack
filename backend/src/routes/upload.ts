@@ -130,7 +130,7 @@ router.post(
 
       // Validate file size based on type
       const MAX_IMAGE_SIZE = 30 * 1024 * 1024; // 30MB for images
-      const MAX_VIDEO_SIZE = 150 * 1024 * 1024; // 150MB
+      const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
 
       if (file.mimetype.startsWith("video/") || fileType === "video") {
         if (file.size > MAX_VIDEO_SIZE) {

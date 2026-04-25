@@ -17,12 +17,13 @@ import { useBackendAuth } from "../hooks/useBackendAuth";
 const NAVIGATION_ITEMS = [
   
   { href: "/raid", label: "Raid" },
-  { href: "/fast-forecast", label: "AI Forecast" },
+  { href: "/fast-forecast", label: "Forecast" },
   { href: "/logs", label: "Logs" },
   { href: "/alerts", label: "Alerts" },
   { href: "/map", label: "Map" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 export default function Navbar() {
