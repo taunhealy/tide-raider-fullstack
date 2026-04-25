@@ -406,11 +406,14 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {beachScores?.scores?.map((score: any) => {
+                        {beachScores?.scores?.filter((score: any) => {
+                          const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
+                          return !conditions?.timeSlot || conditions.timeSlot === entry.timeSlot;
+                        }).map((score: any, index: number) => {
                           const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
                           
                           return (
-                            <div key={score.source} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
+                            <div key={`${score.source}-${index}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
                               <div className="flex items-center justify-between mb-6">
                                 <div className="space-y-1">
                                   <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">

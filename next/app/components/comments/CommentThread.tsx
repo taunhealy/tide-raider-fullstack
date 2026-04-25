@@ -21,7 +21,7 @@ interface Comment {
 }
 
 export default function CommentThread({ logEntryId }: { logEntryId: string }) {
-  const { data: session, status: authStatus } = useBackendAuth();
+  const { data: session, status: authStatus, refetch: refetchAuth } = useBackendAuth();
   const user = session?.user;
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -150,7 +150,7 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
         <div className="bg-white/5 p-12 rounded-3xl text-center border border-white/5">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--color-tertiary)] mx-auto opacity-20" />
         </div>
-      ) : user ? (
+      ) : authStatus === "authenticated" ? (
         <form onSubmit={handleSubmit} className="mt-16 space-y-6 pt-10 border-t border-white/5">
           <div className="relative group">
             <Textarea
@@ -182,19 +182,34 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
         </form>
       ) : (
         <div className="bg-white/[0.02] p-12 rounded-3xl flex flex-col items-center justify-center text-center border border-white/5 gap-6 mt-16">
-          <p className="text-white/20 font-primary font-black text-[10px] uppercase tracking-[0.2em]">
-            Authentication Required for Intel Sharing
-          </p>
-          <Button
-            variant="tertiary"
-            className="w-full max-w-xs rounded-full font-primary font-black uppercase tracking-[0.2em] text-[10px] py-4"
-            onClick={() => {
-              const backendUrl = getBackendUrl();
-              window.location.href = `${backendUrl}/api/auth/google?state=${encodeURIComponent(window.location.href)}`;
-            }}
-          >
-            Sign In with Google
-          </Button>
+          <div className="space-y-2">
+            <p className="text-white/40 font-primary font-black text-[10px] uppercase tracking-[0.2em]">
+              Authorization Required for Intel Sharing
+            </p>
+            <p className="text-white/10 text-[9px] font-bold uppercase tracking-widest">
+              Please sign in to contribute to the discussion
+            </p>
+          </div>
+          
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <Button
+              variant="tertiary"
+              className="w-full rounded-full font-primary font-black uppercase tracking-[0.2em] text-[10px] py-4"
+              onClick={() => {
+                const backendUrl = getBackendUrl();
+                window.location.href = `${backendUrl}/api/auth/google?state=${encodeURIComponent(window.location.href)}`;
+              }}
+            >
+              Sign In with Google
+            </Button>
+            
+            <button 
+              onClick={() => refetchAuth()}
+              className="text-white/20 hover:text-white/40 text-[9px] font-bold uppercase tracking-widest transition-colors py-2"
+            >
+              Already signed in? Verify Status
+            </button>
+          </div>
         </div>
       )}
     </div>

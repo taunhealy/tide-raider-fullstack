@@ -1,14 +1,17 @@
 "use client";
 
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { MapPin } from "lucide-react";
+import { MapPin, Play } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import type { LogEntry } from "@/app/types/raidlogs";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import api from "@/app/lib/api-client";
+import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
+import { getVideoThumbnail } from "@/app/lib/videoUtils";
 
 export default function RecentRaidLogs() {
   const { data, isLoading } = useQuery({
@@ -98,8 +101,44 @@ export default function RecentRaidLogs() {
                 </div>
               </div>
               
-              {/* Square Instagram-sized thumbnail */}
-              {entry.imageUrl && (
+              {/* Media Thumbnail Section */}
+              {entry.videoUrl ? (
+                <div 
+                  className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5"
+                  onClick={(e) => {
+                    if (entry.videoPlatform) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(entry.videoUrl, '_blank');
+                    }
+                  }}
+                >
+                  {entry.videoPlatform ? (
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
+                        alt="Video thumbnail"
+                        fill
+                        className="object-cover group-hover/thumb:scale-110 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, 300px"
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover/thumb:bg-black/20 transition-colors">
+                        <div className="bg-white/90 rounded-full p-2.5 shadow-xl transform group-hover/thumb:scale-110 transition-transform">
+                          <Play className="w-4 h-4 text-[var(--color-tertiary)] fill-[var(--color-tertiary)]" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-2 right-2 bg-black/80 text-[8px] font-bold text-white px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10">
+                        {entry.videoPlatform}
+                      </div>
+                    </div>
+                  ) : (
+                    <VideoThumbnail 
+                      videoUrl={entry.videoUrl} 
+                      className="w-full h-full"
+                    />
+                  )}
+                </div>
+              ) : entry.imageUrl ? (
                 <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <Image
                     src={entry.imageUrl}
@@ -109,7 +148,7 @@ export default function RecentRaidLogs() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 </div>
-              )}
+              ) : null}
               
               {entry.comments && (
                 <p className="text-[12px] text-[var(--color-text-primary)] line-clamp-2 font-primary">

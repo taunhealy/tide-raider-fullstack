@@ -168,7 +168,7 @@ export default function FastForecastPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">Fast Forecast</h1>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Rapid AI Tactical Intelligence</p>
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">AI Surf Report</p>
             </div>
           </div>
           <div className="bg-white border border-slate-200 px-4 py-2 rounded-xl flex items-center gap-3 shadow-sm min-w-[120px] justify-center">
@@ -252,7 +252,7 @@ export default function FastForecastPage() {
                 )}
               </Button>
               <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                Costs {creditCost} Credit{creditCost > 1 ? 's' : ''} • Powered by Tide Raider AI
+                Costs {creditCost} Credit{creditCost > 1 ? 's' : ''} • Powered by Gemini AI
               </p>
             </div>
 
