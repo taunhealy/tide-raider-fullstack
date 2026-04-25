@@ -9,7 +9,7 @@ export function useRecentLogs() {
       const res = await fetch(`/api/raid-logs`);
       if (!res.ok) throw new Error("Failed to fetch logs");
       const data = await res.json();
-      return Array.isArray(data) ? data : []; // Ensure we always return an array
+      return data.entries || []; // Backend returns { entries: [...], total: ... }
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes

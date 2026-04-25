@@ -135,7 +135,7 @@ router.get(
       // Fetch the latest entry for each beach in parallel
       const logPromises = idList.map(beachId => 
         prisma.logEntry.findFirst({
-          where: { beachId, isPrivate: false, isAnonymous: false },
+          where: { beachId, isPrivate: false },
           orderBy: { date: 'desc' },
           select: {
             id: true,

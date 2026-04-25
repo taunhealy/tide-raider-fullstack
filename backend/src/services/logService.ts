@@ -357,12 +357,11 @@ export class LogService {
     } else {
       if (currentUserId) {
         whereClause.OR = [
-          { isPrivate: false, isAnonymous: false },
+          { isPrivate: false },
           { userId: currentUserId },
         ];
       } else {
         whereClause.isPrivate = false;
-        whereClause.isAnonymous = false;
       }
 
       if (isPrivate && currentUserId) {

@@ -534,7 +534,7 @@ export default function RaidLogTable({
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(
     "raidLogViewMode",
-    typeof window !== "undefined" && window.innerWidth >= 768 ? "table" : "card"
+    "card"
   );
 
   // Pagination state
