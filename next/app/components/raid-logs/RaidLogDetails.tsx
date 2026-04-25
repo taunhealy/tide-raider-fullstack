@@ -34,7 +34,7 @@ import ForecastAlertForm from "@/app/components/alerts/ForecastAlertForm";
 import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
-import { ShurikenLoader } from "@/app/components/ui/ShurikenLoader";
+import { RandomLoader } from "../ui/random-loader";
 
 interface RaidLogDetailsProps {
   id: string;
@@ -85,7 +85,7 @@ function LoggerDisplay({
       </Link>
       <Link
         href={`/profile/${userId}`}
-        className="text-[var(--color-text-primary)] font-primary font-semibold text-sm hover:text-[var(--color-tertiary)] transition-colors"
+        className="text-white font-primary font-bold text-sm hover:text-[var(--color-tertiary)] transition-colors"
       >
         {displayName}
       </Link>
@@ -141,10 +141,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
-          <ShurikenLoader />
-          <p className="text-white/40 font-primary mt-32 tracking-wider text-xs font-bold animate-pulse">Synchronizing session intel...</p>
-        </div>
+        <RandomLoader isLoading={true} />
       </div>
     );
   }
@@ -233,7 +230,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
           <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
             {/* Main Content - 1/3 width if video exists, full width otherwise */}
             <div
-              className={`${hasMedia && entry.videoUrl && !entry.videoPlatform ? "lg:col-span-1 lg:order-2" : hasMedia ? "lg:col-span-2 lg:order-1" : "lg:col-span-3"} space-y-4 md:space-y-6`}
+              className="lg:col-span-3 space-y-4 md:space-y-6"
             >
               {/* Header with Beach and Rating */}
               <div className="space-y-3 md:space-y-4">
@@ -307,10 +304,66 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
                 {/* Conditions Section - Improved to show all sources */}
                 <div className="space-y-6 pt-10">
-                  <div className="flex items-baseline justify-between mb-4">
+                  {/* Video Embed Section - Positioned above Conditions Data */}
+                  {entry.videoUrl && entry.videoUrl.trim() !== "" && (
+                    <div className="w-full mb-10">
+                      {!entry.videoPlatform ? (
+                        // Native Video
+                        <div 
+                          className="relative w-full rounded-3xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-black group shadow-2xl"
+                          onClick={() => setIsMediaModalOpen(true)}
+                        >
+                          <VideoThumbnail 
+                            videoUrl={entry.videoUrl} 
+                            className="w-full aspect-video"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                            <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
+                              <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        // YouTube / Vimeo
+                        <a 
+                          href={entry.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative w-full aspect-video rounded-3xl overflow-hidden block cursor-pointer hover:opacity-95 transition-all bg-gray-900 group shadow-2xl border border-white/10 hover:border-[var(--color-tertiary)]/50"
+                        >
+                          <Image
+                            src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
+                            alt="Video thumbnail"
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                            sizes="100vw"
+                            priority
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
+                            <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
+                              <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
+                            </div>
+                          </div>
+                          <div className="absolute bottom-6 right-6 bg-black/80 text-white text-xs font-bold px-4 py-2 rounded-full font-primary backdrop-blur-md border border-white/10 uppercase tracking-widest">
+                            {entry.videoPlatform}
+                          </div>
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-4">
                     <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
                       Conditions Data
                     </h2>
+                    {entry.timeSlot && (
+                      <div className="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                        <Clock className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                          {entry.timeSlot.charAt(0) + entry.timeSlot.slice(1).toLowerCase()} Forecast
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col gap-6">
@@ -359,9 +412,16 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                           return (
                             <div key={score.source} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
                               <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
-                                  {score.sourceName}
-                                </h3>
+                                <div className="space-y-1">
+                                  <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                                    {score.sourceName}
+                                  </h3>
+                                  {conditions?.timeSlot && (
+                                    <p className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-tighter">
+                                      {conditions.timeSlot.charAt(0) + conditions.timeSlot.slice(1).toLowerCase()}
+                                    </p>
+                                  )}
+                                </div>
                                 <div className="flex items-center gap-1.5 translate-y-[-2px]">
                                   <BlueStarRating score={score.starRating} outOfFive={true} size={12} />
                                 </div>
@@ -484,67 +544,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               )}
             </div>
 
-            {/* Left Sidebar - Video Player - 2/3 width on desktop for uploaded videos */}
-            {hasMedia && (
-              <div
-                className={
-                  entry.videoUrl && !entry.videoPlatform
-                    ? "lg:col-span-2 lg:order-1"
-                    : "lg:col-span-1 lg:order-2"
-                }
-              >
-                <div
-                  className={
-                    entry.videoUrl && !entry.videoPlatform
-                      ? "sticky top-20"
-                      : "sticky top-20"
-                  }
-                >
-                  {entry.videoUrl && entry.videoUrl.trim() !== "" ? (
-                    // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
-                    !entry.videoPlatform ? (
-                      // Uploaded video - use CustomVideoPlayer with full controls, make it bigger (2/3 width)
-                      <div className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 max-h-[80vh] bg-black">
-                        <CustomVideoPlayer
-                          videoUrl={entry.videoUrl}
-                          className="w-full min-h-[400px] lg:min-h-[600px] max-h-[80vh]"
-                        />
-                      </div>
-                    ) : (
-                      // External video (YouTube/Vimeo) - show thumbnail and link to source
-                      <a
-                        href={entry.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative w-full aspect-video rounded-lg overflow-hidden block cursor-pointer hover:opacity-95 transition-opacity bg-gray-100 group shadow-sm"
-                      >
-                        <Image
-                          src={getVideoThumbnail(
-                            entry.videoUrl,
-                            entry.videoPlatform
-                          )}
-                          alt="Video thumbnail"
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 1024px) 100vw, 33vw"
-                          priority
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                          <div className="w-12 h-12 md:w-16 md:h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                            <VideoIcon className="w-6 h-6 md:w-8 md:h-8 text-[var(--color-tertiary)]" />
-                          </div>
-                        </div>
-                        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-primary backdrop-blur-sm">
-                          {entry.videoPlatform === "youtube"
-                            ? "YouTube"
-                            : "Vimeo"}
-                        </div>
-                      </a>
-                    )
-                  ) : null}
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* Image Gallery Section - Below Details */}

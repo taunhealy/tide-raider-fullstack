@@ -693,7 +693,7 @@ export function RaidLogForm({
               } else {
                 errorMessage =
                   errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 100MB.`;
+                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 200MB.`;
               }
             } else if (response.status === 400) {
               errorMessage =
@@ -1117,123 +1117,138 @@ export function RaidLogForm({
                     {/* Video File Upload */}
                     <div>
                       <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 100MB)
+                        Upload Video File (Max 200MB)
                       </label>
-                      <input
-                        type="file"
-                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+                      {isPremium ? (
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
 
-                          setIsValidatingVideo(true);
-                          const validation = await validateVideoFile(file);
-                          setIsValidatingVideo(false);
+                            setIsValidatingVideo(true);
+                            const validation = await validateVideoFile(file);
+                            setIsValidatingVideo(false);
 
-                          if (!validation.valid) {
-                            toast.error(
-                              validation.error || "Invalid video file"
-                            );
-                            return;
-                          }
+                            if (!validation.valid) {
+                              toast.error(
+                                validation.error || "Invalid video file"
+                              );
+                              return;
+                            }
 
-                          // If file is over 4.5MB, compression is REQUIRED (Vercel body size limit)
-                          const FILE_SIZE_THRESHOLD = 4.5 * 1024 * 1024;
-                          if (file.size > FILE_SIZE_THRESHOLD) {
-                            setIsCompressingVideo(true);
-                            setVideoCompressionProgress(0);
+                            // If file is over 4.5MB, compression is REQUIRED (Vercel body size limit)
+                            const FILE_SIZE_THRESHOLD = 4.5 * 1024 * 1024;
+                            if (file.size > FILE_SIZE_THRESHOLD) {
+                              setIsCompressingVideo(true);
+                              setVideoCompressionProgress(0);
 
-                            try {
-                              const compressedFile =
-                                await compressVideoIfNeeded(
-                                  file,
-                                  (progress) => {
-                                    setVideoCompressionProgress(progress);
+                              try {
+                                const compressedFile =
+                                  await compressVideoIfNeeded(
+                                    file,
+                                    (progress) => {
+                                      setVideoCompressionProgress(progress);
+                                    }
+                                  );
+
+                                if (compressedFile.size < FILE_SIZE_THRESHOLD) {
+                                  // Compression successful - file is now under limit
+                                  toast.success(
+                                    `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
+                                  );
+                                  setSelectedVideo(compressedFile);
+                                  setVideoPreview(
+                                    URL.createObjectURL(compressedFile)
+                                  );
+                                  setCompressionFailed(false); // Reset failure flag on success
+                                } else if (compressedFile.size < file.size) {
+                                  // Compression helped but still over limit
+                                  toast.warning(
+                                    `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB, but still over 4.5MB limit. Upload may fail. Consider using a YouTube/Vimeo link instead.`,
+                                    { duration: 10000 }
+                                  );
+                                  setSelectedVideo(compressedFile);
+                                  setVideoPreview(
+                                    URL.createObjectURL(compressedFile)
+                                  );
+                                  setCompressionFailed(false); // Reset failure flag - user can still try
+                                } else {
+                                  // Compression didn't help
+                                  toast.error(
+                                    `Video compression failed to reduce size. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
+                                    { duration: 10000 }
+                                  );
+                                  // Clear the selection since it won't work
+                                  setSelectedVideo(null);
+                                  setVideoPreview(null);
+                                  setCompressionFailed(true);
+                                  return;
+                                }
+                              } catch (compressionError) {
+                                console.error(
+                                  "Video compression failed:",
+                                  compressionError
+                                );
+
+                                // Provide more helpful error messages based on error type
+                                let errorMessage = `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit.`;
+
+                                if (compressionError instanceof Error) {
+                                  if (
+                                    compressionError.message.includes("timed out")
+                                  ) {
+                                    errorMessage = compressionError.message;
+                                  } else if (
+                                    compressionError.message.includes("stuck")
+                                  ) {
+                                    errorMessage = compressionError.message;
+                                  } else {
+                                    errorMessage += ` ${compressionError.message}`;
                                   }
-                                );
+                                }
 
-                              if (compressedFile.size < FILE_SIZE_THRESHOLD) {
-                                // Compression successful - file is now under limit
-                                toast.success(
-                                  `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
-                                );
-                                setSelectedVideo(compressedFile);
-                                setVideoPreview(
-                                  URL.createObjectURL(compressedFile)
-                                );
-                                setCompressionFailed(false); // Reset failure flag on success
-                              } else if (compressedFile.size < file.size) {
-                                // Compression helped but still over limit
-                                toast.warning(
-                                  `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB, but still over 4.5MB limit. Upload may fail. Consider using a YouTube/Vimeo link instead.`,
-                                  { duration: 10000 }
-                                );
-                                setSelectedVideo(compressedFile);
-                                setVideoPreview(
-                                  URL.createObjectURL(compressedFile)
-                                );
-                                setCompressionFailed(false); // Reset failure flag - user can still try
-                              } else {
-                                // Compression didn't help
-                                toast.error(
-                                  `Video compression failed to reduce size. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
-                                  { duration: 10000 }
-                                );
+                                errorMessage +=
+                                  " Please try using a YouTube/Vimeo link instead, or compress the video using external tools.";
+
+                                toast.error(errorMessage, { duration: 12000 });
                                 // Clear the selection since it won't work
                                 setSelectedVideo(null);
                                 setVideoPreview(null);
                                 setCompressionFailed(true);
                                 return;
+                              } finally {
+                                setIsCompressingVideo(false);
+                                setVideoCompressionProgress(0);
                               }
-                            } catch (compressionError) {
-                              console.error(
-                                "Video compression failed:",
-                                compressionError
-                              );
-
-                              // Provide more helpful error messages based on error type
-                              let errorMessage = `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit.`;
-
-                              if (compressionError instanceof Error) {
-                                if (
-                                  compressionError.message.includes("timed out")
-                                ) {
-                                  errorMessage = compressionError.message;
-                                } else if (
-                                  compressionError.message.includes("stuck")
-                                ) {
-                                  errorMessage = compressionError.message;
-                                } else {
-                                  errorMessage += ` ${compressionError.message}`;
-                                }
-                              }
-
-                              errorMessage +=
-                                " Please try using a YouTube/Vimeo link instead, or compress the video using external tools.";
-
-                              toast.error(errorMessage, { duration: 12000 });
-                              // Clear the selection since it won't work
-                              setSelectedVideo(null);
-                              setVideoPreview(null);
-                              setCompressionFailed(true);
-                              return;
-                            } finally {
-                              setIsCompressingVideo(false);
-                              setVideoCompressionProgress(0);
+                            } else {
+                              // File is small enough, use as-is
+                              setSelectedVideo(file);
+                              setVideoPreview(URL.createObjectURL(file));
+                              setCompressionFailed(false); // Reset failure flag if new file is valid
                             }
-                          } else {
-                            // File is small enough, use as-is
-                            setSelectedVideo(file);
-                            setVideoPreview(URL.createObjectURL(file));
-                            setCompressionFailed(false); // Reset failure flag if new file is valid
-                          }
 
-                          setVideoUrl(""); // Clear URL if file is selected
-                          setVideoPlatform(null);
-                        }}
-                        className="w-full p-2 border rounded-lg"
-                        aria-label="Upload video file"
-                      />
+                            setVideoUrl(""); // Clear URL if file is selected
+                            setVideoPlatform(null);
+                          }}
+                          className="w-full p-2 border rounded-lg"
+                          aria-label="Upload video file"
+                        />
+                      ) : (
+                        <div className="p-3 border rounded-lg bg-gray-50 border-dashed">
+                          <p className="text-xs text-gray-500 font-primary">
+                            Native video uploads are reserved for premium members.
+                            You can still share videos via YouTube or Vimeo links below.
+                          </p>
+                          <Link
+                            href="/checkout"
+                            className="text-xs text-[var(--color-primary)] hover:underline mt-2 inline-block font-semibold"
+                          >
+                            Upgrade to Premium →
+                          </Link>
+                        </div>
+                      )}
                       {isValidatingVideo && (
                         <p className="text-sm text-gray-500 mt-1 font-primary">
                           Validating video...

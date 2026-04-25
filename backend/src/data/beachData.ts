@@ -2820,30 +2820,31 @@ export const beachData: Beach[] = [
     regionId: "western-cape",
     location: "False Bay",
     distanceFromCT: 35,
-    optimalWindDirections: ["WNW", "NW", "W"], // Added WNW as it's offshore here
+    optimalWindDirections: ["ENE", "NE", "NW"],
     optimalSwellDirections: {
-      min: 225,
-      max: 315,
+      min: 170,
+      max: 190,
+      cardinal: "S",
     },
     bestSeasons: ["winter"],
-    optimalTide: "MID",
+    optimalTide: "LOW_TO_MID",
     description:
       "Protected beach break in False Bay, works best with NW winds. Good for beginners on smaller days.",
     difficulty: "BEGINNER",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 2.1,
-      max: 5.6,
+      min: 0.7,
+      max: 1.5,
     },
     idealSwellPeriod: {
-      min: 12,
-      max: 24,
+      min: 8,
+      max: 12,
     },
     waterTemp: {
       summer: 18,
       winter: 14,
     },
-    hazards: ["Rip currents", "Rocks", "Sharks"],
+    hazards: ["Rip currents", "Sharks"],
     crimeLevel: "Low",
     sharkAttack: {
       hasAttack: false,
@@ -6501,23 +6502,23 @@ export const beachData: Beach[] = [
     },
   },
   {
-    id: "vanriebeek",
-    name: "Van Riebeek",
+    id: "van-riebeeckstrand",
+    name: "Van Riebeeckstrand",
     continent: "Africa",
     countryId: "za",
     regionId: "western-cape",
-    location: "Van Riebeek",
+    location: "Van Riebeeckstrand",
     distanceFromCT: 40,
     optimalWindDirections: ["NE"],
     optimalSwellDirections: {
-      min: 240,
+      min: 225,
       max: 255,
       cardinal: "WSW",
     },
-    bestSeasons: ["winter"],
+    bestSeasons: ["summer"],
     optimalTide: "LOW",
     description:
-      "Van Riebeek offers variable conditions in June, with a mix of opportunities for surfers of different skill levels.",
+      "Van Riebeeckstrand in Western Cape is an exposed beach break that does not work very often. Summer offers the best conditions for surfing. Works best in offshore winds from the northeast. Tends to receive distant groundswells and the best swell direction is from the west southwest. The beach breaks offer lefts and rights. Unlikely to be too crowded, even when the surf is up. Take care of the strong rips here.",
     difficulty: "INTERMEDIATE",
     waveType: "BEACH_BREAK",
     swellSize: {
@@ -6529,18 +6530,18 @@ export const beachData: Beach[] = [
       max: 24,
     },
     waterTemp: {
-      summer: 18,
+      summer: 15.6,
       winter: 14,
     },
-    hazards: ["Strong currents", "Sharks"],
+    hazards: ["Rip currents", "Sharks"],
     crimeLevel: "Medium",
     sharkAttack: {
       hasAttack: false,
     },
     image: "",
     coordinates: {
-      lat: -34.1123,
-      lng: 18.4876,
+      lat: -33.7258,
+      lng: 18.4411,
     },
   },
   {

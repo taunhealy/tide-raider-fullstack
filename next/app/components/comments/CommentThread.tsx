@@ -92,45 +92,45 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
   };
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="space-y-10 max-w-3xl">
       {isLoading ? (
-        <div className="flex justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-10 w-10 animate-spin text-[var(--color-tertiary)] opacity-30" />
         </div>
       ) : comments.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-6">
           {comments.map((comment) => (
             <div
               key={comment.id}
-              className="flex space-x-3 p-3 bg-gray-50 rounded-lg"
+              className="flex space-x-6 p-8 bg-white/[0.03] border border-white/5 rounded-3xl transition-all hover:bg-white/5 hover:border-white/10 group"
             >
-              <Avatar.Root className="h-10 w-10 rounded-full overflow-hidden border border-gray-300">
+              <Avatar.Root className="h-14 w-14 rounded-full overflow-hidden border-2 border-white/5 flex-shrink-0 group-hover:border-[var(--color-tertiary)]/30 transition-all duration-500">
                 <Avatar.Image
                   src={comment.user.image || ""}
                   alt={comment.user.name}
-                  className="h-full w-full object-cover rounded-full"
+                  className="h-full w-full object-cover"
                 />
-                <Avatar.Fallback className="h-full w-full flex items-center justify-center rounded-full bg-gray-100 border border-gray-300">
+                <Avatar.Fallback className="h-full w-full flex items-center justify-center bg-[var(--color-tertiary)]/10 text-[var(--color-tertiary)] font-black text-xl">
                   {comment.user.name
                     ?.split(" ")
                     .map((n) => n[0])
                     .join("")
-                    .toUpperCase()}
+                    .toUpperCase() || "A"}
                 </Avatar.Fallback>
               </Avatar.Root>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-primary text-sm font-medium">
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-primary text-xs font-black text-white/90 tracking-widest uppercase">
                     {comment.user.name}
                   </h4>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
                     {format(
                       new Date(comment.createdAt),
-                      "MMM d, yyyy 'at' h:mm a"
+                      "MMM d, yyyy"
                     )}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                <p className="text-white/60 font-primary text-sm leading-relaxed whitespace-pre-wrap selection:bg-[var(--color-tertiary)]/30">
                   {comment.text}
                 </p>
               </div>
@@ -138,50 +138,62 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
           ))}
         </div>
       ) : (
-        <p className="text-left text-gray-500 py-4">No comments yet.</p>
+        <div className="py-20 px-8 border border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center gap-4 bg-white/[0.01]">
+          <div className="w-16 h-16 rounded-full bg-white/[0.02] flex items-center justify-center border border-white/5">
+            <span className="text-3xl opacity-20">💬</span>
+          </div>
+          <p className="text-white/20 font-primary font-black text-[10px] uppercase tracking-[0.3em]">Quiet on the front lines.</p>
+        </div>
       )}
 
       {authStatus === "loading" && !authTimeout ? (
-        <div className="bg-gray-50 p-4 rounded-lg text-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
+        <div className="bg-white/5 p-12 rounded-3xl text-center border border-white/5">
+          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-tertiary)] mx-auto opacity-20" />
         </div>
       ) : user ? (
-        <form onSubmit={handleSubmit} className="mt-4">
-          <Textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="min-h-[80px] font-primary"
-            disabled={isSubmitting}
-          />
-          <Button
-            type="submit"
-            className="mt-2"
-            disabled={!newComment.trim() || isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Posting...
-              </>
-            ) : (
-              "Post Comment"
-            )}
-          </Button>
+        <form onSubmit={handleSubmit} className="mt-16 space-y-6 pt-10 border-t border-white/5">
+          <div className="relative group">
+            <Textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Contribute to the intelligence pool..."
+              className="min-h-[160px] font-primary bg-black/60 border-white/5 focus:border-[var(--color-tertiary)]/30 focus:ring-1 focus:ring-[var(--color-tertiary)]/20 rounded-3xl p-6 text-white/90 placeholder:text-white/10 transition-all duration-500"
+              disabled={isSubmitting}
+            />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[var(--color-tertiary)]/[0.02] to-transparent opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-700" />
+          </div>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              variant="tertiary"
+              className="px-12 py-3 rounded-full font-primary font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-[var(--color-tertiary)]/5 border border-[var(--color-tertiary)]/20 hover:border-[var(--color-tertiary)]/50 transition-all duration-500"
+              disabled={!newComment.trim() || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-3 h-3 w-3 animate-spin" />
+                  Transmitting...
+                </>
+              ) : (
+                "Post Intel"
+              )}
+            </Button>
+          </div>
         </form>
       ) : (
-        <div className="bg-gray-50 p-4 rounded-lg flex flex-col items-left justify-left text-left mb-5">
-          <p className="text-gray-600 font-primary">
-            Please sign in to leave a comment
+        <div className="bg-white/[0.02] p-12 rounded-3xl flex flex-col items-center justify-center text-center border border-white/5 gap-6 mt-16">
+          <p className="text-white/20 font-primary font-black text-[10px] uppercase tracking-[0.2em]">
+            Authentication Required for Intel Sharing
           </p>
           <Button
-            className="mt-2 max-w-[420px]"
+            variant="tertiary"
+            className="w-full max-w-xs rounded-full font-primary font-black uppercase tracking-[0.2em] text-[10px] py-4"
             onClick={() => {
               const backendUrl = getBackendUrl();
               window.location.href = `${backendUrl}/api/auth/google?state=${encodeURIComponent(window.location.href)}`;
             }}
           >
-            Sign In
+            Sign In with Google
           </Button>
         </div>
       )}

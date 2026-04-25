@@ -70,7 +70,7 @@ export function VideoUploader({
     },
     onDrop: handleUpload,
     disabled: uploading || videos.length >= maxVideos,
-    maxSize: 100 * 1024 * 1024, // 100MB
+    maxSize: 200 * 1024 * 1024, // 200MB
   });
 
   const removeVideo = (index: number) => {
@@ -101,7 +101,7 @@ export function VideoUploader({
               Drag & drop a video here, or click to select
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              MP4, WebM up to 100MB. For hover previews.
+              MP4, WebM up to 200MB. For hover previews.
             </p>
           </div>
         )}
