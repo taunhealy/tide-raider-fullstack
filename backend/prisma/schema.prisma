@@ -206,6 +206,7 @@ model LogEntry {
   beachId       String?
   userId        String?    @map("user_id")
   regionId      String
+  category      SportCategory @default(GENERAL)
   forecastId    String?
   imageUrls     Json?
   hiddenGemId   String?
@@ -281,22 +282,46 @@ model BeachSafariConnection {
   @@index([beachId])
 }
 
+enum SportCategory {
+  GENERAL
+  LOGGING
+  SURF_FOILING
+  WING_FOILING
+  DOWNWIND_FOILING
+  KITESURFING
+}
+
+model BeachConditionProfile {
+  id                     String        @id @default(cuid())
+  beachId                String
+  category               SportCategory @default(GENERAL)
+  optimalWindDirections  String[]
+  optimalSwellDirections Json
+  optimalTide            OptimalTide
+  swellSize              Json
+  idealSwellPeriod       Json
+  beach                  Beach         @relation(fields: [beachId], references: [id], onDelete: Cascade)
+
+  @@unique([beachId, category])
+}
+
 model BeachDailyScore {
-  id         String   @id @default(cuid())
+  id         String        @id @default(cuid())
   beachId    String
   regionId   String
-  score      Int      @default(0)
+  category   SportCategory @default(GENERAL)
+  score      Int           @default(0)
   conditions Json
   date       DateTime
-  timeSlot   TimeSlot @default(MORNING)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  timeSlot   TimeSlot      @default(MORNING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
   starRating Int?
-  source     String   @default("WINDFINDER")
-  beach      Beach    @relation(fields: [beachId], references: [id])
-  region     Region   @relation(fields: [regionId], references: [id])
+  source     String        @default("WINDFINDER")
+  beach      Beach         @relation(fields: [beachId], references: [id])
+  region     Region        @relation(fields: [regionId], references: [id])
 
-  @@unique([beachId, date, source, timeSlot])
+  @@unique([beachId, date, source, timeSlot, category])
   @@index([regionId])
   @@index([beachId, date])
   @@index([starRating])
@@ -330,15 +355,10 @@ model Beach {
   regionId               String
   location               String
   distanceFromCT         Float
-  optimalWindDirections  String[]
-  optimalSwellDirections Json
   bestSeasons            Season[]
-  optimalTide            OptimalTide
   description            String
   difficulty             Difficulty
   waveType               WaveType
-  swellSize              Json
-  idealSwellPeriod       Json
   waterTemp              Json
   hazards                Hazard[]
   crimeLevel             CrimeLevel
@@ -361,6 +381,7 @@ model Beach {
   country                Country                 @relation(fields: [countryId], references: [id])
   region                 Region                  @relation(fields: [regionId], references: [id])
   beachDailyScores       BeachDailyScore[]
+  conditionProfiles      BeachConditionProfile[]
   rentalItems            BeachRentalConnection[]
   feedbacks              Feedback[]
   logEntries             LogEntry[]

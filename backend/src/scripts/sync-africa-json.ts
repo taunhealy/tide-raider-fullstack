@@ -82,15 +82,10 @@ async function sync() {
           continent: beachData.continent,
           location: beachData.location,
           distanceFromCT: beachData.distanceFromCT,
-          optimalWindDirections: beachData.optimalWindDirections,
-          optimalSwellDirections: beachData.optimalSwellDirections,
           bestSeasons: (beachData.bestSeasons || []).map((s: string) => s.toUpperCase()),
-          optimalTide: normalizeTide(beachData.optimalTide || ""),
           description: beachData.description,
           difficulty: normalizeDifficulty(beachData.difficulty),
           waveType: normalizeWaveType(beachData.waveType),
-          swellSize: beachData.swellSize,
-          idealSwellPeriod: beachData.idealSwellPeriod,
           waterTemp: beachData.waterTemp,
           hazards: normalizeHazards(beachData.hazards),
           crimeLevel: normalizeCrime(beachData.crimeLevel || "Low"),
@@ -106,15 +101,10 @@ async function sync() {
           continent: beachData.continent,
           location: beachData.location,
           distanceFromCT: beachData.distanceFromCT,
-          optimalWindDirections: beachData.optimalWindDirections,
-          optimalSwellDirections: beachData.optimalSwellDirections,
           bestSeasons: (beachData.bestSeasons || []).map((s: string) => s.toUpperCase()),
-          optimalTide: normalizeTide(beachData.optimalTide || ""),
           description: beachData.description,
           difficulty: normalizeDifficulty(beachData.difficulty),
           waveType: normalizeWaveType(beachData.waveType),
-          swellSize: beachData.swellSize,
-          idealSwellPeriod: beachData.idealSwellPeriod,
           waterTemp: beachData.waterTemp,
           hazards: normalizeHazards(beachData.hazards),
           crimeLevel: normalizeCrime(beachData.crimeLevel || "Low"),
@@ -123,6 +113,37 @@ async function sync() {
           isHiddenGem: beachData.isHiddenGem || false,
         }
       });
+
+      // Handle Condition Profiles
+      if (beachData.conditionProfiles) {
+        for (const [category, profile] of Object.entries(beachData.conditionProfiles)) {
+          const profileData: any = profile;
+          await prisma.beachConditionProfile.upsert({
+            where: {
+              beachId_category: {
+                beachId: beachData.id,
+                category: category as any
+              }
+            },
+            update: {
+              optimalWindDirections: profileData.optimalWindDirections,
+              optimalSwellDirections: profileData.optimalSwellDirections,
+              optimalTide: normalizeTide(profileData.optimalTide || ""),
+              swellSize: profileData.swellSize,
+              idealSwellPeriod: profileData.idealSwellPeriod,
+            },
+            create: {
+              beachId: beachData.id,
+              category: category as any,
+              optimalWindDirections: profileData.optimalWindDirections,
+              optimalSwellDirections: profileData.optimalSwellDirections,
+              optimalTide: normalizeTide(profileData.optimalTide || ""),
+              swellSize: profileData.swellSize,
+              idealSwellPeriod: profileData.idealSwellPeriod,
+            }
+          });
+        }
+      }
     } catch (e) {
       console.error(`❌ Error syncing beach ${beachData.id}:`, e);
     }

@@ -89,6 +89,33 @@ export type OptimalTide =
   | "ALL"
   | "UNKNOWN";
 
+export type SportCategory = 
+  | "GENERAL"
+  | "LOGGING"
+  | "SURF_FOILING"
+  | "WING_FOILING"
+  | "DOWNWIND_FOILING"
+  | "KITESURFING";
+
+export interface BeachConditionProfile {
+  category: SportCategory;
+  optimalWindDirections: string[];
+  optimalSwellDirections: {
+    min: number;
+    max: number;
+    cardinal?: string;
+  };
+  optimalTide: OptimalTide;
+  swellSize: {
+    min: number;
+    max: number;
+  };
+  idealSwellPeriod: {
+    min: number;
+    max: number;
+  };
+}
+
 export interface Beach {
   id: string;
   name: string;
@@ -100,15 +127,9 @@ export interface Beach {
   isHiddenGem?: boolean | null | undefined;
   location: string;
   distanceFromCT: number;
-  optimalWindDirections: string[];
-  optimalSwellDirections: {
-    min: number;
-    max: number;
-    cardinal?: string;
-  };
+  conditionProfiles: Partial<Record<SportCategory, BeachConditionProfile>>;
   sheltered?: boolean; // Made optional with ?
   bestSeasons: string[];
-  optimalTide: OptimalTide;
   description: string;
   difficulty:
     | "BEGINNER"
@@ -117,14 +138,6 @@ export interface Beach {
     | "All Levels"
     | "EXPERT";
   waveType: WaveType;
-  swellSize: {
-    min: number;
-    max: number;
-  };
-  idealSwellPeriod: {
-    min: number;
-    max: number;
-  };
   waterTemp: {
     summer: number;
     winter: number;

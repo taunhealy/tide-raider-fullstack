@@ -16,6 +16,11 @@ export async function GET() {
       include: {
         region: true,
         country: true,
+        conditionProfiles: {
+          where: {
+            category: "GENERAL"
+          }
+        },
         beachDailyScores: {
           where: {
             date: {
@@ -35,6 +40,9 @@ export async function GET() {
         const coords = typeof beach.coordinates === 'string' 
           ? JSON.parse(beach.coordinates) 
           : beach.coordinates;
+
+        // Extract GENERAL profile to maintain compatibility with legacy optimal fields
+        const profile = beach.conditionProfiles?.[0] || {};
 
         // Group scores by date to aggregate (average) across sources
         const scoresByDate: Record<string, any[]> = {};
@@ -79,10 +87,10 @@ export async function GET() {
           isHiddenGem: beach.isHiddenGem || false,
           isLongboarding: beach.isLongboarding || false,
           isFoiling: beach.isFoiling || false,
-          optimalWindDirections: beach.optimalWindDirections || [],
-          optimalSwellDirections: beach.optimalSwellDirections || { min: 0, max: 360 },
-          swellSize: beach.swellSize || { min: 0, max: 10 },
-          idealSwellPeriod: beach.idealSwellPeriod || { min: 0, max: 25 },
+          optimalWindDirections: profile.optimalWindDirections || [],
+          optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+          swellSize: profile.swellSize || { min: 0, max: 10 },
+          idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
           dailyScores: dailyScores,
           rating: Object.values(dailyScores as any)[0]?.rating || beach.rating || 3
         };

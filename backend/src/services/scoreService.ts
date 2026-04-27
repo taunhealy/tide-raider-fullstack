@@ -46,7 +46,8 @@ export class ScoreService {
    * Calculate score for a single beach
    */
   static calculateScore(
-    beach: Beach,
+    beach: any, // Basic beach properties
+    profile: any, // BeachConditionProfile
     conditions: Pick<
       Forecast,
       | "windSpeed"
@@ -57,20 +58,20 @@ export class ScoreService {
     >
   ): number | null {
     try {
-      const parsedBeach = {
-        ...beach,
+      const parsedProfile = {
+        ...profile,
         optimalSwellDirections:
-          typeof beach.optimalSwellDirections === "string"
-            ? JSON.parse(beach.optimalSwellDirections)
-            : beach.optimalSwellDirections,
+          typeof profile.optimalSwellDirections === "string"
+            ? JSON.parse(profile.optimalSwellDirections)
+            : profile.optimalSwellDirections,
         swellSize:
-          typeof beach.swellSize === "string"
-            ? JSON.parse(beach.swellSize)
-            : beach.swellSize,
+          typeof profile.swellSize === "string"
+            ? JSON.parse(profile.swellSize)
+            : profile.swellSize,
         idealSwellPeriod:
-          typeof beach.idealSwellPeriod === "string"
-            ? JSON.parse(beach.idealSwellPeriod)
-            : beach.idealSwellPeriod,
+          typeof profile.idealSwellPeriod === "string"
+            ? JSON.parse(profile.idealSwellPeriod)
+            : profile.idealSwellPeriod,
       };
 
       let score = 5;
@@ -79,8 +80,8 @@ export class ScoreService {
       // Wind direction scoring
       const windCardinal = this.degreesToCardinal(conditions.windDirection);
 
-      if (!beach.optimalWindDirections.includes(windCardinal)) {
-        const minAngleDiff = beach.optimalWindDirections.reduce(
+      if (!profile.optimalWindDirections.includes(windCardinal)) {
+        const minAngleDiff = profile.optimalWindDirections.reduce(
           (minDiff, optimalDir) => {
             const optimalDegrees = this.cardinalToDegreesMap[optimalDir];
             const diff = Math.abs(conditions.windDirection - optimalDegrees);
@@ -102,7 +103,7 @@ export class ScoreService {
       }
 
       // Wind strength scoring - Only penalize if NOT optimal wind (onshore/cross)
-      const isOptimalWind = beach.optimalWindDirections.includes(windCardinal);
+      const isOptimalWind = profile.optimalWindDirections.includes(windCardinal);
       
       if (!isOptimalWind && !beach.sheltered) {
         if (conditions.windSpeed > 25) {
@@ -120,13 +121,13 @@ export class ScoreService {
       // Wave size scoring
       if (
         !(
-          conditions.swellHeight >= parsedBeach.swellSize.min &&
-          conditions.swellHeight <= parsedBeach.swellSize.max
+          conditions.swellHeight >= parsedProfile.swellSize.min &&
+          conditions.swellHeight <= parsedProfile.swellSize.max
         )
       ) {
         const heightDiff = Math.min(
-          Math.abs(conditions.swellHeight - parsedBeach.swellSize.min),
-          Math.abs(conditions.swellHeight - parsedBeach.swellSize.max)
+          Math.abs(conditions.swellHeight - parsedProfile.swellSize.min),
+          Math.abs(conditions.swellHeight - parsedProfile.swellSize.max)
         );
         if (heightDiff <= 0.5) {
           score -= 0.5;
@@ -140,16 +141,16 @@ export class ScoreService {
       // Swell direction scoring
       if (
         !(
-          conditions.swellDirection >= parsedBeach.optimalSwellDirections.min &&
-          conditions.swellDirection <= parsedBeach.optimalSwellDirections.max
+          conditions.swellDirection >= parsedProfile.optimalSwellDirections.min &&
+          conditions.swellDirection <= parsedProfile.optimalSwellDirections.max
         )
       ) {
         // Calculate minimum angle difference considering wrap-around (0° = 360°)
         const minDiff = Math.abs(
-          conditions.swellDirection - parsedBeach.optimalSwellDirections.min
+          conditions.swellDirection - parsedProfile.optimalSwellDirections.min
         );
         const maxDiff = Math.abs(
-          conditions.swellDirection - parsedBeach.optimalSwellDirections.max
+          conditions.swellDirection - parsedProfile.optimalSwellDirections.max
         );
         // Consider wrap-around for both differences
         const minDiffWrapped = Math.min(minDiff, 360 - minDiff);
@@ -166,7 +167,7 @@ export class ScoreService {
       }
 
       // Swell period scoring - Wave type aware
-      const isBeachBreak = parsedBeach.waveType === "BEACH_BREAK";
+      const isBeachBreak = beach.waveType === "BEACH_BREAK";
       const periodThreshold = isBeachBreak ? 9 : 12;
 
       if (conditions.swellPeriod < (periodThreshold - 3)) {
@@ -178,13 +179,13 @@ export class ScoreService {
         score -= 0.5;
       } else if (
         !(
-          conditions.swellPeriod >= parsedBeach.idealSwellPeriod.min &&
-          conditions.swellPeriod <= parsedBeach.idealSwellPeriod.max
+          conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&
+          conditions.swellPeriod <= parsedProfile.idealSwellPeriod.max
         )
       ) {
         const periodDiff = Math.min(
-          Math.abs(conditions.swellPeriod - parsedBeach.idealSwellPeriod.min),
-          Math.abs(conditions.swellPeriod - parsedBeach.idealSwellPeriod.max)
+          Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.min),
+          Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.max)
         );
         if (periodDiff <= 2) {
           score -= 0.5;
@@ -223,38 +224,43 @@ export class ScoreService {
     try {
       beaches = await prisma.beach.findMany({
         where: { regionId },
+        include: { conditionProfiles: true }
       });
 
       console.log(`Found ${beaches.length} beaches for region ${regionId}`);
 
-      scores = beaches.map((beach) => {
-        const calculatedScore = this.calculateScore(beach, forecastData);
+      beaches.forEach((beach: any) => {
+        const profiles = beach.conditionProfiles || [];
+        
+        // If a beach has no profiles, we skip it or could fallback to a dummy GENERAL profile
+        profiles.forEach((profile: any) => {
+          const calculatedScore = this.calculateScore(beach, profile, forecastData);
 
-        // Convert score to integer 0-10 by multiplying by 2 and rounding
-        const integerScore =
-          calculatedScore === null ? 0 : Math.round(calculatedScore * 2);
+          const integerScore =
+            calculatedScore === null ? 0 : Math.round(calculatedScore * 2);
 
-        // Calculate star rating (1-5) from score (0-10)
-        const scoreOutOfFive = Math.floor(integerScore / 2);
-        const starRating = Math.max(1, Math.min(5, scoreOutOfFive));
+          const scoreOutOfFive = Math.floor(integerScore / 2);
+          const starRating = Math.max(1, Math.min(5, scoreOutOfFive));
 
-        return {
-          beachId: beach.id,
-          regionId,
-          source: forecastData.source,
-          timeSlot: (forecastData as any).timeSlot || "MORNING",
-          score: integerScore,
-          starRating: starRating,
-          date: forecastData.date,
-          conditions: {
-            windSpeed: forecastData.windSpeed,
-            windDirection: forecastData.windDirection,
-            swellHeight: forecastData.swellHeight,
-            swellDirection: forecastData.swellDirection,
-            swellPeriod: forecastData.swellPeriod,
-            tide: (forecastData as any).tide || "",
-          },
-        };
+          scores.push({
+            beachId: beach.id,
+            regionId,
+            category: profile.category,
+            source: forecastData.source,
+            timeSlot: (forecastData as any).timeSlot || "MORNING",
+            score: integerScore,
+            starRating: starRating,
+            date: forecastData.date,
+            conditions: {
+              windSpeed: forecastData.windSpeed,
+              windDirection: forecastData.windDirection,
+              swellHeight: forecastData.swellHeight,
+              swellDirection: forecastData.swellDirection,
+              swellPeriod: forecastData.swellPeriod,
+              tide: (forecastData as any).tide || "",
+            },
+          });
+        });
       });
 
       console.log(
@@ -428,6 +434,7 @@ export class ScoreService {
 
     // Determine the exact timeSlot to query
     let queryTimeSlot: any = filters.timeSlot || "MORNING";
+    let queryCategory: any = (filters as any).category || "GENERAL";
 
     // Get ALL beaches with their scores in a single query
     const beachesWithScores = await prisma.beach.findMany({
@@ -438,6 +445,7 @@ export class ScoreService {
             date: normalizedDate,
             regionId,
             timeSlot: queryTimeSlot,
+            category: queryCategory,
             ...(filters.source ? { source: filters.source } : {}),
           },
           orderBy: {
