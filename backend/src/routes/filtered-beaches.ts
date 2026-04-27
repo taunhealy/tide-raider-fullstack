@@ -432,6 +432,11 @@ router.get(
           where: whereClause,
           include: {
             region: true,
+            conditionProfiles: {
+              where: {
+                category: "GENERAL"
+              }
+            },
             beachDailyScores: {
               where: {
                 date: targetDate,
@@ -503,8 +508,16 @@ router.get(
       // Return response
       return res.json({
         beaches: beaches.map((beach) => {
-          const { beachDailyScores, ...beachData } = beach;
-          return beachData;
+          const { beachDailyScores, conditionProfiles, ...beachData } = beach as any;
+          const profile = conditionProfiles?.[0] || {};
+          return {
+            ...beachData,
+            optimalWindDirections: profile.optimalWindDirections || [],
+            optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+            swellSize: profile.swellSize || { min: 0, max: 10 },
+            idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
+            optimalTide: profile.optimalTide || "ALL",
+          };
         }),
         scores,
         forecast,

@@ -146,7 +146,7 @@ export default function RightSidebar() {
       )}
 
       {/* Sticky container for Recent Sessions, Partners, and Travel Posts */}
-      <div className="sticky top-4 space-y-8">
+      <div className="sticky top-4 space-y-8 max-h-[calc(100vh-2rem)] overflow-y-auto pr-1 pb-4 hover:overflow-y-auto scrollbar-thin">
         <RecentRaidLogs />
         <PartnersShowcase />
         <FunFacts />

@@ -24,6 +24,9 @@ router.get(
           : undefined,
         include: {
           region: true,
+          conditionProfiles: {
+            where: { category: "GENERAL" }
+          }
         },
       });
 
@@ -34,7 +37,20 @@ router.get(
         });
       }
 
-      res.json({ beaches });
+      const beachesWithProfiles = beaches.map(beach => {
+        const { conditionProfiles, ...beachData } = beach as any;
+        const profile = conditionProfiles?.[0] || {};
+        return {
+          ...beachData,
+          optimalWindDirections: profile.optimalWindDirections || [],
+          optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+          swellSize: profile.swellSize || { min: 0, max: 10 },
+          idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
+          optimalTide: profile.optimalTide || "ALL",
+        };
+      });
+
+      res.json({ beaches: beachesWithProfiles });
     } catch (error: any) {
       console.error("Failed to fetch beaches:", error);
       console.error("Error details:", {
@@ -107,11 +123,27 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
       include: {
         region: true,
         country: true,
+        conditionProfiles: {
+          where: { category: "GENERAL" }
+        }
       }
     });
 
+    const beachesWithProfiles = beaches.map(beach => {
+      const { conditionProfiles, ...beachData } = beach as any;
+      const profile = conditionProfiles?.[0] || {};
+      return {
+        ...beachData,
+        optimalWindDirections: profile.optimalWindDirections || [],
+        optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+        swellSize: profile.swellSize || { min: 0, max: 10 },
+        idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
+        optimalTide: profile.optimalTide || "ALL",
+      };
+    });
+
     // Sort results to prioritize the requested region and then by name
-    const sortedResults = beaches.sort((a, b) => {
+    const sortedResults = beachesWithProfiles.sort((a, b) => {
       if (regionId) {
         if (a.regionId === regionId && b.regionId !== regionId) return -1;
         if (a.regionId !== regionId && b.regionId === regionId) return 1;
@@ -142,13 +174,18 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
 
     let beach = null;
 
+    const commonIncludes = {
+      region: true,
+      conditionProfiles: {
+        where: { category: "GENERAL" }
+      }
+    };
+
     if (isUUID) {
       // Try to find by ID first
       beach = await prisma.beach.findUnique({
         where: { id: decodedName },
-        include: {
-          region: true,
-        },
+        include: commonIncludes,
       });
     }
 
@@ -156,9 +193,7 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
     if (!beach) {
       beach = await prisma.beach.findFirst({
         where: { name: decodedName },
-        include: {
-          region: true,
-        },
+        include: commonIncludes,
       });
     }
 
@@ -171,9 +206,7 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
             mode: "insensitive",
           },
         },
-        include: {
-          region: true,
-        },
+        include: commonIncludes,
       });
     }
 
@@ -188,9 +221,7 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
             mode: "insensitive",
           },
         },
-        include: {
-          region: true,
-        },
+        include: commonIncludes,
       });
     }
 
@@ -203,9 +234,7 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
             mode: "insensitive",
           },
         },
-        include: {
-          region: true,
-        },
+        include: commonIncludes,
       });
     }
 
@@ -213,7 +242,18 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Beach not found" });
     }
 
-    res.json({ beach });
+    const { conditionProfiles, ...beachData } = beach as any;
+    const profile = conditionProfiles?.[0] || {};
+    const mappedBeach = {
+      ...beachData,
+      optimalWindDirections: profile.optimalWindDirections || [],
+      optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+      swellSize: profile.swellSize || { min: 0, max: 10 },
+      idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
+      optimalTide: profile.optimalTide || "ALL",
+    };
+
+    res.json({ beach: mappedBeach });
   } catch (error) {
     console.error("Failed to fetch beach:", error);
     res.status(500).json({ error: "Failed to fetch beach" });

@@ -63,12 +63,17 @@ export function getConditionReasons(
   forecastData: CoreForecastData | null,
   includeDetails: boolean = true
 ) {
+  const windDirs = beach.optimalWindDirections || [];
+  const swellDirs = beach.optimalSwellDirections || { min: 0, max: 360 };
+  const swellSz = beach.swellSize || { min: 0, max: 10 };
+  const swellPd = beach.idealSwellPeriod || { min: 0, max: 25 };
+
   if (!forecastData?.windDirection || !forecastData?.swellDirection) {
     return {
       reasons: [],
       optimalConditions: [
         {
-          text: `Optimal Wind: ${beach.optimalWindDirections.join(", ")}`,
+          text: `Optimal Wind: ${windDirs.join(", ")}`,
           isMet: false,
         },
         {
@@ -76,15 +81,15 @@ export function getConditionReasons(
           isMet: false,
         },
         {
-          text: `Optimal Swell Direction: ${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°`,
+          text: `Optimal Swell Direction: ${swellDirs.min}° - ${swellDirs.max}°`,
           isMet: false,
         },
         {
-          text: `Optimal Wave Size: ${beach.swellSize.min}m - ${beach.swellSize.max}m`,
+          text: `Optimal Wave Size: ${swellSz.min}m - ${swellSz.max}m`,
           isMet: false,
         },
         {
-          text: `Optimal Swell Period: ${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s`,
+          text: `Optimal Swell Period: ${swellPd.min}s - ${swellPd.max}s`,
           isMet: false,
         },
       ],
@@ -95,7 +100,7 @@ export function getConditionReasons(
 
   // Check wind direction
   const windCardinal = degreesToCardinal(forecastData.windDirection);
-  const hasGoodWind = beach.optimalWindDirections.includes(windCardinal);
+  const hasGoodWind = windDirs.includes(windCardinal);
   if (includeDetails ? hasGoodWind : !hasGoodWind) {
     reasons.push(
       includeDetails
@@ -106,17 +111,17 @@ export function getConditionReasons(
 
   // Check swell direction
   const swellDeg = forecastData.swellDirection;
-  const minSwellDiff = Math.abs(swellDeg - beach.optimalSwellDirections.min);
-  const maxSwellDiff = Math.abs(swellDeg - beach.optimalSwellDirections.max);
+  const minSwellDiff = Math.abs(swellDeg - swellDirs.min);
+  const maxSwellDiff = Math.abs(swellDeg - swellDirs.max);
   const swellDirDiff = Math.min(minSwellDiff, maxSwellDiff);
 
   if (
     includeDetails
-      ? swellDeg >= beach.optimalSwellDirections.min &&
-        swellDeg <= beach.optimalSwellDirections.max
+      ? swellDeg >= swellDirs.min &&
+        swellDeg <= swellDirs.max
       : !(
-          swellDeg >= beach.optimalSwellDirections.min &&
-          swellDeg <= beach.optimalSwellDirections.max
+          swellDeg >= swellDirs.min &&
+          swellDeg <= swellDirs.max
         )
   ) {
     reasons.push(
@@ -128,15 +133,15 @@ export function getConditionReasons(
 
   // Check swell height
   const hasGoodSwellHeight =
-    forecastData.swellHeight >= beach.swellSize.min &&
-    forecastData.swellHeight <= beach.swellSize.max;
+    forecastData.swellHeight >= swellSz.min &&
+    forecastData.swellHeight <= swellSz.max;
 
   if (includeDetails ? hasGoodSwellHeight : !hasGoodSwellHeight) {
     if (includeDetails) {
       reasons.push(`Perfect wave height (${forecastData.swellHeight}m)`);
     } else {
       const issue =
-        forecastData.swellHeight < beach.swellSize.min
+        forecastData.swellHeight < swellSz.min
           ? "too small"
           : "too big";
       reasons.push(`Wave height (${forecastData.swellHeight}m) ${issue}`);
@@ -146,7 +151,7 @@ export function getConditionReasons(
   // Add optimal conditions section with status
   const optimalConditions = [
     {
-      text: `Optimal Wind: ${beach.optimalWindDirections.join(", ")}`,
+      text: `Optimal Wind: ${windDirs.join(", ")}`,
       isMet: hasGoodWind,
     },
     {
@@ -154,20 +159,20 @@ export function getConditionReasons(
       isMet: forecastData.windSpeed <= 25 || beach.sheltered,
     },
     {
-      text: `Optimal Swell Direction: ${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°`,
+      text: `Optimal Swell Direction: ${swellDirs.min}° - ${swellDirs.max}°`,
       isMet:
-        swellDeg >= beach.optimalSwellDirections.min &&
-        swellDeg <= beach.optimalSwellDirections.max,
+        swellDeg >= swellDirs.min &&
+        swellDeg <= swellDirs.max,
     },
     {
-      text: `Optimal Wave Size: ${beach.swellSize.min}m - ${beach.swellSize.max}m`,
+      text: `Optimal Wave Size: ${swellSz.min}m - ${swellSz.max}m`,
       isMet: hasGoodSwellHeight,
     },
     {
-      text: `Optimal Swell Period: ${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s`,
+      text: `Optimal Swell Period: ${swellPd.min}s - ${swellPd.max}s`,
       isMet:
-        forecastData.swellPeriod >= beach.idealSwellPeriod.min &&
-        forecastData.swellPeriod <= beach.idealSwellPeriod.max,
+        forecastData.swellPeriod >= swellPd.min &&
+        forecastData.swellPeriod <= swellPd.max,
     },
   ];
 
