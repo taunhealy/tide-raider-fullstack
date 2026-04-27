@@ -11,10 +11,11 @@ const BASE_PRICE = 4.00;
 const PLAN_ID = process.env.PAYPAL_PLAN_ID || "P-DEFAULT_PLAN_ID";
 
 // GET /api/paypal/subscription-status
-router.get("/subscription-status", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.get("/subscription-status", authenticateToken, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.id },
+      where: { id: authReq.user?.id },
       select: {
         subscriptionStatus: true,
         hasActiveTrial: true,
@@ -43,9 +44,10 @@ router.get("/subscription-status", authenticateToken, async (req: AuthRequest, r
 });
 
 // POST /api/paypal/sync - Sync subscription status from PayPal
-router.post("/sync", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/sync", authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.id;
     const { subscriptionId } = req.body;
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
@@ -280,9 +282,10 @@ router.post("/webhook", async (req: Request, res: Response) => {
 });
 
 // POST /api/paypal/create-credit-order
-router.post("/create-credit-order", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/create-credit-order", authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?.id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     // 100 credits for R100 (~$5.50 USD)
@@ -306,8 +309,9 @@ router.post("/create-credit-order", authenticateToken, async (req: AuthRequest, 
 });
 
 // POST /api/paypal/capture-credit-order
-router.post("/capture-credit-order", authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post("/capture-credit-order", authenticateToken, async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: "Order ID required" });
 

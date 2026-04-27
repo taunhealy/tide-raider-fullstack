@@ -154,7 +154,7 @@ export class IntelligenceService {
 
     const context = forecasts.map(f => {
        const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-       const score = typeof ScoreService !== 'undefined' ? (ScoreService.calculateScore(beachRef as any, f as any) || 0) : 0;
+       const score = 0; // Score calculation requires profile data not available in this context
        return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${score.toFixed(1)}/10`;
     }).join("\n");
 
@@ -162,13 +162,24 @@ export class IntelligenceService {
     const activePersona = getPersonaByCycle(new Date().getDate());
     const persona = personaOverride || activePersona.id;
 
+    // Fetch the GENERAL condition profile to build spot rules
+    const conditionProfile = await (prisma as any).beachConditionProfile.findFirst({
+      where: { beachId: beachRef.id, category: "GENERAL" }
+    });
+
     // Construct Spot Rules to guide the AI with specific expertise
+    const optimalWind = conditionProfile?.optimalWindDirections?.join(", ") || "N/A";
+    const swellDir = conditionProfile?.optimalSwellDirections 
+      ? `${conditionProfile.optimalSwellDirections.min}° to ${conditionProfile.optimalSwellDirections.max}°`
+      : "N/A";
+    const idealTide = conditionProfile?.optimalTide || "Incoming Mid-to-High";
+
     const spotRules = `
     SPOT DNA & OPTIMAL CONDITIONS for ${beachRef.name}:
-    - Optimal Wind: ${beachRef.optimalWindDirections.join(", ")}
-    - Optimal Swell: ${beachRef.optimalSwellDirections.min}° to ${beachRef.optimalSwellDirections.max}°
-    - Ideal Tide: ${beachRef.idealTide || "Incoming Mid-to-High"}
-    - Spot Knowledge: ${beachRef.description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
+    - Optimal Wind: ${optimalWind}
+    - Optimal Swell: ${swellDir}
+    - Ideal Tide: ${idealTide}
+    - Spot Knowledge: ${(beachRef as any).description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
     `;
 
     const report = await PythonBridge.generateIntelligenceReport(
