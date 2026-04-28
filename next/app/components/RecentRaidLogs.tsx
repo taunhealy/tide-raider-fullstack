@@ -78,20 +78,24 @@ export default function RecentRaidLogs() {
           const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
           const isGatedGem = isHiddenGemEntry && !hasAccess;
 
+          if (isHiddenGemEntry) {
+            console.log(`[RecentRaidLogs] Gating debug for ${entry.beachName}:`, {
+              isHiddenGemEntry,
+              hasAccess,
+              beachData: (entry as any).beach
+            });
+          }
+
           return (
             <Link
               key={entry.id}
               href={isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`}
               className="group block relative"
             >
+              {/* Gated entry indicator - subtle lock in corner */}
               {isGatedGem && (
-                <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-1 pointer-events-none">
-                  <div className="bg-amber-50 border border-amber-200 rounded-full p-2 shadow-md">
-                    <LockIcon className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest text-center">
-                    Unlock Spot
-                  </p>
+                <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-1.5 shadow-lg border border-amber-400">
+                  <LockIcon className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
             <article className="space-y-3">
@@ -103,7 +107,7 @@ export default function RecentRaidLogs() {
                       <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
                     )}
                   </h4>
-                  {entry.region && (
+                  {!isGatedGem && entry.region && (
                     <div className="flex items-center gap-1 text-[12px] text-[var(--color-text-tertiary)] font-primary">
                       <MapPin className="w-3 h-3" />
                       <span className="truncate">
@@ -129,12 +133,9 @@ export default function RecentRaidLogs() {
               {/* Media Thumbnail Section */}
               {entry.videoUrl ? (
                 <div 
-                  className={cn(
-                    "relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5",
-                    isGatedGem && "blur-md"
-                  )}
+                  className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5"
                   onClick={(e) => {
-                    if (isGatedGem) return; // Prevent interaction
+                    // We allow viewing the video for Hidden Gems as a preview, but not the spot data
                     if (entry.videoPlatform) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -168,10 +169,7 @@ export default function RecentRaidLogs() {
                   )}
                 </div>
               ) : entry.imageUrl ? (
-                <div className={cn(
-                  "relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100",
-                  isGatedGem && "blur-md"
-                )}>
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <Image
                     src={entry.imageUrl}
                     alt={entry.beach?.name || entry.beachName || "Session photo"}

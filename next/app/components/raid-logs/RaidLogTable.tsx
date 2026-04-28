@@ -529,8 +529,9 @@ export default function RaidLogTable({
   const { data: session } = useBackendAuth();
   const queryClient = useQueryClient();
   const { data: subscriptionDetails } = useSubscriptionDetails();
-  // Allow all logged-in users access to logs (premium features are now free)
-  const hasAccess = true;
+  // Use prop if available, otherwise check subscription details
+  const isUserPremium = isSubscribed || subscriptionDetails?.status === SubscriptionStatus.ACTIVE || subscriptionDetails?.hasActiveTrial;
+  const hasAccess = isUserPremium;
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(
@@ -1255,7 +1256,7 @@ export default function RaidLogTable({
                                 }}
                                 className="font-primary text-sm text-gray-900 hover:text-brand-3 transition-colors text-left"
                               >
-                                {entry.beach?.name || entry.beachName || "No beach specified"}
+                                {isGatedGem ? "Hidden Gem" : (entry.beach?.name || entry.beachName || "No beach specified")}
                                 {isHiddenGemEntry && (
                                   <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
                                 )}
@@ -1263,7 +1264,7 @@ export default function RaidLogTable({
                             </div>
                           </td>
                           <td className="px-2 py-3 min-w-[100px] text-sm font-primary">
-                            {entry.region?.name ?? "No region"}
+                            {isGatedGem ? "---" : (entry.region?.name ?? "No region")}
                           </td>
                           <td className="px-2 py-3 min-w-[120px]">
                             <LogEntryDisplay

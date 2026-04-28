@@ -63,15 +63,15 @@ function extractWindfinderData() {
       const rowMap = {};
       rowEls.forEach(r => {
         const labelEl = r.querySelector('._label-cell, .row-label, [class*="label"], [class*="tide"]');
-        const label = labelEl?.textContent.toLowerCase() || "";
+        const label = labelEl?.textContent.toLowerCase().trim() || "";
         const name = r.getAttribute('data-row-name') || "";
         const rowClasses = r.className.toLowerCase();
         
         if (name) rowMap[name] = r;
-        if (label.includes('wind speed') || label.includes('speed')) rowMap['wind-speed'] = r;
-        if (label.includes('wave height') || label.includes('swell height') || label.includes('height')) rowMap['wave-height'] = r;
-        if (label.includes('wave period') || label.includes('swell period') || label.includes('period')) rowMap['wave-period'] = r;
-        if (label.includes('tide height') || label.includes('tide (m)')) rowMap['tide-height'] = r;
+        if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave')) rowMap['wind-speed'] = r;
+        if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = r;
+        if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = r;
+        if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = r;
         if (label.includes('tide') || label.includes('maritime') || rowClasses.includes('tide')) rowMap['tide-type'] = r;
       });
 

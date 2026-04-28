@@ -66,6 +66,17 @@ export class LogService {
   } | null> {
     const logEntry = await prisma.logEntry.findUnique({
       where: { id: logEntryId },
+      include: {
+        beach: true,
+        region: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            nationality: true,
+          }
+        }
+      }
     });
 
     if (!logEntry) {
@@ -286,6 +297,13 @@ export class LogService {
         }
       }
 
+      console.log(`[LogService] Found entry for ID ${id}:`, {
+        id: entry.id,
+        beachName: entry.beachName,
+        hasBeach: !!entry.beach,
+        isHiddenGem: entry.beach?.isHiddenGem
+      });
+
       return {
         entry,
         entries: [entry],
@@ -479,6 +497,7 @@ export class LogService {
             select: {
               id: true,
               name: true,
+              isHiddenGem: true,
               region: {
                 select: {
                   id: true,
@@ -972,6 +991,8 @@ export class LogService {
       },
       include: {
         forecast: true,
+        beach: true,
+        region: true,
       },
       orderBy: { date: "desc" },
     });
