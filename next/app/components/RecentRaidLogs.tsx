@@ -138,7 +138,7 @@ export default function RecentRaidLogs() {
                   className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5"
                   onClick={(e) => {
                     // We allow viewing the video for Hidden Gems as a preview, but not the spot data
-                    if (entry.videoPlatform) {
+                    if (entry.videoPlatform && entry.videoUrl) {
                       e.preventDefault();
                       e.stopPropagation();
                       window.open(entry.videoUrl, '_blank');
