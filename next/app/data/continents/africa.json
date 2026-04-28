@@ -1124,11 +1124,11 @@
           "NW"
         ],
         "optimalSwellDirections": {
-          "min": 120,
-          "max": 160,
-          "cardinal": "SE"
+          "min": 180,
+          "max": 200,
+          "cardinal": "S"
         },
-        "optimalTide": "HIGH",
+        "optimalTide": "MID-HIGH",
         "swellSize": {
           "min": 1.6,
           "max": 4

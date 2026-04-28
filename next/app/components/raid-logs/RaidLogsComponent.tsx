@@ -183,6 +183,7 @@ export function RaidLogsComponent({
               <div className="overflow-x-auto">
                 <RaidLogTable
                   entries={raidLogsData.entries}
+                  beaches={beaches || []}
                   isSubscribed={!!session?.user?.isSubscribed}
                   isLoading={isLogsLoading}
                   showPrivateOnly={filters.isPrivate}

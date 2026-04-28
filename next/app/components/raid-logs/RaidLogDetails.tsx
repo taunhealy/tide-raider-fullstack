@@ -16,6 +16,7 @@ import {
   Clock,
   Info as InfoIcon,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
@@ -37,6 +38,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { RandomLoader } from "../ui/random-loader";
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
+import { useBeaches } from "@/app/hooks/useBeaches";
 import { SubscriptionStatus } from "@/app/types/subscription";
 
 interface RaidLogDetailsProps {
@@ -104,22 +106,21 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const { data: subscriptionDetails } = useSubscriptionDetails();
   const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
   const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
-  const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem;
+  
+  const { data: beachesData } = useBeaches();
+  const beaches = (beachesData as any)?.beaches || beachesData || [];
+  
+  // Robust check for Hidden Gem status
+  const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem || 
+                          beaches?.find((b: any) => 
+                            b.id === (entry as any)?.beachId || 
+                            b.id === (entry as any)?.beach?.id || 
+                            b.name?.toLowerCase() === (entry as any)?.beachName?.toLowerCase() ||
+                            b.name?.toLowerCase() === (entry as any)?.beach?.name?.toLowerCase()
+                          )?.isHiddenGem;
+
   const isOwner = session?.user?.id === (entry as any)?.userId;
   const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
-
-  console.log("[RaidLogDetails] Gating debug:", {
-    entryId: id,
-    isHiddenGemEntry,
-    hasAccess,
-    isOwner,
-    isGatedGem,
-    isSubscribed,
-    subscriptionStatus: subscriptionDetails?.status,
-    hasActiveTrial: subscriptionDetails?.hasActiveTrial,
-    beachData: (entry as any)?.beach
-  });
-
 
   const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
   const logDate = entry?.date
@@ -234,27 +235,41 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
           {isGatedGem ? (
-            <div className="p-12 md:p-20 text-center space-y-8 flex flex-col items-center justify-center">
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-full p-6 shadow-2xl">
-                <Lock className="w-12 h-12 text-amber-500" />
+            <div className="p-12 md:p-24 text-center space-y-10 flex flex-col items-center justify-center relative overflow-hidden">
+              {/* Background Glow Effect */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--color-tertiary)]/5 blur-[120px] rounded-full pointer-events-none"></div>
+              
+              <div className="relative">
+                <div className="bg-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)]/20 rounded-3xl p-8 shadow-2xl backdrop-blur-sm">
+                  <Lock className="w-16 h-16 text-[var(--color-tertiary)]" />
+                </div>
+                {/* Small Diamond Badge */}
+                <div className="absolute -top-3 -right-3 bg-amber-500 rounded-full p-2 shadow-lg border-2 border-brand-dark">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
               </div>
               
-              <div className="space-y-4 max-w-lg">
-                <h2 className="text-3xl md:text-4xl font-primary font-bold text-white tracking-tighter">
-                  Hidden Gem Access Only
-                </h2>
-                <p className="text-white/60 font-primary text-lg leading-relaxed">
-                  This surf session was recorded at a <span className="text-amber-500 font-bold">Hidden Gem</span> location. 
-                  Subscribe to unlock exclusive access to these secret spots and view full conditions, ratings, and media.
+              <div className="space-y-6 max-w-xl relative z-10">
+                <div className="space-y-2">
+                  <h3 className="font-primary text-[10px] font-bold text-[var(--color-tertiary)] tracking-[0.3em] uppercase">
+                    Premium Content
+                  </h3>
+                  <h2 className="text-4xl md:text-5xl lg:text-6xl font-primary font-bold text-white tracking-tighter leading-none">
+                    Hidden Gem Access Only
+                  </h2>
+                </div>
+                <p className="text-white/60 font-primary text-lg md:text-xl leading-relaxed">
+                  This surf session was recorded at a <span className="text-[var(--color-tertiary)] font-bold">Hidden Gem</span> location. 
+                  Unlock exclusive access to secret spots, full conditions, and community intelligence.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4 relative z-10 w-full max-w-md justify-center">
                 <Button
                   onClick={() => router.push("/pricing")}
-                  variant="default"
+                  variant="tertiary"
                   size="lg"
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-10 h-14 rounded-2xl shadow-xl transition-all hover:scale-105"
+                  className="h-16 px-12 rounded-2xl shadow-2xl transition-all hover:scale-105 active:scale-95 text-base"
                 >
                   Unlock Hidden Gems
                 </Button>
@@ -262,7 +277,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   onClick={() => router.push("/raidlogs")}
                   variant="dark"
                   size="lg"
-                  className="font-bold px-10 h-14 rounded-2xl"
+                  className="h-16 px-12 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 text-base"
                 >
                   Back to Log Book
                 </Button>

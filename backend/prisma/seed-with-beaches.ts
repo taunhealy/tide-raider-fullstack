@@ -742,6 +742,13 @@ async function main() {
             );
           }
 
+          // Extract condition data
+          const optimalWindDirections = beach.conditionProfiles?.GENERAL?.optimalWindDirections || beach.optimalWindDirections || [];
+          const optimalSwellDirections = beach.conditionProfiles?.GENERAL?.optimalSwellDirections || beach.optimalSwellDirections || {};
+          const optimalTide = beach.conditionProfiles?.GENERAL?.optimalTide || beach.optimalTide || "ALL";
+          const swellSize = beach.conditionProfiles?.GENERAL?.swellSize || beach.swellSize || {};
+          const idealSwellPeriod = beach.conditionProfiles?.GENERAL?.idealSwellPeriod || beach.idealSwellPeriod || {};
+
           await prisma.beach.upsert({
             where: { id: beach.id },
             update: {
@@ -751,17 +758,12 @@ async function main() {
               regionId: region.id,
               location: beach.location,
               distanceFromCT: beach.distanceFromCT,
-              optimalWindDirections: beach.optimalWindDirections,
-              optimalSwellDirections: beach.optimalSwellDirections,
               bestSeasons:
                 beach.bestSeasons?.map((season: string) => mapSeason(season)) ||
                 [],
-              optimalTide: mapOptimalTide(beach.optimalTide as string),
               description: beach.description,
               difficulty: mapDifficulty(beach.difficulty),
               waveType: mapWaveType(beach.waveType),
-              swellSize: beach.swellSize,
-              idealSwellPeriod: beach.idealSwellPeriod,
               waterTemp: beach.waterTemp,
               hazards: mapHazards(beach.hazards || []),
               crimeLevel: mapCrimeLevel(beach.crimeLevel as string),
@@ -772,6 +774,17 @@ async function main() {
               isHiddenGem: beach.isHiddenGem,
               isFoiling: beach.isFoiling || false,
               isLongboarding: beach.isLongboarding || false,
+              conditionProfiles: {
+                deleteMany: { category: 'GENERAL' },
+                create: {
+                  category: 'GENERAL',
+                  optimalWindDirections: optimalWindDirections,
+                  optimalSwellDirections: optimalSwellDirections,
+                  optimalTide: mapOptimalTide(optimalTide as string),
+                  swellSize: swellSize,
+                  idealSwellPeriod: idealSwellPeriod,
+                }
+              }
             },
             create: {
               id: beach.id,
@@ -781,17 +794,12 @@ async function main() {
               regionId: region.id,
               location: beach.location,
               distanceFromCT: beach.distanceFromCT,
-              optimalWindDirections: beach.optimalWindDirections,
-              optimalSwellDirections: beach.optimalSwellDirections,
               bestSeasons:
                 beach.bestSeasons?.map((season: string) => mapSeason(season)) ||
                 [],
-              optimalTide: mapOptimalTide(beach.optimalTide as string),
               description: beach.description,
               difficulty: mapDifficulty(beach.difficulty),
               waveType: mapWaveType(beach.waveType),
-              swellSize: beach.swellSize,
-              idealSwellPeriod: beach.idealSwellPeriod,
               waterTemp: beach.waterTemp,
               hazards: mapHazards(beach.hazards || []),
               crimeLevel: mapCrimeLevel(beach.crimeLevel as string),
@@ -802,6 +810,16 @@ async function main() {
               isHiddenGem: beach.isHiddenGem,
               isFoiling: beach.isFoiling || false,
               isLongboarding: beach.isLongboarding || false,
+              conditionProfiles: {
+                create: {
+                  category: 'GENERAL',
+                  optimalWindDirections: optimalWindDirections,
+                  optimalSwellDirections: optimalSwellDirections,
+                  optimalTide: mapOptimalTide(optimalTide as string),
+                  swellSize: swellSize,
+                  idealSwellPeriod: idealSwellPeriod,
+                }
+              }
             },
           });
 

@@ -14,6 +14,7 @@ import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { useBeaches } from "@/app/hooks/useBeaches";
 import { SubscriptionStatus } from "@/app/types/subscription";
 import { cn } from "@/app/lib/utils";
 
@@ -29,6 +30,9 @@ export default function RecentRaidLogs() {
 
   const { data: session } = useBackendAuth();
   const { data: subscriptionDetails } = useSubscriptionDetails();
+  const { data: beachesData } = useBeaches();
+  const beaches = (beachesData as any)?.beaches || beachesData || [];
+  
   const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
   const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
 
@@ -76,17 +80,11 @@ export default function RecentRaidLogs() {
 
       <div className="space-y-6">
         {recentEntries.map((entry: LogEntry) => {
-          const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
           const isOwner = session?.user?.id === entry.userId;
+          // Harden check to look at beach name as well
+          const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem || 
+                                  beaches?.find((b: any) => b.id === (entry as any).beachId || b.name === entry.beachName)?.isHiddenGem;
           const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
-
-          if (isHiddenGemEntry) {
-            console.log(`[RecentRaidLogs] Gating debug for ${entry.beachName}:`, {
-              isHiddenGemEntry,
-              hasAccess,
-              beachData: (entry as any).beach
-            });
-          }
 
           return (
             <Link
@@ -104,9 +102,16 @@ export default function RecentRaidLogs() {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors font-primary">
-                    {isGatedGem ? "Hidden Gem" : (entry.beach?.name || entry.beachName || "Unnamed Beach")}
-                    {isHiddenGemEntry && (
-                      <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
+                    {isGatedGem ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
+                        <LockIcon className="w-2.5 h-2.5 mr-1" />
+                        Hidden Gem
+                      </span>
+                    ) : (
+                      entry.beach?.name || entry.beachName || "Unnamed Beach"
+                    )}
+                    {isHiddenGemEntry && !isGatedGem && (
+                      <span className="text-amber-500" title="Hidden Gem">💎</span>
                     )}
                   </h4>
                   {!isGatedGem && entry.region && (
@@ -171,7 +176,16 @@ export default function RecentRaidLogs() {
                   )}
                 </div>
               ) : entry.imageUrl ? (
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+                <div 
+                  className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+                  onClick={(e) => {
+                    if (isGatedGem && entry.imageUrl) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(entry.imageUrl, '_blank');
+                    }
+                  }}
+                >
                   <Image
                     src={entry.imageUrl}
                     alt={entry.beach?.name || entry.beachName || "Session photo"}

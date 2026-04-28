@@ -951,9 +951,9 @@
       "NW"
     ],
     "optimalSwellDirections": {
-      "min": 120,
-      "max": 160,
-      "cardinal": "SE"
+      "min": 180,
+      "max": 200,
+      "cardinal": "S"
     },
     "bestSeasons": [
       "winter"
