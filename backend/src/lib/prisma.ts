@@ -28,9 +28,12 @@ function getPrisma() {
       }
 
       if (!url.searchParams.has("connection_limit")) {
-        url.searchParams.set("connection_limit", "10");
-        url.searchParams.set("pool_timeout", "30"); // Increased for Supabase stability
-        url.searchParams.set("connect_timeout", "30"); // Mitigates P1001 on slow networks
+        // Cloud Run can run multiple instances — keep per-instance limit low
+        // to avoid exhausting Supabase free tier (max 60 connections)
+        // 3 connections × up to 10 instances = 30 max, leaving headroom
+        url.searchParams.set("connection_limit", "3");
+        url.searchParams.set("pool_timeout", "30");
+        url.searchParams.set("connect_timeout", "30");
       }
 
       optimizedDatabaseUrl = url.toString();

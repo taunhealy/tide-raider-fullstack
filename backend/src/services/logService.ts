@@ -228,6 +228,7 @@ export class LogService {
             select: {
               id: true,
               name: true,
+              isHiddenGem: true,
               region: {
                 select: {
                   id: true,
@@ -655,6 +656,26 @@ export class LogService {
               regionId: region.id,
             }
           );
+
+          // Last resort: if the client submitted forecast conditions directly, create a record from them
+          if (data.forecast && typeof data.forecast === 'object') {
+            const { randomUUID } = await import("crypto");
+            forecast = await prisma.forecast.create({
+              data: {
+                id: randomUUID(),
+                date: logDate,
+                regionId: region.id,
+                source: "WINDFINDER",
+                timeSlot: "MORNING",
+                windSpeed: data.forecast.windSpeed ?? null,
+                windDirection: data.forecast.windDirection ?? null,
+                swellHeight: data.forecast.swellHeight ?? null,
+                swellPeriod: data.forecast.swellPeriod ?? null,
+                swellDirection: data.forecast.swellDirection ?? null,
+              }
+            });
+            console.log("[createRaidLogEntry] ✅ Created forecast from submitted conditions:", forecast.id);
+          }
         }
       }
     }

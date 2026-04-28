@@ -89,6 +89,7 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
 
           // Scrape all available sources for this region
           let hasAnyConditions = false;
+          const SUPERFORECAST_LIMIT_DAYS = 3;
           
           for (const source of sourcesToScrape) {
             try {
@@ -130,6 +131,33 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
                 console.log(
                   `  ⚠️ No conditions found from ${source} for ${region.id}`
                 );
+              }
+
+              // For WINDFINDER: if the daysLimit exceeds the Superforecast window (3d),
+              // also scrape the regular Windfinder forecast URL to populate days 4-10.
+              if (
+                source === "WINDFINDER" &&
+                (daysLimit === undefined || daysLimit > SUPERFORECAST_LIMIT_DAYS)
+              ) {
+                const config = REGION_CONFIGS[region.id];
+                if (config?.sourceA?.forecastUrl) {
+                  try {
+                    console.log(`  🔍 Fetching extended forecast (days 4-10) for ${region.id} from Windfinder Regular...`);
+                    const extendedConditions = await getLatestConditions(
+                      region.id,
+                      true,
+                      source,
+                      daysLimit,
+                      // Pass a target date 4 days out so surfConditionsService selects the regular URL
+                      new Date(Date.now() + 4 * 24 * 60 * 60 * 1000)
+                    );
+                    if (extendedConditions) {
+                      console.log(`  ✅ Extended Windfinder forecast fetched for ${region.id}`);
+                    }
+                  } catch (extError) {
+                    console.warn(`  ⚠️ Extended Windfinder scrape skipped for ${region.id}:`, extError);
+                  }
+                }
               }
             } catch (error) {
               results.sourcesFailed++;

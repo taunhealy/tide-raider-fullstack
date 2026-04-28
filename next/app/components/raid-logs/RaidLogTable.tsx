@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   Table as TableIcon,
   Loader2,
+  Lock as LockIcon,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import {
@@ -257,7 +258,7 @@ function ForecastInfo({
             )}
             {hasSwellDirection && (
               <span className="ml-1 opacity-80">
-                {degreesToCardinal(forecast!.swellDirection!)}
+                {degreesToCardinal(forecast!.swellDirection!)} ({Math.round(forecast!.swellDirection!)}°)
               </span>
             )}
           </div>
@@ -877,29 +878,65 @@ export default function RaidLogTable({
         {viewMode === "card" && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
-              {currentItems.map((entry) => (
+              {currentItems.map((entry) => {
+                const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
+                const isPremium = isSubscribed || subscriptionDetails?.hasActiveTrial;
+                const isGatedGem = isHiddenGemEntry && !isPremium;
+                const cardHref = isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`;
+
+                return (
                 <div
                   key={entry.id}
-                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col"
+                  className={cn(
+                    "relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 space-y-4 h-full flex flex-col",
+                    isGatedGem && "cursor-pointer"
+                  )}
+                  onClick={isGatedGem ? () => router.push("/pricing") : undefined}
                 >
+                  {/* Hidden Gem lock overlay */}
+                  {isGatedGem && (
+                    <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 pointer-events-none">
+                      <div className="bg-amber-50 border border-amber-200 rounded-full p-3 shadow-md">
+                        <LockIcon className="w-6 h-6 text-amber-500" />
+                      </div>
+                      <p className="text-xs font-bold text-amber-700 uppercase tracking-widest px-4 text-center">
+                        Hidden Gem — Subscribe to unlock
+                      </p>
+                    </div>
+                  )}
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-grow">
-                      <Link
-                        href={`/raidlogs/${entry.id}`}
-                        className="block hover:opacity-75 transition-opacity"
-                      >
-                        <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
-                          {entry.beach?.name || entry.beachName || "No beach specified"}
-                        </h3>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-500 font-primary">
-                            📖 {format(new Date(entry.date), "MMM d, yyyy")}
-                          </p>
-                          <p className="text-sm text-gray-500 font-primary">
-                            📍 {entry.region?.name ?? "No region"}
-                          </p>
-                        </div>
-                      </Link>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              href={cardHref}
+                              className="block hover:opacity-75 transition-opacity"
+                              onClick={(e) => isGatedGem && e.stopPropagation()}
+                            >
+                              <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
+                                {entry.beach?.name || entry.beachName || "No beach specified"}
+                                {isHiddenGemEntry && (
+                                  <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
+                                )}
+                              </h3>
+                              <div className="space-y-1">
+                                <p className="text-sm text-gray-500 font-primary">
+                                  📖 {format(new Date(entry.date), "MMM d, yyyy")}
+                                </p>
+                                <p className="text-sm text-gray-500 font-primary">
+                                  📍 {entry.region?.name ?? "No region"}
+                                </p>
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          {isGatedGem && (
+                            <TooltipContent side="top">
+                              <p className="text-xs">💎 Subscribe to view Hidden Gem sessions</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <div className="flex gap-2">
                       <TooltipProvider>
@@ -1099,7 +1136,8 @@ export default function RaidLogTable({
                     );
                   })()}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Pagination */}
@@ -1184,20 +1222,21 @@ export default function RaidLogTable({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredEntries.map((entry) => {
-                      console.log("[TableDebug] Processing entry:", {
-                        id: entry.id,
-                        beachName: entry.beachName,
-                        forecast: entry.forecast,
-                      });
+                      const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
+                      const isPremium = isSubscribed || subscriptionDetails?.hasActiveTrial;
+                      const isGatedGem = isHiddenGemEntry && !isPremium;
 
                       return (
                         <tr
                           key={`row-${entry.id}`}
-                          className="hover:bg-gray-50 cursor-pointer"
+                          className={cn(
+                            "hover:bg-gray-50 cursor-pointer",
+                            isGatedGem && "bg-amber-50/30"
+                          )}
                           onClick={(e) => {
                             // Don't navigate if clicking on a button
                             if (!(e.target as HTMLElement).closest("button")) {
-                              router.push(`/raidlogs/${entry.id}`);
+                              router.push(isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`);
                             }
                           }}
                         >
@@ -1217,6 +1256,9 @@ export default function RaidLogTable({
                                 className="font-primary text-sm text-gray-900 hover:text-brand-3 transition-colors text-left"
                               >
                                 {entry.beach?.name || entry.beachName || "No beach specified"}
+                                {isHiddenGemEntry && (
+                                  <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
+                                )}
                               </button>
                             </div>
                           </td>
@@ -1248,9 +1290,15 @@ export default function RaidLogTable({
                           <td className="px-2 py-3 w-[60px]">
                             <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                               <Link
-                                href={`/raidlogs/${entry.id}`}
+                                href={isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`}
                                 className="relative w-full h-full block"
+                                onClick={(e) => isGatedGem && e.stopPropagation()}
                               >
+                                {isGatedGem && (
+                                  <div className="absolute inset-0 z-10 bg-white/40 flex items-center justify-center">
+                                    <LockIcon className="w-3 h-3 text-amber-600" />
+                                  </div>
+                                )}
                                 {(entry as any).imageUrls &&
                                 (entry as any).imageUrls.length > 0 ? (
                                   <Image

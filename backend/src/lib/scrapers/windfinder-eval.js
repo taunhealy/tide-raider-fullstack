@@ -123,7 +123,15 @@ function extractWindfinderData() {
            else if (alt.includes('low') || titleText.includes('low') || classes.includes('low')) tideState = "Low";
         }
 
-        const tideHeight = getVal('cell-wp', 'tide-height');
+        // Tide height: only read from the explicit tide-height row.
+        // DO NOT fall back to 'cell-wp' — that class is shared with wave period
+        // and causes the swell period (e.g. 10s) to be stored as "10m" tide height.
+        let tideHeight = "";
+        if (rowMap['tide-height']) {
+          const cells = Array.from(rowMap['tide-height'].querySelectorAll('._cell, .cell, [class*="cell"]'));
+          const el = cells[colIdx];
+          if (el) tideHeight = el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
+        }
 
         return {
           time: timeStr,

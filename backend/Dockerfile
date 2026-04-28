@@ -41,8 +41,9 @@ RUN mkdir -p dist/lib/scrapers && cp src/lib/scrapers/*.js dist/lib/scrapers/
 # We use the base again to inherit system deps without re-running apt-get
 FROM base AS runner
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user WITH a writable home directory
+# (-m creates /home/appuser; crawl4ai needs a writable HOME for its SQLite cache)
+RUN groupadd -r appuser && useradd -r -m -g appuser appuser
 
 WORKDIR /app
 
@@ -58,7 +59,11 @@ COPY --from=base /app/scripts ./scripts
 # Ensure playwright knows where the browser is
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers \
     NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    HOME=/home/appuser
+
+# Ensure appuser can write to their home (crawl4ai cache) and /tmp
+RUN chown -R appuser:appuser /home/appuser
 
 # Switch to non-root user
 USER appuser

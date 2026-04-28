@@ -13,6 +13,12 @@ import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
+# Redirect HOME to /tmp before crawl4ai import.
+# crawl4ai writes its SQLite DB to $HOME/.crawl4ai on startup.
+# In Cloud Run the container's appuser has no writable home dir,
+# so we must point it to /tmp (always writable) before the import.
+os.environ.setdefault("HOME", "/tmp")
+
 # Crawl4AI imports
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 

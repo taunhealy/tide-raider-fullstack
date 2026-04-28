@@ -442,7 +442,10 @@ router.get(
                 date: targetDate,
                 source: dataMappingSource as any,
                 timeSlot: timeSlotParam as any,
+                category: "GENERAL",
               },
+              orderBy: { score: "desc" },
+              take: 1,
               select: {
                 score: true,
                 conditions: true,

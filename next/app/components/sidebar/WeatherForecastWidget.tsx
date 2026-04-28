@@ -152,7 +152,23 @@ export default function WeatherForecastWidget() {
           result
         );
         return result;
-      } catch (err) {
+      } catch (err: any) {
+        // Auto-fallback: if WINDFINDER has no data (404/empty), try WINDGURU silently
+        // This mirrors the filtered-beaches backend source fallback logic
+        if (selectedSource === "WINDFINDER") {
+          console.log("[WeatherForecastWidget] ⚠️ WINDFINDER no data — falling back to WINDGURU");
+          try {
+            const fallback = await api.getForecast(
+              regionId!,
+              normalizedDate,
+              "WINDGURU",
+              normalizedTimeSlot
+            );
+            if (fallback) return fallback;
+          } catch {
+            // WINDGURU also unavailable — fall through to show error
+          }
+        }
         console.error(
           "[WeatherForecastWidget] ❌ Error fetching forecast:",
           err
@@ -161,13 +177,13 @@ export default function WeatherForecastWidget() {
       }
     },
     enabled: queryEnabled,
-    staleTime: 60 * 1000, // Data is fresh for 1 minute - reduces unnecessary refetches
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // Use cached data if available - faster loading
-    gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
-    retry: 2, // Retry twice on failure
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
-    networkMode: "online", // Only run query when online
+    refetchOnMount: false,
+    gcTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    networkMode: "online",
   });
 
   // Debug: Log query state

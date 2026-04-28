@@ -15,6 +15,7 @@ import {
   Waves,
   Clock,
   Info as InfoIcon,
+  Lock,
 } from "lucide-react";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
@@ -35,6 +36,8 @@ import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { RandomLoader } from "../ui/random-loader";
+import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
+import { SubscriptionStatus } from "@/app/types/subscription";
 
 interface RaidLogDetailsProps {
   id: string;
@@ -53,13 +56,10 @@ function LoggerDisplay({
     image?: string | null;
   } | null;
 }) {
-  // Use entry data directly - no need to fetch since entry already has user info
-  // The entry.user object from backend includes: id, name, nationality
-  // Image would need to be added to backend's user relation in log entries
   const userData = entryUserData;
   const displayName = userData?.name || "Anonymous";
-  const userImage = entryUserData?.image || null; // Image not included in entry.user yet
-  const avatarSize = 56; // 14 * 4 = 56px (w-14 h-14)
+  const userImage = entryUserData?.image || null;
+  const avatarSize = 56;
 
   return (
     <div className="flex items-center gap-3">
@@ -101,11 +101,14 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const { data: entry, isLoading, error } = useRaidLog(id);
+  const { data: subscriptionDetails } = useSubscriptionDetails();
+  const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
+  const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
+  const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem;
+  const isGatedGem = isHiddenGemEntry && !hasAccess;
 
   const isOwner = session?.user?.id === entry?.userId;
 
-  // Fetch beach scores for all sources (A, B, C) for this date
-  // Must be called before any conditional returns to follow Rules of Hooks
   const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
   const logDate = entry?.date
     ? new Date(entry.date).toISOString().split("T")[0]
@@ -125,7 +128,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
     enabled: !!beachId && !!logDate && !!entry,
   });
 
-  // Check if user has an existing alert for this log entry
   const { data: existingAlert } = useQuery({
     queryKey: ["alert-for-log", id, session?.user?.id],
     queryFn: async () => {
@@ -164,12 +166,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
     );
   }
 
-  // Forecast is always a single object (one-to-one relation) or null from Prisma
   const forecastData = entry.forecast || null;
-
-  // Check if media is available (including uploaded videos without platform)
-  // Validate that videoUrl is not empty string
-  // Support both single imageUrl and imageUrls array
   const entryImageUrls = (entry as any).imageUrls;
   const imageUrls =
     entryImageUrls && entryImageUrls.length > 0
@@ -177,8 +174,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       : entry.imageUrl
         ? [entry.imageUrl]
         : [];
-  const hasMedia =
-    imageUrls.length > 0 || (entry.videoUrl && entry.videoUrl.trim() !== "");
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-primary selection:bg-[var(--color-tertiary)] selection:text-white">
@@ -226,365 +221,389 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
-          {/* Content Grid - Make video player bigger (2/3 width) */}
-          <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
-            {/* Main Content - 1/3 width if video exists, full width otherwise */}
-            <div
-              className="lg:col-span-3 space-y-4 md:space-y-6"
-            >
-              {/* Header with Beach and Rating */}
-              <div className="space-y-3 md:space-y-4">
-                <div className="flex flex-wrap items-baseline gap-4">
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-primary font-bold text-white tracking-tighter">
-                    {entry.beach?.name || entry.beachName || "Unnamed Beach"}
-                  </h1>
-                  {Number(entry.surferRating) > 3 && (
-                    <span className="bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-[var(--color-tertiary)]/30">
-                      Top Rated
-                    </span>
-                  )}
-                </div>
+          {isGatedGem ? (
+            <div className="p-12 md:p-20 text-center space-y-8 flex flex-col items-center justify-center">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-full p-6 shadow-2xl">
+                <Lock className="w-12 h-12 text-amber-500" />
+              </div>
+              
+              <div className="space-y-4 max-w-lg">
+                <h2 className="text-3xl md:text-4xl font-primary font-bold text-white tracking-tighter">
+                  Hidden Gem Access Only
+                </h2>
+                <p className="text-white/60 font-primary text-lg leading-relaxed">
+                  This surf session was recorded at a <span className="text-amber-500 font-bold">Hidden Gem</span> location. 
+                  Subscribe to unlock exclusive access to these secret spots and view full conditions, ratings, and media.
+                </p>
+              </div>
 
-                <div className="flex items-center gap-2 text-white/50 font-primary text-sm md:text-base">
-                  <MapPin className="w-4 h-4 flex-shrink-0 text-[var(--color-tertiary)]" />
-                  <p className="truncate">
-                    {entry.region?.name
-                      ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
-                      : "No location specified"}
-                  </p>
-                </div>
-
-                {/* Logger Info - positioned below location and above stars - Instagram style */}
-                <div className="space-y-3 pt-4">
-                  <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
-                    Logger
-                  </h2>
-                  {entry.isAnonymous ? (
-                    <div className="flex items-center gap-3">
-                      <div className="bg-[var(--color-tertiary)]/20 rounded-full w-14 h-14 flex items-center justify-center text-[var(--color-tertiary)] font-black text-xl shadow-lg border border-[var(--color-tertiary)]/30">
-                        A
-                      </div>
-                      <p className="text-white font-primary font-black text-sm uppercase tracking-wider">
-                        Anonymous
-                      </p>
-                    </div>
-                  ) : entry.userId ? (
-                    <LoggerDisplay
-                      userId={entry.userId}
-                      userData={entry.user}
-                    />
-                  ) : entry.user?.id ? (
-                    <LoggerDisplay
-                      userId={entry.user.id}
-                      userData={entry.user}
-                    />
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <div className="bg-[var(--color-tertiary)]/20 rounded-full w-14 h-14 flex items-center justify-center text-[var(--color-tertiary)] font-black text-xl shadow-lg border border-[var(--color-tertiary)]/30 flex-shrink-0">
-                        A
-                      </div>
-                      <p className="text-white font-primary font-black text-sm uppercase tracking-wider">
-                        {entry.surferName || "Anonymous"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3 pt-4">
-                  <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
-                    Surf session rating
-                  </h2>
-                  <div className="flex items-center gap-3">
-                    <BlueStarRating
-                      score={entry.surferRating || 0}
-                      outOfFive={true}
-                    />
-                  </div>
-                </div>
-
-                {/* Conditions Section - Improved to show all sources */}
-                <div className="space-y-6 pt-10">
-                  {/* Video Embed Section - Positioned above Conditions Data */}
-                  {entry.videoUrl && entry.videoUrl.trim() !== "" && (
-                    <div className="w-full mb-10">
-                      {!entry.videoPlatform ? (
-                        // Native Video
-                        <div 
-                          className="relative w-full rounded-3xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-black group shadow-2xl"
-                          onClick={() => setIsMediaModalOpen(true)}
-                        >
-                          <VideoThumbnail 
-                            videoUrl={entry.videoUrl} 
-                            className="w-full aspect-video"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                            <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
-                              <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        // YouTube / Vimeo
-                        <a 
-                          href={entry.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="relative w-full aspect-video rounded-3xl overflow-hidden block cursor-pointer hover:opacity-95 transition-all bg-gray-900 group shadow-2xl border border-white/10 hover:border-[var(--color-tertiary)]/50"
-                        >
-                          <Image
-                            src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
-                            alt="Video thumbnail"
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-700"
-                            sizes="100vw"
-                            priority
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
-                            <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
-                              <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
-                            </div>
-                          </div>
-                          <div className="absolute bottom-6 right-6 bg-black/80 text-white text-xs font-bold px-4 py-2 rounded-full font-primary backdrop-blur-md border border-white/10 uppercase tracking-widest">
-                            {entry.videoPlatform}
-                          </div>
-                        </a>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Button
+                  onClick={() => router.push("/pricing")}
+                  variant="default"
+                  size="lg"
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-10 h-14 rounded-2xl shadow-xl transition-all hover:scale-105"
+                >
+                  Unlock Hidden Gems
+                </Button>
+                <Button
+                  onClick={() => router.push("/raidlogs")}
+                  variant="dark"
+                  size="lg"
+                  className="font-bold px-10 h-14 rounded-2xl"
+                >
+                  Back to Log Book
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Content Grid */}
+              <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
+                <div className="lg:col-span-3 space-y-4 md:space-y-6">
+                  {/* Header with Beach and Rating */}
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="flex flex-wrap items-baseline gap-4">
+                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-primary font-bold text-white tracking-tighter">
+                        {entry.beach?.name || entry.beachName || "Unnamed Beach"}
+                      </h1>
+                      {Number(entry.surferRating) > 3 && (
+                        <span className="bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-[var(--color-tertiary)]/30">
+                          Top Rated
+                        </span>
                       )}
                     </div>
-                  )}
 
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
-                      Conditions Data
-                    </h2>
-                    {entry.timeSlot && (
-                      <div className="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
-                        <Clock className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">
-                          {entry.timeSlot.charAt(0) + entry.timeSlot.slice(1).toLowerCase()} Forecast
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col gap-6">
-                    {/* Hero Image - First image from album */}
-                    {imageUrls.length > 0 && (
-                      <div className="w-full">
-                        <div
-                          className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-gray-900 group shadow-2xl"
-                          onClick={() => {
-                            setSelectedImageIndex(0);
-                            setIsMediaModalOpen(true);
-                          }}
-                        >
-                          <Image
-                            src={imageUrls[0]}
-                            alt="Session hero image"
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-700"
-                            sizes="100vw"
-                            priority
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                    <div className="flex items-center gap-2 text-white/50 font-primary text-sm md:text-base">
+                      <MapPin className="w-4 h-4 flex-shrink-0 text-[var(--color-tertiary)]" />
+                      <p className="truncate">
+                        {entry.region?.name
+                          ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
+                          : "No location specified"}
+                      </p>
+                    </div>
+
+                    {/* Logger Info */}
+                    <div className="space-y-3 pt-4">
+                      <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
+                        Logger
+                      </h2>
+                      {entry.isAnonymous ? (
+                        <div className="flex items-center gap-3">
+                          <div className="bg-[var(--color-tertiary)]/20 rounded-full w-14 h-14 flex items-center justify-center text-[var(--color-tertiary)] font-black text-xl shadow-lg border border-[var(--color-tertiary)]/30">
+                            A
+                          </div>
+                          <p className="text-white font-primary font-black text-sm uppercase tracking-wider">
+                            Anonymous
+                          </p>
                         </div>
-                      </div>
-                    )}
+                      ) : entry.userId ? (
+                        <LoggerDisplay
+                          userId={entry.userId}
+                          userData={entry.user}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="bg-[var(--color-tertiary)]/20 rounded-full w-14 h-14 flex items-center justify-center text-[var(--color-tertiary)] font-black text-xl shadow-lg border border-[var(--color-tertiary)]/30 flex-shrink-0">
+                            A
+                          </div>
+                          <p className="text-white font-primary font-black text-sm uppercase tracking-wider">
+                            {entry.surferName || "Anonymous"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Conditions Grids - Display all 3 sources if available */}
-                    {isLoadingBeachScores ? (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-6 animate-pulse space-y-4">
-                            <div className="h-4 w-24 bg-white/10 rounded"></div>
-                            <div className="space-y-3">
-                              <div className="h-10 bg-white/5 rounded-xl"></div>
-                              <div className="h-10 bg-white/5 rounded-xl"></div>
-                              <div className="h-10 bg-white/5 rounded-xl"></div>
+                    <div className="space-y-3 pt-4">
+                      <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
+                        Surf session rating
+                      </h2>
+                      <div className="flex items-center gap-3">
+                        <BlueStarRating
+                          score={entry.surferRating || 0}
+                          outOfFive={true}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Conditions Section */}
+                    <div className="space-y-6 pt-10">
+                      {/* Video Embed Section */}
+                      {entry.videoUrl && entry.videoUrl.trim() !== "" && (
+                        <div className="w-full mb-10">
+                          {!entry.videoPlatform ? (
+                            <div 
+                              className="relative w-full rounded-3xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-black group shadow-2xl"
+                              onClick={() => setIsMediaModalOpen(true)}
+                            >
+                              <VideoThumbnail 
+                                videoUrl={entry.videoUrl} 
+                                className="w-full aspect-video"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                                <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
+                                  <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <a 
+                              href={entry.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="relative w-full aspect-video rounded-3xl overflow-hidden block cursor-pointer hover:opacity-95 transition-all bg-gray-900 group shadow-2xl border border-white/10 hover:border-[var(--color-tertiary)]/50"
+                            >
+                              <Image
+                                src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
+                                alt="Video thumbnail"
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                sizes="100vw"
+                                priority
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
+                                <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
+                                  <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
+                                </div>
+                              </div>
+                              <div className="absolute bottom-6 right-6 bg-black/80 text-white text-xs font-bold px-4 py-2 rounded-full font-primary backdrop-blur-md border border-white/10 uppercase tracking-widest">
+                                {entry.videoPlatform}
+                              </div>
+                            </a>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
+                          Conditions Data
+                        </h2>
+                        {entry.timeSlot && (
+                          <div className="flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+                            <Clock className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                              {entry.timeSlot.charAt(0) + entry.timeSlot.slice(1).toLowerCase()} Forecast
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col gap-6">
+                        {imageUrls.length > 0 && (
+                          <div className="w-full">
+                            <div
+                              className="relative w-full aspect-[21/9] rounded-2xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-gray-900 group shadow-2xl"
+                              onClick={() => {
+                                setSelectedImageIndex(0);
+                                setIsMediaModalOpen(true);
+                              }}
+                            >
+                              <Image
+                                src={imageUrls[0]}
+                                alt="Session hero image"
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                sizes="100vw"
+                                priority
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {beachScores?.scores?.filter((score: any) => {
-                          const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
-                          return !conditions?.timeSlot || conditions.timeSlot === entry.timeSlot;
-                        }).map((score: any, index: number) => {
-                          const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
-                          
-                          return (
-                            <div key={`${score.source}-${index}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
-                              <div className="flex items-center justify-between mb-6">
-                                <div className="space-y-1">
-                                  <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
-                                    {score.sourceName}
-                                  </h3>
-                                  {conditions?.timeSlot && (
-                                    <p className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-tighter">
-                                      {conditions.timeSlot.charAt(0) + conditions.timeSlot.slice(1).toLowerCase()}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 translate-y-[-2px]">
-                                  <BlueStarRating score={score.starRating} outOfFive={true} size={12} />
+                        )}
+
+                        {isLoadingBeachScores ? (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-6 animate-pulse space-y-4">
+                                <div className="h-4 w-24 bg-white/10 rounded"></div>
+                                <div className="space-y-3">
+                                  <div className="h-10 bg-white/5 rounded-xl"></div>
+                                  <div className="h-10 bg-white/5 rounded-xl"></div>
+                                  <div className="h-10 bg-white/5 rounded-xl"></div>
                                 </div>
                               </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {beachScores?.scores?.filter((score: any) => {
+                              const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
+                              return !conditions?.timeSlot || conditions.timeSlot === entry.timeSlot;
+                            }).map((score: any, index: number) => {
+                              const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
                               
-                              <div className="space-y-3">
-                                {conditions ? (
-                                  <>
-                                    {/* Wind */}
-                                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                      <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                        <Wind className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Wind</p>
-                                        <p className="text-xs font-black text-white">
-                                          {conditions.windSpeed != null ? `${conditions.windSpeed}kts` : "N/A"}
-                                          {conditions.windDirection != null && (
-                                            <span className="text-white/40 font-bold ml-1 tracking-tighter">
-                                              {degreesToCardinal(conditions.windDirection)}
-                                            </span>
-                                          )}
+                              return (
+                                <div key={`${score.source}-${index}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10">
+                                  <div className="flex items-center justify-between mb-6">
+                                    <div className="space-y-1">
+                                      <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                                        {score.sourceName}
+                                      </h3>
+                                      {conditions?.timeSlot && (
+                                        <p className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-tighter">
+                                          {conditions.timeSlot.charAt(0) + conditions.timeSlot.slice(1).toLowerCase()}
                                         </p>
-                                      </div>
+                                      )}
                                     </div>
-
-                                    {/* Swell */}
-                                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                      <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                        <Waves className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Swell</p>
-                                        <p className="text-xs font-black text-white">
-                                          {conditions.swellHeight != null ? `${Number(conditions.swellHeight).toFixed(1)}m` : "N/A"}
-                                          {conditions.swellDirection != null && (
-                                            <span className="text-white/40 font-bold ml-1 tracking-tighter">
-                                              {degreesToCardinal(conditions.swellDirection)}
-                                            </span>
-                                          )}
-                                        </p>
-                                      </div>
+                                    <div className="flex items-center gap-1.5 translate-y-[-2px]">
+                                      <BlueStarRating score={score.starRating} outOfFive={true} size={12} />
                                     </div>
-
-                                    {/* Period */}
-                                    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                      <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                        <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Period</p>
-                                        <p className="text-xs font-black text-white">{conditions.swellPeriod != null ? `${conditions.swellPeriod}s` : "N/A"}</p>
-                                      </div>
-                                    </div>
-
-                                    {/* Tide */}
-                                    {conditions.tide && (
-                                      <div className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-                                        <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
-                                          <Waves className="w-4 h-4 text-cyan-400" />
+                                  </div>
+                                  
+                                  <div className="space-y-3">
+                                    {conditions ? (
+                                      <>
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                                          <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
+                                            <Wind className="w-4 h-4 text-[var(--color-tertiary)]" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Wind</p>
+                                            <p className="text-xs font-black text-white">
+                                              {conditions.windSpeed != null ? `${conditions.windSpeed}kts` : "N/A"}
+                                              {conditions.windDirection != null && (
+                                                <span className="text-white/40 font-bold ml-1 tracking-tighter">
+                                                  {degreesToCardinal(conditions.windDirection)}
+                                                </span>
+                                              )}
+                                            </p>
+                                          </div>
                                         </div>
-                                        <div className="overflow-hidden">
-                                          <p className="text-[8px] font-bold text-cyan-400/40 tracking-widest mb-0.5">Tide</p>
-                                          <p className="text-[10px] font-black text-white truncate">{conditions.tide}</p>
+
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                                          <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
+                                            <Waves className="w-4 h-4 text-[var(--color-tertiary)]" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Swell</p>
+                                            <p className="text-xs font-black text-white">
+                                              {conditions.swellHeight != null ? `${Number(conditions.swellHeight).toFixed(1)}m` : "N/A"}
+                                              {conditions.swellDirection != null && (
+                                                <span className="text-white/40 font-bold ml-1 tracking-tighter">
+                                                  {degreesToCardinal(conditions.swellDirection)} ({Math.round(conditions.swellDirection)}°)
+                                                </span>
+                                              )}
+                                            </p>
+                                          </div>
                                         </div>
+
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                                          <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
+                                            <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Period</p>
+                                            <p className="text-xs font-black text-white">{conditions.swellPeriod != null ? `${conditions.swellPeriod}s` : "N/A"}</p>
+                                          </div>
+                                        </div>
+
+                                        {conditions.tide && (
+                                          <div className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
+                                            <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
+                                              <Waves className="w-4 h-4 text-cyan-400" />
+                                            </div>
+                                            <div className="overflow-hidden">
+                                              <p className="text-[8px] font-bold text-cyan-400/40 tracking-widest mb-0.5">Tide</p>
+                                              <p className="text-[10px] font-black text-white truncate">{conditions.tide}</p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <div className="h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
+                                        <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center">
+                                          <InfoIcon className="w-3 h-3 text-white/20" />
+                                        </div>
+                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">No Data Avail</span>
                                       </div>
                                     )}
-                                  </>
-                                ) : (
-                                  <div className="h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
-                                    <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center">
-                                      <InfoIcon className="w-3 h-3 text-white/20" />
-                                    </div>
-                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">No Data Avail</span>
                                   </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
-              
               </div>
 
               {/* Session Date */}
-              <div className="bg-white/5 rounded-2xl p-5 md:p-6 flex items-center gap-4 border border-white/5 hover:bg-white/10 transition-colors">
-                <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[var(--color-tertiary)]/10 flex items-center justify-center border border-[var(--color-tertiary)]/20 shadow-lg">
-                  <Calendar className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-tertiary)]" />
-                </div>
-                <div>
-                  <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest mb-1">
-                    Session date
-                  </h2>
-                  <p className="text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter">
-                    {format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
-                  </p>
+              <div className="px-6 md:px-10 pb-6">
+                <div className="bg-white/5 rounded-2xl p-5 md:p-6 flex items-center gap-4 border border-white/5 hover:bg-white/10 transition-colors">
+                  <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[var(--color-tertiary)]/10 flex items-center justify-center border border-[var(--color-tertiary)]/20 shadow-lg">
+                    <Calendar className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-tertiary)]" />
+                  </div>
+                  <div>
+                    <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest mb-1">
+                      Session date
+                    </h2>
+                    <p className="text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter">
+                      {format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {/* Comments Section */}
               {entry.comments && (
-                <div className="space-y-4 pt-4">
-                  <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
-                    Logger comments
-                  </h2>
-                  <div className="bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                      <svg className="w-12 h-12 text-[var(--color-tertiary)]" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C20.1216 16 21.017 16.8954 21.017 18V21C21.017 22.1046 20.1216 23 19.017 23H16.017C14.9124 23 14.017 22.1046 14.017 21ZM5.017 21V18C5.017 16.8954 5.91243 16 7.017 16H10.017C11.1216 16 12.017 16.8954 12.017 18V21C12.017 22.1046 11.1216 23 10.017 23H7.017C5.91243 23 5.017 22.1046 5.017 21ZM19.017 13C17.9124 13 17.017 12.1046 17.017 11V5C17.017 3.89543 17.9124 3 19.017 3H21.017C22.1216 3 23.017 3.89543 23.017 5V11C23.017 12.1046 22.1216 13 21.017 13H19.017ZM10.017 13C8.91243 13 8.017 12.1046 8.017 11V5C8.017 3.89543 8.91243 3 10.017 3H12.017C13.1216 3 14.017 3.89543 14.017 5V11C14.017 12.1046 13.1216 13 12.017 13H10.017Z" />
-                      </svg>
+                <div className="px-6 md:px-10 pb-10">
+                  <div className="space-y-4 pt-4">
+                    <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                      Logger comments
+                    </h2>
+                    <div className="bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-5">
+                        <svg className="w-12 h-12 text-[var(--color-tertiary)]" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C20.1216 16 21.017 16.8954 21.017 18V21C21.017 22.1046 20.1216 23 19.017 23H16.017C14.9124 23 14.017 22.1046 14.017 21ZM5.017 21V18C5.017 16.8954 5.91243 16 7.017 16H10.017C11.1216 16 12.017 16.8954 12.017 18V21C12.017 22.1046 11.1216 23 10.017 23H7.017C5.91243 23 5.017 22.1046 5.017 21ZM19.017 13C17.9124 13 17.017 12.1046 17.017 11V5C17.017 3.89543 17.9124 3 19.017 3H21.017C22.1216 3 23.017 3.89543 23.017 5V11C23.017 12.1046 22.1216 13 21.017 13H19.017ZM10.017 13C8.91243 13 8.017 12.1046 8.017 11V5C8.017 3.89543 8.91243 3 10.017 3H12.017C13.1216 3 14.017 3.89543 14.017 5V11C14.017 12.1046 13.1216 13 12.017 13H10.017Z" />
+                        </svg>
+                      </div>
+                      <p className="text-white/80 font-primary text-base md:text-lg leading-relaxed whitespace-pre-wrap relative z-10 italic">
+                        "{entry.comments}"
+                      </p>
                     </div>
-                    <p className="text-white/80 font-primary text-base md:text-lg leading-relaxed whitespace-pre-wrap relative z-10 italic">
-                      "{entry.comments}"
-                    </p>
                   </div>
                 </div>
               )}
-            </div>
 
+              {/* Image Gallery Section */}
+              {imageUrls.length > 0 && (
+                <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/20">
+                  <div className="flex items-center gap-4 mb-8">
+                    <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
+                      Session Album
+                    </h2>
+                    <div className="h-px flex-1 bg-white/5"></div>
+                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                      {imageUrls.length} Files
+                    </span>
+                  </div>
+                  <ImageGallery
+                    images={imageUrls}
+                    onImageClick={(index) => {
+                      setSelectedImageIndex(index);
+                      setIsMediaModalOpen(true);
+                    }}
+                    className="cursor-pointer"
+                  />
+                </div>
+              )}
 
-          </div>
-
-          {/* Image Gallery Section - Below Details */}
-          {imageUrls.length > 0 && (
-            <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/20">
-              <div className="flex items-center gap-4 mb-8">
-                <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
-                  Session Album
-                </h2>
-                <div className="h-px flex-1 bg-white/5"></div>
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                  {imageUrls.length} Files
-                </span>
+              {/* User Comments Section */}
+              <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/40">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
+                    Discussion
+                  </h2>
+                  <div className="h-px flex-1 bg-white/5"></div>
+                </div>
+                <div className="text-white">
+                  <CommentThread logEntryId={entry.id} />
+                </div>
               </div>
-              <ImageGallery
-                images={imageUrls}
-                onImageClick={(index) => {
-                  setSelectedImageIndex(index);
-                  setIsMediaModalOpen(true);
-                }}
-                className="cursor-pointer"
-              />
-            </div>
+            </>
           )}
-
-          {/* User Comments Section */}
-          <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/40">
-            <div className="flex items-center gap-4 mb-8">
-              <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
-                Discussion
-              </h2>
-              <div className="h-px flex-1 bg-white/5"></div>
-            </div>
-            <div className="text-white">
-              <CommentThread logEntryId={entry.id} />
-            </div>
-          </div>
         </div>
       </div>
 

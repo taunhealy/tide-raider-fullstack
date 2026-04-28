@@ -58,6 +58,7 @@ export interface LogEntry {
     } | null;
     waveType: string;
     difficulty: string;
+    isHiddenGem?: boolean | null;
   } | null;
   forecast: {
     id: string;

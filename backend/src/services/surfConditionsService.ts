@@ -78,9 +78,30 @@ export async function getLatestConditions(
 
   // Determine URL based on source
   let scrapeUrl = "";
-  if (source === "WINDFINDER") scrapeUrl = region.sourceA.url;
-  else if (source === "WINDGURU") scrapeUrl = region.sourceB?.url || "";
-  else if (source === "WINDY") scrapeUrl = region.sourceC?.url || "";
+  if (source === "WINDFINDER") {
+    // Windfinder Superforecast (weatherforecast/) covers up to ~3 days with high precision.
+    // For dates beyond 3 days, fall back to the regular Windfinder forecast (forecast/)
+    // which covers up to 10 days at lower temporal resolution.
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const SUPERFORECAST_LIMIT_DAYS = 3;
+
+    const hasRegularForecast = !!region.sourceA.forecastUrl;
+    const useRegularForecast = diffDays > SUPERFORECAST_LIMIT_DAYS && hasRegularForecast;
+
+    scrapeUrl = useRegularForecast
+      ? region.sourceA.forecastUrl!
+      : region.sourceA.url;
+
+    console.log(
+      `[getLatestConditions] 📅 Date is ${diffDays}d out — using ${useRegularForecast ? "Regular Forecast (10d)" : "Superforecast (3d)"} for ${region.regionId}`
+    );
+  } else if (source === "WINDGURU") {
+    scrapeUrl = region.sourceB?.url || "";
+  } else if (source === "WINDY") {
+    scrapeUrl = region.sourceC?.url || "";
+  }
 
   if (!scrapeUrl) {
     throw new Error(`Scrape URL not configured for ${region.regionId} source ${source}`);

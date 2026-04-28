@@ -55,6 +55,9 @@ export class CronScheduler {
 
     // Dynamic Heartbeat Accelerator (1-hour tactical pulse)
     // Automatically scales to high-frequency when active subscribers are present
+    const serverStartTime = Date.now();
+    const STARTUP_GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes — allows DB pool to stabilize
+
     const heartbeatTask = cron.schedule(
       "0 * * * *",
       async () => {
@@ -62,6 +65,12 @@ export class CronScheduler {
           const now = new Date();
           // Skip if it's the 01:00 slot (handled by the main daily task)
           if (now.getUTCHours() === 1) return;
+
+          // Guard: skip if server just started — DB pool may not be ready
+          if (Date.now() - serverStartTime < STARTUP_GRACE_PERIOD_MS) {
+            console.log("[cron] ⏳ Heartbeat skipped — within startup grace period (DB pool warming up)");
+            return;
+          }
 
           const { prisma } = require("../lib/prisma");
           const { processAllUserAlerts } = await import("./alertProcessor");

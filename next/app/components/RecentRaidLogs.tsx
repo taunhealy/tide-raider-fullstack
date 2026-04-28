@@ -12,6 +12,10 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import api from "@/app/lib/api-client";
 import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
+import { SubscriptionStatus } from "@/app/types/subscription";
+import { Lock as LockIcon } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 export default function RecentRaidLogs() {
   const { data, isLoading } = useQuery({
@@ -22,6 +26,10 @@ export default function RecentRaidLogs() {
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
   });
+
+  const { data: subscriptionDetails } = useSubscriptionDetails();
+  const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
+  const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
 
   if (isLoading) {
     return (
@@ -66,17 +74,34 @@ export default function RecentRaidLogs() {
       </div>
 
       <div className="space-y-6">
-        {recentEntries.map((entry: LogEntry) => (
-          <Link
-            key={entry.id}
-            href={`/raidlogs/${entry.id}`}
-            className="group block"
-          >
+        {recentEntries.map((entry: LogEntry) => {
+          const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
+          const isGatedGem = isHiddenGemEntry && !hasAccess;
+
+          return (
+            <Link
+              key={entry.id}
+              href={isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`}
+              className="group block relative"
+            >
+              {isGatedGem && (
+                <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-1 pointer-events-none">
+                  <div className="bg-amber-50 border border-amber-200 rounded-full p-2 shadow-md">
+                    <LockIcon className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest text-center">
+                    Unlock Spot
+                  </p>
+                </div>
+              )}
             <article className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors font-primary">
-                    {entry.beach?.name || entry.beachName || "Unnamed Beach"}
+                    {isGatedGem ? "Hidden Gem" : (entry.beach?.name || entry.beachName || "Unnamed Beach")}
+                    {isHiddenGemEntry && (
+                      <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
+                    )}
                   </h4>
                   {entry.region && (
                     <div className="flex items-center gap-1 text-[12px] text-[var(--color-text-tertiary)] font-primary">
@@ -104,8 +129,12 @@ export default function RecentRaidLogs() {
               {/* Media Thumbnail Section */}
               {entry.videoUrl ? (
                 <div 
-                  className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5"
+                  className={cn(
+                    "relative w-full aspect-video rounded-xl overflow-hidden bg-gray-900 group/thumb shadow-md cursor-pointer border border-white/5",
+                    isGatedGem && "blur-md"
+                  )}
                   onClick={(e) => {
+                    if (isGatedGem) return; // Prevent interaction
                     if (entry.videoPlatform) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -139,7 +168,10 @@ export default function RecentRaidLogs() {
                   )}
                 </div>
               ) : entry.imageUrl ? (
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100">
+                <div className={cn(
+                  "relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100",
+                  isGatedGem && "blur-md"
+                )}>
                   <Image
                     src={entry.imageUrl}
                     alt={entry.beach?.name || entry.beachName || "Session photo"}
@@ -150,14 +182,15 @@ export default function RecentRaidLogs() {
                 </div>
               ) : null}
               
-              {entry.comments && (
+              {!isGatedGem && entry.comments && (
                 <p className="text-[12px] text-[var(--color-text-primary)] line-clamp-2 font-primary">
                   {entry.comments}
                 </p>
               )}
-            </article>
-          </Link>
-        ))}
+              </article>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
