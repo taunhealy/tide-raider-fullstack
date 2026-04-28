@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { MapPin, Play } from "lucide-react";
+import { MapPin, Play, Lock as LockIcon } from "lucide-react";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import type { LogEntry } from "@/app/types/raidlogs";
 import { Skeleton } from "@/app/components/ui/skeleton";
@@ -13,8 +13,8 @@ import api from "@/app/lib/api-client";
 import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { SubscriptionStatus } from "@/app/types/subscription";
-import { Lock as LockIcon } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
 export default function RecentRaidLogs() {
@@ -27,6 +27,7 @@ export default function RecentRaidLogs() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: session } = useBackendAuth();
   const { data: subscriptionDetails } = useSubscriptionDetails();
   const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
   const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
@@ -76,7 +77,8 @@ export default function RecentRaidLogs() {
       <div className="space-y-6">
         {recentEntries.map((entry: LogEntry) => {
           const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
-          const isGatedGem = isHiddenGemEntry && !hasAccess;
+          const isOwner = session?.user?.id === entry.userId;
+          const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
 
           if (isHiddenGemEntry) {
             console.log(`[RecentRaidLogs] Gating debug for ${entry.beachName}:`, {

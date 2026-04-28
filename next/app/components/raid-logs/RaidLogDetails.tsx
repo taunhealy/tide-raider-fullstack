@@ -105,19 +105,21 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
   const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
   const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem;
-  const isGatedGem = isHiddenGemEntry && !hasAccess;
+  const isOwner = session?.user?.id === (entry as any)?.userId;
+  const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
 
   console.log("[RaidLogDetails] Gating debug:", {
     entryId: id,
     isHiddenGemEntry,
     hasAccess,
+    isOwner,
+    isGatedGem,
     isSubscribed,
     subscriptionStatus: subscriptionDetails?.status,
     hasActiveTrial: subscriptionDetails?.hasActiveTrial,
     beachData: (entry as any)?.beach
   });
 
-  const isOwner = session?.user?.id === entry?.userId;
 
   const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
   const logDate = entry?.date

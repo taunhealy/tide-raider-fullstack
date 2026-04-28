@@ -44,6 +44,8 @@ import {
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
 import { Tabs, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { SubscriptionStatus } from "@/app/types/subscription";
+
 
 import {
   Pagination,
@@ -881,7 +883,7 @@ export default function RaidLogTable({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
               {currentItems.map((entry) => {
                 const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
-                const isPremium = isSubscribed || subscriptionDetails?.hasActiveTrial;
+                const isPremium = hasAccess; // Use unified access logic
                 const isGatedGem = isHiddenGemEntry && !isPremium;
                 const cardHref = isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`;
 
@@ -916,7 +918,7 @@ export default function RaidLogTable({
                               onClick={(e) => isGatedGem && e.stopPropagation()}
                             >
                               <h3 className="text-base font-medium font-primary text-gray-900 mb-1">
-                                {entry.beach?.name || entry.beachName || "No beach specified"}
+                                {isGatedGem ? "Hidden Gem" : (entry.beach?.name || entry.beachName || "No beach specified")}
                                 {isHiddenGemEntry && (
                                   <span className="ml-1.5 text-amber-500" title="Hidden Gem">💎</span>
                                 )}
@@ -926,7 +928,7 @@ export default function RaidLogTable({
                                   📖 {format(new Date(entry.date), "MMM d, yyyy")}
                                 </p>
                                 <p className="text-sm text-gray-500 font-primary">
-                                  📍 {entry.region?.name ?? "No region"}
+                                  📍 {isGatedGem ? "---" : (entry.region?.name ?? "No region")}
                                 </p>
                               </div>
                             </Link>
@@ -1224,7 +1226,7 @@ export default function RaidLogTable({
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredEntries.map((entry) => {
                       const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
-                      const isPremium = isSubscribed || subscriptionDetails?.hasActiveTrial;
+                      const isPremium = hasAccess; // Use unified access logic
                       const isGatedGem = isHiddenGemEntry && !isPremium;
 
                       return (
