@@ -74,8 +74,7 @@ export class PythonBridge {
       console.log(`[PythonBridge] 🧠 Generating ${mode} ${persona} intel for ${beach}...`);
       
       const pythonCommand = process.platform === "win32" ? "python" : "python3";
-      
-      const pythonProcess = spawn(pythonCommand, [
+      const args = [
         this.INTEL_PATH,
         "--beach", beach,
         "--wind_speed", windSpeed.toString(),
@@ -87,7 +86,11 @@ export class PythonBridge {
         "--persona", persona,
         "--trend", trend || "",
         "--mode", mode
-      ]);
+      ];
+
+      console.log(`[PythonBridge] 🚀 Executing: ${pythonCommand} ${args.join(" ")}`);
+      
+      const pythonProcess = spawn(pythonCommand, args);
 
       let stdout = "";
       let stderr = "";

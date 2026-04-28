@@ -101,40 +101,65 @@ export class IntelligenceService {
   }
   
   static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string): Promise<{ report: string, presenterName: string, creditsRemaining: number }> {
+    console.log(`[IntelligenceService] 📋 Starting report generation: Beach=${beachId}, User=${userId}, Days=${days}, Persona=${personaOverride || 'AUTO'}`);
+    
     // 1. Authenticate user and check credits
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, credits: true }
     });
 
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      console.error(`[IntelligenceService] ❌ User ${userId} not found`);
+      throw new Error("User not found");
+    }
     
     // Credit cost: 1 credit for 1 day, 4 credits for 3 days or more.
     const creditCost = days <= 1 ? 1 : 4;
     
-    if (user.credits < creditCost) throw new Error("INSUFFICIENT_CREDITS");
+    if (user.credits < creditCost) {
+      console.warn(`[IntelligenceService] ⚠️ Insufficient credits: Has ${user.credits}, Needs ${creditCost}`);
+      throw new Error("INSUFFICIENT_CREDITS");
+    }
 
     const beachRef = await prisma.beach.findUnique({
-       where: { id: beachId }
+       where: { id: beachId },
+       include: { region: true }
     });
 
-    if (!beachRef) throw new Error("Beach not found");
+    if (!beachRef) {
+      console.error(`[IntelligenceService] ❌ Beach ${beachId} not found`);
+      throw new Error("Beach not found");
+    }
 
-    // 2. Process Date
-    const startDate = new Date(date);
+    // 2. Process Date with robust validation
+    let startDate = new Date(date);
+    if (isNaN(startDate.getTime())) {
+      console.warn(`[IntelligenceService] ⚠️ Invalid date provided: "${date}", defaulting to today`);
+      startDate = new Date();
+    }
+    
     startDate.setUTCHours(0, 0, 0, 0);
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + days);
 
     // 3. Deduct credit immediately (Atomic update)
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: creditCost } },
-      select: { credits: true }
-    });
+    let updatedUser;
+    try {
+      updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { decrement: creditCost } },
+        select: { id: true, credits: true }
+      });
+      console.log(`[IntelligenceService] 💸 Credits deducted. Remaining: ${updatedUser.credits}`);
+    } catch (error) {
+      console.error(`[IntelligenceService] ❌ Failed to deduct credits:`, error);
+      throw new Error("FAILED_TO_DEDUCT_CREDITS");
+    }
 
     try {
       // 4. Generate Report
+
       const forecasts = await prisma.forecast.findMany({
         where: {
           regionId: beachRef.regionId,
@@ -144,6 +169,8 @@ export class IntelligenceService {
         },
         orderBy: { date: 'asc' }
       });
+
+      console.log(`[IntelligenceService] 📊 Found ${forecasts.length} noon forecasts for the next ${days} days`);
 
       if (forecasts.length === 0) {
         // Refund if no data found
@@ -160,14 +187,22 @@ export class IntelligenceService {
       }
 
       const context = forecasts.map(f => {
-         const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+         const dateObj = f.date instanceof Date ? f.date : new Date(f.date);
+         const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
          const score = 0; // Score calculation requires profile data not available in this context
          return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${score.toFixed(1)}/10`;
       }).join("\n");
 
-      const { getPersonaByCycle } = await import("../constants/intelligence");
-      const activePersona = getPersonaByCycle(new Date().getDate());
-      const persona = personaOverride || activePersona.id;
+      const { getPersonaByCycle, AI_PERSONAS } = await import("../constants/intelligence");
+      const cyclePersona = getPersonaByCycle(new Date().getDate());
+      
+      // Use override if provided, otherwise cycle
+      const persona = (personaOverride || cyclePersona.id).toUpperCase();
+      
+      // Resolve the actual name for the persona being used
+      const activePersona = AI_PERSONAS.find(p => p.id === persona) || cyclePersona;
+      
+      console.log(`[IntelligenceService] 🎭 Using persona: ${activePersona.name} (${activePersona.id})`);
 
       // Fetch the GENERAL condition profile to build spot rules
       const conditionProfile = await (prisma as any).beachConditionProfile.findFirst({
@@ -175,9 +210,14 @@ export class IntelligenceService {
       });
 
       // Construct Spot Rules to guide the AI with specific expertise
-      const optimalWind = conditionProfile?.optimalWindDirections?.join(", ") || "N/A";
-      const swellDir = conditionProfile?.optimalSwellDirections 
-        ? `${conditionProfile.optimalSwellDirections.min}° to ${conditionProfile.optimalSwellDirections.max}°`
+      const optimalWind = Array.isArray(conditionProfile?.optimalWindDirections) 
+        ? conditionProfile.optimalWindDirections.join(", ") 
+        : "N/A";
+        
+      // Safely access JSON fields
+      const swellDirs = conditionProfile?.optimalSwellDirections as any;
+      const swellDir = (swellDirs && typeof swellDirs === 'object' && 'min' in swellDirs)
+        ? `${swellDirs.min}° to ${swellDirs.max}°`
         : "N/A";
       const idealTide = conditionProfile?.optimalTide || "Incoming Mid-to-High";
 
@@ -200,7 +240,10 @@ export class IntelligenceService {
         persona, 
         `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
         days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly"
-      );
+      ).catch(err => {
+        console.error(`[IntelligenceService] ❌ Python generation failed:`, err);
+        throw err;
+      });
 
       let finalReport = report;
       const startDateStr = forecasts[0].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

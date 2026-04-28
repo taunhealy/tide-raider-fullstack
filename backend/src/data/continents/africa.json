@@ -453,59 +453,6 @@
     "isFoiling": true
   },
   {
-    "id": "misty-cliffs-witsands",
-    "name": "Misty Cliffs / Witsands",
-    "continent": "Africa",
-    "countryId": "za",
-    "regionId": "western-cape",
-    "location": "Scarborough",
-    "distanceFromCT": 45,
-    "optimalWindDirections": [
-      "SE",
-      "NW"
-    ],
-    "optimalSwellDirections": {
-      "min": 195,
-      "max": 225,
-      "cardinal": "SW"
-    },
-    "bestSeasons": [
-      "summer"
-    ],
-    "optimalTide": "LOW",
-    "description": "Extremely scenic and exposed spot known for its powerful waves and strong winds. Premier location for advanced wingfoilers and windsurfers, especially in Northwest winds. The 'Witsands' section offers long rolling swells perfect for high-speed runs. Use caution with the rocky shoreline and heavy kelp.",
-    "difficulty": "ADVANCED",
-    "waveType": "BEACH_BREAK",
-    "swellSize": {
-      "min": 1.2,
-      "max": 5
-    },
-    "idealSwellPeriod": {
-      "min": 12,
-      "max": 18
-    },
-    "waterTemp": {
-      "summer": 16,
-      "winter": 12
-    },
-    "hazards": [
-      "Heavy kelp",
-      "Rocks",
-      "Strong wind",
-      "Sharks"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=60",
-    "coordinates": {
-      "lat": -34.1914,
-      "lng": 18.3512
-    },
-    "isFoiling": true
-  },
-  {
     "id": "dunes",
     "name": "Dunes",
     "continent": "Africa",
@@ -1018,8 +965,9 @@
     "location": "Witsand",
     "distanceFromCT": 30,
     "optimalWindDirections": [
-      "SE",
-      "E"
+      "N",
+      "NE",
+      "NW"
     ],
     "optimalSwellDirections": {
       "min": 150,
