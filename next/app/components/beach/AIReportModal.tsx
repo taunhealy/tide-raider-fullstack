@@ -207,8 +207,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to generate report");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || "Failed to generate report");
       }
 
       const data = await response.json();
@@ -449,7 +449,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                      <h4 className="text-[12px] font-black text-black uppercase tracking-widest">Balance Required</h4>
                   </div>
                   <p className="text-[14px] leading-[20px] font-normal text-black opacity-60">
-                    Your account balance is currently {isCreditsLoading ? "..." : credits}. Top up your credits or invite friends to generate this report.
+                    Your account balance is currently {isCreditsLoading ? "..." : credits}. Credits never expire and roll over month to month. Top up your balance or invite friends to generate this report.
                   </p>
                   <div className="flex gap-2 pt-2">
                     <Button 

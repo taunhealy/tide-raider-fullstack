@@ -44,9 +44,12 @@ export async function POST(request: Request) {
         const envUrl = process.env.NEXT_PUBLIC_API_URL;
         const isDevelopment = process.env.NODE_ENV === "development";
 
-        // In development, use localhost backend (connects to Docker postgres)
+        // In development, use localhost backend
         if (isDevelopment) {
-          return envUrl || "http://localhost:4001";
+          if (envUrl?.includes("localhost")) {
+            return envUrl.replace("localhost", "127.0.0.1");
+          }
+          return envUrl || "http://127.0.0.1:4005";
         }
 
         // In production, use production backend (Google Cloud Run)
@@ -65,20 +68,25 @@ export async function POST(request: Request) {
       }
 
       // Proxy to backend start-trial endpoint
-      // Note: Backend expects user ID in JWT token, not email
+      // If promoCode is provided, use the specialized activation endpoint
+      const endpoint = promoCode 
+        ? `${BACKEND_URL}/api/subscriptions/activate-trial-with-code`
+        : `${BACKEND_URL}/api/subscriptions/start-trial`;
+
       console.log(
-        `[subscriptions] Proxying start-trial to: ${BACKEND_URL}/api/subscriptions/start-trial`
+        `[subscriptions] Proxying ${action} to: ${endpoint} ${promoCode ? `with code: ${promoCode}` : ''}`
       );
 
       let response;
       try {
-        response = await fetch(`${BACKEND_URL}/api/subscriptions/start-trial`, {
+        response = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
           credentials: "include",
+          body: JSON.stringify({ promoCode }),
         });
       } catch (fetchError) {
         console.error("[subscriptions] Fetch error:", fetchError);
@@ -194,9 +202,12 @@ async function handleCreate(promoCode?: string) {
       const envUrl = process.env.NEXT_PUBLIC_API_URL;
       const isDevelopment = process.env.NODE_ENV === "development";
 
-      // In development, use localhost backend (connects to Docker postgres)
+      // In development, use localhost backend
       if (isDevelopment) {
-        return envUrl || "http://localhost:4001";
+        if (envUrl?.includes("localhost")) {
+          return envUrl.replace("localhost", "127.0.0.1");
+        }
+        return envUrl || "http://127.0.0.1:4005";
       }
 
       // In production, use production backend (Google Cloud Run)

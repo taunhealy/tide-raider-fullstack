@@ -101,21 +101,30 @@ export default function PricingPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "start-trial", promoCode }),
         });
-        if (!response.ok) throw new Error("Failed to start trial");
-        window.location.reload();
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || "Failed to start trial");
       }
+      window.location.reload();
+      return;
+    }
 
-      const response = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", promoCode }),
-      });
-      const data = await response.json();
-      if (data.url) window.location.href = data.url;
-    } catch (error) {
-      console.error("Subscription conversion failed:", error);
-      toast.error("Process Error", { description: "Failed to initialize secure checkout." });
+    const response = await fetch("/api/subscriptions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create", promoCode }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || errorData.error || "Failed to initialize checkout");
+    }
+
+    const data = await response.json();
+    if (data.url) window.location.href = data.url;
+  } catch (error: any) {
+    console.error("Subscription conversion failed:", error);
+    toast.error("Process Error", { description: error.message || "Failed to initialize secure checkout." });
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }
@@ -145,11 +154,14 @@ export default function PricingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
-      if (!response.ok) throw new Error("Failed order creation");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || "Failed order creation");
+      }
       const data = await response.json();
       if (data.approvalUrl) window.location.href = data.approvalUrl;
     } catch (err: any) {
-      toast.error("Payment Error", { description: "Could not initialize PayPal top-up." });
+      toast.error("Payment Error", { description: err.message || "Could not initialize PayPal top-up." });
       setIsToppingUp(false);
     }
   };
@@ -306,7 +318,7 @@ export default function PricingPage() {
                     { text: "100 AI Intelligence Credits", icon: Zap, color: "text-blue-400" },
                     { text: "Daily, Tactical or Weekly outlooks", icon: ArrowRight, color: "text-blue-400" },
                     { text: "Share reports with your crew via WhatsApp", icon: Check, color: "text-blue-400" },
-                    { text: "Credits never expire, use anytime", icon: ShieldCheck, color: "text-blue-400" },
+                    { text: "Credits never expire & roll over month to month", icon: ShieldCheck, color: "text-blue-400" },
                   ].map((feature, idx) => (
                     <li key={idx} className="flex items-center gap-4">
                       <div className={cn("p-1.5 rounded-lg bg-gray-50 border border-gray-100", feature.color)}>

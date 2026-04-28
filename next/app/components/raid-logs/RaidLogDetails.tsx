@@ -260,8 +260,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   </h2>
                 </div>
                 <p className="text-white/60 font-primary text-lg md:text-xl leading-relaxed">
-                  This surf session was recorded at a <span className="text-[var(--color-tertiary)] font-bold">Hidden Gem</span> location. 
-                  Unlock exclusive access to secret spots, full conditions, and community intelligence.
+                  This surf session was recorded at a <span className="text-[var(--color-tertiary)] font-bold">Hidden Gem/Novelty Wave</span> location. 
+                  Unlock exclusive access to full conditions, and community intelligence.
                 </p>
               </div>
 

@@ -12,7 +12,7 @@ export const MEMBERSHIP_PERKS = [
     color: "text-black" 
   },
   { 
-    text: "30 AI Intelligence Credits per month", 
+    text: "30 AI Intelligence Credits per month (roll over & never expire)", 
     icon: Sparkles, 
     color: "text-black" 
   },

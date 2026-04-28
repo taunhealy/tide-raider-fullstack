@@ -24,7 +24,7 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
         return None
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-flash-latest",
         google_api_key=api_key,
         temperature=0.7
     )

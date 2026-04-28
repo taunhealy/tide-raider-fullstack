@@ -7,7 +7,6 @@ const BACKEND_URL = getBackendUrl();
 /**
  * Universal backend proxy
  * Forwards all requests to the backend with proper authentication
- * Handles CORS and cookie forwarding automatically
  */
 export async function GET(
   req: NextRequest,
@@ -55,25 +54,21 @@ async function proxyToBackend(
   method: string
 ) {
   try {
-    // Build the backend URL
     const path = pathSegments.join("/");
     const searchParams = req.nextUrl.searchParams.toString();
     const backendUrl = `${BACKEND_URL}/api/${path}${searchParams ? `?${searchParams}` : ""}`;
 
     console.log(`[backend-proxy] ${method} ${backendUrl}`);
 
-    // Get cookies
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value;
 
-    // Prepare headers
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...(authToken && { Authorization: `Bearer ${authToken}` }),
       Cookie: cookieStore.toString(),
     };
 
-    // Prepare body for non-GET requests
     let body: string | undefined;
     if (method !== "GET" && method !== "DELETE") {
       try {
@@ -84,36 +79,34 @@ async function proxyToBackend(
       }
     }
 
-    // Forward request to backend
     const response = await fetch(backendUrl, {
       method,
       headers,
       body,
-      credentials: "include",
+      cache: "no-store",
     });
 
-    // Get response data
     const contentType = response.headers.get("content-type");
     let data;
     
     if (contentType?.includes("application/json")) {
-      data = await response.json();
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.warn("[backend-proxy] Failed to parse JSON, falling back to text");
+        data = { error: "Malformed JSON", message: "Backend returned invalid JSON" };
+      }
     } else {
       data = await response.text();
     }
 
-    // Log backend errors for debugging
     if (!response.ok) {
-      console.error(
-        `[backend-proxy] Backend error ${response.status}:`,
-        JSON.stringify(data, null, 2)
-      );
+      console.error(`[backend-proxy] Backend error ${response.status}:`, typeof data === 'object' ? JSON.stringify(data) : data);
     }
 
-    // Return response with same status
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
-    console.error("[backend-proxy] Error:", error);
+    console.error("[backend-proxy] Proxy operation failed:", error.stack || error);
     return NextResponse.json(
       { error: "Proxy error", message: error.message },
       { status: 500 }

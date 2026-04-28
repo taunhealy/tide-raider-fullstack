@@ -947,7 +947,7 @@ export default function RaidLogTable({
                           </TooltipTrigger>
                           {isGatedGem && (
                             <TooltipContent side="top">
-                              <p className="text-xs">💎 Subscribe to view Hidden Gem sessions</p>
+                              <p className="text-xs">💎 Subscribe to view Hidden Gem/Novelty Wave sessions</p>
                             </TooltipContent>
                           )}
                         </Tooltip>

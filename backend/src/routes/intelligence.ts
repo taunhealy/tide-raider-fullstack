@@ -60,7 +60,7 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
     console.error("[IntelligenceRoute] Intelligence report error:", error);
     
     if (error.message === "INSUFFICIENT_CREDITS") {
-      const creditCost = parseInt(days as string) <= 3 ? 1 : 2;
+      const creditCost = parseInt(days as string) <= 1 ? 1 : 4;
       return res.status(402).json({ 
         error: "Insufficient credits", 
         message: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : '' } to generate this ${days}-day report.` 
@@ -71,7 +71,10 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
       return res.status(404).json({ error: "Beach not found" });
     }
 
-    res.status(500).json({ error: "Failed to generate tactical intelligence" });
+    res.status(500).json({ 
+      error: "Failed to generate tactical intelligence",
+      message: error.message || "An unknown error occurred during intelligence generation."
+    });
   }
 });
 

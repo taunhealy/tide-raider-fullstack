@@ -133,110 +133,126 @@ export class IntelligenceService {
       select: { credits: true }
     });
 
-    // 4. Generate Report
-    const forecasts = await prisma.forecast.findMany({
-      where: {
-        regionId: beachRef.regionId,
-        date: { gte: startDate, lt: endDate },
-        timeSlot: "NOON",
-        source: "WINDFINDER"
-      },
-      orderBy: { date: 'asc' }
-    });
+    try {
+      // 4. Generate Report
+      const forecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: beachRef.regionId,
+          date: { gte: startDate, lt: endDate },
+          timeSlot: "NOON",
+          source: "WINDFINDER"
+        },
+        orderBy: { date: 'asc' }
+      });
 
-    if (forecasts.length === 0) {
-      return { 
-        report: `Swell intelligence currently unavailable for this ${days}-day timeframe.`,
-        presenterName: "Tide Raider Central",
-        creditsRemaining: updatedUser.credits
-      };
-    }
+      if (forecasts.length === 0) {
+        // Refund if no data found
+        await prisma.user.update({
+          where: { id: userId },
+          data: { credits: { increment: creditCost } }
+        });
+        
+        return { 
+          report: `Swell intelligence currently unavailable for this ${days}-day timeframe.`,
+          presenterName: "Tide Raider Central",
+          creditsRemaining: updatedUser.credits + creditCost
+        };
+      }
 
-    const context = forecasts.map(f => {
-       const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-       const score = 0; // Score calculation requires profile data not available in this context
-       return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${score.toFixed(1)}/10`;
-    }).join("\n");
+      const context = forecasts.map(f => {
+         const dateStr = f.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+         const score = 0; // Score calculation requires profile data not available in this context
+         return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${score.toFixed(1)}/10`;
+      }).join("\n");
 
-    const { getPersonaByCycle } = await import("../constants/intelligence");
-    const activePersona = getPersonaByCycle(new Date().getDate());
-    const persona = personaOverride || activePersona.id;
+      const { getPersonaByCycle } = await import("../constants/intelligence");
+      const activePersona = getPersonaByCycle(new Date().getDate());
+      const persona = personaOverride || activePersona.id;
 
-    // Fetch the GENERAL condition profile to build spot rules
-    const conditionProfile = await (prisma as any).beachConditionProfile.findFirst({
-      where: { beachId: beachRef.id, category: "GENERAL" }
-    });
+      // Fetch the GENERAL condition profile to build spot rules
+      const conditionProfile = await (prisma as any).beachConditionProfile.findFirst({
+        where: { beachId: beachRef.id, category: "GENERAL" }
+      });
 
-    // Construct Spot Rules to guide the AI with specific expertise
-    const optimalWind = conditionProfile?.optimalWindDirections?.join(", ") || "N/A";
-    const swellDir = conditionProfile?.optimalSwellDirections 
-      ? `${conditionProfile.optimalSwellDirections.min}° to ${conditionProfile.optimalSwellDirections.max}°`
-      : "N/A";
-    const idealTide = conditionProfile?.optimalTide || "Incoming Mid-to-High";
+      // Construct Spot Rules to guide the AI with specific expertise
+      const optimalWind = conditionProfile?.optimalWindDirections?.join(", ") || "N/A";
+      const swellDir = conditionProfile?.optimalSwellDirections 
+        ? `${conditionProfile.optimalSwellDirections.min}° to ${conditionProfile.optimalSwellDirections.max}°`
+        : "N/A";
+      const idealTide = conditionProfile?.optimalTide || "Incoming Mid-to-High";
 
-    const spotRules = `
-    SPOT DNA & OPTIMAL CONDITIONS for ${beachRef.name}:
-    - Optimal Wind: ${optimalWind}
-    - Optimal Swell: ${swellDir}
-    - Ideal Tide: ${idealTide}
-    - Spot Knowledge: ${(beachRef as any).description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
-    `;
+      const spotRules = `
+      SPOT DNA & OPTIMAL CONDITIONS for ${beachRef.name}:
+      - Optimal Wind: ${optimalWind}
+      - Optimal Swell: ${swellDir}
+      - Ideal Tide: ${idealTide}
+      - Spot Knowledge: ${(beachRef as any).description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
+      `;
 
-    const report = await PythonBridge.generateIntelligenceReport(
-      beachRef.name, 
-      forecasts[0].windSpeed, 
-      forecasts[0].windDirection.toString(), 
-      forecasts[0].swellHeight, 
-      forecasts[0].swellPeriod, 
-      forecasts[0].swellDirection.toString(), 
-      0, 
-      persona, 
-      `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
-      days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly"
-    );
+      const report = await PythonBridge.generateIntelligenceReport(
+        beachRef.name, 
+        forecasts[0].windSpeed, 
+        forecasts[0].windDirection.toString(), 
+        forecasts[0].swellHeight, 
+        forecasts[0].swellPeriod, 
+        forecasts[0].swellDirection.toString(), 
+        0, 
+        persona, 
+        `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
+        days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly"
+      );
 
-    let finalReport = report;
-    const startDateStr = forecasts[0].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const endDateStr = forecasts[forecasts.length - 1].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const dateRangeTitle = `[${startDateStr} - ${endDateStr}]`;
+      let finalReport = report;
+      const startDateStr = forecasts[0].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const endDateStr = forecasts[forecasts.length - 1].date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateRangeTitle = `[${startDateStr} - ${endDateStr}]`;
 
-    if (finalReport.includes("BRIEFING:")) {
-      finalReport = finalReport.replace(/(BRIEFING: [^\n]+)/, `$1 ${dateRangeTitle}`);
-    } else {
-      finalReport = `TACTICAL BRIEFING: ${beachRef.name} ${dateRangeTitle}\n\n${finalReport}`;
-    }
+      if (finalReport.includes("BRIEFING:")) {
+        finalReport = finalReport.replace(/(BRIEFING: [^\n]+)/, `$1 ${dateRangeTitle}`);
+      } else {
+        finalReport = `TACTICAL BRIEFING: ${beachRef.name} ${dateRangeTitle}\n\n${finalReport}`;
+      }
 
-    // 5. Save report to history
-    await prisma.intelligenceReport.upsert({
-      where: {
-        intel_history_unique: {
+      // 5. Save report to history
+      await prisma.intelligenceReport.upsert({
+        where: {
+          intel_history_unique: {
+            beachId,
+            userId,
+            date: startDate,
+            persona,
+            duration: days
+          }
+        },
+        update: { 
+          content: finalReport,
+          endDate: endDate
+        },
+        create: {
           beachId,
           userId,
           date: startDate,
           persona,
-          duration: days
+          content: finalReport,
+          duration: days,
+          endDate: endDate
         }
-      },
-      update: { 
-        content: finalReport,
-        endDate: endDate
-      },
-      create: {
-        beachId,
-        userId,
-        date: startDate,
-        persona,
-        content: finalReport,
-        duration: days,
-        endDate: endDate
-      }
-    });
+      });
 
-    return { 
-      report: finalReport, 
-      presenterName: activePersona.name,
-      creditsRemaining: updatedUser.credits
-    };
+      return { 
+        report: finalReport, 
+        presenterName: activePersona.name,
+        creditsRemaining: updatedUser.credits
+      };
+    } catch (error) {
+      // REFUND ON FAILURE
+      console.error("[IntelligenceService] Generation failed, refunding credits:", error);
+      await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: creditCost } }
+      });
+      throw error;
+    }
   }
 
   static async generateWeeklyReport(personaOverride?: string): Promise<{ report: string, presenterName: string }> {

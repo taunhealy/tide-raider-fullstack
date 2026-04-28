@@ -85,7 +85,7 @@ export default function FastForecastPage() {
            });
            throw new Error("INSUFFICIENT_CREDITS");
         }
-        throw new Error(errorData.message || "Failed to generate report");
+        throw new Error(errorData.message || errorData.error || "Failed to generate report");
       }
 
       const data = await response.json();
