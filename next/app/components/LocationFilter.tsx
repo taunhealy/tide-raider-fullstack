@@ -40,7 +40,7 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
     const query = searchQuery.toLowerCase();
     const filtered = regions.filter(
       (region) =>
-        region.name.toLowerCase().includes(query) ||
+        region && (region.name.toLowerCase().includes(query) ||
         (region.country?.name || "").toLowerCase().includes(query)
     );
 

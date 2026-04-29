@@ -152,7 +152,7 @@ export default function RecentRegionSearch({
 
   return (
     <div ref={containerRef} className={cn("flex flex-wrap gap-2", className)}>
-      {recentSearches.map((search: UserSearch) => {
+      {recentSearches.filter(Boolean).map((search: UserSearch) => {
         const isSelected = filters.regionId
           ? filters.regionId.toLowerCase() === search.region.id.toLowerCase()
           : false;

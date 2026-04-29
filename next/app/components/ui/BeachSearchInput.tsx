@@ -204,7 +204,7 @@ export function BeachSearchInput({
         {showDropdown && beaches && beaches.length > 0 && (
           <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200">
             <ScrollArea className="max-h-[200px]">
-              {beaches.map((beach) => (
+              {beaches.filter(Boolean).map((beach) => (
                 <button
                   key={beach.id}
                   type="button"

@@ -733,7 +733,7 @@ export default function TideMap({
                   <div className="mt-4 p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                     {conditionReasons ? (
                       <div className="space-y-2">
-                        {conditionReasons.optimalConditions.map((cond: any, idx: number) => (
+                        {conditionReasons.optimalConditions?.filter(Boolean).map((cond: any, idx: number) => (
                           <div key={idx} className="flex items-start gap-2 group">
                             {cond.isMet ? (
                               <Check className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />

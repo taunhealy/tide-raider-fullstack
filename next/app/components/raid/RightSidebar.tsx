@@ -140,7 +140,7 @@ export default function RightSidebar() {
       </div>
       {filters.regionId && (
         <RegionalHighScores
-          beaches={data?.beaches || []}
+          beaches={(data?.beaches || []).filter(Boolean)}
           selectedRegion={filters.regionId}
         />
       )}

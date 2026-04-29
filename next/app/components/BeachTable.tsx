@@ -33,7 +33,7 @@ export default function BeachTable({
           </tr>
         </thead>
         <tbody>
-          {beaches.map((beach) => {
+          {beaches.filter(Boolean).map((beach) => {
             const suitability = windData
               ? isBeachSuitable(beach, windData)
               : null;

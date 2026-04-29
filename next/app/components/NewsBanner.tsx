@@ -17,7 +17,7 @@ export default function NewsBanner({
   isMember?: boolean;
 }) {
   // We still need to duplicate posts for seamless scrolling
-  const scrollingPosts = posts && Array.isArray(posts) ? [...posts, ...posts] : [];
+  const scrollingPosts = posts && Array.isArray(posts) ? [...posts.filter(Boolean), ...posts.filter(Boolean)] : [];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg-tertiary)] z-50 flex h-10">

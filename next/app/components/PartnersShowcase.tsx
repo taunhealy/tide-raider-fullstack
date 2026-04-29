@@ -54,7 +54,7 @@ export default function PartnersShowcase() {
       </div>
 
       <div className="space-y-3">
-        {partners.map((partner) => (
+        {partners.filter(Boolean).map((partner) => (
           <Link
             key={partner.id}
             href={partner.businessLink}
