@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
+import { cn } from "@/app/lib/utils";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import CommentThread from "@/app/components/comments/CommentThread";
 import { Button } from "@/app/components/ui/Button";
@@ -237,7 +238,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
-            <>
               {/* Content Grid */}
               <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10 relative">
                 {isGatedGem && (
@@ -333,7 +333,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     </div>
 
                     {/* Conditions Section */}
-                    <div className="space-y-6 pt-10">
+                    <div className={cn("space-y-6 pt-10", isGatedGem && "blur-[15px] select-none opacity-30")}>
                       {/* Video Embed Section */}
                       {entry.videoUrl && entry.videoUrl.trim() !== "" && (
                         <div className="w-full mb-10">
@@ -393,10 +393,24 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                             { id: "NOON", label: "Noon" },
                             { id: "EVENING", label: "Eve" }
                           ].map((slot) => {
-                            const slotScores = beachScores?.scores?.filter((score: any) => {
+                            const apiScores = beachScores?.scores?.filter((score: any) => {
                               const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
                               return conditions?.timeSlot === slot.id;
                             }) || [];
+
+                            // If this slot matches the entry's timeSlot and we have forecast data, 
+                            // and there's no matching source in apiScores, add it as a 'Reported' source
+                            const slotScores = [...apiScores];
+                            const entryTimeSlot = entry.timeSlot || (entry as any).forecast?.timeSlot;
+                            
+                            if (entryTimeSlot === slot.id && forecastData && !slotScores.some(s => s.source === 'REPORTER')) {
+                              slotScores.push({
+                                source: 'REPORTER',
+                                sourceName: 'Reported',
+                                starRating: entry.surferRating || 0,
+                                conditions: forecastData
+                              });
+                            }
 
                             return (
                               <div key={slot.id} className="space-y-6">
@@ -605,8 +619,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   <CommentThread logEntryId={entry.id} />
                 </div>
               </div>
-            </>
-          )}
         </div>
       </div>
 

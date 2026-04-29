@@ -261,6 +261,7 @@ export class LogService {
               swellHeight: true,
               swellPeriod: true,
               swellDirection: true,
+              timeSlot: true,
             },
           },
           user: {
@@ -519,6 +520,7 @@ export class LogService {
               swellHeight: true,
               swellPeriod: true,
               swellDirection: true,
+              timeSlot: true,
             },
           },
           user: {

@@ -1018,14 +1018,33 @@ export default function RaidLogTable({
                       </div>
                     </div>
 
-                    <p className="text-[13px] text-gray-700 break-words font-primary line-clamp-2 mt-2">
+                    <div className="text-[13px] text-gray-700 font-primary mt-2 h-[40px] overflow-hidden">
                       <span className="font-semibold text-gray-500">Comments:</span>{" "}
                       {isGatedGem ? (
                         <span className="text-gray-400 italic">---</span>
                       ) : (
-                        entry.comments || "No comments"
+                        <span className="break-words">
+                          {entry.comments ? (
+                            entry.comments.length > 80 ? (
+                              <>
+                                {entry.comments.slice(0, 80)}...{" "}
+                                <Link 
+                                  href={cardHref}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                  className="text-[var(--color-tertiary)] hover:underline font-bold"
+                                >
+                                  Read more
+                                </Link>
+                              </>
+                            ) : entry.comments
+                          ) : (
+                            "No comments"
+                          )}
+                        </span>
                       )}
-                    </p>
+                    </div>
                   </div>
 
                   {/* Image/Video section */}
