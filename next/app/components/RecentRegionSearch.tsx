@@ -154,12 +154,12 @@ export default function RecentRegionSearch({
 
   return (
     <div ref={containerRef} className={cn("flex flex-wrap gap-2", className)}>
-      {recentSearches.filter(Boolean).map((search: UserSearch) => {
-        const isSelected = filters.regionId
+      {recentSearches.filter(s => s && s.region).map((search: UserSearch) => {
+        const isSelected = filters.regionId && search.region?.id
           ? filters.regionId.toLowerCase() === search.region.id.toLowerCase()
           : false;
         const isLoading = loadingId === search.id;
-        const count = regionCounts?.[search.region.id] || 0;
+        const count = search.region?.id ? (regionCounts?.[search.region.id] || 0) : 0;
 
         return (
           <RegionFilterButton

@@ -47,6 +47,7 @@ export default function DateSelector({
 
     return availableDates.map((dateStr) => {
       const date = new Date(dateStr);
+      const isValidDate = !isNaN(date.getTime());
       
       // Calculate how many beaches have a rating >= 3 for this day
       const scoreCount = beaches.filter(Boolean).reduce((acc, b: any) => {
@@ -54,21 +55,21 @@ export default function DateSelector({
         return rating >= 3 ? acc + 1 : acc;
       }, 0);
 
-      let label: string;
+      let label: string = "N/A";
       if (dateStr === todayStr) label = "Today";
       else if (dateStr === tomorrowStr) label = "Tomorrow";
-      else {
+      else if (isValidDate) {
         label = date.toLocaleDateString("en-US", {
           weekday: "short",
           timeZone: "UTC",
         });
       }
 
-      const subLabel = date.toLocaleDateString("en-US", {
+      const subLabel = isValidDate ? date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         timeZone: "UTC",
-      });
+      }) : "Invalid";
 
       return {
         label,

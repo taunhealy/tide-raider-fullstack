@@ -262,11 +262,21 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     setIsSharingEmail(true);
     try {
       // Calculate date range for the header
-      const start = existingReportDate || new Date();
+      const start = existingReportDate && !isNaN(new Date(existingReportDate).getTime()) 
+        ? new Date(existingReportDate) 
+        : new Date();
+      
       const end = new Date(start);
       end.setDate(end.getDate() + (selectedDays - 1));
       
-      const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const formatDate = (d: Date) => {
+        try {
+          if (!d || isNaN(d.getTime())) return "Unknown";
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch (e) {
+          return "Unknown";
+        }
+      };
       const dateRange = `${formatDate(start)} - ${formatDate(end)}`;
 
       const response = await fetch("/api/backend/intelligence/share-email", {
@@ -511,7 +521,16 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                     </div>
                     <div>
                       <h4 className="text-[12px] font-black text-amber-900 uppercase tracking-widest leading-none mb-1">Stale Intelligence</h4>
-                      <p className="text-[11px] font-medium text-amber-700">This signal was logged on {format(existingReportDate!, "MMM d, HH:mm")}</p>
+                      <p className="text-[11px] font-medium text-amber-700">
+                        This signal was logged on {(() => {
+                          try {
+                            if (!existingReportDate || isNaN(new Date(existingReportDate).getTime())) return "Unknown Date";
+                            return format(new Date(existingReportDate), "MMM d, HH:mm");
+                          } catch (e) {
+                            return "Unknown Date";
+                          }
+                        })()}
+                      </p>
                     </div>
                   </div>
                   <Button 

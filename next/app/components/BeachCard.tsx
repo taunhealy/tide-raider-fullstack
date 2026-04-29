@@ -456,7 +456,14 @@ const BeachCard = memo(function BeachCard({
                         </div>
                         <div className="text-right">
                           <div className="font-primary text-[12px] font-semibold text-black leading-none mb-1">
-                            {format(new Date(beachSessions[0].date), "MMM d")}
+                            {(() => {
+                              try {
+                                const d = new Date(beachSessions[0].date);
+                                return !isNaN(d.getTime()) ? format(d, "MMM d") : "N/A";
+                              } catch (e) {
+                                return "N/A";
+                              }
+                            })()}
                           </div>
                           <div className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none">
                             DATE

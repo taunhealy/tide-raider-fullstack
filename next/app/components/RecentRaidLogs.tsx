@@ -80,7 +80,7 @@ export default function RecentRaidLogs() {
       </div>
 
       <div className="space-y-6">
-        {recentEntries.map((entry: LogEntry) => {
+        {recentEntries.filter(Boolean).map((entry: LogEntry) => {
           const isOwner = session?.user?.id === entry.userId;
           // Harden check to look at beach name as well
           const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem || 
@@ -129,7 +129,11 @@ export default function RecentRaidLogs() {
                     </div>
                   )}
                   <p className="text-[12px] text-[var(--color-text-tertiary)] font-primary mt-1">
-                    {entry.date ? format(new Date(entry.date), "MMM d, yyyy") : "Date unknown"}
+                    {(() => {
+                      if (!entry.date) return "Date unknown";
+                      const d = new Date(entry.date);
+                      return !isNaN(d.getTime()) ? format(d, "MMM d, yyyy") : "Date unknown";
+                    })()}
                   </p>
                 </div>
                 <div className="flex-shrink-0">

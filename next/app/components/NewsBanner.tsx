@@ -29,16 +29,21 @@ export default function NewsBanner({
       {/* Middle - Scrolling news section */}
       <div className="whitespace-nowrap overflow-hidden flex-grow h-full min-h-full flex items-center justify-center">
         <div className="inline-block w-full animate-scroll">
-          {scrollingPosts.map((post, index) => (
-            <a
-              key={`${post.slug.current}-${index}`}
-              href={`/blog/${post.slug.current}`}
-              className="inline-block mx-4 sm:mx-8 text-sm sm:text-base text-white hover:text-gray-800 transition-colors pointer-events-auto font-primary"
-            >
-              {post.title}
-              <span className="mx-2 sm:mx-4"></span>
-            </a>
-          ))}
+          {scrollingPosts.map((post, index) => {
+            const slug = typeof post.slug === 'string' ? post.slug : post.slug?.current;
+            if (!slug) return null;
+            
+            return (
+              <a
+                key={`${slug}-${index}`}
+                href={`/blog/${slug}`}
+                className="inline-block mx-4 sm:mx-8 text-sm sm:text-base text-white hover:text-gray-800 transition-colors pointer-events-auto font-primary"
+              >
+                {post.title}
+                <span className="mx-2 sm:mx-4"></span>
+              </a>
+            );
+          })}
         </div>
       </div>
 

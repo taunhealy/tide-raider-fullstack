@@ -220,8 +220,17 @@ export default function WeatherForecastWidget() {
     }
 
     // Parse the selected date
-    const [year, month, day] = forecastDate.split("-").map(Number);
+    const dateParts = forecastDate.split("-").map(Number);
+    if (dateParts.length !== 3 || dateParts.some(isNaN)) {
+      return "INVALID DATE";
+    }
+    
+    const [year, month, day] = dateParts;
     const selectedDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+
+    if (isNaN(selectedDate.getTime())) {
+      return "INVALID DATE";
+    }
 
     // Get today's date
     const today = new Date();
@@ -245,14 +254,18 @@ export default function WeatherForecastWidget() {
     }
 
     // Format as "MON, NOV 18"
-    const dayName = selectedDate
-      .toLocaleDateString("en-US", { weekday: "short" })
-      .toUpperCase();
-    const monthName = selectedDate
-      .toLocaleDateString("en-US", { month: "short" })
-      .toUpperCase();
-    const dayNum = selectedDate.getUTCDate();
-    return `${dayName}, ${monthName} ${dayNum}`;
+    try {
+      const dayName = selectedDate
+        .toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" })
+        .toUpperCase();
+      const monthName = selectedDate
+        .toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })
+        .toUpperCase();
+      const dayNum = selectedDate.getUTCDate();
+      return `${dayName}, ${monthName} ${dayNum}`;
+    } catch (e) {
+      return forecastDate;
+    }
   }, [forecastDate, mounted]);
 
   const getWidgetContent = () => {
