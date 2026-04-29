@@ -105,8 +105,9 @@ export class PythonBridge {
 
       pythonProcess.on("close", (code) => {
         if (code !== 0) {
-          console.error(`[PythonBridge] ❌ Intel generation failed: ${stderr}`);
-          reject(new Error("Intel generation failed"));
+          const errorMessage = stderr.trim() || "Python process exited with non-zero code";
+          console.error(`[PythonBridge] ❌ Intel generation failed (code ${code}): ${errorMessage}`);
+          reject(new Error(`Intel generation failed: ${errorMessage}`));
           return;
         }
 

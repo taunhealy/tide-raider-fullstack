@@ -143,7 +143,7 @@ function LogEntryDisplay({ entry, isAnonymous }: LogEntryDisplayProps) {
 function ForecastInfo({
   forecast,
   entry,
-  hasAccess,
+  isGated,
 }: {
   forecast:
     | {
@@ -154,84 +154,55 @@ function ForecastInfo({
         swellDirection?: number;
       }
     | null
-    | undefined;
   entry: LogEntry;
-  hasAccess: boolean;
+  isGated?: boolean;
 }) {
   const router = useRouter();
 
-  // Debug logging - always log to help diagnose
-  useEffect(() => {
-    console.log(
-      `[ForecastInfo] Entry ${entry.id} (${entry.beachName || "Unknown"}):`,
-      {
-        forecast,
-        hasForecast: !!forecast,
-        windSpeed: forecast?.windSpeed,
-        windSpeedType: typeof forecast?.windSpeed,
-        windDirection: forecast?.windDirection,
-        swellHeight: forecast?.swellHeight,
-        swellHeightType: typeof forecast?.swellHeight,
-        swellPeriod: forecast?.swellPeriod,
-        swellDirection: forecast?.swellDirection,
-      }
-    );
-  }, [entry.id, forecast, entry.beachName]);
-
-  const handleAlertClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!hasAccess) {
-      router.push("/pricing");
-      return;
-    }
-
-    // Pass log ID as query parameter instead of localStorage
-    router.push(`/alerts/new?logId=${entry.id}`);
-  };
-
-  const getBellTooltipText = () => {
-    if (!hasAccess) return "Subscribe to create alerts";
-    if (entry.hasAlert) {
-      return entry.isMyAlert
-        ? "You have an active alert for these conditions"
-        : "Another user has an alert for these conditions";
-    }
-    return "Create alert for these conditions";
-  };
-
   // Only show if forecast exists and has at least one valid value
-  if (!forecast) {
-    return <span className="text-gray-400 text-xs">No conditions</span>;
+  if (!forecast && !isGated) {
+    return <span className="text-gray-500 text-xs font-primary font-medium">No conditions</span>;
   }
+
+  const isActuallyGated = isGated;
 
   // Check if forecast has any valid numeric values (including 0)
   const hasWind =
-    typeof forecast.windSpeed === "number" && forecast.windSpeed !== null;
+    typeof forecast?.windSpeed === "number" && forecast.windSpeed !== null;
   const hasWindDirection =
-    typeof forecast.windDirection === "number" &&
+    typeof forecast?.windDirection === "number" &&
     forecast.windDirection !== null;
   const hasSwell =
-    typeof forecast.swellHeight === "number" && forecast.swellHeight !== null;
+    typeof forecast?.swellHeight === "number" && forecast.swellHeight !== null;
   const hasSwellPeriod =
-    typeof forecast.swellPeriod === "number" && forecast.swellPeriod !== null;
+    typeof forecast?.swellPeriod === "number" && forecast.swellPeriod !== null;
   const hasSwellDirection =
-    typeof forecast.swellDirection === "number" &&
+    typeof forecast?.swellDirection === "number" &&
     forecast.swellDirection !== null;
 
   // If no valid values exist, show "No conditions"
   if (
+    !isActuallyGated &&
     !hasWind &&
     !hasWindDirection &&
     !hasSwell &&
     !hasSwellPeriod &&
     !hasSwellDirection
   ) {
-    return <span className="text-gray-400 text-xs">No conditions</span>;
+    return <span className="text-gray-500 text-xs font-primary font-medium">No conditions</span>;
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex flex-wrap gap-1.5 items-center">
+    <div className={cn("flex flex-col gap-1.5 relative", isActuallyGated && "select-none")}>
+      {isActuallyGated && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+           <div className="bg-white/80 backdrop-blur-[2px] rounded-full px-2 py-0.5 border border-amber-200 shadow-sm flex items-center gap-1.5">
+             <LockIcon className="w-2.5 h-2.5 text-amber-600" />
+             <span className="text-[9px] font-black text-amber-700 uppercase tracking-tight">Premium Data</span>
+           </div>
+        </div>
+      )}
+      <div className={cn("flex flex-wrap gap-1.5 items-center", isActuallyGated && "blur-[10px] select-none opacity-30")}>
         {(hasWind || hasWindDirection) && (
           <div className="inline-flex items-center bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-primary border border-blue-100">
             {hasWind && (
@@ -267,25 +238,6 @@ function ForecastInfo({
           </div>
         )}
 
-        {/* Action Bell */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleAlertClick}
-                className={cn(
-                  "p-1 rounded-full hover:bg-gray-100 transition-colors",
-                  entry.hasAlert ? "text-[var(--color-alert-icon-rating)]" : "text-gray-300 hover:text-gray-600"
-                )}
-              >
-                <Bell className={cn("w-3.5 h-3.5", entry.hasAlert && "fill-current")} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">{getBellTooltipText()}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
     </div>
   );
@@ -932,7 +884,7 @@ export default function RaidLogTable({
                             >
                               <Bell
                                 className={cn(
-                                  "w-3.5 h-3.5 cursor-pointer",
+                                  "w-4 h-4 cursor-pointer",
                                   entry.hasAlert
                                     ? "text-white fill-white"
                                     : "text-[var(--color-tertiary)] fill-none"
@@ -970,7 +922,7 @@ export default function RaidLogTable({
                               <h3 className="h-5 mb-2 flex items-center gap-2">
                                 {isGatedGem ? (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[11px] font-black uppercase tracking-widest border border-amber-500/20">
-                                    <LockIcon className="w-3.5 h-3.5 mr-1.5" />
+                                    <LockIcon className="w-4 h-4 mr-1.5" />
                                     Hidden Gem
                                   </span>
                                 ) : (
@@ -1047,7 +999,8 @@ export default function RaidLogTable({
                       <ForecastInfo
                         forecast={entry.forecast}
                         entry={entry}
-                        hasAccess={hasAccess}
+                        isGated={isGatedGem}
+                        onAlertClick={handleAlertClick}
                       />
                     </div>
 
@@ -1335,13 +1288,12 @@ export default function RaidLogTable({
                             />
                           </td>
                           <td className="px-2 py-3 min-w-[150px]">
-                            {!isGatedGem && (
-                              <ForecastInfo
-                                forecast={entry.forecast}
-                                entry={entry}
-                                hasAccess={hasAccess}
-                              />
-                            )}
+                            <ForecastInfo
+                              forecast={entry.forecast}
+                              entry={entry}
+                              isGated={isGatedGem}
+                              onAlertClick={handleAlertClick}
+                            />
                           </td>
                           <td className="px-2 py-3 max-w-[150px] min-w-[150px] whitespace-normal">
                             {!isGatedGem && (

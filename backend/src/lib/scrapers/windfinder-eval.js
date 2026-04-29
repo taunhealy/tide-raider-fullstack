@@ -44,14 +44,14 @@ function extractWindfinderData() {
     return null;
   };
 
-  const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"]'));
+  const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"]'));
   
     return daySections.map(day => {
-      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"]');
+      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"], .forecast-day__header');
       if (!headerEl) return null;
       const dateText = headerEl.textContent.trim().split('\n')[0];
       
-      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td'))
+      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell'))
         .filter(el => {
            const t = el.textContent || "";
            // Support 3-hour intervals (02h) AND peak tide times (05:42)

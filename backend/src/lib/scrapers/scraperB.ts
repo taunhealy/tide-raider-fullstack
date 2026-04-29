@@ -211,8 +211,8 @@ export async function scraperB(
       `[scraperB] 🔍 Waiting for Windguru table selector (.tabulka)...`
     );
     try {
-      await targetFrame.waitForSelector(".tabulka", { timeout: 20000 });
-      console.log("✅ Found Windguru table (.tabulka)");
+      await targetFrame.waitForSelector(".tabulka, [id*='tabid_'], .forecast-table", { timeout: 30000 });
+      console.log("✅ Found Windguru table container");
     } catch (selectorError) {
       console.error(
         `[scraperB] ❌ Could not find .tabulka selector, trying alternatives...`

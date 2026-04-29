@@ -158,7 +158,7 @@ export async function scraperA(
         
         // Check if we actually see forecast rows
         const hasRows = await page.evaluate(() => {
-          return !!document.querySelector('.forecast-row, [class*="row"], .forecast-tab');
+          return !!document.querySelector('.forecast-row, [class*="row"], .forecast-tab, .forecast-day, [class*="day-wrapper"]');
         });
 
         if (hasRows) {

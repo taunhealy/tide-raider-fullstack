@@ -237,88 +237,64 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
-          {isGatedGem ? (
-            <div className="p-12 md:p-24 text-center space-y-10 flex flex-col items-center justify-center relative overflow-hidden">
-              {/* Background Glow Effect */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--color-tertiary)]/5 blur-[120px] rounded-full pointer-events-none"></div>
-              
-              <div className="relative">
-                <div className="bg-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)]/20 rounded-3xl p-8 shadow-2xl backdrop-blur-sm">
-                  <Lock className="w-16 h-16 text-[var(--color-tertiary)]" />
-                </div>
-                {/* Small Diamond Badge */}
-                <div className="absolute -top-3 -right-3 bg-amber-500 rounded-full p-2 shadow-lg border-2 border-brand-dark">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              
-              <div className="space-y-6 max-w-xl relative z-10">
-                <div className="space-y-2">
-                  <h3 className="font-primary text-[10px] font-bold text-[var(--color-tertiary)] tracking-[0.3em] uppercase">
-                    Premium Content
-                  </h3>
-                  <h2 className="text-4xl md:text-5xl lg:text-6xl font-primary font-bold text-white tracking-tighter leading-none">
-                    Hidden Gem Access Only
-                  </h2>
-                </div>
-                <p className="text-white/60 font-primary text-lg md:text-xl leading-relaxed">
-                  This surf session was recorded at a <span className="text-[var(--color-tertiary)] font-bold">Hidden Gem/Novelty Wave</span> location. 
-                  Unlock exclusive access to full conditions, and community intelligence.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-4 relative z-10 w-full max-w-md justify-center">
-                <Button
-                  onClick={() => router.push("/pricing")}
-                  variant="tertiary"
-                  size="lg"
-                  className="h-16 px-12 rounded-2xl shadow-2xl transition-all hover:scale-105 active:scale-95 text-base"
-                >
-                  Unlock Hidden Gems
-                </Button>
-                <Button
-                  onClick={() => router.push("/raidlogs")}
-                  variant="dark"
-                  size="lg"
-                  className="h-16 px-12 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 text-base"
-                >
-                  Back to Log Book
-                </Button>
-              </div>
-            </div>
-          ) : (
             <>
               {/* Content Grid */}
-              <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10">
+              <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10 relative">
+                {isGatedGem && (
+                  <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none p-10">
+                    <div className="bg-amber-500/90 text-white px-8 py-4 rounded-2xl shadow-2xl border border-amber-400/50 backdrop-blur-md flex flex-col items-center gap-2 pointer-events-auto max-w-sm text-center">
+                      <Lock className="w-8 h-8 mb-2" />
+                      <h4 className="font-primary font-black uppercase tracking-widest text-sm">Premium Intelligence Locked</h4>
+                      <p className="text-xs font-medium opacity-90 mb-4">Subscribe to unlock Hidden Gem locations and community data.</p>
+                      <Button 
+                        size="sm" 
+                        variant="dark" 
+                        className="bg-black/40 hover:bg-black/60 border-white/20 w-full"
+                        onClick={() => router.push("/pricing")}
+                      >
+                        Unlock Now
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div className="lg:col-span-3 space-y-4 md:space-y-6">
                   {/* Header with Beach and Rating */}
                   <div className="space-y-3 md:space-y-4">
                     <div className="flex flex-wrap items-baseline gap-4">
-                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-primary font-bold text-white tracking-tighter">
-                        {entry.beach?.name || entry.beachName || "Unnamed Beach"}
+                      <h1 className={cn("text-3xl md:text-4xl lg:text-5xl font-primary font-bold text-white tracking-tighter", isGatedGem && "blur-[12px] select-none")}>
+                        {isGatedGem ? "Hidden Gem Break" : (entry.beach?.name || entry.beachName || "Unnamed Beach")}
                       </h1>
-                      {Number(entry.surferRating) > 3 && (
+                      {Number(entry.surferRating) > 3 && !isGatedGem && (
                         <span className="bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-[var(--color-tertiary)]/30">
                           Top Rated
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-white/50 font-primary text-sm md:text-base">
+                    <div className={cn("flex items-center gap-2 text-white/50 font-primary text-sm md:text-base", isGatedGem && "blur-[10px] select-none opacity-40")}>
                       <MapPin className="w-4 h-4 flex-shrink-0 text-[var(--color-tertiary)]" />
                       <p className="truncate">
-                        {entry.region?.name
+                        {isGatedGem ? "Region Redacted" : (entry.region?.name
                           ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
-                          : "No location specified"}
+                          : "No location specified")}
                       </p>
                     </div>
 
                     {/* Logger Info */}
-                    <div className="space-y-3 pt-4">
+                    <div className={cn("space-y-3 pt-4", isGatedGem && "blur-[10px] select-none opacity-40")}>
                       <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
                         Logger
                       </h2>
-                      {entry.isAnonymous ? (
+                      {isGatedGem ? (
+                        <div className="flex items-center gap-3">
+                           <div className="bg-gray-800 rounded-full w-14 h-14 flex items-center justify-center text-gray-600 font-black text-xl shadow-lg border border-gray-700">
+                             ?
+                           </div>
+                           <p className="text-white/40 font-primary font-black text-sm uppercase tracking-wider italic">
+                             REDACTED
+                           </p>
+                        </div>
+                      ) : entry.isAnonymous ? (
                         <div className="flex items-center gap-3">
                           <div className="bg-[var(--color-tertiary)]/20 rounded-full w-14 h-14 flex items-center justify-center text-[var(--color-tertiary)] font-black text-xl shadow-lg border border-[var(--color-tertiary)]/30">
                             A
@@ -344,13 +320,13 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       )}
                     </div>
 
-                    <div className="space-y-3 pt-4">
+                    <div className={cn("space-y-3 pt-4", isGatedGem && "blur-[10px] select-none opacity-40")}>
                       <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
                         Surf session rating
                       </h2>
                       <div className="flex items-center gap-3">
                         <BlueStarRating
-                          score={Number(entry.surferRating || 0)}
+                          score={isGatedGem ? 0 : Number(entry.surferRating || 0)}
                           outOfFive={true}
                         />
                       </div>
@@ -564,8 +540,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest mb-1">
                       Session date
                     </h2>
-                    <p className="text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter">
-                      {format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
+                    <p className={cn("text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter", isGatedGem && "blur-[10px] select-none opacity-40")}>
+                      {isGatedGem ? "Redacted Date" : format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
                     </p>
                   </div>
                 </div>
@@ -578,14 +554,14 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
                       Logger comments
                     </h2>
-                    <div className="bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden">
+                    <div className={cn("bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden", isGatedGem && "blur-[10px] select-none opacity-40")}>
                       <div className="absolute top-0 right-0 p-4 opacity-5">
                         <svg className="w-12 h-12 text-[var(--color-tertiary)]" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C20.1216 16 21.017 16.8954 21.017 18V21C21.017 22.1046 20.1216 23 19.017 23H16.017C14.9124 23 14.017 22.1046 14.017 21ZM5.017 21V18C5.017 16.8954 5.91243 16 7.017 16H10.017C11.1216 16 12.017 16.8954 12.017 18V21C12.017 22.1046 11.1216 23 10.017 23H7.017C5.91243 23 5.017 22.1046 5.017 21ZM19.017 13C17.9124 13 17.017 12.1046 17.017 11V5C17.017 3.89543 17.9124 3 19.017 3H21.017C22.1216 3 23.017 3.89543 23.017 5V11C23.017 12.1046 22.1216 13 21.017 13H19.017ZM10.017 13C8.91243 13 8.017 12.1046 8.017 11V5C8.017 3.89543 8.91243 3 10.017 3H12.017C13.1216 3 14.017 3.89543 14.017 5V11C14.017 12.1046 13.1216 13 12.017 13H10.017Z" />
                         </svg>
                       </div>
                       <p className="text-white/80 font-primary text-base md:text-lg leading-relaxed whitespace-pre-wrap relative z-10 italic">
-                        "{entry.comments}"
+                        {isGatedGem ? "Community intelligence redacted. Subscribe to unlock session comments." : `"${entry.comments}"`}
                       </p>
                     </div>
                   </div>
@@ -604,14 +580,16 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       {imageUrls.length} Files
                     </span>
                   </div>
-                  <ImageGallery
-                    images={imageUrls}
-                    onImageClick={(index) => {
-                      setSelectedImageIndex(index);
-                      setIsMediaModalOpen(true);
-                    }}
-                    className="cursor-pointer"
-                  />
+                  <div className={cn(isGatedGem && "blur-[15px] select-none opacity-40 pointer-events-none")}>
+                    <ImageGallery
+                      images={imageUrls}
+                      onImageClick={(index) => {
+                        setSelectedImageIndex(index);
+                        setIsMediaModalOpen(true);
+                      }}
+                      className="cursor-pointer"
+                    />
+                  </div>
                 </div>
               )}
 

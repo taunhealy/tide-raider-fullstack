@@ -24,7 +24,7 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
         return None
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-flash-latest",
+        model="gemini-2.5-flash",
         google_api_key=api_key,
         temperature=0.7
     )
@@ -109,8 +109,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     result = asyncio.run(generate_report(args.beach, args.wind_speed, args.wind_dir, args.swell_height, args.swell_period, args.swell_dir, args.score, args.persona, args.trend, args.mode))
-    if result:
-        print(json.dumps(result, ensure_ascii=False))
-        sys.stdout.flush()
-    else:
+    
+    if not result:
+        print("❌ Intelligence generation returned None", file=sys.stderr)
         sys.exit(1)
+        
+    print(json.dumps(result, ensure_ascii=False))
+    sys.stdout.flush()

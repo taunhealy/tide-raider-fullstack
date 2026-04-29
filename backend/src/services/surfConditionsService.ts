@@ -112,9 +112,25 @@ export async function getLatestConditions(
   );
 
   const runScrapeWithFallback = async (url: string, id: string) => {
+    let currentUrl = url;
     try {
-      if (source === "WINDFINDER") return await scraperA(url, id);
-      if (source === "WINDGURU") return await scraperB(url, id);
+      if (source === "WINDFINDER") {
+        try {
+          return await scraperA(currentUrl, id);
+        } catch (err) {
+          // If superforecast fails, try regular forecast URL if available and if we aren't already using it
+          const isSuperforecast = currentUrl.includes("weatherforecast");
+          const regionConfig = REGION_CONFIGS[id];
+          if (isSuperforecast && regionConfig?.sourceA?.forecastUrl) {
+             const fallbackUrl = regionConfig.sourceA.forecastUrl;
+             console.log(`[getLatestConditions] 🔄 Superforecast failed for ${id}, retrying with Regular Forecast URL: ${fallbackUrl}`);
+             currentUrl = fallbackUrl; // Update currentUrl for semantic fallback if this also fails
+             return await scraperA(fallbackUrl, id);
+          }
+          throw err;
+        }
+      }
+      if (source === "WINDGURU") return await scraperB(currentUrl, id);
       return [];
     } catch (err) {
       console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
