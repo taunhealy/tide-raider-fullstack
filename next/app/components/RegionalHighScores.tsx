@@ -11,6 +11,7 @@ import { Lock } from "lucide-react";
 import Link from "next/link";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { Button } from "@/app/components/ui/Button";
+import { Skeleton } from "@/app/components/ui/skeleton";
 
 interface RegionalHighScoresProps {
   beaches: Beach[];
@@ -224,21 +225,17 @@ function RegionalHighScoresContent({
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
         <div className="mb-4">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">
-            TOP SURF BREAKS
-          </h3>
-          <p className="text-xs text-gray-500 font-primary mt-1">
-            Scores aggregated from all forecast sources
-          </p>
+          <Skeleton className="h-3 w-24 mb-1" />
+          <Skeleton className="h-3 w-40" />
         </div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-2">
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-              <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
+              <Skeleton className="w-7 h-7 rounded-full" />
             </div>
           ))}
         </div>
@@ -280,10 +277,10 @@ function RegionalHighScoresContent({
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-2">
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
               </div>
-              <div className="w-7 h-7 rounded-full bg-gray-200 animate-pulse" />
+              <Skeleton className="w-7 h-7 rounded-full" />
             </div>
           ))}
         </div>

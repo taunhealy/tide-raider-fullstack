@@ -29,13 +29,14 @@ export default function AlertsPage() {
           </div>
           
           <Link href="/alerts/new">
-            <button 
-              suppressHydrationWarning
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-gray-900 bg-gray-900 text-white hover:bg-gray-800 font-bold text-sm tracking-tight shadow-xl transition-all duration-300 active:scale-95"
+            <Button 
+              variant="action"
+              size="lg"
+              className="px-8 shadow-xl"
             >
-              <Bell className="h-4 w-4" />
+              <Bell className="h-4 w-4 mr-2" />
               <span>Create New Alert</span>
-            </button>
+            </Button>
           </Link>
         </div>
 

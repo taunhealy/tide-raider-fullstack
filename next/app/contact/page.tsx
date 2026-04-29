@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Send, MessageSquare, Shield, Zap } from "lucide-react";
+import { Mail, Send, MessageSquare, Shield, Zap, Waves } from "lucide-react";
 import { Button } from "../components/ui/Button";
 
 export default function ContactPage() {
@@ -59,8 +59,8 @@ export default function ContactPage() {
             {/* Contact Info Cards */}
             <div className="lg:col-span-1 space-y-6">
               <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/80 shadow-sm transition-all hover:shadow-md">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-6">
-                  <Mail className="text-blue-500" size={20} />
+                <div className="w-10 h-10 bg-brand-3/10 rounded-xl flex items-center justify-center mb-6">
+                  <Mail className="text-brand-3" size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Email Us</h3>
                 <p className="text-gray-500 mb-4 text-sm leading-relaxed">
@@ -68,15 +68,15 @@ export default function ContactPage() {
                 </p>
                 <a 
                   href="mailto:admin@tideraider.com" 
-                  className="text-base font-black text-gray-900 hover:text-blue-600 transition-colors break-all"
+                  className="text-base font-black text-gray-900 hover:text-brand-3 transition-colors break-all"
                 >
                   admin@tideraider.com
                 </a>
               </div>
 
               <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/80 shadow-sm transition-all hover:shadow-md">
-                <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-6">
-                  <MessageSquare className="text-purple-500" size={20} />
+                <div className="w-10 h-10 bg-brand-3/10 rounded-xl flex items-center justify-center mb-6">
+                  <MessageSquare className="text-brand-3" size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Community</h3>
                 <p className="text-gray-500 mb-4 text-sm leading-relaxed">
@@ -86,30 +86,13 @@ export default function ContactPage() {
                   COMING SOON
                 </span>
               </div>
-
-              <div className="bg-gray-900 p-8 rounded-3xl shadow-xl text-white">
-                <div className="flex items-center gap-3 mb-6">
-                  <Zap className="text-yellow-400 fill-yellow-400" size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Priority Support</span>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed mb-6">
-                  Premium members get accelerated response times and direct access to wave analysts.
-                </p>
-                <Button 
-                  variant="secondary" 
-                  className="w-full bg-white text-gray-900 hover:bg-gray-100 border-none font-bold text-xs uppercase tracking-widest" 
-                  onClick={() => window.location.href='/pricing'}
-                >
-                  Go Premium
-                </Button>
-              </div>
             </div>
 
             {/* Contact Form */}
             <div className="lg:col-span-2">
               <div className="bg-white/80 backdrop-blur-md p-8 md:p-10 rounded-3xl border border-white shadow-sm">
                 <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-8">
-                  Send a <span className="text-blue-600">Message</span>
+                  Send a Message
                 </h2>
                 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -221,11 +204,11 @@ export default function ContactPage() {
           </div>
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
-              <Zap className="text-gray-400" size={18} />
+              <Waves className="text-gray-400" size={18} />
             </div>
             <div>
-              <h4 className="font-bold text-gray-900 text-sm mb-1">Fast Response</h4>
-              <p className="text-xs text-gray-500 leading-relaxed text-pretty">We aim to respond to all inquiries within 24-48 business hours.</p>
+              <h4 className="font-bold text-gray-900 text-sm mb-1">Request A Wave</h4>
+              <p className="text-xs text-gray-500 leading-relaxed text-pretty">Help us expand our horizon. Suggest a new surf break to be added to our database.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">

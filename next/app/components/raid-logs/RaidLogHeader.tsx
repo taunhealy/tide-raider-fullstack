@@ -1,5 +1,6 @@
 "use client";
 
+import { Waves } from "lucide-react";
 import { Button } from "../ui/Button";
 import { LogVisibilityToggle } from "../LogVisibilityToggle";
 import { useRouter } from "next/navigation";
@@ -34,11 +35,20 @@ export function Header({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 w-full">
-      <div className="w-full border-b border-gray-200 pb-3 sm:border-0 sm:pb-0">
-        <h2 className="text-xl sm:text-2xl font-semibold font-primary">
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+            <Waves className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
+        </div>
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
           Raid Sessions
-        </h2>
+        </h1>
+        <p className="text-sm text-gray-500 font-medium mt-1">
+          Recent surf logs and community intelligence.
+        </p>
       </div>
       <div className="flex flex-row gap-3 md:gap-4 items-center w-full md:w-auto">
         <LogVisibilityToggle isPrivate={isPrivate} onChange={onPrivateToggle} />

@@ -21,12 +21,15 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         dark: "bg-gray-700 dark:bg-gray-600 text-white hover:bg-gray-600 dark:hover:bg-gray-500",
         grey: "bg-gray-600 text-white hover:bg-gray-700 border border-gray-600",
+        action:
+          "bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[12px] shadow-sm transition-all active:scale-[0.98] border-none",
         tertiary: "bg-[var(--color-tertiary)] text-black hover:bg-[var(--color-tertiary)]/90 font-black",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 px-10",
         icon: "h-10 w-10",
       },
     },
@@ -48,8 +51,9 @@ export interface ButtonProps
     | "secondary"
     | "dark"
     | "grey"
+    | "action"
     | "tertiary";
-  size?: "default" | "sm" | "lg" | "icon";
+  size?: "default" | "sm" | "lg" | "xl" | "icon";
   isLoading?: boolean;
   asChild?: boolean;
 }

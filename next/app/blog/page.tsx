@@ -1,27 +1,10 @@
 import { landingPageQuery } from "@/app/lib/queries";
 import { client } from "@/app/lib/sanity";
 import BlogGrid from "../sections/BlogGrid";
+import { BookOpen } from "lucide-react";
 import { groq } from "next-sanity";
 
 export const revalidate = 0;
-
-// Only fetch content, not structure
-async function getHomeContent() {
-  const content = await client.fetch(landingPageQuery);
-
-  return content
-    ? {
-        hero: {
-          heroHeading: content.heroHeading,
-          heroSubheading: content.heroSubheading,
-          heroImage: content.heroImage,
-          heroFooterImage: content.heroFooterImage,
-        },
-        blog: content.blog,
-        image: content.heroImage,
-      }
-    : null;
-}
 
 const blogPageQuery = groq`{
   "blog": {
@@ -50,6 +33,24 @@ const blogPageQuery = groq`{
     }
   }
 }`;
+
+// Only fetch content, not structure
+async function getHomeContent() {
+  const content = await client.fetch(landingPageQuery);
+
+  return content
+    ? {
+        hero: {
+          heroHeading: content.heroHeading,
+          heroSubheading: content.heroSubheading,
+          heroImage: content.heroImage,
+          heroFooterImage: content.heroFooterImage,
+        },
+        blog: content.blog,
+        image: content.heroImage,
+      }
+    : null;
+}
 
 export default async function BlogPage() {
   const content = await client.fetch(blogPageQuery);
@@ -109,11 +110,25 @@ export default async function BlogPage() {
   }
 
   return (
-    <main className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
-        <h1 className="font-primary text-4xl md:text-5xl font-bold text-left mb-12">
-          Blog Posts
-        </h1>
+    <main className="min-h-screen bg-gray-50/50 pb-20">
+      <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+                <BookOpen className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
+            </div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+              Blog
+            </h1>
+            <p className="text-sm text-gray-500 font-medium mt-1">
+              Deep dives, spot guides, and surf culture from across the globe.
+            </p>
+          </div>
+        </div>
+
         <BlogGrid data={content.blog} />
       </div>
     </main>

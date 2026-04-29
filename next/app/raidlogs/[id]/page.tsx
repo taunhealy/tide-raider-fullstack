@@ -77,6 +77,22 @@ async function getUserSession(authToken: string | undefined) {
   }
 }
 
+// Fetch all beaches for robust hidden gem matching
+async function getBeaches() {
+  try {
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/beaches`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.beaches || data || [];
+  } catch (error) {
+    console.error("Error fetching beaches for metadata:", error);
+    return [];
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -89,6 +105,7 @@ export async function generateMetadata({
   const cookieStore = await cookies();
   const authToken = cookieStore.get("auth-token")?.value;
   const user = await getUserSession(authToken);
+  const beaches = await getBeaches();
 
   if (!entry) {
     return {
@@ -97,10 +114,19 @@ export async function generateMetadata({
     };
   }
 
-  // Access check logic (similar to RaidLogDetails component)
+  // Access check logic - robust matching against known hidden gems
   const isSubscribed = user?.isSubscribed || user?.hasActiveTrial;
   const isOwner = user?.id === entry.userId;
-  const isHiddenGem = !!entry.beach?.isHiddenGem;
+  
+  // Robust check for Hidden Gem status (match by relation or by name)
+  const isHiddenGem = !!entry.beach?.isHiddenGem || 
+                      beaches.some((b: any) => 
+                        b.isHiddenGem && (
+                          b.id === entry.beachId || 
+                          b.name?.toLowerCase() === entry.beachName?.toLowerCase()
+                        )
+                      );
+                      
   const hasAccess = !isHiddenGem || isSubscribed || isOwner;
 
   // Mask metadata if it's a gated hidden gem
@@ -112,7 +138,7 @@ export async function generateMetadata({
     ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
     : "";
 
-  const description = hasAccess && entry.comments
+  const description = (hasAccess && entry.comments)
     ? `${entry.comments.substring(0, 150)}${entry.comments.length > 150 ? "..." : ""}`
     : `Surf session at ${beachName}${location ? ` in ${location}` : ""}. Rating: ${entry.surferRating || 0}/5 stars.`;
 

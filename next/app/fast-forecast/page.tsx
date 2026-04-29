@@ -158,35 +158,41 @@ export default function FastForecastPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 font-['Inter',_sans-serif]" suppressHydrationWarning>
-      <div className="max-w-3xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50/50 pb-20 font-primary" suppressHydrationWarning>
+      <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
         {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center text-white shadow-xl shadow-slate-200">
-              <Zap className="w-6 h-6" />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Fast Forecast</h1>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">AI Surf Report</p>
-            </div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+              Fast Forecast
+            </h1>
+            <p className="text-sm text-gray-500 font-medium mt-1">
+              Instant AI-powered surf intelligence for your target breaks.
+            </p>
           </div>
-          <div className="bg-white border border-slate-200 px-4 py-2 rounded-xl flex items-center gap-3 shadow-sm min-w-[120px] justify-center">
+          
+          <div className="bg-white/80 backdrop-blur-md border border-white px-4 py-2 rounded-2xl flex items-center gap-3 shadow-sm min-w-[120px] justify-center h-12">
             <Sparkles className="w-4 h-4 text-blue-500 fill-blue-500/10" />
-            <div className="text-sm font-bold text-slate-900 flex items-center gap-1">
+            <div className="text-sm font-bold text-gray-900 flex items-center gap-1">
               {isCreditsLoading ? (
-                <div className="w-6 h-4 bg-slate-100 animate-pulse rounded" />
+                <div className="w-6 h-4 bg-gray-100 animate-pulse rounded" />
               ) : (
                 <span>{credits}</span>
               )}
-              <span className="text-slate-400 font-normal">Credits</span>
+              <span className="text-gray-400 font-normal">Credits</span>
             </div>
           </div>
         </div>
 
         {/* Main Interface Window */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden">
-          <div className="p-8 md:p-12 space-y-10">
+        <div className="max-w-3xl mx-auto bg-white/40 backdrop-blur-sm rounded-[2.5rem] border border-white/60 shadow-sm overflow-hidden">
+          <div className="p-6 md:p-10 space-y-10">
             {/* Input Section */}
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Select Your Break</label>
