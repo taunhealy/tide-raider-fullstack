@@ -18,13 +18,19 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
       where: authReq.user?.id ? { userId: authReq.user.id } : {},
       orderBy: { createdAt: "desc" },
       take: limit,
-      distinct: ["regionId"], // Avoid duplicates
+      distinct: ["regionId", "beachId"], // Avoid duplicates for both regions and beaches
       include: {
         region: {
           include: {
             country: true,
           },
         },
+        beach: {
+          include: {
+            region: true,
+            country: true,
+          }
+        }
       },
     });
 
@@ -43,15 +49,16 @@ router.get("/", optionalAuth, async (req: Request, res: Response) => {
 router.post("/", optionalAuth, async (req: Request, res: Response) => {
   try {
     const authReq = req as unknown as AuthRequest;
-    const { regionId } = req.body;
+    const { regionId, beachId } = req.body;
 
-    if (!regionId) {
-      return res.status(400).json({ error: "regionId is required" });
+    if (!regionId && !beachId) {
+      return res.status(400).json({ error: "regionId or beachId is required" });
     }
 
     const search = await prisma.userSearch.create({
       data: {
-        regionId,
+        regionId: regionId || null,
+        beachId: beachId || null,
         userId: authReq.user?.id || null, // Will be null for non-authenticated users
       },
       include: {
@@ -60,6 +67,12 @@ router.post("/", optionalAuth, async (req: Request, res: Response) => {
             country: true,
           },
         },
+        beach: {
+          include: {
+            region: true,
+            country: true,
+          }
+        }
       },
     });
 

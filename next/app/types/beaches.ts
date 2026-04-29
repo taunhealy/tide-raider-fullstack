@@ -128,6 +128,21 @@ export interface Beach {
   location: string;
   distanceFromCT: number;
   conditionProfiles: Partial<Record<SportCategory, BeachConditionProfile>>;
+  optimalWindDirections: string[];
+  optimalSwellDirections: {
+    min: number;
+    max: number;
+    cardinal?: string;
+  };
+  optimalTide: OptimalTide;
+  swellSize: {
+    min: number;
+    max: number;
+  };
+  idealSwellPeriod: {
+    min: number;
+    max: number;
+  };
   sheltered?: boolean; // Made optional with ?
   bestSeasons: string[];
   description: string;

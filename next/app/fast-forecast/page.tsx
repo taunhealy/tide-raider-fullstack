@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import Link from "next/link";
 import type { Beach } from "@/app/types/beaches";
+import { useSearchTracking } from "@/app/hooks/useSearchTracking";
+import RecentBeachSearch from "@/app/components/RecentBeachSearch";
+
 
 export default function FastForecastPage() {
   const { credits, isLoading: isCreditsLoading } = useSubscriptionStatus();
@@ -21,6 +24,15 @@ export default function FastForecastPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const { trackBeach } = useSearchTracking();
+
+  const handleBeachSelect = (beach: Beach | null) => {
+    setSelectedBeach(beach);
+    if (beach) {
+      trackBeach(beach.id);
+    }
+  };
+
   
   // Sharing State
   const [targetEmail, setTargetEmail] = useState("");
@@ -196,14 +208,18 @@ export default function FastForecastPage() {
             {/* Input Section */}
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Select Your Break</label>
-              <BeachSearchInput 
-                selectedBeach={selectedBeach}
-                onBeachSelect={setSelectedBeach}
-                placeholder="Target beach name..."
-                className="w-full"
-                showSelectedBadge={true}
-              />
-            </div>
+                <BeachSearchInput 
+                  selectedBeach={selectedBeach}
+                  onBeachSelect={handleBeachSelect}
+                  placeholder="Target beach name..."
+                  className="w-full"
+                  showSelectedBadge={true}
+                />
+                <RecentBeachSearch 
+                  onBeachSelect={setSelectedBeach}
+                  selectedBeachId={selectedBeach?.id}
+                />
+              </div>
 
             {/* Duration Options */}
             <div className="space-y-4">

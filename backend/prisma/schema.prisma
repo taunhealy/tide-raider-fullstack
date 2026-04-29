@@ -390,6 +390,7 @@ model Beach {
   properties             Property[]
   broadcasts             Broadcast[]
   intelligenceReports    IntelligenceReport[]
+  searches               UserSearch[]
 
   @@index([regionId])
   @@index([countryId])
@@ -844,9 +845,11 @@ model AlertProperty {
 model UserSearch {
   id        String   @id @default(cuid())
   userId    String?
-  regionId  String
+  regionId  String?
+  beachId   String?
   createdAt DateTime @default(now())
-  region    Region   @relation(fields: [regionId], references: [id])
+  region    Region?  @relation(fields: [regionId], references: [id])
+  beach     Beach?   @relation(fields: [beachId], references: [id])
 
   @@index([userId])
   @@index([createdAt])

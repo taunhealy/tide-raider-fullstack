@@ -1,12 +1,8 @@
-// app/types/region.ts
-import type { Region } from "@/app/types/beaches";
+import type { Region, Beach } from "@/app/types/beaches";
 
 export interface UserSearch {
   id: string;
-  region: Region;
-}
-
-export interface UserSearch {
-  id: string;
-  region: Region;
+  region?: Region;
+  beach?: Beach;
+  createdAt: string;
 }

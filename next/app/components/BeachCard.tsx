@@ -36,6 +36,8 @@ import gsap from "gsap";
 import type { Beach } from "@/app/types/beaches";
 import { ErrorBoundary } from "./ErrorBoundary";
 import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
+import { useSearchTracking } from "@/app/hooks/useSearchTracking";
+
 
 import { CoreForecastData } from "@/app/types/forecast";
 import { Button } from "@/app/components/ui/Button";
@@ -226,6 +228,8 @@ const BeachCard = memo(function BeachCard({
 
   const isModalOpen = searchParams.get("beach") === beach.name;
 
+  const { trackBeach } = useSearchTracking();
+
   // Auto-open AI modal if deep-linked via URL (report history)
   useEffect(() => {
     const reportId = searchParams.get("report");
@@ -234,15 +238,25 @@ const BeachCard = memo(function BeachCard({
     // Support matching by ID (from history page) or Name (from regular UI)
     if (reportId && (reportBeachId === beach.id || searchParams.get("beachName") === beach.name)) {
       setIsAIModalOpen(true);
+      trackBeach(beach.id);
     }
-  }, [searchParams, beach.id, beach.name]);
+  }, [searchParams, beach.id, beach.name, trackBeach]);
+
+  const handleOpenAIModal = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsAIModalOpen(true);
+    trackBeach(beach.id);
+  };
+
 
   const handleOpenModal = (e?: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e?.stopPropagation();
     const params = new URLSearchParams(searchParams);
     params.set("beach", beach.name);
+    trackBeach(beach.id);
     router.push(`${pathname}?${params}`, { scroll: false });
   };
+
 
   const handleCloseModal = () => {
     const params = new URLSearchParams(searchParams);
@@ -366,10 +380,7 @@ const BeachCard = memo(function BeachCard({
                     />
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAIModalOpen(true);
-                      }}
+                      onClick={handleOpenAIModal}
                       className="p-1.5 md:p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors group/ai relative"
                       aria-label="AI Weekly Report"
                     >
