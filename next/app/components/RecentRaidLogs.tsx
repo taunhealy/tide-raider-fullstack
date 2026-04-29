@@ -39,15 +39,15 @@ export default function RecentRaidLogs() {
   if (isLoading) {
     return (
       <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm border border-gray-200">
-        <Skeleton className="h-7 w-32 mb-4" />
+        <Skeleton className="h-7 w-32 mb-4 bg-gray-200/50" />
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-5 w-3/4 bg-gray-200/50" />
+              <Skeleton className="h-4 w-1/2 bg-gray-200/50" />
               <div className="flex gap-1">
                 {[...Array(5)].map((_, j) => (
-                  <Skeleton key={j} className="h-4 w-4" />
+                  <Skeleton key={j} className="h-4 w-4 bg-gray-200/50" />
                 ))}
               </div>
             </div>

@@ -22,43 +22,43 @@ const ForecastWidgetSkeleton = () => (
     }}
   >
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <Skeleton className="h-10 w-40" />
-      <Skeleton className="h-8 w-16" />
+      <Skeleton className="h-10 w-40 bg-gray-200/50" />
+      <Skeleton className="h-8 w-16 bg-gray-200/50" />
     </div>
 
     <div className="grid grid-cols-2 gap-4">
       {/* Wind Direction Skeleton */}
       <div className="bg-gray-100/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-md aspect-square">
-        <Skeleton className="h-5 w-16 mb-4" />
+        <Skeleton className="h-5 w-16 mb-4 bg-gray-200/50" />
         <div className="flex flex-col items-center justify-center h-[calc(100%-28px)]">
-          <Skeleton className="h-8 w-16 mb-2" />
-          <Skeleton className="h-5 w-10 mb-2" />
-          <Skeleton className="h-5 w-14" />
+          <Skeleton className="h-8 w-16 mb-2 bg-gray-200/50" />
+          <Skeleton className="h-5 w-10 mb-2 bg-gray-200/50" />
+          <Skeleton className="h-5 w-14 bg-gray-200/50" />
         </div>
       </div>
 
       {/* Swell Height Skeleton */}
       <div className="bg-gray-100/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-md aspect-square">
-        <Skeleton className="h-5 w-24 mb-4" />
+        <Skeleton className="h-5 w-24 mb-4 bg-gray-200/50" />
         <div className="flex flex-col items-center justify-center h-[calc(100%-28px)]">
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-8 w-16 bg-gray-200/50" />
         </div>
       </div>
 
       {/* Swell Period Skeleton */}
       <div className="bg-gray-100/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-md aspect-square">
-        <Skeleton className="h-5 w-24 mb-4" />
+        <Skeleton className="h-5 w-24 mb-4 bg-gray-200/50" />
         <div className="flex flex-col items-center justify-center h-[calc(100%-28px)]">
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-8 w-16 bg-gray-200/50" />
         </div>
       </div>
 
       {/* Swell Direction Skeleton */}
       <div className="bg-gray-100/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-md aspect-square">
-        <Skeleton className="h-5 w-24 mb-4" />
+        <Skeleton className="h-5 w-24 mb-4 bg-gray-200/50" />
         <div className="flex flex-col items-center justify-center h-[calc(100%-28px)]">
-          <Skeleton className="h-8 w-16 mb-2" />
-          <Skeleton className="h-5 w-14" />
+          <Skeleton className="h-8 w-16 mb-2 bg-gray-200/50" />
+          <Skeleton className="h-5 w-14 bg-gray-200/50" />
         </div>
       </div>
     </div>
@@ -67,16 +67,16 @@ const ForecastWidgetSkeleton = () => (
 
 const RegionalHighScoresSkeleton = () => (
   <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
-    <Skeleton className="h-7 w-40 mb-4" />
+    <Skeleton className="h-7 w-40 mb-4 bg-gray-200/50" />
     <div className="space-y-2">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="flex items-center gap-2">
-          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full bg-gray-200/50" />
           <div className="space-y-1 flex-1">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-5 w-3/4 bg-gray-200/50" />
+            <Skeleton className="h-4 w-1/2 bg-gray-200/50" />
           </div>
-          <Skeleton className="h-8 w-8" />
+          <Skeleton className="h-8 w-8 bg-gray-200/50" />
         </div>
       ))}
     </div>
@@ -87,14 +87,14 @@ const RegionalHighScoresSkeleton = () => (
 
 const RegionalServicesSidebarSkeleton = () => (
   <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
-    <Skeleton className="h-7 w-36 mb-4" />
+    <Skeleton className="h-7 w-36 mb-4 bg-gray-200/50" />
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="flex items-center gap-2">
-          <Skeleton className="h-12 w-12 rounded" />
+          <Skeleton className="h-12 w-12 rounded bg-gray-200/50" />
           <div className="space-y-1 flex-1">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-5 w-full bg-gray-200/50" />
+            <Skeleton className="h-4 w-2/3 bg-gray-200/50" />
           </div>
         </div>
       ))}
@@ -106,20 +106,20 @@ const RegionalServicesSidebarSkeleton = () => (
 const RaidLogSkeleton = () => (
   <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm border border-gray-200">
     <div className="flex items-center justify-between mb-4">
-      <Skeleton className="h-7 w-40" />
-      <Skeleton className="h-5 w-16" />
+      <Skeleton className="h-7 w-40 bg-gray-200/50" />
+      <Skeleton className="h-5 w-16 bg-gray-200/50" />
     </div>
     <div className="space-y-3">
-      <Skeleton className="aspect-video w-full rounded-lg" />
+      <Skeleton className="aspect-video w-full rounded-lg bg-gray-200/50" />
       <div className="space-y-2">
-        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-5 w-3/4 bg-gray-200/50" />
         <div className="flex gap-1">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-4 w-4" />
+            <Skeleton key={i} className="h-4 w-4 bg-gray-200/50" />
           ))}
         </div>
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-4 w-full bg-gray-200/50" />
+        <Skeleton className="h-4 w-1/3 bg-gray-200/50" />
       </div>
     </div>
   </div>

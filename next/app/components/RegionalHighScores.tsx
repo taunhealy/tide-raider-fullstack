@@ -225,17 +225,17 @@ function RegionalHighScoresContent({
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
         <div className="mb-4">
-          <Skeleton className="h-3 w-24 mb-1" />
-          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-24 mb-1 bg-gray-200/50" />
+          <Skeleton className="h-3 w-40 bg-gray-200/50" />
         </div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-2">
               <div className="flex-1">
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-4 w-3/4 mb-2 bg-gray-200/50" />
+                <Skeleton className="h-3 w-1/2 bg-gray-200/50" />
               </div>
-              <Skeleton className="w-7 h-7 rounded-full" />
+              <Skeleton className="w-7 h-7 rounded-full bg-gray-200/50" />
             </div>
           ))}
         </div>
@@ -277,10 +277,10 @@ function RegionalHighScoresContent({
           {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center gap-3 p-2">
               <div className="flex-1">
-                <Skeleton className="h-4 w-3/4 mb-2" />
-                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-4 w-3/4 mb-2 bg-gray-200/50" />
+                <Skeleton className="h-3 w-1/2 bg-gray-200/50" />
               </div>
-              <Skeleton className="w-7 h-7 rounded-full" />
+              <Skeleton className="w-7 h-7 rounded-full bg-gray-200/50" />
             </div>
           ))}
         </div>
@@ -303,8 +303,8 @@ function RegionalHighScoresContent({
                 const displayScore = beach.totalScore;
                 const roundedScore = Math.round(displayScore);
 
-                // Lock the first 5 items for non-premium users
-                const isLocked = index < 5 && !isPremium && !isSubscribed && !hasActiveTrial;
+                // Lock the first 5 items AND any Hidden Gems for non-premium users
+                const isLocked = (index < 5 || beach.isHiddenGem) && !isPremium && !isSubscribed && !hasActiveTrial;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {
