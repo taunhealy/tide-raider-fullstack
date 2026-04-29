@@ -21,16 +21,27 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
     # Debug: Print CWD and check for .env
     cwd = os.getcwd()
     api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        # 1. Try .env in current directory
+        load_dotenv(os.path.join(cwd, ".env"))
+        api_key = os.getenv("GOOGLE_API_KEY")
     
     if not api_key:
-        # Try loading specifically from parent dir if we are in scripts
-        if os.path.basename(cwd) == "scripts":
-            parent_env = os.path.join(os.path.dirname(cwd), ".env")
+        # 2. Try .env in parent directory
+        parent_env = os.path.join(os.path.dirname(cwd), ".env")
+        if os.path.exists(parent_env):
             load_dotenv(parent_env)
             api_key = os.getenv("GOOGLE_API_KEY")
 
     if not api_key:
-        print(f"Error: GOOGLE_API_KEY not found in CWD: {cwd}", file=sys.stderr)
+        # 3. Try specifically checking 'backend/.env' if we're in a common monorepo structure
+        # or checking root if we are in scripts/
+        if os.path.basename(cwd) == "scripts":
+            load_dotenv(os.path.join(os.path.dirname(cwd), ".env"))
+            api_key = os.getenv("GOOGLE_API_KEY")
+
+    if not api_key:
+        print(f"Error: GOOGLE_API_KEY not found. Search path: {cwd}. Please ensure it is set in .env", file=sys.stderr)
         return None
     
     print(f"Intelligence Engine: Authenticated (Key Length: {len(api_key)})", file=sys.stderr)

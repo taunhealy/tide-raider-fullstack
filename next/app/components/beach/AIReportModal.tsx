@@ -372,7 +372,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
              {isCreditsLoading ? (
                <div className="w-8 h-4 bg-gray-200 animate-pulse rounded" />
              ) : (
-               <span className="text-[12px] font-bold text-black">{credits} <span className="opacity-40 font-normal">Credits</span></span>
+                <span className="text-[12px] font-bold text-black">{credits ?? 0} <span className="opacity-40 font-normal">Credits</span></span>
              )}
           </div>
         </div>

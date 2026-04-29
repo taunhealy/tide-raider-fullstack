@@ -78,7 +78,7 @@
     "profileImage": "/images/profile/hero-cover.jpg",
     "coffeeShop": [
       {
-        "name": "Harvest Café, Muizenberg"
+        "name": "Harvest Caf\u00e9, Muizenberg"
       }
     ],
     "beer": [
@@ -186,7 +186,7 @@
       "winter"
     ],
     "optimalTide": "LOW_TO_MID",
-    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It’s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
+    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It\u2019s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
     "difficulty": "ADVANCED",
     "waveType": "BEACH_BREAK",
     "swellSize": {
@@ -584,7 +584,7 @@
   },
   {
     "id": "dungeons",
-    "name": "Dungeons 💀",
+    "name": "Dungeons \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -1391,8 +1391,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -33.766810,
-      "lng": 18.444015  
+      "lat": -33.76681,
+      "lng": 18.444015
     }
   },
   {
@@ -2138,7 +2138,7 @@
     "image": "",
     "coordinates": {
       "lat": -31.659381,
-      "lng": 18.155050
+      "lng": 18.15505
     }
   },
   {
@@ -2706,7 +2706,7 @@
   },
   {
     "id": "sandy-bay",
-    "name": "Sandy Bay （人 人）",
+    "name": "Sandy Bay \uff08\u4eba \u4eba\uff09",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3574,8 +3574,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.0760,
-      "lng": 18.5730
+      "lat": -34.076,
+      "lng": 18.573
     }
   },
   {
@@ -4102,8 +4102,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.6360,
-      "lng": 29.5370
+      "lat": -31.636,
+      "lng": 29.537
     }
   },
   {
@@ -4293,7 +4293,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -4361,8 +4361,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3790,
-      "lng": 21.4110
+      "lat": -34.379,
+      "lng": 21.411
     },
     "videos": [
       {
@@ -4543,7 +4543,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.9380,
+      "lat": -31.938,
       "lng": 29.2197
     },
     "videos": [
@@ -4654,8 +4654,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.0340,
-      "lng": 29.1120
+      "lat": -32.034,
+      "lng": 29.112
     },
     "videos": [
       {
@@ -4711,7 +4711,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.0840,
+      "lat": -32.084,
       "lng": 18.3127
     }
   },
@@ -4762,8 +4762,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.8210,
-      "lng": 18.2390
+      "lat": -31.821,
+      "lng": 18.239
     }
   },
   {
@@ -4813,7 +4813,7 @@
     "image": "",
     "coordinates": {
       "lat": -32.8011,
-      "lng": 17.8960
+      "lng": 17.896
     }
   },
   {
@@ -5488,8 +5488,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3400,
-      "lng": 18.8950
+      "lat": -34.34,
+      "lng": 18.895
     }
   },
   {
@@ -5597,7 +5597,7 @@
   },
   {
     "id": "bellows",
-    "name": "Bellows 💀",
+    "name": "Bellows \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -5693,8 +5693,8 @@
       "hasAttack": false
     },
     "coordinates": {
-      "lat": -34.1200,
-      "lng": 18.4500
+      "lat": -34.12,
+      "lng": 18.45
     }
   },
   {
@@ -5796,8 +5796,8 @@
       "hasAttack": false
     },
     "coordinates": {
-      "lat": -34.1000,
-      "lng": 18.7900
+      "lat": -34.1,
+      "lng": 18.79
     }
   },
   {
@@ -5951,7 +5951,7 @@
   },
   {
     "id": "second-beach-port-st-johns",
-    "name": "Second Beach 💀",
+    "name": "Second Beach \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "eastern-cape",
@@ -6022,8 +6022,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -31.6360,
-      "lng": 29.5370
+      "lat": -31.636,
+      "lng": 29.537
     }
   },
   {
@@ -6080,7 +6080,7 @@
   },
   {
     "id": "sunset-reef",
-    "name": "Sunset Reef 💀",
+    "name": "Sunset Reef \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -6818,7 +6818,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=CucTAx7eRro&ab_channel=TheAdventureLocker",
-        "title": "Surfing in Africa 🏄🗺️ #surf #surffilm",
+        "title": "Surfing in Africa \ud83c\udfc4\ud83d\uddfa\ufe0f #surf #surffilm",
         "platform": "youtube"
       }
     ]
@@ -7017,8 +7017,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1800,
-      "lng": 22.0800
+      "lat": -34.18,
+      "lng": 22.08
     }
   },
   {
@@ -7069,13 +7069,13 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1700,
-      "lng": 22.1500
+      "lat": -34.17,
+      "lng": 22.15
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -7136,13 +7136,13 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1200,
-      "lng": 18.4600
+      "lat": -34.12,
+      "lng": 18.46
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -7217,7 +7217,7 @@
   },
   {
     "id": "ferme-aux-cochons",
-    "name": "Ferme aux Cochons 🦛",
+    "name": "Ferme aux Cochons \ud83e\udd9b",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -7272,7 +7272,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=nQJkdq5gF80&ab_channel=SamBleakley",
-        "title": "Sam Bleakley surfEXPLORE© Gabon",
+        "title": "Sam Bleakley surfEXPLORE\u00a9 Gabon",
         "platform": "youtube"
       },
       {
@@ -7284,7 +7284,7 @@
   },
   {
     "id": "petit-loango",
-    "name": "Petit Loango 🦛",
+    "name": "Petit Loango \ud83e\udd9b",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -7386,12 +7386,11 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=q8q_A6r4dh0&ab_channel=SamBleakley",
-        "title": "surfEXPLORE© Gabon - Sam Bleakley",
+        "title": "surfEXPLORE\u00a9 Gabon - Sam Bleakley",
         "platform": "youtube"
       }
     ]
   },
-
   {
     "id": "tofinho",
     "name": "Tofinho",
@@ -8041,7 +8040,7 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -32.70165, 
+      "lat": -32.70165,
       "lng": 17.97115
     }
   },
@@ -8768,7 +8767,7 @@
   },
   {
     "id": "mtsanga-boueni",
-    "name": "Mtsanga Bouéni",
+    "name": "Mtsanga Bou\u00e9ni",
     "continent": "Africa",
     "countryId": "yt",
     "regionId": "mayotte",
@@ -8788,7 +8787,7 @@
       "winter"
     ],
     "optimalTide": "MID",
-    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bouéni village.",
+    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bou\u00e9ni village.",
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "swellSize": {
@@ -8872,7 +8871,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=ApsaRk8Bfhg&ab_channel=JulieB",
-        "title": "MAYOTTE LA MAGNIFIQUE plongée surf choungui bivouac eps LOVE",
+        "title": "MAYOTTE LA MAGNIFIQUE plong\u00e9e surf choungui bivouac eps LOVE",
         "platform": "youtube"
       }
     ]
@@ -8987,7 +8986,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=lhyCDXX-ifA&ab_channel=FindirelaYeza",
-        "title": "BAÍA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
+        "title": "BA\u00cdA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
         "platform": "youtube"
       }
     ]
@@ -9928,8 +9927,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1700,
-      "lng": 22.1500
+      "lat": -34.17,
+      "lng": 22.15
     }
   },
   {
@@ -10861,7 +10860,7 @@
     "image": "",
     "coordinates": {
       "lat": -34.3697,
-      "lng": 19.0970
+      "lng": 19.097
     }
   },
   {
@@ -11522,7 +11521,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=IiFcs_KD94s&ab_channel=GabrielTManuel",
-        "title": "Conhecendo um pouco o povoado da Caota/Baía Farta/Benguela/Angola",
+        "title": "Conhecendo um pouco o povoado da Caota/Ba\u00eda Farta/Benguela/Angola",
         "platform": "youtube"
       }
     ]

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@/app/lib/server-auth";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
+import { API_CONFIG } from "@/app/lib/api-config";
+
+const BACKEND_URL = API_CONFIG.baseUrl;
 
 /**
  * GET /api/paypal/subscription-status
@@ -12,18 +12,8 @@ const BACKEND_URL =
  */
 export async function GET(req: NextRequest) {
   try {
-    // -------------------------------------------------
-    // 1️⃣ Authenticate the user
-    // -------------------------------------------------
-    const { user } = await getServerAuth();
-
-    if (!user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // -------------------------------------------------
-    // 2️⃣ Fetch user data from backend /api/auth/me
-    // -------------------------------------------------
+    // 1️⃣ Fetch user data from backend /api/auth/me using cookies from the request
+    // This serves as both authentication AND data retrieval
     const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
       headers: {
         "Content-Type": "application/json",
@@ -33,17 +23,18 @@ export async function GET(req: NextRequest) {
     });
 
     if (!response.ok) {
-      if (response.status === 404 || response.status === 401) {
-        return NextResponse.json(
-          { error: "User not found or unauthorized" },
-          { status: response.status }
-        );
+      if (response.status === 401 || response.status === 403) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       throw new Error(`Backend returned ${response.status}`);
     }
 
     const data = await response.json();
     const userData = data.user;
+
+    if (!userData) {
+      return NextResponse.json({ error: "User data missing" }, { status: 404 });
+    }
 
     // -------------------------------------------------
     // 3️⃣ Determine if user has premium access

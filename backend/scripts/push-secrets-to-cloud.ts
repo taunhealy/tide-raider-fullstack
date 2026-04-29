@@ -12,7 +12,8 @@ const secrets = [
   'NEXTAUTH_SECRET',
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
-  'FRONTEND_URL'
+  'FRONTEND_URL',
+  'GOOGLE_API_KEY'
 ];
 
 async function updateSecrets() {

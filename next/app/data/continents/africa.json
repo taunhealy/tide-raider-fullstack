@@ -59,7 +59,7 @@
     "profileImage": "/images/profile/hero-cover.jpg",
     "coffeeShop": [
       {
-        "name": "Harvest Café, Muizenberg"
+        "name": "Harvest Caf\u00e9, Muizenberg"
       }
     ],
     "beer": [
@@ -245,7 +245,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It’s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
+    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It\u2019s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
     "difficulty": "ADVANCED",
     "waveType": "BEACH_BREAK",
     "waterTemp": {
@@ -288,7 +288,8 @@
           "max": 24
         }
       }
-    }
+    },
+    "isHiddenGem": true
   },
   {
     "id": "llandudno",
@@ -574,8 +575,8 @@
     },
     "image": "https://images.unsplash.com/photo-1537045864092-892b7de76421?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bm9vcmRob2VrfGVufDB8fDB8fHww",
     "coordinates": {
-      "lat": -34.1385,
-      "lng": 18.3305
+      "lat": -34.120417,
+      "lng": 18.349722
     },
     "videos": [
       {
@@ -682,7 +683,7 @@
   },
   {
     "id": "dungeons",
-    "name": "Dungeons 💀",
+    "name": "Dungeons \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -1583,8 +1584,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -33.724139,
+      "lng": 18.439056
     },
     "videos": [
       {
@@ -1735,7 +1736,7 @@
   },
   {
     "id": "black-rocks",
-    "name": "Black Rocks 🦈",
+    "name": "Black Rocks \ud83e\udd88",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3024,7 +3025,7 @@
   },
   {
     "id": "sandy-bay",
-    "name": "Sandy Bay （人 人）",
+    "name": "Sandy Bay \uff08\u4eba \u4eba\uff09",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3644,8 +3645,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1556,
-      "lng": 18.3227
+      "lat": -34.103889,
+      "lng": 18.353111
     },
     "videos": [
       {
@@ -3759,8 +3760,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1326,
-      "lng": 18.3347
+      "lat": -34.096194,
+      "lng": 18.352472
     },
     "videos": [
       {
@@ -4102,8 +4103,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.1123,
-      "lng": 18.4876
+      "lat": -34.243194,
+      "lng": 18.852417
     },
     "videos": [
       {
@@ -4830,7 +4831,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -6254,7 +6255,7 @@
   },
   {
     "id": "bellows",
-    "name": "Bellows 💀",
+    "name": "Bellows \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -6638,7 +6639,7 @@
   },
   {
     "id": "second-beach-port-st-johns",
-    "name": "Second Beach 💀",
+    "name": "Second Beach \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "eastern-cape",
@@ -6775,7 +6776,7 @@
   },
   {
     "id": "sunset-reef",
-    "name": "Sunset Reef 💀",
+    "name": "Sunset Reef \ud83d\udc80",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -7544,7 +7545,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=CucTAx7eRro&ab_channel=TheAdventureLocker",
-        "title": "Surfing in Africa 🏄🗺️ #surf #surffilm",
+        "title": "Surfing in Africa \ud83c\udfc4\ud83d\uddfa\ufe0f #surf #surffilm",
         "platform": "youtube"
       }
     ],
@@ -7821,7 +7822,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -7892,7 +7893,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -7992,7 +7993,7 @@
   },
   {
     "id": "ferme-aux-cochons",
-    "name": "Ferme aux Cochons 🦛",
+    "name": "Ferme aux Cochons \ud83e\udd9b",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -8030,7 +8031,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=nQJkdq5gF80&ab_channel=SamBleakley",
-        "title": "Sam Bleakley surfEXPLORE© Gabon",
+        "title": "Sam Bleakley surfEXPLORE\u00a9 Gabon",
         "platform": "youtube"
       },
       {
@@ -8063,7 +8064,7 @@
   },
   {
     "id": "petit-loango",
-    "name": "Petit Loango 🦛",
+    "name": "Petit Loango \ud83e\udd9b",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -8152,7 +8153,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=q8q_A6r4dh0&ab_channel=SamBleakley",
-        "title": "surfEXPLORE© Gabon - Sam Bleakley",
+        "title": "surfEXPLORE\u00a9 Gabon - Sam Bleakley",
         "platform": "youtube"
       }
     ],
@@ -9658,7 +9659,7 @@
   },
   {
     "id": "mtsanga-boueni",
-    "name": "Mtsanga Bouéni",
+    "name": "Mtsanga Bou\u00e9ni",
     "continent": "Africa",
     "countryId": "yt",
     "regionId": "mayotte",
@@ -9667,7 +9668,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bouéni village.",
+    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bou\u00e9ni village.",
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "waterTemp": {
@@ -9748,7 +9749,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=ApsaRk8Bfhg&ab_channel=JulieB",
-        "title": "MAYOTTE LA MAGNIFIQUE plongée surf choungui bivouac eps LOVE",
+        "title": "MAYOTTE LA MAGNIFIQUE plong\u00e9e surf choungui bivouac eps LOVE",
         "platform": "youtube"
       }
     ],
@@ -9871,7 +9872,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=lhyCDXX-ifA&ab_channel=FindirelaYeza",
-        "title": "BAÍA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
+        "title": "BA\u00cdA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
         "platform": "youtube"
       }
     ],
@@ -12601,7 +12602,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=IiFcs_KD94s&ab_channel=GabrielTManuel",
-        "title": "Conhecendo um pouco o povoado da Caota/Baía Farta/Benguela/Angola",
+        "title": "Conhecendo um pouco o povoado da Caota/Ba\u00eda Farta/Benguela/Angola",
         "platform": "youtube"
       }
     ],

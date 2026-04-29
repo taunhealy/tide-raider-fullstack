@@ -241,8 +241,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               {/* Content Grid */}
               <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10 relative">
                 {isGatedGem && (
-                  <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none p-10">
-                    <div className="bg-amber-500/90 text-white px-8 py-4 rounded-2xl shadow-2xl border border-amber-400/50 backdrop-blur-md flex flex-col items-center gap-2 pointer-events-auto max-w-sm text-center">
+                  <div className="absolute inset-0 z-30 flex items-start justify-center pointer-events-none p-10 pt-24 md:pt-32">
+                    <div className="bg-amber-500/95 text-white px-8 py-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-amber-400/50 backdrop-blur-md flex flex-col items-center gap-3 pointer-events-auto max-w-sm text-center transform transition-all hover:scale-105">
                       <Lock className="w-8 h-8 mb-2" />
                       <h4 className="font-primary font-black uppercase tracking-widest text-sm">Premium Intelligence Locked</h4>
                       <p className="text-xs font-medium opacity-90 mb-4">Subscribe to unlock Hidden Gem locations and community data.</p>
