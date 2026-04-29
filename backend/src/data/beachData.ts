@@ -404,6 +404,7 @@ export const beachData: Beach[] = [
     countryId: "za",
     regionId: "western-cape",
     location: "Bakoven",
+    isHiddenGem: true,
     distanceFromCT: 15,
     optimalWindDirections: ["SE", "ESE", "E"],
     optimalSwellDirections: {
@@ -594,8 +595,8 @@ export const beachData: Beach[] = [
     image:
       "https://images.unsplash.com/photo-1537045864092-892b7de76421?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bm9vcmRob2VrfGVufDB8fDB8fHww",
     coordinates: {
-      lat: -34.1012,
-      lng: 18.4987,
+      lat: -34.120417,
+      lng: 18.349722,
     },
     videos: [
       {
@@ -1265,36 +1266,36 @@ export const beachData: Beach[] = [
     distanceFromCT: 35,
     optimalWindDirections: ["NE", "E"],
     optimalSwellDirections: {
-      min: 195,
-      max: 225,
+      min: 210,
+      max: 240,
+      cardinal: "SW",
     },
     bestSeasons: ["winter"],
-    optimalTide: "LOW",
-    description:
-      "Long beach break with multiple peaks over 3km stretch. Northern end offers better shape with both lefts and rights. Sand bottom creates shifting peaks - scout banks before paddling out. Works well in summer when south spots are blown out. Best on SW swell with SE winds. Waves typically fuller on high tide, punchier on low. Good learner spot on smaller days but can handle size in winter. Strong currents run parallel to beach - stay in front of access point.",
-    difficulty: "BEGINNER",
+    optimalTide: "MID_TO_HIGH",
+    description: "Exposed beach break that has fairly consistent surf and can work at any time of year. Optimal wind is from the NE or E, and SW swell is ideal.",
+    difficulty: "INTERMEDIATE",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 0.3,
-      max: 3.5,
+      min: 1.2,
+      max: 4.0,
     },
     idealSwellPeriod: {
-      min: 12,
-      max: 24,
+      min: 10,
+      max: 20,
     },
     waterTemp: {
       summer: 18,
       winter: 14,
     },
-    hazards: ["Rip currents", "Wind chop", "Strong currents"],
+    hazards: ["Rip currents", "Sharks"],
     crimeLevel: "Low",
     sharkAttack: {
       hasAttack: false,
     },
     image: "",
     coordinates: {
-      lat: -34.1123,
-      lng: 18.4876,
+      lat: -33.724139,
+      lng: 18.439056,
     },
     videos: [
       {
@@ -2273,8 +2274,8 @@ export const beachData: Beach[] = [
     },
     image: "",
     coordinates: {
-      lat: -34.1012,
-      lng: 18.4987,
+      lat: -34.103889,
+      lng: 18.353111,
     },
     videos: [
       {
@@ -2365,8 +2366,8 @@ export const beachData: Beach[] = [
     },
     image: "",
     coordinates: {
-      lat: -34.1012,
-      lng: 18.4987,
+      lat: -34.096194,
+      lng: 18.352472,
     },
     videos: [
       {
@@ -2643,8 +2644,8 @@ export const beachData: Beach[] = [
     },
     image: "",
     coordinates: {
-      lat: -34.1123,
-      lng: 18.4876,
+      lat: -34.243194,
+      lng: 18.852417,
     },
     videos: [
       {

@@ -400,13 +400,13 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
                             // If this slot matches the entry's timeSlot and we have forecast data, 
                             // and there's no matching source in apiScores, add it as a 'Reported' source
-                            const slotScores = [...apiScores];
+                            const slotScores = [...(apiScores || [])];
                             const entryTimeSlot = entry.timeSlot || (entry as any).forecast?.timeSlot;
                             
                             if (entryTimeSlot === slot.id && forecastData && !slotScores.some(s => s.source === 'REPORTER')) {
                               slotScores.push({
                                 source: 'REPORTER',
-                                sourceName: 'Reported',
+                                sourceName: 'Source A',
                                 starRating: entry.surferRating || 0,
                                 conditions: forecastData
                               });
@@ -418,7 +418,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                   <div className="h-px flex-1 bg-white/5"></div>
                                   <div className="flex items-center gap-2 bg-white/5 px-6 py-2 rounded-full border border-white/10 shadow-lg">
                                     <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                    <span className="text-xs font-black text-white uppercase tracking-[0.2em]">
+                                    <span className="text-xs font-bold text-white uppercase tracking-[0.2em]">
                                       {slot.label}
                                     </span>
                                   </div>
@@ -441,12 +441,13 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                 ) : slotScores.length > 0 ? (
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {slotScores.map((score: any, index: number) => {
-                                      const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
+                                      const conditions = score.conditions || (score.source === 'WINDFINDER' || score.source === 'REPORTER' ? forecastData : null);
+                                      if (!conditions) return null;
                                       
                                       return (
                                         <div key={`${score.source}-${index}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10 group/card relative overflow-hidden">
                                           {/* Active Indicator if this matches the log entry slot */}
-                                          {entry.timeSlot === slot.id && (
+                                          {entryTimeSlot === slot.id && (
                                             <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-tertiary)] opacity-50"></div>
                                           )}
                                           
@@ -455,7 +456,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                               <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
                                                 {score.sourceName}
                                               </h3>
-                                              <p className="text-[9px] font-black text-[var(--color-tertiary)] uppercase tracking-tighter">
+                                              <p className="text-[9px] font-bold text-[var(--color-tertiary)] uppercase tracking-tighter">
                                                 {slot.label}
                                               </p>
                                             </div>

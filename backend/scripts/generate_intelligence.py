@@ -18,10 +18,22 @@ from langchain_core.prompts import ChatPromptTemplate
 load_dotenv()
 
 async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swell_height: float, swell_period: float, swell_dir: str, score: float, persona: str, daily_snapshots: Optional[str] = None, mode: str = "daily"):
+    # Debug: Print CWD and check for .env
+    cwd = os.getcwd()
     api_key = os.getenv("GOOGLE_API_KEY")
+    
     if not api_key:
-        print("Error: GOOGLE_API_KEY not found", file=sys.stderr)
+        # Try loading specifically from parent dir if we are in scripts
+        if os.path.basename(cwd) == "scripts":
+            parent_env = os.path.join(os.path.dirname(cwd), ".env")
+            load_dotenv(parent_env)
+            api_key = os.getenv("GOOGLE_API_KEY")
+
+    if not api_key:
+        print(f"Error: GOOGLE_API_KEY not found in CWD: {cwd}", file=sys.stderr)
         return None
+    
+    print(f"Intelligence Engine: Authenticated (Key Length: {len(api_key)})", file=sys.stderr)
 
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",

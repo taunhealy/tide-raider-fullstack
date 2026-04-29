@@ -90,7 +90,16 @@ export class PythonBridge {
 
       console.log(`[PythonBridge] 🚀 Executing: ${pythonCommand} ${args.join(" ")}`);
       
-      const pythonProcess = spawn(pythonCommand, args);
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        console.warn(`[PythonBridge] ⚠️ GOOGLE_API_KEY is NOT set in Node process.env!`);
+      } else {
+        console.log(`[PythonBridge] ✅ GOOGLE_API_KEY found (length: ${apiKey.length})`);
+      }
+
+      const pythonProcess = spawn(pythonCommand, args, {
+        env: { ...process.env }
+      });
 
       let stdout = "";
       let stderr = "";
