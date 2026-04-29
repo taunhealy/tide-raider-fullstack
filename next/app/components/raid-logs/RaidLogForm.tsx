@@ -113,7 +113,15 @@ export function RaidLogForm({
   }, [isOpen, isAuthLoading, isBeachesLoading, beaches.length, user, authStatus, needsHookFetch]);
 
   const [selectedDate, setSelectedDate] = useState<string>(
-    entry?.date ? format(new Date(entry.date), "yyyy-MM-dd") : ""
+    (() => {
+      if (!entry?.date) return "";
+      try {
+        const d = new Date(entry.date);
+        return isNaN(d.getTime()) ? "" : format(d, "yyyy-MM-dd");
+      } catch (e) {
+        return "";
+      }
+    })()
   );
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [surferRating, setSurferRating] = useState(entry?.surferRating || 0);
@@ -335,8 +343,18 @@ export function RaidLogForm({
   useEffect(() => {
     if (!entry) return;
 
+    const entryDateStr = (() => {
+      if (!entry.date) return "";
+      try {
+        const d = new Date(entry.date);
+        return isNaN(d.getTime()) ? "" : format(d, "yyyy-MM-dd");
+      } catch (e) {
+        return "";
+      }
+    })();
+
     const hasChanges =
-      selectedDate !== format(new Date(entry.date), "yyyy-MM-dd") ||
+      selectedDate !== entryDateStr ||
       selectedBeach?.name !== entry.beachName ||
       surferRating !== entry.surferRating ||
       comments !== entry.comments ||
@@ -392,7 +410,14 @@ export function RaidLogForm({
 
       // Update all form fields from entry
       if (entry.date) {
-        setSelectedDate(format(new Date(entry.date), "yyyy-MM-dd"));
+        try {
+          const d = new Date(entry.date);
+          if (!isNaN(d.getTime())) {
+            setSelectedDate(format(d, "yyyy-MM-dd"));
+          }
+        } catch (e) {
+          console.error("Error setting initial date:", e);
+        }
       }
       if (entry.surferRating !== undefined && entry.surferRating !== null) {
         setSurferRating(entry.surferRating);

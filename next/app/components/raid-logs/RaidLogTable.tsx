@@ -740,7 +740,16 @@ export default function RaidLogTable({
   const DeleteConfirmationDialog = () => {
     if (!entryToDelete) return null;
 
-    const formattedDate = format(new Date(entryToDelete.date), "MMM d, yyyy");
+    const formattedDate = (() => {
+      try {
+        if (!entryToDelete.date) return "Unknown Date";
+        const date = new Date(entryToDelete.date);
+        if (isNaN(date.getTime())) return "Unknown Date";
+        return format(date, "MMM d, yyyy");
+      } catch (e) {
+        return "Unknown Date";
+      }
+    })();
     const beachName =
       entryToDelete.beach?.name || entryToDelete.beachName || "Unknown beach";
 

@@ -101,10 +101,40 @@ export default function AIReportsView() {
                   <div className="flex flex-col">
                     <span className="text-[11px] font-bold text-black flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5 text-brand-3" />
-                      {format(new Date(report.date), "MMM dd")} {report.duration > 1 && report.endDate ? `- ${format(new Date(report.endDate), "MMM dd")}` : ""}
+                      {(() => {
+                        try {
+                          const start = new Date(report.date);
+                          if (isNaN(start.getTime())) return "Unknown Date";
+                          let range = format(start, "MMM dd");
+                          if (report.duration > 1 && report.endDate) {
+                            const end = new Date(report.endDate);
+                            if (!isNaN(end.getTime())) {
+                              range += ` - ${format(end, "MMM dd")}`;
+                            }
+                          }
+                          return range;
+                        } catch (e) {
+                          return "Unknown Date";
+                        }
+                      })()}
                     </span>
                     <span className="text-[10px] text-gray-400 font-medium mt-0.5">
-                      Tactical Intel [{format(new Date(report.date), "MMM dd")}{report.duration > 1 && report.endDate ? ` - ${format(new Date(report.endDate), "MMM dd")}` : ""}]
+                      Tactical Intel [{(() => {
+                        try {
+                          const start = new Date(report.date);
+                          if (isNaN(start.getTime())) return "N/A";
+                          let range = format(start, "MMM dd");
+                          if (report.duration > 1 && report.endDate) {
+                            const end = new Date(report.endDate);
+                            if (!isNaN(end.getTime())) {
+                              range += ` - ${format(end, "MMM dd")}`;
+                            }
+                          }
+                          return range;
+                        } catch (e) {
+                          return "N/A";
+                        }
+                      })()}]
                     </span>
                   </div>
                 </td>

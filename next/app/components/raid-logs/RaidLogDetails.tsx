@@ -556,7 +556,18 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       Session date
                     </h2>
                     <p className={cn("text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter", isGatedGem && "blur-[10px] select-none opacity-40")}>
-                      {isGatedGem ? "Redacted Date" : format(new Date(entry.date).getTime() + (new Date().getTimezoneOffset() * 60000), "MMMM d, yyyy")}
+                      {isGatedGem ? "Redacted Date" : (() => {
+                        try {
+                          if (!entry.date) return "Date Unknown";
+                          const date = new Date(entry.date);
+                          if (isNaN(date.getTime())) return "Date Unknown";
+                          // Adjusted date to account for timezone to show the correct day
+                          const adjustedDate = new Date(date.getTime() + (new Date().getTimezoneOffset() * 60000));
+                          return format(adjustedDate, "MMMM d, yyyy");
+                        } catch (e) {
+                          return "Date Unknown";
+                        }
+                      })()}
                     </p>
                   </div>
                 </div>
