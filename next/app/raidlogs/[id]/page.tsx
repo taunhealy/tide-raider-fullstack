@@ -58,6 +58,25 @@ async function getRaidLogForMetadata(id: string) {
   }
 }
 
+// Fetch user session for metadata access checks
+async function getUserSession(authToken: string | undefined) {
+  if (!authToken) return null;
+  try {
+    const BACKEND_URL = getBackendUrl();
+    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    console.error("Error fetching user session for metadata:", error);
+    return null;
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -67,6 +86,10 @@ export async function generateMetadata({
   const entry = await getRaidLogForMetadata(id);
   const baseUrl = getBaseUrl();
 
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get("auth-token")?.value;
+  const user = await getUserSession(authToken);
+
   if (!entry) {
     return {
       title: "Raid Log | Tide Raider",
@@ -74,13 +97,33 @@ export async function generateMetadata({
     };
   }
 
+  // Access check logic (similar to RaidLogDetails component)
+  const isSubscribed = user?.isSubscribed || user?.hasActiveTrial;
+  const isOwner = user?.id === entry.userId;
+  const isHiddenGem = !!entry.beach?.isHiddenGem;
+  const hasAccess = !isHiddenGem || isSubscribed || isOwner;
+
+  // Mask metadata if it's a gated hidden gem
+  const beachName = hasAccess 
+    ? (entry.beach?.name || entry.beachName || "Surf Session")
+    : "Hidden Gem";
+
+  const location = entry.region?.name
+    ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
+    : "";
+
+  const description = hasAccess && entry.comments
+    ? `${entry.comments.substring(0, 150)}${entry.comments.length > 150 ? "..." : ""}`
+    : `Surf session at ${beachName}${location ? ` in ${location}` : ""}. Rating: ${entry.surferRating || 0}/5 stars.`;
+
   // Get image URL - prefer first image from imageUrls array, fallback to imageUrl
-  const imageUrls =
-    (entry as any).imageUrls || (entry.imageUrl ? [entry.imageUrl] : []);
-  const imageUrl = imageUrls.length > 0 ? imageUrls[0] : entry.imageUrl;
+  // Only include images in metadata if the user has access to see them
+  const imageUrls = hasAccess
+    ? ((entry as any).imageUrls || (entry.imageUrl ? [entry.imageUrl] : []))
+    : [];
+  const imageUrl = imageUrls.length > 0 ? imageUrls[0] : (hasAccess ? entry.imageUrl : undefined);
 
   // Make image URL absolute if it's relative
-  // R2 images should already be absolute URLs, but handle both cases
   const absoluteImageUrl = imageUrl
     ? imageUrl.startsWith("http")
       ? imageUrl
@@ -88,14 +131,6 @@ export async function generateMetadata({
         ? `${baseUrl}${imageUrl}`
         : `${baseUrl}/${imageUrl}`
     : undefined;
-
-  const beachName = entry.beach?.name || entry.beachName || "Surf Session";
-  const location = entry.region?.name
-    ? `${entry.region.name}${entry.region.country ? `, ${entry.region.country.name}` : ""}`
-    : "";
-  const description = entry.comments
-    ? `${entry.comments.substring(0, 150)}${entry.comments.length > 150 ? "..." : ""}`
-    : `Surf session at ${beachName}${location ? ` in ${location}` : ""}. Rating: ${entry.surferRating || 0}/5 stars.`;
 
   const metadata: Metadata = {
     title: `${beachName}${location ? ` - ${location}` : ""} | Tide Raider`,
