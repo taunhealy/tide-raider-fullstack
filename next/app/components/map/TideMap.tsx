@@ -188,7 +188,7 @@ export default function TideMap({
 
       // Draw Wind Particles
       if (showWindHeatmap) {
-        const validWind = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed !== undefined);
+        const validWind = currentBeaches.filter(b => b && (b as any).dailyScores?.[dateKey]?.conditions?.windSpeed !== undefined);
         
         let avgSpeed = 0;
         let avgVX = 0;
@@ -280,7 +280,7 @@ export default function TideMap({
 
       // Draw Swell Particles (TINY SLOW PIPS)
       if (showSwellHeatmap) {
-        const validSwell = currentBeaches.filter(b => (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight !== undefined);
+        const validSwell = currentBeaches.filter(b => b && (b as any).dailyScores?.[dateKey]?.conditions?.swellHeight !== undefined);
         
         let avgHeight = 2.0;
         let avgVX = 0.0003;
@@ -585,13 +585,14 @@ export default function TideMap({
     const vectorSource = vectorSourceRef.current;
     vectorSource.clear();
 
-    if (!beaches || beaches.length === 0) return;
+    const currentBeaches = (beaches || []).filter(Boolean);
+    if (currentBeaches.length === 0) return;
 
     let features: Feature[] = [];
 
     if (currentZoom < 4) {
       const continents: Record<string, Beach[]> = {};
-      beaches.forEach(b => {
+      currentBeaches.forEach(b => {
         const cId = b.continentId || "unknown";
         if (!continents[cId]) continents[cId] = [];
         continents[cId].push(b);
@@ -613,7 +614,7 @@ export default function TideMap({
       }).filter(Boolean) as Feature[];
     } else if (currentZoom < 7) {
       const countries: Record<string, Beach[]> = {};
-      beaches.forEach(b => {
+      currentBeaches.forEach(b => {
         const cId = b.countryId || "unknown";
         if (!countries[cId]) countries[cId] = [];
         countries[cId].push(b);
@@ -634,8 +635,8 @@ export default function TideMap({
         return feature;
       }).filter(Boolean) as Feature[];
     } else {
-      features = beaches
-        .filter(beach => beach.coordinates && (beach.coordinates.lat !== 0 || beach.coordinates.lng !== 0))
+      features = currentBeaches
+        .filter(beach => beach && beach.coordinates && (beach.coordinates.lat !== 0 || beach.coordinates.lng !== 0))
         .map((beach, idx) => {
         // Add a tiny deterministic jitter to separate markers at the EXACT same point
         // Using a sunflower spiral layout based on index for neat separation at high zoom

@@ -74,7 +74,7 @@ export default function GlobalMapPage() {
         const dateStr = d.toISOString().split('T')[0];
         
         // Count how many beaches have a rating >= 3 for this day
-        const scoreCount = beaches.reduce((acc, b: any) => {
+        const scoreCount = beaches.filter(Boolean).reduce((acc, b: any) => {
           const rating = b.dailyScores?.[dateStr]?.rating ?? b.rating;
           return rating >= 3 ? acc + 1 : acc;
         }, 0);
@@ -120,7 +120,7 @@ export default function GlobalMapPage() {
   }, []);
 
   const filteredBeaches = useMemo(() => {
-    return beaches.filter(beach => {
+    return beaches.filter(Boolean).filter(beach => {
       const matchesSearch = beach.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            beach.region.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesDifficulty = selectedDifficulty.length === 0 || selectedDifficulty.includes(beach.difficulty);
@@ -214,6 +214,7 @@ export default function GlobalMapPage() {
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Matches Found</span>
                         <div className="flex flex-col gap-1">
                           {beaches
+                            .filter(Boolean)
                             .filter(b => b.name.toLowerCase().includes(searchQuery.toLowerCase()))
                             .slice(0, 5)
                             .map(beach => (

@@ -49,7 +49,7 @@ export default function DateSelector({
       const date = new Date(dateStr);
       
       // Calculate how many beaches have a rating >= 3 for this day
-      const scoreCount = beaches.reduce((acc, b: any) => {
+      const scoreCount = beaches.filter(Boolean).reduce((acc, b: any) => {
         const rating = b.dailyScores?.[dateStr]?.rating ?? b.rating;
         return rating >= 3 ? acc + 1 : acc;
       }, 0);
