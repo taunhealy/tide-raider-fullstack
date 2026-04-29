@@ -41,7 +41,7 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
     const filtered = regions.filter(
       (region) =>
         region && (region.name.toLowerCase().includes(query) ||
-        (region.country?.name || "").toLowerCase().includes(query)
+        (region.country?.name || "").toLowerCase().includes(query))
     );
 
     // Group by country
