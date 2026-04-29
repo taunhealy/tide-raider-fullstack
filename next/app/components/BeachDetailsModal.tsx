@@ -140,7 +140,7 @@ export default function BeachDetailsModal({
             <DetailItem label="Difficulty" value={beach.difficulty} />
             <DetailItem
               label="Wave Size"
-              value={`${beach.swellSize.min}-${beach.swellSize.max}m`}
+              value={`${beach.swellSize?.min || 0}-${beach.swellSize?.max || 10}m`}
             />
             <DetailItem
               label="Optimal Tide"
@@ -155,21 +155,21 @@ export default function BeachDetailsModal({
           <div className="space-y-3">
             <DetailItem
               label="Optimal Wind"
-              value={beach.optimalWindDirections.join(", ")}
+              value={(beach.optimalWindDirections || []).join(", ")}
             />
             <DetailItem
               label="Optimal Swell"
-              value={`${beach.optimalSwellDirections.min}°-${beach.optimalSwellDirections.max}°`}
+              value={`${beach.optimalSwellDirections?.min || 0}°-${beach.optimalSwellDirections?.max || 360}°`}
             />
             <DetailItem
               label="Ideal Swell Period"
-              value={`${beach.idealSwellPeriod.min}-${beach.idealSwellPeriod.max}s`}
+              value={`${beach.idealSwellPeriod?.min || 0}-${beach.idealSwellPeriod?.max || 25}s`}
             />
             <DetailItem
               label="Water Temp"
-              value={`${beach.waterTemp.winter}°-${beach.waterTemp.summer}°C`}
+              value={`${beach.waterTemp?.winter || 10}°-${beach.waterTemp?.summer || 20}°C`}
             />
-            <DetailItem label="Hazards" value={beach.hazards.join(", ")} />
+            <DetailItem label="Hazards" value={(beach.hazards || []).join(", ")} />
             <DetailItem
               label="Crime Risk"
               value={

@@ -849,13 +849,13 @@ const BeachCard = memo(function BeachCard({
                       className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
-                        {[
-                          { label: "Optimal Wind", value: beach.optimalWindDirections.join(", ") },
-                          { label: "Wind Speed", value: "0-25kts" },
-                          { label: "Optimal Swell Direction", value: `${beach.optimalSwellDirections.min}° - ${beach.optimalSwellDirections.max}°` },
-                          { label: "Optimal Wave Size", value: `${beach.swellSize.min}m - ${beach.swellSize.max}m` },
-                          { label: "Optimal Swell Period", value: `${beach.idealSwellPeriod.min}s - ${beach.idealSwellPeriod.max}s` }
-                        ].map((item, idx) => (
+                          {[
+                            { label: "Optimal Wind", value: (beach.optimalWindDirections || []).join(", ") },
+                            { label: "Wind Speed", value: "0-25kts" },
+                            { label: "Optimal Swell Direction", value: `${beach.optimalSwellDirections?.min || 0}° - ${beach.optimalSwellDirections?.max || 360}°` },
+                            { label: "Optimal Wave Size", value: `${beach.swellSize?.min || 0}m - ${beach.swellSize?.max || 10}m` },
+                            { label: "Optimal Swell Period", value: `${beach.idealSwellPeriod?.min || 0}s - ${beach.idealSwellPeriod?.max || 25}s` }
+                          ].map((item, idx) => (
                           <div key={idx} className="flex flex-col">
                             <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 mb-1">
                               {item.label}
