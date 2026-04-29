@@ -42,7 +42,7 @@ export const fetchBeachesByRegion = createAsyncThunk(
       count: beaches.length,
       region,
       sampleBeach: beaches[0],
-      allBeachIds: beaches.map((b: any) => b.id).slice(0, 5), // First 5 beach IDs
+      allBeachIds: (beaches || []).filter(Boolean).map((b: any) => b.id).slice(0, 5), // First 5 beach IDs
     });
     return beaches;
   }

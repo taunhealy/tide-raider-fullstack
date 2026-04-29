@@ -168,10 +168,10 @@ function RegionalHighScoresContent({
           beachCount: data?.beaches?.length || 0,
           hasBeaches: Array.isArray(data?.beaches),
           top3Beaches:
-            data?.beaches?.slice(0, 3).map((b: any) => ({
-              name: b.name,
-              totalScore: b.totalScore,
-              latestScore: b.latestScore,
+            data?.beaches?.filter(Boolean).slice(0, 3).map((b: any) => ({
+              name: b?.name,
+              totalScore: b?.totalScore,
+              latestScore: b?.latestScore,
             })) || [],
         }
       );
@@ -199,7 +199,7 @@ function RegionalHighScoresContent({
 
   // Safely access beaches from API response with fallback to empty array
   // Type assertion needed because the API returns BeachWithScore[]
-  const apiBeaches = (data?.beaches || []) as BeachWithScore[];
+  const apiBeaches = (data?.beaches || []).filter(Boolean) as BeachWithScore[];
 
   // Debug: Log when data changes to verify different dates return different data
   useEffect(() => {

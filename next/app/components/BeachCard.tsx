@@ -96,9 +96,11 @@ const BeachCard = memo(function BeachCard({
   beach,
   score,
   forecastData,
-  isLoading,
+  isLoading = false,
   distance,
 }: BeachCardProps) {
+  if (!beach) return null;
+
   // Add enhanced debug logging
   console.log(`Rendering beach ${beach.name} with data:`, {
     score,

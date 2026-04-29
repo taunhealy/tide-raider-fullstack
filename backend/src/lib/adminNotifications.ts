@@ -122,3 +122,40 @@ export async function notifyAdminNewTrial(user: {
     return false;
   }
 }
+
+/**
+ * Send email notification to admin when a trial activation fails
+ */
+export async function notifyAdminTrialFailure(data: {
+  email: string;
+  promoCode?: string;
+  error: string;
+}) {
+  const subject = `❌ Trial Activation Failed - ${data.email}`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #dc2626;">Trial Activation Failed!</h2>
+      <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #fee2e2;">
+        <p><strong>User Email:</strong> ${data.email}</p>
+        <p><strong>Promo Code Used:</strong> ${data.promoCode || "None"}</p>
+        <p><strong>Error Message:</strong> <span style="color: #dc2626;">${data.error}</span></p>
+        <p><strong>Attempt Time:</strong> ${new Date().toLocaleString()}</p>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">
+        An attempt to activate a trial failed. You may want to check if the promo code is valid or if the user is having technical issues.
+      </p>
+    </div>
+  `;
+
+  try {
+    const sent = await sendEmail(ADMIN_EMAIL, subject, html);
+    if (sent) {
+      console.log(`✅ Admin failure notification sent for: ${data.email}`);
+    }
+    return sent;
+  } catch (error) {
+    console.error("Error sending admin failure notification:", error);
+    return false;
+  }
+}

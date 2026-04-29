@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { prisma } from "../lib/prisma";
-import { notifyAdminNewTrial } from "../lib/adminNotifications";
+import { notifyAdminNewTrial, notifyAdminTrialFailure } from "../lib/adminNotifications";
 
 const router = Router();
 
@@ -82,6 +82,15 @@ router.post(
       });
     } catch (error) {
       console.error("[subscriptions] ❌ Start trial error:", error);
+      
+      // Notify admin of failure
+      if (authReq.user?.email) {
+        notifyAdminTrialFailure({
+          email: authReq.user.email,
+          error: error instanceof Error ? error.message : "Unknown error occurred"
+        }).catch(err => console.error("Failed to send admin failure notification:", err));
+      }
+
       return res.status(500).json({
         error: "Failed to start trial",
         message:
@@ -140,6 +149,13 @@ router.post(
           console.log(`[promo-code] Available codes:`, allCodes.map(c => c.code));
         }
         
+        // Notify admin of invalid code attempt
+        notifyAdminTrialFailure({
+          email: user.email,
+          promoCode,
+          error: "Invalid promo code"
+        }).catch(err => console.error("Failed to send admin failure notification:", err));
+
         return res.status(404).json({
           error: "Invalid code",
           message: "The promo code you entered is invalid.",
@@ -265,6 +281,14 @@ router.post(
       });
     } catch (error) {
       console.error("[subscriptions] ❌ Activate trial with code error:", error);
+      
+      // Notify admin of failure
+      notifyAdminTrialFailure({
+        email: user?.email || "unknown@user.com",
+        promoCode,
+        error: error instanceof Error ? error.message : "Unknown error occurred"
+      }).catch(err => console.error("Failed to send admin failure notification:", err));
+
       return res.status(500).json({
         error: "Failed to activate trial",
         message:

@@ -28,6 +28,8 @@ interface AIReportModalProps {
 }
 
 export default function AIReportModal({ beach, isOpen, onClose, date, reportId }: AIReportModalProps) {
+  if (!beach && isOpen) return null;
+
   const { credits, isLoading: isCreditsLoading, isSubscribed } = useSubscriptionStatus();
   const { data: session, status: authStatus } = useBackendAuth();
   const [activeReportId, setActiveReportId] = useState<string | undefined>(reportId);

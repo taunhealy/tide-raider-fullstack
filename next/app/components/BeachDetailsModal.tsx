@@ -45,7 +45,8 @@ const truncateText = (text: string, limit: number) => {
   return text;
 };
 
-const formatWaveType = (waveType: string) => {
+const formatWaveType = (waveType: string | undefined) => {
+  if (!waveType) return "Unknown";
   return waveType
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.toLowerCase().slice(1))
@@ -59,6 +60,8 @@ export default function BeachDetailsModal({
   isSubscribed,
   onSubscribe,
 }: BeachDetailsModalProps) {
+  if (!beach) return null;
+
   // Add this useEffect to debug
   React.useEffect(() => {
     console.log("BeachDetailsModal isOpen changed to:", isOpen);
@@ -273,11 +276,11 @@ function DetailItem({
   value: React.ReactNode;
 }) {
   return (
-    <div mb-4>
-      <span className="text-gray-500 text-sm uppercase tracking-tight font-primary">
+    <div className="mb-4">
+      <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest font-primary">
         {label}
       </span>
-      <div className="text-gray-900 font-medium font-primary mt-1">{value}</div>
+      <div className="text-gray-900 font-bold font-primary mt-0.5 text-sm">{value}</div>
     </div>
   );
 }

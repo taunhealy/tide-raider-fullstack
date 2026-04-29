@@ -241,7 +241,7 @@ export default function PricingPage() {
                 Membership Plans
               </h1>
               <p className="text-sm text-gray-500 font-medium mt-1">
-                Unlock automated notifications and premium surf intelligence.
+                Unlock automated notifications and premium surf intelligence. Start with a 7-day free trial.
               </p>
             </div>
           </div>
@@ -255,8 +255,13 @@ export default function PricingPage() {
                      <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white">
                         <Waves className="w-6 h-6" />
                      </div>
-                     <div className="bg-white border border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-normal tracking-normal text-black">
-                        Unlimited Alerts
+                     <div className="flex flex-col items-end gap-2">
+                        <div className="bg-white border border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-normal tracking-normal text-black">
+                           Unlimited Alerts
+                        </div>
+                        <div className="bg-amber-100 border border-amber-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-bold tracking-tight text-amber-700">
+                           7-DAY FREE TRIAL
+                        </div>
                      </div>
                   </div>
                   <h2 className="text-[24px] leading-[32px] font-bold text-black mb-2">Full Membership</h2>

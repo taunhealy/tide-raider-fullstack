@@ -368,7 +368,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                 <EmptyState message="No breaks found in this region, change filters?" />
               ) : (
                 <div>
-                  {currentBeaches.map((beach: Beach) => {
+                  {currentBeaches.filter(Boolean).map((beach: Beach) => {
                     const score = beachScores[beach.id]?.score ?? 0;
                     const beachForecastData = forecast;
                     const hasScore = beach.id in beachScores;
