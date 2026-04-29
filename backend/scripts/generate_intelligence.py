@@ -58,14 +58,15 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
             "You are a Precision Surf Intelligence AI assigned to a specific maritime asset in the Western Cape. "
             "MISSION CRITICAL: You must only report on the beach break specified in the USER PROMPT. Do not include data for neighboring beaches in the same sector. "
             
-            "Tactical Reporting Rules:\n"
-            "1. IDENTIFIER: Every report must start with the exact phrase: 'TACTICAL BRIEFING: [BEACH NAME]'.\n"
-            "2. ASSET ISOLATION: Focus strictly on the unique topology and requirements of this specific spot. If the Spot DNA says it needs a Mid-Tide, do not suggest Low-Tide even if nearby spots use it.\n"
-            "3. VERIFIED RATINGS: You must assign Star Ratings (⭐⭐⭐⭐⭐/5) to the 2-3 best 'Strike Windows'. These MUST correlate with 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐). Do not invent stars; use the algorithm score provided.\n"
-            "4. TEMPORAL INTEGRITY: You must ONLY report on dates and windows provided in the 'Provided Forecast Data'. Do not mention any dates or operational windows that are not present in the context. Do not use external knowledge of the spot's forecast.\n"
-            "5. TONE: {persona}. (Pirate = Grit, MC = Flow, Bro = Stoke, Strategist = Tactical).\n\n"
+            "Strategic Reporting Protocols:\n"
+            "1. IDENTIFIER: Every report must start with: 'TACTICAL BRIEFING: [BEACH NAME]'.\n"
+            "2. SPORT DNA: You are generating this for the {persona} category. Adjust your physics engine accordingly. (e.g., Foiling cares about period/energy; Kiting cares about wind speed/gusts; Surfing cares about face integrity).\n"
+            "3. HISTORICAL CORRELATION: If 'HISTORICAL MEMORY' is provided, cross-reference it. If a user logged a 'shallow sandbar' yesterday, warn that today's high-period swell may cause heavy close-outs.\n"
+            "4. VERIFIED RATINGS: Assign Star Ratings (⭐⭐⭐⭐⭐/5) based on 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐).\n"
+            "5. DEDUCTION REASONING: Use the 'Deductions' provided in the context to explain why a rating might be suppressed (e.g., 'Rating suppressed due to cross-shore wind component').\n"
+            "6. TONE: {persona}.\n\n"
             
-            "Format: 3-4 specialized maritime paragraphs. No markdown. No bolding. No hashtags. Absolute precision required."
+            "Format: 3-4 specialized maritime paragraphs. No markdown. No bolding. No hashtags. Absolute technical precision required."
         )
         user_prompt = (
             f"Generate a {persona} {duration_label} Strategic Outlook EXCLUSIVELY for the following asset:\n"

@@ -284,11 +284,13 @@ model BeachSafariConnection {
 
 enum SportCategory {
   GENERAL
+  SURFING
+  FOILING
+  KITESURFING
   LOGGING
   SURF_FOILING
   WING_FOILING
   DOWNWIND_FOILING
-  KITESURFING
 }
 
 model BeachConditionProfile {
@@ -340,10 +342,11 @@ model IntelligenceReport {
   endDate     DateTime? @db.Date // End range for multi-day reports
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  category    String   @default("GENERAL")
   beach       Beach    @relation(fields: [beachId], references: [id])
   user        User?    @relation(fields: [userId], references: [id])
 
-  @@unique([beachId, userId, date, persona, duration], name: "intel_history_unique")
+  @@unique([beachId, userId, date, persona, duration, category], name: "intel_history_unique")
   @@index([beachId, date])
   @@index([userId])
 }

@@ -21,6 +21,7 @@ export default function FastForecastPage() {
   
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [selectedDays, setSelectedDays] = useState(7);
+  const [selectedSport, setSelectedSport] = useState("SURFING");
   const [isGenerating, setIsGenerating] = useState(false);
   const [report, setReport] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -81,7 +82,8 @@ export default function FastForecastPage() {
           beachId: selectedBeach.id,
           date: new Date().toISOString().split("T")[0],
           persona: "ADVANCED",
-          days: selectedDays
+          days: selectedDays,
+          category: selectedSport
         }),
       });
 
@@ -220,6 +222,32 @@ export default function FastForecastPage() {
                   selectedBeachId={selectedBeach?.id}
                 />
               </div>
+
+            {/* Specialization Options */}
+            <div className="space-y-4">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Specialization</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Surfing", value: "SURFING", icon: Waves },
+                  { label: "Foiling", value: "FOILING", icon: Sparkles },
+                  { label: "Kiting", value: "KITESURFING", icon: Zap }
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSelectedSport(opt.value)}
+                    className={cn(
+                      "py-4 px-2 rounded-2xl border text-[10px] font-bold uppercase tracking-widest transition-all flex flex-col items-center gap-2",
+                      selectedSport === opt.value
+                        ? "bg-slate-900 border-slate-900 text-white shadow-xl scale-[1.02]"
+                        : "bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:bg-slate-50"
+                    )}
+                  >
+                    <opt.icon className={cn("w-5 h-5", selectedSport === opt.value ? "text-white" : "text-slate-300")} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Duration Options */}
             <div className="space-y-4">

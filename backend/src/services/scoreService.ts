@@ -46,7 +46,7 @@ export class ScoreService {
    * Calculate score for a single beach
    */
   static calculateScore(
-    beach: any, // Basic beach properties
+    beach: any,
     profile: any, // BeachConditionProfile
     conditions: Pick<
       Forecast,
@@ -56,8 +56,9 @@ export class ScoreService {
       | "swellDirection"
       | "swellPeriod"
     >
-  ): number | null {
+  ): { score: number; deductions: string[] } | null {
     try {
+      const deductions: string[] = [];
       const parsedProfile = {
         ...profile,
         optimalSwellDirections:
@@ -72,17 +73,22 @@ export class ScoreService {
           typeof profile.idealSwellPeriod === "string"
             ? JSON.parse(profile.idealSwellPeriod)
             : profile.idealSwellPeriod,
+        optimalWindDirections: 
+          Array.isArray(profile.optimalWindDirections) 
+            ? profile.optimalWindDirections 
+            : typeof profile.optimalWindDirections === "string"
+              ? JSON.parse(profile.optimalWindDirections)
+              : []
       };
 
       let score = 5;
-      const deductions: any[] = [];
 
       // Wind direction scoring
       const windCardinal = this.degreesToCardinal(conditions.windDirection);
 
-      if (!profile.optimalWindDirections.includes(windCardinal)) {
-        const minAngleDiff = profile.optimalWindDirections.reduce(
-          (minDiff, optimalDir) => {
+      if (!parsedProfile.optimalWindDirections.includes(windCardinal)) {
+        const minAngleDiff = parsedProfile.optimalWindDirections.reduce(
+          (minDiff: number, optimalDir: string) => {
             const optimalDegrees = this.cardinalToDegreesMap[optimalDir];
             const diff = Math.abs(conditions.windDirection - optimalDegrees);
             const angleDiff = Math.min(diff, 360 - diff);
@@ -91,15 +97,18 @@ export class ScoreService {
           180
         );
 
+        let penalty = 0;
         if (minAngleDiff <= 22.5) {
-          score -= 0.5; // Fixed: was adding 0.5, should subtract
+          penalty = 0.5;
         } else if (minAngleDiff <= 45) {
-          score -= 1;
+          penalty = 1;
         } else if (minAngleDiff <= 90) {
-          score -= 2;
+          penalty = 2;
         } else {
-          score -= 3;
+          penalty = 3;
         }
+        score -= penalty;
+        deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°)`);
       }
 
       // Wind strength scoring - Only penalize if NOT optimal wind (onshore/cross)
@@ -129,13 +138,16 @@ export class ScoreService {
           Math.abs(conditions.swellHeight - parsedProfile.swellSize.min),
           Math.abs(conditions.swellHeight - parsedProfile.swellSize.max)
         );
+        let sizePenalty = 0;
         if (heightDiff <= 0.5) {
-          score -= 0.5;
+          sizePenalty = 0.5;
         } else if (heightDiff <= 1) {
-          score -= 1;
+          sizePenalty = 1;
         } else {
-          score -= 3;
+          sizePenalty = 3;
         }
+        score -= sizePenalty;
+        deductions.push(`Swell height ${conditions.swellHeight}m is ${conditions.swellHeight < parsedProfile.swellSize.min ? "too small" : "too large"} for this spot (Optimal: ${parsedProfile.swellSize.min}-${parsedProfile.swellSize.max}m).`);
       }
 
       // Swell direction scoring
@@ -157,13 +169,16 @@ export class ScoreService {
         const maxDiffWrapped = Math.min(maxDiff, 360 - maxDiff);
         const swellDirDiff = Math.min(minDiffWrapped, maxDiffWrapped);
 
+        let dirPenalty = 0;
         if (swellDirDiff <= 20) {
-          score -= 1;
+          dirPenalty = 1;
         } else if (swellDirDiff <= 45) {
-          score -= 2;
+          dirPenalty = 2;
         } else {
-          score -= 3;
+          dirPenalty = 3;
         }
+        score -= dirPenalty;
+        deductions.push(`Swell direction ${conditions.swellDirection}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
       }
 
       // Swell period scoring - Wave type aware
@@ -195,10 +210,12 @@ export class ScoreService {
       }
 
       const finalScore = Math.min(5, Math.max(0, score));
-      return Number(finalScore.toFixed(1));
+      return { 
+        score: Number(finalScore.toFixed(1)), 
+        deductions 
+      };
     } catch (error) {
-      console.error("Error calculating beach score:", error);
-      return 0;
+      return { score: 0, deductions: ["Internal calculation error"] };
     }
   }
 
@@ -234,10 +251,11 @@ export class ScoreService {
         
         // If a beach has no profiles, we skip it or could fallback to a dummy GENERAL profile
         profiles.forEach((profile: any) => {
-          const calculatedScore = this.calculateScore(beach, profile, forecastData);
+          const result = this.calculateScore(beach, profile, forecastData);
+          const calculatedScore = result?.score ?? 0;
+          const deductions = result?.deductions ?? [];
 
-          const integerScore =
-            calculatedScore === null ? 0 : Math.round(calculatedScore * 2);
+          const integerScore = Math.round(calculatedScore * 2);
 
           const scoreOutOfFive = Math.floor(integerScore / 2);
           const starRating = Math.max(1, Math.min(5, scoreOutOfFive));
@@ -258,6 +276,7 @@ export class ScoreService {
               swellDirection: forecastData.swellDirection,
               swellPeriod: forecastData.swellPeriod,
               tide: (forecastData as any).tide || "",
+              deductions: deductions,
             },
           });
         });

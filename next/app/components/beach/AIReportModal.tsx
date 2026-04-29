@@ -46,6 +46,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const [isCopied, setIsCopied] = useState(false);
 
   const [selectedDays, setSelectedDays] = useState(7);
+  const [selectedSport, setSelectedSport] = useState("SURFING");
   const creditCost = selectedDays <= 1 ? 1 : 4;
 
   // Sync prop changes and user profile data to internal state
@@ -202,7 +203,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           beachId: beach.id,
           date,
           persona: "BRO",
-          days: selectedDays
+          days: selectedDays,
+          category: selectedSport
         }),
       });
 
@@ -401,6 +403,31 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               </div>
 
               <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Specialization</label>
+                  <div className="flex gap-2">
+                    {[
+                      { label: "Surfing", value: "SURFING", icon: Waves },
+                      { label: "Foiling", value: "FOILING", icon: Sparkles },
+                      { label: "Kiting", value: "KITESURFING", icon: Zap }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setSelectedSport(opt.value)}
+                        className={cn(
+                          "flex-1 py-3 px-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all flex flex-col items-center gap-1.5",
+                          selectedSport === opt.value
+                            ? "bg-black border-black text-white shadow-lg scale-[1.02]"
+                            : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                        )}
+                      >
+                        <opt.icon className={cn("w-4 h-4", selectedSport === opt.value ? "text-white" : "text-gray-300")} />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Select Duration</label>
                   <div className="flex gap-2">

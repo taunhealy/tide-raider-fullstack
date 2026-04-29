@@ -39,7 +39,7 @@ router.get("/report", async (req, res) => {
  */
 router.post("/weekly", authenticateToken, async (req, res: Response) => {
   const authReq = req as AuthRequest;
-  const { beachId, date, persona, days = 7 } = req.body;
+  const { beachId, date, persona, days = 7, category = "GENERAL" } = req.body;
   const userId = authReq.user?.id;
 
   if (!beachId || !date || !userId) {
@@ -52,7 +52,8 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
       date,
       userId,
       parseInt(days as string),
-      persona
+      persona,
+      category
     );
 
     res.json(result);

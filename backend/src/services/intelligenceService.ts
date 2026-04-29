@@ -100,7 +100,7 @@ export class IntelligenceService {
     }
   }
   
-  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string): Promise<{ report: string, presenterName: string, creditsRemaining: number }> {
+  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string, category: string = "GENERAL"): Promise<{ report: string, presenterName: string, creditsRemaining: number }> {
     console.log(`[IntelligenceService] 📋 Starting report generation: Beach=${beachId}, User=${userId}, Days=${days}, Persona=${personaOverride || 'AUTO'}`);
     
     // 1. Authenticate user and check credits
@@ -158,7 +158,23 @@ export class IntelligenceService {
     }
 
     try {
-      // 4. Generate Report
+      // 4. Fetch Historical Memory (Last 3 User Raid Logs)
+      const recentLogs = await prisma.logEntry.findMany({
+        where: { beachId },
+        orderBy: { date: 'desc' },
+        take: 3,
+        select: {
+          date: true,
+          surferRating: true,
+          comments: true
+        }
+      });
+
+      const historicalMemory = recentLogs.map(l => 
+        `[${l.date.toISOString().split('T')[0]}] User Rating: ${l.surferRating}/5. Notes: ${l.comments || 'No comment'}`
+      ).join('\n');
+
+      // 5. Generate Report
 
       const forecasts = await prisma.forecast.findMany({
         where: {
@@ -186,13 +202,6 @@ export class IntelligenceService {
         };
       }
 
-      const context = forecasts.map(f => {
-         const dateObj = f.date instanceof Date ? f.date : new Date(f.date);
-         const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-         const score = 0; // Score calculation requires profile data not available in this context
-         return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${score.toFixed(1)}/10`;
-      }).join("\n");
-
       const { getPersonaByCycle, AI_PERSONAS } = await import("../constants/intelligence");
       const cyclePersona = getPersonaByCycle(new Date().getDate());
       
@@ -204,10 +213,37 @@ export class IntelligenceService {
       
       console.log(`[IntelligenceService] 🎭 Using persona: ${activePersona.name} (${activePersona.id})`);
 
-      // Fetch the GENERAL condition profile to build spot rules
-      const conditionProfile = await (prisma as any).beachConditionProfile.findFirst({
+      // Fetch the specific condition profile for the requested sport category
+      const sportCategory = category.toUpperCase() as any;
+      const conditionProfile = await (prisma as any).beachConditionProfile.findUnique({
+        where: {
+          beachId_category: {
+            beachId: beachId,
+            category: sportCategory
+          }
+        }
+      }) || await (prisma as any).beachConditionProfile.findFirst({
         where: { beachId: beachRef.id, category: "GENERAL" }
       });
+
+      const context = forecasts.map(f => {
+         const dateObj = f.date instanceof Date ? f.date : new Date(f.date);
+         const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+         
+         // Calculate real score if profile is available
+         let scoreValue = 0;
+         let deductions: string[] = [];
+         if (conditionProfile) {
+           const result = ScoreService.calculateScore(beachRef, conditionProfile, f);
+           scoreValue = result?.score || 0;
+           deductions = result?.deductions || [];
+         }
+         
+         const scoreDisplay = (scoreValue * 2).toFixed(1); // Scale to 10
+         const deductionStr = deductions.length > 0 ? ` (Deductions: ${deductions.join(', ')})` : "";
+
+         return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${scoreDisplay}/10${deductionStr}`;
+      }).join("\n");
 
       // Construct Spot Rules to guide the AI with specific expertise
       const optimalWind = Array.isArray(conditionProfile?.optimalWindDirections) 
@@ -236,11 +272,11 @@ export class IntelligenceService {
         forecasts[0].swellHeight, 
         forecasts[0].swellPeriod, 
         forecasts[0].swellDirection.toString(), 
-        0, 
         persona, 
-        `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
+        `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\nSPORT CATEGORY: ${category}\n\nHISTORICAL MEMORY (User Logs):\n${historicalMemory || "No recent intelligence signals from this sector."}\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
         days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly"
       ).catch(err => {
+
         console.error(`[IntelligenceService] ❌ Python generation failed:`, err);
         throw err;
       });
@@ -264,7 +300,8 @@ export class IntelligenceService {
             userId,
             date: startDate,
             persona,
-            duration: days
+            duration: days,
+            category
           }
         },
         update: { 
@@ -278,7 +315,8 @@ export class IntelligenceService {
           persona,
           content: finalReport,
           duration: days,
-          endDate: endDate
+          endDate: endDate,
+          category
         }
       });
 

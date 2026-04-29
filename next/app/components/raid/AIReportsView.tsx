@@ -18,6 +18,7 @@ interface IntelligenceReport {
     name: string;
     id: string;
   };
+  category: string;
 }
 
 export default function AIReportsView() {
@@ -109,6 +110,15 @@ export default function AIReportsView() {
                       <MapPin className="w-4 h-4 text-brand-3" />
                     </div>
                     <span className="text-sm font-black text-black tracking-tight">{report.beach.name}</span>
+                    <span className={cn(
+                      "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border",
+                      report.category === "FOILING" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                      report.category === "KITESURFING" ? "bg-blue-50 text-blue-600 border-blue-100" :
+                      "bg-brand-3/10 text-brand-3 border-brand-3/20"
+                    )}>
+                      {report.category === "KITESURFING" ? "KITE" : 
+                       report.category === "FOILING" ? "FOIL" : "SURF"}
+                    </span>
                   </div>
                 </td>
 
