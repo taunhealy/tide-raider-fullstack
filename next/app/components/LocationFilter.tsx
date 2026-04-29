@@ -110,7 +110,8 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
               </h3>
               <div className="flex flex-col gap-1 ml-1 border-l border-gray-100 pl-3">
                 {group.regions.map((region) => {
-                  const isSelected = region.id.toLowerCase() === filters.regionId;
+                  if (!region) return null;
+                  const isSelected = region?.id?.toLowerCase() === filters.regionId;
 
                   return (
                     <RegionFilterButton

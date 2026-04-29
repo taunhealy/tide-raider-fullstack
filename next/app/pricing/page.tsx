@@ -241,7 +241,7 @@ export default function PricingPage() {
                 Membership Plans
               </h1>
               <p className="text-sm text-gray-500 font-medium mt-1">
-                Unlock automated notifications and premium surf intelligence. Start with a 7-day free trial.
+                Unlock automated notifications and premium surf intelligence. Start with a 20-day free trial.
               </p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function PricingPage() {
                            Unlimited Alerts
                         </div>
                         <div className="bg-amber-100 border border-amber-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-bold tracking-tight text-amber-700">
-                           7-DAY FREE TRIAL
+                           20-DAY FREE TRIAL
                         </div>
                      </div>
                   </div>

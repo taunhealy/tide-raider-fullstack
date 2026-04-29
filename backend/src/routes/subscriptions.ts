@@ -38,9 +38,9 @@ router.post(
         });
       }
 
-      // Calculate trial end date (7 days from now)
+      // Calculate trial end date (20 days from now)
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      trialEndDate.setDate(trialEndDate.getDate() + 20);
 
       // Update user with trial information
       const updatedUser = await prisma.user.update({

@@ -126,7 +126,7 @@ export const trialStartedTemplate = (userName: string) => emailLayout(
   "Welcome to the Tactical Feed 🌊",
   `
   <p class="text">Hey ${userName},</p>
-  <p class="text">Your 7-day tactical trial has been activated. You now have full access to our premium maritime intelligence pipeline, including:</p>
+  <p class="text">Your 20-day tactical trial has been activated. You now have full access to our premium maritime intelligence pipeline, including:</p>
   <div class="highlight-box">
     <ul style="list-style-type: none; padding: 0;">
       <li style="margin-bottom: 10px;">💎 <strong>Hidden Gems:</strong> Uncover the best uncrowded surf breaks.</li>
@@ -134,7 +134,7 @@ export const trialStartedTemplate = (userName: string) => emailLayout(
       <li style="margin-bottom: 10px;">⚡ <strong>Tactical Alerts:</strong> Get notified the moment your ideal conditions hit the water.</li>
     </ul>
   </div>
-  <p class="text">The next 7 days are about getting you into the best waves of your life.</p>
+  <p class="text">The next 20 days are about getting you into the best waves of your life.</p>
   <div class="button-container">
     <a href="https://www.tideraider.com/raid" class="button">Access Tactical Feed</a>
   </div>
@@ -148,7 +148,7 @@ export const trialExpiredTemplate = (userName: string) => emailLayout(
   "Your Tactical Trial has Concluded ⚓",
   `
   <p class="text">Hey ${userName},</p>
-  <p class="text">Your 1-week tactical trial has come to an end. We hope you've enjoyed having the edge on the water.</p>
+  <p class="text">Your 20-day tactical trial has come to an end. We hope you've enjoyed having the edge on the water.</p>
   <div class="highlight-box">
     <p style="font-weight: 700; color: #000000; margin-bottom: 8px;">Don't lose your advantage:</p>
     <p class="text" style="font-size: 14px; margin-bottom: 0;">Upgrade to a full subscription now to maintain access to Hidden Gems, Tactical Alerts, and the full Maritime Intelligence pipeline.</p>

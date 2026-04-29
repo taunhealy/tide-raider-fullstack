@@ -59,6 +59,7 @@ export default function RecentRaidLogs() {
 
   const entries: LogEntry[] = data?.entries || [];
   const recentEntries = entries
+    .filter((e) => e && e.date)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
 

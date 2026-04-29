@@ -351,10 +351,10 @@ export default function BlogPostsSidebar({
       </div>
 
       <div className="space-y-6">
-        {recentPosts.map((post: Post) => (
+        {recentPosts.filter(Boolean).map((post: Post) => (
           <Link
-            key={typeof post.slug === "string" ? post.slug : post.slug.current}
-            href={`/blog/${typeof post.slug === "string" ? post.slug : post.slug.current}`}
+            key={post?.slug ? (typeof post.slug === "string" ? post.slug : post.slug.current) : Math.random().toString()}
+            href={post?.slug ? `/blog/${typeof post.slug === "string" ? post.slug : post.slug.current}` : "#"}
             className="group block"
           >
             <article className="flex gap-4">
@@ -378,8 +378,9 @@ export default function BlogPostsSidebar({
                 {post.countries && post.countries.length > 0 ? (
                   <div className="mt-1 text-main text-[12px] text-[var(--color-text-tertiary)] font-primary">
                     {dbCountries
-                      ?.filter((c: Country) => post.countries.includes(c.id))
-                      .map((c: Country) => c.name)
+                      ?.filter((c: Country) => c && post.countries?.includes(c.id))
+                      .map((c: Country) => c?.name)
+                      .filter(Boolean)
                       .join(" • ") || "Travel Post"}
                   </div>
                 ) : post.trip ? (

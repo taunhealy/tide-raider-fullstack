@@ -78,10 +78,10 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
     if (beachId && reportId && data?.beaches) {
       const targetBeach = data.beaches.filter(Boolean).find((b: Beach) => 
-        b.id === beachId || 
-        b.name.toLowerCase() === beachId.toLowerCase() ||
-        b.id.toLowerCase() === beachId.toLowerCase() ||
-        b.name.toLowerCase().includes(beachId.toLowerCase())
+        b?.id === beachId || 
+        b?.name?.toLowerCase() === beachId.toLowerCase() ||
+        b?.id?.toLowerCase() === beachId.toLowerCase() ||
+        b?.name?.toLowerCase().includes(beachId.toLowerCase())
       );
       
       if (targetBeach && !isDeepLinkModalOpen) {

@@ -191,9 +191,9 @@ export default function BeachDetailsModal({
                 <span
                   title={
                     beach.sharkAttack?.hasAttack
-                      ? beach.sharkAttack.incidents
+                      ? (beach.sharkAttack.incidents || [])
                           ?.filter(Boolean)
-                          .map((i) => `${i.date}: ${i.outcome} - ${i.details}`)
+                          .map((i) => `${i?.date || 'N/A'}: ${i?.outcome || 'N/A'} - ${i?.details || 'N/A'}`)
                           .join("\n")
                       : "No shark attacks reported"
                   }
@@ -221,7 +221,10 @@ export default function BeachDetailsModal({
           <div className="mt-2 pt-4 border-t border-gray-200">
             <h4 className="font-medium text-base mb-3 font-primary">Videos</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {(beach.videos || []).filter(Boolean).map((video, index) => (
+              {(beach.videos || []).filter(Boolean).map((video, index) => {
+                if (!video?.url) return null;
+                const youtubeId = video.url.includes("watch?v=") ? video.url.split("watch?v=")[1] : video.url.split("/").pop();
+                return (
                 <div
                   key={index}
                   className="relative aspect-video w-full min-h-[180px]"
@@ -229,10 +232,10 @@ export default function BeachDetailsModal({
                   <Image
                     src={
                       video.platform === "youtube"
-                        ? `https://img.youtube.com/vi/${video.url.split("watch?v=")[1]}/hqdefault.jpg`
+                        ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`
                         : `https://vimeo.com/api/oembed.json?url=${video.url}&width=640`
                     }
-                    alt={video.title}
+                    alt={video.title || "Beach video"}
                     fill
                     className="object-cover rounded-lg"
                     sizes="(max-width: 768px) 50vw, 33vw"
@@ -260,7 +263,8 @@ export default function BeachDetailsModal({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
