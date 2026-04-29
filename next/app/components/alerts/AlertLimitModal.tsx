@@ -99,27 +99,7 @@ export function AlertLimitModal({ isOpen, onClose }: AlertLimitModalProps) {
               </div>
             </div>
 
-            <div className="flex items-start">
-              <svg
-                className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <div>
-                <p className="font-semibold text-gray-900">Priority Support</p>
-                <p className="text-sm text-gray-600">
-                  Get help when you need it most
-                </p>
-              </div>
-            </div>
+
           </div>
 
           <div className="bg-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)]/20 rounded-lg p-4">

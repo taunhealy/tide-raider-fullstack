@@ -34,7 +34,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="container mx-auto px-4 max-w-6xl py-10">
+      <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
         {/* Header Section - Matching Alerts Page */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
@@ -91,7 +91,7 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="lg:col-span-2">
               <div className="bg-white/80 backdrop-blur-md p-8 md:p-10 rounded-3xl border border-white shadow-sm">
-                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-8">
+                <h2 className="text-2xl font-black text-black uppercase tracking-tight mb-8">
                   Send a Message
                 </h2>
                 

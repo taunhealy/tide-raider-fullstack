@@ -39,15 +39,15 @@ export default function RecentRaidLogs() {
   if (isLoading) {
     return (
       <div className="bg-[var(--color-bg-primary)] p-6 rounded-lg shadow-sm border border-gray-200">
-        <Skeleton className="h-7 w-32 mb-4 bg-gray-200/50" />
+        <Skeleton className="h-7 w-32 mb-4" />
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-5 w-3/4 bg-gray-200/50" />
-              <Skeleton className="h-4 w-1/2 bg-gray-200/50" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
               <div className="flex gap-1">
                 {[...Array(5)].map((_, j) => (
-                  <Skeleton key={j} className="h-4 w-4 bg-gray-200/50" />
+                  <Skeleton key={j} className="h-4 w-4" />
                 ))}
               </div>
             </div>
@@ -94,8 +94,8 @@ export default function RecentRaidLogs() {
             >
               {/* Gated entry indicator - subtle lock in corner */}
               {isGatedGem && (
-                <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-1.5 shadow-lg border border-amber-400">
-                  <LockIcon className="w-2.5 h-2.5 text-white" />
+                <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-2 shadow-lg border border-amber-400 flex items-center justify-center">
+                  <LockIcon className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
             <article className="space-y-3">
@@ -103,15 +103,17 @@ export default function RecentRaidLogs() {
                 <div className="flex-1 min-w-0">
                   <h4 className="heading-7 mb-1 truncate group-hover:text-[var(--color-text-secondary)] transition-colors font-primary">
                     {isGatedGem ? (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
-                        <LockIcon className="w-2.5 h-2.5 mr-1" />
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[11px] font-black uppercase tracking-widest border border-amber-500/20">
+                        <LockIcon className="w-3.5 h-3.5 mr-1.5" />
                         Hidden Gem
                       </span>
                     ) : (
-                      entry.beach?.name || entry.beachName || "Unnamed Beach"
+                      <span className="text-[11px] font-black uppercase tracking-widest text-gray-900">
+                        {entry.beach?.name || entry.beachName || "Unnamed Beach"}
+                      </span>
                     )}
                     {isHiddenGemEntry && !isGatedGem && (
-                      <span className="text-amber-500" title="Hidden Gem">💎</span>
+                      <span className="text-amber-500 text-[11px]" title="Hidden Gem">💎</span>
                     )}
                   </h4>
                   {!isGatedGem && entry.region && (
@@ -131,7 +133,7 @@ export default function RecentRaidLogs() {
                 </div>
                 <div className="flex-shrink-0">
                   <BlueStarRating
-                    score={entry.surferRating ?? 0}
+                    score={Number(entry.surferRating || 0)}
                     outOfFive={true}
                   />
                 </div>

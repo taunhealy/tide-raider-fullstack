@@ -350,7 +350,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       </h2>
                       <div className="flex items-center gap-3">
                         <BlueStarRating
-                          score={entry.surferRating || 0}
+                          score={Number(entry.surferRating || 0)}
                           outOfFive={true}
                         />
                       </div>

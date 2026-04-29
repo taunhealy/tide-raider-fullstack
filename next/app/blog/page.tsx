@@ -118,7 +118,7 @@ export default async function BlogPage() {
               <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Community & News</span>
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Blog

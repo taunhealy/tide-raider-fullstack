@@ -881,7 +881,7 @@ export default function RaidLogTable({
         {/* Card View - Grid Layout */}
         {viewMode === "card" && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-fr">
                 {currentItems.map((entry) => {
                   const isOwner = session?.user?.id && entry.userId && session.user.id === entry.userId;
                   // Harden isHiddenGemEntry check to handle cases where beach relationship might be missing or stale
@@ -907,9 +907,54 @@ export default function RaidLogTable({
                   onClick={isGatedGem ? () => router.push("/pricing") : undefined}
                 >
                   {/* Hidden Gem lock overlay */}
-                  {isGatedGem && (
-                    <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-1.5 shadow-lg border border-amber-400">
-                      <LockIcon className="w-2.5 h-2.5 text-white" />
+                  {isGatedGem ? (
+                    <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-2 shadow-lg border border-amber-400 flex items-center justify-center">
+                      <LockIcon className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  ) : (
+                    <div className="absolute top-2 right-2 z-20">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAlertClick(entry);
+                              }}
+                              className={cn(
+                                "p-2 rounded-full shadow-lg border transition-all flex items-center justify-center",
+                                entry.hasAlert 
+                                  ? "bg-[var(--color-tertiary)] border-[var(--color-tertiary)]" 
+                                  : "bg-[var(--color-tertiary)]/10 border-[var(--color-tertiary)]/20"
+                              )}
+                              aria-label="Set alert for this log entry"
+                            >
+                              <Bell
+                                className={cn(
+                                  "w-3.5 h-3.5 cursor-pointer",
+                                  entry.hasAlert
+                                    ? "text-white fill-white"
+                                    : "text-[var(--color-tertiary)] fill-none"
+                                )}
+                              />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p className="text-sm">
+                              {getGatedTooltip(
+                                getBellTooltipText(
+                                  entry,
+                                  hasAccess,
+                                  isSubscribed ||
+                                    subscriptionDetails?.hasActiveTrial,
+                                  subscriptionDetails?.hasActiveTrial
+                                )
+                              )}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   )}
                   <div className="flex justify-between items-start gap-2">
@@ -922,25 +967,27 @@ export default function RaidLogTable({
                               className="block hover:opacity-75 transition-opacity"
                               onClick={(e) => isGatedGem && e.stopPropagation()}
                             >
-                              <h3 className="text-base font-medium font-primary text-gray-900 mb-1 flex items-center gap-2">
+                              <h3 className="h-5 mb-2 flex items-center gap-2">
                                 {isGatedGem ? (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
-                                    <LockIcon className="w-3 h-3 mr-1" />
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[11px] font-black uppercase tracking-widest border border-amber-500/20">
+                                    <LockIcon className="w-3.5 h-3.5 mr-1.5" />
                                     Hidden Gem
                                   </span>
                                 ) : (
-                                  entry.beach?.name || entry.beachName || "No beach specified"
+                                  <span className="text-[11px] font-black uppercase tracking-widest text-gray-900 truncate">
+                                    {entry.beach?.name || entry.beachName || "No beach specified"}
+                                  </span>
                                 )}
                                 {isHiddenGemEntry && !isGatedGem && (
-                                  <span className="text-amber-500" title="Hidden Gem">💎</span>
+                                  <span className="text-amber-500 text-[11px]" title="Hidden Gem">💎</span>
                                 )}
                               </h3>
                               <div className="space-y-1">
-                                <p className="text-sm text-gray-500 font-primary">
-                                  📖 {isGatedGem ? "---" : format(new Date(entry.date), "MMM d, yyyy")}
+                                <p className="text-[11px] text-gray-500 font-primary flex items-center gap-1.5">
+                                  <span className="opacity-70">📖</span> {isGatedGem ? "---" : format(new Date(entry.date), "MMM d, yyyy")}
                                 </p>
-                                <p className="text-sm text-gray-500 font-primary">
-                                  📍 {isGatedGem ? "---" : (entry.region?.name ?? "No region")}
+                                <p className="text-[11px] text-gray-500 font-primary flex items-center gap-1.5">
+                                  <span className="opacity-70">📍</span> {isGatedGem ? "---" : (entry.region?.name ?? "No region")}
                                 </p>
                               </div>
                             </Link>
@@ -954,121 +1001,79 @@ export default function RaidLogTable({
                       </TooltipProvider>
                     </div>
 
-                    {!isGatedGem && (
-                      <div className="flex gap-2">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAlertClick(entry);
-                                }}
-                                className={cn(
-                                  "p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors",
-                                  "text-gray-500 hover:text-[var(--color-alert-icon-rating)]"
-                                )}
-                                aria-label="Set alert for this log entry"
-                              >
-                                <Bell
-                                  className={cn(
-                                    "w-5 h-5 cursor-pointer",
-                                    entry.hasAlert
-                                      ? entry.isMyAlert
-                                        ? "text-[var(--color-alert-icon-rating)] fill-[var(--color-alert-icon-rating)]"
-                                        : "text-[var(--color-alert-icon-rating)] fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                      : "text-gray-500 fill-none hover:text-[var(--color-alert-icon-rating)]"
-                                  )}
-                                />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-sm">
-                                {getGatedTooltip(
-                                  getBellTooltipText(
-                                    entry,
-                                    hasAccess,
-                                    isSubscribed ||
-                                      subscriptionDetails?.hasActiveTrial,
-                                    subscriptionDetails?.hasActiveTrial
-                                  )
-                                )}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        {session?.user?.id &&
-                          entry.userId &&
-                          session.user.id === entry.userId && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEdit(entry);
-                                }}
-                                className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                                aria-label="Edit raid log"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDelete(entry);
-                                }}
-                                className="text-gray-500 hover:text-red-600"
-                                disabled={deleteMutation.isPending}
-                              >
-                                {deleteMutation.isPending ? (
-                                  <span className="loading-spinner" />
-                                ) : (
-                                  <X className="w-4 h-4" />
-                                )}
-                              </button>
-                            </>
-                          )}
-                      </div>
-                    )}
+                    {session?.user?.id &&
+                      entry.userId &&
+                      session.user.id === entry.userId && (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(entry);
+                            }}
+                            className="text-gray-500 hover:text-[var(--color-text-primary)]"
+                            aria-label="Edit raid log"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(entry);
+                            }}
+                            className="text-gray-500 hover:text-red-600"
+                            disabled={deleteMutation.isPending}
+                          >
+                            {deleteMutation.isPending ? (
+                              <span className="loading-spinner" />
+                            ) : (
+                              <X className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      )}
                   </div>
 
-                  {!isGatedGem && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <BlueStarRating
-                          score={entry.surferRating ?? 0}
-                          outOfFive={true}
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <BlueStarRating
+                        score={isGatedGem ? 0 : Number(entry.surferRating || 0)}
+                        outOfFive={true}
+                      />
+                    </div>
 
-                      {/* Conditions - Right under star rating */}
-                      <div className="bg-gray-50 p-2.5 rounded-lg">
-                        <ForecastInfo
-                          forecast={entry.forecast}
-                          entry={entry}
-                          hasAccess={hasAccess}
-                        />
-                      </div>
+                    {/* Conditions - Right under star rating */}
+                    <div className="bg-gray-50 p-2.5 rounded-lg">
+                      <ForecastInfo
+                        forecast={entry.forecast}
+                        entry={entry}
+                        hasAccess={hasAccess}
+                      />
+                    </div>
 
-                      <div className="text-sm font-primary">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-gray-600">Logger:</span>
+                    <div className="text-[13px] font-primary">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-500">Logger:</span>
+                        {isGatedGem ? (
+                          <span className="text-gray-400 italic">---</span>
+                        ) : (
                           <LogEntryDisplay
                             entry={entry}
                             isAnonymous={entry.isAnonymous ?? false}
                           />
-                        </div>
+                        )}
                       </div>
+                    </div>
 
-                      {entry.comments && (
-                        <p className="text-sm text-gray-700 break-words font-primary line-clamp-2 mt-2">
-                          <span className="font-medium">Comments:</span>{" "}
-                          {entry.comments}
-                        </p>
+                    <p className="text-[13px] text-gray-700 break-words font-primary line-clamp-2 mt-2">
+                      <span className="font-semibold text-gray-500">Comments:</span>{" "}
+                      {isGatedGem ? (
+                        <span className="text-gray-400 italic">---</span>
+                      ) : (
+                        entry.comments || "No comments"
                       )}
-                    </>
-                  )}
+                    </p>
+                  </div>
 
                   {/* Image/Video section */}
                   {(() => {
@@ -1325,7 +1330,7 @@ export default function RaidLogTable({
                           </td>
                           <td className="px-2 py-3 min-w-[100px]">
                             <BlueStarRating
-                              score={isGatedGem ? 0 : (entry.surferRating ?? 0)}
+                              score={isGatedGem ? 0 : Number(entry.surferRating || 0)}
                               outOfFive={true}
                             />
                           </td>

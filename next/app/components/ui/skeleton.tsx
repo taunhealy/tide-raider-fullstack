@@ -8,7 +8,7 @@ const Skeleton = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "animate-pulse rounded-md bg-gray-200 dark:bg-gray-800",
+      "animate-pulse rounded-md bg-gray-200/50 dark:bg-gray-800/50",
       className
     )}
     {...props}
