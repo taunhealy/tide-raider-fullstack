@@ -331,9 +331,9 @@ const normalizeLogEntry = (entry: LogEntry): LogEntry => {
     date: formattedDate,
     isPrivate: entry.isPrivate ?? false,
     isAnonymous: entry.isAnonymous ?? false,
-    hasAlert: Array.isArray(entry.alerts) && entry.alerts.length > 0,
+    hasAlert: Array.isArray(entry.alerts) && entry.alerts.filter(Boolean).length > 0,
     isMyAlert: false,
-    alertId: Array.isArray(entry.alerts) && entry.alerts.length > 0 ? entry.alerts[0].id : "",
+    alertId: Array.isArray(entry.alerts) && entry.alerts.filter(Boolean).length > 0 ? entry.alerts.filter(Boolean)[0]?.id || "" : "",
   };
 };
 

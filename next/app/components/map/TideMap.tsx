@@ -361,12 +361,13 @@ export default function TideMap({
         new VectorLayer({
           source: clusterSource,
           style: (feature) => {
-            const clusterFeatures = feature.get("features");
+            const clusterFeatures = feature.get("features") || [];
             const size = clusterFeatures.length;
             
-            if (!clusterFeatures || size === 0) return;
+            if (size === 0) return;
 
             const representative = clusterFeatures[0];
+            if (!representative) return;
             const type = representative.get("type");
             const manualLabel = representative.get("label");
             const manualCount = representative.get("count");
@@ -378,7 +379,7 @@ export default function TideMap({
 
             if (type === "continent" || type === "country") {
               const items = representative.get("allBeaches") || [];
-              const ratings = items.map((b: any) => getRatingForBeach(b));
+              const ratings = items.filter(Boolean).map((b: any) => getRatingForBeach(b));
               const avgRating = ratings.length > 0 
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
                 : 3;
@@ -400,7 +401,9 @@ export default function TideMap({
             }
 
             if (size > 1) {
-              const ratings = clusterFeatures.map((f: any) => getRatingForBeach(f.get("beach")));
+              const ratings = clusterFeatures
+                .filter(Boolean)
+                .map((f: any) => getRatingForBeach(f.get("beach")));
               const avgRating = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
 
               return new Style({
@@ -469,10 +472,11 @@ export default function TideMap({
     initialMap.on("click", (evt) => {
       const feature = initialMap.forEachFeatureAtPixel(evt.pixel, (feat) => feat);
       if (feature) {
-        const clusterFeatures = feature.get("features");
-        if (!clusterFeatures) return;
+        const clusterFeatures = feature.get("features") || [];
+        if (clusterFeatures.length === 0) return;
         
         const representative = clusterFeatures[0];
+        if (!representative) return;
         const type = representative.get("type");
 
         if (type === "continent" || type === "country") {

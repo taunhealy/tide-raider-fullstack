@@ -192,7 +192,8 @@ export default function BeachDetailsModal({
                   title={
                     beach.sharkAttack.hasAttack
                       ? beach.sharkAttack.incidents
-                          ?.map((i) => `${i.date}: ${i.outcome} - ${i.details}`)
+                          ?.filter(Boolean)
+                          .map((i) => `${i.date}: ${i.outcome} - ${i.details}`)
                           .join("\n")
                       : "No shark attacks reported"
                   }

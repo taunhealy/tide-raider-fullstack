@@ -26,6 +26,12 @@ router.post(
 
       // Check if user already has an active trial or has used their trial
       if (user.hasActiveTrial || user.hasTrialEnded) {
+        // Notify admin of this attempt
+        notifyAdminTrialFailure({
+          email: user.email,
+          error: "Trial already used or active"
+        }).catch(err => console.error("Failed to send admin failure notification:", err));
+
         return res.status(400).json({
           error: "Trial already used",
           message: "You have already used your free trial.",
@@ -84,9 +90,10 @@ router.post(
       console.error("[subscriptions] ❌ Start trial error:", error);
       
       // Notify admin of failure
-      if (authReq.user?.email) {
+      const userEmail = (req as AuthRequest).user?.email;
+      if (userEmail) {
         notifyAdminTrialFailure({
-          email: authReq.user.email,
+          email: userEmail,
           error: error instanceof Error ? error.message : "Unknown error occurred"
         }).catch(err => console.error("Failed to send admin failure notification:", err));
       }
@@ -199,6 +206,13 @@ router.post(
         user.subscriptionStatus === "ACTIVE" ||
         (user.hasActiveTrial && user.trialEndDate && new Date() < user.trialEndDate)
       ) {
+        // Notify admin of this attempt
+        notifyAdminTrialFailure({
+          email: user.email,
+          promoCode,
+          error: "Already subscribed or in trial (Test Run)"
+        }).catch(err => console.error("Failed to send admin failure notification:", err));
+
         return res.status(400).json({
           error: "Already subscribed",
           message: "You already have an active subscription or trial.",
@@ -283,9 +297,12 @@ router.post(
       console.error("[subscriptions] ❌ Activate trial with code error:", error);
       
       // Notify admin of failure
+      const userEmail = (req as AuthRequest).user?.email || "unknown@user.com";
+      const promoCodeFromRequest = req.body?.promoCode;
+      
       notifyAdminTrialFailure({
-        email: user?.email || "unknown@user.com",
-        promoCode,
+        email: userEmail,
+        promoCode: typeof promoCodeFromRequest === 'string' ? promoCodeFromRequest : undefined,
         error: error instanceof Error ? error.message : "Unknown error occurred"
       }).catch(err => console.error("Failed to send admin failure notification:", err));
 

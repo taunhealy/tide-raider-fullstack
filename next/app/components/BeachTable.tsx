@@ -88,7 +88,8 @@ export default function BeachTable({
                     title={
                       beach.sharkAttack.hasAttack
                         ? beach.sharkAttack.incidents
-                            ?.map(
+                            ?.filter(Boolean)
+                            .map(
                               (i) => `${i.date}: ${i.outcome} - ${i.details}`
                             )
                             .join("\n")
