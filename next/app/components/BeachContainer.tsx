@@ -77,7 +77,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     const reportId = searchParams.get("report");
 
     if (beachId && reportId && data?.beaches) {
-      const targetBeach = data.beaches.find((b: Beach) => 
+      const targetBeach = data.beaches.filter(Boolean).find((b: Beach) => 
         b.id === beachId || 
         b.name.toLowerCase() === beachId.toLowerCase() ||
         b.id.toLowerCase() === beachId.toLowerCase() ||
@@ -250,7 +250,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const sortedBeaches = useMemo(() => {
     if (!beaches) return [];
     
-    let processedBeaches = beaches.map(b => {
+    let processedBeaches = (beaches || []).filter(Boolean).map(b => {
       const score = beachScores[b.id]?.score ?? 0;
       let distance = null;
       if (userLocation && b.coordinates?.lat && b.coordinates?.lng) {

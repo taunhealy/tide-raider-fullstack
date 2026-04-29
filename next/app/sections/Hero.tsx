@@ -84,7 +84,7 @@ export default function HeroSection({ data }: HeroProps) {
         const res = await fetch("/api/map-data");
         const data = await res.json();
         if (data.beaches) {
-          setBeaches(data.beaches);
+          setBeaches(data.beaches.filter(Boolean));
         }
       } catch (error) {
         console.error("Error fetching hero map data:", error);
@@ -713,7 +713,7 @@ export default function HeroSection({ data }: HeroProps) {
           <div className="w-full lg:w-1/2 max-w-[95%] lg:max-w-none aspect-[16/10] lg:aspect-[4/3] z-10 relative">
             <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                <TideMap 
-                 beaches={beaches} 
+                 beaches={beaches.filter(Boolean)} 
                  selectedDayIndex={0}
                  showWindHeatmap={true}
                  showSwellHeatmap={true}
