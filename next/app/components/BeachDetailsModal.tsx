@@ -190,7 +190,7 @@ export default function BeachDetailsModal({
               value={
                 <span
                   title={
-                    beach.sharkAttack.hasAttack
+                    beach.sharkAttack?.hasAttack
                       ? beach.sharkAttack.incidents
                           ?.filter(Boolean)
                           .map((i) => `${i.date}: ${i.outcome} - ${i.details}`)
@@ -199,7 +199,7 @@ export default function BeachDetailsModal({
                   }
                   className="cursor-help"
                 >
-                  {beach.sharkAttack.hasAttack ? "🦈" : "❌"}
+                  {beach.sharkAttack?.hasAttack ? "🦈" : "❌"}
                 </span>
               }
             />
@@ -221,7 +221,7 @@ export default function BeachDetailsModal({
           <div className="mt-2 pt-4 border-t border-gray-200">
             <h4 className="font-medium text-base mb-3 font-primary">Videos</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {beach.videos.map((video, index) => (
+              {(beach.videos || []).filter(Boolean).map((video, index) => (
                 <div
                   key={index}
                   className="relative aspect-video w-full min-h-[180px]"

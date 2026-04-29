@@ -801,10 +801,9 @@ export default function DashboardPage() {
                            Historical strategic profiles and strike-window analysis briefings.
                         </p>
                       </div>
-                      <Link href="/fast-forecast">
-                        <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-2xl px-8 py-6 h-auto font-black uppercase tracking-tighter shadow-lg shadow-slate-200 flex items-center gap-2">
-                          <Zap className="w-4 h-4 fill-current text-white" />
-                          Generate New Report
+                      <Link href="/aireport">
+                        <Button className="w-full sm:w-auto bg-[#f8f9fa] border-gray-200 text-gray-900 hover:bg-gray-100 font-primary text-[10px] font-black uppercase tracking-widest h-10 px-6 rounded-xl border flex items-center gap-2">
+                          AI Report
                         </Button>
                       </Link>
                     </div>

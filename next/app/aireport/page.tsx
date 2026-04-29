@@ -15,7 +15,7 @@ import { useSearchTracking } from "@/app/hooks/useSearchTracking";
 import RecentBeachSearch from "@/app/components/RecentBeachSearch";
 
 
-export default function FastForecastPage() {
+export default function AIReportPage() {
   const { credits, isLoading: isCreditsLoading } = useSubscriptionStatus();
   const { data: session } = useBackendAuth();
   
@@ -181,10 +181,10 @@ export default function FastForecastPage() {
               <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Strategic Monitor</span>
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Fast Forecast
+              AI Report
             </h1>
             <p className="text-sm text-gray-500 font-medium mt-1">
               Instant AI-powered surf intelligence for your target breaks.

@@ -35,10 +35,14 @@ export default function AIReportsView() {
   });
 
   const filteredReports = reports?.filter(report => 
-    report.beach.name.toLowerCase().includes(searchQuery.toLowerCase())
+    report?.beach?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleLoadSignal = (report: IntelligenceReport) => {
+    if (!report?.beach) {
+      console.warn("[AIReportsView] Report missing beach data:", report);
+      return;
+    }
     setSelectedReport({
       id: report.id,
       beach: report.beach
@@ -109,7 +113,7 @@ export default function AIReportsView() {
                     <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 group-hover:bg-white group-hover:border-brand-3/30 transition-all">
                       <MapPin className="w-4 h-4 text-brand-3" />
                     </div>
-                    <span className="text-sm font-black text-black tracking-tight">{report.beach.name}</span>
+                    <span className="text-sm font-black text-black tracking-tight">{report.beach?.name || "Unknown Asset"}</span>
                     <span className={cn(
                       "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border",
                       report.category === "FOILING" ? "bg-amber-50 text-amber-600 border-amber-100" :

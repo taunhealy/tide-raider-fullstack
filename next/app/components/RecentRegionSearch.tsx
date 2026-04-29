@@ -117,23 +117,25 @@ export default function RecentRegionSearch({
   useEffect(() => {
     if (recentSearches?.length && isInitialLoadRef.current) {
       const mostRecentSearch = recentSearches[0];
-      const selectedRegion = {
-        id: mostRecentSearch.region.id,
-        regionId: mostRecentSearch.region.id,
-        name: mostRecentSearch.region.name,
-        countryId: mostRecentSearch.region.country?.id || "",
-        country: mostRecentSearch.region.country
-          ? {
-              id: mostRecentSearch.region.country.id || "",
-              name: mostRecentSearch.region.country.name || "",
-              continentId: mostRecentSearch.region.country.continentId || "",
-            }
-          : undefined,
-        continent: mostRecentSearch.region.continent || "",
-      };
+      if (mostRecentSearch?.region) {
+        const selectedRegion = {
+          id: mostRecentSearch.region.id,
+          regionId: mostRecentSearch.region.id,
+          name: mostRecentSearch.region.name,
+          countryId: mostRecentSearch.region.country?.id || "",
+          country: mostRecentSearch.region.country
+            ? {
+                id: mostRecentSearch.region.country.id || "",
+                name: mostRecentSearch.region.country.name || "",
+                continentId: mostRecentSearch.region.country.continentId || "",
+              }
+            : undefined,
+          continent: mostRecentSearch.region.continent || "",
+        };
 
-      selectRegion(selectedRegion);
-      trackSearch(mostRecentSearch.region.id.toLowerCase());
+        selectRegion(selectedRegion);
+        trackSearch(mostRecentSearch.region.id.toLowerCase());
+      }
       isInitialLoadRef.current = false;
     }
   }, [recentSearches]); // Only depend on recentSearches

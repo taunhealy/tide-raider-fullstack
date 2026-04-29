@@ -324,7 +324,7 @@ function MediaGridBase({
             Local Services
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {services.map((service, index) => {
+            {services.filter(Boolean).map((service, index) => {
               // Get emoji based on service type
               let emoji = "🏄‍♂️";
               if (service.type === "coffee_shop") emoji = "☕";

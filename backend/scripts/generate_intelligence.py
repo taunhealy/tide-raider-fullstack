@@ -20,28 +20,34 @@ load_dotenv()
 async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swell_height: float, swell_period: float, swell_dir: str, score: float, persona: str, daily_snapshots: Optional[str] = None, mode: str = "daily"):
     # Debug: Print CWD and check for .env
     cwd = os.getcwd()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        # 1. Try .env in current directory
-        load_dotenv(os.path.join(cwd, ".env"))
-        api_key = os.getenv("GOOGLE_API_KEY")
+    
+    # 1. Check existing environment first (passed from Node)
+    api_key = os.environ.get("GOOGLE_API_KEY")
     
     if not api_key:
-        # 2. Try .env in parent directory
+        # 2. Try .env in current directory
+        load_dotenv(os.path.join(cwd, ".env"))
+        api_key = os.environ.get("GOOGLE_API_KEY")
+    
+    if not api_key:
+        # 3. Try .env in parent directory
         parent_env = os.path.join(os.path.dirname(cwd), ".env")
         if os.path.exists(parent_env):
             load_dotenv(parent_env)
-            api_key = os.getenv("GOOGLE_API_KEY")
+            api_key = os.environ.get("GOOGLE_API_KEY")
 
     if not api_key:
-        # 3. Try specifically checking 'backend/.env' if we're in a common monorepo structure
+        # 4. Try specifically checking 'backend/.env' if we're in a common monorepo structure
         # or checking root if we are in scripts/
         if os.path.basename(cwd) == "scripts":
             load_dotenv(os.path.join(os.path.dirname(cwd), ".env"))
-            api_key = os.getenv("GOOGLE_API_KEY")
+            api_key = os.environ.get("GOOGLE_API_KEY")
 
     if not api_key:
-        print(f"Error: GOOGLE_API_KEY not found. Search path: {cwd}. Please ensure it is set in .env", file=sys.stderr)
+        available_keys = [k for k in os.environ.keys() if "API" in k or "GOOGLE" in k]
+        print(f"Error: GOOGLE_API_KEY not found in environment or .env files.", file=sys.stderr)
+        print(f"Current Working Directory: {cwd}", file=sys.stderr)
+        print(f"Available relevant env keys: {available_keys}", file=sys.stderr)
         return None
     
     print(f"Intelligence Engine: Authenticated (Key Length: {len(api_key)})", file=sys.stderr)

@@ -120,15 +120,15 @@ export default function RecentRaidLogs() {
                     <div className="flex items-center gap-1 text-[12px] text-[var(--color-text-tertiary)] font-primary">
                       <MapPin className="w-3 h-3" />
                       <span className="truncate">
-                        {entry.region.name}
-                        {entry.region.country?.name
+                        {entry.region?.name}
+                        {entry.region?.country?.name
                           ? `, ${entry.region.country.name}`
                           : ""}
                       </span>
                     </div>
                   )}
                   <p className="text-[12px] text-[var(--color-text-tertiary)] font-primary mt-1">
-                    {format(new Date(entry.date), "MMM d, yyyy")}
+                    {entry.date ? format(new Date(entry.date), "MMM d, yyyy") : "Date unknown"}
                   </p>
                 </div>
                 <div className="flex-shrink-0">

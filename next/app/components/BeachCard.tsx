@@ -199,6 +199,7 @@ const BeachCard = memo(function BeachCard({
   const beachSessions = Array.isArray(recentEntries)
     ? recentEntries.filter(
         (entry) =>
+          entry &&
           // Check both beachId and beachName
           entry.beachName?.toLowerCase() === beach.name?.toLowerCase()
       )
@@ -333,9 +334,9 @@ const BeachCard = memo(function BeachCard({
                         )}
                       {beach.sharkAttack?.hasAttack && (
                         <span title="At least 1 shark attack reported">
-                          {beach.sharkAttack.incidents?.some(
-                            (incident) =>
-                              new Date(incident.date).getTime() >
+                          {beach.sharkAttack?.incidents?.filter(Boolean).some(
+                            (incident: any) =>
+                              incident.date && new Date(incident.date).getTime() >
                               new Date().getTime() -
                                 5 * 365 * 24 * 60 * 60 * 1000
                           )
@@ -488,7 +489,7 @@ const BeachCard = memo(function BeachCard({
                         className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                       >
                         <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
-                          {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
+                          {getConditionReasons(beach, forecastData, false).optimalConditions?.filter(Boolean).map((condition, idx) => {
                             const [label, value] = condition.text.split(":");
                             return (
                               <div key={idx} className="flex items-center gap-3">
@@ -724,7 +725,7 @@ const BeachCard = memo(function BeachCard({
 
                     {/* Current Conditions */}
                     <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100 mt-3">
-                      {getConditionReasons(beach, forecastData, false).optimalConditions.map((condition, idx) => {
+                      {getConditionReasons(beach, forecastData, false).optimalConditions?.filter(Boolean).map((condition, idx) => {
                         const [label, value] = condition.text.split(":");
                         return (
                         <div key={idx} className="flex items-center gap-3">
