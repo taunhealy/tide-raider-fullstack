@@ -1,0 +1,67 @@
+{
+  "count": 30,
+  "daysFound": [
+    "Thursday, Apr 30",
+    "Friday, May 01",
+    "Saturday, May 02",
+    "Sunday, May 03",
+    "Monday, May 04",
+    "Tuesday, May 05",
+    "Wednesday, May 06",
+    "Thursday, May 07",
+    "Friday, May 08",
+    "Saturday, May 09"
+  ],
+  "summary": {
+    "2026-04-30": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-01": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-02": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-03": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-04": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-05": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-06": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-07": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-08": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ],
+    "2026-05-09": [
+      "MORNING",
+      "NOON",
+      "EVENING"
+    ]
+  }
+}

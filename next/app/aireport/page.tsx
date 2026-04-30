@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Waves, Sparkles, Zap, ShieldAlert, Loader2, Share2, Mail, MessageSquare, Send, Copy, Check, Info } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
 import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/input";
@@ -18,6 +19,8 @@ import RecentBeachSearch from "@/app/components/RecentBeachSearch";
 export default function AIReportPage() {
   const { credits, isLoading: isCreditsLoading } = useSubscriptionStatus();
   const { data: session } = useBackendAuth();
+  const searchParams = useSearchParams();
+  const beachIdParam = searchParams.get("beachId");
   
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [selectedDays, setSelectedDays] = useState(7);
@@ -26,6 +29,24 @@ export default function AIReportPage() {
   const [report, setReport] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const { trackBeach } = useSearchTracking();
+  
+  // Handle pre-selected beach from URL
+  useEffect(() => {
+    if (beachIdParam && !selectedBeach) {
+      const fetchBeach = async () => {
+        try {
+          const res = await fetch(`/api/backend/beaches/${beachIdParam}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSelectedBeach(data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch beach from URL", err);
+        }
+      };
+      fetchBeach();
+    }
+  }, [beachIdParam, selectedBeach]);
 
   const handleBeachSelect = (beach: Beach | null) => {
     setSelectedBeach(beach);

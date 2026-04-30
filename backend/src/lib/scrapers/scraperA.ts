@@ -154,16 +154,31 @@ export async function scraperA(
     while (attempts < 2 && !navigationSuccessful) {
       try {
         attempts++;
-        await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        // Use networkidle2 for more reliable loading of dynamic content
+        await page.goto(currentUrl, { waitUntil: "networkidle2", timeout: 30000 });
         
-        // Check if we actually see forecast rows
+        // Wait a bit extra for Astro/JS components to hydrate
+        await new Promise(r => setTimeout(r, 2000));
+
+        // Check if we actually see forecast rows - added more inclusive selectors for Superforecast/CSS Modules
         const hasRows = await page.evaluate(() => {
-          return !!document.querySelector('.forecast-row, [class*="row"], .forecast-tab, .forecast-day, [class*="day-wrapper"]');
+          const selectors = [
+            '.forecast-row', 
+            '[class*="row"]', 
+            '.forecast-tab', 
+            '.forecast-day', 
+            '[class*="day-wrapper"]',
+            '[class*="Container"]',
+            '[class*="label"]',
+            '[class*="hour"]',
+            '.fc-table-horizon'
+          ];
+          return selectors.some(s => !!document.querySelector(s));
         });
 
         if (hasRows) {
           navigationSuccessful = true;
-          console.log(`✅ Forecast detected on attempt ${attempts}`);
+          console.log(`✅ Forecast detected on attempt ${attempts} at ${currentUrl}`);
         } else {
           throw new Error("No forecast rows detected in DOM");
         }
@@ -172,7 +187,6 @@ export async function scraperA(
         if (attempts < 2) {
           console.log("🔄 Retrying with Basic Forecast fallback URL...");
           currentUrl = currentUrl.includes('weatherforecast') ? currentUrl.replace('weatherforecast', 'forecast') : currentUrl;
-          // Clean up URL if it has params that break basic forecast
           if (currentUrl.includes('?')) currentUrl = currentUrl.split('?')[0];
         }
       }

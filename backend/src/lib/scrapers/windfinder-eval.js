@@ -44,18 +44,18 @@ function extractWindfinderData() {
     return null;
   };
 
-  const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"]'));
+  const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"], [class*="day-container"], [class*="day-section"], [class*="DaySection"]'));
   
     return daySections.map(day => {
-      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"], .forecast-day__header');
+      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"], .forecast-day__header, [class*="DayHeader"]');
       if (!headerEl) return null;
       const dateText = headerEl.textContent.trim().split('\n')[0];
       
-      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell'))
+      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell, [class*="Column"], [class*="Cell"]'))
         .filter(el => {
            const t = el.textContent || "";
-           // Support 3-hour intervals (02h) AND peak tide times (05:42)
-           return /(\d{2}h|\d{2}:\d{2})/.test(t) && t.length < 50; 
+           // Support 1-hour intervals (07h) as well as 3-hour (02h) and peak tide times (05:42)
+           return /(\d{1,2}h|\d{2}:\d{2})/.test(t) && t.length < 50; 
         });
 
       // Optimize: Index rows by label once per day

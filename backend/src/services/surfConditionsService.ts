@@ -39,7 +39,8 @@ export async function getLatestConditions(
   source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER",
   daysLimit?: number,
   targetDateParam?: Date,
-  timeSlotParam?: string
+  timeSlotParam?: string,
+  startDayOffset: number = 0
 ) {
   const configRegionId = regionId.toLowerCase();
   const region = REGION_CONFIGS[configRegionId];
@@ -78,18 +79,12 @@ export async function getLatestConditions(
 
   // Determine URL based on source
   let scrapeUrl = "";
+  const today = getTodayDate();
+  const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const SUPERFORECAST_LIMIT_DAYS = 3;
+  const useRegularForecast = source === "WINDFINDER" && diffDays > SUPERFORECAST_LIMIT_DAYS && !!region.sourceA.forecastUrl;
+
   if (source === "WINDFINDER") {
-    // Windfinder Superforecast (weatherforecast/) covers up to ~3 days with high precision.
-    // For dates beyond 3 days, fall back to the regular Windfinder forecast (forecast/)
-    // which covers up to 10 days at lower temporal resolution.
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const SUPERFORECAST_LIMIT_DAYS = 3;
-
-    const hasRegularForecast = !!region.sourceA.forecastUrl;
-    const useRegularForecast = diffDays > SUPERFORECAST_LIMIT_DAYS && hasRegularForecast;
-
     scrapeUrl = useRegularForecast
       ? region.sourceA.forecastUrl!
       : region.sourceA.url;
@@ -203,6 +198,13 @@ export async function getLatestConditions(
     const forecastDate = new Date(scrapedForecast.date);
     forecastDate.setUTCHours(0, 0, 0, 0);
     
+    // 🚨 DATA INTEGRITY: If using regular forecast, skip days covered by Superforecast (offset)
+    const dayDiff = Math.round((forecastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (source === "WINDFINDER" && useRegularForecast && dayDiff < startDayOffset) {
+      console.log(`[getLatestConditions] ⏭️ Skipping regular forecast upsert for ${forecastDate.toISOString().split('T')[0]} (offset: ${startDayOffset})`);
+      continue;
+    }
+
     const slot = (scrapedForecast as any).timeSlot || "MORNING";
 
     console.log(

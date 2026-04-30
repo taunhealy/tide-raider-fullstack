@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 import { 
   Dialog, 
   DialogContent, 
@@ -32,6 +33,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   const { credits, isLoading: isCreditsLoading, isSubscribed } = useSubscriptionStatus();
   const { data: session, status: authStatus } = useBackendAuth();
+  const router = useRouter();
   const [activeReportId, setActiveReportId] = useState<string | undefined>(reportId);
   const [reportSequence, setReportSequence] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -534,21 +536,14 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                     </div>
                   </div>
                   <Button 
-                    onClick={handleGenerate}
-                    disabled={isGenerating || isCreditsLoading || credits < creditCost}
+                    onClick={() => {
+                      onClose();
+                      router.push(`/aireport?beachId=${beach.id}`);
+                    }}
                     className="h-10 px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest gap-2 shadow-sm min-w-[160px]"
                   >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        GENERATING...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3 h-3" />
-                        Generate Fresh Intel
-                      </>
-                    )}
+                    <Sparkles className="w-3 h-3" />
+                    Generate Fresh Intel
                   </Button>
                 </div>
               )}
