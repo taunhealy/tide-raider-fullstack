@@ -253,28 +253,44 @@ function AlertFormBody({
   // Track which logEntry we've already processed to prevent infinite loops
   const processedLogEntryId = useRef<string | null>(null);
 
-  // Auto-populate contact info from user profile if empty
+  // Auto-populate contact info from user profile based on notification method
   useEffect(() => {
     if (!authData?.user || !updateAlert) return;
     
     const updates: any = {};
     const currentMethod = alert.notificationMethod;
-    const currentContact = alert.contactInfo;
+    const currentContact = alert.contactInfo || '';
+    const userEmail = authData.user.email;
+    const userWhatsApp = authData.user.whatsappNumber;
 
-    // Only auto-populate if contactInfo is currently empty
-    if (!currentContact) {
-      if (currentMethod === 'email' && authData.user.email) {
-        updates.contactInfo = authData.user.email;
-      } else if ((currentMethod === 'whatsapp' || currentMethod === 'both') && authData.user.whatsappNumber) {
-        updates.contactInfo = authData.user.whatsappNumber;
+    // Determine if we should update the contact info
+    // Case 1: Switching to email - if current is empty or looks like a phone number
+    if (currentMethod === 'email') {
+      const isPhone = /^\+?\d+$/.test(currentContact.replace(/[\s()-]/g, ''));
+      if (!currentContact || isPhone) {
+        if (userEmail && userEmail !== currentContact) {
+          updates.contactInfo = userEmail;
+        }
+      }
+    } 
+    // Case 2: Switching to whatsapp or both - if current is empty or looks like an email
+    else if (currentMethod === 'whatsapp' || currentMethod === 'both') {
+      const isEmail = currentContact.includes('@');
+      if (!currentContact || isEmail) {
+        if (userWhatsApp && userWhatsApp !== currentContact) {
+          updates.contactInfo = userWhatsApp;
+        } else if (isEmail) {
+          // If it was an email and we have no whatsapp number, clear it
+          updates.contactInfo = '';
+        }
       }
     }
 
     if (Object.keys(updates).length > 0) {
-      console.log("[ForecastAlertForm] Auto-populating contact info:", updates);
+      console.log("[ForecastAlertForm] Updating contact info for method:", currentMethod, updates);
       updateAlert(updates);
     }
-  }, [authData?.user?.id, alert.notificationMethod, alert.contactInfo, updateAlert]);
+  }, [authData?.user?.id, alert.notificationMethod, updateAlert]);
 
   // Helper to sanitize WhatsApp number
   const sanitizeWhatsApp = (value: string) => {

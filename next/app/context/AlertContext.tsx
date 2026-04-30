@@ -178,15 +178,7 @@ export function AlertProvider({
     }
   }, [existingAlert?.alertType, existingAlert?.logEntry?.connect?.id]);
 
-  // Pre-populate contactInfo with user's email if not already set
-  useEffect(() => {
-    if (session?.user?.email && !state.alert.contactInfo) {
-      dispatch({
-        type: "UPDATE_ALERT",
-        payload: { contactInfo: session.user.email },
-      });
-    }
-  }, [session?.user?.email, state.alert.contactInfo]);
+
 
   const { data: beachDetails, error: beachError } = useQuery({
     queryKey: ["beach", state.alert.beach?.connect?.id],

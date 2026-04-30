@@ -158,9 +158,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-2">
                      <div className="h-full bg-brand-3 w-3/4 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                  </div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">Elite Tier Progression</p>
-               </div>
+                 
             </div>
           </div>
 
