@@ -862,47 +862,78 @@ export default function RaidLogTable({
                       <LockIcon className="w-3.5 h-3.5 text-white" />
                     </div>
                   ) : (
-                    <div className="absolute top-2 right-2 z-20">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                    <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
+                        {isOwner && (
+                          <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm border border-gray-100">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleAlertClick(entry);
+                                handleEdit(entry);
                               }}
-                              className={cn(
-                                "p-2 rounded-full shadow-lg border transition-all flex items-center justify-center",
-                                entry.hasAlert 
-                                  ? "bg-[var(--color-tertiary)] border-[var(--color-tertiary)]" 
-                                  : "bg-[var(--color-tertiary)]/10 border-[var(--color-tertiary)]/20"
-                              )}
-                              aria-label="Set alert for this log entry"
+                              className="p-1 text-gray-500 hover:text-brand-3 transition-colors"
+                              aria-label="Edit raid log"
                             >
-                              <Bell
-                                className={cn(
-                                  "w-4 h-4 cursor-pointer",
-                                  entry.hasAlert
-                                    ? "text-white fill-white"
-                                    : "text-[var(--color-tertiary)] fill-none"
-                                )}
-                              />
+                              <Pencil className="w-3.5 h-3.5" />
                             </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="left">
-                            <p className="text-sm">
-                              {getGatedTooltip(
-                                getBellTooltipText(
-                                  entry,
-                                  hasAccess,
-                                  isSubscribed ||
-                                    subscriptionDetails?.hasActiveTrial,
-                                  subscriptionDetails?.hasActiveTrial
-                                )
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(entry);
+                              }}
+                              className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                              disabled={deleteMutation.isPending}
+                              aria-label="Delete raid log"
+                            >
+                              {deleteMutation.isPending ? (
+                                <span className="loading-spinner" />
+                              ) : (
+                                <X className="w-3.5 h-3.5" />
                               )}
-                            </p>
-                          </TooltipContent>
+                            </button>
+                          </div>
+                        )}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAlertClick(entry);
+                                }}
+                                className={cn(
+                                  "p-2 rounded-full shadow-lg border transition-all flex items-center justify-center",
+                                  entry.hasAlert 
+                                    ? "bg-[var(--color-tertiary)] border-[var(--color-tertiary)]" 
+                                    : "bg-[var(--color-tertiary)]/10 border-[var(--color-tertiary)]/20"
+                                )}
+                                aria-label="Set alert for this log entry"
+                              >
+                                <Bell
+                                  className={cn(
+                                    "w-4 h-4 cursor-pointer",
+                                    entry.hasAlert
+                                      ? "text-white fill-white"
+                                      : "text-[var(--color-tertiary)] fill-none"
+                                  )}
+                                />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              <p className="text-sm">
+                                {getGatedTooltip(
+                                  getBellTooltipText(
+                                    entry,
+                                    hasAccess,
+                                    isSubscribed ||
+                                      subscriptionDetails?.hasActiveTrial,
+                                    subscriptionDetails?.hasActiveTrial
+                                  )
+                                )}
+                              </p>
+                            </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
@@ -950,38 +981,6 @@ export default function RaidLogTable({
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-
-                    {session?.user?.id &&
-                      entry.userId &&
-                      session.user.id === entry.userId && (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(entry);
-                            }}
-                            className="text-gray-500 hover:text-[var(--color-text-primary)]"
-                            aria-label="Edit raid log"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(entry);
-                            }}
-                            className="text-gray-500 hover:text-red-600"
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? (
-                              <span className="loading-spinner" />
-                            ) : (
-                              <X className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      )}
                   </div>
 
                   <div className="space-y-4">
@@ -1370,6 +1369,35 @@ export default function RaidLogTable({
                           </td>
                           <td className="px-2 py-3">
                             <div className="flex gap-2">
+                              {session?.user?.id &&
+                                entry.userId &&
+                                session.user.id === entry.userId && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/raidlogs/${entry.id}/edit`);
+                                      }}
+                                      className="text-gray-500 hover:text-brand-3 transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(entry);
+                                      }}
+                                      className="text-gray-500 hover:text-red-600 transition-colors"
+                                      disabled={deleteMutation.isPending}
+                                    >
+                                      {deleteMutation.isPending ? (
+                                        <span className="loading-spinner" />
+                                      ) : (
+                                        <X className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1412,26 +1440,6 @@ export default function RaidLogTable({
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              {session?.user?.id &&
-                                entry.userId &&
-                                session.user.id === entry.userId && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(entry);
-                                      }}
-                                      className="text-gray-500 hover:text-red-600"
-                                      disabled={deleteMutation.isPending}
-                                    >
-                                      {deleteMutation.isPending ? (
-                                        <span className="loading-spinner" />
-                                      ) : (
-                                        <X className="w-4 h-4" />
-                                      )}
-                                    </button>
-                                  </>
-                                )}
                             </div>
                           </td>
                         </tr>

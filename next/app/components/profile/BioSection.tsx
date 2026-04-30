@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -28,13 +30,47 @@ export default function BioSection({
   className,
 }: BioSectionProps) {
   const queryClient = useQueryClient();
+  
+  // Use local state to manage input values and avoid cursor jumping issues
+  // caused by direct React Query cache updates on every keystroke.
+  const [bio, setBio] = useState(initialBio);
+  const [link, setLink] = useState(initialLink);
+  const [email, setEmail] = useState(initialEmail);
+  const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber);
+
+  // Sync local state when initial values change (e.g. after a successful mutation or refetch)
+  useEffect(() => {
+    setBio(initialBio);
+  }, [initialBio]);
+
+  useEffect(() => {
+    setLink(initialLink);
+  }, [initialLink]);
+
+  useEffect(() => {
+    setEmail(initialEmail);
+  }, [initialEmail]);
+
+  useEffect(() => {
+    setWhatsappNumber(initialWhatsappNumber);
+  }, [initialWhatsappNumber]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async ({ bio, link, email, whatsappNumber }: { bio: string; link: string; email: string; whatsappNumber: string }) => {
+    mutationFn: async ({ 
+      bio: newBio, 
+      link: newLink, 
+      email: newEmail, 
+      whatsappNumber: newWhatsappNumber 
+    }: { 
+      bio: string; 
+      link: string; 
+      email: string; 
+      whatsappNumber: string 
+    }) => {
       const response = await fetch(`/api/user/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio, link, email, whatsappNumber }),
+        body: JSON.stringify({ bio: newBio, link: newLink, email: newEmail, whatsappNumber: newWhatsappNumber }),
       });
       if (!response.ok) throw new Error("Failed to save");
       return response.json();
@@ -60,6 +96,8 @@ export default function BioSection({
     },
     onSuccess: () => {
       toast.success("Profile updated successfully!");
+      // Dispatch auth-refresh event to sync session/auth state
+      window.dispatchEvent(new CustomEvent("auth-refresh"));
       confetti({
         particleCount: 100,
         spread: 70,
@@ -82,19 +120,14 @@ export default function BioSection({
              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">About Operator</label>
              {isOwnProfile ? (
                <Textarea
-                 value={initialBio}
-                 onChange={(e) =>
-                   queryClient.setQueryData(["user", userId], (old: any) => ({
-                     ...old,
-                     bio: e.target.value,
-                   }))
-                 }
+                 value={bio}
+                 onChange={(e) => setBio(e.target.value)}
                  placeholder="Operator specializations, experience, equipment..."
                  className="min-h-[120px] bg-slate-50 border-slate-100 rounded-2xl focus:bg-white transition-all"
                />
              ) : (
                <p className="text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-50 italic">
-                 {initialBio || "No tactical background provided."}
+                 {bio || "No tactical background provided."}
                </p>
              )}
            </div>
@@ -107,18 +140,13 @@ export default function BioSection({
                   {isOwnProfile ? (
                     <Input
                       type="email"
-                      value={initialEmail}
-                      onChange={(e) =>
-                        queryClient.setQueryData(["user", userId], (old: any) => ({
-                          ...old,
-                          email: e.target.value,
-                        }))
-                      }
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="pl-12 bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all"
                       placeholder="email@tideraider.com"
                     />
                   ) : (
-                    <div className="pl-12 py-3 text-slate-600 font-medium">{initialEmail || "Encrypted"}</div>
+                    <div className="pl-12 py-3 text-slate-600 font-medium">{email || "Encrypted"}</div>
                   )}
                 </div>
               </div>
@@ -130,18 +158,13 @@ export default function BioSection({
                   {isOwnProfile ? (
                     <Input
                       type="text"
-                      value={initialWhatsappNumber}
-                      onChange={(e) =>
-                        queryClient.setQueryData(["user", userId], (old: any) => ({
-                          ...old,
-                          whatsappNumber: e.target.value,
-                        }))
-                      }
+                      value={whatsappNumber}
+                      onChange={(e) => setWhatsappNumber(e.target.value)}
                       className="pl-12 bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all"
                       placeholder="+27..."
                     />
                   ) : (
-                    <div className="pl-12 py-3 text-slate-600 font-medium">{initialWhatsappNumber ? "Active Relay" : "Offline"}</div>
+                    <div className="pl-12 py-3 text-slate-600 font-medium">{whatsappNumber ? "Active Relay" : "Offline"}</div>
                   )}
                 </div>
               </div>
@@ -154,24 +177,19 @@ export default function BioSection({
                 {isOwnProfile ? (
                   <Input
                     type="url"
-                    value={initialLink}
-                    onChange={(e) =>
-                      queryClient.setQueryData(["user", userId], (old: any) => ({
-                        ...old,
-                        link: e.target.value,
-                      }))
-                    }
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
                     className="pl-12 bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all"
                     placeholder="https://yourwebsite.com"
                   />
-                ) : initialLink ? (
+                ) : link ? (
                   <a
-                    href={initialLink}
+                    href={link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="pl-12 py-3 block text-indigo-600 font-bold hover:underline"
                   >
-                    {initialLink.replace(/(^\w+:|^)\/\//, "")}
+                    {link.replace(/(^\w+:|^)\/\//, "")}
                   </a>
                 ) : (
                   <div className="pl-12 py-3 text-slate-400 italic">No external link provided.</div>
@@ -185,14 +203,14 @@ export default function BioSection({
             <Button
               onClick={() =>
                 updateProfileMutation.mutate({
-                  bio: initialBio || "",
-                  link: initialLink || "",
-                  email: initialEmail || "",
-                  whatsappNumber: initialWhatsappNumber || "",
+                  bio,
+                  link,
+                  email,
+                  whatsappNumber,
                 })
               }
               disabled={updateProfileMutation.isPending}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-12 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200 transition-all active:scale-95"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-12 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
             >
               {updateProfileMutation.isPending ? "Synchronizing..." : "Update Identity"}
             </Button>
