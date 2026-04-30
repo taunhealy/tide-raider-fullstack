@@ -117,7 +117,7 @@ export default function CheckoutSuccessPage() {
           </p>
 
           <div className="space-y-4">
-            <Link href="/alerts">
+            <Link href="/dashboard/alerts">
               <Button className="w-full bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/90 text-white font-primary">
                 Go to Alerts
               </Button>

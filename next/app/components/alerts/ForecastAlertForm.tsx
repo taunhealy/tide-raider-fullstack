@@ -191,7 +191,7 @@ export default function ForecastAlertForm({
   const router = useRouter();
 
   const onClose = () => {
-    router.push("/alerts"); // Adjust this path as needed
+    router.push("/dashboard/alerts"); // Unified dashboard path
   };
 
   return (
@@ -1068,7 +1068,7 @@ function AlertFormFooter() {
 
         toast.success("Alert updated successfully");
         queryClient.invalidateQueries({ queryKey: ["alerts"] });
-        router.push("/alerts");
+        router.push("/dashboard/alerts");
       } else {
         // For creation, transform Prisma format to API format
         const properties = Array.isArray(alert.properties?.create)
@@ -1135,7 +1135,7 @@ function AlertFormFooter() {
           toast.success("Alert saved successfully");
           // Invalidate alerts cache to refresh the list
           queryClient.invalidateQueries({ queryKey: ["alerts"] });
-          router.push("/alerts");
+          router.push("/dashboard/alerts");
         } catch (error: any) {
           let errorMessage = "Failed to create alert";
           let errorDetails = "";

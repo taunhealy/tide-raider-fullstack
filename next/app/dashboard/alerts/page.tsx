@@ -30,7 +30,7 @@ export default function AlertsPage() {
 
   const handleCreateNewAlert = () => {
     // Redirect to the new alert page
-    router.push(`/alerts/new`);
+    router.push(`/dashboard/alerts/new`);
   };
 
   const handleSaveAlert = async (alertConfig: AlertConfig) => {
@@ -70,7 +70,7 @@ export default function AlertsPage() {
   };
 
   const handleEditAlert = (alertId: string) => {
-    router.push(`/alerts/${alertId}`);
+    router.push(`/dashboard/alerts/${alertId}`);
   };
 
   const handleDeleteAlert = (alertId: string) => {
@@ -111,23 +111,34 @@ export default function AlertsPage() {
   }, [alerts]);
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold font-primary text-primary">
-          Forecast Alerts
-        </h1>
-        <Button onClick={handleCreateNewAlert} className="font-primary">
-          Create New Alert
-        </Button>
-      </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary overflow-x-hidden pb-20">
+      <div className="max-w-6xl mx-auto p-4 sm:p-8 lg:p-12 space-y-10">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 rounded-full bg-brand-3 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-3">Condition Monitor</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+              Tactical <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Alerts</span>
+            </h1>
+            <p className="text-slate-500 mt-3 max-w-lg font-medium text-lg">
+              Automated triggers for your preferred surf conditions.
+            </p>
+          </div>
 
-      <div>
-        <p className="text-muted-foreground mb-8 font-primary text-lg">
-          Set up personalized alerts to get notified when surf conditions match
-          your preferences.
-        </p>
-        <div className="bg-card rounded-lg p-6 shadow-sm">
-          <AlertsList />
+          <Button 
+            onClick={handleCreateNewAlert}
+            className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center gap-2"
+          >
+            Create New Alert
+          </Button>
+        </header>
+
+        <div className="bg-white/40 backdrop-blur-md rounded-[40px] p-2 md:p-8 border border-white/60 shadow-sm">
+          <div className="bg-white rounded-[32px] p-6 sm:p-10 border border-slate-100 min-h-[400px]">
+             <AlertsList />
+          </div>
         </div>
       </div>
     </div>

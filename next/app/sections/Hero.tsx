@@ -109,7 +109,7 @@ export default function HeroSection({ data }: HeroProps) {
       description:
         "Set alerts for when it's good, or to your custom preferences.",
       icon: "alerts-icon",
-      link: "/alerts",
+      link: "/dashboard/alerts",
     },
     {
       id: 3,

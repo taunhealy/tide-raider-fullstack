@@ -231,7 +231,7 @@ export default function NewAlertPage() {
           isOpen={alertLimitReached && !isPremium}
           onClose={() => {
             setAlertLimitReached(false);
-            router.push("/alerts");
+            router.push("/dashboard/alerts");
           }}
         />
         <ForecastAlertModal
@@ -268,7 +268,7 @@ export default function NewAlertPage() {
         isOpen={alertLimitReached && !isPremium}
         onClose={() => {
           setAlertLimitReached(false);
-          router.push("/alerts");
+          router.push("/dashboard/alerts");
         }}
       />
       <ForecastAlertModal

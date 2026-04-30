@@ -313,22 +313,20 @@ function TableSkeleton() {
   );
 }
 
-const normalizeLogEntry = (entry: LogEntry): LogEntry => {
-  let formattedDate = "Unknown Date";
+const safeFormatDate = (dateInput: any, formatStr: string = "MMM d, yyyy") => {
+  if (!dateInput) return "Unknown Date";
   try {
-    if (entry.date) {
-      const date = new Date(entry.date);
-      if (!isNaN(date.getTime())) {
-        formattedDate = format(date, "yyyy-MM-dd");
-      }
-    }
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return "Unknown Date";
+    return format(date, formatStr);
   } catch (e) {
-    console.error("Error formatting date for log entry:", entry.id, e);
+    return "Unknown Date";
   }
+};
 
+const normalizeLogEntry = (entry: LogEntry): LogEntry => {
   return {
     ...entry,
-    date: formattedDate,
     isPrivate: entry.isPrivate ?? false,
     isAnonymous: entry.isAnonymous ?? false,
     hasAlert: Array.isArray(entry.alerts) && entry.alerts.filter(Boolean).length > 0,
@@ -426,7 +424,7 @@ function CommentsCell({
               <TooltipContent className="max-w-[300px]">
                 <div className="space-y-1">
                   <p className="text-sm font-medium">
-                    Latest comment ({latestComment ? format(new Date(latestComment.createdAt), "MMM d, yyyy") : ''}):
+                    Latest comment ({latestComment ? safeFormatDate(latestComment.createdAt) : ''}):
                   </p>
                   <p className="text-sm text-gray-600 break-words">
                     {latestComment?.text}
@@ -556,7 +554,7 @@ export default function RaidLogTable({
       router.push(`/alerts/${entry.alertId}`);
     } else {
       // Pass log ID as query parameter
-      router.push(`/alerts/new?logId=${entry.id}`);
+      router.push(`/dashboard/alerts/new?logId=${entry.id}`);
     }
   };
 
@@ -740,16 +738,7 @@ export default function RaidLogTable({
   const DeleteConfirmationDialog = () => {
     if (!entryToDelete) return null;
 
-    const formattedDate = (() => {
-      try {
-        if (!entryToDelete.date) return "Unknown Date";
-        const date = new Date(entryToDelete.date);
-        if (isNaN(date.getTime())) return "Unknown Date";
-        return format(date, "MMM d, yyyy");
-      } catch (e) {
-        return "Unknown Date";
-      }
-    })();
+    const formattedDate = safeFormatDate(entryToDelete.date);
     const beachName =
       entryToDelete.beach?.name || entryToDelete.beachName || "Unknown beach";
 
@@ -945,7 +934,7 @@ export default function RaidLogTable({
                               </h3>
                               <div className="space-y-1">
                                 <p className="text-[11px] text-gray-500 font-primary flex items-center gap-1.5">
-                                  <span className="opacity-70">📖</span> {isGatedGem ? "---" : format(new Date(entry.date), "MMM d, yyyy")}
+                                  <span className="opacity-70">📖</span> {isGatedGem ? "---" : safeFormatDate(entry.date)}
                                 </p>
                                 <p className="text-[11px] text-gray-500 font-primary flex items-center gap-1.5">
                                   <span className="opacity-70">📍</span> {isGatedGem ? "---" : (entry.region?.name ?? "No region")}
@@ -1267,7 +1256,7 @@ export default function RaidLogTable({
                           }}
                         >
                           <td className="px-2 py-3 whitespace-nowrap text-sm min-w-[100px] font-primary">
-                            {isGatedGem ? "---" : format(new Date(entry.date), "MMM d, yyyy")}
+                            {isGatedGem ? "---" : safeFormatDate(entry.date)}
                           </td>
                           <td className="px-2 py-3 whitespace-nowrap min-w-[120px]">
                             <div className="flex items-center gap-2">

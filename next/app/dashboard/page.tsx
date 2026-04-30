@@ -507,20 +507,21 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary selection:bg-[var(--color-tertiary)]/20 overflow-x-hidden">
-      {/* Subtle Background Glows */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--color-tertiary)]/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px]" />
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary selection:bg-brand-3/20 overflow-x-hidden">
+      {/* Tactical Header Banner - Same as Profile for consistency */}
+      <div className="h-48 sm:h-64 w-full relative overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-brand-3 opacity-90" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8fafc] to-transparent" />
       </div>
 
-      <div className="relative z-10 flex flex-col lg:flex-row min-h-screen">
+      <div className="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-256px)] -mt-24 sm:-mt-32">
         {/* Left Column: Operation Controls */}
         <div className="flex-1 p-4 sm:p-8 lg:p-12 space-y-10 max-w-5xl">
           <header>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-2 rounded-full bg-[var(--color-tertiary)] shadow-[0_0_8px_var(--color-tertiary)] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-tertiary)]">System Live</span>
+              <div className="w-2 h-2 rounded-full bg-brand-3 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-3">System Online</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Command <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Center</span>

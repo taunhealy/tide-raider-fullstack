@@ -185,10 +185,10 @@ export default function BioSection({
             <Button
               onClick={() =>
                 updateProfileMutation.mutate({
-                  bio: initialBio,
-                  link: initialLink,
-                  email: initialEmail,
-                  whatsappNumber: initialWhatsappNumber,
+                  bio: initialBio || "",
+                  link: initialLink || "",
+                  email: initialEmail || "",
+                  whatsappNumber: initialWhatsappNumber || "",
                 })
               }
               disabled={updateProfileMutation.isPending}

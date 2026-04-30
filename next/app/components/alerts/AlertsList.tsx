@@ -70,7 +70,7 @@ export function AlertsList() {
   };
 
   const handleEdit = (id: string) => {
-    router.push(`/alerts/${id}/edit`);
+    router.push(`/dashboard/alerts/${id}/edit`);
   };
 
   if (isAlertsLoading || isSubscriptionLoading) {

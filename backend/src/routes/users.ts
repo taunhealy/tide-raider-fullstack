@@ -74,11 +74,11 @@ router.put(
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: {
-          ...(bio !== undefined && { bio: bio.trim() }),
-          ...(name !== undefined && { name: name.trim() }),
-          ...(link !== undefined && { link: link.trim() }),
-          ...(whatsappNumber !== undefined && { whatsappNumber: whatsappNumber.trim() }),
-          ...(email !== undefined && { email: email.trim() }),
+          ...(typeof bio === 'string' && { bio: bio.trim() }),
+          ...(typeof name === 'string' && { name: name.trim() }),
+          ...(typeof link === 'string' && { link: link.trim() }),
+          ...(typeof whatsappNumber === 'string' && { whatsappNumber: whatsappNumber.trim() }),
+          ...(typeof email === 'string' && { email: email.trim() }),
         },
         select: {
           id: true,
