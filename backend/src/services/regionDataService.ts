@@ -2,6 +2,8 @@ import { prisma } from "../lib/prisma";
 import { getLatestConditions } from "./surfConditionsService";
 import { ScoreService } from "./scoreService";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
+import { EnsembleService } from "./ensembleService";
+import { TimeSlot } from "@prisma/client";
 
 // Core South Africa regions that are always kept fresh by cron
 const CORE_REGIONS = ["western-cape", "eastern-cape"];
@@ -170,8 +172,24 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
             }
           }
 
-          // Mark as succeeded if we got conditions from at least one source
+          // Trigger Ensemble Calculation (Tide Raider Source)
           if (hasAnyConditions) {
+            console.log(`🌊 [Ensemble] Triggering Tide Raider ensemble update for ${region.id}...`);
+            const timeSlots: TimeSlot[] = ["MORNING", "NOON"];
+            const daysToEnsemble = daysLimit || 10;
+            
+            for (let i = 0; i < daysToEnsemble; i++) {
+              const ensembleDate = new Date();
+              ensembleDate.setDate(ensembleDate.getDate() + i);
+              ensembleDate.setUTCHours(0, 0, 0, 0);
+
+              for (const slot of timeSlots) {
+                EnsembleService.updateEnsembleForecast(region.id, ensembleDate, slot).catch(err => {
+                  console.error(`❌ [Ensemble] Error for ${region.id} on ${ensembleDate.toISOString()} (${slot}):`, err);
+                });
+              }
+            }
+            
             console.log(`✅ Successfully processed region ${region.id}`);
             results.regionsSucceeded++;
           } else {

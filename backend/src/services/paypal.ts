@@ -142,4 +142,45 @@ export class PayPalService {
       throw error;
     }
   }
+
+  // Subscription Management
+  static async suspendSubscription(subscriptionId: string, reason: string = "User requested suspension") {
+    const token = await this.getAccessToken();
+    try {
+      await axios.post(
+        `${PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/suspend`,
+        { reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return true;
+    } catch (error: any) {
+      console.error("[PayPal] Suspend Subscription Failed:", error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  static async cancelSubscription(subscriptionId: string, reason: string = "User requested cancellation") {
+    const token = await this.getAccessToken();
+    try {
+      await axios.post(
+        `${PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+        { reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return true;
+    } catch (error: any) {
+      console.error("[PayPal] Cancel Subscription Failed:", error.response?.data || error.message);
+      throw error;
+    }
+  }
 }

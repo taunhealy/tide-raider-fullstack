@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
-type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY";
+type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -52,7 +52,7 @@ export default function WeatherForecastWidget() {
     setMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
-      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
+      if (stored && ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
         setSelectedSource(stored as ForecastSource);
       }
     }
@@ -354,6 +354,17 @@ export default function WeatherForecastWidget() {
             >
               C
             </button>
+            <button
+              onClick={() => setSelectedSource("TIDE_RAIDER")}
+              suppressHydrationWarning
+              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+                selectedSource === "TIDE_RAIDER"
+                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
+                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+              }`}
+            >
+              D
+            </button>
           </div>
         </div>
       </div>
@@ -500,6 +511,18 @@ export default function WeatherForecastWidget() {
                 )}
               >
                 Gamma
+              </button>
+              <button
+                onClick={() => setSelectedSource("TIDE_RAIDER")}
+                suppressHydrationWarning
+                className={cn(
+                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  selectedSource === "TIDE_RAIDER"
+                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
+                    : "bg-white/5 text-white/40 hover:bg-white/10"
+                )}
+              >
+                Delta
               </button>
             </div>
           </div>

@@ -815,30 +815,29 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Feed Preview */}
-        <div className="hidden lg:block w-[450px] sticky top-0 h-screen border-l border-slate-100 overflow-hidden group bg-slate-50">
-          <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-white/10 to-white/80 pointer-events-none" />
-          <div className="absolute bottom-12 left-12 z-20 space-y-4">
-            <div className="flex items-center gap-2">
-              
-            <div className="p-4 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Location Lock</p>
-              <p className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Jeffreys Bay</p>
-            </div>
-          </div>
-          
+        <div className="hidden lg:block w-[550px] sticky top-0 h-screen border-l border-slate-100 overflow-hidden group bg-slate-50">
           {data?.heroImage?.image ? (
             <Image
               src={urlForImage(data.heroImage.image).url()}
               alt={data.heroImage.alt || "Background"}
               fill
+              priority
               className="object-cover transition-transform duration-[10s] group-hover:scale-110 opacity-80"
             />
           ) : (
             <div className="w-full h-full bg-slate-100" />
           )}
+
+          <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-white/10 to-white/80 pointer-events-none" />
+          
+          <div className="absolute bottom-12 left-12 z-20 space-y-4">
+            <div className="p-4 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Location Lock</p>
+              <p className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Jeffreys Bay</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 }

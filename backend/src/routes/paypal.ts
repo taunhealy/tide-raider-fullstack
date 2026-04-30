@@ -66,7 +66,14 @@ router.post("/sync", authenticateToken, async (req: Request, res: Response) => {
     });
 
     if (!user?.paypalSubscriptionId) {
-      return res.status(400).json({ error: "No subscription ID found for user" });
+      if (user?.subscriptionStatus === "ACTIVE") {
+        return res.json({
+          success: true,
+          status: "ACTIVE",
+          message: "Your tactical status is ACTIVE. Subscription managed manually."
+        });
+      }
+      return res.status(400).json({ error: "No PayPal subscription found to sync." });
     }
 
     const accessToken = await PayPalService.getAccessToken();
@@ -343,31 +350,78 @@ router.post("/capture-credit-order", authenticateToken, async (req: Request, res
   }
 });
 
+// POST /api/paypal/suspend
+router.post("/suspend", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.id;
+        
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const user = await prisma.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // If it's a PayPal subscription, suspend it there
+        if (user.paypalSubscriptionId) {
+            await PayPalService.suspendSubscription(user.paypalSubscriptionId);
+        }
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { subscriptionStatus: "SUSPENDED" }
+        });
+
+        res.json({ success: true, message: "Subscription suspended successfully" });
+    } catch (error) {
+        console.error("[PayPal] Suspend Error:", error);
+        res.status(500).json({ error: "Failed to suspend subscription" });
+    }
+});
+
 // POST /api/paypal/cancel
 router.post("/cancel", authenticateToken, async (req: Request, res: Response) => {
-    const authReq = req as AuthRequest;
-    const userId = authReq.user?.id;
-    
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.id;
+        
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+        const user = await prisma.user.findUnique({
+          where: { id: userId }
+        });
 
-    if (user) {
-      await prisma.user.update({
-          where: { id: userId },
-          data: { subscriptionStatus: "CANCELLED" }
-      });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-      await sendEmail(
-        user.email,
-        "Subscription Cancelled ⚓",
-        subscriptionCancelledTemplate(user.name || "Explorer")
-      );
+        // If it's a PayPal subscription, cancel it there
+        if (user.paypalSubscriptionId) {
+            try {
+                await PayPalService.cancelSubscription(user.paypalSubscriptionId);
+            } catch (err) {
+                console.warn("[PayPal] Cancel in PayPal failed, proceeding with DB update:", err);
+            }
+        }
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { subscriptionStatus: "CANCELLED" }
+        });
+
+        if (user.email) {
+            await sendEmail(
+                user.email,
+                "Subscription Cancelled ⚓",
+                subscriptionCancelledTemplate(user.name || "Explorer")
+            ).catch(err => console.error("Failed to send cancellation email:", err));
+        }
+        
+        res.json({ success: true, message: "Subscription cancelled successfully" });
+    } catch (error) {
+        console.error("[PayPal] Cancel Error:", error);
+        res.status(500).json({ error: "Failed to cancel subscription" });
     }
-    
-    res.json({ success: true });
 });
 
 export default router;

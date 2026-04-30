@@ -34,7 +34,7 @@ router.get(
         ? (req.query.searchQuery as string).trim()
         : undefined;
       const sourceParam =
-        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY") ||
+        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER") ||
         "WINDFINDER";
 
       let regionId: string | undefined = undefined;
@@ -235,7 +235,7 @@ router.get(
         prisma.forecast.findMany({
           where: {
             ...(regionId && { regionId }),
-            source: { in: ["WINDFINDER", "WINDGURU"] },
+            source: { in: ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"] },
             date: { 
               gte: pastLimit,
               lte: futureLimit
@@ -307,97 +307,113 @@ router.get(
         });
       }
 
-      // If still no forecast, trigger on-demand scraping as fallback
+      // If still no forecast, trigger on-demand scraping or ensemble generation
       if (!forecast && regionId) {
-        console.log(
-          `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}/${timeSlotParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
-        );
-        console.log(
-          `[filtered-beaches] ⏱️ Starting scrape at ${new Date().toISOString()}`
-        );
-
-        try {
-          // Calculate distance from today in days
-          let effectiveSource = sourceParam;
-          // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
-          if (sourceParam === "WINDFINDER" && diffDays > 3) {
-            console.log(`[filtered-beaches] 📅 Date is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
-            effectiveSource = "WINDGURU";
+        // 🌊 TIDE RAIDER SPECIAL HANDLING: If the ensemble is missing, generate it on demand
+        if (sourceParam === "TIDE_RAIDER") {
+          console.log(`🌊 [filtered-beaches] Tide Raider missing. Generating on-demand...`);
+          try {
+            const { EnsembleService } = require("../services/ensembleService");
+            forecast = await EnsembleService.updateEnsembleForecast(regionId, targetDate, timeSlotParam as any);
+            if (forecast) {
+               console.log(`✅ [filtered-beaches] Tide Raider generated successfully.`);
+            }
+          } catch (ensembleError) {
+            console.error(`❌ [filtered-beaches] Failed to generate on-demand ensemble:`, ensembleError);
           }
+        }
 
-          const scrapeStartTime = Date.now();
-          const scrapedForecast = await getLatestConditions(
-            regionId,
-            false, // Don't force refresh - only scrape if no data
-            effectiveSource,
-            undefined, // daysLimit
-            targetDate,
-            timeSlotParam
-          );
-          const scrapeDuration = Date.now() - scrapeStartTime;
-
+        if (!forecast) {
           console.log(
-            `[filtered-beaches] ⏱️ Scrape completed in ${scrapeDuration}ms`
+            `[filtered-beaches] 🚨 No forecast found for ${regionId} (${sourceParam}/${timeSlotParam}) on ${targetDate.toISOString().split("T")[0]}, triggering scrape...`
+          );
+          console.log(
+            `[filtered-beaches] ⏱️ Starting scrape at ${new Date().toISOString()}`
           );
 
-          if (scrapedForecast) {
+          try {
+            // Calculate distance from today in days
+            let effectiveSource = sourceParam;
+            // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
+            if (sourceParam === "WINDFINDER" && diffDays > 3) {
+              console.log(`[filtered-beaches] 📅 Date is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
+              effectiveSource = "WINDGURU";
+            }
+
+            const scrapeStartTime = Date.now();
+            const scrapedForecast = await getLatestConditions(
+              regionId,
+              false, // Don't force refresh - only scrape if no data
+              effectiveSource as any,
+              undefined, // daysLimit
+              targetDate,
+              timeSlotParam
+            );
+            const scrapeDuration = Date.now() - scrapeStartTime;
+
             console.log(
-              `[filtered-beaches] ✅ Scraping successful for ${regionId} (${sourceParam})`,
+              `[filtered-beaches] ⏱️ Scrape completed in ${scrapeDuration}ms`
+            );
+
+            if (scrapedForecast) {
+              console.log(
+                `[filtered-beaches] ✅ Scraping successful for ${regionId} (${sourceParam})`,
+                {
+                  windSpeed: scrapedForecast.windSpeed,
+                  swellHeight: scrapedForecast.swellHeight,
+                  date: scrapedForecast.date,
+                  timeSlot: scrapedForecast.timeSlot,
+                }
+              );
+              // Query the forecast again after scraping
+              const finalSource = (sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam;
+              forecast = await prisma.forecast.findFirst({
+                where: {
+                  regionId,
+                  date: targetDate,
+                  source: finalSource,
+                  timeSlot: timeSlotParam as any,
+                },
+                select: forecastSelect,
+              });
+
+              // SECONDARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
+              if (!forecast && sourceParam === "WINDFINDER" && diffDays <= 3) {
+                console.log(`[filtered-beaches] 🔄 SECONDARY FALLBACK: Windfinder null, attempting WINDGURU...`);
+                await getLatestConditions(regionId, false, "WINDGURU");
+                forecast = await prisma.forecast.findFirst({
+                  where: {
+                    regionId,
+                    date: targetDate,
+                    source: "WINDGURU",
+                    timeSlot: timeSlotParam as any,
+                  },
+                  select: forecastSelect,
+                });
+              }
+              console.log(
+                `[filtered-beaches] 📊 Re-queried forecast after scraping:`,
+                forecast ? "FOUND" : "NOT FOUND"
+              );
+            } else {
+              console.warn(
+                `[filtered-beaches] ⚠️ Scraping returned null/undefined for ${regionId} (${sourceParam})`
+              );
+            }
+          } catch (scrapeError) {
+            console.error(
+              `[filtered-beaches] ❌ Error during on-demand scraping for ${regionId} (${sourceParam}):`,
               {
-                windSpeed: scrapedForecast.windSpeed,
-                swellHeight: scrapedForecast.swellHeight,
-                date: scrapedForecast.date,
-                timeSlot: scrapedForecast.timeSlot,
+                error:
+                  scrapeError instanceof Error
+                    ? scrapeError.message
+                    : String(scrapeError),
+                stack:
+                  scrapeError instanceof Error ? scrapeError.stack : undefined,
               }
             );
-            // Query the forecast again after scraping
-            const finalSource = (sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam;
-            forecast = await prisma.forecast.findFirst({
-              where: {
-                regionId,
-                date: targetDate,
-                source: finalSource,
-                timeSlot: timeSlotParam as any,
-              },
-              select: forecastSelect,
-            });
-
-            // SECONDARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
-            if (!forecast && sourceParam === "WINDFINDER" && diffDays <= 3) {
-               console.log(`[filtered-beaches] 🔄 SECONDARY FALLBACK: Windfinder null, attempting WINDGURU...`);
-               await getLatestConditions(regionId, false, "WINDGURU");
-               forecast = await prisma.forecast.findFirst({
-                 where: {
-                   regionId,
-                   date: targetDate,
-                   source: "WINDGURU",
-                   timeSlot: timeSlotParam as any,
-                 },
-                 select: forecastSelect,
-               });
-            }
-            console.log(
-              `[filtered-beaches] 📊 Re-queried forecast after scraping:`,
-              forecast ? "FOUND" : "NOT FOUND"
-            );
-          } else {
-            console.warn(
-              `[filtered-beaches] ⚠️ Scraping returned null/undefined for ${regionId} (${sourceParam})`
-            );
+            // Continue anyway - return null forecast and let UI handle it
           }
-        } catch (scrapeError) {
-          console.error(
-            `[filtered-beaches] ❌ Error during on-demand scraping for ${regionId} (${sourceParam}):`,
-            {
-              error:
-                scrapeError instanceof Error
-                  ? scrapeError.message
-                  : String(scrapeError),
-              stack:
-                scrapeError instanceof Error ? scrapeError.stack : undefined,
-            }
-          );
-          // Continue anyway - return null forecast and let UI handle it
         }
       }
 

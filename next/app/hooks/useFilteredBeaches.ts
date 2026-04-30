@@ -29,12 +29,12 @@ export function useFilteredBeaches({
 
   // Get selected source from localStorage (shared with WeatherForecastWidget)
   const [selectedSource, setSelectedSource] = useState<
-    "WINDFINDER" | "WINDGURU" | "WINDY"
+    "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER"
   >(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
-      if (stored && ["WINDFINDER", "WINDGURU", "WINDY"].includes(stored)) {
-        return stored as "WINDFINDER" | "WINDGURU" | "WINDY";
+      if (stored && ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
+        return stored as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
       }
     }
     return "WINDFINDER";
@@ -43,8 +43,8 @@ export function useFilteredBeaches({
   // Listen for source changes from WeatherForecastWidget
   useEffect(() => {
     const handleSourceChange = (event: CustomEvent) => {
-      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY";
-      if (["WINDFINDER", "WINDGURU", "WINDY"].includes(newSource)) {
+      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
+      if (["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(newSource)) {
         setSelectedSource(newSource);
         if (process.env.NODE_ENV === "development") {
           console.log(
@@ -139,7 +139,7 @@ export function useFilteredBeaches({
         isLongboarding?: string;
         isFoiling?: string;
         timeSlot?: string;
-        source?: "WINDFINDER" | "WINDGURU" | "WINDY";
+        source?: "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
         ignoreRegion?: boolean;
       } = {};
 

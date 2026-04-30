@@ -13,7 +13,8 @@ const secrets = [
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
   'FRONTEND_URL',
-  'GOOGLE_API_KEY'
+  'GOOGLE_API_KEY',
+  'GEMINI_API_KEY'
 ];
 
 async function updateSecrets() {
@@ -79,7 +80,7 @@ async function updateSecrets() {
             .map(s => `${s}=${s}:latest`)
             .join(',');
 
-        const deployCmd = `gcloud run services update ${serviceName} --region europe-west1 --update-secrets ${secretMappings}`;
+        const deployCmd = `gcloud run services update ${serviceName} --region europe-west1 --update-secrets "${secretMappings}"`;
         console.log(`Running: ${deployCmd}`);
         execSync(deployCmd, { stdio: 'inherit', shell: 'powershell.exe' });
         console.log('✅ Deployment updated successfully!');

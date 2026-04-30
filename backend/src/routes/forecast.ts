@@ -26,10 +26,10 @@ router.get(
 
       // Validate and normalize source parameter
       const sourceParamRaw = req.query.source as string | undefined;
-      const validSources = ["WINDFINDER", "WINDGURU", "WINDY"] as const;
-      const sourceParam: "WINDFINDER" | "WINDGURU" | "WINDY" =
+      const validSources = ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"] as const;
+      const sourceParam: "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" =
         sourceParamRaw && (validSources as readonly string[]).includes(sourceParamRaw)
-          ? (sourceParamRaw as "WINDFINDER" | "WINDGURU" | "WINDY")
+          ? (sourceParamRaw as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER")
           : "WINDFINDER";
 
       if (sourceParamRaw && !validSources.includes(sourceParamRaw as any)) {
@@ -150,8 +150,22 @@ router.get(
         const isToday = targetDate.getTime() === today.getTime();
 
         if (isTodayOrFuture) {
+          // 🌊 TIDE RAIDER SPECIAL HANDLING: If the ensemble is missing, generate it on demand
+          if (sourceParam === "TIDE_RAIDER") {
+            console.log(`🌊 [forecast] Tide Raider missing for ${resolvedRegionId} on ${dateStr}. Generating on-demand...`);
+            try {
+              const { EnsembleService } = require("../services/ensembleService");
+              forecast = await EnsembleService.updateEnsembleForecast(resolvedRegionId, targetDate, timeSlotParam as any);
+              if (forecast) {
+                console.log(`✅ [forecast] Tide Raider generated successfully.`);
+                return res.json(forecast);
+              }
+            } catch (ensembleError) {
+              console.error(`❌ [forecast] Failed to generate on-demand ensemble:`, ensembleError);
+            }
+          }
+
           // Auto-scrape for today or future dates when data is missing
-          // This ensures fresh data is available for current and upcoming dates
           console.log(
             `[forecast] 🚨 No forecast found for ${resolvedRegionId} (${sourceParam}) on ${dateStr}, triggering scrape...`
           );
@@ -166,7 +180,7 @@ router.get(
             today.setUTCHours(0, 0, 0, 0);
             const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             
-            let effectiveSource = sourceParam;
+            let effectiveSource: "WINDFINDER" | "WINDGURU" | "WINDY" = sourceParam as any;
             // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
             if (sourceParam === "WINDFINDER" && diffDays > 3) {
               console.log(`[forecast] 📅 Date ${dateStr} is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
