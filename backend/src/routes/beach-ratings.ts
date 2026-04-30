@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { ScoreService } from "../services/scoreService";
+import { getLatestConditions } from "../services/surfConditionsService";
 import { prisma } from "../lib/prisma";
 import {
   optionalAuth,
@@ -579,17 +580,35 @@ router.get(
         });
 
         if (beach) {
-          const forecasts = await prisma.forecast.findMany({
+          let forecasts = await prisma.forecast.findMany({
             where: {
               regionId: beach.regionId,
               date: targetDate
             }
           });
 
+          // If no forecasts exist, try to fetch them (this triggers archive if date is in the past)
+          if (forecasts.length === 0) {
+            console.log(`[beach-ratings/beach-scores] No forecasts found for ${beachId} on ${date}. Triggering fetch/archive...`);
+            try {
+              await getLatestConditions(beach.regionId, false, "WINDFINDER", 1, targetDate);
+              // Re-fetch forecasts to see if we got something
+              forecasts = await prisma.forecast.findMany({
+                where: {
+                  regionId: beach.regionId,
+                  date: targetDate
+                }
+              });
+            } catch (fetchErr) {
+              console.error(`[beach-ratings/beach-scores] Failed to fetch conditions:`, fetchErr);
+            }
+          }
+
           if (forecasts.length > 0) {
-            console.log(`[beach-ratings/beach-scores] Auto-calculating scores for ${beachId} on ${date}`);
+            console.log(`[beach-ratings/beach-scores] Ensuring scores exist for ${beachId} on ${date}`);
             for (const forecast of forecasts) {
               try {
+                // This will skip if scores already exist
                 await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
               } catch (calcErr) {
                 console.error(`[beach-ratings/beach-scores] Failed calc for ${forecast.source}:`, calcErr);

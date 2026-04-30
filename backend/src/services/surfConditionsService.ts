@@ -31,12 +31,79 @@ function getTodayDate() {
   return date;
 }
 
+/**
+ * Fetch historical data from Open-Meteo Archive API
+ */
+async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
+  try {
+    // 1. Get a representative beach for the region to get coordinates
+    const beach = await prisma.beach.findFirst({
+      where: { regionId },
+      select: { coordinates: true }
+    });
+    
+    if (!beach || !beach.coordinates) {
+      console.warn(`[Archive] No coordinates found for region ${regionId}, using Cape Town defaults`);
+    }
+    
+    const coords = (beach?.coordinates as { lat: number, lng: number }) || { lat: -33.9249, lng: 18.4241 };
+    const dateStr = date.toISOString().split('T')[0];
+    
+    console.log(`[Archive] Fetching Open-Meteo Archive for ${regionId} on ${dateStr} at ${coords.lat}, ${coords.lng}`);
+    
+    // Open-Meteo Archive API
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m,wave_height,wave_period,wave_direction&wind_speed_unit=kn`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Open-Meteo API failed: ${response.statusText}`);
+    const data = await response.json();
+    
+    if (!data.hourly) {
+      throw new Error("No hourly data returned from Open-Meteo");
+    }
+
+    const hourly = data.hourly;
+    const times = hourly.time as string[];
+    
+    const slots = [
+      { name: "MORNING", hour: 9 },
+      { name: "NOON", hour: 13 },
+      { name: "EVENING", hour: 17 }
+    ];
+    
+    const results = slots.map(slot => {
+      // Find index for the specific hour
+      const timeStr = `${dateStr}T${slot.hour.toString().padStart(2, '0')}:00`;
+      const timeIndex = times.findIndex((t: string) => t.startsWith(timeStr));
+      
+      if (timeIndex === -1) return null;
+      
+      return {
+        date: date,
+        timeSlot: slot.name,
+        windSpeed: Math.round(hourly.wind_speed_10m[timeIndex] || 0),
+        windDirection: hourly.wind_direction_10m[timeIndex] || 0,
+        swellHeight: hourly.wave_height?.[timeIndex] || 0,
+        swellPeriod: Math.round(hourly.wave_period?.[timeIndex] || 0),
+        swellDirection: hourly.wave_direction?.[timeIndex] || 0,
+        source: "OPENMETEO_ARCHIVE",
+        tide: ""
+      };
+    }).filter((r): r is any => r !== null);
+    
+    return results;
+  } catch (error) {
+    console.error(`[Archive] Failed to fetch from Open-Meteo:`, error);
+    return [];
+  }
+}
+
 const pendingScrapes = new Map<string, Promise<any>>();
 
 export async function getLatestConditions(
   regionId: string,
   forceRefresh = false,
-  source: "WINDFINDER" | "WINDGURU" | "WINDY" = "WINDFINDER",
+  source: "WINDFINDER" | "WINDGURU" | "WINDY" | "OPENMETEO_ARCHIVE" = "WINDFINDER",
   daysLimit?: number,
   targetDateParam?: Date,
   timeSlotParam?: string,
@@ -74,6 +141,47 @@ export async function getLatestConditions(
         `[getLatestConditions] 📦 Using cached ${source} forecast for ${region.regionId} on ${lookupDate.toISOString().split("T")[0]} slot ${timeSlotParam || activeSlot}`
       );
       return existingForecast;
+    }
+
+    // If looking for a past date and it's not in DB, we MUST use archive
+    const today = getTodayDate();
+    if (lookupDate < today) {
+        console.log(`[getLatestConditions] 🕒 Past date detected (${lookupDate.toISOString().split('T')[0]}). Triggering Archive Fetch...`);
+        const archiveForecasts = await fetchArchiveFromOpenMeteo(region.regionId, lookupDate);
+        
+        if (archiveForecasts.length > 0) {
+            // Store and calculate scores for each
+            let requestedArchive = null;
+            for (const f of archiveForecasts) {
+                const stored = await prisma.forecast.upsert({
+                    where: {
+                        date_regionId_source_timeSlot: {
+                            date: lookupDate,
+                            regionId: region.regionId,
+                            source: "OPENMETEO_ARCHIVE",
+                            timeSlot: f.timeSlot
+                        }
+                    },
+                    update: f,
+                    create: {
+                        id: randomUUID(),
+                        ...f,
+                        regionId: region.regionId
+                    }
+                });
+
+                // Calculate scores
+                await ScoreService.calculateAndStoreScores(region.regionId, {
+                    ...f,
+                    regionId: region.regionId
+                } as any);
+
+                if (f.timeSlot === (timeSlotParam || activeSlot)) {
+                    requestedArchive = stored;
+                }
+            }
+            return requestedArchive;
+        }
     }
   }
 

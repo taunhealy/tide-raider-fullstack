@@ -4,8 +4,12 @@ import { prisma } from "@/app/lib/prisma";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const source = searchParams.get("source");
+    const timeSlot = searchParams.get("timeSlot");
+
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const sevenDaysLater = new Date(today);
@@ -26,7 +30,9 @@ export async function GET() {
             date: {
               gte: today,
               lt: sevenDaysLater
-            }
+            },
+            ...(source ? { source } : {}),
+            ...(timeSlot ? { timeSlot: timeSlot as any } : {})
           },
           orderBy: {
             date: 'desc' // Latest entries first if there are duplicates

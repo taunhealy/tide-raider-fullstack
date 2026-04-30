@@ -42,6 +42,23 @@ export default function GlobalMapPage() {
   const [reportBeach, setReportBeach] = useState<any | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
+  // Source selection state (shared with WeatherForecastWidget)
+  const [selectedSource, setSelectedSource] = useState<string>("WINDFINDER");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored) setSelectedSource(stored);
+    }
+
+    const handleSourceChange = (e: any) => {
+      setSelectedSource(e.detail);
+    };
+
+    window.addEventListener("forecastSourceChanged", handleSourceChange as any);
+    return () => window.removeEventListener("forecastSourceChanged", handleSourceChange as any);
+  }, []);
+
   useEffect(() => {
     setMounted(true);
     const savedWind = localStorage.getItem("showWindHeatmap");
@@ -104,8 +121,11 @@ export default function GlobalMapPage() {
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/map-data");
+        const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
+        const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
+        const res = await fetch(`/api/map-data?${sourceParam}${timeSlotParam}`);
         const data = await res.json();
         if (data.beaches) {
           setBeaches(data.beaches);
@@ -117,7 +137,7 @@ export default function GlobalMapPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [selectedSource, filters.timeSlot]);
 
   const filteredBeaches = useMemo(() => {
     return beaches.filter(Boolean).filter(beach => {

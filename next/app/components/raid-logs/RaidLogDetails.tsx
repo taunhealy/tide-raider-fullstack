@@ -208,12 +208,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
             {!isGatedGem && (
               <Button
                 onClick={() => setIsAlertModalOpen(true)}
-                variant="dark"
+                variant="action"
                 size="sm"
-                className="flex items-center gap-2 font-primary text-sm"
+                className="flex items-center gap-2 font-primary text-[10px] md:text-[11px] h-9 px-4 md:px-5 active:scale-95"
               >
-                <Bell className="w-4 h-4" />
-                <span className="hidden sm:inline">
+                <Bell className="w-3.5 h-3.5" />
+                <span>
                   {existingAlert ? "Edit Alert" : "Set Alert"}
                 </span>
               </Button>
@@ -224,11 +224,10 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                 onClick={() => router.push(`/raidlogs/${entry.id}/edit`)}
                 variant="dark"
                 size="sm"
-                className="flex items-center gap-2 font-primary text-sm"
+                className="flex items-center gap-2 font-primary text-[10px] md:text-[11px] h-9 px-4 md:px-5 border-white/10 hover:bg-white/5 active:scale-95"
               >
-                <Pencil className="w-4 h-4" />
-                <span className="hidden sm:inline">Edit Log</span>
-                <span className="sm:hidden">Edit</span>
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Edit Log</span>
               </Button>
             )}
           </div>

@@ -53,8 +53,9 @@ export function Header({
       <div className="flex flex-row gap-3 md:gap-4 items-center w-full md:w-auto">
         <LogVisibilityToggle isPrivate={isPrivate} onChange={onPrivateToggle} />
         <Button
+          variant="action"
           size="sm"
-          className="whitespace-nowrap hover:bg-gray-50 transition-colors"
+          className="whitespace-nowrap px-6 h-10 shadow-md active:scale-95"
           onClick={handlePostClick}
         >
           Post
@@ -63,7 +64,7 @@ export function Header({
           onClick={onFilterOpen}
           variant="outline"
           size="sm"
-          className="inline-flex hover:bg-gray-50 transition-colors"
+          className="inline-flex h-10 px-5 border-gray-200 hover:bg-gray-50 transition-all font-bold uppercase tracking-widest text-[11px] rounded-xl shadow-sm active:scale-95"
         >
           Filter
         </Button>

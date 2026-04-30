@@ -177,9 +177,13 @@ router.get(
       const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       
       // Determine the "True Source" based on date depth
-      // Windfinder (Superforecast) only goes 3 days deep.
       let effectiveSource = sourceParam;
-      if (sourceParam === "WINDFINDER" && diffDays > 3) {
+      
+      if (diffDays < 0) {
+        // For past dates, always prefer the archive source if possible
+        effectiveSource = "OPENMETEO_ARCHIVE";
+      } else if (sourceParam === "WINDFINDER" && diffDays > 3) {
+        // Windfinder (Superforecast) only goes 3 days deep.
         effectiveSource = "WINDGURU";
       }
 
@@ -199,9 +203,9 @@ router.get(
         tide: true,
       };
 
-      // Limit UI to 3 days behind and 7 days ahead (10 days total)
+      // Limit UI to 30 days behind and 7 days ahead
       const pastLimit = new Date(today);
-      pastLimit.setUTCDate(today.getUTCDate() - 3);
+      pastLimit.setUTCDate(today.getUTCDate() - 30);
 
       const futureLimit = new Date(today);
       futureLimit.setUTCDate(today.getUTCDate() + 7);
