@@ -85,13 +85,7 @@ export default function DateSelector({
   const activeDate = selectedDate || dateOptions[0]?.value || null;
 
   if (!mounted || (dateOptions.length === 0 && !isLoading)) {
-    return (
-      <div className={cn("flex flex-wrap gap-2", className)}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <div key={i} className="h-12 w-[75px] bg-gray-200 animate-pulse rounded-xl" />
-        ))}
-      </div>
-    );
+    return null;
   }
 
   if (isLoading) {

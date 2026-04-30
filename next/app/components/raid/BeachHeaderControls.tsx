@@ -69,7 +69,7 @@ const ProximityFilterRow = ({
               onChange={(e) => onChange(parseInt(e.target.value) || 0)}
               className="w-10 bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 appearance-none"
               min={0}
-              max={100}
+              max={500}
             />
             <span className="text-[10px] font-bold">km Radius</span>
           </div>
@@ -97,15 +97,15 @@ const ProximityFilterRow = ({
     {maxDistance !== null && (
       <div className="flex items-center gap-6 px-1">
         <Slider
-          value={[Math.min(maxDistance, 100)]}
-          max={100}
+          value={[Math.min(maxDistance, 500)]}
+          max={500}
           min={5}
           step={5}
           onValueChange={(vals) => onChange(vals[0])}
           className="flex-1"
         />
         <div className="flex flex-col items-end min-w-[40px]">
-          <span className="text-[12px] font-bold text-black">{maxDistance > 100 ? "100+" : `${maxDistance}km`}</span>
+          <span className="text-[12px] font-bold text-black">{maxDistance >= 500 ? "500km+" : `${maxDistance}km`}</span>
           <span className="text-[8px] font-black uppercase tracking-tighter text-gray-400">MAX</span>
         </div>
       </div>
@@ -245,7 +245,7 @@ export default function BeachHeaderControls({
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] px-1 text-gray-400/80">
                         Tide
                       </label>
-                      <TideSlot tide={forecast?.tide} />
+                      <TideSlot tide={forecast?.tide} isLoading={isLoading} />
                     </div>
                   )}
                 </div>
