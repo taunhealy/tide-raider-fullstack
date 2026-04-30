@@ -71,12 +71,17 @@ async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
       { name: "EVENING", hour: 17 }
     ];
     
+    console.log(`[Archive] Found ${times.length} hourly slots. Looking for matches in ${dateStr}...`);
+
     const results = slots.map(slot => {
       // Find index for the specific hour
       const timeStr = `${dateStr}T${slot.hour.toString().padStart(2, '0')}:00`;
       const timeIndex = times.findIndex((t: string) => t.startsWith(timeStr));
       
-      if (timeIndex === -1) return null;
+      if (timeIndex === -1) {
+        console.warn(`[Archive] No data found in hourly array for ${timeStr}`);
+        return null;
+      }
       
       return {
         date: date,
@@ -91,6 +96,7 @@ async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
       };
     }).filter((r): r is any => r !== null);
     
+    console.log(`[Archive] Successfully parsed ${results.length} slots for ${regionId}`);
     return results;
   } catch (error) {
     console.error(`[Archive] Failed to fetch from Open-Meteo:`, error);
@@ -142,52 +148,72 @@ export async function getLatestConditions(
       );
       return existingForecast;
     }
+  }
 
-    // If looking for a past date and it's not in DB, we MUST use archive
-    const today = getTodayDate();
-    if (lookupDate < today) {
-        console.log(`[getLatestConditions] 🕒 Past date detected (${lookupDate.toISOString().split('T')[0]}). Triggering Archive Fetch...`);
-        const archiveForecasts = await fetchArchiveFromOpenMeteo(region.regionId, lookupDate);
-        
-        if (archiveForecasts.length > 0) {
-            // Store and calculate scores for each
-            let requestedArchive = null;
-            for (const f of archiveForecasts) {
-                const stored = await prisma.forecast.upsert({
-                    where: {
-                        date_regionId_source_timeSlot: {
-                            date: lookupDate,
-                            regionId: region.regionId,
-                            source: "OPENMETEO_ARCHIVE",
-                            timeSlot: f.timeSlot
-                        }
-                    },
-                    update: f,
-                    create: {
-                        id: randomUUID(),
-                        ...f,
-                        regionId: region.regionId
-                    }
-                });
+  // If looking for a past date, we MUST use archive (scrapers only work for future/current)
+  const today = getTodayDate();
+  if (lookupDate < today) {
+      // Check if it exists in DB first under OPENMETEO_ARCHIVE source
+      const archiveInDb = await prisma.forecast.findFirst({
+          where: {
+              regionId: region.regionId,
+              source: "OPENMETEO_ARCHIVE",
+              date: lookupDate,
+              timeSlot: (timeSlotParam as any) || activeSlot,
+          }
+      });
 
-                // Calculate scores
-                await ScoreService.calculateAndStoreScores(region.regionId, {
-                    ...f,
-                    regionId: region.regionId
-                } as any);
+      if (archiveInDb && !forceRefresh) {
+          console.log(`[getLatestConditions] 📦 Using cached ARCHIVE for ${region.regionId} on ${lookupDate.toISOString().split("T")[0]}`);
+          return archiveInDb;
+      }
 
-                if (f.timeSlot === (timeSlotParam || activeSlot)) {
-                    requestedArchive = stored;
-                }
-            }
-            return requestedArchive;
-        }
-    }
+      console.log(`[getLatestConditions] 🕒 Past date detected (${lookupDate.toISOString().split('T')[0]}). Triggering Archive Fetch...`);
+      const archiveForecasts = await fetchArchiveFromOpenMeteo(region.regionId, lookupDate);
+      
+      if (archiveForecasts.length > 0) {
+          // Parallelize storage and score calculation
+          const results = await Promise.all(archiveForecasts.map(async (f) => {
+              const stored = await prisma.forecast.upsert({
+                  where: {
+                      date_regionId_source_timeSlot: {
+                          date: lookupDate,
+                          regionId: region.regionId,
+                          source: "OPENMETEO_ARCHIVE",
+                          timeSlot: f.timeSlot
+                      }
+                  },
+                  update: f,
+                  create: {
+                      id: randomUUID(),
+                      ...f,
+                      regionId: region.regionId
+                  }
+              });
+
+              // Calculate scores
+              await ScoreService.calculateAndStoreScores(region.regionId, {
+                  ...f,
+                  regionId: region.regionId
+              } as any);
+
+              return stored;
+          }));
+
+          // Return the specific requested slot
+          const targetSlot = timeSlotParam || activeSlot;
+          const requestedArchive = results.find(r => r.timeSlot === targetSlot) || results[0];
+          
+          console.log(`[getLatestConditions] ✅ Archive retrieval complete. Returning slot: ${requestedArchive.timeSlot}`);
+          return requestedArchive;
+      } else {
+          console.error(`[getLatestConditions] ❌ Archive fetch returned no data for ${region.regionId} on ${lookupDate.toISOString()}`);
+          // Fall through to scrapers (which will likely fail) or throw
+      }
   }
 
   // Determine URL based on source
   let scrapeUrl = "";
-  const today = getTodayDate();
   const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   const SUPERFORECAST_LIMIT_DAYS = 3;
   const useRegularForecast = source === "WINDFINDER" && diffDays > SUPERFORECAST_LIMIT_DAYS && !!region.sourceA.forecastUrl;

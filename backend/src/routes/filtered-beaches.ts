@@ -239,7 +239,7 @@ router.get(
         prisma.forecast.findMany({
           where: {
             ...(regionId && { regionId }),
-            source: { in: ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"] },
+            source: { in: ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER", "OPENMETEO_ARCHIVE"] },
             date: { 
               gte: pastLimit,
               lte: futureLimit
