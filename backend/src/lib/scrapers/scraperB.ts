@@ -1,7 +1,6 @@
 // @ts-nocheck
 
-import puppeteerCore from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import { chromium } from "playwright";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { USER_AGENTS } from "../proxy/userAgents";
@@ -11,40 +10,11 @@ import { BaseForecastData } from "../types";
 const proxyManager = new ProxyManager();
 
 async function getBrowser() {
-  const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-
-  if (!isVercel && process.env.NODE_ENV === "development") {
-    console.log("Using system Chrome for local development");
-    return puppeteerCore.launch({
-      headless: true,
-      args: ["--no-sandbox"],
-      executablePath:
-        process.platform === "win32"
-          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-          : "/usr/bin/google-chrome",
-    });
-  } else {
-    console.log(
-      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : "production"} environment`
-    );
-    chromium.setGraphicsMode = false;
-    return puppeteerCore.launch({
-      args: [
-        ...chromium.args,
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-extensions",
-        "--disable-background-networking",
-        "--memory-pressure-off",
-      ],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless === "new" ? true : chromium.headless,
-    });
-  }
+  console.log(`[getBrowser] Launching Playwright Chromium...`);
+  return await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+  });
 }
 
 // Convert knots to m/s (Windguru shows wind in knots)
@@ -123,45 +93,17 @@ export async function scraperB(
   const startTime = Date.now();
 
   try {
-    browser = await getBrowser();
-    console.log("✅ Browser launched");
-
-    const page = await browser.newPage();
-    console.log("✅ New page created");
-
-    await page.setUserAgent(
-      USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
-    );
-
-    // Anti-bot measures
-    await page.evaluateOnNewDocument(() => {
-      // @ts-ignore
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-      // @ts-ignore
-      Object.defineProperty(navigator, "plugins", {
-        get: () => [
-          { name: "Chrome PDF Plugin" },
-          { name: "Chrome PDF Viewer" },
-          { name: "Native Client" },
-        ],
-      });
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+      viewport: { width: 1920, height: 1080 }
     });
-
-    // Block unnecessary resources
-    await page.setRequestInterception(true);
-    page.on("request", (request) => {
-      if (["image", "stylesheet", "font"].includes(request.resourceType())) {
-        request.abort();
-      } else {
-        request.continue();
-      }
-    });
+    const page = await context.newPage();
 
     console.log(`[scraperB] 🌐 Navigating to ${url}...`);
-    // Wait for networkidle2 to ensure dynamic content loads
     await page.goto(url, { 
-      waitUntil: ["domcontentloaded", "networkidle2"], 
-      timeout: 45000 
+      waitUntil: "domcontentloaded", 
+      timeout: 60000 
     });
     console.log(`[scraperB] ✅ Page loaded successfully`);
 

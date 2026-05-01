@@ -1,7 +1,6 @@
 // @ts-nocheck
 
-import puppeteerCore from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import { chromium } from "playwright";
 import { USER_AGENTS } from "../proxy/userAgents";
 import { ProxyManager } from "../proxy/proxyManager";
 import { createHash } from "crypto";
@@ -9,12 +8,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { BaseForecastData } from "../types";
 
-// Add at the top of the file
-declare global {
-  interface Window {
-    __mousePos?: { x: number; y: number };
-  }
-}
+const proxyManager = new ProxyManager();
 
 const cardinalToDirection: { [key: string]: number } = {
   N: 0,
@@ -35,75 +29,12 @@ const cardinalToDirection: { [key: string]: number } = {
   NNW: 337.5,
 };
 
-// Enhanced fingerprint randomization
-const generateFingerprint = () => {
-  const noise = Math.random().toString(36).slice(2, 7);
-  return createHash("sha256").update(noise).digest("hex").slice(0, 32);
-};
-
-// Randomized request intervals (2-45 seconds)
-const randomizedDelay = (base: number = 2000, variance: number = 43000) =>
-  new Promise((resolve) =>
-    setTimeout(resolve, base + Math.random() * variance)
-  );
-
-// Enhanced browser configuration
-const getBrowserArgs = () => {
-  const args = [
-    "--no-sandbox",
-    "--disable-blink-features=AutomationControlled",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-    `--font-render-hinting=${Math.random() > 0.5 ? "medium" : "none"}`,
-    `--window-size=${1280 + Math.floor(Math.random() * 200)},${720 + Math.floor(Math.random() * 200)}`,
-  ];
-
-  if (Math.random() > 0.8) args.push("--disable-accelerated-2d-canvas");
-  return args;
-};
-
-const proxyManager = new ProxyManager();
-
-const getBrowserPath = () => {
-  return process.env.PLAYWRIGHT_BROWSERS_PATH || "./playwright";
-};
-
 async function getBrowser() {
-  // Check if running on Vercel (serverless environment)
-  const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-
-  // Use @sparticuz/chromium for production environments (Vercel, etc.)
-  // Only use system Chrome in local development
-  if (!isVercel && process.env.NODE_ENV === "development") {
-    // Local development - use Chrome/Chromium installed on the system
-    console.log("Using system Chrome for local development");
-    return puppeteerCore.launch({
-      headless: true,
-      args: ["--no-sandbox"],
-      executablePath:
-        process.platform === "win32"
-          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" // Default Chrome path
-          : "/usr/bin/google-chrome", // Default Linux Chrome path
-    });
-  } else {
-    // Production/serverless environment (Vercel, etc.) - use @sparticuz/chromium
-    console.log(
-      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : "production"} environment`
-    );
-    chromium.setGraphicsMode = false; // Disable graphics mode for serverless
-    return puppeteerCore.launch({
-      args: [
-        ...chromium.args,
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-      ],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless === "new" ? true : chromium.headless,
-    });
-  }
+  console.log(`[getBrowser] Launching Playwright Chromium...`);
+  return await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+  });
 }
 
 export async function scraperA(
@@ -118,13 +49,13 @@ export async function scraperA(
   const startTime = Date.now();
 
   try {
-    browser = await getBrowser();
-    console.log("✅ Browser launched");
-
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.setViewport({ width: 1280, height: 1000 });
-
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 1000 }
+    });
+    const page = await context.newPage();
+    
     page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
 
 
@@ -154,7 +85,7 @@ export async function scraperA(
       try {
         attempts++;
         // Use networkidle2 for more reliable loading of dynamic content
-        await page.goto(currentUrl, { waitUntil: "networkidle2", timeout: 30000 });
+        await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
         
         // Wait a bit extra for Astro/JS components to hydrate
         await new Promise(r => setTimeout(r, 2000));

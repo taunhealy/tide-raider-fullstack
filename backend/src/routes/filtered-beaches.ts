@@ -181,7 +181,7 @@ router.get(
       
       if (diffDays < 0) {
         // For past dates, always prefer the archive source if possible
-        effectiveSource = "OPENMETEO_ARCHIVE";
+        effectiveSource = "OPENMETEO_ARCHIVE" as any;
       } else if (sourceParam === "WINDFINDER" && diffDays > 3) {
         // Windfinder (Superforecast) only goes 3 days deep.
         effectiveSource = "WINDGURU";

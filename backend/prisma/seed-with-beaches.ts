@@ -922,7 +922,7 @@ async function main() {
               comments: entry.comments,
               isPrivate: entry.isPrivate,
               isAnonymous: entry.isAnonymous,
-              user: { connect: { id: user.id } },
+              user: { connect: { id: user?.id } },
               beach: { connect: { id: beach.id } },
               region: { connect: { id: beach.region.id } },
               forecast: { connect: { id: forecast.id } },

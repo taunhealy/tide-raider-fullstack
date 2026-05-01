@@ -72,7 +72,7 @@ export async function scraperC(
 
     console.log(`[scraperC] 🔍 Navigating to ${url}...`);
     await page.goto(url, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
       timeout: 60000,
     });
 

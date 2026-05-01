@@ -56,7 +56,7 @@ async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
     
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Open-Meteo API failed: ${response.statusText}`);
-    const data = await response.json();
+    const data = await response.json() as any;
     
     if (!data.hourly) {
       throw new Error("No hourly data returned from Open-Meteo");
