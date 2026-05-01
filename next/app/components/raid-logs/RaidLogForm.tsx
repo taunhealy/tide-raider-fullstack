@@ -26,6 +26,7 @@ import {
 } from "@/app/lib/scoreDisplayBlueStars";
 import { getVideoId } from "@/app/lib/videoUtils";
 import { MultiImageUploader } from "./MultiImageUploader";
+import { MultiVideoUploader } from "./MultiVideoUploader";
 import { getBackendUrl } from "@/app/lib/api-config";
 
 interface RaidLogFormProps {
@@ -157,17 +158,24 @@ export function RaidLogForm({
     entry?.isPrivate || false
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [videoUrl, setVideoUrl] = useState(entry?.videoUrl || "");
-  const [videoPlatform, setVideoPlatform] = useState<
-    "youtube" | "vimeo" | null
-  >(entry?.videoPlatform || null);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>("");
-  const [isValidatingVideo, setIsValidatingVideo] = useState(false);
-  const [isCompressingVideo, setIsCompressingVideo] = useState(false);
-  const [videoCompressionProgress, setVideoCompressionProgress] = useState(0);
-  const [compressionFailed, setCompressionFailed] = useState(false);
+  
+  // Multiple videos support
+  const [videoUrls, setVideoUrls] = useState<any[]>(() => {
+    if (entry) {
+      const entryVideoUrls = (entry as any).videoUrls;
+      if (entryVideoUrls && Array.isArray(entryVideoUrls) && entryVideoUrls.length > 0) {
+        return entryVideoUrls;
+      }
+      if (entry.videoUrl) {
+        return [{ 
+          url: entry.videoUrl, 
+          type: entry.videoPlatform || "upload" 
+        }];
+      }
+    }
+    return [];
+  });
+
   const [email, setEmail] = useState<string>("");
 
   console.log("useForecast params:", {
@@ -362,9 +370,8 @@ export function RaidLogForm({
       isPrivate !== entry.isPrivate ||
       JSON.stringify(imageUrls) !==
         JSON.stringify(entry?.imageUrl ? [entry.imageUrl] : []) ||
-      selectedVideo !== null ||
-      videoUrl !== entry.videoUrl ||
-      videoPlatform !== entry.videoPlatform ||
+      JSON.stringify(videoUrls) !==
+        JSON.stringify((entry as any).videoUrls || (entry?.videoUrl ? [{ url: entry.videoUrl, type: entry.videoPlatform || "upload" }] : [])) ||
       email !== ((entry as any).email || user?.email || userEmail || "");
 
     setHasUnsavedChanges(hasChanges);
@@ -377,9 +384,6 @@ export function RaidLogForm({
     isAnonymous,
     isPrivate,
     imageUrls,
-    selectedVideo,
-    videoUrl,
-    videoPlatform,
     email,
     user?.email,
     userEmail,
@@ -431,12 +435,7 @@ export function RaidLogForm({
       if (entry.isPrivate !== undefined) {
         setIsPrivate(entry.isPrivate);
       }
-      if (entry.videoUrl !== undefined && entry.videoUrl !== null) {
-        setVideoUrl(entry.videoUrl);
-      }
-      if (entry.videoPlatform !== undefined && entry.videoPlatform !== null) {
-        setVideoPlatform(entry.videoPlatform as "youtube" | "vimeo" | null);
-      }
+      // videoUrls is already initialized in useState
       // Populate email from entry or user profile
       if ((entry as any).email) {
         setEmail((entry as any).email);
@@ -458,11 +457,7 @@ export function RaidLogForm({
         // Fallback to single imageUrl if no array
         setImageUrls([entry.imageUrl]);
       }
-      // If entry has a videoUrl but no platform, it's an uploaded video
-      if (entry.videoUrl && !entry.videoPlatform && !videoPreview) {
-        setVideoPreview(entry.videoUrl);
-        setUploadedVideoUrl(entry.videoUrl);
-      }
+      // videoUrls handles both external and uploaded videos
     }
   }, [entry]);
 
@@ -569,8 +564,10 @@ export function RaidLogForm({
           setComments(state.comments || "");
           setIsAnonymous(state.isAnonymous || false);
           setIsPrivate(state.isPrivate || false);
-          setVideoUrl(state.videoUrl || "");
-          setVideoPlatform(state.videoPlatform || null);
+          // Restore video URLs from saved state
+          if (state.videoUrls && Array.isArray(state.videoUrls)) {
+            setVideoUrls(state.videoUrls);
+          }
           // Restore email if it was saved
           if (state.email) {
             setEmail(state.email);
@@ -601,10 +598,9 @@ export function RaidLogForm({
       comments,
       isAnonymous,
       isPrivate,
-      videoUrl,
-      videoPlatform,
+      videoUrls,
       selectedVideo: null, // Don't store File object
-      uploadedVideoUrl,
+      uploadedVideoUrl: (entry as any)?.uploadedVideoUrl || "",
       email, // Save email state
     };
 
@@ -620,28 +616,12 @@ export function RaidLogForm({
       return;
     }
 
-    // Prevent submission if compression is in progress or failed
-    if (isCompressingVideo) {
-      toast.warning(
-        "Please wait for video compression to complete before submitting."
-      );
-      return;
-    }
-
-    if (compressionFailed) {
-      toast.error(
-        "Video compression failed. Please remove the video or use a YouTube/Vimeo link instead."
-      );
-      return;
-    }
-
     if (!user) {
       saveFormState();
       toast.error("Please sign in to log your session", {
         action: {
           label: "Sign In",
           onClick: () => {
-            // Use single source of truth for backend URL
             const BACKEND_URL = getBackendUrl();
             window.location.href = `${BACKEND_URL}/api/auth/google?state=${encodeURIComponent(
               `${window.location.origin}/raidlogs/new`
@@ -657,155 +637,11 @@ export function RaidLogForm({
       return;
     }
 
-    // For editing, allow using existing forecast if no new forecast data
-    // Check for forecast data by looking for required properties (windSpeed, swellHeight, etc.)
-    const hasForecastData =
-      forecastData &&
-      (forecastData.id ||
-        forecastData.windSpeed !== undefined ||
-        forecastData.swellHeight !== undefined);
-
-    // Allow submission even without forecast data (will use 'unknown' values)
-    // Removed the error toast - forecast will show 'unknown' instead
-
     setIsSubmitting(true);
     try {
-      // Images are already uploaded via MultiImageUploader component
-      // Just use the imageUrls state
+      // Images and videos are already handled by their respective Multi-Uploader components
       const finalImageUrls = imageUrls.length > 0 ? imageUrls : [];
-
-      // Upload video if selected
-      let uploadedVideoUrlFinal = null;
-      if (selectedVideo) {
-        // Re-validate video before upload to prevent submission if invalid
-        const validation = await validateVideoFile(selectedVideo);
-        if (!validation.valid) {
-          setIsSubmitting(false);
-          toast.error(
-            validation.error ||
-              "Invalid video file. Please select a different video."
-          );
-          return; // Stop submission if video is invalid
-        }
-
-        try {
-          // Always use regular upload route (avoids CORS issues with presigned URLs)
-          console.log("[RaidLogForm] Uploading video via regular route...");
-          const formData = new FormData();
-          formData.append("file", selectedVideo);
-          formData.append("type", "video");
-
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-            credentials: "include", // Include cookies for authentication
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            let errorMessage =
-              errorData.error || errorData.message || "Failed to upload video";
-
-            // Provide more specific error messages
-            if (response.status === 413) {
-              const fileSizeMB = (selectedVideo.size / (1024 * 1024)).toFixed(
-                2
-              );
-              if (selectedVideo.size > 4.5 * 1024 * 1024) {
-                errorMessage =
-                  errorData.error ||
-                  `Video file (${fileSizeMB}MB) exceeds the 4.5MB upload limit. Please compress your video using external tools or use a YouTube/Vimeo link instead.`;
-              } else {
-                errorMessage =
-                  errorData.error ||
-                  `Video file is too large (${fileSizeMB}MB). Maximum allowed size is 200MB.`;
-              }
-            } else if (response.status === 400) {
-              errorMessage =
-                errorData.error ||
-                "Invalid video file. Please select a valid video file (MP4, WebM, MOV, or AVI).";
-            }
-
-            console.error(
-              "[RaidLogForm] Upload error:",
-              errorMessage,
-              errorData,
-              `Status: ${response.status}`
-            );
-            toast.error(`Video upload failed: ${errorMessage}`);
-            setIsSubmitting(false);
-            return;
-          } else {
-            const data = await response.json();
-            uploadedVideoUrlFinal = data.videoUrl;
-            if (!uploadedVideoUrlFinal) {
-              console.warn(
-                "[RaidLogForm] Video upload succeeded but no videoUrl returned"
-              );
-              toast.warning(
-                "Video uploaded but URL not received. Log will be created without video."
-              );
-            } else {
-              console.log(
-                "[RaidLogForm] Video uploaded successfully:",
-                uploadedVideoUrlFinal
-              );
-            }
-          }
-        } catch (uploadError) {
-          console.error("[RaidLogForm] Video upload exception:", uploadError);
-
-          // Provide more specific error messages
-          let errorMessage = "Unknown error";
-          if (uploadError instanceof Error) {
-            errorMessage = uploadError.message;
-            if (
-              uploadError.message.includes("Failed to fetch") ||
-              uploadError.name === "TypeError"
-            ) {
-              errorMessage =
-                "Network error: Unable to connect to upload server. Please check your internet connection and try again.";
-            }
-          }
-
-          toast.error(`Video upload error: ${errorMessage}`, {
-            duration: 8000, // Show longer for important errors
-          });
-          // Stop submission if video upload fails
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // Use imageUrls array - first image is the primary imageUrl for backward compatibility
-      const finalImageUrl =
-        finalImageUrls.length > 0 ? finalImageUrls[0] : undefined;
-
-      // Determine final video URL
-      // Priority: uploaded video > existing entry video > video URL input
-      // Only use existing entry video if we're editing AND no new video was selected
-      let finalVideoUrl: string | undefined = undefined;
-
-      if (uploadedVideoUrlFinal) {
-        // New video was uploaded successfully
-        finalVideoUrl = uploadedVideoUrlFinal;
-      } else if (entry?.videoUrl && !selectedVideo && !videoUrl) {
-        // Editing existing entry, no new video selected, use existing
-        finalVideoUrl = entry.videoUrl;
-      } else if (videoUrl && videoUrl.trim() !== "") {
-        // Video URL was provided (YouTube/Vimeo)
-        finalVideoUrl = videoUrl;
-      } else {
-        // No video - set to empty string (schema expects string, not null/undefined)
-        finalVideoUrl = "";
-      }
-
-      // If we have an uploaded video, don't use platform
-      const finalVideoPlatform =
-        uploadedVideoUrlFinal ||
-        (entry?.videoUrl && !selectedVideo && !videoUrl && entry?.videoPlatform)
-          ? null // Uploaded videos don't have a platform
-          : videoPlatform;
+      const finalImageUrl = finalImageUrls.length > 0 ? finalImageUrls[0] : undefined;
 
       const logData = {
         selectedBeach,
@@ -816,10 +652,12 @@ export function RaidLogForm({
         comments,
         isPrivate,
         uploadedImageUrl: finalImageUrl,
-        imageUrls: finalImageUrls, // Send all images
-        videoUrl: finalVideoUrl,
-        videoPlatform: finalVideoPlatform,
-        email: email.trim() || user?.email || userEmail || "", // Use provided email or fallback to user's email
+        imageUrls: finalImageUrls,
+        videoUrls: videoUrls,
+        // For backward compatibility
+        videoUrl: videoUrls.length > 0 ? videoUrls[0].url : "",
+        videoPlatform: videoUrls.length > 0 ? videoUrls[0].type : null,
+        email: email.trim() || user?.email || userEmail || "",
       };
 
       // If editing, update instead of create
@@ -892,12 +730,9 @@ export function RaidLogForm({
       if (user || !document.hidden) {
         localStorage.removeItem(FORM_STATE_KEY);
       }
-      // Clean up video preview URL
-      if (videoPreview && videoPreview.startsWith("blob:")) {
-        URL.revokeObjectURL(videoPreview);
-      }
+      // videoUrls cleanup handled by MultiVideoUploader if needed
     };
-  }, [user, videoPreview]);
+  }, [user]);
 
   // Relaxed loading condition: if we have a user from props/session, don't block for auth
   const shouldBlock = (isAuthLoading && !user && !userEmail) || (isBeachesLoading && beaches.length === 0);
@@ -1138,270 +973,11 @@ export function RaidLogForm({
                     </span>
                     Add Video (Optional)
                   </h3>
-                  <div className="space-y-4">
-                    {/* Video File Upload */}
-                    <div>
-                      <label className="block text-sm font-primary mb-1">
-                        Upload Video File (Max 200MB)
-                      </label>
-                      {isPremium ? (
-                        <input
-                          type="file"
-                          accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-
-                            setIsValidatingVideo(true);
-                            const validation = await validateVideoFile(file);
-                            setIsValidatingVideo(false);
-
-                            if (!validation.valid) {
-                              toast.error(
-                                validation.error || "Invalid video file"
-                              );
-                              return;
-                            }
-
-                            // If file is over 4.5MB, compression is REQUIRED (Vercel body size limit)
-                            const FILE_SIZE_THRESHOLD = 4.5 * 1024 * 1024;
-                            if (file.size > FILE_SIZE_THRESHOLD) {
-                              setIsCompressingVideo(true);
-                              setVideoCompressionProgress(0);
-
-                              try {
-                                const compressedFile =
-                                  await compressVideoIfNeeded(
-                                    file,
-                                    (progress) => {
-                                      setVideoCompressionProgress(progress);
-                                    }
-                                  );
-
-                                if (compressedFile.size < FILE_SIZE_THRESHOLD) {
-                                  // Compression successful - file is now under limit
-                                  toast.success(
-                                    `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB`
-                                  );
-                                  setSelectedVideo(compressedFile);
-                                  setVideoPreview(
-                                    URL.createObjectURL(compressedFile)
-                                  );
-                                  setCompressionFailed(false); // Reset failure flag on success
-                                } else if (compressedFile.size < file.size) {
-                                  // Compression helped but still over limit
-                                  toast.warning(
-                                    `Video compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB, but still over 4.5MB limit. Upload may fail. Consider using a YouTube/Vimeo link instead.`,
-                                    { duration: 10000 }
-                                  );
-                                  setSelectedVideo(compressedFile);
-                                  setVideoPreview(
-                                    URL.createObjectURL(compressedFile)
-                                  );
-                                  setCompressionFailed(false); // Reset failure flag - user can still try
-                                } else {
-                                  // Compression didn't help
-                                  toast.error(
-                                    `Video compression failed to reduce size. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit. Please compress it using external tools or use a YouTube/Vimeo link instead.`,
-                                    { duration: 10000 }
-                                  );
-                                  // Clear the selection since it won't work
-                                  setSelectedVideo(null);
-                                  setVideoPreview(null);
-                                  setCompressionFailed(true);
-                                  return;
-                                }
-                              } catch (compressionError) {
-                                console.error(
-                                  "Video compression failed:",
-                                  compressionError
-                                );
-
-                                // Provide more helpful error messages based on error type
-                                let errorMessage = `Video compression failed. Your video (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 4.5MB upload limit.`;
-
-                                if (compressionError instanceof Error) {
-                                  if (
-                                    compressionError.message.includes("timed out")
-                                  ) {
-                                    errorMessage = compressionError.message;
-                                  } else if (
-                                    compressionError.message.includes("stuck")
-                                  ) {
-                                    errorMessage = compressionError.message;
-                                  } else {
-                                    errorMessage += ` ${compressionError.message}`;
-                                  }
-                                }
-
-                                errorMessage +=
-                                  " Please try using a YouTube/Vimeo link instead, or compress the video using external tools.";
-
-                                toast.error(errorMessage, { duration: 12000 });
-                                // Clear the selection since it won't work
-                                setSelectedVideo(null);
-                                setVideoPreview(null);
-                                setCompressionFailed(true);
-                                return;
-                              } finally {
-                                setIsCompressingVideo(false);
-                                setVideoCompressionProgress(0);
-                              }
-                            } else {
-                              // File is small enough, use as-is
-                              setSelectedVideo(file);
-                              setVideoPreview(URL.createObjectURL(file));
-                              setCompressionFailed(false); // Reset failure flag if new file is valid
-                            }
-
-                            setVideoUrl(""); // Clear URL if file is selected
-                            setVideoPlatform(null);
-                          }}
-                          className="w-full p-2 border rounded-lg"
-                          aria-label="Upload video file"
-                        />
-                      ) : (
-                        <div className="p-3 border rounded-lg bg-gray-50 border-dashed">
-                          <p className="text-xs text-gray-500 font-primary">
-                            Native video uploads are reserved for premium members.
-                            You can still share videos via YouTube or Vimeo links below.
-                          </p>
-                          <Link
-                            href="/checkout"
-                            className="text-xs text-[var(--color-primary)] hover:underline mt-2 inline-block font-semibold"
-                          >
-                            Upgrade to Premium →
-                          </Link>
-                        </div>
-                      )}
-                      {isValidatingVideo && (
-                        <p className="text-sm text-gray-500 mt-1 font-primary">
-                          Validating video...
-                        </p>
-                      )}
-                      {isCompressingVideo && (
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-500 mb-1 font-primary">
-                            Compressing video...{" "}
-                            {Math.round(videoCompressionProgress)}%
-                          </p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-[var(--color-tertiary)] h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${videoCompressionProgress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                      {selectedVideo && (
-                        <div className="mt-2 space-y-2">
-                          <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                            <span className="text-sm font-primary">
-                              {selectedVideo.name} (
-                              {Math.round(selectedVideo.size / 1024)}KB)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedVideo(null);
-                                setVideoPreview(null);
-                                if (videoPreview) {
-                                  URL.revokeObjectURL(videoPreview);
-                                }
-                              }}
-                              className="text-red-500 hover:text-red-700"
-                              aria-label="Remove video"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                          {videoPreview && (
-                            <video
-                              src={videoPreview}
-                              controls
-                              preload="none"
-                              className="w-full rounded-md max-h-48"
-                            />
-                          )}
-                        </div>
-                      )}
-                      {uploadedVideoUrl && !selectedVideo && (
-                        <div className="mt-2">
-                          <video
-                            src={uploadedVideoUrl}
-                            controls
-                            preload="none"
-                            className="w-full rounded-md max-h-48"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="text-center text-sm text-gray-500 font-primary">
-                      OR
-                    </div>
-
-                    {/* Video URL Input (for YouTube/Vimeo) */}
-                    <div>
-                      <label className="block text-sm font-primary mb-1">
-                        Video Platform
-                      </label>
-                      <select
-                        value={videoPlatform || ""}
-                        onChange={(e) => {
-                          setVideoPlatform(
-                            e.target.value
-                              ? (e.target.value as "youtube" | "vimeo")
-                              : null
-                          );
-                          if (selectedVideo) {
-                            setSelectedVideo(null);
-                            setVideoPreview(null);
-                            if (videoPreview) {
-                              URL.revokeObjectURL(videoPreview);
-                            }
-                          }
-                        }}
-                        className="w-full p-2 border rounded-lg"
-                        aria-label="Select video platform"
-                      >
-                        <option value="">Select Platform</option>
-                        <option value="youtube">YouTube</option>
-                        <option value="vimeo">Vimeo</option>
-                      </select>
-                    </div>
-
-                    {videoPlatform && (
-                      <div>
-                        <label className="block text-sm font-primary mb-1">
-                          Video URL
-                        </label>
-                        <input
-                          type="url"
-                          value={videoUrl}
-                          onChange={(e) => {
-                            setVideoUrl(e.target.value);
-                            // Reset compression failure flag when user provides a URL
-                            if (e.target.value.trim() !== "") {
-                              setCompressionFailed(false);
-                            }
-                          }}
-                          placeholder={`Enter ${videoPlatform === "youtube" ? "YouTube" : "Vimeo"} URL`}
-                          className="w-full p-2 border rounded-lg"
-                        />
-                        {videoUrl &&
-                          !validateVideoUrl(videoUrl, videoPlatform) && (
-                            <p className="text-red-500 text-sm mt-1">
-                              Please enter a valid{" "}
-                              {videoPlatform === "youtube"
-                                ? "YouTube"
-                                : "Vimeo"}{" "}
-                              URL
-                            </p>
-                          )}
-                      </div>
-                    )}
-                  </div>
+                  <MultiVideoUploader
+                    videos={videoUrls}
+                    onVideosChange={setVideoUrls}
+                    maxVideos={5}
+                  />
                 </div>
               )}
 
@@ -1472,9 +1048,7 @@ export function RaidLogForm({
                   (!forecastData && !entry?.forecast) ||
                   !selectedBeach ||
                   !selectedDate ||
-                  isSubmitting ||
-                  isCompressingVideo ||
-                  compressionFailed
+                  isSubmitting
                 }
                 className="w-full font-primary bg-[var(--color-tertiary)] text-white hover:bg-[var(--color-tertiary)]/90 py-2 mt-4"
                 onClick={(e) => {

@@ -139,4 +139,4 @@ export interface RaidLogResponse {
   total: number;
 }
 
-export type VideoPlatform = "youtube" | "vimeo";
+export type VideoPlatform = "youtube" | "vimeo" | "short" | "upload";

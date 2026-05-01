@@ -23,6 +23,7 @@ export function useUpdateLog() {
       uploadedImageUrl?: string;
       imageUrls?: string[];
       videoUrl?: string;
+      videoUrls?: any[];
       videoPlatform?: string | null;
     }) => {
       if (!user) {
@@ -86,6 +87,8 @@ export function useUpdateLog() {
           data.imageUrls.length > 0 && { imageUrls: data.imageUrls }),
         videoUrl:
           data.videoUrl && data.videoUrl.trim() !== "" ? data.videoUrl : "",
+        // Include videoUrls array if provided
+        ...(data.videoUrls && data.videoUrls.length > 0 && { videoUrls: data.videoUrls }),
         // Convert null to undefined for optional string fields (schema doesn't accept null)
         videoPlatform: data.videoPlatform || undefined,
         // Handle forecastId - can come from forecastData.id or forecastData itself if it's already an ID string

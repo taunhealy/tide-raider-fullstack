@@ -208,6 +208,7 @@ model LogEntry {
   regionId      String
   category      SportCategory @default(GENERAL)
   forecastId    String?
+  videoUrls     Json?
   imageUrls     Json?
   hiddenGemId   String?
   alerts        Alert[]

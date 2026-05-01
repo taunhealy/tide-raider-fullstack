@@ -31,6 +31,11 @@ export const createRaidLogSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal("")),
   imageUrls: z.array(z.string().url()).optional(), // Array of image URLs for multiple images
   videoUrl: z.string().url().optional().or(z.literal("")),
+  videoUrls: z.array(z.object({
+    url: z.string().url(),
+    type: z.enum(["upload", "youtube", "vimeo", "short"]),
+    thumbnail: z.string().optional()
+  })).optional(),
   videoPlatform: z.string().nullable().optional(), // Allow null for uploaded videos
   isPrivate: z.boolean().optional(),
   isAnonymous: z.boolean().optional(),
@@ -64,6 +69,11 @@ export const updateRaidLogSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal("")),
   imageUrls: z.array(z.string().url()).optional(), // Array of image URLs for multiple images
   videoUrl: z.string().url().optional().or(z.literal("")),
+  videoUrls: z.array(z.object({
+    url: z.string().url(),
+    type: z.enum(["upload", "youtube", "vimeo", "short"]),
+    thumbnail: z.string().optional()
+  })).optional(),
   videoPlatform: z.string().nullable().optional(), // Allow null for uploaded videos
   waveType: z.string().optional(),
   beachId: z.string().uuid().optional(),

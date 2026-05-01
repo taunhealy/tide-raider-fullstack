@@ -573,6 +573,7 @@ export class LogService {
       imageUrl?: string;
       imageUrls?: string[]; // Array of image URLs
       videoUrl?: string;
+      videoUrls?: any[]; // Array of video URL objects
       videoPlatform?: string;
       isPrivate?: boolean;
       isAnonymous?: boolean;
@@ -720,6 +721,10 @@ export class LogService {
               : [data.imageUrls]
             : undefined,
         videoUrl: data.videoUrl,
+        videoUrls:
+          data.videoUrls && data.videoUrls.length > 0
+            ? data.videoUrls
+            : undefined,
         videoPlatform: data.videoPlatform,
         waveType: data.waveType,
         user: {
@@ -773,6 +778,7 @@ export class LogService {
       imageUrl?: string;
       imageUrls?: string[]; // Array of image URLs
       videoUrl?: string;
+      videoUrls?: any[]; // Array of video URL objects
       videoPlatform?: string;
       waveType?: string;
       beachId?: string;
@@ -921,6 +927,12 @@ export class LogService {
       }),
       ...(updateData.videoUrl !== undefined && {
         videoUrl: updateData.videoUrl,
+      }),
+      ...(updateData.videoUrls !== undefined && {
+        videoUrls:
+          updateData.videoUrls && updateData.videoUrls.length > 0
+            ? updateData.videoUrls
+            : Prisma.JsonNull,
       }),
       ...(updateData.videoPlatform !== undefined && {
         videoPlatform: updateData.videoPlatform,

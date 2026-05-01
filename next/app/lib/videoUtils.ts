@@ -1,25 +1,52 @@
 /**
+ * Detects the platform and extracts the video ID from a URL
+ */
+export function parseVideoUrl(url: string): {
+  id: string;
+  platform: "youtube" | "vimeo" | "short" | "upload" | null;
+} {
+  if (!url) return { id: "", platform: null };
+
+  // Check for YouTube Shorts first
+  if (url.includes("youtube.com/shorts/")) {
+    const parts = url.split("/shorts/");
+    const id = parts[1]?.split(/[?&]/)[0] || "";
+    return { id, platform: "short" };
+  }
+
+  // Regular YouTube
+  const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const youtubeMatch = url.match(youtubeRegExp);
+  if (youtubeMatch && youtubeMatch[2].length === 11) {
+    return { id: youtubeMatch[2], platform: "youtube" };
+  }
+
+  // Vimeo
+  const vimeoRegExp = /vimeo\.com\/([0-9]+)/;
+  const vimeoMatch = url.match(vimeoRegExp);
+  if (vimeoMatch) {
+    return { id: vimeoMatch[1], platform: "vimeo" };
+  }
+
+  // Fallback for uploaded videos (if it's a direct URL to a video file or our storage)
+  if (url.includes("r2.tideraider.com") || url.match(/\.(mp4|webm|mov|avi)$/i)) {
+    return { id: url, platform: "upload" };
+  }
+
+  return { id: "", platform: null };
+}
+
+/**
  * Extracts the video ID from a YouTube or Vimeo URL
  */
 export function getVideoId(
   url: string,
-  platform: "youtube" | "vimeo" = "youtube"
+  platform: "youtube" | "vimeo" | "short" | "upload" = "youtube"
 ): string {
-  if (!url) return "";
-
-  if (platform === "youtube") {
-    // Handle various YouTube URL formats
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : "";
-  } else if (platform === "vimeo") {
-    // Handle Vimeo URLs
-    const regExp = /vimeo\.com\/([0-9]+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : "";
+  const result = parseVideoUrl(url);
+  if (result.platform === platform || (platform === "youtube" && result.platform === "short")) {
+    return result.id;
   }
-
   return "";
 }
 
@@ -28,29 +55,42 @@ export function getVideoId(
  */
 export function getVideoThumbnail(
   url: string,
-  platform: "youtube" | "vimeo" = "youtube"
+  platform?: "youtube" | "vimeo" | "short" | "upload"
 ): string {
-  if (!url) return "/images/placeholder.jpg"; // Fallback to placeholder
+  if (!url) return "/images/placeholder.jpg";
 
-  const videoId = getVideoId(url, platform);
+  const { id, platform: detectedPlatform } = parseVideoUrl(url);
+  const finalPlatform = platform || detectedPlatform;
 
-  if (!videoId) {
-    console.warn(`[videoUtils] Could not extract video ID from URL: ${url}`);
-    return "/images/placeholder.jpg"; // Fallback to placeholder
+  if (!id && finalPlatform !== "upload") {
+    return "/images/placeholder.jpg";
   }
 
+  if (finalPlatform === "youtube" || finalPlatform === "short") {
+    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  } else if (finalPlatform === "vimeo") {
+    return `https://vumbnail.com/${id}.jpg`;
+  } else if (finalPlatform === "upload") {
+    // For uploaded videos, we might show a video icon or a generic thumbnail
+    return "/images/video-placeholder.jpg";
+  }
+
+  return "/images/placeholder.jpg";
+}
+
+/**
+ * Formats a video URL for embedding
+ */
+export function getEmbedUrl(url: string): string {
+  const { id, platform } = parseVideoUrl(url);
+  
   if (platform === "youtube") {
-    // YouTube thumbnail URL - validate video ID format (11 characters)
-    if (videoId.length !== 11) {
-      console.warn(`[videoUtils] Invalid YouTube video ID format: ${videoId}`);
-      return "/images/placeholder.jpg";
-    }
-    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    return `https://www.youtube.com/embed/${id}`;
+  } else if (platform === "short") {
+    return `https://www.youtube.com/embed/${id}`;
   } else if (platform === "vimeo") {
-    // For Vimeo, we'd need to use their API to get thumbnails
-    // This is a placeholder - in production you'd want to fetch the actual thumbnail
-    return `https://vumbnail.com/${videoId}.jpg`;
+    return `https://player.vimeo.com/video/${id}`;
   }
-
-  return "/images/placeholder.jpg"; // Fallback to placeholder
+  
+  return url;
 }

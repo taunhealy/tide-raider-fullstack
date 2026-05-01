@@ -843,7 +843,7 @@ export default function RaidLogTable({
                                             b.name?.toLowerCase() === entry.beach?.name?.toLowerCase()
                                           )?.isHiddenGem;
                   const isPremium = hasAccess; // Use unified access logic
-                  const isGatedGem = isHiddenGemEntry && !isPremium && !isOwner;
+                  const isGatedGem = !!(isHiddenGemEntry && !isPremium && !isOwner);
 
                   const cardHref = isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`;
 
@@ -997,7 +997,6 @@ export default function RaidLogTable({
                         forecast={entry.forecast}
                         entry={entry}
                         isGated={isGatedGem}
-                        onAlertClick={handleAlertClick}
                       />
                     </div>
 
@@ -1057,8 +1056,16 @@ export default function RaidLogTable({
                           ? [entry.imageUrl]
                           : [];
                     const hasImages = imageUrls.length > 0;
-                    const hasVideo =
-                      entry.videoUrl && entry.videoUrl.trim() !== "";
+                    const entryVideoUrls = (entry as any).videoUrls;
+                    const videoUrls = 
+                      entryVideoUrls && 
+                      Array.isArray(entryVideoUrls) && 
+                      entryVideoUrls.length > 0
+                        ? entryVideoUrls
+                        : entry.videoUrl
+                          ? [{ url: entry.videoUrl, type: entry.videoPlatform || "upload" }]
+                          : [];
+                    const hasVideo = videoUrls.length > 0;
 
                     if (!hasImages && !hasVideo) {
                       return (
@@ -1104,37 +1111,27 @@ export default function RaidLogTable({
                                   </div>
                                 )}
                               </>
-                            ) : hasVideo && entry.videoUrl ? (
-                              // Check if it's an uploaded video (no platform) or external (YouTube/Vimeo)
-                              !entry.videoPlatform ? (
-                                // Uploaded video - use 360p thumbnail for preview to minimize server costs
-                                <VideoThumbnail
-                                  videoUrl={entry.videoUrl}
-                                  onPlay={() => {
-                                    if (isGatedGem) {
-                                      window.open(entry.videoUrl!, '_blank');
-                                    } else {
-                                      router.push(`/raidlogs/${entry.id}`);
-                                    }
-                                  }}
+                            ) : hasVideo && videoUrls.length > 0 ? (
+                              <>
+                                <Image
+                                  src={videoUrls[0].thumbnail || getVideoThumbnail(videoUrls[0].url, videoUrls[0].type)}
+                                  alt="Video thumbnail"
+                                  fill={true}
+                                  className="object-cover rounded-md hover:opacity-90 transition-opacity"
                                 />
-                              ) : (
-                                // External video (YouTube/Vimeo) - show thumbnail
-                                <>
-                                  <Image
-                                    src={getVideoThumbnail(
-                                      entry.videoUrl,
-                                      entry.videoPlatform
-                                    )}
-                                    alt="Video thumbnail"
-                                    fill={true}
-                                    className="object-cover rounded-md hover:opacity-90 transition-opacity"
-                                  />
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                    <VideoIcon className="w-8 h-8 text-white" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <VideoIcon className="w-8 h-8 text-white" />
+                                </div>
+                                {/* Video count badge */}
+                                {videoUrls.length > 1 && (
+                                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white rounded-full px-2 py-0.5 flex items-center gap-1 shadow-lg border border-white/10 z-10">
+                                    <VideoIcon className="w-3 h-3" />
+                                    <span className="text-[10px] font-primary font-bold">
+                                      {videoUrls.length}
+                                    </span>
                                   </div>
-                                </>
-                              )
+                                )}
+                              </>
                             ) : null}
                           </button>
                         </div>
@@ -1238,7 +1235,7 @@ export default function RaidLogTable({
                                                 b.name?.toLowerCase() === entry.beach?.name?.toLowerCase()
                                               )?.isHiddenGem;
                       const isPremium = hasAccess; // Use unified access logic
-                      const isGatedGem = isHiddenGemEntry && !isPremium && !isOwner;
+                      const isGatedGem = !!(isHiddenGemEntry && !isPremium && !isOwner);
 
                       return (
                         <tr
@@ -1308,7 +1305,6 @@ export default function RaidLogTable({
                               forecast={entry.forecast}
                               entry={entry}
                               isGated={isGatedGem}
-                              onAlertClick={handleAlertClick}
                             />
                           </td>
                           <td className="px-2 py-3 max-w-[150px] min-w-[150px] whitespace-normal">
@@ -1341,6 +1337,13 @@ export default function RaidLogTable({
                                   <Image
                                     src={(entry as any).imageUrls[0]}
                                     alt="Session photo"
+                                    fill
+                                    className="object-cover transition-transform hover:scale-105 duration-300"
+                                  />
+                                ) : (entry as any).videoUrls && (entry as any).videoUrls.length > 0 ? (
+                                  <Image
+                                    src={(entry as any).videoUrls[0].thumbnail || getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
+                                    alt="Video thumbnail"
                                     fill
                                     className="object-cover transition-transform hover:scale-105 duration-300"
                                   />

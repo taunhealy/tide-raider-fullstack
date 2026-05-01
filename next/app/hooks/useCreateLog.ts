@@ -20,6 +20,7 @@ export function useCreateLog() {
       uploadedImageUrl?: string;
       imageUrls?: string[];
       videoUrl?: string;
+      videoUrls?: any[];
       videoPlatform?: string | null;
     }) => {
       if (!session?.user) {
@@ -182,6 +183,7 @@ export function useCreateLog() {
         imageUrl: primaryImageUrl,
         ...(validImageUrls.length > 0 && { imageUrls: validImageUrls }),
         videoUrl: finalVideoUrl,
+        videoUrls: data.videoUrls && data.videoUrls.length > 0 ? data.videoUrls : undefined,
         videoPlatform: data.videoPlatform || undefined,
         forecastId: forecastId,
         // Only include forecast if we don't have forecastId (forecastId takes precedence)

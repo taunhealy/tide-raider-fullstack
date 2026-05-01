@@ -30,6 +30,7 @@ import { MediaModal } from "./MediaModal";
 import { VideoThumbnail } from "./VideoThumbnail";
 import { CustomVideoPlayer } from "./CustomVideoPlayer";
 import { ImageGallery } from "./ImageGallery";
+import { MultimediaGrid } from "./MultimediaGrid";
 import type { VideoPlatform } from "@/app/types/raidlogs";
 import { useRaidLog } from "@/app/hooks/useRaidLog";
 import { Dialog, DialogContent } from "@/app/components/ui/dialog";
@@ -190,6 +191,16 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         ? [entry.imageUrl]
         : [];
 
+  const entryVideoUrls = (entry as any).videoUrls;
+  const videoUrls = entryVideoUrls && Array.isArray(entryVideoUrls) && entryVideoUrls.length > 0
+    ? entryVideoUrls
+    : entry.videoUrl
+      ? [{ url: entry.videoUrl, type: entry.videoPlatform || "upload" }]
+      : [];
+
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
+  const [activeMediaType, setActiveMediaType] = useState<"image" | "video">("image");
+
   return (
     <div className="min-h-screen bg-gray-950 text-white font-primary selection:bg-[var(--color-tertiary)] selection:text-white">
       {/* Navigation and Actions Bar - Fixed at top */}
@@ -331,55 +342,32 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       </div>
                     </div>
 
-                    {/* Conditions Section */}
-                    <div className={cn("space-y-6 pt-10", isGatedGem && "blur-[15px] select-none opacity-30")}>
-                      {/* Video Embed Section */}
-                      {entry.videoUrl && entry.videoUrl.trim() !== "" && (
-                        <div className="w-full mb-10">
-                          {!entry.videoPlatform ? (
-                            <div 
-                              className="relative w-full rounded-3xl overflow-hidden border border-white/10 cursor-pointer hover:border-[var(--color-tertiary)]/50 transition-all bg-black group shadow-2xl"
-                              onClick={() => setIsMediaModalOpen(true)}
-                            >
-                              <VideoThumbnail 
-                                videoUrl={entry.videoUrl} 
-                                className="w-full aspect-video"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                                <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
-                                  <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <a 
-                              href={entry.videoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="relative w-full aspect-video rounded-3xl overflow-hidden block cursor-pointer hover:opacity-95 transition-all bg-gray-900 group shadow-2xl border border-white/10 hover:border-[var(--color-tertiary)]/50"
-                            >
-                              <Image
-                                src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform)}
-                                alt="Video thumbnail"
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-700"
-                                sizes="100vw"
-                                priority
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
-                                <div className="bg-white/90 rounded-full p-4 md:p-6 shadow-2xl transform group-hover:scale-110 transition-transform">
-                                  <VideoIcon className="w-8 h-8 md:w-10 md:h-10 text-[var(--color-tertiary)]" />
-                                </div>
-                              </div>
-                              <div className="absolute bottom-6 right-6 bg-black/80 text-white text-xs font-bold px-4 py-2 rounded-full font-primary backdrop-blur-md border border-white/10 uppercase tracking-widest">
-                                {entry.videoPlatform}
-                              </div>
-                            </a>
-                          )}
+                    {/* Multimedia Section - Unified Grid with Hero */}
+                    <div className={cn("space-y-12 pt-10", isGatedGem && "blur-[15px] select-none opacity-30")}>
+                      {(imageUrls.length > 0 || videoUrls.length > 0) && (
+                        <div className="w-full">
+                          <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest mb-6 uppercase">
+                            Session Gallery
+                          </h2>
+                          <div className={cn(isGatedGem && "blur-[20px] select-none opacity-40 pointer-events-none")}>
+                            <MultimediaGrid
+                              images={imageUrls}
+                              videos={videoUrls}
+                              onMediaClick={(type, index) => {
+                                if (type === "image") {
+                                  setSelectedImageIndex(index);
+                                  setActiveMediaType("image");
+                                } else {
+                                  setSelectedVideoIndex(index);
+                                  setActiveMediaType("video");
+                                }
+                                setIsMediaModalOpen(true);
+                              }}
+                            />
+                          </div>
                         </div>
                       )}
-
-                      <div className="space-y-12 pt-10">
+                    </div>
                         <div className="flex items-center justify-between mb-4">
                           <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
                             Conditions Data
@@ -541,8 +529,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
                     </div>
                   </div>
-                </div>
-              </div>
 
               {/* Session Date */}
               <div className="px-6 md:px-10 pb-6">
@@ -593,30 +579,6 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                 </div>
               )}
 
-              {/* Image Gallery Section */}
-              {imageUrls.length > 0 && (
-                <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/20">
-                  <div className="flex items-center gap-4 mb-8">
-                    <h2 className="font-primary text-2xl md:text-3xl font-bold text-white tracking-tighter">
-                      Session Album
-                    </h2>
-                    <div className="h-px flex-1 bg-white/5"></div>
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                      {imageUrls.length} Files
-                    </span>
-                  </div>
-                  <div className={cn(isGatedGem && "blur-[15px] select-none opacity-40 pointer-events-none")}>
-                    <ImageGallery
-                      images={imageUrls}
-                      onImageClick={(index) => {
-                        setSelectedImageIndex(index);
-                        setIsMediaModalOpen(true);
-                      }}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                </div>
-              )}
 
               {/* User Comments Section */}
               <div className="border-t border-white/5 p-8 md:p-12 lg:p-16 bg-black/40">
@@ -630,18 +592,18 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   <CommentThread logEntryId={entry.id} />
                 </div>
               </div>
+          </div>
         </div>
-      </div>
 
       {/* Media Modal */}
       <MediaModal
         isOpen={isMediaModalOpen}
         onClose={() => setIsMediaModalOpen(false)}
-        imageUrl={entry.imageUrl}
         imageUrls={imageUrls}
-        videoUrl={entry.videoUrl}
-        videoPlatform={entry.videoPlatform as VideoPlatform}
+        videoUrls={videoUrls}
         initialImageIndex={selectedImageIndex}
+        initialVideoIndex={selectedVideoIndex}
+        initialType={activeMediaType}
       />
 
       {/* Alert Modal */}

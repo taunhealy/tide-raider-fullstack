@@ -1,9 +1,10 @@
 # ─────────────────────────────────────────────────────────────
-# Tide Raider Backend – Highly Optimized for Build Efficiency
+# Tide Raider Backend – Extreme Optimization for Production
 # ─────────────────────────────────────────────────────────────
+
+# Stage 0: Base System Dependencies
 FROM node:22-slim AS base
 
-# Install ALL system dependencies (Chromium, Python, FFmpeg) in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 \
     libatk1.0-0 libatspi2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 \
@@ -14,59 +15,67 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# ───── Stage 1: Dependency Installation ─────
-# These layers change infrequently
-COPY package*.json requirements.txt ./
+# Stage 1: Build Dependencies (Full npm install)
+FROM base AS build-deps
+COPY package*.json ./
 COPY prisma ./prisma/
-COPY scripts ./scripts/
-
-# Install Node dependencies skipping heavy binaries
 RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --legacy-peer-deps
 
-# Install Python dependencies
+# Stage 2: Python Dependencies
+FROM base AS python-deps
+COPY requirements.txt ./
 RUN pip install --break-system-packages -r requirements.txt
 
-# Install Playwright Chromium (this is a big layer, so keep it early)
+# Stage 3: Playwright Browser Installation
+FROM base AS playwright-deps
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
-RUN npx playwright install chromium
+RUN npx playwright install --with-deps chromium
 
-# ───── Stage 2: Build the app ─────
+# Stage 4: Build the Application
+FROM base AS builder
+COPY --from=build-deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate && npm run build
-# Copy non-TS assets that TSC ignores to dist
-RUN mkdir -p dist/lib/scrapers && cp src/lib/scrapers/*.js dist/lib/scrapers/
+# Use local prisma from node_modules
+RUN ./node_modules/.bin/prisma generate && npm run build
+RUN mkdir -p dist/lib/scrapers && cp src/lib/scrapers/*.js dist/lib/scrapers/ 2>/dev/null || true
 
-# ───── Stage 3: Production Release ─────
-# We use the base again to inherit system deps without re-running apt-get
+# Stage 5: Production Node Modules (No devDependencies)
+FROM base AS prod-deps
+COPY package*.json ./
+COPY prisma ./prisma/
+# We need the prisma CLI even in prod-deps to run generate
+RUN SUPABASE_SKIP_BINARY_DOWNLOAD=1 npm ci --omit=dev --legacy-peer-deps && \
+    npm install prisma@6.2.1 --no-save --legacy-peer-deps
+RUN ./node_modules/.bin/prisma generate
+
+# Stage 6: Final Production Runner
 FROM base AS runner
 
-# Create non-root user WITH a writable home directory
-# (-m creates /home/appuser; crawl4ai needs a writable HOME for its SQLite cache)
 RUN groupadd -r appuser && useradd -r -m -g appuser appuser
-
 WORKDIR /app
 
-# Copy dependencies and built files
-COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/dist ./dist
-COPY --from=base /app/package.json ./package.json
-COPY --from=base /app/prisma ./prisma
-COPY --from=base /app/pw-browsers ./pw-browsers
-COPY --from=base /app/requirements.txt ./requirements.txt
-COPY --from=base /app/scripts ./scripts
+# Copy ONLY what is strictly necessary for production
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
 
-# Ensure playwright knows where the browser is
+# Copy Python packages
+RUN mkdir -p /usr/local/lib/python3.11/dist-packages
+COPY --from=python-deps /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
+COPY --from=python-deps /usr/local/bin /usr/local/bin
+COPY --from=playwright-deps /app/pw-browsers ./pw-browsers
+
+# Configuration
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers \
     NODE_ENV=production \
     PORT=8080 \
     HOME=/home/appuser
 
-# Ensure appuser can write to their home (crawl4ai cache) and /tmp
-RUN chown -R appuser:appuser /home/appuser
+RUN chown -R appuser:appuser /home/appuser /app
 
-# Switch to non-root user
 USER appuser
-
 EXPOSE 8080
 CMD ["npm", "start"]
