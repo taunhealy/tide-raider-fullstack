@@ -34,11 +34,12 @@ export async function GET(req: NextRequest) {
     // Forward request to backend with cookies
     const backendUrl = `${BACKEND_URL}/api/auth/me`;
     const response = await fetch(backendUrl, {
+      method: "GET",
       headers: {
+        "Content-Type": "application/json",
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        ...(cookieHeader && { Cookie: cookieHeader }),
+        Cookie: cookieHeader || "",
       },
-      credentials: "include",
       cache: "no-store",
     });
 

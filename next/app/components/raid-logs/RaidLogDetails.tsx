@@ -128,8 +128,9 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
 
   const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
-  const logDate = entry?.date
-    ? new Date(entry.date).toISOString().split("T")[0]
+  const logDateRaw = entry?.date ? new Date(entry.date) : null;
+  const logDate = logDateRaw && !isNaN(logDateRaw.getTime()) 
+    ? logDateRaw.toISOString().split("T")[0]
     : null;
 
   const { data: beachScores, isLoading: isLoadingBeachScores } = useQuery({
