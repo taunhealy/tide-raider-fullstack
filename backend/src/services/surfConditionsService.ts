@@ -260,6 +260,10 @@ export async function getLatestConditions(
         }
       }
       if (source === "WINDGURU") return await scraperB(currentUrl, id);
+      if (source === "WINDY") {
+        const { scraperC } = await import("../lib/scrapers/scraperC");
+        return await scraperC(currentUrl, id);
+      }
       return [];
     } catch (err) {
       console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);

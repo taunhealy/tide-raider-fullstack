@@ -14,8 +14,7 @@ const PORT = parseInt(process.env.PORT || "4001", 10);
 
 console.log(`[server] Backend source RELOADED at ${new Date().toISOString()}`);
 
-// Trust proxy (required for Fly.io and rate limiting)
-// Trust only the first proxy hop (Fly.io's proxy)
+// Trust proxy (required for cloud proxies and rate limiting)
 app.set("trust proxy", 1);
 
 // Middleware
@@ -130,10 +129,6 @@ app.listen(PORT, HOST, () => {
   console.log(
     `🌐 Listening on ${HOST}:${PORT}${HOST === "0.0.0.0" ? " (accessible from all network interfaces)" : " (localhost only)"}`
   );
-  if (process.env.FLY_APP_NAME) {
-    console.log(`✈️  Fly.io app: ${process.env.FLY_APP_NAME}`);
-    console.log(`🌍 Public URL: https://${process.env.FLY_APP_NAME}.fly.dev`);
-  }
 
   // Start cron scheduler
   if (process.env.ENABLE_CRON !== "false") {

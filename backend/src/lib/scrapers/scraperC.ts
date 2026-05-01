@@ -12,9 +12,8 @@ const proxyManager = new ProxyManager();
 
 async function getBrowser() {
   const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-  const isFly = process.env.FLY_APP_NAME !== undefined;
 
-  if (!isVercel && !isFly && process.env.NODE_ENV === "development") {
+  if (!isVercel && process.env.NODE_ENV === "development") {
     console.log("Using system Chrome for local development");
     return puppeteerCore.launch({
       headless: true,
@@ -26,7 +25,7 @@ async function getBrowser() {
     });
   } else {
     console.log(
-      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : isFly ? "Fly.io" : "production"} environment`
+      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : "production"} environment`
     );
     chromium.setGraphicsMode = false;
     return puppeteerCore.launch({

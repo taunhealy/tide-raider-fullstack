@@ -69,13 +69,12 @@ const getBrowserPath = () => {
 };
 
 async function getBrowser() {
-  // Check if running on Vercel (serverless environment) or Fly.io (container environment)
+  // Check if running on Vercel (serverless environment)
   const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-  const isFly = process.env.FLY_APP_NAME !== undefined;
 
-  // Use @sparticuz/chromium for production environments (Vercel, Fly.io, etc.)
+  // Use @sparticuz/chromium for production environments (Vercel, etc.)
   // Only use system Chrome in local development
-  if (!isVercel && !isFly && process.env.NODE_ENV === "development") {
+  if (!isVercel && process.env.NODE_ENV === "development") {
     // Local development - use Chrome/Chromium installed on the system
     console.log("Using system Chrome for local development");
     return puppeteerCore.launch({
@@ -87,9 +86,9 @@ async function getBrowser() {
           : "/usr/bin/google-chrome", // Default Linux Chrome path
     });
   } else {
-    // Production/serverless environment (Vercel, Fly.io, etc.) - use @sparticuz/chromium
+    // Production/serverless environment (Vercel, etc.) - use @sparticuz/chromium
     console.log(
-      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : isFly ? "Fly.io" : "production"} environment`
+      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : "production"} environment`
     );
     chromium.setGraphicsMode = false; // Disable graphics mode for serverless
     return puppeteerCore.launch({

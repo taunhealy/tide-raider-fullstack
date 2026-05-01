@@ -33,7 +33,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperB,
     },
     sourceC: {
-      url: "https://windy.app/forecast2/spot/89110/Muizenberg+South+Africa",
+      url: "https://windy.app/forecast2/spot/89110/Muizenberg",
       scraper: scraperC,
     },
   },
