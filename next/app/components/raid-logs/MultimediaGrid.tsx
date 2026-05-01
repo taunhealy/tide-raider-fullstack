@@ -22,19 +22,24 @@ export function MultimediaGrid({
 }: MultimediaGridProps) {
   // Combine media into a single array for unified rendering
   // We want to preserve original indices for the click handlers
+  // Filtering ensures we don't crash on null/empty data from the backend
   const allMedia = [
-    ...videos.map((video, index) => ({ 
-      category: "video" as const, 
-      url: video.url, 
-      platformType: video.type, 
-      thumbnail: video.thumbnail, 
-      index 
-    })),
-    ...images.map((url, index) => ({ 
-      category: "image" as const, 
-      url, 
-      index 
-    })),
+    ...videos
+      .filter(v => v && v.url && v.url.trim() !== "")
+      .map((video, index) => ({ 
+        category: "video" as const, 
+        url: video.url, 
+        platformType: video.type, 
+        thumbnail: video.thumbnail, 
+        index 
+      })),
+    ...images
+      .filter(url => typeof url === "string" && url.trim() !== "")
+      .map((url, index) => ({ 
+        category: "image" as const, 
+        url, 
+        index 
+      })),
   ];
 
   if (allMedia.length === 0) return null;

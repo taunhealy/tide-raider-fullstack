@@ -14,8 +14,8 @@ const getBackendUrl = () => {
     return envUrl || "http://127.0.0.1:4005";
   }
 
-  // In production, use production backend (connects to Fly.io postgres)
-  return envUrl || "https://tide-raider-backend.fly.dev";
+  // In production, use production backend (Google Cloud Run)
+  return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();

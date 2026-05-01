@@ -84,7 +84,9 @@ export default function RecentRaidLogs() {
           const isOwner = session?.user?.id === entry.userId;
           // Harden check to look at beach name as well
           const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem || 
-                                  beaches?.find((b: any) => b && (b.id === (entry as any).beachId || b.name === entry.beachName))?.isHiddenGem;
+                                  (Array.isArray(beaches) ? beaches : [])?.find((b: any) => 
+                                    b && (b.id === (entry as any).beachId || b.name === entry.beachName)
+                                  )?.isHiddenGem;
           const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
 
           return (

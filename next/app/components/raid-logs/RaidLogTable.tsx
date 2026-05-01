@@ -836,11 +836,13 @@ export default function RaidLogTable({
                   const isOwner = session?.user?.id && entry.userId && session.user.id === entry.userId;
                   // Harden isHiddenGemEntry check to handle cases where beach relationship might be missing or stale
                   const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem || 
-                                          beaches?.find(b => 
-                                            b.id === (entry as any).beachId || 
-                                            b.id === entry.beach?.id ||
-                                            b.name?.toLowerCase() === entry.beachName?.toLowerCase() ||
-                                            b.name?.toLowerCase() === entry.beach?.name?.toLowerCase()
+                                          (Array.isArray(beaches) ? beaches : [])?.find(b => 
+                                            b && (
+                                              b.id === (entry as any).beachId || 
+                                              b.id === entry.beach?.id ||
+                                              b.name?.toLowerCase() === entry.beachName?.toLowerCase() ||
+                                              b.name?.toLowerCase() === entry.beach?.name?.toLowerCase()
+                                            )
                                           )?.isHiddenGem;
                   const isPremium = hasAccess; // Use unified access logic
                   const isGatedGem = !!(isHiddenGemEntry && !isPremium && !isOwner);

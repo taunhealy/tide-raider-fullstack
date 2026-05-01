@@ -114,11 +114,13 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   
   // Robust check for Hidden Gem status
   const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem || 
-                          beaches?.find((b: any) => 
-                            b.id === (entry as any)?.beachId || 
-                            b.id === (entry as any)?.beach?.id || 
-                            b.name?.toLowerCase() === (entry as any)?.beachName?.toLowerCase() ||
-                            b.name?.toLowerCase() === (entry as any)?.beach?.name?.toLowerCase()
+                          (Array.isArray(beaches) ? beaches : [])?.find((b: any) => 
+                            b && (
+                              b.id === (entry as any)?.beachId || 
+                              b.id === (entry as any)?.beach?.id || 
+                              b.name?.toLowerCase() === (entry as any)?.beachName?.toLowerCase() ||
+                              b.name?.toLowerCase() === (entry as any)?.beach?.name?.toLowerCase()
+                            )
                           )?.isHiddenGem;
 
   const isOwner = session?.user?.id === (entry as any)?.userId;
@@ -183,19 +185,20 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   }
 
   const forecastData = entry.forecast || null;
-  const entryImageUrls = (entry as any).imageUrls;
-  const imageUrls =
-    entryImageUrls && entryImageUrls.length > 0
-      ? entryImageUrls
-      : entry.imageUrl
+
+  // Support both single imageUrl and imageUrls array
+  const entryImageUrls = (entry as any)?.imageUrls;
+  const imageUrls = Array.isArray(entryImageUrls) && entryImageUrls.length > 0
+      ? entryImageUrls.filter((url): url is string => typeof url === 'string' && url.length > 0)
+      : entry?.imageUrl
         ? [entry.imageUrl]
         : [];
 
-  const entryVideoUrls = (entry as any).videoUrls;
-  const videoUrls = entryVideoUrls && Array.isArray(entryVideoUrls) && entryVideoUrls.length > 0
-    ? entryVideoUrls
-    : entry.videoUrl
-      ? [{ url: entry.videoUrl, type: entry.videoPlatform || "upload" }]
+  const entryVideoUrls = (entry as any)?.videoUrls;
+  const videoUrls = Array.isArray(entryVideoUrls) && entryVideoUrls.length > 0
+    ? entryVideoUrls.filter((v: any) => v && v.url)
+    : entry?.videoUrl
+      ? [{ url: entry.videoUrl, type: (entry as any).videoPlatform || "upload" }]
       : [];
 
   const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
