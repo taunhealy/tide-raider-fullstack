@@ -102,6 +102,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const router = useRouter();
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
+  const [activeMediaType, setActiveMediaType] = useState<"image" | "video">("image");
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const { data: entry, isLoading, error } = useRaidLog(id);
@@ -202,13 +204,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       ? [{ url: entry.videoUrl, type: (entry as any).videoPlatform || "upload" }]
       : [];
 
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState(0);
-  const [activeMediaType, setActiveMediaType] = useState<"image" | "video">("image");
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-primary selection:bg-[var(--color-tertiary)] selection:text-white">
       {/* Navigation and Actions Bar - Fixed at top */}
-      <div className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 md:px-6 py-3 md:py-4">
+      <div className="sticky top-[80px] z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/5 px-4 md:px-6 py-3 md:py-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link
             href="/raidlogs"

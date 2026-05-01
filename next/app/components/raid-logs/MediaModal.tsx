@@ -112,20 +112,20 @@ export function MediaModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[100] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0"
+        className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[11000] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0"
       >
         <DialogTitle className="sr-only">{getModalTitle()}</DialogTitle>
 
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 z-[110] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all duration-200 backdrop-blur-sm group"
+          className="absolute top-6 right-6 z-[11100] p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all duration-200 backdrop-blur-sm group"
         >
           <X className="w-6 h-6 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
         </button>
 
         {/* Media Selector (if both exist) */}
         {images.length > 0 && videos.length > 0 && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[110] flex gap-2 bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/10">
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[11100] flex gap-2 bg-white/10 p-1 rounded-full backdrop-blur-md border border-white/10">
             <button
               onClick={() => setCurrentType("image")}
               className={cn(
@@ -162,13 +162,13 @@ export function MediaModal({
                 <>
                   <button
                     onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[110] transition-all"
+                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[11100] transition-all"
                   >
                     <ChevronLeft className="w-8 h-8" />
                   </button>
                   <button
                     onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[110] transition-all"
+                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[11100] transition-all"
                   >
                     <ChevronRight className="w-8 h-8" />
                   </button>
@@ -195,13 +195,13 @@ export function MediaModal({
                 <>
                   <button
                     onClick={() => setCurrentVideoIndex((prev) => (prev === 0 ? videos.length - 1 : prev - 1))}
-                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[110] transition-all"
+                    className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[11100] transition-all"
                   >
                     <ChevronLeft className="w-8 h-8" />
                   </button>
                   <button
                     onClick={() => setCurrentVideoIndex((prev) => (prev === videos.length - 1 ? 0 : prev + 1))}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[110] transition-all"
+                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-4 z-[11100] transition-all"
                   >
                     <ChevronRight className="w-8 h-8" />
                   </button>

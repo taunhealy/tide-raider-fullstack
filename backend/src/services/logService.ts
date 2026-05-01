@@ -222,6 +222,7 @@ export class LogService {
           imageUrl: true,
           imageUrls: true, // Include imageUrls array for multiple images
           videoUrl: true,
+          videoUrls: true, // Include videoUrls array for multiple videos
           videoPlatform: true,
           userId: true,
           beachName: true,
@@ -482,6 +483,7 @@ export class LogService {
           imageUrl: true,
           imageUrls: true, // Include imageUrls array for multiple images
           videoUrl: true,
+          videoUrls: true, // Include videoUrls array for multiple videos
           videoPlatform: true,
           userId: true,
           beachName: true,
