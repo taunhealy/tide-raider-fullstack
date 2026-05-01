@@ -1,5 +1,61 @@
 [
   {
+    "id": "cape-hangklip",
+    "name": "Cape Hangklip",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Pringle Bay",
+    "distanceFromCT": 90,
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "description": "A powerful reef break at the tip of the Cape Hangklip headland. Can provide long, hollow sections when the West swell hits it just right.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rocks",
+      "Sharks",
+      "Strong Currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -34.383934,
+      "lng": 18.833114
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NW",
+          "WNW",
+          "N"
+        ],
+        "optimalSwellDirections": {
+          "min": 240,
+          "max": 300,
+          "cardinal": "W"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.5,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
     "id": "muizenberg-beach",
     "name": "Muizenberg Beach",
     "continent": "Africa",
@@ -1150,7 +1206,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Series of beach and reef breaks along 3km stretch. Main peak ('Die Plaat') offers powerful rights over reef, while beach breaks provide mellower options. Works best on winter SW swells with NW winds. Multiple takeoff zones spread crowds but watch for strong currents between peaks. Deep channels between reefs create strong rips - good for paddle outs but dangerous for inexperienced surfers. Known shark territory, luckily not Great Whites - stay alert and avoid dawn/dusk sessions.",
+    "description": "Series of beach and reef breaks along 3km stretch. Main peak ('Die Plaat') offers powerful rights over reef, while beach breaks provide mellower options. Works best on South swells with NNW winds. Multiple takeoff zones spread crowds but watch for strong currents between peaks. Deep channels between reefs create strong rips - good for paddle outs but dangerous for inexperienced surfers. Known shark territory, luckily not Great Whites - stay alert and avoid dawn/dusk sessions.",
     "difficulty": "INTERMEDIATE",
     "waveType": "BEACH_BREAK",
     "waterTemp": {
@@ -1181,12 +1237,13 @@
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "W",
+          "N",
+          "NNW",
           "NW"
         ],
         "optimalSwellDirections": {
-          "min": 137.5,
-          "max": 180.5,
+          "min": 150,
+          "max": 210,
           "cardinal": "S"
         },
         "optimalTide": "LOW",
