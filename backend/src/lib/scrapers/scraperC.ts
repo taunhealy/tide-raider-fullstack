@@ -1,7 +1,6 @@
 // @ts-nocheck
 
-import puppeteerCore from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import { chromium } from "playwright";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { USER_AGENTS } from "../proxy/userAgents";
@@ -12,39 +11,16 @@ const proxyManager = new ProxyManager();
 
 async function getBrowser() {
   const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
+  
+  const executablePath = process.env.PLAYWRIGHT_BROWSERS_PATH 
+    ? join(process.env.PLAYWRIGHT_BROWSERS_PATH, "chromium-1155/chrome-linux/chrome") 
+    : undefined;
 
-  if (!isVercel && process.env.NODE_ENV === "development") {
-    console.log("Using system Chrome for local development");
-    return puppeteerCore.launch({
-      headless: true,
-      args: ["--no-sandbox"],
-      executablePath:
-        process.platform === "win32"
-          ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-          : "/usr/bin/google-chrome",
-    });
-  } else {
-    console.log(
-      `Using @sparticuz/chromium for ${isVercel ? "Vercel" : "production"} environment`
-    );
-    chromium.setGraphicsMode = false;
-    return puppeteerCore.launch({
-      args: [
-        ...chromium.args,
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-extensions",
-        "--disable-background-networking",
-        "--memory-pressure-off",
-      ],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless === "new" ? true : chromium.headless,
-    });
-  }
+  console.log(`[getBrowser] Launching Playwright Chromium...`);
+  return await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+  });
 }
 
 // Convert m/s to m/s (Windy.app already shows in m/s, but we'll keep this for consistency)
@@ -79,8 +55,12 @@ export async function scraperC(
     console.log(`[scraperC] 🌐 Starting Windy.app scrape for ${region}`);
     console.log(`[scraperC] 📍 URL: ${url}`);
 
-    browser = await getBrowser();
-    const page = await browser.newPage();
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+      viewport: { width: 1920, height: 1080 }
+    });
+    const page = await context.newPage();
 
     // Capture console messages from the page for debugging
     page.on("console", (msg) => {
@@ -90,17 +70,9 @@ export async function scraperC(
       }
     });
 
-    // Set random user agent
-    const userAgent =
-      USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-    await page.setUserAgent(userAgent);
-
-    // Set viewport
-    await page.setViewport({ width: 1920, height: 1080 });
-
     console.log(`[scraperC] 🔍 Navigating to ${url}...`);
     await page.goto(url, {
-      waitUntil: "networkidle2",
+      waitUntil: "networkidle",
       timeout: 60000,
     });
 
@@ -121,7 +93,7 @@ export async function scraperC(
         const daysRow = document.querySelector("tr#windyWidgetDays");
         if (!daysRow) return false;
         const cells = daysRow.querySelectorAll("td, th");
-        return cells.length > 5; // Should have at least 5 cells (days)
+        return cells.length > 5;
       }`,
       { timeout: 30000 }
     );
@@ -134,16 +106,16 @@ export async function scraperC(
 
     console.log(`[scraperC] 🔍 Extracting forecast data from page...`);
 
-    // Load evaluation code from separate JS file to avoid TypeScript helper injection
-    // @ts-ignore - __dirname is available in CommonJS
+    // Load evaluation code from separate JS file
+    // @ts-ignore
     const evalCodePath = join(__dirname, "windy-eval.js");
     const evalCode = readFileSync(evalCodePath, "utf-8");
 
-    // Use page.evaluate with the entire function code as a string
-    // This avoids TypeScript compilation entirely
     const forecastData = await page.evaluate(`
-      ${evalCode}
-      extractWindyData();
+      (function() {
+        ${evalCode}
+        return extractWindyData();
+      })()
     `);
 
     // Check if we got an error object with debug info

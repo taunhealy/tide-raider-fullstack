@@ -6,6 +6,7 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "Pringle Bay",
+    "isHiddenGem": true,
     "distanceFromCT": 90,
     "bestSeasons": [
       "winter",
@@ -51,6 +52,62 @@
         "idealSwellPeriod": {
           "min": 10,
           "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "silversands-beach",
+    "name": "Silversands Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "isHiddenGem": true,
+    "distanceFromCT": 90,
+    "bestSeasons": [
+      "winter",
+      "spring"
+    ],
+    "description": "Extremely consistent beach break offering powerful lefts and rights. Works best on S and SW swells with N offshore winds. Often holds larger swells than nearby Muizenberg.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rip currents",
+      "Sharks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -34.370583,
+      "lng": 18.876694
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "N",
+          "NNE",
+          "NNW"
+        ],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 225,
+          "cardinal": "S"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 0.6,
+          "max": 2.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
         }
       }
     }
@@ -5978,7 +6035,7 @@
     "regionId": "western-cape",
     "location": "Pringle Bay",
     "isHiddenGem": true,
-    "distanceFromCT": 250,
+    "distanceFromCT": 90,
     "bestSeasons": [
       "winter"
     ],
