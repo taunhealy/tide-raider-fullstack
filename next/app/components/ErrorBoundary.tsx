@@ -1,46 +1,68 @@
-import React from "react";
+"use client";
+
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { ShieldAlert, RefreshCw } from "lucide-react";
+import { Button } from "./ui/Button";
 
 interface Props {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
+  error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null,
+  };
 
-  static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Beach component error:", error, errorInfo);
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
   }
 
-  render() {
+  public render() {
     if (this.state.hasError) {
+      if (this.fallback) return this.fallback;
+
       return (
-        this.props.fallback || (
-          <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-            <h3 className="text-red-800 font-semibold mb-2">
-              Something went wrong
-            </h3>
-            <p className="text-red-600">Unable to display beach information</p>
-            <button
-              onClick={() => this.setState({ hasError: false })}
-              className="mt-2 text-sm text-red-700 hover:text-red-800 underline"
-            >
-              Try again
-            </button>
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white rounded-3xl border border-red-100 shadow-sm">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
+            <ShieldAlert className="w-8 h-8 text-red-500" />
           </div>
-        )
+          <h2 className="text-xl font-black text-gray-900 mb-2 uppercase tracking-tight">Signal Interrupted</h2>
+          <p className="text-sm text-gray-500 max-w-xs mb-8 font-medium">
+            A client-side exception occurred while processing this report. Our engineers have been alerted.
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <Button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-black hover:bg-slate-800 text-white font-bold uppercase tracking-widest h-12 rounded-xl flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reset Connection
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="w-full border-slate-200 text-slate-500 font-bold uppercase tracking-widest h-12 rounded-xl"
+            >
+              Try Again
+            </Button>
+          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-8 p-4 bg-slate-50 rounded-xl text-left overflow-auto max-w-full">
+              <p className="text-[10px] font-mono text-red-600">{this.state.error?.toString()}</p>
+            </div>
+          )}
+        </div>
       );
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Waves, Sparkles, Zap, ShieldAlert, Loader2, Share2, Mail, MessageSquare, Send, Copy, Check, Info } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
@@ -14,9 +14,9 @@ import Link from "next/link";
 import type { Beach } from "@/app/types/beaches";
 import { useSearchTracking } from "@/app/hooks/useSearchTracking";
 import RecentBeachSearch from "@/app/components/RecentBeachSearch";
+import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
-
-export default function AIReportPage() {
+function AIReportContent() {
   const { credits, isLoading: isCreditsLoading } = useSubscriptionStatus();
   const { data: session } = useBackendAuth();
   const searchParams = useSearchParams();
@@ -30,6 +30,16 @@ export default function AIReportPage() {
   const [isCopied, setIsCopied] = useState(false);
   const { trackBeach } = useSearchTracking();
   
+  // Date state to avoid hydration mismatches
+  const [dateDisplay, setDateDisplay] = useState<{start: string, end: string} | null>(null);
+
+  useEffect(() => {
+    // Set date display only on client to avoid hydration mismatch
+    const start = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const end = new Date(Date.now() + (selectedDays - 1) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    setDateDisplay({ start, end });
+  }, [selectedDays]);
+
   // Handle pre-selected beach from URL
   useEffect(() => {
     if (beachIdParam && !selectedBeach) {
@@ -38,7 +48,9 @@ export default function AIReportPage() {
           const res = await fetch(`/api/backend/beaches/${beachIdParam}`);
           if (res.ok) {
             const data = await res.json();
-            setSelectedBeach(data);
+            if (data && data.id) {
+              setSelectedBeach(data);
+            }
           }
         } catch (err) {
           console.error("Failed to fetch beach from URL", err);
@@ -50,7 +62,7 @@ export default function AIReportPage() {
 
   const handleBeachSelect = (beach: Beach | null) => {
     setSelectedBeach(beach);
-    if (beach) {
+    if (beach?.id) {
       trackBeach(beach.id);
     }
   };
@@ -72,13 +84,6 @@ export default function AIReportPage() {
   const handleGenerate = async () => {
     if (!selectedBeach) {
       toast.error("Beach Required", { description: "Please select a break first." });
-      return;
-    }
-
-    if (credits < creditCost) {
-      toast.error("Insufficient Credits", {
-        description: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : ''} to generate this report.`
-      });
       return;
     }
 
@@ -109,31 +114,37 @@ export default function AIReportPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         if (response.status === 402 || errorData.message?.includes("INSUFFICIENT_CREDITS")) {
-           toast.error("Insufficient Credits", {
-             description: "Your balance is too low to compile this tactical signal.",
-             action: {
-               label: "Top Up",
-               onClick: () => window.location.href = "/pricing"
-             }
-           });
-           throw new Error("INSUFFICIENT_CREDITS");
+            toast.error("Insufficient Credits", {
+              description: "Your balance is too low to compile this tactical signal.",
+              action: {
+                label: "Top Up",
+                onClick: () => window.location.href = "/pricing"
+              }
+            });
+            throw new Error("INSUFFICIENT_CREDITS");
         }
         throw new Error(errorData.message || errorData.error || "Failed to generate report");
       }
 
       const data = await response.json();
-      setReport(data.report);
-      window.dispatchEvent(new CustomEvent("credits-updated"));
-      
-      toast.success("Intelligence Ready", {
-        description: `Your ${selectedDays === 7 ? 'Weekly' : selectedDays + '-Day'} Strategic Report is compiled.`
-      });
+      if (data && data.report) {
+        setReport(data.report);
+        window.dispatchEvent(new CustomEvent("credits-updated"));
+        
+        toast.success("Intelligence Ready", {
+          description: `Your ${selectedDays === 7 ? 'Weekly' : selectedDays + '-Day'} Strategic Report is compiled.`
+        });
+      } else {
+        throw new Error("Received empty report from intelligence engine.");
+      }
     } catch (err: any) {
-      toast.error("Process Failed", {
-        description: err.message
-      });
+      if (err.message !== "INSUFFICIENT_CREDITS") {
+        toast.error("Process Failed", {
+          description: err.message
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -193,7 +204,7 @@ export default function AIReportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20 font-primary" suppressHydrationWarning>
+    <div className="min-h-screen bg-gray-50/50 pb-20 font-primary">
       <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -218,7 +229,7 @@ export default function AIReportPage() {
               {isCreditsLoading ? (
                 <div className="w-6 h-4 bg-gray-100 animate-pulse rounded" />
               ) : (
-                <span>{credits}</span>
+                <span>{credits ?? 0}</span>
               )}
               <span className="text-gray-400 font-normal">Credits</span>
             </div>
@@ -339,7 +350,7 @@ export default function AIReportPage() {
                           <Waves className="w-4 h-4" />
                        </div>
                        <h3 className="font-black uppercase tracking-widest text-slate-900 text-sm">
-                         Tactical Intel: {selectedBeach?.name} [{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(Date.now() + (selectedDays - 1) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}]
+                         Tactical Intel: {selectedBeach?.name} {dateDisplay && `[${dateDisplay.start} - ${dateDisplay.end}]`}
                        </h3>
                     </div>
                     {report}
@@ -420,5 +431,22 @@ export default function AIReportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AIReportPage() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50/50">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-black" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Signal...</p>
+          </div>
+        </div>
+      }>
+        <AIReportContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

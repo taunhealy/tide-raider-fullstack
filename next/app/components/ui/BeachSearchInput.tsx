@@ -94,16 +94,18 @@ export function BeachSearchInput({
 
   // Show dropdown when there are search results and input is focused
   useEffect(() => {
+    const hasBeaches = Array.isArray(beaches) && beaches.length > 0;
+    const hasMinLength = debouncedSearch && debouncedSearch.length >= minSearchLength;
+    
     if (
-      beaches &&
-      beaches.length > 0 &&
-      debouncedSearch.length >= minSearchLength &&
+      hasBeaches &&
+      hasMinLength &&
       isFocused &&
       !justSelectedRef.current &&
       searchTerm !== selectedBeach?.name
     ) {
       setShowDropdown(true);
-    } else if (!isFocused || debouncedSearch.length < minSearchLength || searchTerm === selectedBeach?.name) {
+    } else if (!isFocused || !hasMinLength || searchTerm === selectedBeach?.name) {
       setShowDropdown(false);
     }
     
@@ -114,9 +116,10 @@ export function BeachSearchInput({
   }, [beaches, debouncedSearch, isFocused, minSearchLength, searchTerm, selectedBeach]);
 
   const handleBeachSelect = (beach: Beach) => {
+    if (!beach) return;
     justSelectedRef.current = true;
     ignoreBlurRef.current = true;
-    setSearchTerm(beach.name);
+    setSearchTerm(beach.name || "");
     setShowDropdown(false);
     onBeachSelect?.(beach);
   };
@@ -139,11 +142,10 @@ export function BeachSearchInput({
 
   const handleFocus = () => {
     setIsFocused(true);
-    if (
-      beaches &&
-      beaches.length > 0 &&
-      debouncedSearch.length >= minSearchLength
-    ) {
+    const hasBeaches = Array.isArray(beaches) && beaches.length > 0;
+    const hasMinLength = debouncedSearch && debouncedSearch.length >= minSearchLength;
+
+    if (hasBeaches && hasMinLength) {
       setShowDropdown(true);
     }
   };
@@ -173,12 +175,13 @@ export function BeachSearchInput({
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
-        <Input
+        <input
           type="text"
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
-            if (e.target.value.length >= minSearchLength) {
+            const val = e.target.value;
+            setSearchTerm(val);
+            if (val && val.length >= minSearchLength) {
               setShowDropdown(true);
             } else {
               setShowDropdown(false);
@@ -188,20 +191,19 @@ export function BeachSearchInput({
           onBlur={handleBlur}
           placeholder={placeholder}
           className={cn(
-            "w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg",
-            "focus-visible:ring-0 focus-visible:bg-gray-50 focus-visible:border-gray-300",
-            "placeholder-gray-400 transition-all font-primary",
-            "focus-visible:ring-offset-0"
+            "flex h-11 w-full rounded-lg border border-gray-200 bg-white px-10 py-2 text-sm ring-offset-background font-primary",
+            "placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:bg-gray-50 focus-visible:border-gray-300",
+            "transition-all duration-200"
           )}
         />
         {isLoading && (
-          <div className="absolute right-3 top-2.5">
-            <Skeleton className="h-4 w-4 rounded-full" />
+          <div className="absolute right-3 top-3.5">
+             <div className="h-4 w-4 rounded-full border-2 border-gray-200 border-t-gray-500 animate-spin" />
           </div>
         )}
 
         {/* Dropdown with Results */}
-        {showDropdown && beaches && beaches.length > 0 && (
+        {showDropdown && Array.isArray(beaches) && beaches.length > 0 && (
           <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200">
             <ScrollArea className="max-h-[200px]">
               {beaches.filter(Boolean).map((beach) => (
@@ -228,3 +230,4 @@ export function BeachSearchInput({
     </div>
   );
 }
+
