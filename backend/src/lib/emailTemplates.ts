@@ -263,3 +263,72 @@ export const subscriptionCancelledTemplate = (userName: string) => emailLayout(
   </div>
   `
 );
+
+/**
+ * Analytics Report Template
+ */
+export const analyticsReportTemplate = (stats: any) => emailLayout(
+  "Website Analytics Report 📊",
+  `
+  <p class="text">Here is your weekly performance summary for <strong>Tide Raider</strong>.</p>
+  
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+    <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 16px;">Core Growth Metrics</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Date Range</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">${stats.dateRange}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Total Registered Users</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">${stats.totalUsers}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">New Signups (7d)</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #10b981;">+${stats.newUsers}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Active Subscribers</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #60a5fa;">${stats.activeSubscribers}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+    <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 16px;">Engagement Metrics (7d)</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Active Searchers</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">${stats.activeUsers}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Total Searches Performed</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">${stats.totalSearches}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">Alert Notifications Sent</td>
+        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700;">${stats.alertsSent}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div style="display: flex; gap: 16px;">
+    <div style="flex: 1; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+      <h4 style="font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 12px;">Top Regions</h4>
+      <ul style="list-style: none; padding: 0; font-size: 13px;">
+        ${stats.topRegions.map((r: any) => `<li style="margin-bottom: 4px;">${r.name}: <strong>${r.count}</strong></li>`).join('')}
+      </ul>
+    </div>
+    <div style="flex: 1; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+      <h4 style="font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 12px;">Top Beaches</h4>
+      <ul style="list-style: none; padding: 0; font-size: 13px;">
+        ${stats.topBeaches.map((b: any) => `<li style="margin-bottom: 4px;">${b.name}: <strong>${b.count}</strong></li>`).join('')}
+      </ul>
+    </div>
+  </div>
+
+  <div class="button-container">
+    <a href="https://www.tideraider.com/admin" class="button">Open Admin Hub</a>
+  </div>
+  `
+);

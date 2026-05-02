@@ -83,15 +83,13 @@ async function loadData() {
     // Define the continents to load
     const continents = ["africa", "asia", "europe", "north-america", "oceania", "south-america"];
     
-    // Path to the continents directory in the frontend
-    // In local dev: k:/Kea/tide-raider-fullstack/next/app/data/continents/
-    // In fly.io/container, you might need a different path or volume
-    const frontendDataPath = join(process.cwd(), "../next/app/data/continents");
+    // Path to the continents directory in the backend
+    const backendDataPath = path.join(__dirname, "../src/data/continents");
     
-    console.log(`Loading beach data from JSON files in: ${frontendDataPath}`);
+    console.log(`Loading beach data from JSON files in: ${backendDataPath}`);
     
     for (const continent of continents) {
-      const jsonPath = join(frontendDataPath, `${continent}.json`);
+      const jsonPath = path.join(backendDataPath, `${continent}.json`);
       if (fs.existsSync(jsonPath)) {
         try {
           const rawData = fs.readFileSync(jsonPath, "utf8");

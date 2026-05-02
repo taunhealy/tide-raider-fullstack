@@ -13,12 +13,13 @@ import {
   Star, 
   InfoIcon, 
   Eye, 
-  Sparkles,
-  Play,
-  ArrowUpRight,
-  Wind,
-  Droplets,
-  MapPin
+  Sparkles, 
+  Play, 
+  ArrowUpRight, 
+  Wind, 
+  Droplets, 
+  MapPin, 
+  Gem 
 } from "lucide-react";
 import AIReportModal from "./beach/AIReportModal";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
@@ -126,8 +127,8 @@ const BeachCard = memo(function BeachCard({
   const handleSubscribe = useHandleSubscribe();
   const queryClient = useQueryClient();
 
-  // All beaches are now unlocked for everyone
-  const isLocked = false;
+  // Hidden gems are locked for non-premium users
+  const isLocked = !!beach.isHiddenGem && !directIsPremium;
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -291,8 +292,13 @@ const BeachCard = memo(function BeachCard({
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {beach.name}
                       {beach.isHiddenGem && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[9px] font-black uppercase tracking-widest border border-brand-3/20">
-                          <Lock className="w-2.5 h-2.5 mr-1" />
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
+                          isLocked 
+                            ? "bg-slate-100 text-slate-400 border-slate-200" 
+                            : "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.2)]"
+                        )}>
+                          <Gem className={cn("w-2.5 h-2.5 mr-1.5", !isLocked && "fill-indigo-600/20")} />
                           Hidden Gem
                         </span>
                       )}
@@ -666,8 +672,13 @@ const BeachCard = memo(function BeachCard({
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {beach.name}
                       {beach.isHiddenGem && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[9px] font-black uppercase tracking-widest border border-brand-3/20">
-                          <Lock className="w-2.5 h-2.5 mr-1" />
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
+                          isLocked 
+                            ? "bg-slate-100 text-slate-400 border-slate-200" 
+                            : "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.2)]"
+                        )}>
+                          <Gem className={cn("w-2.5 h-2.5 mr-1.5", !isLocked && "fill-indigo-600/20")} />
                           Hidden Gem
                         </span>
                       )}

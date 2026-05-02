@@ -167,6 +167,11 @@
         "url": "https://www.youtube.com/watch?v=2uqps13F8WU&ab_channel=021DRONE",
         "title": "Surfing Muizenberg",
         "platform": "youtube"
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=PLMqdQNyTSw",
+        "title": "Muizenberg Beach Surfing with FPV Drone (Friday, 24.04.2026)",
+        "platform": "youtube"
       }
     ],
     "profileImage": "/images/profile/hero-cover.jpg",
@@ -3540,9 +3545,9 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Protected bay with gentle waves. Good for beginners and longboarding.",
-    "difficulty": "BEGINNER",
-    "waveType": "BEACH_BREAK",
+    "description": "Reef break with point break characteristics. Needs big swell.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
     "isHiddenGem": true,
     "waterTemp": {
       "summer": 18,
@@ -3559,15 +3564,11 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.3213,
-      "lng": 18.4552
+      "lat": -34.19,
+      "lng": 18.27
     },
     "videos": [
-      {
-        "url": "https://www.youtube.com/watch?v=4rUJTyOOkE8&ab_channel=CAMPBELLTV",
-        "title": "SURFING ON THE WILDSIDE OF BUFFELSBAY (Vlog 02)",
-        "platform": "youtube"
-      },
+     
       {
         "url": "https://www.youtube.com/watch?v=ALpwacrc40I&ab_channel=cape%7Cdoctor",
         "title": "SURFING CAPE of STORMS AFRICA | Buffels 2023 09 16 ",
@@ -3581,13 +3582,13 @@
           "W"
         ],
         "optimalSwellDirections": {
-          "min": 225,
-          "max": 315
+          "min": 180,
+          "max": 220
         },
-        "optimalTide": "LOW",
+        "optimalTide": "MID_TO_HIGH",
         "swellSize": {
-          "min": 0.3,
-          "max": 3.5
+          "min": 1.6,
+          "max": 3.2
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -4471,6 +4472,14 @@
       "lat": -34.1123,
       "lng": 18.4876
     },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=juMANH1wjJo",
+        "title": "Logging A Novelty Wave In Cape Town (24.04.2026)",
+        "platform": "youtube"
+      }
+    ],
+
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [

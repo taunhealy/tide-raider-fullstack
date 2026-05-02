@@ -41,13 +41,13 @@ steps:
       - ${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --memory=1Gi
+      - --memory=2Gi
       - --cpu=1
       - --timeout=600
       - --max-instances=10
       - --min-instances=0
       - --port=8080
-      - --set-env-vars=NODE_ENV=production,FRONTEND_URL=https://www.tideraider.com
+      - --set-env-vars=NODE_ENV=production,FRONTEND_URL=https://www.tideraider.com,REDIS_ENABLED=true
       - --update-secrets=GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest
       - --update-secrets=GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
       - --update-secrets=JWT_SECRET=JWT_SECRET:latest
@@ -62,6 +62,8 @@ steps:
       - --update-secrets=RESEND_API_KEY=RESEND_API_KEY:latest
       - --update-secrets=GOOGLE_API_KEY=GOOGLE_API_KEY:latest
       - --update-secrets=DIRECT_URL=DIRECT_URL:latest
+      - --update-secrets=UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest
+      - --update-secrets=UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest
 
 # Default substitution values
 substitutions:

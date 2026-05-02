@@ -1,0 +1,30 @@
+[
+  {
+    "name": "keep-last-5-tagged",
+    "action": {
+      "type": "Keep"
+    },
+    "mostRecentVersions": {
+      "keepCount": 5
+    }
+  },
+  {
+    "name": "delete-old-images",
+    "action": {
+      "type": "Delete"
+    },
+    "condition": {
+      "olderThan": "14d",
+      "tagState": "ANY"
+    }
+  },
+  {
+    "name": "delete-untagged",
+    "action": {
+      "type": "Delete"
+    },
+    "condition": {
+      "tagState": "UNTAGGED"
+    }
+  }
+]

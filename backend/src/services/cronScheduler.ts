@@ -127,6 +127,20 @@ export class CronScheduler {
     this.tasks.push(newsletterTask);
     console.log("✅ Weekly Newsletter scheduled: Every Sunday at 07:00 UTC");
 
+    // Sunday Evening Analytics (Run every Sunday at 18:00 UTC / 20:00 SAST)
+    const analyticsTask = cron.schedule(
+      "0 18 * * 0",
+      async () => {
+        console.log("📊 Gathering weekly analytics report...");
+        await this.runAnalyticsReportJob();
+      },
+      {
+        timezone: "UTC",
+      }
+    );
+    this.tasks.push(analyticsTask);
+    console.log("✅ Weekly Analytics Report scheduled: Every Sunday at 18:00 UTC");
+
     // Optional: Run immediately on startup (useful for testing)
     if (process.env.RUN_CRON_ON_STARTUP === "true") {
       console.log("🚀 Running cron job immediately on startup...");
@@ -453,6 +467,49 @@ export class CronScheduler {
       };
     } catch (error) {
       console.error("❌ Newsletter Job Failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Run the weekly analytics report job
+   * Sends a summary of website performance to the owner
+   */
+  async runAnalyticsReportJob() {
+    const startTime = Date.now();
+    console.log("📊 Running Weekly Analytics Report Job...");
+
+    try {
+      const { AnalyticsService } = await import("./analyticsService");
+      const { sendEmail } = await import("../lib/email");
+      const { analyticsReportTemplate } = await import("../lib/emailTemplates");
+      
+      const stats = await AnalyticsService.getWeeklyStats();
+      
+      const adminEmail = "taunhealy@gmail.com";
+      const subject = `Tide Raider Analytics: Weekly Report [${stats.dateRange}] 📊`;
+
+      const success = await sendEmail(
+        adminEmail,
+        subject,
+        analyticsReportTemplate(stats)
+      );
+
+      const duration = Date.now() - startTime;
+      if (success) {
+        console.log(`✅ Analytics Report sent to ${adminEmail} in ${duration}ms`);
+      } else {
+        console.error(`❌ Failed to send Analytics Report to ${adminEmail}`);
+      }
+
+      return {
+        success,
+        adminEmail,
+        stats,
+        duration: `${duration}ms`
+      };
+    } catch (error) {
+      console.error("❌ Analytics Report Job Failed:", error);
       throw error;
     }
   }

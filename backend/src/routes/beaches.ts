@@ -154,6 +154,10 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
     const beachesWithProfiles = beaches.map(beach => {
       const { conditionProfiles, ...beachData } = beach as any;
       const profile = conditionProfiles?.[0] || {};
+      
+      const isSubscriber = (req as any).user?.isSubscribed;
+      const isGated = beach.isHiddenGem && !isSubscriber;
+
       return {
         ...beachData,
         optimalWindDirections: profile.optimalWindDirections || [],
@@ -161,6 +165,13 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
         swellSize: profile.swellSize || { min: 0, max: 10 },
         idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
         optimalTide: profile.optimalTide || "ALL",
+        // Gate sensitive data
+        ...(isGated && {
+          description: "Locked Hidden Gem - Subscribe to unlock full details.",
+          hazards: [],
+          videos: [],
+          coffeeShop: [],
+        })
       };
     });
 
@@ -266,6 +277,10 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
 
     const { conditionProfiles, ...beachData } = beach as any;
     const profile = conditionProfiles?.[0] || {};
+    
+    const isSubscriber = (req as any).user?.isSubscribed;
+    const isGated = beach.isHiddenGem && !isSubscriber;
+
     const mappedBeach = {
       ...beachData,
       optimalWindDirections: profile.optimalWindDirections || [],
@@ -273,6 +288,13 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       swellSize: profile.swellSize || { min: 0, max: 10 },
       idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
       optimalTide: profile.optimalTide || "ALL",
+      // Gate sensitive data
+      ...(isGated && {
+        description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",
+        hazards: [],
+        videos: [],
+        coffeeShop: [],
+      })
     };
 
     res.json({ beach: mappedBeach });

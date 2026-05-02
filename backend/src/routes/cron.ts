@@ -367,4 +367,22 @@ router.get("/preview-story", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/cron/run-analytics - Manual trigger for analytics report
+router.post("/run-analytics", async (req: Request, res: Response) => {
+  try {
+    const cronSecret = req.headers["x-cron-secret"];
+    if (cronSecret !== process.env.CRON_SECRET) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    console.log("📊 Manual Analytics Report trigger received...");
+    const { getCronScheduler } = await import("../services/cronScheduler");
+    const result = await getCronScheduler().runAnalyticsReportJob();
+    return res.json(result);
+  } catch (error) {
+    console.error("❌ Analytics report job failed:", error);
+    return res.status(500).json({ error: "Analytics report job failed" });
+  }
+});
+
 export default router;

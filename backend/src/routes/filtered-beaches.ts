@@ -149,18 +149,18 @@ router.get(
       };
 
       // Add isHiddenGem filter logic:
-      // If true, only show hidden gems (REQUIRES AUTHENTICATION).
-      // If false/missing, exclude hidden gems (include false and null).
+      // 1. If explicit isHiddenGem=true requested, filter for them (requires subscription to see list)
+      // 2. If searchQuery is present, INCLUDE hidden gems in results (they will be gated below)
+      // 3. Otherwise, exclude hidden gems by default from the general list
       if (req.query.isHiddenGem === "true") {
         if ((req as any).user?.isSubscribed) {
           whereClause.isHiddenGem = true;
         } else {
-          // User requested hidden gems but is not subscribed - return 0 results
+          // User requested hidden gems list but is not subscribed - return 0 results
           whereClause.id = "force-zero-results"; 
         }
-      } else {
-        // Exclude true (include false and null)
-        // Using AND with OR to avoid clashing with other filters
+      } else if (!searchQuery && !(req as any).user?.isSubscribed) {
+        // No search query and user is not subscribed: exclude hidden gems from the general list
         whereClause.AND = [
           {
             OR: [
@@ -170,6 +170,8 @@ router.get(
           }
         ];
       }
+      // If user is subscribed OR if there is a search query, hidden gems are included in the results.
+      // (Non-subscribers will have the data gated in the mapping logic below)
 
       // Add isLongboarding filter if specified
       if (req.query.isLongboarding === "true") {
@@ -458,15 +460,19 @@ router.get(
           >,
           beach
         ) => {
+          const isSubscriber = (req as any).user?.isSubscribed;
+          const isGated = beach.isHiddenGem && !isSubscriber;
+          
           const dailyScore =
             beach.beachDailyScores.length > 0
               ? beach.beachDailyScores[0]
               : null;
+          
           acc[beach.id] = {
-            score: dailyScore?.score ?? 0,
+            score: isGated ? 0 : (dailyScore?.score ?? 0),
             beach: {
               ...beach,
-              beachDailyScores: dailyScore ? [dailyScore] : [],
+              beachDailyScores: isGated ? [] : (dailyScore ? [dailyScore] : []),
             },
           };
           return acc;
@@ -478,6 +484,10 @@ router.get(
         beaches: beaches.map((beach) => {
           const { beachDailyScores, conditionProfiles, ...beachData } = beach as any;
           const profile = conditionProfiles?.[0] || {};
+          
+          const isSubscriber = (req as any).user?.isSubscribed;
+          const isGated = beach.isHiddenGem && !isSubscriber;
+
           return {
             ...beachData,
             optimalWindDirections: profile.optimalWindDirections || [],
@@ -485,6 +495,14 @@ router.get(
             swellSize: profile.swellSize || { min: 0, max: 10 },
             idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
             optimalTide: profile.optimalTide || "ALL",
+            // Gate sensitive data
+            ...(isGated && {
+              description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",
+              hazards: [],
+              videos: [],
+              coffeeShop: [],
+              logEntries: [],
+            })
           };
         }),
         scores,
