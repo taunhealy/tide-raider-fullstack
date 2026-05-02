@@ -104,19 +104,7 @@ function RegionalHighScoresContent({
 
   const queryClient = useQueryClient();
 
-  // Force clear cache and refetch when date changes
-  useEffect(() => {
-    if (selectedDate && selectedRegion) {
-      console.log(
-        `[RegionalHighScores] 🔄 Date changed to ${selectedDate}, invalidating cache`
-      );
-      // Invalidate all queries for this region (will trigger refetch)
-      queryClient.invalidateQueries({
-        queryKey: ["regionalHighScores", selectedRegion],
-        exact: false, // Match all queries that start with this key
-      });
-    }
-  }, [selectedDate, selectedRegion, queryClient]);
+  // Date change handled by queryKey: ["regionalHighScores", selectedRegion, selectedDate]
 
   // Use the new endpoint
   // Only enable query when we have a date (client-side) and region

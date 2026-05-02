@@ -40,7 +40,6 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadingSpinner } from "@/app/components/ui/LoadingSpinner";
 import { RandomLoader } from "../ui/random-loader";
 import { useSubscriptionDetails } from "@/app/hooks/useSubscriptionDetails";
-import { useBeaches } from "@/app/hooks/useBeaches";
 import { SubscriptionStatus } from "@/app/types/subscription";
 
 interface RaidLogDetailsProps {
@@ -111,19 +110,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
   const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
   const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
   
-  const { data: beachesData } = useBeaches();
-  const beaches = (beachesData as any)?.beaches || beachesData || [];
-  
-  // Robust check for Hidden Gem status
-  const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem || 
-                          (Array.isArray(beaches) ? beaches : [])?.find((b: any) => 
-                            b && (
-                              b.id === (entry as any)?.beachId || 
-                              b.id === (entry as any)?.beach?.id || 
-                              b.name?.toLowerCase() === (entry as any)?.beachName?.toLowerCase() ||
-                              b.name?.toLowerCase() === (entry as any)?.beach?.name?.toLowerCase()
-                            )
-                          )?.isHiddenGem;
+  const isHiddenGemEntry = !!(entry as any)?.beach?.isHiddenGem;
 
   const isOwner = session?.user?.id === (entry as any)?.userId;
 
@@ -502,14 +489,16 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                               </div>
                                             </div>
 
-                                            {conditions.tide && (
+                                            {conditions.tide && typeof conditions.tide !== 'object' && (
                                               <div className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                                                 <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
                                                   <Waves className="w-4 h-4 text-cyan-400" />
                                                 </div>
                                                 <div className="overflow-hidden">
                                                   <p className="text-[8px] font-bold text-cyan-400/40 tracking-widest mb-0.5">Tide</p>
-                                                  <p className="text-[10px] font-black text-white truncate">{conditions.tide}</p>
+                                                  <p className="text-[10px] font-black text-white truncate">
+                                                    {String(conditions.tide)}
+                                                  </p>
                                                 </div>
                                               </div>
                                             )}
@@ -577,7 +566,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         </svg>
                       </div>
                       <p className="text-white/80 font-primary text-base md:text-lg leading-relaxed whitespace-pre-wrap relative z-10 italic">
-                        {isGatedGem ? "Community intelligence redacted. Subscribe to unlock session comments." : `"${entry.comments}"`}
+                        {isGatedGem ? "Community intelligence redacted. Subscribe to unlock session comments." : (typeof entry.comments === 'string' ? `"${entry.comments}"` : "")}
                       </p>
                     </div>
                   </div>

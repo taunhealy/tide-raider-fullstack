@@ -5,11 +5,10 @@ import type { Beach } from "@/app/types/beaches";
 import { RaidLogsComponent } from "@/app/components/raid-logs/RaidLogsComponent";
 
 interface ClientProfileLogsProps {
-  beaches: Beach[];
   userId: string;
 }
 
-export function ClientProfileLogs({ beaches, userId }: ClientProfileLogsProps) {
+export function ClientProfileLogs({ userId }: ClientProfileLogsProps) {
   const { data: userData } = useQuery({
     queryKey: ["user", userId],
     queryFn: async () => {

@@ -158,13 +158,10 @@ export default function DashboardPage() {
     },
   });
 
-  const { data: beaches = [] } = useQuery({
-    queryKey: ["beaches"],
-    queryFn: async () => {
-      const res = await fetch("/api/beaches");
-      if (!res.ok) throw new Error("Failed to fetch beaches");
-      return res.json();
-    },
+  // Only fetch beaches for the selected/default region to save data
+  const { data: beaches = [] } = useBeaches({ 
+    regionId: "western-cape", // Default to SA/Western Cape
+    enabled: activeTab === "logs" || activeTab === "account"
   });
 
   // Add this useEffect to refresh data when subscription changes
@@ -623,7 +620,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="w-full overflow-x-auto">
-                    <ClientProfileLogs userId={session?.user?.id || ""} beaches={beaches} />
+                    <ClientProfileLogs userId={session?.user?.id || ""} />
                   </div>
                 </div>
               </div>

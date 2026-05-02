@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { optionalAuth, AuthRequest } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
+import { redis } from "../lib/redis";
+import crypto from "crypto";
 import { ensureRegionDataFresh } from "../services/regionDataService";
 
 const router = Router();
@@ -15,6 +17,14 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const regionId = req.query.regionId as string | undefined;
+
+      // Check cache for global beach list (no regionId)
+      const cacheKey = `beaches:list:${regionId || 'all'}`;
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        console.log(`[beaches] 🚀 Serving from cache: ${cacheKey}`);
+        return res.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+      }
 
       const beaches = await prisma.beach.findMany({
         where: regionId
@@ -50,7 +60,19 @@ router.get(
         };
       });
 
-      res.json({ beaches: beachesWithProfiles });
+      // Sort to prioritize Western Cape
+      const sortedBeaches = beachesWithProfiles.sort((a, b) => {
+        if (a.regionId === 'western-cape' && b.regionId !== 'western-cape') return -1;
+        if (a.regionId !== 'western-cape' && b.regionId === 'western-cape') return 1;
+        return 0;
+      });
+
+      const responseData = { beaches: sortedBeaches };
+      
+      // Cache for 1 hour
+      await redis.set(cacheKey, JSON.stringify(responseData), { ex: 3600 });
+
+      res.json(responseData);
     } catch (error: any) {
       console.error("Failed to fetch beaches:", error);
       console.error("Error details:", {

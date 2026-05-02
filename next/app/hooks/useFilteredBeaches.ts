@@ -4,6 +4,7 @@ import { BeachInitialData } from "../types/beaches";
 import { useBeachFilters } from "./useBeachFilters";
 import { CoreForecastData } from "../types/forecast";
 import api from "../lib/api-client";
+import { usePathname } from "next/navigation";
 
 interface UseFilteredBeachesProps {
   initialData: BeachInitialData | null;
@@ -21,6 +22,7 @@ export function useFilteredBeaches({
 }: UseFilteredBeachesProps) {
   const { filters } = useBeachFilters();
   const queryClient = useQueryClient();
+  const pathname = usePathname();
 
   // Get the selected source from the forecast query cache
   // The forecast query key is ["forecast", regionId, normalizedDate, selectedSource]
@@ -143,7 +145,9 @@ export function useFilteredBeaches({
         ignoreRegion?: boolean;
       } = {};
 
-      if (filters.regionId) params.regionId = filters.regionId;
+      // DEFAULT REGION: Fallback to Western Cape if no region is selected
+      // This prevents the "load-render-reload" flicker by providing a stable default immediately
+      params.regionId = filters.regionId || "western-cape";
       if (filters.searchQuery && filters.searchQuery.trim()) {
         params.searchQuery = filters.searchQuery.trim();
       }
@@ -192,7 +196,13 @@ export function useFilteredBeaches({
       return await api.getFilteredBeaches(params);
     },
     initialData: shouldUseInitialData,
-    enabled: enabled && (!!filters.regionId || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("beachId"))),
+    enabled: enabled && (
+      !!filters.regionId || 
+      (typeof window !== "undefined" && (
+        pathname === "/raid" || 
+        new URLSearchParams(window.location.search).has("beachId")
+      ))
+    ),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
     refetchOnMount: false, // Use cached data if available - faster loading

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { redis } from "@/app/lib/redis";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,6 +16,14 @@ export async function GET(request: Request) {
     today.setUTCHours(0, 0, 0, 0);
     const sevenDaysLater = new Date(today);
     sevenDaysLater.setDate(today.getDate() + 7);
+
+    // Create cache key
+    const cacheKey = `map-data:${source || 'all'}:${timeSlot || 'all'}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log(`[api/map-data] 🚀 Serving from cache`);
+      return NextResponse.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+    }
 
     // Fetch all beaches and their scores for the next week
     const beaches = await prisma.beach.findMany({
@@ -98,7 +108,7 @@ export async function GET(request: Request) {
           swellSize: profile.swellSize || { min: 0, max: 10 },
           idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
           dailyScores: dailyScores,
-          rating: Object.values(dailyScores as any)[0]?.rating || beach.rating || 3
+          rating: (Object.values(dailyScores) as any[])[0]?.rating || beach.rating || 3
         };
       } catch (e) {
         console.error(`[api/map-data] Error mapping beach at index ${index} (${beach?.id || "unknown"}):`, e);
@@ -106,7 +116,19 @@ export async function GET(request: Request) {
       }
     }).filter(Boolean);
 
-    return NextResponse.json({ beaches: mappedBeaches });
+    // Sort to prioritize South Africa (Western Cape) first
+    const sortedBeaches = (mappedBeaches as any[]).sort((a: any, b: any) => {
+      if (a.regionId === 'western-cape' && b.regionId !== 'western-cape') return -1;
+      if (a.regionId !== 'western-cape' && b.regionId === 'western-cape') return 1;
+      return 0;
+    });
+
+    const responseData = { beaches: sortedBeaches };
+    
+    // Cache for 1 hour (3600 seconds)
+    await redis.set(cacheKey, JSON.stringify(responseData), { ex: 3600 });
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("[api/map-data] Error:", error);
     return NextResponse.json({ error: "Failed to fetch map data" }, { status: 500 });

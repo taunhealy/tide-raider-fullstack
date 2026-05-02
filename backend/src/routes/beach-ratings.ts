@@ -8,6 +8,8 @@ import {
   AuthRequest,
 } from "../middleware/auth";
 import { dataRateLimiter } from "../middleware/rateLimiter";
+import { getCachedApiResponse, cacheApiResponse } from "../lib/redis";
+import crypto from "crypto";
 
 const router = Router();
 
@@ -23,9 +25,16 @@ router.get(
       const dateParam = req.query.date as string | undefined;
       const date = dateParam ? new Date(dateParam) : new Date();
 
-      const counts = await ScoreService.getRegionCounts(date);
+      const cacheKey = `region-counts:${dateParam || "today"}`;
+      const cached = await getCachedApiResponse(cacheKey);
+      if (cached)
+        return res.json(typeof cached === "string" ? JSON.parse(cached) : cached);
 
-      return res.json({ counts });
+      const counts = await ScoreService.getRegionCounts(date);
+      const responseData = { counts };
+      await cacheApiResponse(cacheKey, responseData, 3600); // Cache counts for 1 hour
+
+      return res.json(responseData);
     } catch (error) {
       console.error("[beach-ratings] Error fetching region counts:", error);
       return res.status(500).json({
@@ -52,6 +61,20 @@ router.get(
 
       if (!regionId) {
         return res.status(400).json({ error: "regionId is required" });
+      }
+
+      // Check cache first
+      const cacheKeyParts = [regionId, req.query.period, req.query.date];
+      const cacheKey = `historical:${crypto
+        .createHash("md5")
+        .update(JSON.stringify(cacheKeyParts))
+        .digest("hex")}`;
+      const cached = await getCachedApiResponse(cacheKey);
+      if (cached) {
+        console.log(
+          `[beach-ratings/historical] 🚀 Serving from cache: ${cacheKey}`
+        );
+        return res.json(typeof cached === "string" ? JSON.parse(cached) : cached);
       }
 
       // Calculate date range based on period
@@ -461,14 +484,19 @@ router.get(
         }
       }
 
-      return res.json({
+      const responseData = {
         beaches: sortedBeaches,
         period: period || "today",
         dateRange: {
           start: startDate,
           end: endDate,
         },
-      });
+      };
+
+      // Cache for 30 minutes
+      await cacheApiResponse(cacheKey, responseData, 1800);
+
+      return res.json(responseData);
     } catch (error) {
       console.error("[beach-ratings] Error fetching historical scores:", error);
       return res.status(500).json({

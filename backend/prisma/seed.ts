@@ -451,7 +451,7 @@ async function main() {
         }
 
         // Use UPSERT instead of CREATE to handle existing beaches
-        await prisma.beach.upsert({
+        const upsertedBeach = await prisma.beach.upsert({
           where: { id: beach.id },
           update: {
             // Update existing beach data
@@ -461,8 +461,6 @@ async function main() {
             regionId: region.id,
             location: beach.location,
             distanceFromCT: beach.distanceFromCT,
-            optimalWindDirections: beach.optimalWindDirections,
-            optimalSwellDirections: beach.optimalSwellDirections,
             bestSeasons: beach.bestSeasons.map((season) => mapSeason(season)),
             optimalTide: mapOptimalTide(beach.optimalTide as string),
             description: beach.description,
@@ -488,8 +486,6 @@ async function main() {
             regionId: region.id,
             location: beach.location,
             distanceFromCT: beach.distanceFromCT,
-            optimalWindDirections: beach.optimalWindDirections,
-            optimalSwellDirections: beach.optimalSwellDirections,
             bestSeasons: beach.bestSeasons.map((season) => mapSeason(season)),
             optimalTide: mapOptimalTide(beach.optimalTide as string),
             description: beach.description,
@@ -507,6 +503,62 @@ async function main() {
             isHiddenGem: beach.isHiddenGem || false,
           },
         });
+
+        // Seed BeachConditionProfiles if they exist in the data
+        if (beach.conditionProfiles && typeof beach.conditionProfiles === 'object') {
+          for (const [category, profile] of Object.entries(beach.conditionProfiles as any)) {
+            await prisma.beachConditionProfile.upsert({
+              where: {
+                beachId_category: {
+                  beachId: upsertedBeach.id,
+                  category: category as any,
+                },
+              },
+              update: {
+                optimalWindDirections: (profile as any).optimalWindDirections || [],
+                optimalSwellDirections: (profile as any).optimalSwellDirections || {},
+                swellSize: (profile as any).swellSize || {},
+                idealSwellPeriod: (profile as any).idealSwellPeriod || {},
+                optimalTide: mapOptimalTide((profile as any).optimalTide as string),
+              },
+              create: {
+                beachId: upsertedBeach.id,
+                category: category as any,
+                optimalWindDirections: (profile as any).optimalWindDirections || [],
+                optimalSwellDirections: (profile as any).optimalSwellDirections || {},
+                swellSize: (profile as any).swellSize || {},
+                idealSwellPeriod: (profile as any).idealSwellPeriod || {},
+                optimalTide: mapOptimalTide((profile as any).optimalTide as string),
+              },
+            });
+          }
+        } else {
+          // Create a default GENERAL profile from the beach's main fields
+          await prisma.beachConditionProfile.upsert({
+            where: {
+              beachId_category: {
+                beachId: upsertedBeach.id,
+                category: "GENERAL",
+              },
+            },
+            update: {
+              optimalWindDirections: beach.optimalWindDirections,
+              optimalSwellDirections: beach.optimalSwellDirections,
+              swellSize: beach.swellSize,
+              idealSwellPeriod: beach.idealSwellPeriod,
+              optimalTide: mapOptimalTide(beach.optimalTide as string),
+            },
+            create: {
+              beachId: upsertedBeach.id,
+              category: "GENERAL",
+              optimalWindDirections: beach.optimalWindDirections,
+              optimalSwellDirections: beach.optimalSwellDirections,
+              swellSize: beach.swellSize,
+              idealSwellPeriod: beach.idealSwellPeriod,
+              optimalTide: mapOptimalTide(beach.optimalTide as string),
+            },
+          });
+        }
 
         createdCount++;
         if (createdCount % 50 === 0) {

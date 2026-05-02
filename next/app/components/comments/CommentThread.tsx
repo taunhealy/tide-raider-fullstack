@@ -124,10 +124,15 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
                     {comment.user.name}
                   </h4>
                   <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
-                    {format(
-                      new Date(comment.createdAt),
-                      "MMM d, yyyy"
-                    )}
+                    {(() => {
+                      try {
+                        if (!comment.createdAt) return "Recent";
+                        const date = new Date(comment.createdAt);
+                        return isNaN(date.getTime()) ? "Recent" : format(date, "MMM d, yyyy");
+                      } catch (e) {
+                        return "Recent";
+                      }
+                    })()}
                   </span>
                 </div>
                 <p className="text-white/60 font-primary text-sm leading-relaxed whitespace-pre-wrap selection:bg-[var(--color-tertiary)]/30">

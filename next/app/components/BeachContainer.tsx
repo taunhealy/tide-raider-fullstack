@@ -20,6 +20,8 @@ import SidebarSkeleton from "./SidebarSkeleton";
 import LoadingIndicator from "./LoadingIndicator";
 import EmptyState from "./EmptyState";
 import BeachCardSkeleton from "./skeletons/BeachCardSkeleton";
+import api from "@/app/lib/api-client";
+import type { LogEntry } from "@/app/types/raidlogs";
 
 import type { Beach, BeachInitialData } from "@/app/types/beaches";
 
@@ -193,17 +195,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
           router.push(`${pathname}?${params.toString()}`, { scroll: false });
           hasAutoRedirected.current = true;
         }
-      } else if (recentSearches !== undefined) {
-        // No recent searches - default to Western Cape for first-time visitors
-        const params = new URLSearchParams(window.location.search);
-        params.set("regionId", "western-cape");
-        
-        if (!params.get("timeSlot")) {
-          params.set("timeSlot", "MORNING");
-        }
-        
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        hasAutoRedirected.current = true;
       }
     }
   }, [filters.regionId, recentSearches, pathname, router]);
@@ -241,10 +232,25 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const forecast = (data?.forecast as any) ?? null;
   const totalCount = data?.totalCount || 0;
 
+  // Fetch the latest log for this region to feature it at the top
+  const { data: latestRegionLog, isLoading: isLoadingLatestLog } = useQuery({
+    queryKey: ["latestLog", filters.regionId],
+    queryFn: async () => {
+      if (!filters.regionId) return null;
+      const res = await api.getRaidLogs({ 
+        regionId: filters.regionId, 
+        limit: 1, 
+        page: 1 
+      });
+      return res.entries?.[0] || null;
+    },
+    enabled: !!filters.regionId,
+  });
+
   const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
     updateFilter("regionId", regionId || "");
     setCurrentPage(1);
-    queryClient.invalidateQueries({ queryKey: ["filteredBeaches"] });
+    // queryClient.invalidateQueries is redundant as queryKey includes regionId
   };
 
   const sortedBeaches = useMemo(() => {
@@ -355,40 +361,51 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <div className="h-px bg-black/10 w-full mt-10" />
 
             <div className="grid grid-cols-1 gap-5 relative mt-10">
-              {!filters.regionId ? (
-                <EmptyState message="Select a region to view beaches" />
-              ) : isLoading && !data ? (
-                <div className="flex flex-col items-center justify-center py-12">
+              {!filters.regionId || (isLoading && !data) ? (
+                <div className="flex flex-col items-center justify-center py-12 min-h-[400px]">
                   <LoadingIndicator />
-                  <p className="text-gray-600 font-primary mt-4">
-                    Loading surf breaks and forecast data...
+                  <p className="text-gray-600 font-primary mt-4 animate-pulse">
+                    {!filters.regionId ? "Initializing your region..." : "Loading surf breaks and forecast data..."}
                   </p>
                 </div>
-              ) : sortedBeaches.length === 0 ? (
-                <EmptyState message="No breaks found in this region, change filters?" />
               ) : (
-                <div>
-                  {currentBeaches.filter(Boolean).map((beach: Beach) => {
-                    const score = beachScores[beach.id]?.score ?? 0;
-                    const beachForecastData = forecast;
-                    const hasScore = beach.id in beachScores;
-                    const scoreValue = hasScore
-                      ? score !== null && score !== undefined
-                        ? Number(score)
-                        : null
-                      : null;
+                <div className="space-y-10">
 
-                    return (
-                      <BeachCard
-                        key={beach.id}
-                        beach={beach}
-                        score={scoreValue}
-                        forecastData={beachForecastData}
-                        isLoading={!hasScore && isLoading && !data}
-                        distance={(beach as any).distance}
-                      />
-                    );
-                  })}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">All Breaks in Region</h3>
+                       <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{sortedBeaches.length} Breaks</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-5">
+                      {sortedBeaches.length === 0 ? (
+                        <EmptyState message="No breaks found in this region, change filters?" />
+                      ) : (
+                        currentBeaches.filter(Boolean).map((beach: Beach) => {
+                          const score = beachScores[beach.id]?.score ?? 0;
+                          const beachForecastData = forecast;
+                          const hasScore = beach.id in beachScores;
+                          const scoreValue = hasScore
+                            ? score !== null && score !== undefined
+                              ? Number(score)
+                              : null
+                            : null;
+
+                          return (
+                            <BeachCard
+                              key={beach.id}
+                              beach={beach}
+                              score={scoreValue}
+                              forecastData={beachForecastData}
+                              isLoading={!hasScore && isLoading && !data}
+                              distance={(beach as any).distance}
+                              scoreInsights={Array.isArray(beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.conditions) ? beachScores[beach.id].beach.beachDailyScores[0].conditions : []}
+                            />
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
 
                   {totalPages > 1 && (
                     <div className="flex flex-col items-center gap-4 mt-8 mb-4">

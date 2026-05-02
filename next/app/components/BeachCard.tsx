@@ -13,13 +13,18 @@ import {
   Star, 
   InfoIcon, 
   Eye, 
-  Sparkles 
+  Sparkles,
+  Play,
+  ArrowUpRight,
+  Wind,
+  Droplets,
+  MapPin
 } from "lucide-react";
 import AIReportModal from "./beach/AIReportModal";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import GoogleMapsButton from "@/app/components/GoogleMapsButton";
-import {} from "@/app/lib/videoUtils";
+import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import Image from "next/image";
 import {
   DEFAULT_PROFILE_IMAGE,
@@ -50,6 +55,7 @@ interface BeachCardProps {
   onCloseModal?: () => void;
   isLoading: boolean;
   distance?: number | null;
+  scoreInsights?: string[];
 }
 
 const ConditionsSkeleton = () => (
@@ -98,6 +104,7 @@ const BeachCard = memo(function BeachCard({
   forecastData,
   isLoading = false,
   distance,
+  scoreInsights,
 }: BeachCardProps) {
   if (!beach) return null;
 
@@ -196,14 +203,7 @@ const BeachCard = memo(function BeachCard({
   const recentEntries = queryClient.getQueryData<LogEntry[]>([
     "recentQuestEntries",
   ]);
-  const beachSessions = Array.isArray(recentEntries)
-    ? recentEntries.filter(
-        (entry) =>
-          entry &&
-          // Check both beachId and beachName
-          entry.beachName?.toLowerCase() === beach.name?.toLowerCase()
-      )
-    : [];
+  const beachSessions = (beach as any).logEntries || [];
 
   const renderRating = () => {
     // Convert 0-10 score to 1-5 star rating consistent with backend logic
@@ -440,35 +440,113 @@ const BeachCard = memo(function BeachCard({
                       </div>
                     </div>
 
-                    {/* Latest Session Log */}
-                    {beachSessions[0] && (
-                      <div className="mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-3 md:-mx-6 md:px-6 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
-                            LATEST SURF LOG
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
-                            <span className="font-primary text-[11px] font-bold text-gray-400">
-                              / 5.0
+                    {/* Score Insights (Deductions) */}
+                    {scoreInsights && scoreInsights.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-1 mb-2 px-1">
+                        {scoreInsights.map((insight, i) => (
+                          <div key={i} className="flex items-center gap-2 group/insight animate-in fade-in slide-in-from-left-2 duration-500">
+                            <div className="w-1 h-3 rounded-full bg-red-400/30 shrink-0" />
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">
+                              {insight}
                             </span>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-primary text-[12px] font-semibold text-black leading-none mb-1">
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Latest Session Log - Featured Card Style */}
+                    {beachSessions[0] && (
+                      <div className="mt-5 space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                          <h4 className="text-[10px] font-black text-black uppercase tracking-[0.2em]">Latest Surf Log</h4>
+                          <span className="text-[10px] font-bold text-brand-3/60">
                             {(() => {
                               try {
                                 const d = new Date(beachSessions[0].date);
-                                return !isNaN(d.getTime()) ? format(d, "MMM d") : "N/A";
+                                return !isNaN(d.getTime()) ? format(d, "MMM d") : "Recently";
                               } catch (e) {
-                                return "N/A";
+                                return "Recently";
                               }
                             })()}
-                          </div>
-                          <div className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none">
-                            DATE
-                          </div>
+                          </span>
                         </div>
+
+                        <Link 
+                          href={`/raidlogs/${beachSessions[0].id}`}
+                          className="group/log block relative overflow-hidden bg-brand-3/[0.03] border border-brand-3/10 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
+                        >
+                          <div className="flex p-3 gap-3">
+                            {/* Log Thumbnail */}
+                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-900 shrink-0">
+                              {beachSessions[0].videoUrl ? (
+                                <>
+                                  <Image
+                                    src={getVideoThumbnail(beachSessions[0].videoUrl, beachSessions[0].videoPlatform || "youtube")}
+                                    alt=""
+                                    fill
+                                    className="object-cover transition-transform duration-700 group-hover/log:scale-110"
+                                  />
+                                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                    <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                                      <Play className="w-2.5 h-2.5 text-brand-3 fill-brand-3 ml-0.5" />
+                                    </div>
+                                  </div>
+                                </>
+                              ) : beachSessions[0].imageUrl ? (
+                                <Image
+                                  src={beachSessions[0].imageUrl}
+                                  alt=""
+                                  fill
+                                  className="object-cover transition-transform duration-700 group-hover/log:scale-110"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-200">
+                                  <Sparkles className="w-6 h-6" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Log Content Summary */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <div className="flex items-center gap-2 mb-1">
+                                <BlueStarRating score={beachSessions[0].surferRating || 0} size={10} />
+                                <span className="text-[10px] font-bold text-slate-400">/ 5.0</span>
+                              </div>
+                              
+                              <div className="text-[11px] font-black text-slate-900 uppercase truncate mb-1">
+                                {beachSessions[0].surferName || "Tide Raider"}
+                              </div>
+
+                              {beachSessions[0].comments && (
+                                <p className="text-[10px] text-slate-500 font-medium line-clamp-2 leading-relaxed italic">
+                                  "{beachSessions[0].comments}"
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-center self-center pl-1 text-slate-300 group-hover/log:text-brand-3 transition-colors">
+                               <ArrowUpRight className="w-4 h-4 transform group-hover/log:translate-x-0.5 group-hover/log:-translate-y-0.5 transition-transform" />
+                            </div>
+                          </div>
+
+                          {/* Mini Conditions Bar if available */}
+                          {beachSessions[0].forecast && (
+                            <div className="flex items-center gap-4 px-3 py-2 bg-slate-50/50 border-t border-slate-100">
+                              <div className="flex items-center gap-1.5">
+                                <Wind className="w-2.5 h-2.5 text-slate-400" />
+                                <span className="text-[9px] font-black text-slate-600">
+                                  {Math.round(beachSessions[0].forecast.windSpeed)}<span className="text-slate-400">kts</span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Droplets className="w-2.5 h-2.5 text-slate-400" />
+                                <span className="text-[9px] font-black text-slate-600">
+                                  {beachSessions[0].forecast.swellHeight.toFixed(1)}<span className="text-slate-400">m</span> @ {Math.round(beachSessions[0].forecast.swellPeriod)}s
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </Link>
                       </div>
                     )}
 
@@ -764,31 +842,6 @@ const BeachCard = memo(function BeachCard({
                         );
                       })}
                     </div>
-
-                    {/* Latest Session Log */}
-                    {beachSessions[0] && (
-                      <div className="mt-4 pt-3 border-t border-gray-100 bg-gray-50/50 -mx-4 px-4 py-3 md:-mx-6 md:px-6 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
-                            LATEST SURF LOG
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <BlueStarRating score={beachSessions[0].surferRating || 0} size={12} />
-                            <span className="font-primary text-[11px] font-bold text-gray-400">
-                              / 5.0
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-primary text-[12px] font-semibold text-black leading-none mb-1">
-                            {format(new Date(beachSessions[0].date), "MMM d")}
-                          </div>
-                          <div className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none">
-                            DATE
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Add the Show/Hide Conditions button here - ALWAYS present */}
                     <div className="flex flex-col gap-1 mt-3">

@@ -143,3 +143,31 @@ export async function cacheBeachCounts(counts: Record<string, number>) {
   }
 }
 
+const API_CACHE_PREFIX = "api:cache:";
+
+export async function getCachedApiResponse(key: string) {
+  try {
+    const fullKey = `${API_CACHE_PREFIX}${key}`;
+    const cached = await redis.get(fullKey);
+    if (cached) {
+      console.log(`[Redis] Cache hit for API: ${fullKey}`);
+      return cached; // Upstash returns parsed JSON if it was stored as object, but we'll handle string too
+    }
+    return null;
+  } catch (error) {
+    console.error("[Redis] Error getting cached API response:", error);
+    return null;
+  }
+}
+
+export async function cacheApiResponse(key: string, data: any, ttlSeconds: number = 900) {
+  try {
+    const fullKey = `${API_CACHE_PREFIX}${key}`;
+    await redis.set(fullKey, JSON.stringify(data), {
+      ex: ttlSeconds,
+    });
+    console.log(`[Redis] Cached API response for ${fullKey} (TTL: ${ttlSeconds}s)`);
+  } catch (error) {
+    console.error("[Redis] Error caching API response:", error);
+  }
+}

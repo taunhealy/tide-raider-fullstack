@@ -1,19 +1,8 @@
 "use client";
 
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
-import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
-import { LogEntry } from "@/app/types/raidlogs";
-import SurfForecastWidget from "./SurfForecastWidget";
-import Link from "next/link";
-import { LogEntrySkeleton } from "@/app/components/LogEntrySkeleton";
-import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
-import {
-  getWindEmoji,
-  getSwellEmoji,
-  degreesToCardinal,
-} from "@/app/lib/forecastUtils";
-import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
+import { Play, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 
 interface MediaGridProps {
   videos?:
@@ -31,7 +20,7 @@ interface MediaGridProps {
       name: string;
       country?: { name: string };
     };
-    logEntries?: any[]; // The pre-fetched log entry from the parent API
+    logEntries?: any[]; 
     // Simplified service relationships
     coffeeShops?: { name: string }[];
     shapers?: { name: string; url?: string }[];
@@ -45,42 +34,6 @@ function MediaGridBase({
   beach,
   isLocked = false,
 }: MediaGridProps) {
-  // Use the pre-fetched log if available from the parent API, otherwise fetch it.
-  // We check for Array.isArray so that even an empty list [] prevents a re-fetch.
-  const hasLogEntries = Array.isArray(beach.logEntries);
-  const initialLogData = hasLogEntries ? beach.logEntries : undefined;
-
-  // Fetch latest log entry only if not provided by backend parent
-  const {
-    data: latestLogEntry,
-    isLoading: isLoadingLog,
-    error: logError,
-  } = useQuery<LogEntry[]>({
-    queryKey: ["raid-logs", beach.id, beach.name],
-    queryFn: async () => {
-      // If we already have the log from the parent API, return it immediately
-      if (initialLogData) return initialLogData;
-
-      try {
-        const response = await fetch(
-          `/api/raid-logs?beachId=${beach.id}&limit=1`
-        );
-        if (!response.ok) {
-          return [];
-        }
-        const data = await response.json();
-        return data.entries || [];
-      } catch (err) {
-        return [];
-      }
-    },
-    initialData: initialLogData,
-    enabled: !hasLogEntries, // Only run the query if we don't already have the log array
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
 
   // Ensure videos is always an array and has the correct shape
   const beachVideos =
@@ -129,184 +82,58 @@ function MediaGridBase({
 
   return (
     <div className="space-y-6">
-      {/* Latest Log Entry Section */}
-      {isLoadingLog ? (
-        <LogEntrySkeleton />
-      ) : (
-        latestLogEntry &&
-        latestLogEntry.length > 0 && (
-          <div className="border border-[var(--color-border-light)] rounded-lg p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-medium font-primary text-[var(--color-text-primary)]">
-                Latest Surf Log
-              </h2>
-              <span className="text-sm font-primary text-[var(--color-text-secondary)]">
-                {new Date(latestLogEntry[0].date).toLocaleDateString()}
-              </span>
-            </div>
 
-            <Link
-              href={`/raidlogs/${latestLogEntry[0].id}`}
-              className="block group"
-            >
-              <div className="bg-[var(--color-bg-primary)] rounded-lg p-2 border border-[var(--color-border-light)] space-y-2 transition-all duration-200 hover:border-[var(--color-border-medium)] hover:shadow-sm">
-                {/* Rating and Surfer Info with Media Icons */}
-                <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    {latestLogEntry[0].surferName &&
-                      !latestLogEntry[0].isAnonymous && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-primary text-[var(--color-text-secondary)]">
-                            {latestLogEntry[0].surferName}
-                          </span>
-                          {/* Add video/image icons if media exists */}
-                          <div className="flex items-center gap-1">
-                            {latestLogEntry[0].videoUrl && (
-                              <VideoIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                            )}
-                            {latestLogEntry[0].imageUrl && (
-                              <ImageIcon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    <div className="flex flex-col justify-between border-l border-[var(--color-border-light)] pl-2">
-                      <BlueStarRating
-                        score={latestLogEntry[0].surferRating}
-                        outOfFive={true}
-                      />
-                    </div>
-                  </div>
-                  {/* Forecast conditions */}
-                  {latestLogEntry[0].forecast && (
-                    <div className="flex items-center gap-1.5 w-full sm:w-auto border-t sm:border-t-0 border-[var(--color-border-light)] py-1.5">
-                      <div className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-primary">
-                        <span className="hidden sm:inline mr-1">
-                          {getWindEmoji(latestLogEntry[0].forecast.windSpeed)}
-                        </span>
-                        <span>
-                          {latestLogEntry[0].forecast.windSpeed.toFixed(2)}kts{" "}
-                          {degreesToCardinal(
-                            latestLogEntry[0].forecast.windDirection
-                          )}
-                        </span>
-                      </div>
-                      <div className="inline-flex items-center bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-xs font-primary">
-                        <span className="hidden sm:inline mr-1">
-                          🌊
-                        </span>
-                        <span>
-                          {latestLogEntry[0].forecast.swellHeight.toFixed(2)}m @{" "}
-                          {latestLogEntry[0].forecast.swellPeriod}s{" "}
-                          {degreesToCardinal(
-                            latestLogEntry[0].forecast.swellDirection
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Comments */}
-                {latestLogEntry[0].comments && (
-                  <div className="border-t border-[var(--color-border-light)] pt-2 mt-2">
-                    <p className="text-sm font-primary text-[var(--color-text-primary)] leading-relaxed">
-                      {latestLogEntry[0].comments}
-                    </p>
-                  </div>
-                )}
-
-                {/* Image */}
-                {latestLogEntry[0].imageUrl && (
-                  <div className="relative aspect-video rounded-lg overflow-hidden border border-[var(--color-border-light)]">
-                    <img
-                      src={latestLogEntry[0].imageUrl}
-                      alt="Surf session"
-                      className="object-cover w-full h-full duration-300"
-                    />
-                  </div>
-                )}
-
-                {/* View Details Link */}
-                <div className="flex items-center justify-end pt-2 text-sm font-primary text-[var(--color-text-secondary)]">
-                  <span className="flex items-center gap-1 group-hover:text-[var(--color-tertiary)]">
-                    View details
-                    <svg
-                      className="w-4 h-4 transition-transform group-hover:translate-x-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </Link>
-          </div>
-        )
-      )}
-
-      {/* Beach Videos Section - Add debug info */}
+      {/* Beach Videos Section */}
       {beachVideos.length > 0 ? (
-        <div className="border border-[var(--color-border-light)] rounded-lg p-5">
-          <h2 className="text-base font-medium font-primary text-[var(--color-text-primary)] mb-4">
-            Videos
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Videos</h4>
+            <span className="text-[10px] font-bold text-slate-400">{beachVideos.length} Available</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {beachVideos.map((video, index) => (
               <a
                 key={`video-${index}`}
-                href={isLocked ? undefined : video.url}
+                href={isLocked ? "#" : video.url}
                 target={isLocked ? undefined : "_blank"}
                 rel={isLocked ? undefined : "noopener noreferrer"}
                 onClick={isLocked ? (e) => e.preventDefault() : undefined}
-                className={`relative aspect-video rounded-lg overflow-hidden border border-[var(--color-border-light)] transition-all duration-200 ${
-                  isLocked
-                    ? "cursor-not-allowed opacity-75"
-                    : "group/card hover:border-[var(--color-border-medium)] cursor-pointer"
-                }`}
+                className="group/video block relative overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
               >
-                <div
-                  className={`absolute inset-0 bg-cover bg-center transition-all duration-300 ${
-                    isLocked
-                      ? ""
-                      : "group-hover/card:opacity-60 group-hover/card:blur-[1px]"
-                  }`}
-                  style={{
-                    backgroundImage: `url(${getVideoThumbnail(video.url, video.platform)})`,
-                  }}
-                />
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent ${
-                    isLocked
-                      ? "opacity-60"
-                      : "opacity-60 group-hover/card:opacity-90"
-                  }`}
-                />
-                <div
-                  className={`absolute inset-0 flex items-center justify-center ${
-                    isLocked
-                      ? "opacity-90"
-                      : "opacity-90 group-hover/card:opacity-50 transition-all duration-300"
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-full bg-[var(--color-tertiary)] flex items-center justify-center shadow-lg">
-                    <VideoIcon className="w-5 h-5 text-white" />
+                <div className="flex p-3 gap-3">
+                  {/* Video Thumbnail */}
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-900 shrink-0">
+                    <Image
+                      src={getVideoThumbnail(video.url, video.platform)}
+                      alt={video.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover/video:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 group-hover/video:scale-110">
+                        <Play className="w-3.5 h-3.5 text-brand-3 fill-brand-3 ml-0.5" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                {!isLocked && (
-                  <div className="absolute bottom-0 left-0 right-0 p-3.5 transform translate-y-[100%] group-hover/card:translate-y-0 transition-transform duration-300 ease-out">
-                    <h3 className="text-white text-sm font-medium font-primary line-clamp-2 drop-shadow-lg">
+
+                  {/* Video Info */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none">
+                        {video.platform}
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-[11px] font-black text-slate-900 uppercase line-clamp-2 leading-tight">
                       {video.title}
                     </h3>
                   </div>
-                )}
+
+                  <div className="flex items-center justify-center self-center pl-1 text-slate-300 group-hover/video:text-brand-3 transition-colors">
+                     <ArrowUpRight className="w-4 h-4 transform group-hover/video:translate-x-0.5 group-hover/video:-translate-y-0.5 transition-transform" />
+                  </div>
+                </div>
               </a>
             ))}
           </div>
@@ -318,12 +145,15 @@ function MediaGridBase({
       )}
 
       {/* Local Services Grid */}
+      {/* Local Services Section */}
       {services.length > 0 && (
-        <div className="border border-[var(--color-border-light)] rounded-lg p-5">
-          <h2 className="text-base font-medium font-primary text-[var(--color-text-primary)] mb-4">
-            Local Services
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Local Services</h4>
+            <span className="text-[10px] font-bold text-slate-400">{services.length} Spots</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {services.filter(Boolean).map((service, index) => {
               // Get emoji based on service type
               let emoji = "🏄‍♂️";
@@ -343,53 +173,35 @@ function MediaGridBase({
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`
-                    block 
-                    bg-[var(--color-bg-primary)] 
-                    rounded-lg 
-                    p-6 
-                    hover:bg-gray-50 
-                    transition-colors 
-                    ${
-                      service.isAd
-                        ? "border border-[var(--color-border-light)] hover:border-[var(--color-border-medium)]"
-                        : "border border-gray-200"
-                    }
-                  `}
+                  className="group/service block relative overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
                   onClick={(e) => {
-                    // Stop propagation to prevent opening the BeachDetailsModal
                     e.stopPropagation();
                   }}
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <span>{emoji}</span>
-                      <span className="text-sm font-primary font-medium text-gray-600">
-                        {service.category}
-                      </span>
+                  <div className="flex p-4 gap-4 items-center">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-xl shrink-0 border border-slate-100 group-hover/service:bg-white group-hover/service:border-brand-3/20 transition-colors">
+                      {emoji}
                     </div>
-                  </div>
 
-                  <h3 className="heading-7 font-primary font-semibold text-gray-900 mb-1">
-                    {service.name}
-                  </h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none">
+                          {service.category}
+                        </span>
+                      </div>
+                      
+                      <h3 className="text-[12px] font-black text-slate-900 uppercase truncate">
+                        {service.name}
+                      </h3>
+                      
+                      <p className="text-[10px] text-slate-500 font-medium">
+                         {beach.region?.name}
+                      </p>
+                    </div>
 
-                  <p className="text-sm font-primary text-gray-500 mb-3">
-                    {beach.region?.name}
-                  </p>
-
-                  <div className="h-px bg-gray-100 my-3"></div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-primary text-[var(--color-text-secondary)] hover:underline">
-                      View details
-                    </span>
-
-                    {service.isAd && (
-                      <span className="text-xs font-primary text-gray-400">
-                        Ad
-                      </span>
-                    )}
+                    <div className="flex items-center justify-center self-center pl-1 text-slate-300 group-hover/service:text-brand-3 transition-colors">
+                       <ArrowUpRight className="w-4 h-4 transform group-hover/service:translate-x-0.5 group-hover/service:-translate-y-0.5 transition-transform" />
+                    </div>
                   </div>
                 </a>
               );
@@ -402,35 +214,6 @@ function MediaGridBase({
   );
 }
 
-// Add this skeleton component for the entire MediaGrid
-function MediaGridSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      {/* Log Entry Skeleton */}
-      <div className="border border-[var(--color-border-light)] rounded-lg p-5">
-        <div className="h-6 w-32 bg-gray-200 rounded mb-4"></div>
-        <div className="bg-[var(--color-bg-primary)] rounded-lg p-4 space-y-4">
-          <div className="flex space-x-1">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-4 h-4 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-          <div className="h-24 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-
-      {/* Videos Skeleton */}
-      <div className="border border-[var(--color-border-light)] rounded-lg p-5">
-        <div className="h-6 w-32 bg-gray-200 rounded mb-4"></div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="aspect-video bg-gray-200 rounded"></div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Instead, export MediaGridBase directly
 export const MediaGrid = MediaGridBase;

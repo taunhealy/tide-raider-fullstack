@@ -1,0 +1,29 @@
+---
+description: Mandatory practices for Google Cloud cost efficiency and deployment management.
+globs: 
+---
+
+# Google Cloud Efficiency Rules
+
+To maintain the project budget ($5/month limit) and prevent storage bloat, all AI agents MUST follow these rules:
+
+## 1. Deployment Method
+- **NEVER** use `gcloud run deploy --source .`. 
+- **WHY**: This creates redundant `cloud-run-source-deploy` repositories in Artifact Registry which consume massive amounts of storage ($0.10/GB/month) and have no automated cleanup.
+- **ALWAYS** use Docker-based deployments:
+    1. Build the image locally or via Cloud Build.
+    2. Tag the image into the project's specific Artifact Registry repository.
+    3. Push the image.
+    4. Deploy from the pushed image.
+
+## 2. Artifact Registry Management
+- **Keep it Lean**: Only keep the latest 5 versions of any image.
+- **Cleanup Policies**: Ensure every Artifact Registry repository has a lifecycle policy (refer to `cleanup-policies.json`) with `dry_run=false`.
+- **Location**: Prefer `africa-south1` for all Tide Raider services to consolidate costs and improve performance for South African users.
+
+## 3. Gemini AI Projects
+- **Consolidation**: Do not create new "ghost" projects (e.g., `gen-lang-client-...`) for Gemini API keys.
+- **Project Identity**: Always use the main production project (`surf-445620`) for API keys to keep billing and quotas centralized.
+
+## 4. Multi-Region Efficiency
+- **Redundancy**: Avoid multi-region deployments (e.g., Europe AND US) unless explicitly requested for high availability. One region is usually sufficient for development and saves 50% on compute costs.
