@@ -65,7 +65,7 @@ steps:
 
 # Default substitution values
 substitutions:
-  _REGION: africa-south1
+  _REGION: europe-west1
   _ARTIFACT_REGISTRY_REPO: tide-raider
   _SERVICE_NAME: tide-raider-backend
   _FRONTEND_URL: https://www.tideraider.com

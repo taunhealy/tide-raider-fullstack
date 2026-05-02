@@ -1,18 +1,6 @@
 import { cookies } from "next/headers";
 import { getServerAuth } from "./server-auth";
-
-// Use NEXT_PUBLIC_API_URL if set, otherwise use environment-appropriate default
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // If NEXT_PUBLIC_API_URL is explicitly set, always use it (for both dev and prod)
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // Fallback: use Cloud Run backend (EU West)
-  return "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
-};
+import { getBackendUrl } from "./api-config";
 
 const BACKEND_URL = getBackendUrl();
 
