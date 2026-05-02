@@ -19,10 +19,15 @@ export async function GET(request: Request) {
 
     // Create cache key
     const cacheKey = `map-data:${source || 'all'}:${timeSlot || 'all'}`;
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      console.log(`[api/map-data] 🚀 Serving from cache`);
-      return NextResponse.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+    let cached;
+    try {
+      cached = await redis.get(cacheKey);
+      if (cached) {
+        console.log(`[api/map-data] 🚀 Serving from cache`);
+        return NextResponse.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+      }
+    } catch (redisError) {
+      console.error("[api/map-data] Redis error (continuing without cache):", redisError);
     }
 
     // Fetch all beaches and their scores for the next week
@@ -126,11 +131,21 @@ export async function GET(request: Request) {
     const responseData = { beaches: sortedBeaches };
     
     // Cache for 1 hour (3600 seconds)
-    await redis.set(cacheKey, JSON.stringify(responseData), { ex: 3600 });
+    try {
+      await redis.set(cacheKey, JSON.stringify(responseData), { ex: 3600 });
+    } catch (redisError) {
+      console.error("[api/map-data] Redis set error:", redisError);
+    }
 
     return NextResponse.json(responseData);
   } catch (error) {
-    console.error("[api/map-data] Error:", error);
-    return NextResponse.json({ error: "Failed to fetch map data" }, { status: 500 });
+    console.error("[api/map-data] ❌ CRITICAL ERROR:", error);
+    if (error instanceof Error) {
+      console.error("[api/map-data] Stack:", error.stack);
+    }
+    return NextResponse.json({ 
+      error: "Failed to fetch map data", 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 });
   }
 }

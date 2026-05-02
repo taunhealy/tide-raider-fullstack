@@ -30,6 +30,7 @@ export default function GlobalErrorHandler() {
         isNullAddEventListenerError ||
         errorSource.includes("share-modal") ||
         errorSource.includes("content_script.js") ||
+        errorMessage.includes("codes.forEach") ||
         errorSource.includes("codes.forEach")
       ) {
         // Log the error but don't let it crash the app

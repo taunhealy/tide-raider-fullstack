@@ -49,14 +49,30 @@ const createRedisClient = () => {
     }
   }
 
+  // Final check for production credentials
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    console.error("❌ CRITICAL: Redis credentials missing. Falling back to no-op client.");
+    return {
+      get: async (key: string) => null,
+      set: async (key: string, value: any, options?: any) => null,
+      setex: async (key: string, seconds: number, value: string) => null,
+      del: async (key: string) => null,
+    } as unknown as Redis;
+  }
+
   try {
     return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: (process.env.UPSTASH_REDIS_REST_URL || "").trim(),
+      token: (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim(),
     });
   } catch (error) {
     console.error("Failed to initialize Redis client:", error);
-    throw error;
+    return {
+      get: async (key: string) => null,
+      set: async (key: string, value: any, options?: any) => null,
+      setex: async (key: string, seconds: number, value: string) => null,
+      del: async (key: string) => null,
+    } as unknown as Redis;
   }
 };
 
