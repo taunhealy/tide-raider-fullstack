@@ -55,12 +55,6 @@ export async function authenticateToken(
       );
     }
 
-    if (secret) {
-      console.log(
-        `[auth] 🔑 Using secret to verify JWT (first 10 chars: ${secret.substring(0, 10)}...)`
-      );
-    }
-
     let userId: string | undefined;
     let decoded: {
       sub?: string;

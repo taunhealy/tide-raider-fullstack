@@ -108,29 +108,6 @@ const BeachCard = memo(function BeachCard({
 }: BeachCardProps) {
   if (!beach) return null;
 
-  // Add enhanced debug logging
-  console.log(`Rendering beach ${beach.name} with data:`, {
-    score,
-    scoreType: typeof score,
-    beachId: beach.id,
-    hasForecastData: !!forecastData,
-    forecastDetails: forecastData
-      ? {
-          windSpeed: forecastData.windSpeed,
-          windDirection: forecastData.windDirection,
-          swellHeight: forecastData.swellHeight,
-          swellPeriod: forecastData.swellPeriod,
-        }
-      : null,
-  });
-
-  console.log("Beach card forecast data:", {
-    beachId: beach.id,
-    forecastData,
-    hasForecastData: !!forecastData,
-    forecastProperties: forecastData ? Object.keys(forecastData) : [],
-  });
-
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -151,15 +128,6 @@ const BeachCard = memo(function BeachCard({
 
   // All beaches are now unlocked for everyone
   const isLocked = false;
-
-  // Debug logging for beach data
-  console.log(`[BeachCard] ${beach.name} - Data:`, {
-    score,
-    isLocked,
-    subscriptionStatus,
-    sessionUser: session?.user,
-    userId: session?.user?.id,
-  });
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -473,7 +441,7 @@ const BeachCard = memo(function BeachCard({
 
                         <Link 
                           href={`/raidlogs/${beachSessions[0].id}`}
-                          className="group/log block relative overflow-hidden bg-brand-3/[0.03] border border-brand-3/10 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
+                          className="group/log block relative overflow-hidden bg-brand-3/[0.07] border border-brand-3/20 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/40 hover:-translate-y-0.5 active:scale-[0.98]"
                         >
                           <div className="flex p-3 gap-3">
                             {/* Log Thumbnail */}

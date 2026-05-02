@@ -106,12 +106,12 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
             >
               <Avatar.Root className="h-14 w-14 rounded-full overflow-hidden border-2 border-white/5 flex-shrink-0 group-hover:border-[var(--color-tertiary)]/30 transition-all duration-500">
                 <Avatar.Image
-                  src={comment.user.image || ""}
-                  alt={comment.user.name}
+                  src={comment.user?.image || ""}
+                  alt={comment.user?.name || "Anonymous"}
                   className="h-full w-full object-cover"
                 />
                 <Avatar.Fallback className="h-full w-full flex items-center justify-center bg-[var(--color-tertiary)]/10 text-[var(--color-tertiary)] font-black text-xl">
-                  {comment.user.name
+                  {(comment.user?.name || "Anonymous")
                     ?.split(" ")
                     .map((n) => n[0])
                     .join("")
@@ -121,7 +121,7 @@ export default function CommentThread({ logEntryId }: { logEntryId: string }) {
               <div className="flex-1 min-w-0 pt-1">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-primary text-xs font-black text-white/90 tracking-widest uppercase">
-                    {comment.user.name}
+                    {comment.user?.name || "Anonymous"}
                   </h4>
                   <span className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
                     {(() => {

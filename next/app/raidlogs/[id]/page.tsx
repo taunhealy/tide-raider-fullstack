@@ -2,17 +2,7 @@ import RaidLogDetails from "@/app/components/raid-logs/RaidLogDetails";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
 
-// Get backend URL helper
-const getBackendUrl = () => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const isDevelopment = process.env.NODE_ENV === "development";
-  return (
-    envUrl ||
-    (isDevelopment
-      ? "http://localhost:4001"
-      : "https://tide-raider-backend-82632174665.africa-south1.run.app")
-  );
-};
+import { getBackendUrl } from "@/app/lib/api-config";
 
 // Get base URL for absolute image URLs
 const getBaseUrl = () => {
@@ -50,6 +40,8 @@ async function getRaidLogForMetadata(id: string) {
     }
 
     const data = await response.json();
+    if (!data) return null;
+    
     // Backend returns entry directly when fetching by ID
     return data.id ? data : data.entries?.[0] || null;
   } catch (error) {

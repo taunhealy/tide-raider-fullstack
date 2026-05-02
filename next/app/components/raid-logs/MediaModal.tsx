@@ -185,7 +185,7 @@ export function MediaModal({
                   className="w-full h-full border-0 max-w-5xl aspect-video"
                   title="Video player"
                 />
-              ) : currentVideo?.type === "upload" ? (
+              ) : (currentVideo?.type === "upload" && currentVideo?.url) ? (
                 <CustomVideoPlayer videoUrl={currentVideo.url} className="w-full h-full max-w-5xl" />
               ) : (
                 <div className="text-white">Video not available</div>

@@ -99,7 +99,7 @@ function MediaGridBase({
                 target={isLocked ? undefined : "_blank"}
                 rel={isLocked ? undefined : "noopener noreferrer"}
                 onClick={isLocked ? (e) => e.preventDefault() : undefined}
-                className="group/video block relative overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
+                className="group/video block relative overflow-hidden bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/20 hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 <div className="flex p-3 gap-3">
                   {/* Video Thumbnail */}
@@ -140,7 +140,7 @@ function MediaGridBase({
         </div>
       ) : (
         <div style={{ display: "none" }}>
-          No videos available: {JSON.stringify({ videos, beachVideos })}
+          No videos available
         </div>
       )}
 
@@ -173,7 +173,7 @@ function MediaGridBase({
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group/service block relative overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/30 hover:-translate-y-0.5 active:scale-[0.98]"
+                  className="group/service block relative overflow-hidden bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-500 hover:shadow-md hover:border-brand-3/20 hover:-translate-y-0.5 active:scale-[0.98]"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
