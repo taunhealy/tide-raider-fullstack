@@ -1,5 +1,5 @@
 
-console.log("!!! WIND-EVAL INJECTED !!!");
+console.log("!!! WIND-EVAL INJECTED - V2 ROBUST !!!");
 /**
  * Windfinder extraction script - Final Production Version
  */
@@ -7,7 +7,7 @@ function extractWindfinderData() {
   const getDirFromEl = (el) => {
     if (!el) return null;
     
-    // Check for alt attribute (new discovery from user)
+    // Check for alt attribute
     const img = el.tagName === 'IMG' ? el : el.querySelector('img');
     const alt = img?.getAttribute('alt') || el.getAttribute('alt') || "";
     if (alt) {
@@ -15,7 +15,7 @@ function extractWindfinderData() {
       if (match) return Math.round(parseFloat(match[1])).toString();
     }
 
-    // Check for style transform rotate (new discovery from user)
+    // Check for style transform rotate
     const style = img?.getAttribute('style') || el.getAttribute('style') || "";
     if (style.includes('rotate')) {
       const match = style.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
@@ -44,153 +44,147 @@ function extractWindfinderData() {
     return null;
   };
 
-  const daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"], [class*="day-container"], [class*="day-section"], [class*="DaySection"]'));
+  // Day detection: Try class-based sections first, then fallback to header-based splitting
+  let daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"], [class*="day-container"], [class*="day-section"], [class*="DaySection"]'));
   
-    return daySections.map(day => {
-      const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"], .forecast-day__header, [class*="DayHeader"]');
-      if (!headerEl) return null;
-      const dateText = headerEl.textContent.trim().split('\n')[0];
-      
-      const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell, [class*="Column"], [class*="Cell"]'))
-        .filter(el => {
-           const t = el.textContent || "";
-           // Support 1-hour intervals (07h) as well as 3-hour (02h) and peak tide times (05:42)
-           return /(\d{1,2}h|\d{2}:\d{2})/.test(t) && t.length < 50; 
-        });
+  if (daySections.length === 0) {
+    console.log("⚠️ No class-based day sections found. Falling back to header-based detection...");
+    // Find all day headers
+    const headers = Array.from(document.querySelectorAll('h3, h4, [class*="header"], [class*="daylabel"]'))
+      .filter(h => h.innerText.match(/\w+, \w+ \d+/)); // e.g. "Monday, May 04"
+    
+    if (headers.length > 0) {
+      // Group elements between headers
+      daySections = headers.map((header, idx) => {
+        const nextHeader = headers[idx + 1];
+        const section = document.createElement('div');
+        section.appendChild(header.cloneNode(true));
+        let next = header.nextElementSibling;
+        while (next && next !== nextHeader) {
+          section.appendChild(next.cloneNode(true));
+          next = next.nextElementSibling;
+        }
+        // Artificial class to help our internal selectors
+        section.className = 'pseudo-day-section';
+        return section;
+      });
+    }
+  }
 
-      // Optimize: Index rows by label once per day
-      const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"], [class*="_row_"]'));
-      const rowMap = {};
-      rowEls.forEach(r => {
-        const labelEl = r.querySelector('._label-cell, .row-label, [class*="label"], [class*="tide"]');
-        const label = labelEl?.textContent.toLowerCase().trim() || "";
-        const name = r.getAttribute('data-row-name') || "";
-        const rowClasses = r.className.toLowerCase();
-        
-        if (name) rowMap[name] = r;
-        if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave')) rowMap['wind-speed'] = r;
-        if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = r;
-        if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = r;
-        if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = r;
-        if (label.includes('tide') || label.includes('maritime') || rowClasses.includes('tide')) rowMap['tide-type'] = r;
+  return daySections.map(day => {
+    const headerEl = day.querySelector('.fc-day-header, [class*="header"], [class*="daylabel"], .forecast-day__header, [class*="DayHeader"], h3, h4');
+    if (!headerEl) return null;
+    const dateText = headerEl.textContent.trim().split('\n')[0];
+    
+    const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell, [class*="Column"], [class*="Cell"]'))
+      .filter(el => {
+         const t = el.textContent || "";
+         return /(\d{1,2}h|\d{2}:\d{2})/.test(t) && t.length < 50; 
       });
 
-      const rows = columns.map(col => {
-        const timeEl = col.querySelector('.cell-ts, .forecast-hour, [class*="time"]') || col;
-        const timeStr = timeEl.textContent.trim().match(/(\d{2}h|\d{2}:\d{2})/)?.[0] || "";
-        if (!timeStr) return null;
-
-        const colIdx = columns.indexOf(col);
-
-        const getVal = (cls, rowKey) => {
-          let el = col.querySelector('.' + cls) || col.querySelector(`[class*="${cls}"]`);
-          if (!el && rowKey && rowMap[rowKey]) {
-             const cells = Array.from(rowMap[rowKey].querySelectorAll('._cell, .cell, [class*="cell"]'));
-             el = cells[colIdx];
-          }
-          if (!el) return "";
-          return el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
-        };
-
-        const windDirEl = col.querySelector('.cell-wd img, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
-        const waveDirEl = col.querySelector('.cell-wad img, .cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]') || 
-                          col.querySelector('img[src*="pointer-outline"]');
-
-        const wDir = getDirFromEl(windDirEl);
-        const sDir = getDirFromEl(waveDirEl);
-
-        // Find Tide trend by checking ALL SVGs in this column
-        let tideState = "";
-        const svgs = Array.from(col.querySelectorAll('svg title'));
-        for (const title of svgs) {
-          const t = title.textContent || "";
-          if (t.includes('Rising')) tideState = "Rising";
-          else if (t.includes('Falling')) tideState = "Falling";
-          else if (t.includes('High tide')) tideState = "High";
-          else if (t.includes('Low tide')) tideState = "Low";
-        }
-
-        // Fallback: Check icons or titles with more specific patterns
-        if (!tideState) {
-           const tideIcon = col.querySelector('svg, img[src*="tide"], img[src*="wave"], [class*="icon-tide"]');
-           const alt = tideIcon?.getAttribute('alt')?.toLowerCase() || "";
-           const titleText = col.querySelector('[title]')?.getAttribute('title')?.toLowerCase() || "";
-           const classes = tideIcon?.className?.toLowerCase() || "";
-
-           if (alt.includes('rising') || titleText.includes('rising') || classes.includes('rising')) tideState = "Rising";
-           else if (alt.includes('falling') || titleText.includes('falling') || classes.includes('falling')) tideState = "Falling";
-           else if (alt.includes('high') || titleText.includes('high') || classes.includes('high')) tideState = "High";
-           else if (alt.includes('low') || titleText.includes('low') || classes.includes('low')) tideState = "Low";
-        }
-
-        // Tide height: only read from the explicit tide-height row.
-        // DO NOT fall back to 'cell-wp' — that class is shared with wave period
-        // and causes the swell period (e.g. 10s) to be stored as "10m" tide height.
-        let tideHeight = "";
-        if (rowMap['tide-height']) {
-          const cells = Array.from(rowMap['tide-height'].querySelectorAll('._cell, .cell, [class*="cell"]'));
-          const el = cells[colIdx];
-          if (el) tideHeight = el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
-        }
-
-        return {
-          time: timeStr,
-          windSpeed: getVal('cell-ws', 'wind-speed'),
-          windDir: wDir,
-          waveHeight: getVal('cell-wh', 'wave-height'),
-          wavePeriod: getVal('cell-wp', 'wave-period'),
-          swellDir: sDir,
-          tide: tideState,
-          tideHeight: tideHeight
-        };
-      }).filter(r => r !== null);
+    // Optimize: Index rows by label once per day
+    const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"], [class*="_row_"]'));
+    const rowMap = {};
+    rowEls.forEach(r => {
+      const labelEl = r.querySelector('._label-cell, .row-label, [class*="label"], [class*="tide"]');
+      const label = labelEl?.textContent.toLowerCase().trim() || "";
+      const name = r.getAttribute('data-row-name') || "";
+      const rowClasses = r.className.toLowerCase();
       
-      // Post-process: Propagate tide trends (Rising/Falling) to fill gaps
-      for (let i = 0; i < rows.length; i++) {
-        if (!rows[i].tide && rows[i].time.includes('h')) {
-          // Look for nearest trend or peak
-          let prev = rows[i-1];
-          let next = rows[i+1];
-          
-          if (prev && next) {
-             const hPrev = parseFloat(prev.tideHeight);
-             const hNext = parseFloat(next.tideHeight);
-             const hCurr = parseFloat(rows[i].tideHeight);
-             
-             if (!isNaN(hCurr) && !isNaN(hPrev) && !isNaN(hNext)) {
-                if (hCurr > hPrev && hCurr < hNext) rows[i].tide = "Rising";
-                else if (hCurr < hPrev && hCurr > hNext) rows[i].tide = "Falling";
-                else if (hCurr > hPrev && hCurr > hNext) rows[i].tide = "High";
-                else if (hCurr < hPrev && hCurr < hNext) rows[i].tide = "Low";
-             }
-          }
+      if (name) rowMap[name] = r;
+      if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave') && !label.includes('gust')) rowMap['wind-speed'] = r;
+      if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = r;
+      if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = r;
+      if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = r;
+      if (label.includes('tide') || label.includes('maritime') || rowClasses.includes('tide')) rowMap['tide-type'] = r;
+    });
 
-          if (!rows[i].tide) {
-            let prevTrend = "";
-            for (let j = i - 1; j >= 0; j--) {
-              if (rows[j].tide) {
-                prevTrend = rows[j].tide;
-                break;
-              }
-            }
-            let nextTrend = "";
-            for (let j = i + 1; j < rows.length; j++) {
-              if (rows[j].tide) {
-                nextTrend = rows[j].tide;
-                break;
-              }
-            }
-            if (prevTrend && prevTrend === nextTrend) {
-              rows[i].tide = prevTrend;
-            } else if (prevTrend && !nextTrend) {
-              rows[i].tide = prevTrend;
-            } else if (nextTrend && !prevTrend) {
-              rows[i].tide = nextTrend;
-            }
-          }
+    const rows = columns.map(col => {
+      const timeEl = col.querySelector('.cell-ts, .forecast-hour, [class*="time"]') || col;
+      const timeStr = timeEl.textContent.trim().match(/(\d{2}h|\d{2}:\d{2})/)?.[0] || "";
+      if (!timeStr) return null;
+
+      const colIdx = columns.indexOf(col);
+
+      const getVal = (cls, rowKey) => {
+        let el = col.querySelector('.' + cls) || col.querySelector(`[class*="${cls}"]`);
+        if (!el && rowKey && rowMap[rowKey]) {
+           const cells = Array.from(rowMap[rowKey].querySelectorAll('._cell, .cell, [class*="cell"]'));
+           el = cells[colIdx];
         }
+        if (!el) return "";
+        return el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
+      };
+
+      const windDirEl = col.querySelector('.cell-wd img, [class*="wind"] img, [class*="wd"] img, [title*="wind direction" i]');
+      const waveDirEl = col.querySelector('.cell-wad img, .cell-waves-wrapper img, [class*="waves"] img, .cell-wh [title], [title*="swell direction" i], [title*="wave direction" i]') || 
+                        col.querySelector('img[src*="pointer-outline"]');
+
+      const wDir = getDirFromEl(windDirEl);
+      const sDir = getDirFromEl(waveDirEl);
+
+      // Find Tide trend by checking ALL SVGs and Titles
+      let tideState = "";
+      const titles = Array.from(col.querySelectorAll('svg title, [title]'));
+      for (const title of titles) {
+        const t = (title.textContent || title.getAttribute('title') || "").toLowerCase();
+        if (t.includes('rising') || t.includes('↗')) tideState = "Rising";
+        else if (t.includes('falling') || t.includes('↘')) tideState = "Falling";
+        else if (t.includes('high tide')) tideState = "High";
+        else if (t.includes('low tide')) tideState = "Low";
       }
 
-      return { dateText, rows };
-    }).filter(d => d && d.rows.length > 0);
+      // Check for specific character indicators as mentioned in docs
+      const colText = col.innerText;
+      if (!tideState) {
+        if (colText.includes('↗')) tideState = "Rising";
+        else if (colText.includes('↘')) tideState = "Falling";
+      }
+
+      let tideHeight = "";
+      if (rowMap['tide-height']) {
+        const cells = Array.from(rowMap['tide-height'].querySelectorAll('._cell, .cell, [class*="cell"]'));
+        const el = cells[colIdx];
+        if (el) tideHeight = el.textContent.trim().replace(",", ".").replace(/[^0-9.]/g, "");
+      }
+
+      return {
+        time: timeStr,
+        windSpeed: getVal('cell-ws', 'wind-speed'),
+        windDir: wDir,
+        waveHeight: getVal('cell-wh', 'wave-height'),
+        wavePeriod: getVal('cell-wp', 'wave-period'),
+        swellDir: sDir,
+        tide: tideState,
+        tideHeight: tideHeight
+      };
+    }).filter(r => r !== null);
+    
+    // Post-process: Propagate tide trends (Rising/Falling)
+    for (let i = 0; i < rows.length; i++) {
+      if (!rows[i].tide && rows[i].time.includes('h')) {
+        let prevTrend = "";
+        for (let j = i - 1; j >= 0; j--) {
+          if (rows[j].tide) {
+            prevTrend = rows[j].tide;
+            break;
+          }
+        }
+        let nextTrend = "";
+        for (let j = i + 1; j < rows.length; j++) {
+          if (rows[j].tide) {
+            nextTrend = rows[j].tide;
+            break;
+          }
+        }
+        if (prevTrend && prevTrend === nextTrend) {
+          rows[i].tide = prevTrend;
+        } else if (prevTrend && (prevTrend === "Rising" || prevTrend === "Falling")) {
+          rows[i].tide = prevTrend;
+        }
+      }
+    }
+
+    return { dateText, rows };
+  }).filter(d => d && d.rows.length > 0);
 }

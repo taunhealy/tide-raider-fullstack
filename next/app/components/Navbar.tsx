@@ -17,10 +17,9 @@ import { useBackendAuth } from "../hooks/useBackendAuth";
 const NAVIGATION_ITEMS = [
   
   { href: "/raid", label: "Raid" },
-  { href: "/aireport", label: "AI Report" },
   { href: "/logs", label: "Logs" },
-  { href: "/dashboard/alerts", label: "Alerts" },
-  { href: "/map", label: "Map" },
+  { href: "/dashboard/alerts", label: "Set Alerts" },
+  { href: "/aireport", label: "AI Report" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },

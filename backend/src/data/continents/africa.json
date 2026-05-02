@@ -1215,7 +1215,7 @@
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
-    "location": "Witsand",
+    "location": "Witsands",
     "distanceFromCT": 30,
     "bestSeasons": [
       "winter"
@@ -6155,64 +6155,6 @@
     }
   },
   {
-    "id": "seafarm-pringle-bay",
-    "name": "Seafarm Pringle Bay",
-    "continent": "Africa",
-    "countryId": "za",
-    "regionId": "western-cape",
-    "location": "Pringle Bay",
-    "isHiddenGem": true,
-    "distanceFromCT": 88,
-    "bestSeasons": [
-      "winter"
-    ],
-    "description": "Powerful reef break located in Pringle Bay. This hidden gem comes alive on massive swells. Features heavy waves and rocky bottom. Strictly for advanced surfers due to the power and remote location.",
-    "difficulty": "ADVANCED",
-    "waveType": "REEF_BREAK",
-    "waterTemp": {
-      "summer": 19,
-      "winter": 14
-    },
-    "hazards": [
-      "Massive swell",
-      "Rocks",
-      "Strong currents",
-      "Remote location"
-    ],
-    "crimeLevel": "Low",
-    "sharkAttack": {
-      "hasAttack": false
-    },
-    "image": "",
-    "coordinates": {
-      "lat": -34.3512,
-      "lng": 18.8267
-    },
-    "conditionProfiles": {
-      "GENERAL": {
-        "optimalWindDirections": [
-          "NE",
-          "N",
-          "NW"
-        ],
-        "optimalSwellDirections": {
-          "min": 190,
-          "max": 240,
-          "cardinal": "SSW"
-        },
-        "optimalTide": "ALL",
-        "swellSize": {
-          "min": 2.5,
-          "max": 6
-        },
-        "idealSwellPeriod": {
-          "min": 12,
-          "max": 22
-        }
-      }
-    }
-  },
-  {
     "id": "harold-porter",
     "name": "Harold Porter",
     "continent": "Africa",
@@ -9021,7 +8963,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Holbaai, located in the Western Cape, is an exposed beach break known for its consistent surf conditions. The best time for surfing is during the summer, when the conditions are optimal. The ideal wind direction comes from the east, while the best swell direction is from the southwest, often provided by distant groundswells.",
+    "description": "Holbaai is a regional classic beach break located between Haakgat and Melkbos. It features hollow and fast sections over a sand and rock bottom. Best at low to medium tides in summer with southwest swell and offshore east winds. Generally empty but requires caution due to dangerous rip currents. Suitable for all levels.",
     "difficulty": "INTERMEDIATE",
     "waveType": "BEACH_BREAK",
     "waterTemp": {
@@ -9040,17 +8982,20 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -33.6744,
-      "lng": 18.4533
+      "lat": -33.747141,
+      "lng": 18.439668
     },
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "E"
+          "E",
+          "N",
+          "NNE",
+          "NNW"
         ],
         "optimalSwellDirections": {
-          "min": 225,
-          "max": 250,
+          "min": 202.5,
+          "max": 247.5,
           "cardinal": "SW"
         },
         "optimalTide": "LOW",
@@ -11970,6 +11915,13 @@
       "lat": -34.4169,
       "lng": 19.1789
     },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=3MoFtXTyGnU",
+        "title": "RAW POV SURFING OVER ROCKS AT ONRUS!",
+        "platform": "youtube"
+      }
+    ],
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
@@ -13222,6 +13174,46 @@
     }
   },
   {
+    "id": "waterfalls",
+    "name": "Waterfalls",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "description": "Waterfalls is a reef break in Betty's Bay offering left waves between 50-150m. Best on a SW swell and NE wind at medium tide. Hazards include rocks and sharks. Access via Marine Drive car park, then a long paddle or boat.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 20,
+      "winter": 17
+    },
+    "hazards": ["Rocks", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.359361,
+      "lng": 18.926194
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NE", "ENE", "NNE"],
+        "optimalSwellDirections": {
+          "min": 202.5,
+          "max": 247.5,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 1.0,
+          "max": 4.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
     "id": "imsouane-magic-bay-morocco",
     "name": "Imsouane",
     "continent": "Africa",
@@ -13408,6 +13400,995 @@
         "idealSwellPeriod": {
           "min": 8,
           "max": 14
+        }
+      }
+    }
+  },
+  {
+    "id": "cap-lopez",
+    "name": "Cap Lopez",
+    "continent": "Africa",
+    "countryId": "ga",
+    "regionId": "ogooue-maritime",
+    "location": "Port-Gentil",
+    "isHiddenGem": true,
+    "bestSeasons": ["winter", "autumn"],
+    "description": "Cap Lopez is a significant headland on the coast of Gabon. It provides long, peeling waves on its best days. Recognized as a high-quality spot, it remains largely uncrowded.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 27,
+      "winter": 24
+    },
+    "hazards": ["Strong Currents", "Isolation"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -0.6311,
+      "lng": 8.7042
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=lbiWGYeNjv0",
+        "title": "Surf Gabon | Cap Lopez/PG2/Enamino",
+        "platform": "youtube"
+      }
+    ],
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["SE", "S", "SSE"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 240,
+          "cardinal": "SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.0,
+          "max": 3.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "bayview-reef",
+    "name": "Bayview Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Hermanus",
+    "isHiddenGem": false,
+    "bestSeasons": ["winter", "autumn"],
+    "description": "Bay View has been surfed since 1979 and is recognized by local and professional surfers, including Grant 'Twiggy' Baker. A heavy reef break that comes alive on massive swells. On big days, you may need to paddle around from the town.",
+    "difficulty": "PRO",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Sharks", "Heavy Surf"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.413472,
+      "lng": 19.2615
+    },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=XhG3mLKXA50",
+        "title": "Cape Big Wave Surfing - 10 Aug 2024 (Bay View Reef)",
+        "platform": "youtube"
+      }
+    ],
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "NNW", "WNW"],
+        "optimalSwellDirections": {
+          "min": 210,
+          "max": 240,
+          "cardinal": "SW"
+        },
+        "optimalTide": "RISING",
+        "swellSize": {
+          "min": 2.7,
+          "max": 8.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "vendetta-reef",
+    "name": "Vendetta Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Gansbaai",
+    "isHiddenGem": true,
+    "bestSeasons": ["winter", "autumn", "spring"],
+    "description": "A heavy reef break located near Gansbaai. Known for its intensity when the swell is medium to big. The spot provides both left and right waves and is considered a regional classic.",
+    "difficulty": "PRO",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Sharks", "Sea Urchins", "Kelp"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.439806,
+      "lng": 19.21225
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "N", "NE"],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 247.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "MID_TO_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "sandbaai-beach",
+    "name": "Sandbaai Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Hermanus",
+    "isHiddenGem": false,
+    "bestSeasons": ["summer", "spring"],
+    "description": "Sandbaai Beach is a consistent spot near Hermanus. The bottom is a mix of sand and rocks, working best on a medium tide. Suitable for all levels, it provides fun right-hand waves. The beach is also known for its natural pools at low tide.",
+    "difficulty": "BEGINNER",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Localism"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.425111,
+      "lng": 19.187528
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["N", "NNE", "NNW"],
+        "optimalSwellDirections": {
+          "min": 157.5,
+          "max": 247.5,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 1.2,
+          "max": 2.1
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "magnet-rock",
+    "name": "Magnet Rock",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Hermanus",
+    "isHiddenGem": true,
+    "bestSeasons": ["winter", "autumn"],
+    "description": "Magnet Rock sits near the harbor area of Hermanus. It only works when a big Indian Ocean storm swell hits. The takeoff is fairly easy at first, but it gets solid as it hits the shallower reef. Long rides of 150-300m are possible.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Kelp", "Pollution"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.420139,
+      "lng": 19.168083
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["N", "NE", "NNE"],
+        "optimalSwellDirections": {
+          "min": 157.5,
+          "max": 247.5,
+          "cardinal": "SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 2.0,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "stinky-pits",
+    "name": "Stinky Pits",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Gansbaai",
+    "isHiddenGem": true,
+    "bestSeasons": ["winter", "summer"],
+    "description": "Stinky Pits is located between the two harbors at Gansbaai. It provides long, hollow tube rides on its best days. The spot is known for its intensity and hollow lefts. Watch out for strong rips and the presence of sharks, especially when the fish factory is active.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 20,
+      "winter": 17
+    },
+    "hazards": ["Strong Currents", "Sharks", "Rocks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.586194,
+      "lng": 19.343528
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NE", "NNE", "ENE"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 240,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID_TO_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "pearly-reef",
+    "name": "Pearly Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Pearly Beach",
+    "isHiddenGem": true,
+    "bestSeasons": ["winter"],
+    "description": "Pearly Reef is a consistent reef break near Pearly Beach. It works best on a medium tide and handles swells around 5 feet. Suitable for all levels, it provides fun right-hand waves. Be mindful of rocks and the potential for shark presence in the area.",
+    "difficulty": "BEGINNER",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 23,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.673361,
+      "lng": 19.509083
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["N", "NNE", "NNW"],
+        "optimalSwellDirections": {
+          "min": 202.5,
+          "max": 247.5,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 1.2,
+          "max": 2.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "camelot",
+    "name": "Camelot",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "isHiddenGem": true,
+    "description": "Camelot is a consistent right-hand reef break near Betty's Bay. It features a coral reef bottom and works best on a medium to high tide. Suited for intermediate and pro surfers, it offers wave lengths between 50 and 150 meters. Localism can be present, so respect the lineup.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Localism"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.360056,
+      "lng": 18.9215
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 157.5,
+          "max": 202.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.0,
+          "max": 3.0
+        },
+        "idealSwellPeriod": {
+          "min": 9,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "chrystal-road",
+    "name": "Chrystal Road",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Pringle Bay",
+    "description": "Chrystal Road is a consistent right-hand break with a mix of sand and rocks. It offers rides under 50m and works best on medium to high tides with SE or NW winds. Watch out for rips and rocks.",
+    "difficulty": "ALL_LEVELS",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Rip Currents"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.371417,
+      "lng": 18.872139
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["SE", "NW", "ESE", "WNW"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 225,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.0,
+          "max": 3.0
+        },
+        "idealSwellPeriod": {
+          "min": 9,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "jerilotto",
+    "name": "Jerilotto",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Rooi-Els",
+    "description": "Jerilotto is a rare right-hand point break in Rooi-Els. It features a sand and rock bottom and only works on very big swells. The wave is ledgy and can get hollow. Parking is near the Rooi-Els river bridge, followed by a steep footpath. Check the tide as the beach can be submerged at high tide.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Rip Currents", "Undertow"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.294944,
+      "lng": 18.820417
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["E", "SE", "S", "ESE", "SSE"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 225,
+          "cardinal": "SW"
+        },
+        "optimalTide": "LOW_MID",
+        "swellSize": {
+          "min": 2.5,
+          "max": 6.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "harbour-island",
+    "name": "Harbour Island",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Gordon's Bay",
+    "description": "Harbour Island is a right-hand break near the Gordon's Bay harbour wall. It works best in winter with big swells pushing into False Bay. The bottom is coral reef and sand. Suitable for all levels, it offers waves around 3-4ft on its day. Low to medium tide is best.",
+    "difficulty": "ALL_LEVELS",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 15
+    },
+    "hazards": ["Rocks", "Buoys", "Harbour Wall"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.153473,
+      "lng": 18.856995
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "N", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 202.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "LOW_MID",
+        "swellSize": {
+          "min": 0.8,
+          "max": 2.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "greenways-reef",
+    "name": "Greenways Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Strand",
+    "description": "Greenways Reef is a consistent reef break located out at sea near the Greenways Country Estate in Strand. It requires a long paddle or boat access. The waves are hollow, fast, and powerful, breaking over a mix of coral, rock, and sand. Best on mid to high tide with clean swells and light winds. Suitable for intermediate surfers.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 19,
+      "winter": 15
+    },
+    "hazards": ["Rocks", "Rip Currents", "Undertow", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.134279,
+      "lng": 18.836595
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "N", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 202.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.2,
+          "max": 3.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "glencairn-reef",
+    "name": "Glencairn Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Simon's Town",
+    "description": "Glencairn Reef is a fast, hollow, and powerful left-hand reef break located near Simon’s Town on the Cape Peninsula. It breaks over a shallow coral reef, sometimes in very thin water. Best in winter with SE swells and NW offshore winds. Suitable for experienced and intermediate surfers due to shallow reef and localism.",
+    "difficulty": "EXPERIENCED",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 17,
+      "winter": 14
+    },
+    "hazards": ["Shallow Reef", "Rocks", "Rip Currents", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.158217,
+      "lng": 18.435733
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 202.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 3.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "extensions",
+    "name": "Extensions",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point",
+    "description": "Extensions is a regional classic right-hand surf spot located inside the Cape Nature Reserve near Olifantsbos Point. It breaks over a rock shelf and sandbank, offering hollow and fast waves that can be challenging when the swell is large. Best at low to medium tide in autumn and winter. Suitable for intermediate and experienced surfers.",
+    "difficulty": "EXPERIENCED",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 15
+    },
+    "hazards": ["Rocks", "Rip Currents", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.337988,
+      "lng": 18.446549
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "N", "NE"],
+        "optimalSwellDirections": {
+          "min": 119,
+          "max": 270,
+          "cardinal": "SW"
+        },
+        "optimalTide": "LOW_MEDIUM",
+        "swellSize": {
+          "min": 0.6,
+          "max": 4.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "black-rocks",
+    "name": "Black Rocks",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point",
+    "description": "Black Rocks is a high-performance surf spot located inside the Cape Point Nature Reserve. It breaks over a coral reef and offers both left and right waves, known for their power and length (150-300m). It requires large swells to work well. Best with clean groundswell and specific wind conditions. Expert/experienced only due to lulls, sharks, and strong localism.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 21,
+      "winter": 15
+    },
+    "hazards": ["Sharks", "Localism", "Powerful Waves", "Rocks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.309867,
+      "lng": 18.46175
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["S", "SW", "SSW", "WSW"],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 202.5,
+          "cardinal": "S"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.5,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "southwest-reef",
+    "name": "Southwest Reef",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point",
+    "description": "Southwest Reef is a world-class big wave surf spot located about 700m offshore from Cape Point. It is a triangular reef that creates massive A-frame peaks, capable of handling swells up to 60 feet. Boat access only. Extremely dangerous due to size, power, and sharp reef. Pros and experts only.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Size", "Power", "Sharp Reef", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.358817,
+      "lng": 18.497283
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "W", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 220,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 2.5,
+          "max": 18.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 24
+        }
+      }
+    }
+  },
+  {
+    "id": "dias-beach",
+    "name": "Dias Beach",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point",
+    "description": "Dias Beach is a heavy shore-break spot located inside the Cape Point National Park. It is known for its powerful barrels and steep 20-minute hike access. Picks up all available swell, making it consistent when other spots are flat. Surrounded by high cliffs with little beach. Extremely dangerous due to strong rips, sharks, and baboons.",
+    "difficulty": "ADVANCED",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Strong Rips", "Undertow", "Sharks", "Baboons"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.355267,
+      "lng": 18.481067
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "W", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 220,
+          "cardinal": "SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.0,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "olifantsbos",
+    "name": "Olifantsbos",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Cape Point",
+    "description": "Olifantsbos is a rugged right pointbreak located inside the Cape Point Nature Reserve. It breaks over a coral reef and is known for its natural, uncrowded setting. Best in winter with moderate to large west to southwest swells and southeast winds. The wave can be long (150-300m) and powerful. Intermediate surfers only due to rocks, rips, and sharks. Watch for baboons in the area.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Rip Currents", "Sharks", "Baboons"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.254433,
+      "lng": 18.377957
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["SE", "SSE", "ESE"],
+        "optimalSwellDirections": {
+          "min": 202.5,
+          "max": 292.5,
+          "cardinal": "SW/W"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "ijs-kommetjie",
+    "name": "I & J’s",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Kommetjie",
+    "description": "I & J’s is a consistent regional classic surf spot located near the Soetwater holiday camp. It sits in a small kelp bay and features a coral reef bottom. Offers both left and right waves, generally under 50m. Access via the holiday camp paypoint. Mostly empty, suitable for intermediate surfers. Hazards include rocks, urchins, sharks, and thick kelp.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Urchins", "Sharks", "Kelp"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.161933,
+      "lng": 18.327633
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["N", "NE", "NNE", "ENE"],
+        "optimalSwellDirections": {
+          "min": 202.5,
+          "max": 247.5,
+          "cardinal": "SW"
+        },
+        "optimalTide": "LOW_MID",
+        "swellSize": {
+          "min": 1.2,
+          "max": 3.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "365-kommetjie",
+    "name": "365",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Kommetjie",
+    "description": "365 is a world-class reef break located near Misty Cliffs. Known for big open barrels and consistency (breaking almost 365 days a year). The bottom is coral reef with heavy kelp and urchins. Best on medium to high tide with clean west swell and glassy mornings. Intermediate surfers recommended due to shallow rocky ledges and thick kelp.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Sharks", "Rocks", "Thick Kelp", "Urchins"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.150640,
+      "lng": 18.317570
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalSwellDirections": {
+          "min": 247.5,
+          "max": 337.5,
+          "cardinal": "W/NW"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "waterfalls-bettys-bay",
+    "name": "Waterfalls",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Betty's Bay",
+    "description": "Waterfalls is a consistent reef break located in Betty's Bay, Western Cape. It features a sand and rock bottom and works best at medium tide with northeast winds and southwest swell. Length of ride ranges from 50 to 150m. Usually empty and uncrowded. Access from Marine Drive car park via a long paddle or boat. Hazards include rocks and sharks.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": ["Rocks", "Sharks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.3475,
+      "lng": 18.9205
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["NE", "NNE", "ENE"],
+        "optimalSwellDirections": {
+          "min": 180.0,
+          "max": 240.0,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 1.2,
+          "max": 3.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "blue-whale",
+    "name": "Blue Whale",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Noordhoek",
+    "description": "Blue Whale is an exposed reef break located near Noordhoek Beach. It requires massive swells to start working and is known for its heavy, powerful waves. Best with strong southeast winds and large south to southwest groundswells. Extremely dangerous due to size, power, and remote location. Advanced/expert surfers only.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": ["Heavy Waves", "Power", "Sharks", "Rocks"],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.126139,
+      "lng": 18.335806
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["SE", "SSE", "ESE"],
+        "optimalSwellDirections": {
+          "min": 180.0,
+          "max": 225.0,
+          "cardinal": "S/SW"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 3.0,
+          "max": 8.0
+        },
+        "idealSwellPeriod": {
+          "min": 14,
+          "max": 24
+        }
+      }
+    }
+  },
+  {
+    "id": "gasworks",
+    "name": "Gasworks",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Bantry Bay",
+    "description": "Gasworks is a world-class big wave surf spot located in Bantry Bay. Known for powerful right-handers that break in deep water and move toward exposed rocks. Long paddle (20+ min) or boat access only. Requires a 'rhino chaser' for big days. Best with west swell and south or east offshore winds. Risky entry/exit over dolosse and harbor security. Often affected by pollution from the Black River.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 16,
+      "winter": 12
+    },
+    "hazards": ["Pollution", "Dolosse", "Security", "Rocks", "Size"],
+    "crimeLevel": "Medium",
+    "coordinates": {
+      "lat": -33.925582,
+      "lng": 18.374908
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["S", "SE", "E", "ESE", "SSE"],
+        "optimalSwellDirections": {
+          "min": 240,
+          "max": 300,
+          "cardinal": "W"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 2.0,
+          "max": 6.5
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "railways-milnerton",
+    "name": "Railways",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Milnerton",
+    "description": "Railways is a regional classic beach break located in Milnerton, behind the flea market. Known for its unique triangular peaks that can be hollow and intense. Offers both left and right waves, best at medium to high tide. Handles any east wind. Hazards include pollution, strong rips, and undertow against the breakers. Suitable for all levels.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 17,
+      "winter": 13
+    },
+    "hazards": ["Pollution", "Strong Rips", "Undertow"],
+    "crimeLevel": "Medium",
+    "coordinates": {
+      "lat": -33.899845,
+      "lng": 18.476670
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": ["E", "SE", "ESE", "SSE"],
+        "optimalSwellDirections": {
+          "min": 292.5,
+          "max": 22.5,
+          "cardinal": "NW/N"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.0,
+          "max": 3.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 18
         }
       }
     }

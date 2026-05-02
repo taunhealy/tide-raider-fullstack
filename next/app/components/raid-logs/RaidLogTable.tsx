@@ -1226,7 +1226,7 @@ export default function RaidLogTable({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredEntries.map((entry) => {
+                    {currentItems.map((entry) => {
                       const isOwner = session?.user?.id && entry.userId && session.user.id === entry.userId;
                       // Harden isHiddenGemEntry check to handle cases where beach relationship might be missing or stale
                       const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem || 
@@ -1454,6 +1454,50 @@ export default function RaidLogTable({
                 </table>
               )}
             </div>
+            {/* Pagination for Table View */}
+            {totalPages > 1 && (
+              <div className="mt-6 pb-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          handlePageChange(Math.max(1, currentPage - 1))
+                        }
+                        className={cn(
+                          currentPage === 1 && "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <PaginationItem key={`table-page-${i}`}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(i + 1)}
+                          isActive={currentPage === i + 1}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          handlePageChange(
+                            Math.min(totalPages, currentPage + 1)
+                          )
+                        }
+                        className={cn(
+                          currentPage === totalPages &&
+                            "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         )}
       </div>

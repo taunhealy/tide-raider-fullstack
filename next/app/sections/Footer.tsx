@@ -112,7 +112,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="hover:text-white/60 transition-colors"
             >
-              Built by Kea Logic
+              Built by Kea Logic in Cape Town
             </a>
           </div>
           

@@ -10,11 +10,12 @@
 
 import * as dotenv from "dotenv";
 import path from "path";
+import fs from "fs";
 
 // Load environment variables, prioritizing .env.local if it exists
 const envLocalPath = path.join(__dirname, "../.env.local");
 const envPath = path.join(__dirname, "../.env");
-if (existsSync(envLocalPath)) {
+if (fs.existsSync(envLocalPath)) {
   dotenv.config({ path: envLocalPath });
 } else {
   dotenv.config({ path: envPath });
@@ -662,6 +663,26 @@ async function main() {
     // 4. Create beaches (if beachData is available)
     if (beachData.length > 0) {
       console.log("4. Creating/updating beaches...");
+
+      // Pruning step: Delete beaches that are no longer in the JSON data
+      console.log("  - Starting pruning step...");
+      const jsonBeachIds = new Set(beachData.map((b: any) => b.id).filter(Boolean));
+      const dbBeaches = await prisma.beach.findMany({ select: { id: true } });
+      const beachesToDelete = dbBeaches
+        .filter((b: any) => !jsonBeachIds.has(b.id))
+        .map((b: any) => b.id);
+
+      if (beachesToDelete.length > 0) {
+        console.log(
+          `  - Pruning ${beachesToDelete.length} obsolete beaches: ${beachesToDelete.join(", ")}`
+        );
+        await prisma.beach.deleteMany({
+          where: { id: { in: beachesToDelete } },
+        });
+        console.log("  ✓ Pruning complete");
+      } else {
+        console.log("  - No obsolete beaches to prune");
+      }
       let createdCount = 0;
       let skippedCount = 0;
       let errorCount = 0;
@@ -755,7 +776,7 @@ async function main() {
               countryId: country.id,
               regionId: region.id,
               location: beach.location,
-              distanceFromCT: beach.distanceFromCT,
+              distanceFromCT: beach.distanceFromCT || 0,
               bestSeasons:
                 beach.bestSeasons?.map((season: string) => mapSeason(season)) ||
                 [],
@@ -791,7 +812,7 @@ async function main() {
               countryId: country.id,
               regionId: region.id,
               location: beach.location,
-              distanceFromCT: beach.distanceFromCT,
+              distanceFromCT: beach.distanceFromCT || 0,
               bestSeasons:
                 beach.bestSeasons?.map((season: string) => mapSeason(season)) ||
                 [],

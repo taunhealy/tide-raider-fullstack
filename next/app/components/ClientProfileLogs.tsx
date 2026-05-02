@@ -16,6 +16,7 @@ export function ClientProfileLogs({ userId }: ClientProfileLogsProps) {
       if (!res.ok) throw new Error("Failed to fetch user");
       return res.json();
     },
+    enabled: !!userId,
   });
 
   return (

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { MapPin, Clock } from "lucide-react";
+import { getVideoThumbnail } from "@/app/lib/videoUtils";
 
 export function RecentLogsSidebar() {
   const { data, isLoading } = useRaidLogs({ limit: 5 }, false);
@@ -14,12 +15,12 @@ export function RecentLogsSidebar() {
 
   return (
     <aside className="hidden lg:block w-80 shrink-0 sticky top-24 self-start space-y-6">
-      <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-6 border border-white/60 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-black text-sm uppercase tracking-widest text-slate-900">
+      <div className="bg-slate-900 rounded-[32px] p-6 border border-slate-800 shadow-xl">
+        <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+          <h3 className="font-black text-xs uppercase tracking-[0.2em] text-white">
             Recent Intelligence
           </h3>
-          <Link href="/raidlogs" className="text-[10px] font-bold text-brand-3 uppercase hover:underline">
+          <Link href="/raidlogs" className="text-[10px] font-bold text-white uppercase hover:underline">
             View All
           </Link>
         </div>
@@ -44,7 +45,7 @@ export function RecentLogsSidebar() {
                 href={`/raidlogs/${entry.id}`}
                 className="group flex gap-4 transition-all duration-300 hover:translate-x-1"
               >
-                <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 shadow-sm">
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-slate-700 shadow-sm">
                   {entry.imageUrl ? (
                     <Image
                       src={entry.imageUrl}
@@ -52,22 +53,29 @@ export function RecentLogsSidebar() {
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+                  ) : entry.videoUrl ? (
+                    <Image
+                      src={getVideoThumbnail(entry.videoUrl)}
+                      alt={entry.beachName || "Surf session"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                    <div className="w-full h-full flex items-center justify-center text-slate-600">
                       <MapPin className="w-6 h-6" />
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col justify-between py-0.5 flex-1 min-w-0">
                   <div className="space-y-1">
-                    <h4 className="font-bold text-xs text-slate-900 truncate group-hover:text-brand-3 transition-colors">
+                    <h4 className="font-bold text-xs text-white truncate group-hover:text-brand-3 transition-colors">
                       {entry.beachName}
                     </h4>
                     <div className="flex items-center gap-2">
-                       <BlueStarRating rating={entry.surferRating || 0} size="xs" />
+                       <BlueStarRating score={entry.surferRating || 0} size={12} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-[10px] text-slate-500 font-medium">
+                  <div className="flex items-center gap-3 text-[10px] text-slate-400 font-medium">
                     <span className="flex items-center gap-1">
                       <Clock className="w-2.5 h-2.5" />
                       {format(new Date(entry.date), "MMM d")}

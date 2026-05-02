@@ -37,7 +37,7 @@ export function EmptyAlertsState() {
           <CheckCircle className="w-5 h-5 text-[var(--color-tertiary)] mt-0.5" />
           <div>
             <span className="block font-semibold text-[var(--color-text-primary)] text-sm">Instant Notification</span>
-            <span className="text-xs text-[var(--color-text-secondary)]">Email/Whatsapp updates when forecast matches your Alerts</span>
+            <span className="text-xs text-[var(--color-text-secondary)]">Email/Whatsapp    updates when forecast matches your Alerts</span>
           </div>
         </div>
       </div>
@@ -46,7 +46,7 @@ export function EmptyAlertsState() {
         <Button 
           variant="action"
           size="sm"
-          className="font-primary px-8 h-12 shadow-md active:scale-95 uppercase tracking-widest font-black text-xs"
+          className="whitespace-nowrap px-8 h-10 shadow-md active:scale-95 uppercase tracking-widest font-black text-xs"
         >
           Create Your First Alert
         </Button>
