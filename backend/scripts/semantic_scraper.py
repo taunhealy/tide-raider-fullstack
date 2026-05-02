@@ -44,9 +44,9 @@ class DailyForecastResponse(BaseModel):
 async def semantic_scrape(url: str, region_id: str):
     print(f"--- Starting Decoupled Semantic Scrape for {region_id} ---", file=sys.stderr)
     
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("Error: GOOGLE_API_KEY not found in environment", file=sys.stderr)
+        print("Error: Neither GOOGLE_API_KEY nor GEMINI_API_KEY found in environment", file=sys.stderr)
         return None
 
     # Step 1: Crawl the page to get Markdown
@@ -64,7 +64,7 @@ async def semantic_scrape(url: str, region_id: str):
 
     # Step 2: Use LangChain + Gemini to extract structured data
     llm = ChatGoogleGenerativeAI(
-        model="gemini-flash-latest",
+        model="gemini-1.5-flash",
         google_api_key=api_key,
         temperature=0
     )

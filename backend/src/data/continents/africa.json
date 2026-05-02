@@ -637,6 +637,13 @@
       "lat": -33.8569,
       "lng": 18.4841
     },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=h1jbkyLOKms",
+        "title": "Surf's Up in Cape Town! My First Surf Session in 8 Months!!",
+        "platform": "youtube"
+      }
+    ],
     "isFoiling": true,
     "conditionProfiles": {
       "GENERAL": {
@@ -12512,13 +12519,13 @@
           "NW"
         ],
         "optimalSwellDirections": {
-          "min": 135,
-          "max": 157.5,
-          "cardinal": "SE"
+          "min": 170,
+          "max": 200,
+          "cardinal": "S"
         },
         "optimalTide": "ALL",
         "swellSize": {
-          "min": 1.2,
+          "min": 1.6,
           "max": 3.5
         },
         "idealSwellPeriod": {
@@ -13245,6 +13252,11 @@
       {
         "url": "https://www.youtube.com/watch?v=FjIu0Z5tK3A",
         "title": "IMSOUANE | The Magic Bay of Morocco (Longboard Surfing)",
+        "platform": "youtube"
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=6bFXMrcWA5k",
+        "title": "Surfing, Hiking & Beach BBQ!! ",
         "platform": "youtube"
       }
     ],

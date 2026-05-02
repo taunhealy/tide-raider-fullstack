@@ -90,11 +90,12 @@ export class PythonBridge {
 
       console.log(`[PythonBridge] 🚀 Executing: ${pythonCommand} ${args.join(" ")}`);
       
-      const apiKey = process.env.GOOGLE_API_KEY;
+      const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        console.warn(`[PythonBridge] ⚠️ GOOGLE_API_KEY is NOT set in Node process.env!`);
+        console.warn(`[PythonBridge] ⚠️ Neither GOOGLE_API_KEY nor GEMINI_API_KEY is set in Node process.env!`);
       } else {
-        console.log(`[PythonBridge] ✅ GOOGLE_API_KEY found (length: ${apiKey.length})`);
+        const keySource = process.env.GOOGLE_API_KEY ? "GOOGLE_API_KEY" : "GEMINI_API_KEY";
+        console.log(`[PythonBridge] ✅ ${keySource} found (length: ${apiKey.length})`);
       }
 
       const pythonProcess = spawn(pythonCommand, args, {

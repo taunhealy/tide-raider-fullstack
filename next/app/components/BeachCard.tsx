@@ -290,15 +290,17 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
-                      {beach.name}
+                      {isLocked ? (
+                        <span className="blur-[8px] select-none opacity-50">Hidden Gem Break</span>
+                      ) : beach.name}
                       {beach.isHiddenGem && (
                         <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
+                          "inline-flex items-center px-1.5 py-0 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all duration-300 h-4 md:h-[18px]",
                           isLocked 
                             ? "bg-slate-100 text-slate-400 border-slate-200" 
                             : "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.2)]"
                         )}>
-                          <Gem className={cn("w-2.5 h-2.5 mr-1.5", !isLocked && "fill-indigo-600/20")} />
+                          <Gem className={cn("w-2 h-2 mr-1", !isLocked && "fill-indigo-600/20")} />
                           Hidden Gem
                         </span>
                       )}
@@ -322,8 +324,8 @@ const BeachCard = memo(function BeachCard({
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
                       {beach.location && (
                         <>
-                          <span className="font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500">
-                            {beach.location}
+                          <span className={cn("font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500", isLocked && "blur-[4px] select-none")}>
+                            {isLocked ? "Top Secret Location" : beach.location}
                           </span>
                           <span className="opacity-20 text-[8px] mt-0.5">•</span>
                         </>
@@ -338,8 +340,8 @@ const BeachCard = memo(function BeachCard({
                           <span className="opacity-20 text-[8px] mt-0.5">•</span>
                         </>
                       )}
-                      <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
-                        {formatRegionName(beach.region?.name, beach.regionId)}
+                      <span className={cn("font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black", isLocked && "blur-[4px] select-none")}>
+                        {isLocked ? "Secret Region" : formatRegionName(beach.region?.name, beach.regionId)}
                       </span>
                     </h6>
                   </div>
@@ -392,36 +394,43 @@ const BeachCard = memo(function BeachCard({
                   // Show actual conditions when we have both score and forecast data
                   <div className="flex flex-col gap-1 md:gap-2">
                     <div className="flex items-center gap-2">
-                      <BlueStarRating score={score} />
+                      <div className={cn(isLocked && "blur-[8px] opacity-30 select-none")}>
+                        <BlueStarRating score={isLocked ? 0 : score} />
+                      </div>
 
                       <div
-                        className="flex items-center gap-2 relative px-2.5 py-1.5 border border-gray-100 rounded-xl bg-white shadow-sm"
-                        onMouseEnter={() => setShowRatingHint(true)}
-                        onMouseLeave={() => setShowRatingHint(false)}
+                        className={cn(
+                          "flex items-center gap-2 relative px-2.5 py-1.5 border border-gray-100 rounded-xl bg-white shadow-sm",
+                          isLocked && "blur-[6px] opacity-30 select-none"
+                        )}
+                        onMouseEnter={isLocked ? undefined : () => setShowRatingHint(true)}
+                        onMouseLeave={isLocked ? undefined : () => setShowRatingHint(false)}
                       >
-                        <div className="text-base">{scoreDisplay.emoji}</div>
+                        <div className="text-base">{isLocked ? "🔒" : scoreDisplay.emoji}</div>
 
-                        <div
-                          className={`
-                        absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 
-                        px-3 py-1 bg-gray-900 text-white text-sm rounded-md 
-                        transition-opacity whitespace-nowrap
-                        ${showRatingHint ? "opacity-100" : "opacity-0"}
-                      `}
-                        >
-                          {scoreDisplay.description}
-                        </div>
+                        {!isLocked && (
+                          <div
+                            className={`
+                          absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 
+                          px-3 py-1 bg-gray-900 text-white text-sm rounded-md 
+                          transition-opacity whitespace-nowrap
+                          ${showRatingHint ? "opacity-100" : "opacity-0"}
+                        `}
+                          >
+                            {scoreDisplay.description}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Score Insights (Deductions) */}
                     {scoreInsights && scoreInsights.length > 0 && (
-                      <div className="flex flex-col gap-1.5 mt-1 mb-2 px-1">
+                      <div className={cn("flex flex-col gap-1.5 mt-1 mb-2 px-1", isLocked && "blur-[6px] opacity-30 select-none")}>
                         {scoreInsights.map((insight, i) => (
                           <div key={i} className="flex items-center gap-2 group/insight animate-in fade-in slide-in-from-left-2 duration-500">
                             <div className="w-1 h-3 rounded-full bg-red-400/30 shrink-0" />
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide leading-tight">
-                              {insight}
+                              {isLocked ? "TOP SECRET INSIGHT" : insight}
                             </span>
                           </div>
                         ))}

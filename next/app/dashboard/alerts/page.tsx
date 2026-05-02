@@ -8,6 +8,8 @@ import { Button } from "@/app/components/ui/Button";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
+import { RecentLogsSidebar } from "@/app/components/alerts/RecentLogsSidebar";
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<AlertConfig[]>([]);
@@ -111,34 +113,46 @@ export default function AlertsPage() {
   }, [alerts]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary overflow-x-hidden pb-20">
-      <div className="max-w-6xl mx-auto p-4 sm:p-8 lg:p-12 space-y-10">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-2 rounded-full bg-brand-3 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-3">Condition Monitor</span>
+    <div className="min-h-screen bg-gray-50/50 text-slate-900 font-primary overflow-x-hidden pb-20">
+      <div className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6 lg:p-9 space-y-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          <div className="flex-1 space-y-10 min-w-0">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" className="text-white">
+                      <path d="M221.8,175.94C216.25,166.12,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.13-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"></path>
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Condition Monitor</span>
+                </div>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                  Tactical Alerts
+                </h1>
+                <p className="text-sm text-gray-500 font-medium mt-1">
+                  Automated triggers for your preferred surf conditions.
+                </p>
+              </div>
+
+              <Button 
+                variant="action"
+                size="sm"
+                onClick={handleCreateNewAlert}
+                className="whitespace-nowrap px-8 h-10 shadow-md active:scale-95"
+              >
+                Create New Alert
+              </Button>
+            </header>
+
+            <div className="bg-white/40 backdrop-blur-md rounded-[40px] p-2 md:p-8 border border-white/60 shadow-sm">
+              <div className="bg-white rounded-[32px] p-6 sm:p-10 border border-slate-100 min-h-[400px]">
+                 <AlertsList />
+              </div>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
-              Tactical <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Alerts</span>
-            </h1>
-            <p className="text-slate-500 mt-3 max-w-lg font-medium text-lg">
-              Automated triggers for your preferred surf conditions.
-            </p>
           </div>
 
-          <Button 
-            onClick={handleCreateNewAlert}
-            className="bg-slate-900 hover:bg-slate-800 text-white px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-slate-200 transition-all active:scale-95 flex items-center gap-2"
-          >
-            Create New Alert
-          </Button>
-        </header>
-
-        <div className="bg-white/40 backdrop-blur-md rounded-[40px] p-2 md:p-8 border border-white/60 shadow-sm">
-          <div className="bg-white rounded-[32px] p-6 sm:p-10 border border-slate-100 min-h-[400px]">
-             <AlertsList />
-          </div>
+          <RecentLogsSidebar />
         </div>
       </div>
     </div>

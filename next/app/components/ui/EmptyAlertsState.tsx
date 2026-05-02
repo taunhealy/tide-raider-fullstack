@@ -11,7 +11,9 @@ export function EmptyAlertsState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-light)] shadow-sm text-center max-w-2xl mx-auto mt-8">
       <div className="bg-[var(--color-component-icon-bg)] p-4 rounded-full mb-6">
-        <Bell className="w-12 h-12 text-[var(--color-tertiary)]" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 256 256" className="text-[var(--color-tertiary)]">
+          <path d="M221.8,175.94C216.25,166.12,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.13-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"></path>
+        </svg>
       </div>
       
       <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3 font-primary">
@@ -35,13 +37,17 @@ export function EmptyAlertsState() {
           <CheckCircle className="w-5 h-5 text-[var(--color-tertiary)] mt-0.5" />
           <div>
             <span className="block font-semibold text-[var(--color-text-primary)] text-sm">Instant Notification</span>
-            <span className="text-xs text-[var(--color-text-secondary)]">Email updates when forecast matches your Alerts</span>
+            <span className="text-xs text-[var(--color-text-secondary)]">Email/Whatsapp updates when forecast matches your Alerts</span>
           </div>
         </div>
       </div>
 
-      <Link href="/alerts/new">
-        <Button size="lg" className="font-primary px-8 bg-[var(--color-tertiary)] hover:bg-[var(--color-ui-accent)] text-black">
+      <Link href="/dashboard/alerts/new">
+        <Button 
+          variant="action"
+          size="sm"
+          className="font-primary px-8 h-12 shadow-md active:scale-95 uppercase tracking-widest font-black text-xs"
+        >
           Create Your First Alert
         </Button>
       </Link>

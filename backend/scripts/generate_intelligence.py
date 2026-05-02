@@ -22,19 +22,19 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
     cwd = os.getcwd()
     
     # 1. Check existing environment first (passed from Node)
-    api_key = os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
         # 2. Try .env in current directory
         load_dotenv(os.path.join(cwd, ".env"))
-        api_key = os.environ.get("GOOGLE_API_KEY")
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
         # 3. Try .env in parent directory
         parent_env = os.path.join(os.path.dirname(cwd), ".env")
         if os.path.exists(parent_env):
             load_dotenv(parent_env)
-            api_key = os.environ.get("GOOGLE_API_KEY")
+            api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
     if not api_key:
         # 4. Try specifically checking 'backend/.env' if we're in a common monorepo structure
@@ -53,7 +53,7 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
     print(f"Intelligence Engine: Authenticated (Key Length: {len(api_key)})", file=sys.stderr)
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         google_api_key=api_key,
         temperature=0.7
     )

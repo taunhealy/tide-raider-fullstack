@@ -327,7 +327,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   };
 
   return (
-    <div className="bg-[var(--color-bg-secondary)] p-4 sm:p-6 lg:p-8 xl:p-12 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
+    <div className="bg-[var(--color-bg-secondary)] pt-20 p-4 sm:pt-24 sm:p-6 lg:pt-28 lg:p-8 xl:pt-32 xl:p-12 mx-auto relative min-h-[calc(100vh-72px)] flex flex-col font-primary">
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-[30px] xl:gap-[54px] max-w-7xl mx-auto w-full">
         <Suspense fallback={<SidebarSkeleton />}>
           <LeftSidebar />

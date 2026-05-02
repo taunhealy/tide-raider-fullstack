@@ -269,17 +269,9 @@ export const funFacts: FunFact[] = [
   },
   {
     id: 46,
-    fact: "Heather Price became the first woman to surf Dungeons in 1999, paving the way for female big wave surfing in South Africa.",
+    fact: "Heather Price's 1919 Muizenberg ride was SA's first recorded surf, but the sport vanished for decades when the US Marines took their boards back to sea.",
     category: "surf-history",
-    source: "Zigzag Magazine Historical Archives",
-    sourceUrl: "https://www.zigzag.co.za",
-  },
-  {
-    id: 47,
-    fact: "The Cave at Kalk Bay was first surfed in the 1960s, but only becomes surfable approximately 5-10 times per year when specific swell direction, size, and wind conditions align.",
-    category: "surf-history",
-    source: "Cape Town Surf Heritage Collection",
-    sourceUrl: "https://www.cityofcapetown.gov.za",
+    source: "Muizenberg Historical Society",
   },
   {
     id: 48,
@@ -616,13 +608,6 @@ export const funFacts: FunFact[] = [
     category: "marine-life",
     source: "Marine Dynamics Academy Research",
     sourceUrl: "https://www.marinedynamicsacademy.com",
-  },
-  {
-    id: 104,
-    fact: "The Cave at Kalk Bay only breaks perfectly when deep-water swells exceed 8 feet and coincide with a specific 190-degree swell direction and low tide.",
-    category: "surf-history",
-    source: "Cape Town Surf Chronicles",
-    sourceUrl: "https://www.surfingarchives.co.za",
   },
   {
     id: 105,
