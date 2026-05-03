@@ -4,7 +4,6 @@
     "module": "CommonJS",
     "lib": ["ES2022"],
     "moduleResolution": "node",
-    "rootDir": "./src",
     "outDir": "./dist",
     "strict": true,
     "noImplicitAny": false,
@@ -25,6 +24,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "prisma/**/*.ts"]
+  "include": ["src/**/*", "scratch/**/*", "prisma/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

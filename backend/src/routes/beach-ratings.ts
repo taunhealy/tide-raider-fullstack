@@ -30,7 +30,8 @@ router.get(
       if (cached)
         return res.json(typeof cached === "string" ? JSON.parse(cached) : cached);
 
-      const counts = await ScoreService.getRegionCounts(date);
+      const timeSlot = req.query.timeSlot as string | undefined;
+      const counts = await ScoreService.getRegionCounts(date, timeSlot);
       const responseData = { counts };
       await cacheApiResponse(cacheKey, responseData, 3600); // Cache counts for 1 hour
 

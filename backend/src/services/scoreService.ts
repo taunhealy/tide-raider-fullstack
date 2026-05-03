@@ -339,7 +339,7 @@ export class ScoreService {
   }
 
   /**
-   * Get region counts for beaches scoring 4 or higher (score >= 8)
+   * Get region counts for unique beaches scoring 4 or higher (score >= 8)
    */
   static async getRegionCounts(date: Date, timeSlot?: string) {
     const normalizedDate = new Date(date);
@@ -354,18 +354,30 @@ export class ScoreService {
       whereClause.timeSlot = timeSlot as any;
     }
 
-    const regionCounts = await prisma.beachDailyScore.groupBy({
-      by: ["regionId"],
+    // Get all scores matching the criteria
+    const scores = await prisma.beachDailyScore.findMany({
       where: whereClause,
-      _count: {
+      select: {
+        regionId: true,
         beachId: true,
       },
     });
 
-    return regionCounts.reduce(
-      (acc, { regionId, _count }) => ({
+    // Count unique beaches per region
+    const counts: Record<string, Set<string>> = {};
+    
+    scores.forEach(score => {
+      if (!counts[score.regionId]) {
+        counts[score.regionId] = new Set();
+      }
+      counts[score.regionId].add(score.beachId);
+    });
+
+    // Convert Sets to counts
+    return Object.entries(counts).reduce(
+      (acc, [regionId, beachSet]) => ({
         ...acc,
-        [regionId]: _count.beachId,
+        [regionId]: beachSet.size,
       }),
       {} as Record<string, number>
     );

@@ -488,7 +488,7 @@ export default function RaidLogTable({
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(
-    "raidLogViewMode",
+    "raidLogViewMode_v2",
     "card"
   );
 
@@ -786,7 +786,22 @@ export default function RaidLogTable({
   };
 
   if (isLoading) {
-    return <TableSkeleton />;
+    return viewMode === "card" ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="bg-white rounded-lg border border-gray-200 shadow p-4 space-y-4 h-[400px] animate-pulse">
+            <div className="h-48 bg-gray-100 rounded-md"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+              <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+              <div className="h-10 bg-gray-100 rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <TableSkeleton />
+    );
   }
 
   return (

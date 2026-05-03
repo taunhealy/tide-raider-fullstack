@@ -14,9 +14,9 @@ interface LocationFilterProps {
 }
 
 export default function LocationFilter({ regions }: LocationFilterProps) {
-  const { data: regionCountsData } = useRegionCounts();
-  const [searchQuery, setSearchQuery] = useState("");
   const { filters, selectRegion } = useBeachFilters();
+  const { data: regionCountsData } = useRegionCounts(filters.forecastDate, filters.timeSlot);
+  const [searchQuery, setSearchQuery] = useState("");
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 

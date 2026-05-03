@@ -648,9 +648,9 @@
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "SE",
-          "SSE",
-          "NW"
+          "NW",
+          "NE",
+          "N"
         ],
         "optimalSwellDirections": {
           "min": 210,

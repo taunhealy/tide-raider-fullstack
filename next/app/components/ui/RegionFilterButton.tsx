@@ -18,6 +18,12 @@ const getCountryFlag = (countryId?: string) => {
   );
 };
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/app/components/ui/tooltip";
+
 export default function RegionFilterButton({
   region,
   isSelected,
@@ -55,12 +61,19 @@ export default function RegionFilterButton({
       </div>
 
       {count > 0 && (
-        <span className={cn(
-          "text-[9px] font-black px-1.5 py-0.5 rounded-lg shrink-0 transition-colors",
-          isSelected ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400 group-hover/region:bg-white"
-        )}>
-          {count}
-        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className={cn(
+              "text-[9px] font-black px-1.5 py-0.5 rounded-lg shrink-0 transition-colors cursor-help",
+              isSelected ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400 group-hover/region:bg-white"
+            )}>
+              {count}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="bg-black text-white border-none text-[10px] py-1 px-2">
+            Number of breaks with 4+ star conditions for selected period
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {isLoading && (

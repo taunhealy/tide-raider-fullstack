@@ -53,7 +53,7 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
     print(f"Intelligence Engine: Authenticated (Key Length: {len(api_key)})", file=sys.stderr)
 
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.0-flash",
         google_api_key=api_key,
         temperature=0.7
     )
