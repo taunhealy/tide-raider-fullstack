@@ -51,6 +51,7 @@ export default function AIChatWidget() {
 
       if (!res.ok) {
         if (res.status === 402) throw new Error("INSUFFICIENT_CREDITS");
+        if (res.status === 403) throw new Error("PERMISSION_DENIED");
         throw new Error("Relay failed");
       }
 
@@ -65,6 +66,8 @@ export default function AIChatWidget() {
       let errorMsg = "Tactical signal lost. Please try again.";
       if (err.message === "INSUFFICIENT_CREDITS") {
         errorMsg = "Negative. Insufficient credits for this operation. Please refuel your account.";
+      } else if (err.message === "PERMISSION_DENIED") {
+        errorMsg = "Critical: AI permission denied. Mission control must verify Google Cloud billing and API access.";
       }
       setMessages(prev => [...prev, { role: "model", content: errorMsg }]);
     }

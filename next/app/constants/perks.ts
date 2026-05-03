@@ -1,6 +1,6 @@
 import { Zap, Star, Sparkles, Check, Bell } from "lucide-react";
 
-export const PREMIUM_PERKS = [
+export const MEMBERSHIP_PERKS = [
   { 
     text: "Unlimited WhatsApp & Email surf alerts", 
     icon: Zap, 

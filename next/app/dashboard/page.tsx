@@ -23,7 +23,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Bell, Zap, Sparkles } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import { FREE_PERKS, PREMIUM_PERKS } from "../constants/perks";
+import { FREE_PERKS, MEMBERSHIP_PERKS } from "../constants/perks";
 import AIReportsView from "../components/raid/AIReportsView";
 import { ClientProfileLogs } from "../components/ClientProfileLogs";
 import { useBeaches } from "@/app/hooks/useBeaches";
@@ -537,7 +537,7 @@ export default function DashboardPage() {
           <header>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-2 rounded-full bg-brand-3 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-3">System Online</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900">System Online</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Command <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-500">Center</span>
@@ -701,7 +701,7 @@ export default function DashboardPage() {
                         <ul className="space-y-3">
                           {(subscriptionData?.status === SubscriptionStatus.ACTIVE || 
                             subscriptionData?.status === SubscriptionStatus.SUSPENDED 
-                              ? PREMIUM_PERKS 
+                              ? MEMBERSHIP_PERKS 
                               : FREE_PERKS).map((feature, i) => (
                             <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
                               <div className={cn(

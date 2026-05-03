@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { AI_MODELS } from "../constants/ai";
 import { prisma } from "../lib/prisma";
 
 export class AIChatService {
@@ -9,7 +10,7 @@ export class AIChatService {
       throw new Error("MISSING_API_KEY");
     }
     const genAI = new GoogleGenerativeAI(apiKey);
-    return genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    return genAI.getGenerativeModel({ model: AI_MODELS.CHAT });
   }
 
   static async chat(userId: string, message: string, history: { role: "user" | "model"; content: string }[] = []) {

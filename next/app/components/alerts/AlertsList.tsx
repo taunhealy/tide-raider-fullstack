@@ -75,7 +75,7 @@ export function AlertsList() {
 
   if (isAlertsLoading || isSubscriptionLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
         {[1, 2, 3].map((i) => (
           <AlertCardSkeleton key={i} />
         ))}
@@ -99,7 +99,7 @@ export function AlertsList() {
       {/* Democratized: Removed isPremium check and upgrade banner */}
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
         {validAlerts.map((alert) => (
           <AlertCard
             key={alert.id}

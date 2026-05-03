@@ -30,6 +30,13 @@ router.post("/message", authenticateToken, async (req, res: Response) => {
       });
     }
 
+    if (error.message?.includes("403") || error.message?.includes("denied access")) {
+      return res.status(403).json({ 
+        error: "AI_PERMISSION_ERROR", 
+        message: "Tactical AI project has been denied access. Check mission billing and API permissions in Cloud Console." 
+      });
+    }
+
     res.status(500).json({ error: "Tactical relay failed. Systems offline." });
   }
 });

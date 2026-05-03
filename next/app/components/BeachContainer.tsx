@@ -54,7 +54,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const searchParams = useSearchParams();
   
   // Sorting and Location state - Proximity active by default (45km)
-  const [maxDistance, setMaxDistance] = useState<number | null>(500);
+  const [maxDistance, setMaxDistance] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
