@@ -49,7 +49,7 @@ export async function scraperA(
   const startTime = Date.now();
 
   try {
-    const browser = await getBrowser();
+    browser = await getBrowser();
     const context = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport: { width: 1280, height: 1000 }
@@ -61,7 +61,7 @@ export async function scraperA(
 
 
     // Anti-bot measures
-    await page.evaluateOnNewDocument(() => {
+    await page.addInitScript(() => {
       // @ts-ignore
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });

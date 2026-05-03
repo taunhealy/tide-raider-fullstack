@@ -93,7 +93,7 @@ export async function scraperB(
   const startTime = Date.now();
 
   try {
-    const browser = await getBrowser();
+    browser = await getBrowser();
     const context = await browser.newContext({
       userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
       viewport: { width: 1920, height: 1080 }

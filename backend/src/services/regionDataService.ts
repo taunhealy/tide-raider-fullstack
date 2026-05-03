@@ -9,7 +9,7 @@ import { TimeSlot } from "@prisma/client";
 const CORE_REGIONS = ["western-cape", "eastern-cape"];
 const STALE_THRESHOLD_MS = 1000 * 60 * 60 * 6; // 6 hours
 
-export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string[]) {
+export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string[], forceRefresh: boolean = false) {
   const results = {
     regionsProcessed: 0,
     regionsSucceeded: 0,
@@ -95,13 +95,28 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
           
           for (const source of sourcesToScrape) {
             try {
+              // Freshness Check: If we already have recent data (< 6 hours), skip redundant scraping
+              const latestForecast = await prisma.forecast.findFirst({
+                where: { regionId: region.id, source: source },
+                orderBy: { createdAt: 'desc' }
+              });
+
+              const isStale = !latestForecast || (Date.now() - new Date(latestForecast.createdAt).getTime() > STALE_THRESHOLD_MS);
+
+              if (!isStale && !forceRefresh) {
+                console.log(`  ✅ Data for ${region.id} from ${source} is still fresh (updated ${Math.round((Date.now() - new Date(latestForecast!.createdAt).getTime()) / 60000)}m ago). Skipping scrape.`);
+                results.sourcesScraped++; // Count as success since we have fresh data
+                hasAnyConditions = true;
+                continue;
+              }
+
               console.log(
-                `  🔍 Fetching conditions for ${region.id} from ${source}...`
+                `  🔍 Fetching fresh conditions for ${region.id} from ${source}...`
               );
-              // forceRefresh = true means: always scrape to get fresh data for today
+              // forceRefresh in getLatestConditions means "ignore DB cache for the requested slot"
               const conditions = await getLatestConditions(
                 region.id,
-                true,
+                true, // We still pass true here because we already decided to scrape
                 source,
                 daysLimit // Pass the limit here
               );

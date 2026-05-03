@@ -55,7 +55,7 @@ export async function scraperC(
     console.log(`[scraperC] 🌐 Starting Windy.app scrape for ${region}`);
     console.log(`[scraperC] 📍 URL: ${url}`);
 
-    const browser = await getBrowser();
+    browser = await getBrowser();
     const context = await browser.newContext({
       userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
       viewport: { width: 1920, height: 1080 }
