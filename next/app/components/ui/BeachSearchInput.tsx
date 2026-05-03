@@ -178,6 +178,7 @@ export function BeachSearchInput({
         <input
           type="text"
           value={searchTerm}
+          suppressHydrationWarning
           onChange={(e) => {
             const val = e.target.value;
             setSearchTerm(val);

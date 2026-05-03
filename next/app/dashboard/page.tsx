@@ -23,7 +23,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Bell, Zap, Sparkles } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import { MEMBERSHIP_PERKS } from "../constants/perks";
+import { FREE_PERKS, PREMIUM_PERKS } from "../constants/perks";
 import AIReportsView from "../components/raid/AIReportsView";
 import { ClientProfileLogs } from "../components/ClientProfileLogs";
 import { useBeaches } from "@/app/hooks/useBeaches";
@@ -699,11 +699,14 @@ export default function DashboardPage() {
                       <div className="space-y-4">
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">Membership Perks</h4>
                         <ul className="space-y-3">
-                          {MEMBERSHIP_PERKS.map((feature, i) => (
+                          {(subscriptionData?.status === SubscriptionStatus.ACTIVE || 
+                            subscriptionData?.status === SubscriptionStatus.SUSPENDED 
+                              ? PREMIUM_PERKS 
+                              : FREE_PERKS).map((feature, i) => (
                             <li key={i} className="flex items-center gap-3 text-sm text-slate-600">
                               <div className={cn(
                                 "w-1.5 h-1.5 rounded-full",
-                                subscriptionData?.status === SubscriptionStatus.ACTIVE ? "bg-green-500" : "bg-slate-300"
+                                feature.color === "text-brand-3" ? "bg-brand-3" : "bg-slate-300"
                               )} />
                               {feature.text}
                             </li>
@@ -723,23 +726,26 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 mb-8 font-primary">
-                      <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
-                         Update My Info
-                      </button>
-                      {subscriptionData?.status === SubscriptionStatus.SUSPENDED ? (
-                        <button onClick={() => handleSubscriptionAction("activate")} className="flex items-center justify-center gap-2 py-4 rounded-xl bg-brand-3 text-white transition-all text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-3/20">
-                          Resume Subscription
+                    {(subscriptionData?.status === SubscriptionStatus.ACTIVE || 
+                      subscriptionData?.status === SubscriptionStatus.SUSPENDED) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 mb-8 font-primary">
+                        <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
+                          Update My Info
                         </button>
-                      ) : (
-                        <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
-                          Pause Subscription
+                        {subscriptionData?.status === SubscriptionStatus.SUSPENDED ? (
+                          <button onClick={() => handleSubscriptionAction("activate")} className="flex items-center justify-center gap-2 py-4 rounded-xl bg-brand-3 text-white transition-all text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-3/20">
+                            Resume Subscription
+                          </button>
+                        ) : (
+                          <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
+                            Pause Subscription
+                          </button>
+                        )}
+                        <button onClick={() => handleSubscriptionAction("cancel")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-red-50 text-red-500 transition-all text-[10px] font-black uppercase tracking-widest border border-transparent">
+                          Cancel Subscription
                         </button>
-                      )}
-                      <button onClick={() => handleSubscriptionAction("cancel")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-red-50 text-red-500 transition-all text-[10px] font-black uppercase tracking-widest border border-transparent">
-                        Cancel Subscription
-                      </button>
-                    </div>
+                      </div>
+                    )}
 
                     {subscriptionData?.status !== SubscriptionStatus.ACTIVE && (
                       <div className="p-8 bg-gradient-to-br from-brand-3/5 to-slate-50 border border-brand-3/20 rounded-[26px] group relative overflow-hidden">

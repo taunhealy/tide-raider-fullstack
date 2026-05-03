@@ -20,6 +20,7 @@ export type FilterType =
   | "isHiddenGem"
   | "isLongboarding"
   | "isFoiling"
+  | "isRegular"
   | "timeSlot";
 
 // The complete filters interface that can be used across the app
@@ -41,6 +42,7 @@ export interface Filters {
   isHiddenGem: boolean;
   isLongboarding: boolean;
   isFoiling: boolean;
+  isRegular?: boolean;
   sheltered?: boolean;
   timeSlot?: string;
 }

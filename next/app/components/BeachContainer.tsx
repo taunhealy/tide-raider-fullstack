@@ -323,9 +323,20 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
   }, [totalPages, currentPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
+  // Reset to page 1 ONLY when tactical filters change, not when page changes
+  const tacticalFiltersKey = useMemo(() => {
+    const { ...tactical } = filters;
+    return JSON.stringify({ tactical, maxDistance });
   }, [filters, maxDistance]);
+
+  useEffect(() => {
+    // Only reset if we're not already on page 1
+    // And only if the URL doesn't already have a page parameter (to allow deep links)
+    const urlPage = searchParams.get("page");
+    if (!urlPage && currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [tacticalFiltersKey]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {

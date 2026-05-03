@@ -66,6 +66,7 @@ const ProximityFilterRow = ({
              <input
               type="number"
               value={maxDistance}
+              suppressHydrationWarning
               onChange={(e) => onChange(parseInt(e.target.value) || 0)}
               className="w-10 bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 appearance-none"
               min={0}
@@ -335,7 +336,7 @@ export default function BeachHeaderControls({
                             >
                               Hidden Gems
                               {hiddenGemCount > 0 && (
-                                <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-white/20 text-white text-[10px] font-black border border-white/20 shadow-sm">
+                                <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-white text-brand-3 text-[10px] font-black shadow-sm">
                                   {hiddenGemCount}
                                 </span>
                               )}
