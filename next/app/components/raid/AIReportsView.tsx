@@ -81,6 +81,7 @@ export default function AIReportsView() {
           placeholder="Filter by beach..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          suppressHydrationWarning
           className="w-full bg-white/80 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-3/20 transition-all font-medium"
         />
       </div>
@@ -159,6 +160,7 @@ export default function AIReportsView() {
                 <td className="px-6 py-5 text-right">
                   <button 
                     onClick={() => handleLoadSignal(report)}
+                    suppressHydrationWarning
                     className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-3 hover:text-brand-3 focus:outline-none transition-all pr-2"
                   >
                     Load Signal

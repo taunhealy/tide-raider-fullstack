@@ -482,8 +482,13 @@ export default function RaidLogTable({
   >();
   const queryClient = useQueryClient();
   const { data: subscriptionDetails } = useSubscriptionDetails();
-  // Use prop if available, otherwise check subscription details
-  const isUserPremium = isSubscribed || subscriptionDetails?.status === SubscriptionStatus.ACTIVE || subscriptionDetails?.hasActiveTrial;
+  // Use prop if available, otherwise check subscription details and session
+  const isUserPremium = 
+    isSubscribed || 
+    session?.user?.isSubscribed || 
+    subscriptionDetails?.status === SubscriptionStatus.ACTIVE || 
+    subscriptionDetails?.hasActiveTrial ||
+    session?.user?.hasActiveTrial;
   const hasAccess = isUserPremium;
 
   // Set default view mode based on screen size
@@ -733,6 +738,13 @@ export default function RaidLogTable({
 
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
+
+  // Force card view on mobile
+  useEffect(() => {
+    if (isMobile && viewMode === "table") {
+      setViewMode("card");
+    }
+  }, [isMobile, viewMode, setViewMode]);
 
   // Add the DeleteConfirmationDialog to the main component return
   const DeleteConfirmationDialog = () => {

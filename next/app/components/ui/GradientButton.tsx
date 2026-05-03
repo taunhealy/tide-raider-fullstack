@@ -1,6 +1,7 @@
 "use client";
 
 import { ButtonHTMLAttributes, ReactNode } from "react";
+import { Filter } from "lucide-react";
 
 export type GradientButtonVariant = 
   | "purple-pink"    // Hidden Gems style
@@ -194,3 +195,53 @@ export function FoilingButton({
     </GradientButton>
   );
 }
+
+export function FiltersButton({
+  active = false,
+  children = "Filters",
+  ...props
+}: Omit<GradientButtonProps, "variant" | "icon"> & { children?: ReactNode }) {
+  return (
+    <GradientButton
+      variant="gray"
+      active={active}
+      className="font-black uppercase tracking-widest text-[10px]"
+      icon={<Filter className="w-4 h-4" />}
+      {...props}
+    >
+      {children}
+    </GradientButton>
+  );
+}
+
+export function RegularButton({
+  active = false,
+  children = "Regular",
+  ...props
+}: Omit<GradientButtonProps, "variant" | "icon"> & { children?: ReactNode }) {
+  return (
+    <GradientButton
+      variant="gray"
+      active={active}
+      icon={
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <path d="M2 18s3-2 10-2 10 2 10 2" />
+          <path d="M2 12s3-2 10-2 10 2 10 2" />
+          <path d="M2 6s3-2 10-2 10 2 10 2" />
+        </svg>
+      }
+      {...props}
+    >
+      {children}
+    </GradientButton>
+  );
+}
+

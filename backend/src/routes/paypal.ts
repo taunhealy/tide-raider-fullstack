@@ -424,4 +424,35 @@ router.post("/cancel", authenticateToken, async (req: Request, res: Response) =>
     }
 });
 
+// POST /api/paypal/activate (Resume)
+router.post("/activate", authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const authReq = req as AuthRequest;
+        const userId = authReq.user?.id;
+        
+        if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+        const user = await prisma.user.findUnique({
+          where: { id: userId }
+        });
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // If it's a PayPal subscription, activate it there
+        if (user.paypalSubscriptionId) {
+            await PayPalService.activateSubscription(user.paypalSubscriptionId);
+        }
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { subscriptionStatus: "ACTIVE" }
+        });
+
+        res.json({ success: true, message: "Subscription resumed successfully" });
+    } catch (error) {
+        console.error("[PayPal] Activate Error:", error);
+        res.status(500).json({ error: "Failed to resume subscription" });
+    }
+});
+
 export default router;

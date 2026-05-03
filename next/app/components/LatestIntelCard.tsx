@@ -73,7 +73,7 @@ export function LatestIntelCard({ entry, isGated = false }: LatestIntelCardProps
           
           <div className="bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-lg border border-white/20 text-right">
              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Session Rating</div>
-             <BlueStarRating score={entry.surferRating || 0} size={14} />
+             <BlueStarRating score={entry.surferRating || 0} size={14} outOfFive={true} />
           </div>
         </div>
 

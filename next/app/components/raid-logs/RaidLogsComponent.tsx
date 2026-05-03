@@ -128,7 +128,7 @@ export function RaidLogsComponent({
   );
 
   return (
-    <div id="raid-logs-container" className="min-h-screen bg-gray-50/50 p-3 sm:p-4 md:p-6 lg:p-9 font-primary relative pb-20">
+    <div id="raid-logs-container" className="min-h-0 py-4 font-primary relative pb-20">
       <div className="max-w-6xl mx-auto px-0 md:px-4">
         {(isBeachesLoading || isLogsLoading) && !loadingTimeout && (
           <RandomLoader isLoading={isBeachesLoading || isLogsLoading} />

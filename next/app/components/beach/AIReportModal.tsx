@@ -100,7 +100,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         setIsLoadingArchive(true);
         try {
           let url = "";
-          if (activeReportId && activeReportId !== 'latest') {
+          if (activeReportId && activeReportId !== 'latest' && activeReportId !== 'true') {
             url = `/api/backend/intelligence/report/${activeReportId}`;
           } else {
             url = `/api/backend/intelligence/latest?beachId=${beach.id}`;
@@ -111,17 +111,18 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             // Only throw error for real failures, 404 for a report-not-found is okay for "latest"
-            if (response.status === 404 && !activeReportId) {
+            if (response.status === 404 && (!activeReportId || activeReportId === 'latest' || activeReportId === 'true')) {
               setReport(null);
               return;
             }
             
-            console.error("[AIReportModal] Fetch failed:", {
+            const errorMessage = errorData.error || errorData.message || `Signal fetch failed (Status: ${response.status})`;
+            console.error("[AIReportModal] Tactical fetch failed:", {
               status: response.status,
               url,
               error: errorData
             });
-            throw new Error(errorData.error || "Failed to load intelligence");
+            throw new Error(errorMessage);
           }
 
           const data = await response.json();

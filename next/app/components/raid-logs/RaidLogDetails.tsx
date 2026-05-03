@@ -284,7 +284,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
                     {/* Logger Info */}
                     <div className={cn("space-y-3 pt-4", isGatedGem && "blur-[10px] select-none opacity-40")}>
-                      <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
+                      <h2 className="text-xs text-white font-black uppercase tracking-[0.2em]">
                         Logger
                       </h2>
                       {isGatedGem ? (
@@ -323,7 +323,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     </div>
 
                     <div className={cn("space-y-3 pt-4", isGatedGem && "blur-[10px] select-none opacity-40")}>
-                      <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest">
+                      <h2 className="text-xs text-white font-black uppercase tracking-[0.2em]">
                         Surf session rating
                       </h2>
                       <div className="flex items-center gap-3">
@@ -338,7 +338,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     <div className={cn("space-y-12 pt-10", isGatedGem && "blur-[15px] select-none opacity-30")}>
                       {(imageUrls.length > 0 || videoUrls.length > 0) && (
                         <div className="w-full">
-                          <h2 className="font-primary text-[10px] text-white/40 font-bold tracking-widest mb-6 uppercase">
+                          <h2 className="text-xs text-white font-black uppercase tracking-[0.2em] mb-6">
                             Session Gallery
                           </h2>
                           <div className={cn(isGatedGem && "blur-[20px] select-none opacity-40 pointer-events-none")}>
@@ -397,7 +397,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                   <div className="h-px flex-1 bg-white/5"></div>
                                   <div className="flex items-center gap-2 bg-white/5 px-6 py-2 rounded-full border border-white/10 shadow-lg">
                                     <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                    <span className="text-xs font-bold text-white uppercase tracking-[0.2em]">
+                                    <span className="text-xs font-black text-white uppercase tracking-[0.2em]">
                                       {slot.label}
                                     </span>
                                   </div>
@@ -432,7 +432,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                           
                                           <div className="flex items-center justify-between mb-6">
                                             <div className="space-y-1">
-                                              <h3 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                                              <h3 className="text-[10px] font-black text-white uppercase tracking-[0.15em]">
                                                 {score.sourceName}
                                               </h3>
                                               <p className="text-[9px] font-bold text-[var(--color-tertiary)] uppercase tracking-tighter">
@@ -531,7 +531,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                     <Calendar className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-tertiary)]" />
                   </div>
                   <div>
-                    <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest mb-1">
+                    <h2 className="text-xs text-white font-black uppercase tracking-[0.2em] mb-1">
                       Session date
                     </h2>
                     <p className={cn("text-white font-primary font-black text-lg md:text-xl uppercase tracking-tighter", isGatedGem && "blur-[10px] select-none opacity-40")}>
@@ -556,7 +556,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               {entry.comments && (
                 <div className="px-6 md:px-10 pb-10">
                   <div className="space-y-4 pt-4">
-                    <h2 className="font-primary text-[10px] font-bold text-white/40 tracking-widest">
+                    <h2 className="text-xs text-white font-black uppercase tracking-[0.2em]">
                       Logger comments
                     </h2>
                     <div className={cn("bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden", isGatedGem && "blur-[10px] select-none opacity-40")}>

@@ -10,6 +10,7 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import Sponsors from "../Sponsors";
 import PartnersShowcase from "../PartnersShowcase";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 // Create skeleton components outside the main component
 const ForecastWidgetSkeleton = () => (
@@ -131,6 +132,16 @@ export default function RightSidebar() {
     enabled: true,
   });
   const { filters } = useBeachFilters();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const handleBeachClick = (beach: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("beachId", beach.id);
+    params.set("report", "true");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <aside className="w-full lg:w-[250px] xl:w-[300px] space-y-8">
@@ -142,6 +153,7 @@ export default function RightSidebar() {
         <RegionalHighScores
           beaches={(data?.beaches || []).filter(Boolean)}
           selectedRegion={filters.regionId}
+          onBeachClick={handleBeachClick}
         />
       )}
 

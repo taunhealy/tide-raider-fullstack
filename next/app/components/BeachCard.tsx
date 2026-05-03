@@ -128,7 +128,8 @@ const BeachCard = memo(function BeachCard({
   const queryClient = useQueryClient();
 
   // Hidden gems are locked for non-premium users
-  const isLocked = !!beach.isHiddenGem && !directIsPremium;
+  // We only lock if we're NOT loading the subscription status and we're sure they're not premium
+  const isLocked = !!beach.isHiddenGem && !directIsPremium && !isSubscriptionLoading;
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isLocalLoading, setIsLocalLoading] = useState(false);
@@ -355,7 +356,7 @@ const BeachCard = memo(function BeachCard({
                       name={beach.name}
                       region={beach.region?.name}
                       location={beach.location}
-                      className="hidden md:flex"
+                      className="flex"
                     />
                     <button
                       type="button"
@@ -492,7 +493,7 @@ const BeachCard = memo(function BeachCard({
                             {/* Log Content Summary */}
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
                               <div className="flex items-center gap-2 mb-1">
-                                <BlueStarRating score={beachSessions[0].surferRating || 0} size={10} />
+                                <BlueStarRating score={beachSessions[0].surferRating || 0} size={10} outOfFive={true} />
                                 <span className="text-[10px] font-bold text-slate-400">/ 5.0</span>
                               </div>
                               
@@ -679,7 +680,9 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
-                      {beach.name}
+                      {isLocked ? (
+                        <span className="blur-[8px] select-none opacity-50">Hidden Gem Break</span>
+                      ) : beach.name}
                       {beach.isHiddenGem && (
                         <span className={cn(
                           "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
@@ -711,14 +714,14 @@ const BeachCard = memo(function BeachCard({
                     <h6 className="mt-1 flex items-center gap-1.5 flex-wrap">
                       {beach.location && (
                         <>
-                          <span className="font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500">
-                            {beach.location}
+                          <span className={cn("font-primary text-[11px] leading-[16px] font-medium tracking-tight text-gray-500", isLocked && "blur-[4px] select-none")}>
+                            {isLocked ? "Secret Location" : beach.location}
                           </span>
                           <span className="opacity-20 text-[8px] mt-0.5">•</span>
                         </>
                       )}
-                      <span className="font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black">
-                        {formatRegionName(beach.region?.name, beach.regionId)}
+                      <span className={cn("font-primary text-[12px] leading-[16px] font-semibold tracking-[-0.3px] text-black", isLocked && "blur-[4px] select-none")}>
+                        {isLocked ? "Secret Region" : formatRegionName(beach.region?.name, beach.regionId)}
                       </span>
                     </h6>
                   </div>
@@ -732,7 +735,7 @@ const BeachCard = memo(function BeachCard({
                       name={beach.name}
                       region={beach.region?.name}
                       location={beach.location}
-                      className="hidden md:flex"
+                      className="flex"
                     />
                     <button
                       type="button"

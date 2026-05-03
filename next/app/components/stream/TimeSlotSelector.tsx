@@ -19,6 +19,12 @@ export default function TimeSlotSelector({
   orientation = "horizontal",
   isLoading = false,
 }: TimeSlotSelectorProps) {
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const slots = [
     { id: TimeSlot.MORNING, label: "06:00", name: "MORNING" },
     { id: TimeSlot.NOON, label: "12:00", name: "NOON" },
@@ -26,6 +32,30 @@ export default function TimeSlotSelector({
   ];
 
   const isVertical = orientation === "vertical";
+
+  // Prevent hydration mismatch by rendering a consistent state initially
+  if (!hasMounted) {
+    return (
+      <div 
+        className={cn(
+          "flex gap-2 p-1.5 rounded-2xl relative z-[100] shadow-sm transition-all duration-300",
+          isVertical 
+            ? "flex-col bg-black/60 backdrop-blur-xl border border-white/10" 
+            : "flex-row bg-white/50 backdrop-blur-sm border border-gray-200"
+        )}
+      >
+        {slots.map((slot) => (
+          <div
+            key={slot.id}
+            className={cn(
+              "animate-pulse bg-gray-200/50 rounded-lg",
+              isVertical ? "w-16 h-20" : "w-16 sm:w-20 h-10"
+            )}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div 

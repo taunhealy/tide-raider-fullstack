@@ -20,13 +20,11 @@ export function ClientProfileLogs({ userId }: ClientProfileLogsProps) {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
-      <div className="container mx-auto p-6">
-        <RaidLogsComponent
-          userId={userId}
-          initialFilters={{ isPrivate: false }}
-        />
-      </div>
+    <div className="w-full">
+      <RaidLogsComponent
+        userId={userId}
+        initialFilters={{ isPrivate: false }}
+      />
     </div>
   );
 }

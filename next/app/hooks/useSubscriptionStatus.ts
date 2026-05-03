@@ -102,10 +102,10 @@ export function useSubscriptionStatus() {
     };
   }
 
-  // For authenticated users, use query data
+  // Combine direct query data with session-based flags for maximum reliability
   const subscriptionData = data as SubscriptionStatus | undefined;
-  const isSubscribed = subscriptionData ? subscriptionData.subscriptionStatus === "ACTIVE" : false;
-  const hasActiveTrial = subscriptionData ? subscriptionData.hasActiveTrial : false;
+  const isSubscribed = (subscriptionData ? subscriptionData.subscriptionStatus === "ACTIVE" : false) || (session?.user?.isSubscribed || false);
+  const hasActiveTrial = (subscriptionData ? subscriptionData.hasActiveTrial : false) || (session?.user?.hasActiveTrial || false);
   const isPremium = isSubscribed || hasActiveTrial;
 
   return {

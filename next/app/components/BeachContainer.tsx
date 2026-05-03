@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
@@ -67,6 +68,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     ignoreRegion: maxDistance !== null || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("beachId"))
   });
   const { data: authData } = useBackendAuth();
+  const { isPremium, isSubscribed, isLoading: isSubLoading } = useSubscriptionStatus();
   const user = authData?.user;
   const queryClient = useQueryClient();
   const pathname = usePathname();
@@ -223,8 +225,23 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     }
   }, [filters.regionId, trackSearch]);
 
-  // Add pagination state
+  // Add pagination state - initialize from URL if present
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Sync currentPage with URL on mount and handle URL changes
+  useEffect(() => {
+    const p = searchParams.get("page");
+    if (p) {
+      const pageNum = parseInt(p);
+      if (!isNaN(pageNum) && pageNum !== currentPage) {
+        setCurrentPage(pageNum);
+      }
+    } else if (currentPage !== 1) {
+      // If no page in URL but state is not 1, we might have navigated back
+      // Only reset if we're not explicitly changing it
+    }
+  }, [searchParams]);
+
   const itemsPerPage = 20;
 
   const beaches = data?.beaches || [];
@@ -322,6 +339,13 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(targetUrl)}`;
       return;
     }
+    
+    // Update URL without a full page reload to maintain state
+    const params = new URLSearchParams(window.location.search);
+    if (page === 1) params.delete("page");
+    else params.set("page", page.toString());
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -346,7 +370,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               onToggleProximity={handleToggleProximityMode}
               isLocating={isLocating}
               isAuthenticated={!!user}
-              isSubscribed={!!user?.isSubscribed}
+              isSubscribed={isPremium}
               forecast={forecast}
               hiddenGemCount={data?.hiddenGemCount}
               isLoading={isLoading || isFetching}

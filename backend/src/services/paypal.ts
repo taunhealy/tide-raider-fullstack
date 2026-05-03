@@ -183,4 +183,24 @@ export class PayPalService {
       throw error;
     }
   }
+
+  static async activateSubscription(subscriptionId: string, reason: string = "User requested activation") {
+    const token = await this.getAccessToken();
+    try {
+      await axios.post(
+        `${PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/activate`,
+        { reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      return true;
+    } catch (error: any) {
+      console.error("[PayPal] Activate Subscription Failed:", error.response?.data || error.message);
+      throw error;
+    }
+  }
 }

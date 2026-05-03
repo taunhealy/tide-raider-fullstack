@@ -26,10 +26,17 @@ import { cn } from "@/app/lib/utils";
 import { MEMBERSHIP_PERKS } from "../constants/perks";
 import AIReportsView from "../components/raid/AIReportsView";
 import { ClientProfileLogs } from "../components/ClientProfileLogs";
+import { useBeaches } from "@/app/hooks/useBeaches";
 
 export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const { data: session } = useBackendAuth();
   const { trialStatus, trialEndDate } = useSubscription();
 
@@ -279,6 +286,16 @@ export default function DashboardPage() {
           throw new Error(error.error || "Failed to suspend subscription");
         }
         toast.success("Subscription suspended successfully");
+      } else if (action === "activate") {
+        const response = await fetch("/api/paypal/activate", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to resume subscription");
+        }
+        toast.success("Subscription resumed successfully");
       }
 
       // Refresh subscription data
@@ -503,6 +520,8 @@ export default function DashboardPage() {
     );
   };
 
+  if (!hasMounted) return null;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-primary selection:bg-brand-3/20 overflow-x-hidden">
       {/* Tactical Header Banner - Same as Profile for consistency */}
@@ -539,6 +558,7 @@ export default function DashboardPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
+                suppressHydrationWarning
                 className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 relative
                   ${activeTab === tab.id 
                     ? "text-brand-3 bg-brand-3/5" 
@@ -556,7 +576,7 @@ export default function DashboardPage() {
           <main className="min-h-[500px]">
             {activeTab === "account" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-4 sm:p-10 space-y-8 shadow-sm">
                   <div className="grid gap-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div>
@@ -566,6 +586,7 @@ export default function DashboardPage() {
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                            suppressHydrationWarning
                             className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
                             placeholder="Assign handle..."
                           />
@@ -578,6 +599,7 @@ export default function DashboardPage() {
                             type="text"
                             value={whatsappNumber}
                             onChange={(e) => setWhatsappNumber(e.target.value)}
+                            suppressHydrationWarning
                             className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 outline-none focus:border-brand-3 focus:ring-1 focus:ring-brand-3/30 transition-all text-slate-900 font-bold"
                             placeholder="+27..."
                           />
@@ -586,11 +608,12 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="pt-2">
-                      <button
-                        onClick={handleProfileUpdate}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto px-12 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-slate-800 transition-all active:scale-95 py-4 shadow-lg shadow-slate-900/10 disabled:opacity-50"
-                      >
+                        <button
+                          onClick={handleProfileUpdate}
+                          disabled={isLoading}
+                          suppressHydrationWarning
+                          className="w-full sm:w-auto px-12 bg-slate-900 text-white font-black uppercase tracking-tighter rounded-2xl hover:bg-slate-800 transition-all active:scale-95 py-4 shadow-lg shadow-slate-900/10 disabled:opacity-50"
+                        >
                         {isLoading ? "Synchronizing..." : "Update Tactical Identity"}
                       </button>
                     </div>
@@ -609,7 +632,7 @@ export default function DashboardPage() {
 
             {activeTab === "logs" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 shadow-sm">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-4 sm:p-10 shadow-sm">
                   <div className="flex items-center gap-4 mb-8">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
                       <Zap className="w-6 h-6" />
@@ -619,7 +642,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-slate-500">Historical record of all tactical interventions.</p>
                     </div>
                   </div>
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full">
                     <ClientProfileLogs userId={session?.user?.id || ""} />
                   </div>
                 </div>
@@ -629,21 +652,30 @@ export default function DashboardPage() {
             {activeTab === "billing" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-slate-900">
                 <div className="bg-white border border-slate-200 rounded-[32px] p-2 shadow-sm">
-                  <div className="bg-white rounded-[26px] p-6 sm:p-10 border border-slate-100">
+                  <div className="bg-white rounded-[26px] p-4 sm:p-10 border border-slate-100">
                     <div className="flex flex-col sm:flex-row justify-between gap-8 mb-10">
                       <div className="space-y-2">
                         <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border
                           ${subscriptionData?.status === SubscriptionStatus.ACTIVE 
                             ? "bg-green-500/10 text-green-600 border-green-500/20" 
+                            : subscriptionData?.status === SubscriptionStatus.SUSPENDED
+                            ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                             : "bg-slate-100 text-slate-500 border-slate-200"}`}>
-                          ● {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Active" : "Standard Plan"}
+                          ● {subscriptionData?.status === SubscriptionStatus.ACTIVE 
+                             ? "Active" 
+                             : subscriptionData?.status === SubscriptionStatus.SUSPENDED 
+                             ? "Paused" 
+                             : "Standard Plan"}
                         </span>
                         <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                          {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Premium Member" : "Free Member"}
+                          {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Premium Member" : 
+                           subscriptionData?.status === SubscriptionStatus.SUSPENDED ? "Paused Premium" : "Free Member"}
                         </h3>
                         <p className="text-sm text-slate-500 font-medium font-primary">
                           {subscriptionData?.status === SubscriptionStatus.ACTIVE 
                             ? "You've got full access to all our surf tools." 
+                            : subscriptionData?.status === SubscriptionStatus.SUSPENDED
+                            ? "Your premium access is currently on standby."
                             : "You're on our basic free plan."}
                         </p>
                       </div>
@@ -695,9 +727,15 @@ export default function DashboardPage() {
                       <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
                          Update My Info
                       </button>
-                      <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
-                        Pause Subscription
-                      </button>
+                      {subscriptionData?.status === SubscriptionStatus.SUSPENDED ? (
+                        <button onClick={() => handleSubscriptionAction("activate")} className="flex items-center justify-center gap-2 py-4 rounded-xl bg-brand-3 text-white transition-all text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-3/20">
+                          Resume Subscription
+                        </button>
+                      ) : (
+                        <button onClick={() => handleSubscriptionAction("suspend")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">
+                          Pause Subscription
+                        </button>
+                      )}
                       <button onClick={() => handleSubscriptionAction("cancel")} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-red-50 text-red-500 transition-all text-[10px] font-black uppercase tracking-widest border border-transparent">
                         Cancel Subscription
                       </button>
@@ -724,7 +762,7 @@ export default function DashboardPage() {
 
             {activeTab === "credits" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-4 sm:p-10 space-y-8 shadow-sm">
                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 pb-8 border-b border-slate-100">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
@@ -788,7 +826,7 @@ export default function DashboardPage() {
 
             {activeTab === "intelligence" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-white border border-slate-200 rounded-[32px] p-6 sm:p-10 space-y-8 shadow-sm min-h-[600px]">
+                <div className="bg-white border border-slate-200 rounded-[32px] p-4 sm:p-10 space-y-8 shadow-sm min-h-[600px]">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6 mb-2">
                       <div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -813,22 +851,23 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Feed Preview */}
-        <div className="hidden lg:block w-[550px] sticky top-0 h-screen border-l border-slate-100 overflow-hidden group bg-slate-50">
-          {data?.heroImage?.image ? (
-            <Image
-              src={urlForImage(data.heroImage.image).url()}
-              alt={data.heroImage.alt || "Background"}
-              fill
-              priority
-              className="object-cover transition-transform duration-[10s] group-hover:scale-110 opacity-80"
-            />
-          ) : (
-            <div className="w-full h-full bg-slate-100" />
-          )}
+        <div className="hidden lg:block w-[550px] sticky top-0 h-screen border-l border-slate-100 p-6 group">
+          <div className="relative h-full w-full overflow-hidden rounded-[48px] border border-slate-200 shadow-2xl">
+            {data?.heroImage?.image ? (
+              <Image
+                src={urlForImage(data.heroImage.image).url()}
+                alt={data.heroImage.alt || "Background"}
+                fill
+                priority
+                className="object-cover transition-transform duration-[10s] group-hover:scale-110"
+              />
+            ) : (
+              <div className="w-full h-full bg-transparent" />
+            )}
 
-          <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-white/10 to-white/80 pointer-events-none" />
-          
-          <div className="absolute bottom-12 left-12 z-20 space-y-4">
+            <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-black/5 to-black/20 pointer-events-none" />
+            
+            <div className="absolute bottom-12 left-12 z-20 space-y-4">
             <div className="p-4 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl shadow-sm">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 italic">Location Lock</p>
               <p className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Jeffreys Bay</p>
@@ -837,5 +876,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

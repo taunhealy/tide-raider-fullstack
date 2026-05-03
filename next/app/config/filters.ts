@@ -102,4 +102,11 @@ export const FILTERS: FilterConfig[] = [
     urlParam: "timeSlot",
     beachProp: "timeSlot" as any,
   },
+  {
+    key: "isRegular",
+    type: "boolean",
+    label: "Regular",
+    urlParam: "isRegular",
+    beachProp: "isHiddenGem", // Derived from isHiddenGem: false
+  },
 ];

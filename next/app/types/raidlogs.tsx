@@ -29,8 +29,10 @@ export interface LogEntry {
   isAnonymous: boolean;
   waveType: string | null;
   imageUrl: string | null;
+  imageUrls?: string[];
   videoUrl: string | null;
   videoPlatform: VideoPlatform | null;
+  videoUrls?: Array<{ url: string; type: VideoPlatform; thumbnail?: string }>;
   userId: string | null;
   beachName: string;
   region: {

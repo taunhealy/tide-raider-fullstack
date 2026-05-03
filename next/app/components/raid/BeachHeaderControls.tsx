@@ -12,7 +12,7 @@ import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
-import { HiddenGemsButton, LoggersButton, FoilingButton } from "@/app/components/ui/GradientButton";
+import { HiddenGemsButton, LoggersButton, FoilingButton, FiltersButton, RegularButton } from "@/app/components/ui/GradientButton";
 import { Filter, Lock } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
@@ -270,82 +270,96 @@ export default function BeachHeaderControls({
                   <div className="h-px bg-black/5 w-full" />
                   
                   {/* Filters Row - Balanced and professional */}
-                  <div className="flex flex-wrap items-center gap-2 px-1">
+                  <div className="flex flex-col gap-3 px-1">
                     {/* Mobile Filter Button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="lg:hidden flex items-center gap-2 bg-white"
-                      onClick={() => setIsFilterOpen(true)}
-                    >
-                      <Filter className="w-4 h-4" />
-                      Filters
-                    </Button>
+                    <div className="lg:hidden">
+                      <FiltersButton
+                        size="sm"
+                        onClick={() => setIsFilterOpen(true)}
+                      >
+                        Filters
+                      </FiltersButton>
+                    </div>
 
-                    <LoggersButton
-                      active={!!filters.isLongboarding}
-                      size="sm"
-                      title="Quickly filter by waves good for long boarding"
-                      onClick={() => {
-                        const newValue = !filters.isLongboarding;
-                        updateFilter("isLongboarding", newValue ? "true" : "");
-                      }}
-                    >
-                      Loggers Only
-                    </LoggersButton>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <RegularButton
+                        active={filters.isRegular === undefined ? (filters.isHiddenGem !== "true") : filters.isRegular === true}
+                        size="sm"
+                        onClick={() => {
+                          const currentActive = filters.isRegular === undefined ? (filters.isHiddenGem !== "true") : filters.isRegular === true;
+                          updateFilter("isRegular", !currentActive ? "true" : "false");
+                        }}
+                      >
+                        Regular
+                      </RegularButton>
 
-                    <FoilingButton
-                      active={!!filters.isFoiling}
-                      size="sm"
-                      onClick={() => {
-                        const newValue = !filters.isFoiling;
-                        updateFilter("isFoiling", newValue ? "true" : "");
-                      }}
-                    >
-                      Foiling Only
-                    </FoilingButton>
+                      <LoggersButton
+                        active={!!filters.isLongboarding}
+                        size="sm"
+                        title="Quickly filter by waves good for long boarding"
+                        onClick={() => {
+                          const newValue = !filters.isLongboarding;
+                          updateFilter("isLongboarding", newValue ? "true" : "");
+                        }}
+                      >
+                        Logging
+                      </LoggersButton>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className={cn("flex", (!isAuthenticated || !isSubscribed) && "cursor-not-allowed")}>
-                          <HiddenGemsButton
-                            active={!!filters.isHiddenGem}
-                            size="sm"
-                            disabled={!isAuthenticated || !isSubscribed}
-                            onClick={() => {
-                              const newValue = !filters.isHiddenGem;
-                              updateFilter("isHiddenGem", newValue ? "true" : "");
-                            }}
-                            className={cn(
-                              (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale pointer-events-none"
-                            )}
-                          >
-                            Hidden Gems
-                            {hiddenGemCount > 0 && (
-                              <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-brand-3 text-white text-[10px] font-black border border-white/20 shadow-sm">
-                                {hiddenGemCount}
-                              </span>
-                            )}
-                            {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3" />}
-                          </HiddenGemsButton>
-                        </div>
-                      </TooltipTrigger>
-                      {(!isAuthenticated || !isSubscribed) && (
-                        <TooltipContent side="top" className="bg-black text-white border-white/10 p-3">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-bold text-[11px] uppercase tracking-wider">Subscription Access Required</span>
-                            <p className="text-[10px] text-gray-400">Hidden Gems are reserved for subscribers.</p>
-                            <Link 
-                              href="/pricing" 
-                              className="text-[10px] text-brand-3 font-black uppercase tracking-widest mt-1 hover:underline flex items-center gap-1"
+                      <FoilingButton
+                        active={!!filters.isFoiling}
+                        size="sm"
+                        onClick={() => {
+                          const newValue = !filters.isFoiling;
+                          updateFilter("isFoiling", newValue ? "true" : "");
+                        }}
+                      >
+                        Foiling
+                      </FoilingButton>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={cn("flex", (!isAuthenticated || !isSubscribed) && "cursor-not-allowed")}>
+                            <HiddenGemsButton
+                              active={filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === true}
+                              size="sm"
+                              disabled={!isAuthenticated || !isSubscribed}
+                              onClick={() => {
+                                const currentActive = filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === true;
+                                updateFilter("isHiddenGem", !currentActive ? "true" : "false");
+                              }}
+                              className={cn(
+                                (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale pointer-events-none"
+                              )}
                             >
-                              Subscribe to unlock
-                              <div className="w-1 h-1 rounded-full bg-brand-3 animate-pulse" />
-                            </Link>
+                              Hidden Gems
+                              {hiddenGemCount > 0 && (
+                                <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-white/20 text-white text-[10px] font-black border border-white/20 shadow-sm">
+                                  {hiddenGemCount}
+                                </span>
+                              )}
+                              {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3" />}
+                            </HiddenGemsButton>
                           </div>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
+                        </TooltipTrigger>
+                        {(!isAuthenticated || !isSubscribed) && (
+                          <TooltipContent side="top" className="bg-black text-white border-white/10 p-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-bold text-[11px] uppercase tracking-wider">Subscription Access Required</span>
+                              <p className="text-[10px] text-gray-400">Hidden Gems are reserved for subscribers.</p>
+                              <Link 
+                                href="/pricing" 
+                                className="text-[10px] text-brand-3 font-black uppercase tracking-widest mt-1 hover:underline flex items-center gap-1"
+                              >
+                                Subscribe to unlock
+                                <div className="w-1 h-1 rounded-full bg-brand-3 animate-pulse" />
+                              </Link>
+                            </div>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </div>
                   </div>
 
                   {isMounted && (

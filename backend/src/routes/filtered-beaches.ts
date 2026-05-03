@@ -148,30 +148,40 @@ router.get(
         }),
       };
 
-      // Add isHiddenGem filter logic:
-      // 1. If explicit isHiddenGem=true requested, filter for them (requires subscription to see list)
-      // 2. If searchQuery is present, INCLUDE hidden gems in results (they will be gated below)
-      // 3. Otherwise, exclude hidden gems by default from the general list
-      if (req.query.isHiddenGem === "true") {
-        if ((req as any).user?.isSubscribed) {
-          whereClause.isHiddenGem = true;
-        } else {
-          // User requested hidden gems list but is not subscribed - return 0 results
-          whereClause.id = "force-zero-results"; 
+      // Add independent filters for Hidden Gems and Regular breaks
+      const isSubscribed = (req as any).user?.isSubscribed;
+      const showHiddenGems = req.query.isHiddenGem === "true" || (!req.query.isHiddenGem && isSubscribed);
+      const showRegular = req.query.isRegular === "true" || (!req.query.isRegular && !req.query.isHiddenGem);
+
+      const typeFilters: Prisma.BeachWhereInput[] = [];
+
+      if (showHiddenGems) {
+        if (isSubscribed) {
+          typeFilters.push({ isHiddenGem: true });
+        } else if (req.query.isHiddenGem === "true") {
+          // Non-subscriber explicitly requested gems - force 0 results
+          whereClause.id = "force-zero-results";
         }
-      } else if (!searchQuery && !(req as any).user?.isSubscribed) {
-        // No search query and user is not subscribed: exclude hidden gems from the general list
-        whereClause.AND = [
-          {
-            OR: [
-              { isHiddenGem: false },
-              { isHiddenGem: null }
-            ]
-          }
-        ];
       }
-      // If user is subscribed OR if there is a search query, hidden gems are included in the results.
-      // (Non-subscribers will have the data gated in the mapping logic below)
+
+      if (showRegular) {
+        typeFilters.push({ 
+          OR: [
+            { isHiddenGem: false },
+            { isHiddenGem: null }
+          ]
+        });
+      }
+
+      if (typeFilters.length > 0) {
+        whereClause.AND = [
+          ...(whereClause.AND as any[] || []),
+          { OR: typeFilters }
+        ];
+      } else {
+        // Neither selected - return 0 results
+        whereClause.id = "force-zero-results";
+      }
 
       // Add isLongboarding filter if specified
       if (req.query.isLongboarding === "true") {

@@ -21,7 +21,7 @@ export default function RecentRaidLogs() {
   const { data, isLoading } = useQuery({
     queryKey: ["recentRaidLogs"],
     queryFn: async () => {
-      return api.getRaidLogs({ limit: 4, page: 1 }); // Fetch one more for the list
+      return api.getRaidLogs({ limit: 6, page: 1 }); // Fetch 6 for grid layout
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
@@ -30,8 +30,13 @@ export default function RecentRaidLogs() {
   const { data: session } = useBackendAuth();
   const { data: subscriptionDetails } = useSubscriptionDetails();
   
-  const isSubscribed = subscriptionDetails?.status === SubscriptionStatus.ACTIVE;
-  const hasAccess = isSubscribed || subscriptionDetails?.hasActiveTrial;
+  const isSubscribed = 
+    subscriptionDetails?.status === SubscriptionStatus.ACTIVE || 
+    session?.user?.isSubscribed;
+  const hasAccess = 
+    isSubscribed || 
+    subscriptionDetails?.hasActiveTrial || 
+    session?.user?.hasActiveTrial;
 
   if (isLoading) {
     return (
@@ -70,8 +75,8 @@ export default function RecentRaidLogs() {
       </div>
 
       <div className="space-y-4 px-1">
-        <div className="space-y-5">
-          {recentEntries.slice(0, 3).map((entry) => {
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-5">
+          {recentEntries.slice(0, 6).map((entry) => {
             const isOwner = session?.user?.id === entry.userId;
             const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
             const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
@@ -85,6 +90,20 @@ export default function RecentRaidLogs() {
                 <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
                   {entry.imageUrl ? (
                     <Image src={entry.imageUrl} alt="" fill className="object-cover" />
+                  ) : entry.videoUrl ? (
+                    <Image 
+                      src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform as any)} 
+                      alt="" 
+                      fill 
+                      className="object-cover" 
+                    />
+                  ) : entry.videoUrls?.[0] ? (
+                    <Image 
+                      src={entry.videoUrls[0].thumbnail || getVideoThumbnail(entry.videoUrls[0].url, entry.videoUrls[0].type)} 
+                      alt="" 
+                      fill 
+                      className="object-cover" 
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
                       <MapPin className="w-4 h-4" />

@@ -47,34 +47,36 @@ export const useBeachFilters = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const filters = {
-    // Handle standard filters
-    ...FILTERS.reduce(
-      (acc, filter) => {
-        const value = searchParams.get(filter.urlParam);
-        if (filter.type === "array") {
-          acc[filter.key] = value?.split(",") || [];
-        } else if (filter.type === "boolean") {
-          acc[filter.key] = value === "true";
-        } else if (filter.type === "number") {
-          acc[filter.key] = value ? Number(value) : 0;
-        } else if (filter.type === "string") {
-          acc[filter.key] = value || "";
-        }
-        return acc;
-      },
-      {} as Record<FilterType, any>
-    ),
-    // Handle region-related parameters
-    regionId: searchParams.get("regionId") || null,
-    region: searchParams.get("region") || null,
-    country: searchParams.get("country") || null,
-    continent: searchParams.get("continent") || null,
-    // Handle forecast date
-    forecastDate: searchParams.get("forecastDate") || null,
-    // Handle search query
-    searchQuery: searchParams.get("searchQuery") || null,
-  };
+  const filters = useMemo(() => {
+    return {
+      // Handle standard filters
+      ...FILTERS.reduce(
+        (acc, filter) => {
+          const value = searchParams.get(filter.urlParam);
+          if (filter.type === "array") {
+            acc[filter.key] = value?.split(",") || [];
+          } else if (filter.type === "boolean") {
+            acc[filter.key] = value === "true";
+          } else if (filter.type === "number") {
+            acc[filter.key] = value ? Number(value) : 0;
+          } else if (filter.type === "string") {
+            acc[filter.key] = value || "";
+          }
+          return acc;
+        },
+        {} as Record<FilterType, any>
+      ),
+      // Handle region-related parameters
+      regionId: searchParams.get("regionId") || null,
+      region: searchParams.get("region") || null,
+      country: searchParams.get("country") || null,
+      continent: searchParams.get("continent") || null,
+      // Handle forecast date
+      forecastDate: searchParams.get("forecastDate") || null,
+      // Handle search query
+      searchQuery: searchParams.get("searchQuery") || null,
+    };
+  }, [searchParams]);
 
   const updateFilter = useCallback(
     (filterType: string, value: string | string[]) => {

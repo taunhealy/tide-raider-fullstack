@@ -60,6 +60,13 @@ export function RecentLogsSidebar() {
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+                  ) : (entry as any).videoUrls?.[0] ? (
+                    <Image
+                      src={(entry as any).videoUrls[0].thumbnail || getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
+                      alt={entry.beachName || "Surf session"}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-600">
                       <MapPin className="w-6 h-6" />
@@ -72,7 +79,7 @@ export function RecentLogsSidebar() {
                       {entry.beachName}
                     </h4>
                     <div className="flex items-center gap-2">
-                       <BlueStarRating score={entry.surferRating || 0} size={12} />
+                       <BlueStarRating score={entry.surferRating || 0} size={12} outOfFive={true} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] text-slate-400 font-medium">
