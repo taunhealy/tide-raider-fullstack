@@ -34,6 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Session middleware for Passport (persistent store to avoid memory leaks)
 const pgSession = require("connect-pg-simple")(session);
+/*
 app.use(
   session({
     store: new pgSession({
@@ -60,6 +61,7 @@ app.use(
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+*/
 
 // Apply rate limiting
 app.use(rateLimiter);

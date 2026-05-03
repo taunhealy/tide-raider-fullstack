@@ -25,12 +25,14 @@ import paypalRouter from "./paypal";
 import uploadRouter from "./upload";
 import intelligenceRouter from "./intelligence";
 import preferencesRouter from "./preferences";
+import aiChatRouter from "./ai-chat";
 
 const router = Router();
 
 router.use("/upload", uploadRouter);
 router.use("/camping", campingRouter);
 router.use("/preferences", preferencesRouter);
+router.use("/ai-chat", aiChatRouter);
 
 // Mount route handlers
 router.use("/auth", authRouter);

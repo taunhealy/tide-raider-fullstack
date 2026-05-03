@@ -3,9 +3,9 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./sections/Footer";
 import NewsBannerWrapper from "./components/NewsBannerWrapper";
+import AIChatWidget from "./components/AIChatWidget";
 import AppProviders from "./providers/AppProviders";
 import { Metadata } from "next";
-// Removed NextAuth imports - we use backend auth now
 import { AuthCallbackHandler } from "./components/AuthCallbackHandler";
 import { ReferralTracker } from "./components/ReferralTracker";
 import { Suspense } from "react";
@@ -53,13 +53,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // We use backend auth, so no need to fetch session server-side
-  // SessionProvider will handle auth client-side
   const session = null;
-
-  // Don't fetch beaches server-side - causes timeouts on Vercel
-  // Beaches are already fetched client-side via API routes, so this is not needed
-  // Passing empty array - AppProviders will handle client-side fetching
   const beaches: any[] = [];
 
   return (
@@ -69,7 +63,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Force preload critical fonts */}
         <link
           rel="preload"
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
@@ -99,7 +92,6 @@ export default async function RootLayout({
         className="min-h-screen flex flex-col font-primary"
         suppressHydrationWarning
       >
-
         <AuthCallbackHandler />
         <Suspense fallback={null}>
           <ReferralTracker />
@@ -108,6 +100,7 @@ export default async function RootLayout({
           <NewsBannerWrapper />
           <Navbar />
           <main className="flex-grow">{children}</main>
+          <AIChatWidget />
           <Footer />
         </AppProviders>
       </body>

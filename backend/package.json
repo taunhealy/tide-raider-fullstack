@@ -33,6 +33,7 @@
     "@aws-sdk/node-http-handler": "^3.370.0",
     "@aws-sdk/s3-request-presigner": "^3.732.0",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@google/generative-ai": "^0.24.1",
     "@libsql/client": "^0.14.0",
     "@neondatabase/serverless": "^0.10.4",
     "@prisma/client": "^6.2.1",

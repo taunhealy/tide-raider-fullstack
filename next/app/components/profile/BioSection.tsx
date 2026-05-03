@@ -33,26 +33,26 @@ export default function BioSection({
   
   // Use local state to manage input values and avoid cursor jumping issues
   // caused by direct React Query cache updates on every keystroke.
-  const [bio, setBio] = useState(initialBio);
-  const [link, setLink] = useState(initialLink);
-  const [email, setEmail] = useState(initialEmail);
-  const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber);
+  const [bio, setBio] = useState(initialBio || "");
+  const [link, setLink] = useState(initialLink || "");
+  const [email, setEmail] = useState(initialEmail || "");
+  const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber || "");
 
   // Sync local state when initial values change (e.g. after a successful mutation or refetch)
   useEffect(() => {
-    setBio(initialBio);
+    setBio(initialBio || "");
   }, [initialBio]);
 
   useEffect(() => {
-    setLink(initialLink);
+    setLink(initialLink || "");
   }, [initialLink]);
 
   useEffect(() => {
-    setEmail(initialEmail);
+    setEmail(initialEmail || "");
   }, [initialEmail]);
 
   useEffect(() => {
-    setWhatsappNumber(initialWhatsappNumber);
+    setWhatsappNumber(initialWhatsappNumber || "");
   }, [initialWhatsappNumber]);
 
   const updateProfileMutation = useMutation({

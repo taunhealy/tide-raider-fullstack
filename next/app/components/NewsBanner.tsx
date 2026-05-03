@@ -47,15 +47,6 @@ export default function NewsBanner({
         </div>
       </div>
 
-      {/* Right - CTA section - Hidden on mobile */}
-      <div className="hidden md:flex flex-shrink-0 bg-white px-3 sm:px-6 py-[5px] items-center border-l border-[var(--color-bg-tertiary)] rounded-md">
-        <a
-          href="/pricing"
-          className="text-black hover:text-gray-800 transition-colors text-xs sm:text-sm whitespace-nowrap"
-        >
-          {isMember ? "Ahoy!" : "Join now"}
-        </a>
       </div>
-    </div>
   );
 }

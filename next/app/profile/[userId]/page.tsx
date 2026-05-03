@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import UserNotFound from "@/app/components/UserNotFound";
 import BioSection from "@/app/components/profile/BioSection";
 import ProfileHeader from "@/app/components/profile/ProfileHeader";
-import RippleLoader from "@/app/components/ui/RippleLoader";
+import LoadingIndicator from "@/app/components/LoadingIndicator";
 import Image from "next/image";
 import { urlForImage } from "@/app/lib/urlForImage";
 import { groq } from "next-sanity";
@@ -70,8 +70,9 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-160px)] flex items-center justify-center">
-        <RippleLoader isLoading={true} />
+      <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center">
+        <LoadingIndicator />
+        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px] mt-4">Initializing Operator Profile...</p>
       </div>
     );
   }
