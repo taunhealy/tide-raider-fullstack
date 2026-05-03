@@ -36,9 +36,11 @@ export async function GET() {
     // Get auth token from cookies
     const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+    const authToken = cookieStore.get("auth-token")?.value || 
+                      cookieStore.get("next-auth.session-token")?.value ||
+                      cookieStore.get("__Secure-next-auth.session-token")?.value;
 
-    if (!authToken) {
+    if (!authToken && !user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -50,8 +52,9 @@ export async function GET() {
     try {
       userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
-          Cookie: `auth-token=${authToken}`,
+          "Content-Type": "application/json",
+          Authorization: authToken ? `Bearer ${authToken}` : "",
+          Cookie: cookieStore.toString(),
         },
         credentials: "include",
         cache: "no-store",
@@ -94,7 +97,7 @@ export async function GET() {
         `${baseUrl}/api/paypal/subscription-status`,
         {
           headers: {
-            Cookie: `auth-token=${authToken}`,
+            Cookie: cookieStore.toString(),
           },
           cache: "no-store",
         }

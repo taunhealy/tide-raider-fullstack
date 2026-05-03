@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
 import { generateUniqueReferralCode, rewardReferrer } from "../lib/referrals";
 import jwt from "jsonwebtoken";
+import { decode } from "next-auth/jwt";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -64,12 +65,35 @@ export async function authenticateToken(
     };
 
     try {
-      decoded = jwt.verify(token, secret) as {
-        sub?: string;
-        id?: string;
-        email?: string;
-        name?: string;
-      };
+      // 1. Try standard JWT verify (for our custom auth-token)
+      try {
+        decoded = jwt.verify(token, secret) as {
+          sub?: string;
+          id?: string;
+          email?: string;
+          name?: string;
+        };
+      } catch (jwtError) {
+        // 2. If verify fails, try NextAuth decode (for encrypted session tokens)
+        console.log("[auth] jwt.verify failed, attempting NextAuth decode...");
+        try {
+          const nextAuthDecoded = await decode({
+            token,
+            secret,
+          });
+
+          if (nextAuthDecoded) {
+            console.log("[auth] NextAuth decode successful");
+            decoded = nextAuthDecoded as any;
+          } else {
+            console.error("[auth] Both jwt.verify and NextAuth decode failed");
+            throw jwtError;
+          }
+        } catch (decodeError) {
+          console.error("[auth] NextAuth decode error:", decodeError);
+          throw jwtError;
+        }
+      }
 
       userId = decoded.id || decoded.sub;
       if (!userId) {
@@ -230,11 +254,14 @@ export async function optionalAuth(
         process.env.AUTH_SECRET;
       if (secret) {
         try {
-          const decoded = jwt.verify(token, secret) as {
-            sub?: string;
-            id?: string;
-          };
-          const userId = decoded.id || decoded.sub;
+          let decoded: any;
+          try {
+            decoded = jwt.verify(token, secret);
+          } catch (e) {
+            decoded = await decode({ token, secret });
+          }
+
+          const userId = decoded?.id || decoded?.sub;
           if (userId) {
             const user = await prisma.user.findUnique({
               where: { id: userId },

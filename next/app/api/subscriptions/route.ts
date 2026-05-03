@@ -61,9 +61,11 @@ export async function POST(request: Request) {
       // Get auth token from cookies to pass to backend
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-      const authToken = cookieStore.get("auth-token")?.value;
+      const authToken = cookieStore.get("auth-token")?.value || 
+                        cookieStore.get("next-auth.session-token")?.value ||
+                        cookieStore.get("__Secure-next-auth.session-token")?.value;
 
-      if (!authToken) {
+      if (!authToken && !session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
@@ -83,7 +85,8 @@ export async function POST(request: Request) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: authToken ? `Bearer ${authToken}` : "",
+            Cookie: cookieStore.toString(),
           },
           credentials: "include",
           body: JSON.stringify({ promoCode }),
@@ -216,13 +219,16 @@ async function handleCreate(promoCode?: string) {
 
     const BACKEND_URL = getBackendUrl();
 
-    // Get auth token from cookies to pass to backend
     const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth-token")?.value;
+    const authToken = cookieStore.get("auth-token")?.value || 
+                      cookieStore.get("next-auth.session-token")?.value ||
+                      cookieStore.get("__Secure-next-auth.session-token")?.value;
 
     if (!authToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      // If we're authenticated via NextAuth session, we can still try to proceed
+      // by passing the cookies, as the backend middleware supports NextAuth cookies
+      console.log("[subscriptions/handleCreate] No auth-token, relying on session cookies");
     }
 
     // Proxy to backend create-subscription endpoint
@@ -232,7 +238,7 @@ async function handleCreate(promoCode?: string) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+          Authorization: authToken ? `Bearer ${authToken}` : "",
           Cookie: cookieStore.toString(),
         },
         credentials: "include",

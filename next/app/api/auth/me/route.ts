@@ -26,10 +26,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(cached.data);
     }
 
-    // Build cookie header - include auth-token if present
-    const cookieHeader = authToken
-      ? `auth-token=${authToken}`
-      : cookieStore.toString();
+    // Build cookie header - always include all cookies
+    const cookieHeader = cookieStore.toString();
 
     // Forward request to backend with cookies
     const backendUrl = `${BACKEND_URL}/api/auth/me`;
@@ -80,7 +78,7 @@ export async function PUT(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         ...(authToken && { Authorization: `Bearer ${authToken}` }),
-        Cookie: authToken ? `auth-token=${authToken}` : cookieStore.toString(),
+        Cookie: cookieStore.toString(),
       },
       body: JSON.stringify(body),
     });
