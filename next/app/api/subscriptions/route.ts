@@ -7,15 +7,22 @@ import { SubscriptionStatus } from "@/app/types/subscription";
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
+  // Get auth token from cookies as fallback authentication
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get("auth-token")?.value || 
+                    cookieStore.get("next-auth.session-token")?.value ||
+                    cookieStore.get("__Secure-next-auth.session-token")?.value;
+
   // Get the base URL from environment variable, fallback to a default
   const baseUrl =
     process.env.NEXTAUTH_URL ||
     process.env.NEXT_PUBLIC_BASE_URL ||
     "http://localhost:3000";
 
-  // If no session, redirect to login
-  if (!session?.user?.email) {
-    return NextResponse.redirect(`${baseUrl}/login`);
+  // If no session and no auth-token, redirect to login
+  if (!session?.user?.email && !authToken) {
+    return NextResponse.redirect(`${baseUrl}/auth/signin`);
   }
 
   // Add status parameter to indicate cancelled payment
@@ -28,7 +35,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
+  
+  // Get auth token from cookies as fallback authentication
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const authToken = cookieStore.get("auth-token")?.value || 
+                    cookieStore.get("next-auth.session-token")?.value ||
+                    cookieStore.get("__Secure-next-auth.session-token")?.value;
+
+  if (!session?.user?.email && !authToken) {
+    console.log("[subscriptions] Unauthorized: No session and no auth-token found");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -58,16 +74,7 @@ export async function POST(request: Request) {
 
       const BACKEND_URL = getBackendUrl();
 
-      // Get auth token from cookies to pass to backend
-      const { cookies } = await import("next/headers");
-      const cookieStore = await cookies();
-      const authToken = cookieStore.get("auth-token")?.value || 
-                        cookieStore.get("next-auth.session-token")?.value ||
-                        cookieStore.get("__Secure-next-auth.session-token")?.value;
-
-      if (!authToken && !session?.user?.email) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      // No need to re-fetch cookies, they are available at the top of the function
 
       // Proxy to backend start-trial endpoint
       // If promoCode is provided, use the specialized activation endpoint
@@ -171,6 +178,9 @@ export async function POST(request: Request) {
         return handleCreate(promoCode);
       case "unsubscribe":
       case "cancel":
+        if (!session?.user?.email) {
+          return NextResponse.json({ error: "Email session required for this action" }, { status: 400 });
+        }
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
           select: { paypalSubscriptionId: true },
@@ -182,8 +192,14 @@ export async function POST(request: Request) {
           baseUrl
         );
       case "suspend":
+        if (!session?.user?.email) {
+          return NextResponse.json({ error: "Email session required for this action" }, { status: 400 });
+        }
         return handleSuspend(session.user.email, access_token, baseUrl);
       case "activate":
+        if (!session?.user?.email) {
+          return NextResponse.json({ error: "Email session required for this action" }, { status: 400 });
+        }
         return handleActivate(session.user.email, access_token, baseUrl);
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -219,17 +235,14 @@ async function handleCreate(promoCode?: string) {
 
     const BACKEND_URL = getBackendUrl();
 
+    // authToken and cookieStore are passed from the caller or retrieved here if needed
+    // But handleCreate is called from POST which already has them.
+    // However, since handleCreate is defined outside POST, we need to pass them or re-retrieve.
     const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
     const authToken = cookieStore.get("auth-token")?.value || 
                       cookieStore.get("next-auth.session-token")?.value ||
                       cookieStore.get("__Secure-next-auth.session-token")?.value;
-
-    if (!authToken) {
-      // If we're authenticated via NextAuth session, we can still try to proceed
-      // by passing the cookies, as the backend middleware supports NextAuth cookies
-      console.log("[subscriptions/handleCreate] No auth-token, relying on session cookies");
-    }
 
     // Proxy to backend create-subscription endpoint
     const response = await fetch(
