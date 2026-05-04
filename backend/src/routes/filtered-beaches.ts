@@ -149,14 +149,18 @@ router.get(
       };
 
       // Add independent filters for Hidden Gems and Regular breaks
-      const isSubscribed = (req as any).user?.isSubscribed;
-      const showHiddenGems = req.query.isHiddenGem === "true" || (!req.query.isHiddenGem && isSubscribed);
+      const user = (req as any).user;
+      const isSubscribed = user?.isSubscribed;
+      const hasActiveTrial = user?.hasActiveTrial;
+      const isPremium = isSubscribed || hasActiveTrial;
+      
+      const showHiddenGems = req.query.isHiddenGem === "true" || (!req.query.isHiddenGem && isPremium);
       const showRegular = req.query.isRegular === "true" || (!req.query.isRegular && !req.query.isHiddenGem);
 
       const typeFilters: Prisma.BeachWhereInput[] = [];
 
       if (showHiddenGems) {
-        if (isSubscribed) {
+        if (isPremium) {
           typeFilters.push({ isHiddenGem: true });
         } else if (req.query.isHiddenGem === "true") {
           // Non-subscriber explicitly requested gems - force 0 results

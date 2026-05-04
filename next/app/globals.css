@@ -25,11 +25,25 @@
   :root {
     /* Typography Variables */
     --font-family-base: "Inter", sans-serif;
-    --font-size-xs: 12px; /* Small labels, footnotes */
-    --font-size-sm: 14px; /* Body text, table content */
-    --font-size-base: 16px; /* Default paragraph text */
-    --font-size-lg: 20px; /* Headings (H3/H4), card titles */
-    --font-size-xl: 32px; /* Main headings (H1) */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 20px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 48px;
+    --font-size-4xl: 64px;
+    --font-size-5xl: 80px;
+
+    /* Base-20 Spacing Scale */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 20px;
+    --spacing-lg: 40px;
+    --spacing-xl: 60px;
+    --spacing-2xl: 80px;
+    --spacing-3xl: 100px;
+    --spacing-4xl: 120px;
     --line-height-tight: 1.2; /* Compact text, headings */
     --line-height-normal: 1.5; /* Body text readability */
     --font-weight-light: 300; /* Subtle emphasis */
@@ -112,27 +126,27 @@
 
   /* Updated to use variables */
   .heading-1 {
-    @apply font-[var(--font-montserrat)] uppercase text-[320px] leading-[var(--line-height-tight)] text-black;
+    @apply font-[var(--font-montserrat)] uppercase text-[var(--font-size-5xl)] leading-[var(--line-height-tight)] text-black;
     font-weight: var(--font-weight-heading);
   }
 
   .heading-2 {
-    @apply font-[var(--font-family-base)] text-[81px] leading-[var(--line-height-tight)];
+    @apply font-[var(--font-family-base)] text-[var(--font-size-4xl)] leading-[var(--line-height-tight)];
     font-weight: var(--font-weight-heading);
   }
 
   .heading-3 {
-    @apply font-[var(--font-family-base)] text-[54px] leading-[var(--line-height-tight)] font-bold;
+    @apply font-[var(--font-family-base)] text-[var(--font-size-3xl)] leading-[var(--line-height-tight)] font-bold;
     font-weight: var(--font-weight-heading);
   }
 
   .heading-4 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-xl)] leading-[var(--line-height-tight)];
+    @apply font-[var(--font-family-base)] text-[var(--font-size-2xl)] leading-[var(--line-height-tight)];
     font-weight: var(--font-weight-heading);
   }
 
   .heading-5 {
-    @apply font-[var(--font-family-base)] text-[var(--font-size-lg)] leading-[var(--line-height-tight)];
+    @apply font-[var(--font-family-base)] text-[var(--font-size-xl)] leading-[var(--line-height-tight)];
     font-weight: var(--font-weight-heading);
   }
 

@@ -123,9 +123,15 @@ export default function GlobalMapPage() {
     async function fetchData() {
       setLoading(true);
       try {
+      try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
         const res = await fetch(`/api/map-data?${sourceParam}${timeSlotParam}`);
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch: ${res.status}`);
+        }
+        
         const data = await res.json();
         if (data.beaches) {
           setBeaches(data.beaches);
@@ -264,7 +270,10 @@ export default function GlobalMapPage() {
                         {["Western Cape", "Eastern Cape", "KwaZulu-Natal"].map(region => (
                           <button 
                             key={region}
-                            onClick={() => setSearchQuery(region)}
+                            onClick={() => {
+                              setSearchQuery(region);
+                              updateFilter("regionId", region.toLowerCase().replace(/\s+/g, "-"));
+                            }}
                             className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-[11px] font-bold text-gray-600 transition-all"
                           >
                             {region}

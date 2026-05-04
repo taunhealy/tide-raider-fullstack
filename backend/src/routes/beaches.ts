@@ -155,8 +155,12 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
       const { conditionProfiles, ...beachData } = beach as any;
       const profile = conditionProfiles?.[0] || {};
       
-      const isSubscriber = (req as any).user?.isSubscribed;
-      const isGated = beach.isHiddenGem && !isSubscriber;
+      const user = (req as any).user;
+      const isSubscribed = user?.isSubscribed;
+      const hasActiveTrial = user?.hasActiveTrial;
+      const isPremium = isSubscribed || hasActiveTrial;
+      
+      const isGated = beach.isHiddenGem && !isPremium;
 
       return {
         ...beachData,
@@ -278,8 +282,12 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
     const { conditionProfiles, ...beachData } = beach as any;
     const profile = conditionProfiles?.[0] || {};
     
-    const isSubscriber = (req as any).user?.isSubscribed;
-    const isGated = beach.isHiddenGem && !isSubscriber;
+    const user = (req as any).user;
+    const isSubscribed = user?.isSubscribed;
+    const hasActiveTrial = user?.hasActiveTrial;
+    const isPremium = isSubscribed || hasActiveTrial;
+    
+    const isGated = beach.isHiddenGem && !isPremium;
 
     const mappedBeach = {
       ...beachData,

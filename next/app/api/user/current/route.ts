@@ -15,7 +15,7 @@ const getBackendUrl = () => {
   }
 
   // In production, use production backend (Google Cloud Run)
-  return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
+  return envUrl || "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
 };
 
 const BACKEND_URL = getBackendUrl();
@@ -112,14 +112,25 @@ export async function GET() {
     }
 
     // Extract subscription status - prioritize backend subscriptionStatus from /api/auth/me
-    const subscriptionStatus =
+    let subscriptionStatus =
       userData.user?.subscriptionStatus ||
       subscriptionData?.subscriptionStatus ||
       (userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE");
+    
     const paypalSubscriptionId =
       subscriptionData?.paypalSubscriptionId || null;
+    
+    // Check for trial status from multiple sources
     const hasActiveTrial =
-      subscriptionData?.hasActiveTrial || userData.user?.hasActiveTrial || false;
+      userData.user?.hasActiveTrial || 
+      subscriptionData?.hasActiveTrial || 
+      subscriptionStatus === "TRIAL" ||
+      false;
+
+    // If hasActiveTrial is true but status is not TRIAL or ACTIVE, set to TRIAL
+    if (hasActiveTrial && subscriptionStatus !== "ACTIVE") {
+      subscriptionStatus = "TRIAL";
+    }
 
     // Extract subscription-related fields from user object
     return NextResponse.json({

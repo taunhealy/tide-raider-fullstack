@@ -729,6 +729,7 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         image: user.image,
         isSubscribed,
         hasActiveTrial,
+        subscriptionStatus: user.subscriptionStatus,
         trialEndDate: user.trialEndDate,
         referralCode: user.referralCode,
         credits: user.credits,

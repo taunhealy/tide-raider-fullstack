@@ -93,38 +93,67 @@ export default function PricingPage() {
   }, []);
 
   const handleSubscribeWithLoading = async () => {
+    if (loadingStates.subscribe) return;
+    
     setLoadingStates((prev) => ({ ...prev, subscribe: true }));
     try {
-      if (!subscriptionDetails?.hasTrialEnded && !subscriptionDetails?.hasActiveTrial) {
+      // If user is eligible for trial
+      if (!subscriptionDetails?.hasTrialEnded && !subscriptionDetails?.hasActiveTrial && subscriptionDetails?.status !== SubscriptionStatus.ACTIVE) {
+        console.log("[Pricing] Starting free trial...");
+        
         const response = await fetch("/api/subscriptions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "start-trial", promoCode }),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || errorData.error || "Failed to start trial");
+        }
+        
+        const data = await response.json();
+        console.log("[Pricing] Trial started successfully:", data);
+        
+        toast.success("Welcome to Premium!", {
+          description: "Your 20-day free trial has been activated."
+        });
+
+        // Trigger global refreshes
+        window.dispatchEvent(new Event("auth-refresh"));
+        window.dispatchEvent(new Event("subscription-refresh"));
+        
+        // Short delay to let state propagate before reload/redirect
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1500);
+        return;
+      }
+
+      // If not eligible for trial, proceed to PayPal/Checkout
+      console.log("[Pricing] Trial not available, proceeding to checkout...");
+      const response = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", promoCode }),
+      });
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || errorData.error || "Failed to start trial");
+        throw new Error(errorData.message || errorData.error || "Failed to initialize checkout");
       }
-      window.location.reload();
-      return;
-    }
 
-    const response = await fetch("/api/subscriptions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "create", promoCode }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || errorData.error || "Failed to initialize checkout");
-    }
-
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-  } catch (error: any) {
-    console.error("Subscription conversion failed:", error);
-    toast.error("Process Error", { description: error.message || "Failed to initialize secure checkout." });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL received");
+      }
+    } catch (error: any) {
+      console.error("Subscription conversion failed:", error);
+      toast.error("Process Error", { 
+        description: error.message || "Failed to initialize secure checkout." 
+      });
     } finally {
       setLoadingStates((prev) => ({ ...prev, subscribe: false }));
     }

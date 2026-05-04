@@ -270,6 +270,9 @@ router.post("/webhook", async (req: Request, res: Response) => {
           data: { subscriptionStatus: "CANCELLED" }
         });
 
+        // Enforce free tier limits immediately
+        await AlertService.syncAlertStatus(user.id);
+
         await sendEmail(
           user.email,
           "Subscription Cancelled ⚓",
@@ -374,6 +377,9 @@ router.post("/suspend", authenticateToken, async (req: Request, res: Response) =
             data: { subscriptionStatus: "SUSPENDED" }
         });
 
+        // Enforce free tier limits immediately
+        await AlertService.syncAlertStatus(userId);
+
         res.json({ success: true, message: "Subscription suspended successfully" });
     } catch (error) {
         console.error("[PayPal] Suspend Error:", error);
@@ -408,6 +414,9 @@ router.post("/cancel", authenticateToken, async (req: Request, res: Response) =>
             where: { id: userId },
             data: { subscriptionStatus: "CANCELLED" }
         });
+
+        // Enforce free tier limits immediately
+        await AlertService.syncAlertStatus(userId);
 
         if (user.email) {
             await sendEmail(

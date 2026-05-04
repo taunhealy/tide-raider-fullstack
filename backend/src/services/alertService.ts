@@ -413,11 +413,58 @@ export class AlertService {
   }
 
   /**
-   * Delete alert checks for an alert
+   * Deactivate excess alerts for a user based on their subscription status.
+   * Free tier: 1 alert active.
+   * Premium tier: 10+ alerts active.
    */
-  static async deleteAlertChecks(alertId: string) {
-    await prisma.alertCheck.deleteMany({
-      where: { alertId },
+  static async syncAlertStatus(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { subscriptionStatus: true, hasActiveTrial: true, trialEndDate: true }
     });
+
+    if (!user) return;
+
+    const isTrialActive = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > new Date();
+    const isPremium = user.subscriptionStatus === "ACTIVE" || isTrialActive;
+
+    if (!isPremium) {
+      await this.deactivateExcessAlerts(userId);
+    }
+  }
+
+  /**
+   * Deactivates all alerts except the oldest one for a user.
+   */
+  static async deactivateExcessAlerts(userId: string) {
+    console.log(`[AlertService] Deactivating excess alerts for user: ${userId}`);
+    
+    // Find all alerts for the user, ordered by creation date (oldest first)
+    const alerts = await prisma.alert.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" }
+    });
+
+    if (alerts.length <= 1) {
+      console.log(`[AlertService] User ${userId} has ${alerts.length} alerts. No action needed.`);
+      return;
+    }
+
+    // Keep the first (oldest) alert active if it was active, 
+    // or just ensure only one can be active.
+    // Actually, the requirement says "only have their free one as active".
+    // We'll keep the oldest one and deactivate the rest.
+    const excessAlertIds = alerts.slice(1).map(a => a.id);
+    
+    await prisma.alert.updateMany({
+      where: {
+        id: { in: excessAlertIds }
+      },
+      data: {
+        active: false
+      }
+    });
+
+    console.log(`[AlertService] Deactivated ${excessAlertIds.length} excess alerts for user ${userId}`);
   }
 }

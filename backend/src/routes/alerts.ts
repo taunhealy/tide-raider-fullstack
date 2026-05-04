@@ -415,7 +415,31 @@ router.put(
       const { id: alertId } = req.params;
 
       // Verify ownership
-      await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
+      const alert = await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
+
+      // If trying to activate, check limits
+      if (req.body.active === true && !alert.active) {
+        const user = await prisma.user.findUnique({
+          where: { id: authReq.user.id },
+          select: { subscriptionStatus: true, hasActiveTrial: true }
+        });
+        
+        const isPremium = user?.subscriptionStatus === "ACTIVE" || user?.hasActiveTrial === true;
+        if (!isPremium) {
+          const activeCount = await prisma.alert.count({
+            where: { userId: authReq.user.id, active: true }
+          });
+          
+          if (activeCount >= 1) {
+            return res.status(403).json({
+              error: "Alert limit reached",
+              message: "Free users are limited to 1 active alert. Upgrade to Premium to activate more.",
+              code: "ALERT_LIMIT_REACHED",
+              requiresUpgrade: true
+            });
+          }
+        }
+      }
 
       const updatedAlert = await AlertService.updateAlert(alertId, req.body);
 
@@ -452,7 +476,31 @@ router.patch("/:id", authenticateToken, async (req: Request, res: Response) => {
     const { id: alertId } = req.params;
 
     // Verify ownership
-    await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
+    const alert = await AlertService.verifyAlertOwnership(alertId, authReq.user.id);
+
+    // If trying to activate, check limits
+    if (req.body.active === true && !alert.active) {
+      const user = await prisma.user.findUnique({
+        where: { id: authReq.user.id },
+        select: { subscriptionStatus: true, hasActiveTrial: true }
+      });
+      
+      const isPremium = user?.subscriptionStatus === "ACTIVE" || user?.hasActiveTrial === true;
+      if (!isPremium) {
+        const activeCount = await prisma.alert.count({
+          where: { userId: authReq.user.id, active: true }
+        });
+        
+        if (activeCount >= 1) {
+          return res.status(403).json({
+            error: "Alert limit reached",
+            message: "Free users are limited to 1 active alert. Upgrade to Premium to activate more.",
+            code: "ALERT_LIMIT_REACHED",
+            requiresUpgrade: true
+          });
+        }
+      }
+    }
 
     const updatedAlert = await AlertService.updateAlert(alertId, req.body);
 

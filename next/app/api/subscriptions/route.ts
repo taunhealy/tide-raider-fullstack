@@ -69,7 +69,7 @@ export async function POST(request: Request) {
         }
 
         // In production, use production backend (Google Cloud Run)
-        return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
+        return envUrl || "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
       };
 
       const BACKEND_URL = getBackendUrl();
@@ -230,7 +230,7 @@ async function handleCreate(promoCode?: string) {
       }
 
       // In production, use production backend (Google Cloud Run)
-      return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
+      return envUrl || "https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app";
     };
 
     const BACKEND_URL = getBackendUrl();

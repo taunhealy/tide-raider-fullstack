@@ -656,24 +656,29 @@ export default function DashboardPage() {
                     <div className="flex flex-col sm:flex-row justify-between gap-8 mb-10">
                       <div className="space-y-2">
                         <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border
-                          ${subscriptionData?.status === SubscriptionStatus.ACTIVE 
+                          ${subscriptionData?.status === SubscriptionStatus.ACTIVE || subscriptionData?.status === SubscriptionStatus.TRIAL
                             ? "bg-green-500/10 text-green-600 border-green-500/20" 
                             : subscriptionData?.status === SubscriptionStatus.SUSPENDED
                             ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
                             : "bg-slate-100 text-slate-500 border-slate-200"}`}>
                           ● {subscriptionData?.status === SubscriptionStatus.ACTIVE 
                              ? "Active" 
+                             : subscriptionData?.status === SubscriptionStatus.TRIAL
+                             ? "Active Trial"
                              : subscriptionData?.status === SubscriptionStatus.SUSPENDED 
                              ? "Paused" 
                              : "Standard Plan"}
                         </span>
                         <h3 className="text-3xl font-black text-slate-900 tracking-tight">
                           {subscriptionData?.status === SubscriptionStatus.ACTIVE ? "Premium Member" : 
+                           subscriptionData?.status === SubscriptionStatus.TRIAL ? "Premium Trial" :
                            subscriptionData?.status === SubscriptionStatus.SUSPENDED ? "Paused Premium" : "Free Member"}
                         </h3>
                         <p className="text-sm text-slate-500 font-medium font-primary">
                           {subscriptionData?.status === SubscriptionStatus.ACTIVE 
                             ? "You've got full access to all our surf tools." 
+                            : subscriptionData?.status === SubscriptionStatus.TRIAL
+                            ? "You are currently enjoying full premium access."
                             : subscriptionData?.status === SubscriptionStatus.SUSPENDED
                             ? "Your premium access is currently on standby."
                             : "You're on our basic free plan."}
@@ -700,6 +705,7 @@ export default function DashboardPage() {
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">Membership Perks</h4>
                         <ul className="space-y-3">
                           {(subscriptionData?.status === SubscriptionStatus.ACTIVE || 
+                            subscriptionData?.status === SubscriptionStatus.TRIAL ||
                             subscriptionData?.status === SubscriptionStatus.SUSPENDED 
                               ? MEMBERSHIP_PERKS 
                               : FREE_PERKS).map((feature, i) => (
@@ -718,8 +724,8 @@ export default function DashboardPage() {
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-3">About your plan</h4>
                         <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                           <p className="text-xs text-slate-500 leading-relaxed font-primary">
-                            {subscriptionData?.status === SubscriptionStatus.ACTIVE 
-                              ? "Your Premium membership is active. You can use all our surf forecasting tools, set unlimited alerts, and use your 30 monthly AI credits for strategic intelligence."
+                            {subscriptionData?.status === SubscriptionStatus.ACTIVE || subscriptionData?.status === SubscriptionStatus.TRIAL
+                              ? "Your Premium access is active. You can use all our surf forecasting tools, set unlimited alerts, and use your 30 monthly AI credits for strategic intelligence."
                               : "You're currently using our standard free plan. Upgrade to Premium to unlock automated alerts, hidden surf spots, and monthly AI intelligence credits."}
                           </p>
                         </div>
@@ -727,6 +733,7 @@ export default function DashboardPage() {
                     </div>
 
                     {(subscriptionData?.status === SubscriptionStatus.ACTIVE || 
+                      subscriptionData?.status === SubscriptionStatus.TRIAL ||
                       subscriptionData?.status === SubscriptionStatus.SUSPENDED) && (
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 mb-8 font-primary">
                         <button onClick={handleSyncSubscription} className="flex items-center justify-center gap-2 py-4 rounded-xl hover:bg-white hover:shadow-sm transition-all text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-slate-900 border border-transparent">

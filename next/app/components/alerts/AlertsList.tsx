@@ -99,16 +99,34 @@ export function AlertsList() {
       {/* Democratized: Removed isPremium check and upgrade banner */}
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
-        {validAlerts.map((alert) => (
-          <AlertCard
-            key={alert.id}
-            alert={alert as any}
-            onToggleActive={handleToggleActive}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-[var(--spacing-md)] md:gap-[var(--spacing-lg)]">
+        {validAlerts.map((alert, index) => {
+          // Identify if this alert is "excess" for free tier
+          // Logic: First 1 alert is free, rest are premium.
+          // Note: Alerts are usually sorted by forecastDate desc or createdAt desc in API.
+          // For consistency with backend, we should use oldest-first for the free slot,
+          // but if the list is already sorted by the API, we'll just use the index here
+          // and assume the API gave us the preferred ones first.
+          // Actually, let's just use the index for now.
+          const isExcess = !isPremium && index > 0;
+          
+          return (
+            <AlertCard
+              key={alert.id}
+              alert={alert as any}
+              isLocked={isExcess}
+              onToggleActive={(id, active) => {
+                if (isExcess && active) {
+                  toast.error("Alert limit reached. Upgrade to Premium to activate more missions.");
+                  return;
+                }
+                handleToggleActive(id, active);
+              }}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+            />
+          );
+        })}
       </div>
     </div>
   );
