@@ -5,7 +5,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { USER_AGENTS } from "../proxy/userAgents";
 import { ProxyManager } from "../proxy/proxyManager";
-import { BaseForecastData } from "../types";
+import { BaseForecastData, TimeSlot } from "../types";
 
 const proxyManager = new ProxyManager();
 
@@ -142,7 +142,7 @@ export async function scraperC(
       console.error(`[scraperC] ❌ No forecast data extracted from page`);
       console.error(`[scraperC] 🔍 Received:`, forecastData);
       throw new Error(
-        "Failed to parse Windy.app table or no morning forecast found"
+        "Failed to parse Windy.app table"
       );
     }
 
@@ -152,22 +152,54 @@ export async function scraperC(
     }
 
     console.log(
-      `[scraperC] 🔍 Raw forecast data extracted (${forecastData.length} item(s)):`,
-      JSON.stringify(forecastData, null, 2)
+      `[scraperC] 🔍 Raw hourly forecast data extracted (${forecastData.length} items)`
     );
 
-    // Convert and parse the data for each date
+    // Convert and parse the data for each date/slot
     const forecasts: BaseForecastData[] = [];
 
     for (const data of forecastData) {
-      console.log(`[scraperC] 🔄 Processing forecast data:`, {
-        raw: data,
-        windSpeed: data.windSpeed,
-        windDirection: data.windDirection,
-        swellHeight: data.swellHeight,
-        swellPeriod: data.swellPeriod,
-        swellDirection: data.swellDirection,
-      });
+      const hour = data.hour;
+      let slot: TimeSlot | null = null;
+      
+      // Map hours to slots (consistent with scraperA)
+      if (hour >= 5 && hour <= 9) {
+        slot = TimeSlot.MORNING;
+      } else if (hour >= 11 && hour <= 15) {
+        slot = TimeSlot.NOON;
+      } else if (hour >= 17 && hour <= 21) {
+        slot = TimeSlot.EVENING;
+      }
+
+      if (!slot) continue;
+
+      // Check if we already have a forecast for this date and slot
+      // Windy often provides data every 3 hours (0, 3, 6, 9, 12, 15, 18, 21)
+      const forecastDate = new Date(data.date);
+      forecastDate.setUTCHours(0, 0, 0, 0);
+      
+      const existingIdx = forecasts.findIndex(f => 
+        f.date.getTime() === forecastDate.getTime() && 
+        f.timeSlot === slot
+      );
+
+      if (existingIdx !== -1) {
+        const preferredHours: Record<TimeSlot, number> = {
+          [TimeSlot.MORNING]: 8,
+          [TimeSlot.NOON]: 13,
+          [TimeSlot.EVENING]: 19,
+        };
+        const target = preferredHours[slot];
+        const existingForecast = forecasts[existingIdx] as any;
+        const existingHour = existingForecast.rawHour || 0;
+
+        // If this hour is closer to our target hour for the slot, replace it
+        if (Math.abs(hour - target) < Math.abs(existingHour - target)) {
+          forecasts.splice(existingIdx, 1);
+        } else {
+          continue;
+        }
+      }
 
       const windSpeedMs = msToMs(data.windSpeed || 0);
       const windDirection = parseWindDirection(data.windDirection || 0);
@@ -175,42 +207,23 @@ export async function scraperC(
       const swellPeriod = parseInt(data.swellPeriod) || 0;
       const swellDirection = parseWindDirection(data.swellDirection || 0);
 
-      console.log(`[scraperC] 📊 Parsed values:`, {
-        windSpeedMs,
-        windDirection,
-        swellHeight,
-        swellPeriod,
-        swellDirection,
-      });
-
-      // Use the date from the data (should be an ISO string)
-      // Primary source: ISO date string from data.date
-      let forecastDate = new Date(data.date);
-      // Fallback: if the date is invalid, use current UTC date
-      if (isNaN(forecastDate.getTime())) {
-        console.warn(`[scraperC] ❗ Invalid date '${data.date}' - falling back to today`);
-        forecastDate = new Date();
-      }
-      // Normalize to UTC midnight for DB consistency
-      forecastDate.setUTCHours(0, 0, 0, 0);
-
       const forecast: BaseForecastData = {
         date: forecastDate,
         regionId: region,
+        timeSlot: slot,
         windSpeed: windSpeedMs,
         windDirection: windDirection,
         swellHeight: swellHeight,
         swellPeriod: swellPeriod,
         swellDirection: swellDirection,
       };
+      (forecast as any).rawHour = hour;
 
-      console.log(`[scraperC] ✅ Created forecast object:`, forecast);
       forecasts.push(forecast);
     }
 
     console.log(
-      `[scraperC] ✅ Successfully scraped ${forecasts.length} forecast(s):`,
-      JSON.stringify(forecasts, null, 2)
+      `[scraperC] ✅ Successfully categorized into ${forecasts.length} forecast(s) across slots`
     );
     return forecasts;
   } catch (error) {

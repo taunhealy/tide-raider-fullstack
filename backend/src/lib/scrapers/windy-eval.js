@@ -812,8 +812,8 @@ function extractWindyData() {
     return -1; // Will be calculated from dayIndex
   }
 
-  // Group by date and find the first available time for each day
-  const forecastsByDate = {};
+  // Return all forecasts for all available time columns
+  const result = [];
 
   timeColumns.forEach(function (timeCol) {
     if (timeCol.dayIndex >= 0) {
@@ -827,36 +827,31 @@ function extractWindyData() {
 
       const forecastDate = new Date(today);
       forecastDate.setUTCDate(forecastDate.getUTCDate() + dayOffset);
-      const dateKey = forecastDate.toISOString().split("T")[0];
+      
+      // Use timeCol.index which is the actual column index in the table
+      const colIndex = timeCol.index;
+      const windSpeed = windSpeeds[colIndex] || 0;
+      const windDirection = windDirections[colIndex] || 0;
+      const swellHeight = swellHeights[colIndex] || 0;
+      const swellPeriod = swellPeriods[colIndex] || 0;
+      const swellDirection = swellDirections[colIndex] || 0;
 
-      // Only store one forecast per date (use the first available time found)
-      if (!forecastsByDate[dateKey]) {
-        // Use timeCol.index which is the actual column index in the table
-        const colIndex = timeCol.index;
-        const windSpeed = windSpeeds[colIndex] || 0;
-        const windDirection = windDirections[colIndex] || 0;
-        const swellHeight = swellHeights[colIndex] || 0;
-        const swellPeriod = swellPeriods[colIndex] || 0;
-        const swellDirection = swellDirections[colIndex] || 0;
-
-        forecastsByDate[dateKey] = {
-          date: forecastDate.toISOString(), // Convert to ISO string for serialization
-          hour: timeCol.hour,
-          windSpeed: windSpeed,
-          windDirection: windDirection,
-          swellHeight: swellHeight,
-          swellPeriod: swellPeriod,
-          swellDirection: swellDirection,
-        };
-      }
+      result.push({
+        date: forecastDate.toISOString(), // Convert to ISO string for serialization
+        hour: timeCol.hour,
+        windSpeed: windSpeed,
+        windDirection: windDirection,
+        swellHeight: swellHeight,
+        swellPeriod: swellPeriod,
+        swellDirection: swellDirection,
+      });
     }
   });
 
-  const result = Object.values(forecastsByDate);
   console.log(
     "[scraperC] [page.evaluate] ✅ Extracted " +
       result.length +
-      " forecast(s) (first available time for each day)"
+      " hourly forecast(s)"
   );
   
   // Return debug info if no forecasts found
@@ -864,7 +859,6 @@ function extractWindyData() {
     const debugInfo = {
       foundDays: dayMapping.length,
       foundTimeColumns: timeColumns.length,
-      timeColumnsWithHours: timeColumns.filter(function(tc) { return tc.hour >= 5 && tc.hour <= 11; }).length,
       windDirectionsCount: windDirections.length,
       windSpeedsCount: windSpeeds.length,
       sampleTimeColumns: timeColumns.slice(0, 10),
