@@ -31,7 +31,7 @@ export const getBackendUrl = (): string => {
     if (envUrl?.includes("localhost")) {
       return envUrl.replace("localhost", "127.0.0.1");
     }
-    return envUrl || "http://127.0.0.1:4005";
+    return envUrl || "http://127.0.0.1:4050";
   }
 
   // In production, always use Cloud Run backend (never localhost)

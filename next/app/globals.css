@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,7 +26,9 @@
 @layer base {
   :root {
     /* Typography Variables */
-    --font-family-base: "Inter", sans-serif;
+    --font-inter: "Inter", sans-serif;
+    --font-secondary: "Montserrat", sans-serif;
+    --font-family-base: var(--font-inter);
     --font-size-xs: 12px;
     --font-size-sm: 14px;
     --font-size-base: 16px;
@@ -57,8 +61,7 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Elevated elements like sidebars */
 
     /* Existing Font Variables */
-    --font-montserrat: "Montserrat", system-ui, -apple-system,
-      BlinkMacSystemFont, sans-serif;
+    --font-montserrat: var(--font-secondary);
 
     /* Brand Colors */
     --color-primary: #000000;

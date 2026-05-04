@@ -56,6 +56,7 @@ export default function SearchBar({
       className={className}
       showSelectedBadge={true}
       minSearchLength={2}
+      regionId={filters.regionId}
     />
   );
 }

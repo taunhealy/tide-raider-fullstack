@@ -45,7 +45,6 @@ export async function GET(request: Request) {
         isHiddenGem: true,
         isLongboarding: true,
         isFoiling: true,
-        rating: true,
         region: {
           select: {
             name: true

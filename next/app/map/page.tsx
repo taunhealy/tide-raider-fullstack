@@ -123,7 +123,6 @@ export default function GlobalMapPage() {
     async function fetchData() {
       setLoading(true);
       try {
-      try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
         const res = await fetch(`/api/map-data?${sourceParam}${timeSlotParam}`);
@@ -147,8 +146,15 @@ export default function GlobalMapPage() {
 
   const filteredBeaches = useMemo(() => {
     return beaches.filter(Boolean).filter(beach => {
-      const matchesSearch = beach.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      // Respect both search query and regionId filter
+      const matchesSearch = !searchQuery || 
+                           beach.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            beach.region.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesRegion = !filters.regionId || 
+                           beach.regionId?.toLowerCase() === filters.regionId.toLowerCase() ||
+                           beach.region?.toLowerCase() === filters.regionId.toLowerCase().replace(/-/g, " ");
+
       const matchesDifficulty = selectedDifficulty.length === 0 || selectedDifficulty.includes(beach.difficulty);
       
       const currentRating = (beach as any).dailyScores?.[selectedDateString]?.rating ?? beach.rating;
@@ -162,9 +168,9 @@ export default function GlobalMapPage() {
       const matchesFoiling = !isFoilingOnly || isFoiler;
       const matchesHiddenGems = !isHiddenGemsOnly || isGem;
       
-      return matchesSearch && matchesDifficulty && matchesRating && matchesLoggers && matchesFoiling && matchesHiddenGems;
+      return matchesSearch && matchesRegion && matchesDifficulty && matchesRating && matchesLoggers && matchesFoiling && matchesHiddenGems;
     });
-  }, [beaches, searchQuery, selectedDifficulty, minRating, selectedDateString, isLoggersOnly, isFoilingOnly, isHiddenGemsOnly]);
+  }, [beaches, searchQuery, filters.regionId, selectedDifficulty, minRating, selectedDateString, isLoggersOnly, isFoilingOnly, isHiddenGemsOnly]);
 
   const toggleDifficulty = (d: string) => {
     setSelectedDifficulty(prev => 
@@ -309,7 +315,13 @@ export default function GlobalMapPage() {
               {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || isHiddenGemsOnly) && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery("")} className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-800 transition-all">
+                    <button 
+                      onClick={() => {
+                        setSearchQuery("");
+                        updateFilter("regionId", "");
+                      }} 
+                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-800 transition-all"
+                    >
                       {searchQuery} <X className="w-2 h-2" />
                     </button>
                   )}
@@ -341,6 +353,7 @@ export default function GlobalMapPage() {
                   <button 
                     onClick={() => {
                       setSearchQuery("");
+                      updateFilter("regionId", "");
                       setMinRating(0);
                       setSelectedDifficulty([]);
                       setIsLoggersOnly(false);

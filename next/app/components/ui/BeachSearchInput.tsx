@@ -18,6 +18,7 @@ interface BeachSearchInputProps {
   className?: string;
   showSelectedBadge?: boolean;
   minSearchLength?: number;
+  regionId?: string | null;
 }
 
 export function BeachSearchInput({
@@ -28,6 +29,7 @@ export function BeachSearchInput({
   className,
   showSelectedBadge = true,
   minSearchLength = 2,
+  regionId,
 }: BeachSearchInputProps) {
   const [searchTerm, setSearchTerm] = useState(controlledValue || "");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -55,14 +57,18 @@ export function BeachSearchInput({
 
   // Fetch beaches based on debounced search
   const { data: beaches, isLoading } = useQuery({
-    queryKey: ["beaches-search", debouncedSearch],
+    queryKey: ["beaches-search", debouncedSearch, regionId],
     queryFn: async () => {
       if (!debouncedSearch || debouncedSearch.length < minSearchLength) {
         return [];
       }
-      const response = await fetch(
-        `/api/beaches/search?term=${encodeURIComponent(debouncedSearch)}`
-      );
+      const url = new URL("/api/beaches/search", window.location.origin);
+      url.searchParams.set("term", debouncedSearch);
+      if (regionId) {
+        url.searchParams.set("regionId", regionId);
+      }
+
+      const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error("Failed to fetch beaches");
       }

@@ -123,13 +123,22 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
 
     // Use raw SQL for space-agnostic matching (e.g. "Innerkom" matches "Inner Kom")
     // We fetch IDs first, then use Prisma for the full include/relation logic
-    const matchingBeaches = await prisma.$queryRaw<any[]>`
-      SELECT id FROM "Beach"
-      WHERE REPLACE(name, ' ', '') ILIKE ${'%' + termWithoutSpaces + '%'}
-      OR name ILIKE ${'%' + sanitizedTerm + '%'}
-      OR location ILIKE ${'%' + sanitizedTerm + '%'}
-      LIMIT 20
-    `;
+    const matchingBeaches = regionId 
+      ? await prisma.$queryRaw<any[]>`
+          SELECT id FROM "Beach"
+          WHERE (REPLACE(name, ' ', '') ILIKE ${'%' + termWithoutSpaces + '%'}
+          OR name ILIKE ${'%' + sanitizedTerm + '%'}
+          OR location ILIKE ${'%' + sanitizedTerm + '%'})
+          AND "regionId" = ${regionId}
+          LIMIT 20
+        `
+      : await prisma.$queryRaw<any[]>`
+          SELECT id FROM "Beach"
+          WHERE REPLACE(name, ' ', '') ILIKE ${'%' + termWithoutSpaces + '%'}
+          OR name ILIKE ${'%' + sanitizedTerm + '%'}
+          OR location ILIKE ${'%' + sanitizedTerm + '%'}
+          LIMIT 20
+        `;
 
     const matchingIds = matchingBeaches.map(b => b.id);
 

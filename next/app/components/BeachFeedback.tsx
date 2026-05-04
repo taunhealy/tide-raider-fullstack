@@ -4,10 +4,7 @@ import { useState } from "react";
 import { Beach } from "@/app/types/beaches";
 import { Button } from "@/app/components/ui/Button";
 import { cn } from "@/app/lib/utils";
-import { Inter } from "next/font/google";
 import { Check, Calendar, Search, ChevronDown } from "lucide-react";
-
-const inter = Inter({ subsets: ["latin"] });
 
 interface FeedbackProps {
   beaches: Beach[];
@@ -108,8 +105,7 @@ export default function Feedback({ beaches }: FeedbackProps) {
             <div className="space-y-2">
               <label
                 className={cn(
-                  "block text-[14px] font-medium text-[var(--color-text-secondary)]",
-                  inter.className
+                  "block text-[14px] font-medium text-[var(--color-text-secondary)]"
                 )}
               >
                 Date
@@ -134,8 +130,7 @@ export default function Feedback({ beaches }: FeedbackProps) {
             <div className="space-y-2 relative">
               <label
                 className={cn(
-                  "block text-[14px] font-medium text-[var(--color-text-secondary)]",
-                  inter.className
+                  "block text-[16px] font-medium text-[var(--color-text-secondary)] mb-2"
                 )}
               >
                 Beach
@@ -194,8 +189,7 @@ export default function Feedback({ beaches }: FeedbackProps) {
             <div className="space-y-2">
               <label
                 className={cn(
-                  "block text-[16px] font-medium text-[var(--color-text-secondary)] mb-2",
-                  inter.className
+                  "block text-[16px] font-medium text-[var(--color-text-secondary)] mb-2"
                 )}
               >
                 Inaccurate Conditions
@@ -234,8 +228,7 @@ export default function Feedback({ beaches }: FeedbackProps) {
                     </div>
                     <span
                       className={cn(
-                        "text-[14px] text-[var(--color-text-primary)]",
-                        inter.className
+                        "text-[14px] text-[var(--color-text-primary)]"
                       )}
                     >
                       {condition.title}
@@ -249,8 +242,7 @@ export default function Feedback({ beaches }: FeedbackProps) {
             <div className="space-y-2">
               <label
                 className={cn(
-                  "block text-[16px] font-medium text-[var(--color-text-secondary)] mb-2",
-                  inter.className
+                  "block text-[16px] font-medium text-[var(--color-text-secondary)] mb-2"
                 )}
               >
                 Improvements

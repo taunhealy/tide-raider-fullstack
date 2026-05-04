@@ -2,12 +2,17 @@ import { client } from "@/app/lib/sanity";
 import NewsBanner from "./NewsBanner";
 
 async function getBlogPosts() {
-  return await client.fetch(`
-    *[_type == "post"] | order(publishedAt desc)[0...10] {
-      title,
-      slug,
-    }
-  `);
+  try {
+    return await client.fetch(`
+      *[_type == "post"] | order(publishedAt desc)[0...10] {
+        title,
+        slug,
+      }
+    `);
+  } catch (error) {
+    console.error("[NewsBannerWrapper] Failed to fetch blog posts:", error);
+    return [];
+  }
 }
 
 export default async function NewsBannerWrapper() {

@@ -1,34 +1,13 @@
-import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/Navbar";
-import Footer from "./sections/Footer";
-import NewsBannerWrapper from "./components/NewsBannerWrapper";
-import AIChatWidget from "./components/AIChatWidget";
-import AppProviders from "./providers/AppProviders";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/sections/Footer";
+import NewsBannerWrapper from "@/app/components/NewsBannerWrapper";
+import AIChatWidget from "@/app/components/AIChatWidget";
+import AppProviders from "@/app/providers/AppProviders";
 import { Metadata } from "next";
-import { AuthCallbackHandler } from "./components/AuthCallbackHandler";
-import { ReferralTracker } from "./components/ReferralTracker";
+import { AuthCallbackHandler } from "@/app/components/AuthCallbackHandler";
+import { ReferralTracker } from "@/app/components/ReferralTracker";
 import { Suspense } from "react";
-
-// Load all weights explicitly for Inter
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
-  preload: true,
-  fallback: ["system-ui", "sans-serif"],
-});
-
-// Load all weights explicitly for Montserrat
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-secondary",
-  display: "swap",
-  preload: true,
-  fallback: ["Arial", "sans-serif"],
-});
 
 export const metadata: Metadata = {
   title:
@@ -59,28 +38,10 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${montserrat.variable}`}
+      className="antialiased"
       suppressHydrationWarning
     >
       <head>
-        <link
-          rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
-          as="style"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
-        />
-        <link
-          rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap"
-          as="style"
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;900&display=swap"
-        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
