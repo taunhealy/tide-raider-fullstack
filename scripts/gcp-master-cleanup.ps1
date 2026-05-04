@@ -8,12 +8,13 @@ foreach ($project in $projects) {
     Write-Host "`n=== Auditing Project: $project ===" -ForegroundColor Cyan
     
     # 1. List all repositories in the project
-    $repos = gcloud artifacts repositories list --project $project --format="json(name, location)" | ConvertFrom-Json
+    $repos = gcloud artifacts repositories list --project $project --format="json(name)" | ConvertFrom-Json
     
     foreach ($repo in $repos) {
-        $repoPath = $repo.name
-        $location = $repo.location
-        $repoName = $repoPath.Split('/')[-1]
+        $repoPath = $repo.name # e.g., projects/surf-445620/locations/europe-west1/repositories/tide-raider
+        $parts = $repoPath.Split('/')
+        $location = $parts[3]
+        $repoName = $parts[5]
         
         Write-Host "  Checking Repository: $repoName in $location" -ForegroundColor Yellow
         

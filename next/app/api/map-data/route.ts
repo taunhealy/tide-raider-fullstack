@@ -32,12 +32,40 @@ export async function GET(request: Request) {
 
     // Fetch all beaches and their scores for the next week
     const beaches = await prisma.beach.findMany({
-      include: {
-        region: true,
-        country: true,
+      select: {
+        id: true,
+        name: true,
+        location: true,
+        coordinates: true,
+        difficulty: true,
+        waveType: true,
+        regionId: true,
+        countryId: true,
+        continent: true,
+        isHiddenGem: true,
+        isLongboarding: true,
+        isFoiling: true,
+        rating: true,
+        region: {
+          select: {
+            name: true
+          }
+        },
+        country: {
+          select: {
+            name: true,
+            continentId: true
+          }
+        },
         conditionProfiles: {
           where: {
             category: "GENERAL"
+          },
+          select: {
+            optimalWindDirections: true,
+            optimalSwellDirections: true,
+            swellSize: true,
+            idealSwellPeriod: true
           }
         },
         beachDailyScores: {
@@ -49,8 +77,13 @@ export async function GET(request: Request) {
             ...(source ? { source } : {}),
             ...(timeSlot ? { timeSlot: timeSlot as any } : {})
           },
+          select: {
+            date: true,
+            starRating: true,
+            conditions: true
+          },
           orderBy: {
-            date: 'desc' // Latest entries first if there are duplicates
+            date: 'desc'
           }
         }
       }
