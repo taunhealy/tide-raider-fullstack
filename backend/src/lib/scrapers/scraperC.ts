@@ -192,10 +192,10 @@ export async function scraperC(
         regionId: region,
         timeSlot: slot,
         windSpeed: Math.round(data.windSpeed || 0),
-        windDirection: parseWindDirection(data.windDirection || 0),
+        windDirection: data.windDirection !== null ? parseWindDirection(data.windDirection) : 0,
         swellHeight: parseFloat(data.swellHeight) || 0,
         swellPeriod: Math.round(data.swellPeriod || 0),
-        swellDirection: parseWindDirection(data.swellDirection || 0),
+        swellDirection: data.swellDirection !== null ? parseWindDirection(data.swellDirection) : 0,
       };
       (forecast as any).rawHour = hour;
 

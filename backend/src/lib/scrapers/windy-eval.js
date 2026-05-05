@@ -390,26 +390,38 @@ function extractWindyData() {
     return { error: "Could not find wind direction row", debug: { foundDays: dayMapping.length, foundTimeColumns: timeColumns.length, windDirectionsCount: 0, windSpeedsCount: 0 } };
   }
 
+  function extractRotation(cell) {
+    if (!cell) return null;
+    // 1. Check cell itself
+    const cellStyle = cell.getAttribute("style") || "";
+    let match = cellStyle.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
+    if (match) return parseFloat(match[1]);
+    
+    // 2. Check all children for style attribute containing rotate
+    const allChildren = cell.querySelectorAll("*");
+    for (let i = 0; i < allChildren.length; i++) {
+      const style = allChildren[i].getAttribute("style") || "";
+      match = style.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
+      if (match) return parseFloat(match[1]);
+    }
+    return null;
+  }
+
   const windDirCells = Array.from(windDirRow.querySelectorAll("td, th"));
   console.log("[scraperC] [page.evaluate] Found " + windDirCells.length + " wind direction cell(s) (td+th)");
   const windDirections = [];
 
   windDirCells.forEach(function (cell, index) {
-    const style = cell.getAttribute("style") || "";
-    // Extract rotation from transform: rotate(343deg) or -webkit-transform: rotate(343deg)
-    // The pattern matches: rotate(343deg) -> extracts 343
-    // Also handles: transform: rotate(343deg); -webkit-transform: rotate(343deg)
-    const match = style.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
-    if (match) {
-      const degrees = parseFloat(match[1]);
+    const degrees = extractRotation(cell);
+    if (degrees !== null) {
       windDirections.push(degrees);
       if (index < 3) {
-        console.log("[scraperC] [page.evaluate] Wind dir cell " + index + ": extracted " + degrees + " degrees from style");
+        console.log("[scraperC] [page.evaluate] Wind dir cell " + index + ": extracted " + degrees + " degrees");
       }
     } else {
-      windDirections.push(0);
+      windDirections.push(null); // Use null instead of 0 for missing data
       if (index < 5) {
-        console.log("[scraperC] [page.evaluate] Wind dir cell " + index + " has no rotation, style: " + style.substring(0, 80));
+        console.log("[scraperC] [page.evaluate] Wind dir cell " + index + " has no rotation found");
       }
     }
   });
@@ -578,23 +590,11 @@ function extractWindyData() {
     const waveDirCells = Array.from(waveDirRow.querySelectorAll("td, th"));
     console.log("[scraperC] [page.evaluate] Found " + waveDirCells.length + " wave direction cell(s) (td+th)");
     waveDirCells.forEach(function (cell, index) {
-      // First check if the cell itself has transform: rotate() style
-      const cellStyle = cell.getAttribute("style") || "";
-      const cellMatch = cellStyle.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
-      if (cellMatch) {
-        const degrees = parseFloat(cellMatch[1]);
+      const degrees = extractRotation(cell);
+      if (degrees !== null) {
         swellDirections[index] = degrees;
       } else {
-        // Look for div with transform: rotate() inside the cell
-        const div = cell.querySelector("div");
-        if (div) {
-          const divStyle = div.getAttribute("style") || "";
-          const divMatch = divStyle.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
-          if (divMatch) {
-            const degrees = parseFloat(divMatch[1]);
-            swellDirections[index] = degrees;
-          }
-        }
+        swellDirections[index] = null;
       }
     });
     console.log("[scraperC] [page.evaluate] Extracted " + swellDirections.filter(function(d) { return d !== undefined && d !== null; }).length + " wave directions (including 0° for North)");
