@@ -7,7 +7,7 @@ import api from "../lib/api-client";
 import { usePathname } from "next/navigation";
 
 interface UseFilteredBeachesProps {
-  initialData: BeachInitialData | null;
+  initialData?: BeachInitialData | null;
   enabled?: boolean;
   ignoreRegion?: boolean;
 }

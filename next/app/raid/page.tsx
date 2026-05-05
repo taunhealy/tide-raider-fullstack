@@ -16,5 +16,5 @@ export const revalidate = 0; // Never cache this page
  */
 export default function RaidPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   // Pass params to wrapper which will pass them to the container
-  return <BeachContainerWrapper initialData={null} searchParams={searchParams} />;
+  return <BeachContainerWrapper searchParams={searchParams} />;
 }

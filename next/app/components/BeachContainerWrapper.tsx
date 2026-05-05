@@ -5,7 +5,8 @@ import BeachContainer from "./BeachContainer";
 import type { BeachInitialData } from "@/app/types/beaches";
 
 interface BeachContainerWrapperProps {
-  initialData: BeachInitialData | null;
+  initialData?: BeachInitialData | null;
+  searchParams?: any;
 }
 
 /**
@@ -13,7 +14,7 @@ interface BeachContainerWrapperProps {
  * This is required in Next.js 13+ when using useSearchParams() in client components
  */
 function BeachContainerContent({ initialData }: BeachContainerWrapperProps) {
-  return <BeachContainer initialData={initialData} />;
+  return <BeachContainer initialData={initialData ?? null} />;
 }
 
 export default function BeachContainerWrapper({

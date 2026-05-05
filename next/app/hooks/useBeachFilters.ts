@@ -56,7 +56,7 @@ export const useBeachFilters = () => {
           if (filter.type === "array") {
             acc[filter.key] = value?.split(",") || [];
           } else if (filter.type === "boolean") {
-            acc[filter.key] = value === "true";
+            acc[filter.key] = value === null ? undefined : value === "true";
           } else if (filter.type === "number") {
             acc[filter.key] = value ? Number(value) : 0;
           } else if (filter.type === "string") {

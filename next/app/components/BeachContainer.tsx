@@ -7,7 +7,7 @@ import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
-import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Loader2, Info } from "lucide-react";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { cn } from "@/app/lib/utils";
 
@@ -31,7 +31,7 @@ import { LocationFilter } from "../types/filters";
 // Remove the getBeachForecastData helper function
 
 interface BeachContainerProps {
-  initialData: BeachInitialData | null;
+  initialData?: BeachInitialData | null;
 }
 
 // Distance helper using Haversine formula
@@ -62,11 +62,32 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const [deepLinkedBeach, setDeepLinkedBeach] = useState<Beach | null>(null);
   const [isDeepLinkModalOpen, setIsDeepLinkModalOpen] = useState(false);
 
-  const { data, isLoading, isFetching } = useFilteredBeaches({
+  const { data, isLoading, isFetching, error } = useFilteredBeaches({
     initialData: maxDistance !== null ? null : initialData, // Don't use initial regional data in proximity mode
     enabled: true,
     ignoreRegion: maxDistance !== null || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("beachId"))
   });
+
+  // Log data state for debugging
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log("[BeachContainer] State Update:", { 
+        isLoading, 
+        isFetching, 
+        hasData: !!data, 
+        beachCount: data?.beaches?.length,
+        error: error ? (error as any).message : null,
+        filters: {
+          regionId: filters.regionId,
+          timeSlot: filters.timeSlot,
+          forecastDate: filters.forecastDate,
+          isRegular: filters.isRegular,
+          isHiddenGem: filters.isHiddenGem
+        },
+        searchParams: Object.fromEntries(new URLSearchParams(window.location.search))
+      });
+    }
+  }, [data, isLoading, isFetching, error, filters]);
   const { data: authData } = useBackendAuth();
   const { isPremium, isSubscribed, isLoading: isSubLoading } = useSubscriptionStatus();
   const user = authData?.user;
@@ -398,10 +419,27 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <div className="grid grid-cols-1 gap-5 relative mt-10">
               {!filters.regionId || (isLoading && !data) ? (
                 <div className="flex flex-col items-center justify-center py-12 min-h-[400px]">
-                  <LoadingIndicator />
-                  <p className="text-gray-600 font-primary mt-4 animate-pulse">
-                    {!filters.regionId ? "Initializing your region..." : "Loading surf breaks and forecast data..."}
+                  <Loader2 className="w-8 h-8 text-brand-3 animate-spin mb-4" />
+                  <p className="text-slate-500 font-medium animate-pulse">
+                    {!filters.regionId ? "Initializing your region..." : "Fetching the best breaks..."}
                   </p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12 min-h-[400px] bg-red-50/30 rounded-3xl border border-red-100">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <Info className="w-6 h-6 text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">Failed to load breaks</h3>
+                  <p className="text-slate-500 text-center max-w-md px-6 mb-6">
+                    {(error as any).message || "There was a problem communicating with the server. Please try again later."}
+                  </p>
+                  <Button 
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    className="rounded-xl"
+                  >
+                    Try Refreshing
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-10">
