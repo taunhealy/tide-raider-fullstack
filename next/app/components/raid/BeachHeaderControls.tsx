@@ -284,10 +284,10 @@ export default function BeachHeaderControls({
 
                     <div className="flex flex-wrap items-center gap-2">
                       <RegularButton
-                        active={filters.isRegular === undefined ? (filters.isHiddenGem !== "true") : filters.isRegular === true}
+                        active={filters.isRegular === undefined ? true : filters.isRegular === "true" || filters.isRegular === true}
                         size="sm"
                         onClick={() => {
-                          const currentActive = filters.isRegular === undefined ? (filters.isHiddenGem !== "true") : filters.isRegular === true;
+                          const currentActive = filters.isRegular === undefined ? true : filters.isRegular === "true" || filters.isRegular === true;
                           updateFilter("isRegular", !currentActive ? "true" : "false");
                         }}
                       >
@@ -323,11 +323,11 @@ export default function BeachHeaderControls({
                         <TooltipTrigger asChild>
                           <div className={cn("flex", (!isAuthenticated || !isSubscribed) && "cursor-not-allowed")}>
                             <HiddenGemsButton
-                              active={filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === true}
+                              active={filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === "true" || filters.isHiddenGem === true}
                               size="sm"
                               disabled={!isAuthenticated || !isSubscribed}
                               onClick={() => {
-                                const currentActive = filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === true;
+                                const currentActive = filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === "true" || filters.isHiddenGem === true;
                                 updateFilter("isHiddenGem", !currentActive ? "true" : "false");
                               }}
                               className={cn(

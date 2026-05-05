@@ -103,7 +103,7 @@
         "optimalTide": "ALL",
         "swellSize": {
           "min": 1.2,
-          "max": 4.0
+          "max": 4
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -177,7 +177,7 @@
     "profileImage": "/images/profile/hero-cover.jpg",
     "coffeeShop": [
       {
-        "name": "Harvest Caf\u00e9, Muizenberg"
+        "name": "Harvest Café, Muizenberg"
       }
     ],
     "beer": [
@@ -363,7 +363,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It\u2019s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
+    "description": "Pebbles is certainly an adequate name for this surf spot as it breaks over pebbles and granite. It’s a beach break in between Llandudno and Camps Bay. This wave is best for bodyboarders. It needs big swell to work, with heavy waves and you will find some of the best barrels. Pebbles often closes out, but the rights are favoured.",
     "difficulty": "ADVANCED",
     "waveType": "BEACH_BREAK",
     "waterTemp": {
@@ -808,7 +808,7 @@
   },
   {
     "id": "dungeons",
-    "name": "Dungeons \ud83d\udc80",
+    "name": "Dungeons 💀",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -1318,7 +1318,7 @@
         "optimalTide": "LOW",
         "swellSize": {
           "min": 1.5,
-          "max": 5.0
+          "max": 5
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -1862,7 +1862,7 @@
   },
   {
     "id": "black-rocks",
-    "name": "Black Rocks \ud83e\udd88",
+    "name": "Black Rocks 🦈",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3151,7 +3151,7 @@
   },
   {
     "id": "sandy-bay",
-    "name": "Sandy Bay \uff08\u4eba \u4eba\uff09",
+    "name": "Sandy Bay （人 人）",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3575,7 +3575,6 @@
       "lng": 18.27
     },
     "videos": [
-     
       {
         "url": "https://www.youtube.com/watch?v=ALpwacrc40I&ab_channel=cape%7Cdoctor",
         "title": "SURFING CAPE of STORMS AFRICA | Buffels 2023 09 16 ",
@@ -4486,7 +4485,6 @@
         "platform": "youtube"
       }
     ],
-
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
@@ -4961,7 +4959,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -6327,7 +6325,7 @@
   },
   {
     "id": "bellows",
-    "name": "Bellows \ud83d\udc80",
+    "name": "Bellows 💀",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -6711,7 +6709,7 @@
   },
   {
     "id": "second-beach-port-st-johns",
-    "name": "Second Beach \ud83d\udc80",
+    "name": "Second Beach 💀",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "eastern-cape",
@@ -6848,7 +6846,7 @@
   },
   {
     "id": "sunset-reef",
-    "name": "Sunset Reef \ud83d\udc80",
+    "name": "Sunset Reef 💀",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -7617,7 +7615,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=CucTAx7eRro&ab_channel=TheAdventureLocker",
-        "title": "Surfing in Africa \ud83c\udfc4\ud83d\uddfa\ufe0f #surf #surffilm",
+        "title": "Surfing in Africa 🏄🗺️ #surf #surffilm",
         "platform": "youtube"
       }
     ],
@@ -7894,7 +7892,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -7965,7 +7963,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=WnYnXiONb_U&ab_channel=StokedTheBrand",
-        "title": "Stoked Sessions \u2022 Surfing Mossel Bay - Stoked X Kane Johnstone",
+        "title": "Stoked Sessions • Surfing Mossel Bay - Stoked X Kane Johnstone",
         "platform": "youtube"
       },
       {
@@ -8065,7 +8063,7 @@
   },
   {
     "id": "ferme-aux-cochons",
-    "name": "Ferme aux Cochons \ud83e\udd9b",
+    "name": "Ferme aux Cochons 🦛",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -8103,7 +8101,7 @@
       },
       {
         "url": "https://www.youtube.com/watch?v=nQJkdq5gF80&ab_channel=SamBleakley",
-        "title": "Sam Bleakley surfEXPLORE\u00a9 Gabon",
+        "title": "Sam Bleakley surfEXPLORE© Gabon",
         "platform": "youtube"
       },
       {
@@ -8136,7 +8134,7 @@
   },
   {
     "id": "petit-loango",
-    "name": "Petit Loango \ud83e\udd9b",
+    "name": "Petit Loango 🦛",
     "continent": "Africa",
     "countryId": "ga",
     "regionId": "gabon-coast",
@@ -8225,7 +8223,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=q8q_A6r4dh0&ab_channel=SamBleakley",
-        "title": "surfEXPLORE\u00a9 Gabon - Sam Bleakley",
+        "title": "surfEXPLORE© Gabon - Sam Bleakley",
         "platform": "youtube"
       }
     ],
@@ -9734,7 +9732,7 @@
   },
   {
     "id": "mtsanga-boueni",
-    "name": "Mtsanga Bou\u00e9ni",
+    "name": "Mtsanga Bouéni",
     "continent": "Africa",
     "countryId": "yt",
     "regionId": "mayotte",
@@ -9743,7 +9741,7 @@
     "bestSeasons": [
       "winter"
     ],
-    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bou\u00e9ni village.",
+    "description": "Premier reef break on Mayotte's southwest coast. Works best with SW swells and NNW winds. Multiple sections offering both hollow and wall sections. Best during southern hemisphere winter when SW swells are most consistent. Remote location requires boat access from Bouéni village.",
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
     "waterTemp": {
@@ -9824,7 +9822,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=ApsaRk8Bfhg&ab_channel=JulieB",
-        "title": "MAYOTTE LA MAGNIFIQUE plong\u00e9e surf choungui bivouac eps LOVE",
+        "title": "MAYOTTE LA MAGNIFIQUE plongée surf choungui bivouac eps LOVE",
         "platform": "youtube"
       }
     ],
@@ -9947,7 +9945,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=lhyCDXX-ifA&ab_channel=FindirelaYeza",
-        "title": "BA\u00cdA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
+        "title": "BAÍA AZUL ONE OF THE MOST BEAUTIFUL BEACHES IN ANGOLA/ BENGUELA #TOURISM #Angola #Globo #Ghana",
         "platform": "youtube"
       }
     ],
@@ -12684,7 +12682,7 @@
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=IiFcs_KD94s&ab_channel=GabrielTManuel",
-        "title": "Conhecendo um pouco o povoado da Caota/Ba\u00eda Farta/Benguela/Angola",
+        "title": "Conhecendo um pouco o povoado da Caota/Baía Farta/Benguela/Angola",
         "platform": "youtube"
       }
     ],
@@ -13187,7 +13185,10 @@
       "summer": 20,
       "winter": 17
     },
-    "hazards": ["Rocks", "Sharks"],
+    "hazards": [
+      "Rocks",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.359361,
@@ -13195,7 +13196,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NE", "ENE", "NNE"],
+        "optimalWindDirections": [
+          "NE",
+          "ENE",
+          "NNE"
+        ],
         "optimalSwellDirections": {
           "min": 202.5,
           "max": 247.5,
@@ -13203,8 +13208,8 @@
         },
         "optimalTide": "MID",
         "swellSize": {
-          "min": 1.0,
-          "max": 4.0
+          "min": 1,
+          "max": 4
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -13412,7 +13417,10 @@
     "regionId": "ogooue-maritime",
     "location": "Port-Gentil",
     "isHiddenGem": true,
-    "bestSeasons": ["winter", "autumn"],
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
     "description": "Cap Lopez is a significant headland on the coast of Gabon. It provides long, peeling waves on its best days. Recognized as a high-quality spot, it remains largely uncrowded.",
     "difficulty": "ADVANCED",
     "waveType": "POINT_BREAK",
@@ -13420,7 +13428,10 @@
       "summer": 27,
       "winter": 24
     },
-    "hazards": ["Strong Currents", "Isolation"],
+    "hazards": [
+      "Strong Currents",
+      "Isolation"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -0.6311,
@@ -13435,7 +13446,11 @@
     ],
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["SE", "S", "SSE"],
+        "optimalWindDirections": [
+          "SE",
+          "S",
+          "SSE"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 240,
@@ -13443,7 +13458,7 @@
         },
         "optimalTide": "ALL",
         "swellSize": {
-          "min": 1.0,
+          "min": 1,
           "max": 3.5
         },
         "idealSwellPeriod": {
@@ -13461,7 +13476,10 @@
     "regionId": "western-cape",
     "location": "Hermanus",
     "isHiddenGem": false,
-    "bestSeasons": ["winter", "autumn"],
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
     "description": "Bay View has been surfed since 1979 and is recognized by local and professional surfers, including Grant 'Twiggy' Baker. A heavy reef break that comes alive on massive swells. On big days, you may need to paddle around from the town.",
     "difficulty": "PRO",
     "waveType": "REEF_BREAK",
@@ -13469,7 +13487,11 @@
       "summer": 19,
       "winter": 14
     },
-    "hazards": ["Rocks", "Sharks", "Heavy Surf"],
+    "hazards": [
+      "Rocks",
+      "Sharks",
+      "Heavy Surf"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.413472,
@@ -13484,7 +13506,11 @@
     ],
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "NNW", "WNW"],
+        "optimalWindDirections": [
+          "NW",
+          "NNW",
+          "WNW"
+        ],
         "optimalSwellDirections": {
           "min": 210,
           "max": 240,
@@ -13493,7 +13519,7 @@
         "optimalTide": "RISING",
         "swellSize": {
           "min": 2.7,
-          "max": 8.0
+          "max": 8
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -13510,7 +13536,11 @@
     "regionId": "western-cape",
     "location": "Gansbaai",
     "isHiddenGem": true,
-    "bestSeasons": ["winter", "autumn", "spring"],
+    "bestSeasons": [
+      "winter",
+      "autumn",
+      "spring"
+    ],
     "description": "A heavy reef break located near Gansbaai. Known for its intensity when the swell is medium to big. The spot provides both left and right waves and is considered a regional classic.",
     "difficulty": "PRO",
     "waveType": "REEF_BREAK",
@@ -13518,7 +13548,12 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Rocks", "Sharks", "Sea Urchins", "Kelp"],
+    "hazards": [
+      "Rocks",
+      "Sharks",
+      "Sea Urchins",
+      "Kelp"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.439806,
@@ -13526,7 +13561,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "N", "NE"],
+        "optimalWindDirections": [
+          "NW",
+          "N",
+          "NE"
+        ],
         "optimalSwellDirections": {
           "min": 112.5,
           "max": 247.5,
@@ -13535,7 +13574,7 @@
         "optimalTide": "MID_TO_HIGH",
         "swellSize": {
           "min": 1.5,
-          "max": 5.0
+          "max": 5
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -13552,7 +13591,10 @@
     "regionId": "western-cape",
     "location": "Hermanus",
     "isHiddenGem": false,
-    "bestSeasons": ["summer", "spring"],
+    "bestSeasons": [
+      "summer",
+      "spring"
+    ],
     "description": "Sandbaai Beach is a consistent spot near Hermanus. The bottom is a mix of sand and rocks, working best on a medium tide. Suitable for all levels, it provides fun right-hand waves. The beach is also known for its natural pools at low tide.",
     "difficulty": "BEGINNER",
     "waveType": "BEACH_BREAK",
@@ -13560,7 +13602,10 @@
       "summer": 19,
       "winter": 14
     },
-    "hazards": ["Rocks", "Localism"],
+    "hazards": [
+      "Rocks",
+      "Localism"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.425111,
@@ -13568,7 +13613,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["N", "NNE", "NNW"],
+        "optimalWindDirections": [
+          "N",
+          "NNE",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 157.5,
           "max": 247.5,
@@ -13594,7 +13643,10 @@
     "regionId": "western-cape",
     "location": "Hermanus",
     "isHiddenGem": true,
-    "bestSeasons": ["winter", "autumn"],
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
     "description": "Magnet Rock sits near the harbor area of Hermanus. It only works when a big Indian Ocean storm swell hits. The takeoff is fairly easy at first, but it gets solid as it hits the shallower reef. Long rides of 150-300m are possible.",
     "difficulty": "INTERMEDIATE",
     "waveType": "REEF_BREAK",
@@ -13602,7 +13654,11 @@
       "summer": 19,
       "winter": 14
     },
-    "hazards": ["Rocks", "Kelp", "Pollution"],
+    "hazards": [
+      "Rocks",
+      "Kelp",
+      "Pollution"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.420139,
@@ -13610,7 +13666,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["N", "NE", "NNE"],
+        "optimalWindDirections": [
+          "N",
+          "NE",
+          "NNE"
+        ],
         "optimalSwellDirections": {
           "min": 157.5,
           "max": 247.5,
@@ -13618,8 +13678,8 @@
         },
         "optimalTide": "ALL",
         "swellSize": {
-          "min": 2.0,
-          "max": 5.0
+          "min": 2,
+          "max": 5
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -13636,7 +13696,10 @@
     "regionId": "western-cape",
     "location": "Gansbaai",
     "isHiddenGem": true,
-    "bestSeasons": ["winter", "summer"],
+    "bestSeasons": [
+      "winter",
+      "summer"
+    ],
     "description": "Stinky Pits is located between the two harbors at Gansbaai. It provides long, hollow tube rides on its best days. The spot is known for its intensity and hollow lefts. Watch out for strong rips and the presence of sharks, especially when the fish factory is active.",
     "difficulty": "ADVANCED",
     "waveType": "REEF_BREAK",
@@ -13644,7 +13707,11 @@
       "summer": 20,
       "winter": 17
     },
-    "hazards": ["Strong Currents", "Sharks", "Rocks"],
+    "hazards": [
+      "Strong Currents",
+      "Sharks",
+      "Rocks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.586194,
@@ -13652,7 +13719,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NE", "NNE", "ENE"],
+        "optimalWindDirections": [
+          "NE",
+          "NNE",
+          "ENE"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 240,
@@ -13678,7 +13749,9 @@
     "regionId": "western-cape",
     "location": "Pearly Beach",
     "isHiddenGem": true,
-    "bestSeasons": ["winter"],
+    "bestSeasons": [
+      "winter"
+    ],
     "description": "Pearly Reef is a consistent reef break near Pearly Beach. It works best on a medium tide and handles swells around 5 feet. Suitable for all levels, it provides fun right-hand waves. Be mindful of rocks and the potential for shark presence in the area.",
     "difficulty": "BEGINNER",
     "waveType": "REEF_BREAK",
@@ -13686,7 +13759,10 @@
       "summer": 23,
       "winter": 14
     },
-    "hazards": ["Rocks", "Sharks"],
+    "hazards": [
+      "Rocks",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.673361,
@@ -13694,7 +13770,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["N", "NNE", "NNW"],
+        "optimalWindDirections": [
+          "N",
+          "NNE",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 202.5,
           "max": 247.5,
@@ -13727,7 +13807,10 @@
       "summer": 19,
       "winter": 14
     },
-    "hazards": ["Rocks", "Localism"],
+    "hazards": [
+      "Rocks",
+      "Localism"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.360056,
@@ -13735,7 +13818,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 157.5,
           "max": 202.5,
@@ -13743,8 +13830,8 @@
         },
         "optimalTide": "MID_HIGH",
         "swellSize": {
-          "min": 1.0,
-          "max": 3.0
+          "min": 1,
+          "max": 3
         },
         "idealSwellPeriod": {
           "min": 9,
@@ -13767,7 +13854,10 @@
       "summer": 19,
       "winter": 14
     },
-    "hazards": ["Rocks", "Rip Currents"],
+    "hazards": [
+      "Rocks",
+      "Rip Currents"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.371417,
@@ -13775,7 +13865,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["SE", "NW", "ESE", "WNW"],
+        "optimalWindDirections": [
+          "SE",
+          "NW",
+          "ESE",
+          "WNW"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 225,
@@ -13783,8 +13878,8 @@
         },
         "optimalTide": "MID_HIGH",
         "swellSize": {
-          "min": 1.0,
-          "max": 3.0
+          "min": 1,
+          "max": 3
         },
         "idealSwellPeriod": {
           "min": 9,
@@ -13807,7 +13902,11 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Rocks", "Rip Currents", "Undertow"],
+    "hazards": [
+      "Rocks",
+      "Rip Currents",
+      "Undertow"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.294944,
@@ -13815,7 +13914,13 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["E", "SE", "S", "ESE", "SSE"],
+        "optimalWindDirections": [
+          "E",
+          "SE",
+          "S",
+          "ESE",
+          "SSE"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 225,
@@ -13824,7 +13929,7 @@
         "optimalTide": "LOW_MID",
         "swellSize": {
           "min": 2.5,
-          "max": 6.0
+          "max": 6
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -13847,7 +13952,11 @@
       "summer": 19,
       "winter": 15
     },
-    "hazards": ["Rocks", "Buoys", "Harbour Wall"],
+    "hazards": [
+      "Rocks",
+      "Buoys",
+      "Harbour Wall"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.153473,
@@ -13855,7 +13964,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "N", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "N",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 112.5,
           "max": 202.5,
@@ -13887,7 +14001,12 @@
       "summer": 19,
       "winter": 15
     },
-    "hazards": ["Rocks", "Rip Currents", "Undertow", "Sharks"],
+    "hazards": [
+      "Rocks",
+      "Rip Currents",
+      "Undertow",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.134279,
@@ -13895,7 +14014,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "N", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "N",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 112.5,
           "max": 202.5,
@@ -13927,7 +14051,12 @@
       "summer": 17,
       "winter": 14
     },
-    "hazards": ["Shallow Reef", "Rocks", "Rip Currents", "Sharks"],
+    "hazards": [
+      "Shallow Reef",
+      "Rocks",
+      "Rip Currents",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.158217,
@@ -13935,7 +14064,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 112.5,
           "max": 202.5,
@@ -13944,7 +14077,7 @@
         "optimalTide": "MID_HIGH",
         "swellSize": {
           "min": 1.5,
-          "max": 3.0
+          "max": 3
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -13967,7 +14100,11 @@
       "summer": 18,
       "winter": 15
     },
-    "hazards": ["Rocks", "Rip Currents", "Sharks"],
+    "hazards": [
+      "Rocks",
+      "Rip Currents",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.337988,
@@ -13975,7 +14112,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "N", "NE"],
+        "optimalWindDirections": [
+          "NW",
+          "N",
+          "NE"
+        ],
         "optimalSwellDirections": {
           "min": 119,
           "max": 270,
@@ -13984,7 +14125,7 @@
         "optimalTide": "LOW_MEDIUM",
         "swellSize": {
           "min": 0.6,
-          "max": 4.0
+          "max": 4
         },
         "idealSwellPeriod": {
           "min": 10,
@@ -14007,7 +14148,12 @@
       "summer": 21,
       "winter": 15
     },
-    "hazards": ["Sharks", "Localism", "Powerful Waves", "Rocks"],
+    "hazards": [
+      "Sharks",
+      "Localism",
+      "Powerful Waves",
+      "Rocks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.309867,
@@ -14015,7 +14161,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["S", "SW", "SSW", "WSW"],
+        "optimalWindDirections": [
+          "S",
+          "SW",
+          "SSW",
+          "WSW"
+        ],
         "optimalSwellDirections": {
           "min": 112.5,
           "max": 202.5,
@@ -14024,7 +14175,7 @@
         "optimalTide": "ALL",
         "swellSize": {
           "min": 1.5,
-          "max": 5.0
+          "max": 5
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -14047,7 +14198,12 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Size", "Power", "Sharp Reef", "Sharks"],
+    "hazards": [
+      "Size",
+      "Power",
+      "Sharp Reef",
+      "Sharks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.358817,
@@ -14055,7 +14211,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "W", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "W",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 220,
@@ -14064,7 +14225,7 @@
         "optimalTide": "MID_HIGH",
         "swellSize": {
           "min": 2.5,
-          "max": 18.0
+          "max": 18
         },
         "idealSwellPeriod": {
           "min": 12,
@@ -14087,7 +14248,12 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Strong Rips", "Undertow", "Sharks", "Baboons"],
+    "hazards": [
+      "Strong Rips",
+      "Undertow",
+      "Sharks",
+      "Baboons"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.355267,
@@ -14095,7 +14261,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "W", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "W",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 180,
           "max": 220,
@@ -14103,7 +14274,7 @@
         },
         "optimalTide": "ALL",
         "swellSize": {
-          "min": 1.0,
+          "min": 1,
           "max": 4.5
         },
         "idealSwellPeriod": {
@@ -14127,7 +14298,12 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Rocks", "Rip Currents", "Sharks", "Baboons"],
+    "hazards": [
+      "Rocks",
+      "Rip Currents",
+      "Sharks",
+      "Baboons"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.254433,
@@ -14135,7 +14311,11 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["SE", "SSE", "ESE"],
+        "optimalWindDirections": [
+          "SE",
+          "SSE",
+          "ESE"
+        ],
         "optimalSwellDirections": {
           "min": 202.5,
           "max": 292.5,
@@ -14167,7 +14347,12 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Rocks", "Urchins", "Sharks", "Kelp"],
+    "hazards": [
+      "Rocks",
+      "Urchins",
+      "Sharks",
+      "Kelp"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.161933,
@@ -14175,7 +14360,12 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["N", "NE", "NNE", "ENE"],
+        "optimalWindDirections": [
+          "N",
+          "NE",
+          "NNE",
+          "ENE"
+        ],
         "optimalSwellDirections": {
           "min": 202.5,
           "max": 247.5,
@@ -14207,15 +14397,24 @@
       "summer": 18,
       "winter": 14
     },
-    "hazards": ["Sharks", "Rocks", "Thick Kelp", "Urchins"],
+    "hazards": [
+      "Sharks",
+      "Rocks",
+      "Thick Kelp",
+      "Urchins"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
-      "lat": -34.150640,
-      "lng": 18.317570
+      "lat": -34.15064,
+      "lng": 18.31757
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["NW", "WNW", "NNW"],
+        "optimalWindDirections": [
+          "NW",
+          "WNW",
+          "NNW"
+        ],
         "optimalSwellDirections": {
           "min": 247.5,
           "max": 337.5,
@@ -14234,46 +14433,6 @@
     }
   },
   {
-    "id": "waterfalls-bettys-bay",
-    "name": "Waterfalls",
-    "continent": "Africa",
-    "countryId": "za",
-    "regionId": "western-cape",
-    "location": "Betty's Bay",
-    "description": "Waterfalls is a consistent reef break located in Betty's Bay, Western Cape. It features a sand and rock bottom and works best at medium tide with northeast winds and southwest swell. Length of ride ranges from 50 to 150m. Usually empty and uncrowded. Access from Marine Drive car park via a long paddle or boat. Hazards include rocks and sharks.",
-    "difficulty": "INTERMEDIATE",
-    "waveType": "REEF_BREAK",
-    "waterTemp": {
-      "summer": 18,
-      "winter": 14
-    },
-    "hazards": ["Rocks", "Sharks"],
-    "crimeLevel": "Low",
-    "coordinates": {
-      "lat": -34.3475,
-      "lng": 18.9205
-    },
-    "conditionProfiles": {
-      "GENERAL": {
-        "optimalWindDirections": ["NE", "NNE", "ENE"],
-        "optimalSwellDirections": {
-          "min": 180.0,
-          "max": 240.0,
-          "cardinal": "SW"
-        },
-        "optimalTide": "MID",
-        "swellSize": {
-          "min": 1.2,
-          "max": 3.5
-        },
-        "idealSwellPeriod": {
-          "min": 10,
-          "max": 18
-        }
-      }
-    }
-  },
-  {
     "id": "blue-whale",
     "name": "Blue Whale",
     "continent": "Africa",
@@ -14287,7 +14446,12 @@
       "summer": 16,
       "winter": 12
     },
-    "hazards": ["Heavy Waves", "Power", "Sharks", "Rocks"],
+    "hazards": [
+      "Heavy Waves",
+      "Power",
+      "Sharks",
+      "Rocks"
+    ],
     "crimeLevel": "Low",
     "coordinates": {
       "lat": -34.126139,
@@ -14295,16 +14459,20 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["SE", "SSE", "ESE"],
+        "optimalWindDirections": [
+          "SE",
+          "SSE",
+          "ESE"
+        ],
         "optimalSwellDirections": {
-          "min": 180.0,
-          "max": 225.0,
+          "min": 180,
+          "max": 225,
           "cardinal": "S/SW"
         },
         "optimalTide": "MID_HIGH",
         "swellSize": {
-          "min": 3.0,
-          "max": 8.0
+          "min": 3,
+          "max": 8
         },
         "idealSwellPeriod": {
           "min": 14,
@@ -14327,7 +14495,13 @@
       "summer": 16,
       "winter": 12
     },
-    "hazards": ["Pollution", "Dolosse", "Security", "Rocks", "Size"],
+    "hazards": [
+      "Pollution",
+      "Dolosse",
+      "Security",
+      "Rocks",
+      "Size"
+    ],
     "crimeLevel": "Medium",
     "coordinates": {
       "lat": -33.925582,
@@ -14335,7 +14509,13 @@
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["S", "SE", "E", "ESE", "SSE"],
+        "optimalWindDirections": [
+          "S",
+          "SE",
+          "E",
+          "ESE",
+          "SSE"
+        ],
         "optimalSwellDirections": {
           "min": 240,
           "max": 300,
@@ -14343,7 +14523,7 @@
         },
         "optimalTide": "MID_HIGH",
         "swellSize": {
-          "min": 2.0,
+          "min": 2,
           "max": 6.5
         },
         "idealSwellPeriod": {
@@ -14367,15 +14547,24 @@
       "summer": 17,
       "winter": 13
     },
-    "hazards": ["Pollution", "Strong Rips", "Undertow"],
+    "hazards": [
+      "Pollution",
+      "Strong Rips",
+      "Undertow"
+    ],
     "crimeLevel": "Medium",
     "coordinates": {
       "lat": -33.899845,
-      "lng": 18.476670
+      "lng": 18.47667
     },
     "conditionProfiles": {
       "GENERAL": {
-        "optimalWindDirections": ["E", "SE", "ESE", "SSE"],
+        "optimalWindDirections": [
+          "E",
+          "SE",
+          "ESE",
+          "SSE"
+        ],
         "optimalSwellDirections": {
           "min": 292.5,
           "max": 22.5,
@@ -14383,7 +14572,7 @@
         },
         "optimalTide": "MID_HIGH",
         "swellSize": {
-          "min": 1.0,
+          "min": 1,
           "max": 3.5
         },
         "idealSwellPeriod": {

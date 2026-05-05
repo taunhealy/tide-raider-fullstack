@@ -602,8 +602,12 @@ router.get(
 
       let scores = await getScores();
 
-      // Fallback: If no scores exist but forecasts DO exist, calculate them on the fly
-      if (scores.length === 0) {
+      const expectedSources = ["WINDFINDER", "WINDGURU", "WINDY"];
+      const foundSources = new Set(scores.map(s => s.source));
+      const missingSources = expectedSources.filter(s => !foundSources.has(s));
+
+      // Fallback: If scores are missing for some sources, calculate them on the fly
+      if (missingSources.length > 0) {
         const beach = await prisma.beach.findUnique({
           where: { id: beachId as string },
           select: { regionId: true }
@@ -617,18 +621,19 @@ router.get(
             }
           });
 
-          // If no forecasts exist, try to fetch them (this triggers archive if date is in the past)
-          if (forecasts.length === 0) {
-            console.log(`[beach-ratings/beach-scores] No forecasts found for ${beachId} on ${date}. Triggering fetch/archive...`);
+          const foundForecastSources = new Set(forecasts.map(f => f.source));
+          const sourcesToFetch = missingSources.filter(s => !foundForecastSources.has(s));
+
+          // If forecasts are missing for the missing sources, try to fetch them
+          if (sourcesToFetch.length > 0) {
+            console.log(`[beach-ratings/beach-scores] Missing forecasts for ${sourcesToFetch.join(', ')} for ${beachId} on ${date}. Triggering fetch/archive...`);
             try {
-              // Trigger fetches for all sources in parallel to populate the dashboard
-              await Promise.all([
-                getLatestConditions(beach.regionId, false, "WINDFINDER", 1, targetDate),
-                getLatestConditions(beach.regionId, false, "WINDGURU", 1, targetDate),
-                getLatestConditions(beach.regionId, false, "WINDY", 1, targetDate)
-              ]);
+              // Trigger fetches for missing sources in parallel
+              await Promise.all(
+                sourcesToFetch.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
+              );
               
-              // Re-fetch forecasts to see if we got something
+              // Re-fetch forecasts
               forecasts = await prisma.forecast.findMany({
                 where: {
                   regionId: beach.regionId,

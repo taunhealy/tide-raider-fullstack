@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "./ui/Button";
+import { Switch } from "./ui/switch";
 import { cn } from "@/app/lib/utils";
 
 interface LogVisibilityToggleProps {
@@ -13,16 +13,33 @@ export function LogVisibilityToggle({
   onChange,
 }: LogVisibilityToggleProps) {
   return (
-    <Button
-      onClick={onChange}
-      variant={isPrivate ? "outline" : "action"}
-      size="sm"
-      className={cn(
-        "inline-flex h-10 px-5 border-gray-200 transition-all font-bold uppercase tracking-widest text-[11px] rounded-xl shadow-sm active:scale-95",
-        !isPrivate && "bg-brand-3 text-gray-900 border-none shadow-[0_0_15px_rgba(28,217,255,0.3)] hover:bg-white"
-      )}
-    >
-      {isPrivate ? "Private" : "Public"}
-    </Button>
+    <div className="flex items-center gap-3 bg-gray-50/50 backdrop-blur-sm border border-gray-200 px-4 h-10 rounded-xl shadow-sm transition-all hover:bg-white">
+      <span 
+        className={cn(
+          "text-[10px] font-black uppercase tracking-widest transition-colors duration-300", 
+          !isPrivate ? "text-brand-3" : "text-gray-400"
+        )}
+      >
+        Public
+      </span>
+      
+      <Switch 
+        checked={isPrivate} 
+        onCheckedChange={onChange}
+        className={cn(
+          "transition-all",
+          isPrivate ? "bg-indigo-600" : "bg-brand-3"
+        )}
+      />
+      
+      <span 
+        className={cn(
+          "text-[10px] font-black uppercase tracking-widest transition-colors duration-300", 
+          isPrivate ? "text-indigo-600" : "text-gray-400"
+        )}
+      >
+        Private
+      </span>
+    </div>
   );
 }

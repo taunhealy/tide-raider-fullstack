@@ -246,17 +246,18 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
               <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10 relative">
                 {isGatedGem && (
                   <div className="absolute inset-0 z-30 flex items-start justify-center pointer-events-none p-10 pt-24 md:pt-32">
-                    <div className="bg-amber-500/95 text-white px-8 py-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-amber-400/50 backdrop-blur-md flex flex-col items-center gap-3 pointer-events-auto max-w-sm text-center transform transition-all hover:scale-105">
-                      <Lock className="w-8 h-8 mb-2" />
-                      <h4 className="font-primary font-black uppercase tracking-widest text-sm">Premium Intelligence Locked</h4>
-                      <p className="text-xs font-medium opacity-90 mb-4">Subscribe to unlock Hidden Gem locations and community data.</p>
+                    <div className="bg-slate-900/90 text-white px-8 py-10 rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-2xl flex flex-col items-center gap-4 pointer-events-auto max-w-[340px] text-center transform transition-all hover:scale-[1.02]">
+                      <div className="w-16 h-16 rounded-2xl bg-[var(--color-tertiary)]/10 flex items-center justify-center mb-2 border border-[var(--color-tertiary)]/20 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                        <Lock className="w-7 h-7 text-[var(--color-tertiary)]" />
+                      </div>
+                      <h4 className="font-primary font-black uppercase tracking-[0.2em] text-sm text-white">Premium Intelligence Locked</h4>
+                      <p className="text-[11px] font-medium text-slate-400 leading-relaxed mb-4 px-4">Subscribe to unlock Hidden Gem locations, exact coordinates, and community data.</p>
                       <Button 
-                        size="sm" 
-                        variant="dark" 
-                        className="bg-black/40 hover:bg-black/60 border-white/20 w-full"
+                        size="lg" 
+                        className="bg-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/90 text-white font-black uppercase tracking-[0.15em] text-[10px] w-full rounded-2xl h-12 shadow-lg shadow-[var(--color-tertiary)]/20 active:scale-95 transition-all"
                         onClick={() => router.push("/pricing")}
                       >
-                        Unlock Now
+                        Initialize Subscription
                       </Button>
                     </div>
                   </div>

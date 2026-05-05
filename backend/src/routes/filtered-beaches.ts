@@ -154,8 +154,8 @@ router.get(
       const hasActiveTrial = user?.hasActiveTrial;
       const isPremium = isSubscribed || hasActiveTrial;
       
-      const showHiddenGems = req.query.isHiddenGem === "true" || (!req.query.isHiddenGem && isPremium);
-      const showRegular = req.query.isRegular === "true" || (!req.query.isRegular && !req.query.isHiddenGem);
+      const showHiddenGems = req.query.isHiddenGem === "true" || (req.query.isHiddenGem === undefined && isPremium);
+      const showRegular = req.query.isRegular === "true" || req.query.isRegular === undefined;
 
       const typeFilters: Prisma.BeachWhereInput[] = [];
 

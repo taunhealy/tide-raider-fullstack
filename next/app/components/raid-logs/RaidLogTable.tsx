@@ -979,7 +979,7 @@ export default function RaidLogTable({
                             >
                               <h3 className="h-5 mb-2 flex items-center gap-2">
                                 {isGatedGem ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[11px] font-black uppercase tracking-widest border border-amber-500/20">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[11px] font-black uppercase tracking-widest border border-brand-3/20">
                                     <LockIcon className="w-4 h-4 mr-1.5" />
                                     Hidden Gem
                                   </span>
@@ -1143,7 +1143,9 @@ export default function RaidLogTable({
                             ) : hasVideo && videoUrls.length > 0 ? (
                               <>
                                 <Image
-                                  src={videoUrls[0].thumbnail || getVideoThumbnail(videoUrls[0].url, videoUrls[0].type)}
+                                  src={(!videoUrls[0].thumbnail || videoUrls[0].thumbnail.includes("instagram-placeholder")) 
+                                      ? getVideoThumbnail(videoUrls[0].url, videoUrls[0].type) 
+                                      : videoUrls[0].thumbnail}
                                   alt="Video thumbnail"
                                   fill={true}
                                   className="object-cover rounded-md hover:opacity-90 transition-opacity"
@@ -1371,7 +1373,9 @@ export default function RaidLogTable({
                                   />
                                 ) : (entry as any).videoUrls && (entry as any).videoUrls.length > 0 ? (
                                   <Image
-                                    src={(entry as any).videoUrls[0].thumbnail || getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
+                                    src={((entry as any).videoUrls[0].thumbnail && !(entry as any).videoUrls[0].thumbnail.includes("instagram-placeholder")) 
+                                      ? (entry as any).videoUrls[0].thumbnail 
+                                      : getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
                                     alt="Video thumbnail"
                                     fill
                                     className="object-cover transition-transform hover:scale-105 duration-300"

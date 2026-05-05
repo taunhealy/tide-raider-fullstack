@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     sevenDaysLater.setDate(today.getDate() + 7);
 
     // Create cache key
-    const cacheKey = `map-data:${source || 'all'}:${timeSlot || 'all'}`;
+    const cacheKey = `map-data-v2:${source || 'all'}:${timeSlot || 'all'}`;
     let cached;
     try {
       cached = await redis.get(cacheKey);
@@ -62,8 +62,9 @@ export async function GET(request: Request) {
             voteCount: true
           }
         },
-        // Exclude conditionProfiles from the global map fetch to reduce payload size.
-        // Full details will be fetched on-demand when a beach is clicked.
+        conditionProfiles: {
+          where: { category: "GENERAL" }
+        },
         beachDailyScores: {
           where: {
             date: {
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
           select: {
             date: true,
             starRating: true,
-            // conditions: true // Excluded for performance
+            conditions: true
           },
           orderBy: {
             date: 'desc'
@@ -106,11 +107,13 @@ export async function GET(request: Request) {
           acc[dateStr] = {
             date: dateStr,
             rating: avgRating,
-            // conditions: null // Full conditions fetched on demand
+            conditions: scores[0]?.conditions || null
           };
           return acc;
         }, {});
           
+        const profile = beach.conditionProfiles?.[0] || {};
+
         return {
           id: beach.id,
           name: beach.name,
@@ -131,6 +134,11 @@ export async function GET(request: Request) {
           isLongboarding: beach.isLongboarding || false,
           isFoiling: beach.isFoiling || false,
           dailyScores: dailyScores,
+          optimalWindDirections: profile.optimalWindDirections || [],
+          optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
+          swellSize: profile.swellSize || { min: 0, max: 10 },
+          idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
+          optimalTide: profile.optimalTide || "ALL",
           mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
           sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
           rating: (Object.values(dailyScores) as any[])[0]?.rating || beach.rating || 3

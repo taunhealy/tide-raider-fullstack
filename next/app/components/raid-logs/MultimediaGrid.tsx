@@ -107,7 +107,9 @@ export function MultimediaGrid({
               ) : (
                 <>
                   <Image
-                    src={media.thumbnail || getVideoThumbnail(media.url, media.platformType)}
+                    src={(!media.thumbnail || media.thumbnail.includes("instagram-placeholder")) 
+                      ? getVideoThumbnail(media.url, media.platformType) 
+                      : media.thumbnail}
                     alt={`Session video ${idx + 2}`}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"

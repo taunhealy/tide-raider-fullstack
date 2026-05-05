@@ -553,6 +553,11 @@ export function RaidLogForm({
       return;
     }
 
+    if (imageUrls.length === 0 && videoUrls.length === 0) {
+      toast.error("Raid Log entry needs a media to post, it can't be blank");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Images and videos are already handled by their respective Multi-Uploader components
@@ -832,9 +837,9 @@ export function RaidLogForm({
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { value: "WINDFINDER", label: "Windfinder", color: "text-blue-600" },
-                      { value: "WINDGURU", label: "Windguru", color: "text-emerald-600" },
-                      { value: "WINDY", label: "Windy", color: "text-red-600" },
+                      { value: "WINDFINDER", label: "Source A", color: "text-blue-600" },
+                      { value: "WINDGURU", label: "Source B", color: "text-emerald-600" },
+                      { value: "WINDY", label: "Source C", color: "text-red-600" },
                     ].map((source) => {
                       const forecast = allForecasts?.[source.value];
                       return (

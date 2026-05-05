@@ -80,8 +80,11 @@ export function getVideoThumbnail(
     // For uploaded videos, we might show a video icon or a generic thumbnail
     return "/images/video-placeholder.jpg";
   } else if (finalPlatform === "instagram") {
-    // Instagram doesn't provide a direct thumbnail URL easily without API, 
-    // but we can use a generic icon or eventually scrape it.
+    // Attempt to extract username for unavatar fallback
+    const usernameMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)\/(?:p|reels|reel)\//);
+    if (usernameMatch && !["p", "reels", "reel", "tv"].includes(usernameMatch[1])) {
+      return `https://unavatar.io/instagram/${usernameMatch[1]}`;
+    }
     return "/images/instagram-placeholder.png";
   }
 

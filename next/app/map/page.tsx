@@ -28,7 +28,8 @@ export default function GlobalMapPage() {
   const [viewMode, setViewMode] = useState<"map" | "grid">("map");
   
   // Use selectedDayIndex but also sync it with filter
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  // Derived day index from URL filter
+  // const [selectedDayIndex, setSelectedDayIndex] = useState(0); // Removed in favor of useMemo below
   const [showWindHeatmap, setShowWindHeatmap] = useState(true);
   const [showSwellHeatmap, setShowSwellHeatmap] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -82,15 +83,31 @@ export default function GlobalMapPage() {
   const setIsFoilingOnly = (val: boolean) => updateFilter("isFoiling", val ? "true" : "");
   const setIsHiddenGemsOnly = (val: boolean) => updateFilter("isHiddenGem", val ? "true" : "");
 
+  // Derive selectedDayIndex from URL filter
+  const selectedDayIndex = useMemo(() => {
+    if (!filters.forecastDate) return 0;
+    
+    const targetDate = new Date(filters.forecastDate);
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    
+    const diffTime = targetDate.getTime() - today.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays >= 0 && diffDays <= 6) return diffDays;
+    return 0;
+  }, [filters.forecastDate]);
+
   const weekDays = useMemo(() => {
     const days = [];
-    const now = new Date();
+    const baselineDate = new Date();
+    baselineDate.setUTCHours(0, 0, 0, 0);
+    
     for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setUTCDate(now.getUTCDate() + i);
+        const d = new Date(baselineDate);
+        d.setUTCDate(baselineDate.getUTCDate() + i);
         const dateStr = d.toISOString().split('T')[0];
         
-        // Count how many beaches have a rating >= 3 for this day
         const scoreCount = beaches.filter(Boolean).reduce((acc, b: any) => {
           const rating = b.dailyScores?.[dateStr]?.rating ?? b.rating;
           return rating >= 3 ? acc + 1 : acc;
@@ -107,17 +124,16 @@ export default function GlobalMapPage() {
     return days;
   }, [beaches]);
 
-  // Update filter when selectedDayIndex changes
-  useEffect(() => {
-    const dateStr = weekDays[selectedDayIndex]?.dateStr;
-    if (dateStr) {
-      updateFilter("forecastDate", dateStr);
-    }
-  }, [selectedDayIndex, weekDays, updateFilter]);
-
   const selectedDateString = useMemo(() => {
     return weekDays[selectedDayIndex]?.dateStr || new Date().toISOString().split('T')[0];
   }, [selectedDayIndex, weekDays]);
+
+  const handleDaySelect = (index: number) => {
+    const dateStr = weekDays[index]?.dateStr;
+    if (dateStr) {
+      updateFilter("forecastDate", dateStr);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -546,7 +562,7 @@ export default function GlobalMapPage() {
                 return (
                   <button
                     key={option.index}
-                    onClick={() => setSelectedDayIndex(option.index)}
+                    onClick={() => handleDaySelect(option.index)}
                     className={cn(
                       "flex flex-col items-center min-w-[60px] md:min-w-[80px] px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all border border-transparent group shrink-0",
                       loading && "cursor-wait opacity-70",
@@ -597,6 +613,7 @@ export default function GlobalMapPage() {
                 center={mapCenter}
                 zoom={mapZoom}
                 selectedDayIndex={selectedDayIndex}
+                selectedDateString={selectedDateString}
                 onAIReportClick={(beach) => {
                   setReportBeach(beach);
                   setIsReportModalOpen(true);

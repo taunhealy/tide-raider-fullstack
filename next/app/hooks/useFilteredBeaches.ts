@@ -138,6 +138,7 @@ export function useFilteredBeaches({
         hazards?: string;
         forecastDate?: string;
         isHiddenGem?: string;
+        isRegular?: string;
         isLongboarding?: string;
         isFoiling?: string;
         timeSlot?: string;
@@ -178,7 +179,8 @@ export function useFilteredBeaches({
           : filters.hazards;
       }
       if (filters.forecastDate) params.forecastDate = filters.forecastDate;
-      if (filters.isHiddenGem) params.isHiddenGem = "true";
+      if (filters.isHiddenGem !== undefined) params.isHiddenGem = filters.isHiddenGem;
+      if (filters.isRegular !== undefined) params.isRegular = filters.isRegular;
       if (filters.isLongboarding) params.isLongboarding = "true";
       if (filters.isFoiling) params.isFoiling = "true";
       if (filters.timeSlot) params.timeSlot = filters.timeSlot;

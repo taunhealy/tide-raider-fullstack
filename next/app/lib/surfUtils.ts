@@ -68,7 +68,7 @@ export function getConditionReasons(
   const swellSz = beach.swellSize || { min: 0, max: 10 };
   const swellPd = beach.idealSwellPeriod || { min: 0, max: 25 };
 
-  if (!forecastData?.windDirection || !forecastData?.swellDirection) {
+  if (forecastData?.windDirection === undefined || forecastData?.swellDirection === undefined || forecastData === null) {
     return {
       reasons: [],
       optimalConditions: [
