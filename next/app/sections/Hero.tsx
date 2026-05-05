@@ -27,7 +27,7 @@ const TideMap = dynamic(() => import("@/app/components/map/TideMap"), {
     <div className="w-full h-full bg-gray-800/50 flex items-center justify-center rounded-xl border border-gray-700">
       <div className="flex flex-col items-center gap-2">
         <div className="w-8 h-8 border-2 border-brand-3/30 border-t-brand-3 rounded-full animate-spin" />
-        <span className="text-[10px] font-white text-brand-3/50 uppercase tracking-[0.2em]">Tactical Sync...</span>
+        <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Tactical Sync...</span>
       </div>
     </div>
   )

@@ -753,14 +753,14 @@ export default function TideMap({
       {/* Loading Overlay */}
       {loading && beaches.length === 0 && (
         <div className="absolute inset-0 z-[40] flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
-          <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/20 animate-in zoom-in-95 duration-300">
+          <div className="bg-gray-900/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/10 animate-in zoom-in-95 duration-300">
             <div className="relative">
-              <div className="w-12 h-12 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin" />
-              <MapPin className="absolute inset-0 m-auto w-4 h-4 text-gray-400" />
+              <div className="w-12 h-12 border-4 border-white/10 border-t-[#1d4ed8] rounded-full animate-spin" />
+              <MapPin className="absolute inset-0 m-auto w-4 h-4 text-white/50" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Calibrating Intel</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Syncing global break coordinates...</p>
+              <p className="text-sm font-black text-white uppercase tracking-widest mb-1">Tactical Sync...</p>
+              <p className="text-[10px] text-white/50 font-bold uppercase tracking-tighter">Syncing global break coordinates...</p>
             </div>
           </div>
         </div>

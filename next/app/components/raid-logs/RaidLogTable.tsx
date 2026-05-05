@@ -196,9 +196,9 @@ function ForecastInfo({
     <div className={cn("flex flex-col gap-1.5 relative", isActuallyGated && "select-none")}>
       {isActuallyGated && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-           <div className="bg-white/80 backdrop-blur-[2px] rounded-full px-2 py-0.5 border border-amber-200 shadow-sm flex items-center gap-1.5">
-             <LockIcon className="w-2.5 h-2.5 text-amber-600" />
-             <span className="text-[9px] font-black text-amber-700 uppercase tracking-tight">Premium Data</span>
+           <div className="bg-white/80 backdrop-blur-[2px] rounded-full px-2 py-0.5 border border-blue-200 shadow-sm flex items-center gap-1.5">
+             <LockIcon className="w-2.5 h-2.5 text-[#1d4ed8]" />
+             <span className="text-[9px] font-black text-[#1d4ed8] uppercase tracking-tight">Premium Data</span>
            </div>
         </div>
       )}
@@ -887,7 +887,7 @@ export default function RaidLogTable({
                 >
                   {/* Hidden Gem lock overlay */}
                   {isGatedGem ? (
-                    <div className="absolute top-2 right-2 z-20 bg-amber-500 rounded-full p-2 shadow-lg border border-amber-400 flex items-center justify-center">
+                    <div className="absolute top-2 right-2 z-20 bg-[#1d4ed8] rounded-full p-2 shadow-lg border border-blue-400 flex items-center justify-center">
                       <LockIcon className="w-3.5 h-3.5 text-white" />
                     </div>
                   ) : (
@@ -979,8 +979,8 @@ export default function RaidLogTable({
                             >
                               <h3 className="h-5 mb-2 flex items-center gap-2">
                                 {isGatedGem ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-brand-3/10 text-brand-3 text-[11px] font-black uppercase tracking-widest border border-brand-3/20">
-                                    <LockIcon className="w-4 h-4 mr-1.5" />
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-[#1d4ed8] text-[11px] font-black uppercase tracking-widest border border-blue-100">
+                                    <LockIcon className="w-4 h-4 mr-1.5 text-[#1d4ed8]" />
                                     Hidden Gem
                                   </span>
                                 ) : (
@@ -989,7 +989,7 @@ export default function RaidLogTable({
                                   </span>
                                 )}
                                 {isHiddenGemEntry && !isGatedGem && (
-                                  <span className="text-amber-500 text-[11px]" title="Hidden Gem">💎</span>
+                                  <span className="text-blue-500 text-[11px]" title="Hidden Gem">💎</span>
                                 )}
                               </h3>
                               <div className="space-y-1">
@@ -1273,7 +1273,7 @@ export default function RaidLogTable({
                           key={`row-${entry.id}`}
                           className={cn(
                             "hover:bg-gray-50 cursor-pointer",
-                            isGatedGem && "bg-amber-50/30"
+                            isGatedGem && "bg-blue-50/30"
                           )}
                           onClick={(e) => {
                             // Don't navigate if clicking on a button
@@ -1297,15 +1297,15 @@ export default function RaidLogTable({
                                 className="font-primary text-sm text-gray-900 hover:text-brand-3 transition-colors text-left"
                               >
                                 {isGatedGem ? (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
-                                    <LockIcon className="w-2.5 h-2.5 mr-1" />
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-black text-[9px] font-black uppercase tracking-widest border border-blue-100">
+                                    <LockIcon className="w-2.5 h-2.5 mr-1 text-[#1d4ed8]" />
                                     Hidden Gem
                                   </span>
                                 ) : (
                                   <>
                                     {entry.beach?.name || entry.beachName || "No beach specified"}
                                     {isHiddenGemEntry && (
-                                      <span className="ml-1 text-amber-500" title="Hidden Gem">💎</span>
+                                      <span className="ml-1 text-blue-500" title="Hidden Gem">💎</span>
                                     )}
                                   </>
                                 )}
@@ -1360,7 +1360,7 @@ export default function RaidLogTable({
                               >
                                 {isGatedGem && (
                                   <div className="absolute inset-0 z-10 bg-white/40 flex items-center justify-center">
-                                    <LockIcon className="w-3 h-3 text-amber-600" />
+                                    <LockIcon className="w-3 h-3 text-[#1d4ed8]" />
                                   </div>
                                 )}
                                 {(entry as any).imageUrls &&

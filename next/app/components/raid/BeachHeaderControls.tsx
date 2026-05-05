@@ -319,19 +319,29 @@ export default function BeachHeaderControls({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <RegularButton
+                        active={filters.isRegular !== "false"}
+                        size="sm"
+                        onClick={() => {
+                          const currentActive = filters.isRegular !== "false";
+                          updateFilter("isRegular", !currentActive ? "true" : "false");
+                        }}
+                      >
+                        Public Breaks
+                      </RegularButton>
+
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className={cn("flex", (!isAuthenticated || !isSubscribed) && "cursor-not-allowed")}>
+                          <div className="flex">
                             <HiddenGemsButton
-                              active={filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === "true" || filters.isHiddenGem === true}
+                              active={filters.isHiddenGem === "true" || filters.isHiddenGem === true}
                               size="sm"
-                              disabled={!isAuthenticated || !isSubscribed}
                               onClick={() => {
-                                const currentActive = filters.isHiddenGem === undefined ? isSubscribed : filters.isHiddenGem === "true" || filters.isHiddenGem === true;
+                                const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
                                 updateFilter("isHiddenGem", !currentActive ? "true" : "false");
                               }}
                               className={cn(
-                                (!isAuthenticated || !isSubscribed) && "opacity-50 grayscale pointer-events-none"
+                                (!isAuthenticated || !isSubscribed) && "shadow-[0_0_15px_-5px_rgba(79,70,229,0.4)]"
                               )}
                             >
                               Hidden Gems
@@ -340,7 +350,7 @@ export default function BeachHeaderControls({
                                   {hiddenGemCount}
                                 </span>
                               )}
-                              {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3" />}
+                              {(!isAuthenticated || !isPremium) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
                             </HiddenGemsButton>
                           </div>
                         </TooltipTrigger>

@@ -292,16 +292,16 @@ const BeachCard = memo(function BeachCard({
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {isLocked ? (
-                        <span className="blur-[8px] select-none opacity-50">Hidden Gem Break</span>
+                        <span className="blur-[8px] select-none text-[#1d4ed8]">Hidden Gem Break</span>
                       ) : beach.name}
                       {beach.isHiddenGem && (
                         <span className={cn(
                           "inline-flex items-center px-1.5 py-0 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all duration-300 h-4 md:h-[18px]",
                           isLocked 
-                            ? "bg-slate-100 text-slate-400 border-slate-200" 
+                            ? "bg-blue-50 text-black border-blue-100" 
                             : "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.2)]"
                         )}>
-                          <Gem className={cn("w-2 h-2 mr-1", !isLocked && "fill-indigo-600/20")} />
+                          <Gem className={cn("w-2 h-2 mr-1", !isLocked ? "fill-indigo-600/20" : "text-[#1d4ed8]")} />
                           Hidden Gem
                         </span>
                       )}
@@ -681,16 +681,16 @@ const BeachCard = memo(function BeachCard({
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
                       {isLocked ? (
-                        <span className="blur-[8px] select-none opacity-50">Hidden Gem Break</span>
+                        <span className="blur-[8px] select-none text-[#1d4ed8]">Hidden Gem Break</span>
                       ) : beach.name}
                       {beach.isHiddenGem && (
                         <span className={cn(
                           "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
                           isLocked 
-                            ? "bg-slate-100 text-slate-400 border-slate-200" 
+                            ? "bg-blue-50 text-[#1d4ed8] border-blue-100" 
                             : "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.2)]"
                         )}>
-                          <Gem className={cn("w-2.5 h-2.5 mr-1.5", !isLocked && "fill-indigo-600/20")} />
+                          <Gem className={cn("w-2.5 h-2.5 mr-1.5", !isLocked ? "fill-indigo-600/20" : "text-[#1d4ed8]")} />
                           Hidden Gem
                         </span>
                       )}

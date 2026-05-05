@@ -49,21 +49,28 @@ async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
     const coords = (beach?.coordinates as { lat: number, lng: number }) || { lat: -33.9249, lng: 18.4241 };
     const dateStr = date.toISOString().split('T')[0];
     
-    console.log(`[Archive] Fetching Open-Meteo Archive for ${regionId} on ${dateStr} at ${coords.lat}, ${coords.lng}`);
+    console.log(`[Archive] Fetching Open-Meteo data for ${regionId} on ${dateStr} at ${coords.lat}, ${coords.lng}`);
     
-    // Open-Meteo Archive API
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m,wave_height,wave_period,wave_direction&wind_speed_unit=kn`;
+    // Fetch from both Weather Archive (for wind) and Marine API (for waves)
+    const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kn`;
+    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wave_height,wave_period,wave_direction`;
     
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Open-Meteo API failed: ${response.statusText}`);
-    const data = await response.json() as any;
+    const [weatherRes, marineRes] = await Promise.all([
+      fetch(weatherUrl),
+      fetch(marineUrl)
+    ]);
+
+    if (!weatherRes.ok) throw new Error(`Weather API failed: ${weatherRes.statusText}`);
+    if (!marineRes.ok) throw new Error(`Marine API failed: ${marineRes.statusText}`);
+
+    const weatherData = await weatherRes.json() as any;
+    const marineData = await marineRes.json() as any;
     
-    if (!data.hourly) {
-      throw new Error("No hourly data returned from Open-Meteo");
+    if (!weatherData.hourly || !marineData.hourly) {
+      throw new Error("Missing hourly data from Open-Meteo");
     }
 
-    const hourly = data.hourly;
-    const times = hourly.time as string[];
+    const times = weatherData.hourly.time as string[];
     
     const slots = [
       { name: "MORNING", hour: 9 },
@@ -71,32 +78,26 @@ async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
       { name: "EVENING", hour: 17 }
     ];
     
-    console.log(`[Archive] Found ${times.length} hourly slots. Looking for matches in ${dateStr}...`);
-
     const results = slots.map(slot => {
-      // Find index for the specific hour
       const timeStr = `${dateStr}T${slot.hour.toString().padStart(2, '0')}:00`;
       const timeIndex = times.findIndex((t: string) => t.startsWith(timeStr));
       
-      if (timeIndex === -1) {
-        console.warn(`[Archive] No data found in hourly array for ${timeStr}`);
-        return null;
-      }
+      if (timeIndex === -1) return null;
       
       return {
         date: date,
         timeSlot: slot.name,
-        windSpeed: Math.round(hourly.wind_speed_10m[timeIndex] || 0),
-        windDirection: hourly.wind_direction_10m[timeIndex] || 0,
-        swellHeight: hourly.wave_height?.[timeIndex] || 0,
-        swellPeriod: Math.round(hourly.wave_period?.[timeIndex] || 0),
-        swellDirection: hourly.wave_direction?.[timeIndex] || 0,
+        windSpeed: Math.round(weatherData.hourly.wind_speed_10m[timeIndex] || 0),
+        windDirection: weatherData.hourly.wind_direction_10m[timeIndex] || 0,
+        swellHeight: marineData.hourly.wave_height?.[timeIndex] || 0,
+        swellPeriod: Math.round(marineData.hourly.wave_period?.[timeIndex] || 0),
+        swellDirection: marineData.hourly.wave_direction?.[timeIndex] || 0,
         source: "OPENMETEO_ARCHIVE",
         tide: ""
       };
     }).filter((r): r is any => r !== null);
     
-    console.log(`[Archive] Successfully parsed ${results.length} slots for ${regionId}`);
+    console.log(`[Archive] Successfully merged ${results.length} slots for ${regionId}`);
     return results;
   } catch (error) {
     console.error(`[Archive] Failed to fetch from Open-Meteo:`, error);

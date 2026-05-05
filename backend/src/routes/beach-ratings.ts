@@ -607,7 +607,10 @@ router.get(
       const missingSources = expectedSources.filter(s => !foundSources.has(s));
 
       // Fallback: If scores are missing for some sources, calculate them on the fly
-      if (missingSources.length > 0) {
+      // Only attempt fetching for recent or future dates to avoid slow scraper timeouts for old historical data
+      const isHistorical = targetDate < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      
+      if (missingSources.length > 0 && !isHistorical) {
         const beach = await prisma.beach.findUnique({
           where: { id: beachId as string },
           select: { regionId: true }
@@ -666,7 +669,7 @@ router.get(
         WINDFINDER: "Source A",
         WINDGURU: "Source B",
         WINDY: "Source C",
-        OPENMETEO_ARCHIVE: "Archive Data"
+        OPENMETEO_ARCHIVE: "OpenMeteo"
       };
 
       const formattedScores = scores.map((score) => ({

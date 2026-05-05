@@ -19,7 +19,7 @@ const NAVIGATION_ITEMS = [
   { href: "/raid", label: "Raid" },
   { href: "/map", label: "Map" },
   { href: "/logs", label: "Logs" },
-  { href: "/dashboard/alerts", label: "Set Alerts" },
+  { href: "/dashboard/alerts", label: "Alerts" },
   { href: "/aireport", label: "AI Report" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },

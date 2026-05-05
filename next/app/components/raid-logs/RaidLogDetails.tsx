@@ -133,7 +133,14 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
         `/api/beach-scores?beachId=${beachId}&date=${logDate}`
       );
       if (!response.ok) return null;
-      return response.json();
+      const data = await response.json();
+      console.log("[RaidLogDetails] Beach Scores Data:", {
+        beachId,
+        date: logDate,
+        scoresCount: data?.scores?.length,
+        sources: data?.scores?.map((s: any) => s.source)
+      });
+      return data;
     },
     enabled: !!beachId && !!logDate && !!entry,
   });
@@ -386,7 +393,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                             const sources = [
                               { id: 'WINDFINDER', name: 'Source A', color: 'text-blue-400' },
                               { id: 'WINDGURU', name: 'Source B', color: 'text-emerald-400' },
-                              { id: 'WINDY', name: 'Source C', color: 'text-red-400' }
+                              { id: 'WINDY', name: 'Source C', color: 'text-red-400' },
+                              { id: 'OPENMETEO_ARCHIVE', name: 'Archive Data', color: 'text-gray-400' }
                             ];
 
                             // Check if this slot is the one the user actually surfed
@@ -425,11 +433,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                 ) : (
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     {sources.map((sourceInfo) => {
-                                      const score = apiScores.find(s => s.source === sourceInfo.id);
+                                      const score = apiScores.find((s: any) => s.source === sourceInfo.id);
                                       let conditions = score?.conditions;
                                       
-                                      // Fallback for Source A if it's the user's session slot and API didn't return conditions
-                                      if (sourceInfo.id === 'WINDFINDER' && isSessionalSlot && !conditions) {
+                                      // Fallback for the source the user actually used for this session
+                                      if (entry.mostAccurateSource === sourceInfo.id && isSessionalSlot && !conditions) {
                                         conditions = forecastData;
                                       }
 

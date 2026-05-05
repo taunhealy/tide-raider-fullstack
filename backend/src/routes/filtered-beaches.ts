@@ -40,7 +40,7 @@ router.get(
         req.query.isHiddenGem,
         req.query.isLongboarding,
         req.query.searchQuery,
-        (req as any).user?.isSubscribed ? "subscribed" : "free"
+        (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial ? "premium" : "free"
       ];
       const cacheKey = crypto.createHash('md5').update(JSON.stringify(cacheKeyParts)).digest('hex');
       
@@ -160,12 +160,7 @@ router.get(
       const typeFilters: Prisma.BeachWhereInput[] = [];
 
       if (showHiddenGems) {
-        if (isPremium) {
-          typeFilters.push({ isHiddenGem: true });
-        } else if (req.query.isHiddenGem === "true") {
-          // Non-subscriber explicitly requested gems - force 0 results
-          whereClause.id = "force-zero-results";
-        }
+        typeFilters.push({ isHiddenGem: true });
       }
 
       if (showRegular) {
@@ -474,8 +469,8 @@ router.get(
           >,
           beach
         ) => {
-          const isSubscriber = (req as any).user?.isSubscribed;
-          const isGated = beach.isHiddenGem && !isSubscriber;
+          const isPremiumUser = (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
+          const isGated = beach.isHiddenGem && !isPremiumUser;
           
           const dailyScore =
             beach.beachDailyScores.length > 0
@@ -499,11 +494,13 @@ router.get(
           const { beachDailyScores, conditionProfiles, ...beachData } = beach as any;
           const profile = conditionProfiles?.[0] || {};
           
-          const isSubscriber = (req as any).user?.isSubscribed;
-          const isGated = beach.isHiddenGem && !isSubscriber;
+           const isPremiumUser = (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
+           const isGated = beach.isHiddenGem && !isPremiumUser;
 
           return {
             ...beachData,
+            name: isGated ? "Hidden Gem Break" : beachData.name,
+            location: isGated ? "Secret Location" : beachData.location,
             optimalWindDirections: profile.optimalWindDirections || [],
             optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
             swellSize: profile.swellSize || { min: 0, max: 10 },

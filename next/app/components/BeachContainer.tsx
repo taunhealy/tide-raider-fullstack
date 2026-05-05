@@ -162,7 +162,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   };
 
   // Auto-redirect to last selected region if no regionId in URL
-  const { data: recentSearches } = useQuery({
+  const { data: recentSearches, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["recentSearches"],
     queryFn: async () => {
       const res = await fetch("/api/user-searches?limit=1");
@@ -174,11 +174,10 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     enabled: !filters.regionId && !hasAutoRedirected.current, // Only fetch if no regionId and haven't redirected yet
   });
 
-  // Auto-redirect to most recent region if no regionId in URL
   useEffect(() => {
     // Only redirect if:
     // 1. No regionId in URL
-    // 2. We have recent searches
+    // 2. We have recent searches check completed
     // 3. We haven't already redirected
     // 4. We're on the /raid page
     if (
@@ -186,29 +185,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       !hasAutoRedirected.current &&
       pathname === "/raid"
     ) {
-      // If we have recent searches, use the most recent one
+      // 1. Try to use most recent search
       if (recentSearches && recentSearches.length > 0) {
         const mostRecentSearch = recentSearches[0];
         if (mostRecentSearch?.region?.id) {
-          // Construct region object from recent search data
-          const selectedRegion = {
-            id: mostRecentSearch.region.id,
-            regionId: mostRecentSearch.region.id,
-            name: mostRecentSearch.region.name,
-            countryId: mostRecentSearch.region.country?.id || "",
-            country: mostRecentSearch.region.country
-              ? {
-                  id: mostRecentSearch.region.country.id || "",
-                  name: mostRecentSearch.region.country.name || "",
-                  continentId: mostRecentSearch.region.country.continentId || "",
-                }
-              : undefined,
-            continent: mostRecentSearch.region.continent || "",
-          };
-
-          // Use selectRegion logic but combine with timeSlot
           const params = new URLSearchParams(window.location.search);
-          const formattedRegionId = selectedRegion.id.toLowerCase().replace(/\s+/g, "-");
+          const formattedRegionId = mostRecentSearch.region.id.toLowerCase().replace(/\s+/g, "-");
           params.set("regionId", formattedRegionId);
           
           if (!params.get("timeSlot")) {
@@ -217,10 +199,24 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
           
           router.push(`${pathname}?${params.toString()}`, { scroll: false });
           hasAutoRedirected.current = true;
+          return;
         }
       }
+
+      // 2. Fallback to Western Cape if history check is done and empty
+      if (!isLoadingHistory) {
+        const params = new URLSearchParams(window.location.search);
+        params.set("regionId", "western-cape");
+        if (!params.get("timeSlot")) {
+          params.set("timeSlot", "MORNING");
+        }
+        
+        console.log("[BeachContainer] 📍 History empty. Defaulting URL to Western Cape.");
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        hasAutoRedirected.current = true;
+      }
     }
-  }, [filters.regionId, recentSearches, pathname, router]);
+  }, [filters.regionId, recentSearches, isLoadingHistory, pathname, router]);
 
   // Track region searches when regionId changes
   const { mutate: trackSearch } = useMutation({
@@ -315,6 +311,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     }
 
     return processedBeaches.sort((a, b) => {
+      // If Hidden Gems filter is active, prioritize them at the top
+      if (filters.isHiddenGem === "true" || filters.isHiddenGem === true) {
+        if (a.isHiddenGem && !b.isHiddenGem) return -1;
+        if (!a.isHiddenGem && b.isHiddenGem) return 1;
+      }
+
       const hasScoreA = a.id in beachScores;
       const hasScoreB = b.id in beachScores;
 
