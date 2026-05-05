@@ -413,6 +413,15 @@ export class AlertService {
   }
 
   /**
+   * Delete alert checks for an alert
+   */
+  static async deleteAlertChecks(alertId: string) {
+    await prisma.alertCheck.deleteMany({
+      where: { alertId },
+    });
+  }
+
+  /**
    * Deactivate excess alerts for a user based on their subscription status.
    * Free tier: 1 alert active.
    * Premium tier: 10+ alerts active.

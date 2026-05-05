@@ -621,7 +621,13 @@ router.get(
           if (forecasts.length === 0) {
             console.log(`[beach-ratings/beach-scores] No forecasts found for ${beachId} on ${date}. Triggering fetch/archive...`);
             try {
-              await getLatestConditions(beach.regionId, false, "WINDFINDER", 1, targetDate);
+              // Trigger fetches for all sources in parallel to populate the dashboard
+              await Promise.all([
+                getLatestConditions(beach.regionId, false, "WINDFINDER", 1, targetDate),
+                getLatestConditions(beach.regionId, false, "WINDGURU", 1, targetDate),
+                getLatestConditions(beach.regionId, false, "WINDY", 1, targetDate)
+              ]);
+              
               // Re-fetch forecasts to see if we got something
               forecasts = await prisma.forecast.findMany({
                 where: {

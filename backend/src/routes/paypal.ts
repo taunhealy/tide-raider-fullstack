@@ -5,6 +5,7 @@ import axios from "axios";
 import { PayPalService } from "../services/paypal";
 import { sendEmail } from "../lib/email";
 import { subscriptionActivatedTemplate, subscriptionCancelledTemplate } from "../lib/emailTemplates";
+import { AlertService } from "../services/alertService";
 
 const router = Router();
 const BASE_PRICE = 4.00;

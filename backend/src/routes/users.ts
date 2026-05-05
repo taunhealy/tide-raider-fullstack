@@ -77,7 +77,7 @@ router.put(
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      const { bio, name, link, whatsappNumber, email } = req.body;
+      const { bio, name, link, instagram, whatsappNumber, email } = req.body;
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
