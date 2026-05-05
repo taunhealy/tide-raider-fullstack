@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { chromium } from "playwright";
+import { getBrowser } from "./browser";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { USER_AGENTS } from "../proxy/userAgents";
@@ -9,13 +9,6 @@ import { BaseForecastData } from "../types";
 
 const proxyManager = new ProxyManager();
 
-async function getBrowser() {
-  console.log(`[getBrowser] Launching Playwright Chromium...`);
-  return await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-  });
-}
 
 // Convert knots to m/s (Windguru shows wind in knots)
 const knotsToMs = (knots: number): number => {
@@ -286,10 +279,10 @@ export async function scraperB(
       const forecast: BaseForecastData = {
         date: forecastDate, // Return Date object, normalized to UTC midnight
         timeSlot: (data.timeSlot || "MORNING") as any,
-        windSpeed: windSpeedMs,
+        windSpeed: Math.round(windSpeedMs),
         windDirection: windDirection,
         swellHeight: swellHeight,
-        swellPeriod: swellPeriod,
+        swellPeriod: Math.round(swellPeriod),
         swellDirection: swellDirection,
       };
       forecasts.push(forecast);

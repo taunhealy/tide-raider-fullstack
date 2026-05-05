@@ -9,7 +9,7 @@ const getBackendUrl = () => {
 
   // In development, use localhost backend (connects to Docker postgres)
   if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
+    return envUrl || "http://localhost:4050";
   }
 
   // In production, use production backend (connects to Fly.io postgres)

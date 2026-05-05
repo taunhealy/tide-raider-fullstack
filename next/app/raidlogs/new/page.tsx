@@ -384,7 +384,7 @@ export default function NewRaidLogPage() {
                         <>
                           The backend server at{" "}
                           <code className="bg-gray-100 px-2 py-1 rounded">
-                            {backendHealth.backendUrl || "localhost:4001"}
+                            {backendHealth.backendUrl || "localhost:4050"}
                           </code>{" "}
                           is not running or not reachable.
                           {backendHealth.error && (
@@ -399,7 +399,7 @@ export default function NewRaidLogPage() {
                     <>
                       The backend server at{" "}
                       <code className="bg-gray-100 px-2 py-1 rounded">
-                        localhost:4001
+                        localhost:4050
                       </code>{" "}
                       appears to be not running or not responding.
                     </>
@@ -445,7 +445,7 @@ export default function NewRaidLogPage() {
                     <li>
                       Wait for:{" "}
                       <code className="bg-gray-200 px-1 rounded">
-                        🚀 Backend server running on port 4001
+                        🚀 Backend server running on port 4050
                       </code>
                     </li>
                     <li>Click &quot;Check Connection Again&quot; above</li>

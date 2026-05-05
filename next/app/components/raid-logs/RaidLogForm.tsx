@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Search, X, Bell } from "lucide-react";
+import { Star, Search, X, Bell, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { cn } from "@/app/lib/utils";
 import type { Beach } from "@/app/types/beaches";
@@ -14,6 +14,11 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
+import {
+  getWindEmoji,
+  getSwellEmoji,
+  degreesToCardinal,
+} from "@/app/lib/forecastUtils";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
 import { useUpdateLog } from "@/app/hooks/useUpdateLog";
 import { useBeaches } from "@/app/hooks/useBeaches";
@@ -158,6 +163,12 @@ export function RaidLogForm({
     entry?.isPrivate || false
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [surfTimeSlot, setSurfTimeSlot] = useState<string | undefined>(
+    (entry as any)?.surfTimeSlot || undefined
+  );
+  const [mostAccurateSource, setMostAccurateSource] = useState<string | undefined>(
+    (entry as any)?.mostAccurateSource || undefined
+  );
   
   // Multiple videos support
   const [videoUrls, setVideoUrls] = useState<any[]>(() => {
@@ -185,131 +196,36 @@ export function RaidLogForm({
   });
 
   const {
-    data: forecastData,
-    isLoading: isLoadingForecast,
-    error: forecastError,
+    data: allForecasts,
+    isLoading: isLoadingForecasts,
   } = useQuery({
-    queryKey: ["forecast", selectedBeach?.regionId, selectedDate],
+    queryKey: ["forecasts-all", selectedBeach?.regionId, selectedDate, surfTimeSlot],
     queryFn: async () => {
-      if (!selectedBeach?.regionId || !selectedDate) {
-        // Return 'unknown' forecast instead of throwing
-        return {
-          id: "unknown",
-          date: new Date(selectedDate || new Date()),
-          regionId: selectedBeach?.regionId || "unknown",
-          windSpeed: "unknown" as any,
-          windDirection: "unknown" as any,
-          swellHeight: "unknown" as any,
-          swellPeriod: "unknown" as any,
-          swellDirection: "unknown" as any,
-        };
-      }
-
+      if (!selectedBeach?.regionId || !selectedDate || !surfTimeSlot) return {};
+      
+      const sources = ["WINDFINDER", "WINDGURU", "WINDY"];
+      const results: Record<string, any> = {};
       const dateStr = new Date(selectedDate).toISOString().split("T")[0];
-      // Use Next.js API route which proxies to backend
-      // Backend expects 'forecastDate' parameter, not 'date'
-      const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&forecastDate=${dateStr}`;
-
-      console.log("[RaidLogForm] Fetching forecast from:", url);
-      const response = await fetch(url, {
-        credentials: "include", // Include cookies for auth
-      });
-
-      if (!response.ok) {
-        console.warn("API error:", response.status, response.statusText);
-        // Instead of throwing, return 'unknown' forecast
-        if (!selectedBeach?.regionId || !selectedDate) {
-          throw new Error("Missing beach or date");
+      
+      await Promise.all(sources.map(async (source) => {
+        try {
+          const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&forecastDate=${dateStr}&source=${source}&timeSlot=${surfTimeSlot}`;
+          const res = await fetch(url, { credentials: "include" });
+          if (res.ok) {
+            const data = await res.json();
+            results[source] = data.forecast;
+          }
+        } catch (e) {
+          console.error(`[RaidLogForm] Failed to fetch ${source} forecast:`, e);
         }
-        return {
-          id: "unknown",
-          date: new Date(selectedDate),
-          regionId: selectedBeach.regionId,
-          windSpeed: "unknown" as any,
-          windDirection: "unknown" as any,
-          swellHeight: "unknown" as any,
-          swellPeriod: "unknown" as any,
-          swellDirection: "unknown" as any,
-        };
-      }
-
-      const data = await response.json();
-      console.log("[RaidLogForm] API response structure:", {
-        hasForecast: !!data?.forecast,
-        hasScores: !!data?.scores,
-        forecastKeys: data?.forecast ? Object.keys(data.forecast) : [],
-        selectedBeachId: selectedBeach?.id,
-        forecastId: data?.forecast?.id,
-        forecastDate: data?.forecast?.date,
-        forecastWindSpeed: data?.forecast?.windSpeed,
-        forecastSwellHeight: data?.forecast?.swellHeight,
-        fullResponse: data, // Log full response for debugging
-      });
-
-      // The /api/filtered-beaches endpoint returns: { beaches: [], scores: {}, forecast: {...} }
-      // Extract forecast from the response
-      if (data?.forecast) {
-        console.log("[RaidLogForm] Using forecast from data.forecast:", {
-          forecastId: data.forecast.id,
-          date: data.forecast.date,
-          selectedDate: dateStr,
-          hasId: !!data.forecast.id,
-          hasWindSpeed: data.forecast.windSpeed !== undefined,
-          hasSwellHeight: data.forecast.swellHeight !== undefined,
-          windSpeed: data.forecast.windSpeed,
-          swellHeight: data.forecast.swellHeight,
-        });
-        return data.forecast;
-      }
-
-      // If forecast is missing, try to extract from scores (for specific beach)
-      if (data?.scores && selectedBeach?.id) {
-        const beachScore = data.scores[selectedBeach.id];
-        if (beachScore?.forecastData) {
-          console.log("[RaidLogForm] Using forecast from beach score");
-          return beachScore.forecastData;
-        }
-      }
-
-      // If we have scores, try to get the first beach's forecast
-      if (data?.scores) {
-        const firstBeachId = Object.keys(data.scores)[0];
-        if (firstBeachId && data.scores[firstBeachId]?.forecastData) {
-          console.log("[RaidLogForm] Using forecast from first beach score");
-          return data.scores[firstBeachId].forecastData;
-        }
-      }
-
-      // If the entire response is a forecast object (some endpoints return it directly)
-      if (data?.id && data?.windSpeed !== undefined) {
-        console.log("[RaidLogForm] Using entire response as forecast");
-        return data;
-      }
-
-      console.warn(
-        "[RaidLogForm] No usable forecast data in API response, returning 'unknown' values:",
-        {
-          dataKeys: Object.keys(data || {}),
-          forecast: data?.forecast,
-          scoresCount: data?.scores ? Object.keys(data.scores).length : 0,
-        }
-      );
-
-      // Return a forecast object with 'unknown' values instead of throwing an error
-      return {
-        id: "unknown",
-        date: new Date(selectedDate),
-        regionId: selectedBeach.regionId,
-        windSpeed: "unknown" as any,
-        windDirection: "unknown" as any,
-        swellHeight: "unknown" as any,
-        swellPeriod: "unknown" as any,
-        swellDirection: "unknown" as any,
-      };
+      }));
+      
+      return results;
     },
-    enabled: !!selectedBeach?.regionId && !!selectedDate,
-    staleTime: 1000 * 60 * 5,
+    enabled: !!selectedBeach?.regionId && !!selectedDate && !!surfTimeSlot
   });
+
+  const forecastData = allForecasts?.WINDFINDER || allForecasts?.WINDGURU || allForecasts?.WINDY;
 
   // Add debug logging
   useEffect(() => {
@@ -317,18 +233,18 @@ export function RaidLogForm({
       forecastData,
       selectedBeach,
       selectedDate,
-      isLoadingForecast,
+      isLoadingForecasts,
       hasData: !!forecastData,
       forecastProps: forecastData && {
-        id: forecastData.id,
-        windSpeed: forecastData.windSpeed,
-        windDirection: forecastData.windDirection,
-        swellHeight: forecastData.swellHeight,
-        swellPeriod: forecastData.swellPeriod,
-        swellDirection: forecastData.swellDirection,
+        id: (forecastData as any).id,
+        windSpeed: (forecastData as any).windSpeed,
+        windDirection: (forecastData as any).windDirection,
+        swellHeight: (forecastData as any).swellHeight,
+        swellPeriod: (forecastData as any).swellPeriod,
+        swellDirection: (forecastData as any).swellDirection,
       },
     });
-  }, [forecastData, selectedBeach, selectedDate, isLoadingForecast]);
+  }, [forecastData, selectedBeach, selectedDate, isLoadingForecasts]);
 
   const { data: searchResults, isLoading: isLoadingBeaches } = useQuery({
     queryKey: ["beaches-search", searchTerm],
@@ -658,6 +574,8 @@ export function RaidLogForm({
         videoUrl: videoUrls.length > 0 ? videoUrls[0].url : "",
         videoPlatform: videoUrls.length > 0 ? videoUrls[0].type : null,
         email: email.trim() || user?.email || userEmail || "",
+        surfTimeSlot,
+        mostAccurateSource,
       };
 
       // If editing, update instead of create
@@ -871,40 +789,127 @@ export function RaidLogForm({
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
                       3
                     </span>
-                    Surf Conditions
+                    When did you surf?
                   </h3>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    {isLoadingForecast ? (
-                      <div className="text-gray-600 font-primary">
-                        Loading forecast data...
-                      </div>
-                    ) : forecastData ? (
-                      <SurfForecastWidget forecast={forecastData} />
-                    ) : (
-                      <SurfForecastWidget
-                        forecast={{
-                          id: "unknown",
-                          date: selectedDate
-                            ? new Date(selectedDate)
-                            : new Date(),
-                          regionId: selectedBeach?.regionId || "unknown",
-                          windSpeed: "unknown" as any,
-                          windDirection: "unknown" as any,
-                          swellHeight: "unknown" as any,
-                          swellPeriod: "unknown" as any,
-                          swellDirection: "unknown" as any,
-                        }}
-                      />
-                    )}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: "MORNING", label: "Morning", sub: "05–09h", icon: "🌅" },
+                      { value: "NOON", label: "Midday", sub: "11–15h", icon: "☀️" },
+                      { value: "EVENING", label: "Evening", sub: "17–21h", icon: "🌇" },
+                    ].map((slot) => (
+                      <button
+                        key={slot.value}
+                        type="button"
+                        onClick={() => setSurfTimeSlot(
+                          surfTimeSlot === slot.value ? undefined : slot.value
+                        )}
+                        className={cn(
+                          "flex flex-col items-center p-3 rounded-lg border-2 transition-all font-primary text-sm",
+                          surfTimeSlot === slot.value
+                            ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/10 text-[var(--color-primary)]"
+                            : "border-gray-200 hover:border-gray-300 text-gray-600"
+                        )}
+                      >
+                        <span className="text-xl mb-1">{slot.icon}</span>
+                        <span className="font-semibold">{slot.label}</span>
+                        <span className="text-xs text-gray-400">{slot.sub}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {(forecastData || entry?.forecast) && (
+              {selectedBeach && selectedDate && surfTimeSlot && (
+                <div className="step">
+                  <h3 className="text-[16px] font-semibold mb-1 font-primary text-[var(--color-primary)] flex items-center">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
+                      4
+                    </span>
+                    Most Accurate Source
+                  </h3>
+                  <p className="text-[11px] text-gray-500 mb-4 font-primary">
+                    Compare the predictions for your <span className="font-bold text-[var(--color-tertiary)]">{surfTimeSlot.toLowerCase()}</span> session. Which was closest to reality?
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      { value: "WINDFINDER", label: "Windfinder", color: "text-blue-600" },
+                      { value: "WINDGURU", label: "Windguru", color: "text-emerald-600" },
+                      { value: "WINDY", label: "Windy", color: "text-red-600" },
+                    ].map((source) => {
+                      const forecast = allForecasts?.[source.value];
+                      return (
+                        <button
+                          key={source.value}
+                          type="button"
+                          onClick={() => setMostAccurateSource(
+                            mostAccurateSource === source.value ? undefined : source.value
+                          )}
+                          className={cn(
+                            "flex flex-col p-3 rounded-xl border-2 transition-all font-primary text-left relative overflow-hidden group",
+                            mostAccurateSource === source.value
+                              ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5 ring-1 ring-[var(--color-tertiary)]/20"
+                              : "border-gray-100 hover:border-gray-200 bg-white"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={cn("font-bold text-[13px] tracking-tight whitespace-nowrap", source.color)}>{source.label}</span>
+                            {mostAccurateSource === source.value && (
+                              <div className="w-5 h-5 bg-[var(--color-tertiary)] rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-white text-[10px] font-bold">✓</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {isLoadingForecasts ? (
+                            <div className="flex flex-col items-center justify-center py-4 space-y-3">
+                              <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />
+                              <div className="space-y-2 w-full">
+                                <div className="h-2.5 w-full bg-slate-50 animate-pulse rounded-full" />
+                                <div className="h-2.5 w-2/3 bg-slate-50 animate-pulse rounded-full" />
+                              </div>
+                            </div>
+                          ) : forecast ? (
+                            <div className="space-y-2.5">
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-blue-50 rounded-lg">
+                                  <span className="text-xs">{getWindEmoji(forecast.windSpeed)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-0.5">Wind</span>
+                                  <span className="text-xs font-black text-gray-700 leading-none">
+                                    {forecast.windSpeed}kts {degreesToCardinal(forecast.windDirection)}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-cyan-50 rounded-lg">
+                                  <span className="text-xs">{getSwellEmoji(forecast.swellHeight)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase leading-none mb-0.5">Swell</span>
+                                  <span className="text-xs font-black text-gray-700 leading-none">
+                                    {forecast.swellHeight}m @ {forecast.swellPeriod}s
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="py-4 text-center">
+                              <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest italic">No Data</span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {(mostAccurateSource || entry?.forecast) && (
                 <div className="step">
                   <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
-                      4
+                      5
                     </span>
                     Rate Your Session
                   </h3>
@@ -920,20 +925,20 @@ export function RaidLogForm({
                 <div className="step">
                   <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
-                      5
+                      6
                     </span>
-                    Add Comments
+                    Session Intel
                   </h3>
                   <textarea
                     value={comments}
                     onChange={(e) => setComments(e.target.value.slice(0, 140))}
                     className="w-full p-2 border rounded-lg"
                     rows={4}
-                    placeholder="How was your session?"
+                    placeholder="Describe the waves, crowd, or anything else..."
                     maxLength={140}
                   />
                   <div className="text-sm text-gray-500 mt-1 font-primary">
-                    Characters remaining: {250 - comments.length}
+                    Characters remaining: {140 - comments.length}
                   </div>
                 </div>
               )}
@@ -942,7 +947,7 @@ export function RaidLogForm({
                 <div className="step">
                   <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
-                      6
+                      7
                     </span>
                     Add Photos (Optional)
                   </h3>
@@ -969,7 +974,7 @@ export function RaidLogForm({
                 <div className="step">
                   <h3 className="text-[16px] font-semibold mb-3 font-primary text-[var(--color-primary)] flex items-center">
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
-                      7
+                      8
                     </span>
                     Add Video (Optional)
                   </h3>
@@ -984,7 +989,7 @@ export function RaidLogForm({
               <div className="step border-t pt-6">
                 <h3 className="text-[16px] font-semibold mb-4 font-primary text-[var(--color-primary)] flex items-center">
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
-                    8
+                    9
                   </span>
                   Additional Options
                 </h3>

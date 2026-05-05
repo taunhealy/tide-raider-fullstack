@@ -56,6 +56,8 @@ export const createRaidLogSchema = z.object({
     .optional(),
   continent: z.string().optional(),
   country: z.string().optional(),
+  surfTimeSlot: z.enum(["MORNING", "NOON", "EVENING"]).optional(),
+  mostAccurateSource: z.enum(["WINDFINDER", "WINDGURU", "WINDY", "OPENMETEO_ARCHIVE"]).optional(),
 });
 
 export const updateRaidLogSchema = z.object({
@@ -84,6 +86,8 @@ export const updateRaidLogSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   forecastId: z.string().uuid().optional(),
+  surfTimeSlot: z.enum(["MORNING", "NOON", "EVENING"]).optional(),
+  mostAccurateSource: z.enum(["WINDFINDER", "WINDGURU", "WINDY", "OPENMETEO_ARCHIVE"]).optional(),
 });
 
 export const deleteRaidLogQuerySchema = z.object({

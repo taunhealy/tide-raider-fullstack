@@ -17,6 +17,8 @@ import {
   Info as InfoIcon,
   Lock,
   Sparkles,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import { cn } from "@/app/lib/utils";
@@ -360,159 +362,160 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         </div>
                       )}
                     </div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h2 className="font-primary text-xl lg:text-2xl font-bold text-white tracking-tighter">
-                            Conditions Data
+                        <div className="flex items-center justify-between mb-8">
+                          <h2 className="font-primary text-2xl lg:text-3xl font-bold text-white tracking-tighter">
+                            Forecast Reliability
                           </h2>
+                          <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
+                            <Sparkles className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Crowdsourced Intelligence</span>
+                          </div>
                         </div>
                         
-                        <div className="space-y-12">
+                        <div className="space-y-16">
                           {[
-                            { id: "MORNING", label: "Morning" },
-                            { id: "NOON", label: "Noon" },
-                            { id: "EVENING", label: "Eve" }
+                            { id: "MORNING", label: "Morning", icon: <Clock className="w-4 h-4 text-blue-400" /> },
+                            { id: "NOON", label: "Midday", icon: <Sun className="w-4 h-4 text-amber-400" /> },
+                            { id: "EVENING", label: "Evening", icon: <Moon className="w-4 h-4 text-indigo-400" /> }
                           ].map((slot) => {
                             const apiScores = beachScores?.scores?.filter((score: any) => {
-                              const conditions = score.conditions || (score.source === 'WINDFINDER' ? forecastData : null);
-                              return conditions?.timeSlot === slot.id;
+                              return score.timeSlot === slot.id;
                             }) || [];
 
-                            // If this slot matches the entry's timeSlot and we have forecast data, 
-                            // and there's no matching source in apiScores, add it as a 'Reported' source
-                            const slotScores = [...(apiScores || [])];
-                            const entryTimeSlot = entry.timeSlot || (entry as any).forecast?.timeSlot;
-                            
-                            if (entryTimeSlot === slot.id && forecastData && !slotScores.some(s => s.source === 'REPORTER')) {
-                              slotScores.push({
-                                source: 'REPORTER',
-                                sourceName: 'Source A',
-                                starRating: entry.surferRating || 0,
-                                conditions: forecastData
-                              });
-                            }
+                            const sources = [
+                              { id: 'WINDFINDER', name: 'Source A', color: 'text-blue-400' },
+                              { id: 'WINDGURU', name: 'Source B', color: 'text-emerald-400' },
+                              { id: 'WINDY', name: 'Source C', color: 'text-red-400' }
+                            ];
+
+                            // Check if this slot is the one the user actually surfed
+                            const entryTimeSlot = (entry as any).surfTimeSlot || entry.timeSlot;
+                            const isSessionalSlot = entryTimeSlot === slot.id;
 
                             return (
                               <div key={slot.id} className="space-y-6">
                                 <div className="flex items-center gap-4">
-                                  <div className="h-px flex-1 bg-white/5"></div>
-                                  <div className="flex items-center gap-2 bg-white/5 px-6 py-2 rounded-full border border-white/10 shadow-lg">
-                                    <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
+                                  <div className="flex items-center gap-3 bg-white/5 px-6 py-2.5 rounded-2xl border border-white/10 shadow-xl backdrop-blur-md">
+                                    {slot.icon}
                                     <span className="text-xs font-black text-white uppercase tracking-[0.2em]">
                                       {slot.label}
                                     </span>
+                                    {isSessionalSlot && (
+                                      <span className="ml-2 bg-[var(--color-tertiary)]/20 text-[var(--color-tertiary)] text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter border border-[var(--color-tertiary)]/30">
+                                        Your Session
+                                      </span>
+                                    )}
                                   </div>
-                                  <div className="h-px flex-1 bg-white/5"></div>
+                                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
                                 </div>
 
                                 {isLoadingBeachScores ? (
-                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     {[1, 2, 3].map((i) => (
-                                      <div key={i} className="bg-white/5 border border-white/5 rounded-2xl p-6 animate-pulse space-y-4">
-                                        <div className="h-4 w-24 bg-white/10 rounded"></div>
+                                      <div key={i} className="bg-white/[0.03] border border-white/5 rounded-3xl p-6 animate-pulse space-y-4">
+                                        <div className="h-4 w-24 bg-white/10 rounded-full"></div>
                                         <div className="space-y-3">
-                                          <div className="h-10 bg-white/5 rounded-xl"></div>
-                                          <div className="h-10 bg-white/5 rounded-xl"></div>
-                                          <div className="h-10 bg-white/5 rounded-xl"></div>
+                                          <div className="h-12 bg-white/5 rounded-2xl"></div>
+                                          <div className="h-12 bg-white/5 rounded-2xl"></div>
                                         </div>
                                       </div>
                                     ))}
                                   </div>
-                                ) : slotScores.length > 0 ? (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {slotScores.map((score: any, index: number) => {
-                                      const conditions = score.conditions || (score.source === 'WINDFINDER' || score.source === 'REPORTER' ? forecastData : null);
-                                      if (!conditions) return null;
+                                ) : (
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                    {sources.map((sourceInfo) => {
+                                      const score = apiScores.find(s => s.source === sourceInfo.id);
+                                      let conditions = score?.conditions;
                                       
+                                      // Fallback for Source A if it's the user's session slot and API didn't return conditions
+                                      if (sourceInfo.id === 'WINDFINDER' && isSessionalSlot && !conditions) {
+                                        conditions = forecastData;
+                                      }
+
+                                      const isMostAccurate = isSessionalSlot && entry.mostAccurateSource === sourceInfo.id;
+                                      
+                                      if (!conditions) {
+                                        return (
+                                          <div key={sourceInfo.id} className="bg-white/[0.02] border border-dashed border-white/10 rounded-3xl p-6 flex flex-col items-center justify-center min-h-[160px] opacity-40">
+                                            <span className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-1", sourceInfo.color)}>{sourceInfo.name}</span>
+                                            <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest italic">No Forecast Data</span>
+                                          </div>
+                                        );
+                                      }
+
                                       return (
-                                        <div key={`${score.source}-${index}`} className="bg-white/5 border border-white/5 rounded-2xl p-6 transition-all hover:bg-white/10 hover:border-white/10 group/card relative overflow-hidden">
-                                          {/* Active Indicator if this matches the log entry slot */}
-                                          {entryTimeSlot === slot.id && (
-                                            <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-tertiary)] opacity-50"></div>
+                                        <div 
+                                          key={sourceInfo.id} 
+                                          className={cn(
+                                            "group/card relative overflow-hidden rounded-3xl border transition-all duration-500",
+                                            isMostAccurate 
+                                              ? "bg-[var(--color-tertiary)]/[0.08] border-[var(--color-tertiary)]/40 shadow-[0_0_40px_rgba(var(--color-tertiary-rgb),0.15)] ring-1 ring-[var(--color-tertiary)]/30" 
+                                              : "bg-white/[0.03] border-white/5 hover:bg-white/[0.06] hover:border-white/10"
+                                          )}
+                                        >
+                                          {/* Decorative Background Elements */}
+                                          {isMostAccurate && (
+                                            <div className="absolute -top-12 -right-12 w-24 h-24 bg-[var(--color-tertiary)]/10 blur-3xl rounded-full"></div>
                                           )}
                                           
-                                          <div className="flex items-center justify-between mb-6">
-                                            <div className="space-y-1">
-                                              <h3 className="text-[10px] font-black text-white uppercase tracking-[0.15em]">
-                                                {score.sourceName}
-                                              </h3>
-                                              <p className="text-[9px] font-bold text-[var(--color-tertiary)] uppercase tracking-tighter">
-                                                {slot.label}
-                                              </p>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 translate-y-[-2px]">
-                                              <BlueStarRating score={score.starRating} outOfFive={true} size={12} />
-                                            </div>
-                                          </div>
-                                          
-                                          <div className="space-y-3">
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                              <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                                <Wind className="w-4 h-4 text-[var(--color-tertiary)]" />
+                                          <div className="p-6 space-y-5">
+                                            <div className="flex items-center justify-between">
+                                              <div className="space-y-1">
+                                                <h3 className={cn("text-[10px] font-black uppercase tracking-[0.2em]", sourceInfo.color)}>
+                                                  {sourceInfo.name}
+                                                </h3>
                                               </div>
-                                              <div>
-                                                <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Wind</p>
+                                              <div className="flex flex-col items-end gap-2">
+                                                <BlueStarRating score={score?.starRating || 0} outOfFive={true} size={10} />
+                                              </div>
+                                            </div>
+
+                                            {isMostAccurate && (
+                                              <div className="bg-[var(--color-tertiary)] text-white text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest shadow-lg shadow-[var(--color-tertiary)]/20 animate-in fade-in zoom-in duration-500">
+                                                MOST ACCURATE
+                                              </div>
+                                            )}
+                                            
+                                            <div className="grid grid-cols-2 gap-3">
+                                              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 group-hover/card:bg-white/10 transition-colors">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  <Wind className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
+                                                  <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Wind</span>
+                                                </div>
                                                 <p className="text-xs font-black text-white">
-                                                  {conditions.windSpeed != null ? `${conditions.windSpeed}kts` : "N/A"}
+                                                  {conditions.windSpeed != null ? `${conditions.windSpeed}kts` : "--"}
                                                   {conditions.windDirection != null && (
-                                                    <span className="text-white/40 font-bold ml-1 tracking-tighter">
-                                                      {degreesToCardinal(conditions.windDirection)}
+                                                    <span className="text-[10px] text-white/40 ml-1.5 font-bold uppercase tracking-tighter">
+                                                      {degreesToCardinal(conditions.windDirection)} ({Math.round(conditions.windDirection)}°)
                                                     </span>
                                                   )}
                                                 </p>
                                               </div>
-                                            </div>
 
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                              <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                                <Waves className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                              </div>
-                                              <div>
-                                                <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Swell</p>
+                                              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 group-hover/card:bg-white/10 transition-colors">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  <Waves className="w-3.5 h-3.5 text-blue-400" />
+                                                  <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">Swell</span>
+                                                </div>
                                                 <p className="text-xs font-black text-white">
-                                                  {conditions.swellHeight != null ? `${Number(conditions.swellHeight).toFixed(1)}m` : "N/A"}
+                                                  {conditions.swellHeight != null ? `${Number(conditions.swellHeight).toFixed(1)}m` : "--"}
+                                                  {conditions.swellPeriod != null && (
+                                                    <span className="text-[10px] text-white/40 ml-1.5 font-bold uppercase tracking-tighter">
+                                                      {conditions.swellPeriod}s
+                                                    </span>
+                                                  )}
                                                   {conditions.swellDirection != null && (
-                                                    <span className="text-white/40 font-bold ml-1 tracking-tighter">
+                                                    <span className="text-[10px] text-white/40 ml-1.5 font-bold uppercase tracking-tighter">
                                                       {degreesToCardinal(conditions.swellDirection)} ({Math.round(conditions.swellDirection)}°)
                                                     </span>
                                                   )}
                                                 </p>
                                               </div>
                                             </div>
-
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                              <div className="w-8 h-8 rounded-lg bg-[var(--color-tertiary)]/10 flex items-center justify-center flex-shrink-0">
-                                                <Clock className="w-4 h-4 text-[var(--color-tertiary)]" />
-                                              </div>
-                                              <div>
-                                                <p className="text-[8px] font-bold text-white/30 tracking-widest mb-0.5">Period</p>
-                                                <p className="text-xs font-black text-white">{conditions.swellPeriod != null ? `${conditions.swellPeriod}s` : "N/A"}</p>
-                                              </div>
-                                            </div>
-
-                                            {conditions.tide && typeof conditions.tide !== 'object' && (
-                                              <div className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-                                                <div className="w-8 h-8 rounded-lg bg-cyan-400/10 flex items-center justify-center flex-shrink-0">
-                                                  <Waves className="w-4 h-4 text-cyan-400" />
-                                                </div>
-                                                <div className="overflow-hidden">
-                                                  <p className="text-[8px] font-bold text-cyan-400/40 tracking-widest mb-0.5">Tide</p>
-                                                  <p className="text-[10px] font-black text-white truncate">
-                                                    {String(conditions.tide)}
-                                                  </p>
-                                                </div>
-                                              </div>
-                                            )}
                                           </div>
                                         </div>
                                       );
                                     })}
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-center justify-center py-10 border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
-                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                                      <InfoIcon className="w-5 h-5 text-white/20" />
-                                    </div>
-                                    <span className="text-xs font-bold text-white/20 uppercase tracking-widest">No conditions data available for {slot.label}</span>
                                   </div>
                                 )}
                               </div>

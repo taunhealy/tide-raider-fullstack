@@ -570,14 +570,15 @@ export default function GlobalMapPage() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-white z-50">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin" />
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] animate-pulse">Syncing Global Data...</p>
-              </div>
+          {/* Subtle loading indicator overlay */}
+          {loading && (
+            <div className="absolute top-24 right-6 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-gray-100 animate-in fade-in slide-in-from-right-4 duration-500">
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+              <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">Syncing Intel...</p>
             </div>
-          ) : viewMode === "map" ? (
+          )}
+
+          {viewMode === "map" ? (
             <div className="relative w-full h-full">
               {/* Floating Widgets - Hidden on mobile, moved to bottom drawer or separate toggle */}
               <div className="absolute top-20 md:top-24 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
@@ -591,6 +592,7 @@ export default function GlobalMapPage() {
                 onRegionSelect={(regionId) => {
                   updateFilter("regionId", regionId);
                 }}
+                selectedRegionId={filters.regionId}
                 center={mapCenter}
                 zoom={mapZoom}
                 selectedDayIndex={selectedDayIndex}

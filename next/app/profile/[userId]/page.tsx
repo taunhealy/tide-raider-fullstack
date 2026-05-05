@@ -13,9 +13,9 @@ import Image from "next/image";
 import { urlForImage } from "@/app/lib/urlForImage";
 import { groq } from "next-sanity";
 import { client } from "@/app/lib/sanity";
-import NationalitySelector from "@/app/components/profile/NationalitySelector";
-import { Shield, MapPin, Zap, Calendar } from "lucide-react";
+import { Shield, MapPin, Zap, Calendar, Instagram } from "lucide-react";
 import { formatDate } from "@/app/lib/utils";
+import UserLogsSection from "@/app/components/profile/UserLogsSection";
 
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
@@ -177,6 +177,7 @@ export default function ProfilePage() {
                     className="p-6"
                     initialBio={userData?.bio}
                     initialLink={userData?.link}
+                    initialInstagram={userData?.instagram}
                     initialEmail={userData?.email}
                     initialWhatsappNumber={userData?.whatsappNumber}
                     isOwnProfile={isOwnProfile}
@@ -185,6 +186,11 @@ export default function ProfilePage() {
                 </div>
              </div>
           </div>
+        </div>
+
+        {/* User Logs Section */}
+        <div className="mt-12 mb-20">
+           <UserLogsSection userId={userId} />
         </div>
       </div>
       

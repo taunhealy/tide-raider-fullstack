@@ -22,6 +22,8 @@ export function useCreateLog() {
       videoUrl?: string;
       videoUrls?: any[];
       videoPlatform?: string | null;
+      surfTimeSlot?: string;
+      mostAccurateSource?: string;
     }) => {
       if (!session?.user) {
         throw new Error("You must be logged in to create a log entry");
@@ -189,6 +191,8 @@ export function useCreateLog() {
         // Only include forecast if we don't have forecastId (forecastId takes precedence)
         ...(!forecastId && forecast && { forecast }),
         ...(beachId && { beachId }),
+        ...(data.surfTimeSlot && { surfTimeSlot: data.surfTimeSlot }),
+        ...(data.mostAccurateSource && { mostAccurateSource: data.mostAccurateSource }),
       };
 
       const response = await fetch("/api/raid-logs", {

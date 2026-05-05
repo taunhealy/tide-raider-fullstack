@@ -6,7 +6,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    // Proxy to backend: http://localhost:4001/api/intelligence/report?...
+    // Proxy to backend: http://localhost:4050/api/intelligence/report?...
     // Increased timeout to 30s for AI generation
     const result = await backendGet(`/api/intelligence/report?${queryString}`, { timeout: 30000 });
     

@@ -6,7 +6,7 @@ const getBackendUrl = () => {
   const isDevelopment = process.env.NODE_ENV === "development";
 
   if (isDevelopment) {
-    return envUrl || "http://localhost:4001";
+    return envUrl || "http://localhost:4050";
   }
 
   return envUrl || "https://tide-raider-backend.fly.dev";

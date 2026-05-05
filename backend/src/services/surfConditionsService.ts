@@ -267,19 +267,30 @@ export async function getLatestConditions(
       return [];
     } catch (err) {
       console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
+      
+      // USER REQUEST: Send email on failure instead of using Crawl4ai
       try {
-        console.log(`[getLatestConditions] 🧠 Attempting semantic scrape with Gemini...`);
-        const semanticResults = await PythonBridge.runSemanticScrape(url, id);
-        if (semanticResults && semanticResults.length > 0) return semanticResults;
-        throw new Error("Semantic scrape returned no data");
-      } catch (semanticErr) {
-        console.error(`[getLatestConditions] ❌ ALL SCRAPE FALLBACKS FAILED for ${url}:`, semanticErr);
+        const { sendEmail } = await import("../lib/email");
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const stack = err instanceof Error ? err.stack : "No stack trace";
         
-        // Final tactical alert to admin
-        await sendScrapeFailureAlert(regionId, source, (semanticErr as Error).message, url);
+        const html = `
+          <h2>🚨 Scraper Failure Alert</h2>
+          <p><strong>Source:</strong> ${source}</p>
+          <p><strong>Region:</strong> ${id}</p>
+          <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
+          <p><strong>Error:</strong> ${errorMessage}</p>
+          <hr>
+          <pre style="background: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 12px;">${stack}</pre>
+        `;
         
-        return [];
+        await sendEmail("taunhealy@gmail.com", `🚨 Scraper Failure: ${source} - ${id}`, html);
+        console.log(`[getLatestConditions] 📧 Failure alert sent to taunhealy@gmail.com`);
+      } catch (emailErr) {
+        console.error(`[getLatestConditions] ❌ Failed to send failure alert email:`, emailErr);
       }
+
+      return [];
     }
   };
 

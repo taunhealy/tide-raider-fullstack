@@ -33,10 +33,10 @@ router.get(
             }
           : undefined,
         include: {
-          region: true,
           conditionProfiles: {
             where: { category: "GENERAL" }
-          }
+          },
+          sourceAccuracy: true
         },
       });
 
@@ -57,6 +57,8 @@ router.get(
           swellSize: profile.swellSize || { min: 0, max: 10 },
           idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
           optimalTide: profile.optimalTide || "ALL",
+          mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
+          sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
         };
       });
 
@@ -152,11 +154,10 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
         id: { in: matchingIds }
       },
       include: {
-        region: true,
-        country: true,
         conditionProfiles: {
           where: { category: "GENERAL" }
-        }
+        },
+        sourceAccuracy: true
       }
     });
 
@@ -178,6 +179,8 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
         swellSize: profile.swellSize || { min: 0, max: 10 },
         idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
         optimalTide: profile.optimalTide || "ALL",
+        mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
+        sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
         // Gate sensitive data
         ...(isGated && {
           description: "Locked Hidden Gem - Subscribe to unlock full details.",
@@ -224,7 +227,8 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       region: true,
       conditionProfiles: {
         where: { category: "GENERAL" }
-      }
+      },
+      sourceAccuracy: true
     };
 
     if (isUUID) {
@@ -305,6 +309,8 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       swellSize: profile.swellSize || { min: 0, max: 10 },
       idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
       optimalTide: profile.optimalTide || "ALL",
+      mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
+      sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
       // Gate sensitive data
       ...(isGated && {
         description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",

@@ -130,10 +130,13 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
 
                 // Calculate and store scores for this specific source
                 try {
-                  await ScoreService.calculateAndStoreScores(
-                    region.id,
-                    conditions
-                  );
+                  const forecasts = Array.isArray(conditions) ? conditions : [conditions];
+                  for (const forecast of forecasts) {
+                    await ScoreService.calculateAndStoreScores(
+                      region.id,
+                      forecast
+                    );
+                  }
                   console.log(
                     `  ✅ Calculated scores for ${source} in ${region.id}`
                   );

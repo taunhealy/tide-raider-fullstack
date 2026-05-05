@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { chromium } from "playwright";
+import { getBrowser } from "./browser";
 import { USER_AGENTS } from "../proxy/userAgents";
 import { ProxyManager } from "../proxy/proxyManager";
 import { createHash } from "crypto";
@@ -29,13 +29,6 @@ const cardinalToDirection: { [key: string]: number } = {
   NNW: 337.5,
 };
 
-async function getBrowser() {
-  console.log(`[getBrowser] Launching Playwright Chromium...`);
-  return await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-  });
-}
 
 export async function scraperA(
   url: string,

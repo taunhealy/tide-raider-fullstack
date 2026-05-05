@@ -592,6 +592,7 @@ router.get(
             score: true,
             starRating: true,
             conditions: true,
+            timeSlot: true,
           },
           orderBy: {
             source: "asc",
@@ -663,6 +664,7 @@ router.get(
         score: score.score,
         starRating: score.starRating || Math.max(1, Math.min(5, Math.floor(score.score / 2))),
         conditions: score.conditions,
+        timeSlot: score.timeSlot,
       }));
 
       return res.json({ scores: formattedScores });

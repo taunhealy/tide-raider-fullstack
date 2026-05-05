@@ -1,27 +1,13 @@
 // @ts-nocheck
 
-import { chromium } from "playwright";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { getBrowser } from "./browser";
 import { USER_AGENTS } from "../proxy/userAgents";
 import { ProxyManager } from "../proxy/proxyManager";
+import { readFileSync } from "fs";
+import { join } from "path";
 import { BaseForecastData, TimeSlot } from "../types";
 
 const proxyManager = new ProxyManager();
-
-async function getBrowser() {
-  const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV;
-  
-  const executablePath = process.env.PLAYWRIGHT_BROWSERS_PATH 
-    ? join(process.env.PLAYWRIGHT_BROWSERS_PATH, "chromium-1155/chrome-linux/chrome") 
-    : undefined;
-
-  console.log(`[getBrowser] Launching Playwright Chromium...`);
-  return await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-  });
-}
 
 // Convert m/s to m/s (Windy.app already shows in m/s, but we'll keep this for consistency)
 const msToMs = (ms: number): number => {
@@ -201,21 +187,15 @@ export async function scraperC(
         }
       }
 
-      const windSpeedMs = msToMs(data.windSpeed || 0);
-      const windDirection = parseWindDirection(data.windDirection || 0);
-      const swellHeight = parseFloat(data.swellHeight) || 0;
-      const swellPeriod = parseInt(data.swellPeriod) || 0;
-      const swellDirection = parseWindDirection(data.swellDirection || 0);
-
       const forecast: BaseForecastData = {
         date: forecastDate,
         regionId: region,
         timeSlot: slot,
-        windSpeed: windSpeedMs,
-        windDirection: windDirection,
-        swellHeight: swellHeight,
-        swellPeriod: swellPeriod,
-        swellDirection: swellDirection,
+        windSpeed: Math.round(data.windSpeed || 0),
+        windDirection: parseWindDirection(data.windDirection || 0),
+        swellHeight: parseFloat(data.swellHeight) || 0,
+        swellPeriod: Math.round(data.swellPeriod || 0),
+        swellDirection: parseWindDirection(data.swellDirection || 0),
       };
       (forecast as any).rawHour = hour;
 

@@ -228,6 +228,8 @@ export class LogService {
           beachName: true,
           beachId: true,
           regionId: true,
+          surfTimeSlot: true,
+          mostAccurateSource: true,
           region: {
             select: {
               id: true,
@@ -488,6 +490,8 @@ export class LogService {
           userId: true,
           beachName: true,
           beachId: true,
+          surfTimeSlot: true,
+          mostAccurateSource: true,
           region: {
             select: {
               id: true,
@@ -584,6 +588,8 @@ export class LogService {
       regionId: string;
       forecastId?: string;
       forecast?: any;
+      surfTimeSlot?: string;
+      mostAccurateSource?: string;
     }
   ) {
     // Find or create beach
@@ -729,6 +735,8 @@ export class LogService {
             : undefined,
         videoPlatform: data.videoPlatform,
         waveType: data.waveType,
+        surfTimeSlot: data.surfTimeSlot as any || undefined,
+        mostAccurateSource: data.mostAccurateSource as any || undefined,
         user: {
           connect: { id: userId },
         },
@@ -761,6 +769,27 @@ export class LogService {
       },
     });
 
+    // Update BeachSourceAccuracy aggregation
+    if (logEntry.beachId && data.mostAccurateSource) {
+      await prisma.beachSourceAccuracy.upsert({
+        where: {
+          beachId_source: {
+            beachId: logEntry.beachId,
+            source: data.mostAccurateSource as any,
+          },
+        },
+        create: {
+          beachId: logEntry.beachId,
+          source: data.mostAccurateSource as any,
+          voteCount: 1,
+        },
+        update: {
+          voteCount: { increment: 1 },
+        },
+      });
+      console.log(`[createRaidLogEntry] Incremented accuracy vote for ${data.mostAccurateSource} on beach ${logEntry.beachId}`);
+    }
+
     return logEntry;
   }
 
@@ -788,12 +817,14 @@ export class LogService {
       regionId?: string;
       date?: string;
       forecastId?: string;
+      surfTimeSlot?: string;
+      mostAccurateSource?: string;
     }
   ) {
     // Verify ownership
     const existingEntry = await prisma.logEntry.findUnique({
       where: { id: logEntryId },
-      select: { userId: true },
+      select: { userId: true, beachId: true, mostAccurateSource: true },
     });
 
     if (!existingEntry) {
@@ -940,6 +971,12 @@ export class LogService {
         videoPlatform: updateData.videoPlatform,
       }),
       ...(updateData.waveType && { waveType: updateData.waveType }),
+      ...(updateData.surfTimeSlot !== undefined && {
+        surfTimeSlot: updateData.surfTimeSlot as any || null,
+      }),
+      ...(updateData.mostAccurateSource !== undefined && {
+        mostAccurateSource: updateData.mostAccurateSource as any || null,
+      }),
     };
 
     if (beach) {
@@ -952,6 +989,51 @@ export class LogService {
       updatePayload.forecast = { connect: { id: forecast.id } };
     }
 
+
+    // Handle BeachSourceAccuracy aggregation if either beach or source changed
+    const finalBeachId = beach?.id || existingEntry.beachId;
+    const oldSource = existingEntry.mostAccurateSource;
+    const newSource = updateData.mostAccurateSource !== undefined ? updateData.mostAccurateSource : oldSource;
+
+    if (
+      (updateData.mostAccurateSource !== undefined && updateData.mostAccurateSource !== oldSource) ||
+      (beach && beach.id !== existingEntry.beachId)
+    ) {
+        // 1. Remove old vote from old beach
+        if (existingEntry.beachId && oldSource) {
+             await prisma.beachSourceAccuracy.update({
+                where: {
+                  beachId_source: {
+                    beachId: existingEntry.beachId,
+                    source: oldSource as any,
+                  },
+                },
+                data: {
+                  voteCount: { decrement: 1 },
+                },
+              }).catch(() => {});
+        }
+
+        // 2. Add new vote to new beach
+        if (finalBeachId && newSource) {
+             await prisma.beachSourceAccuracy.upsert({
+                where: {
+                  beachId_source: {
+                    beachId: finalBeachId,
+                    source: newSource as any,
+                  },
+                },
+                create: {
+                  beachId: finalBeachId,
+                  source: newSource as any,
+                  voteCount: 1,
+                },
+                update: {
+                  voteCount: { increment: 1 },
+                },
+              });
+        }
+    }
     const logEntry = await prisma.logEntry.update({
       where: { id: logEntryId },
       data: updatePayload,
@@ -979,7 +1061,7 @@ export class LogService {
   static async deleteLogEntry(logEntryId: string, userId: string) {
     const logEntry = await prisma.logEntry.findUnique({
       where: { id: logEntryId },
-      select: { userId: true },
+      select: { userId: true, beachId: true, mostAccurateSource: true },
     });
 
     if (!logEntry) {
@@ -993,6 +1075,27 @@ export class LogService {
     await prisma.logEntry.delete({
       where: { id: logEntryId },
     });
+
+    // Decrement BeachSourceAccuracy if this entry had a vote
+    if (logEntry.beachId && logEntry.mostAccurateSource) {
+      try {
+        await prisma.beachSourceAccuracy.update({
+          where: {
+            beachId_source: {
+              beachId: logEntry.beachId,
+              source: logEntry.mostAccurateSource,
+            },
+          },
+          data: {
+            voteCount: { decrement: 1 },
+          },
+        });
+        console.log(`[deleteLogEntry] Decremented accuracy vote for ${logEntry.mostAccurateSource} on beach ${logEntry.beachId}`);
+      } catch (e) {
+        // Ignore if the accuracy record doesn't exist
+        console.warn(`[deleteLogEntry] Could not decrement accuracy (may not exist):`, e);
+      }
+    }
 
     return { success: true };
   }

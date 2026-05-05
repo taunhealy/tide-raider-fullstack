@@ -32,6 +32,7 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
         credits: true,
         email: true,
         whatsappNumber: true,
+        instagram: true,
         _count: {
           select: {
             boards: true,
@@ -46,6 +47,13 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    // Hide sensitive fields if not the owner
+    const isOwner = (req as any).user?.id === userId;
+    if (!isOwner) {
+      delete (user as any).email;
+      delete (user as any).whatsappNumber;
     }
 
     return res.json(user);
@@ -77,6 +85,7 @@ router.put(
           ...(typeof bio === 'string' && { bio: bio.trim() }),
           ...(typeof name === 'string' && { name: name.trim() }),
           ...(typeof link === 'string' && { link: link.trim() }),
+          ...(typeof instagram === 'string' && { instagram: instagram.trim() }),
           ...(typeof whatsappNumber === 'string' && { whatsappNumber: whatsappNumber.trim() }),
           ...(typeof email === 'string' && { email: email.trim() }),
         },
@@ -87,6 +96,7 @@ router.put(
           link: true,
           image: true,
           email: true,
+          instagram: true,
           whatsappNumber: true,
         },
       });

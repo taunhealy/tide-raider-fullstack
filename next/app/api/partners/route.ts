@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       const envUrl = process.env.NEXT_PUBLIC_API_URL;
       
       if (isDevelopment) {
-        return envUrl || "http://localhost:4001";
+        return envUrl || "http://localhost:4050";
       }
       return envUrl || "https://tide-raider-backend-82632174665.europe-west1.run.app";
     };

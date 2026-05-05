@@ -16,6 +16,7 @@ import { cn } from "@/app/lib/utils";
 import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon, Cloud } from "lucide-react";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
+import api from "@/app/lib/api-client";
 
 export interface Beach {
   id: string;
@@ -50,7 +51,7 @@ interface TideMapProps {
   center?: [number, number];
   zoom?: number;
   showWindHeatmap?: boolean;
-  showSwellHeatmap?: boolean;
+  selectedRegionId?: string | null;
   variant?: "hero" | "default";
 }
 
@@ -63,7 +64,8 @@ export default function TideMap({
   center = [18.4233, -33.9249], 
   zoom = 12,
   showWindHeatmap = false,
-  showSwellHeatmap = false
+  showSwellHeatmap = false,
+  selectedRegionId = null
 }: TideMapProps) {
   const mapElement = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,10 +73,17 @@ export default function TideMap({
   const [popupBeach, setPopupBeach] = useState<any | null>(null);
   const [currentZoom, setCurrentZoom] = useState(zoom);
   const [showConditions, setShowConditions] = useState(false);
+  const [isPopupLoading, setIsPopupLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const selectedDayIndexRef = useRef(selectedDayIndex);
   const selectedDateStringRef = useRef("");
   const beachesRef = useRef(beaches);
+  const onRegionSelectRef = useRef(onRegionSelect);
+
+  // Sync ref with current prop to avoid closure issues in listeners
+  useEffect(() => {
+    onRegionSelectRef.current = onRegionSelect;
+  }, [onRegionSelect]);
 
   // Particle System State
   const windParticles = useRef<any[]>([]);
@@ -484,7 +493,7 @@ export default function TideMap({
           
           if (type === "country") {
             const countryId = representative.get("countryId") || representative.get("beach")?.countryId;
-            if (countryId) onRegionSelect(countryId);
+            if (countryId) onRegionSelectRef.current(countryId);
           }
 
           initialMap.getView().animate({
@@ -521,6 +530,21 @@ export default function TideMap({
           setPopupBeach(beach);
           overlay.setPosition(evt.coordinate);
           onBeachSelect(beach);
+          
+          // Fetch full beach details on demand
+          if (beach?.id) {
+            setIsPopupLoading(true);
+            api.getBeach(beach.id).then(res => {
+              if (res?.beach) {
+                // Update the popup beach with full details
+                setPopupBeach(prev => prev?.id === beach.id ? { ...prev, ...res.beach } : prev);
+              }
+            }).catch(err => {
+              console.error("[TideMap] Failed to fetch beach details:", err);
+            }).finally(() => {
+              setIsPopupLoading(false);
+            });
+          }
         }
       } else {
         setPopupBeach(null);
@@ -530,14 +554,16 @@ export default function TideMap({
     });
 
     // Detect visible region on pan/zoom
-    let lastAutoRegion = "";
     initialMap.on("moveend", () => {
       const gZoom = initialMap.getView().getZoom();
       const center = initialMap.getView().getCenter();
       if (!center || !gZoom || gZoom < 4) return;
 
       const extent = initialMap.getView().calculateExtent(initialMap.getSize());
-      const featuresInView = vectorSource.getFeaturesInExtent(extent);
+      // We check clusterSource because that's what's actually on the layer
+      if (!clusterSourceRef.current) return;
+      
+      const featuresInView = clusterSourceRef.current.getFeaturesInExtent(extent);
       
       if (featuresInView.length > 0) {
         let closestFeature = null;
@@ -545,6 +571,7 @@ export default function TideMap({
 
         featuresInView.forEach(f => {
           const geom = f.getGeometry() as Point;
+          if (!geom) return;
           const coord = geom.getCoordinates();
           const dx = coord[0] - center[0];
           const dy = coord[1] - center[1];
@@ -557,18 +584,23 @@ export default function TideMap({
 
         if (closestFeature) {
           const feature = closestFeature as Feature;
-          const type = feature.get("type");
+          // For clusters, we need to look at the underlying features
+          const clusterFeatures = feature.get("features") || [];
+          if (clusterFeatures.length === 0) return;
+          
+          const representative = clusterFeatures[0];
+          const type = representative.get("type");
           let targetRegion = "";
 
           if (type === "country" || type === "continent") {
-            targetRegion = feature.get("countryId") || feature.get("beach")?.countryId;
+            targetRegion = representative.get("countryId") || representative.get("beach")?.countryId;
           } else if (type === "beach") {
-            targetRegion = feature.get("beach")?.regionId || feature.get("beach")?.countryId;
+            targetRegion = representative.get("beach")?.regionId || representative.get("beach")?.countryId;
           }
 
-          if (targetRegion && targetRegion !== lastAutoRegion) {
-            lastAutoRegion = targetRegion;
-            onRegionSelect(targetRegion);
+          if (targetRegion && targetRegion !== selectedRegionId) {
+            console.log(`[TideMap] 📍 Auto-selecting region: ${targetRegion} (was: ${selectedRegionId})`);
+            onRegionSelectRef.current(targetRegion);
           }
         }
       }
@@ -720,13 +752,30 @@ export default function TideMap({
                 </span>
               </div>
 
+              {beachData.mostAccurateSource && beachData.sourceAccuracyCount > 0 && (
+                <div className="mb-4 flex items-center gap-2 bg-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)]/20 rounded-lg px-2 py-1.5">
+                  <Sparkles className="w-3 h-3 text-[var(--color-tertiary)]" />
+                  <div className="flex flex-col">
+                    <span className="text-[7px] font-black text-white/50 uppercase tracking-widest leading-none mb-0.5">Most Reliable Source</span>
+                    <span className="text-[10px] font-black text-[var(--color-tertiary)] uppercase tracking-tight leading-none">
+                      {beachData.mostAccurateSource === 'WINDFINDER' ? 'Windfinder' : 
+                       beachData.mostAccurateSource === 'WINDGURU' ? 'Windguru' : 
+                       beachData.mostAccurateSource === 'WINDY' ? 'Windy' : 
+                       beachData.mostAccurateSource} 
+                      <span className="text-white/40 ml-1 text-[8px]">({beachData.sourceAccuracyCount} votes)</span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <button 
                   onClick={() => setShowConditions(!showConditions)}
-                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-bold tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+                  disabled={isPopupLoading}
+                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-bold tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  View conditions
-                  {showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+                  {isPopupLoading ? "Loading Intel..." : showConditions ? "Hide conditions" : "View conditions"}
+                  {!isPopupLoading && (showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
                 </button>
 
                 {showConditions && (

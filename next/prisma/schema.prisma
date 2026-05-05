@@ -210,6 +210,8 @@ model LogEntry {
   forecastId    String?
   imageUrls     Json?
   hiddenGemId   String?
+  surfTimeSlot       TimeSlot?
+  mostAccurateSource ForecastSource?
   alerts        Alert[]
   beach         Beach?     @relation(fields: [beachId], references: [id])
   forecast      Forecast?  @relation(fields: [forecastId], references: [id])
@@ -222,6 +224,17 @@ model LogEntry {
   @@index([userId])
   @@index([forecastId])
   @@index([hiddenGemId])
+}
+
+model BeachSourceAccuracy {
+  id        String         @id @default(cuid())
+  beachId   String
+  source    ForecastSource
+  voteCount Int            @default(0)
+  beach     Beach          @relation(fields: [beachId], references: [id], onDelete: Cascade)
+
+  @@unique([beachId, source])
+  @@index([beachId])
 }
 
 model SafariBooking {
@@ -390,6 +403,7 @@ model Beach {
   properties             Property[]
   broadcasts             Broadcast[]
   intelligenceReports    IntelligenceReport[]
+  sourceAccuracy         BeachSourceAccuracy[]
 
   @@index([regionId])
   @@index([countryId])

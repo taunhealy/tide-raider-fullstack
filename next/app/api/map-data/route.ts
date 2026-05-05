@@ -56,17 +56,14 @@ export async function GET(request: Request) {
             continentId: true
           }
         },
-        conditionProfiles: {
-          where: {
-            category: "GENERAL"
-          },
+        sourceAccuracy: {
           select: {
-            optimalWindDirections: true,
-            optimalSwellDirections: true,
-            swellSize: true,
-            idealSwellPeriod: true
+            source: true,
+            voteCount: true
           }
         },
+        // Exclude conditionProfiles from the global map fetch to reduce payload size.
+        // Full details will be fetched on-demand when a beach is clicked.
         beachDailyScores: {
           where: {
             date: {
@@ -79,7 +76,7 @@ export async function GET(request: Request) {
           select: {
             date: true,
             starRating: true,
-            conditions: true
+            // conditions: true // Excluded for performance
           },
           orderBy: {
             date: 'desc'
@@ -94,10 +91,7 @@ export async function GET(request: Request) {
           ? JSON.parse(beach.coordinates) 
           : beach.coordinates;
 
-        // Extract GENERAL profile to maintain compatibility with legacy optimal fields
-        const profile = beach.conditionProfiles?.[0] || {};
-
-        // Group scores by date to aggregate (average) across sources
+        // Group scores by date
         const scoresByDate: Record<string, any[]> = {};
         (beach.beachDailyScores || []).forEach((score: any) => {
           const d = score.date.toISOString().split('T')[0];
@@ -105,18 +99,14 @@ export async function GET(request: Request) {
           scoresByDate[d].push(score);
         });
 
-        // Map grouped scores to average ratings and conditions
+        // Map grouped scores to average ratings
         const dailyScores = Object.entries(scoresByDate).reduce((acc: any, [dateStr, scores]) => {
           const avgRating = scores.reduce((sum, s) => sum + s.starRating, 0) / scores.length;
           
-          // Use the first score with conditions as representative
-          const representativeScores = scores.filter(s => s.conditions && typeof s.conditions === 'object');
-          const conditions = representativeScores.length > 0 ? representativeScores[0].conditions : null;
-
           acc[dateStr] = {
             date: dateStr,
             rating: avgRating,
-            conditions: conditions
+            // conditions: null // Full conditions fetched on demand
           };
           return acc;
         }, {});
@@ -140,11 +130,9 @@ export async function GET(request: Request) {
           isHiddenGem: beach.isHiddenGem || false,
           isLongboarding: beach.isLongboarding || false,
           isFoiling: beach.isFoiling || false,
-          optimalWindDirections: profile.optimalWindDirections || [],
-          optimalSwellDirections: profile.optimalSwellDirections || { min: 0, max: 360 },
-          swellSize: profile.swellSize || { min: 0, max: 10 },
-          idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
           dailyScores: dailyScores,
+          mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
+          sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
           rating: (Object.values(dailyScores) as any[])[0]?.rating || beach.rating || 3
         };
       } catch (e) {

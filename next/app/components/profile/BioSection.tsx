@@ -8,11 +8,12 @@ import confetti from "canvas-confetti";
 import Textarea from "../ui/textarea";
 import { Input } from "../ui/input";
 import { Button } from "../ui/Button";
-import { Mail, MessageSquare, Globe, User } from "lucide-react";
+import { Mail, MessageSquare, Globe, User, Instagram } from "lucide-react";
 
 interface BioSectionProps {
   initialBio?: string;
   initialLink?: string;
+  initialInstagram?: string;
   initialEmail?: string;
   initialWhatsappNumber?: string;
   isOwnProfile: boolean;
@@ -23,6 +24,7 @@ interface BioSectionProps {
 export default function BioSection({
   initialBio = "",
   initialLink = "",
+  initialInstagram = "",
   initialEmail = "",
   initialWhatsappNumber = "",
   isOwnProfile,
@@ -35,6 +37,7 @@ export default function BioSection({
   // caused by direct React Query cache updates on every keystroke.
   const [bio, setBio] = useState(initialBio || "");
   const [link, setLink] = useState(initialLink || "");
+  const [instagram, setInstagram] = useState(initialInstagram || "");
   const [email, setEmail] = useState(initialEmail || "");
   const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber || "");
 
@@ -46,6 +49,10 @@ export default function BioSection({
   useEffect(() => {
     setLink(initialLink || "");
   }, [initialLink]);
+  
+  useEffect(() => {
+    setInstagram(initialInstagram || "");
+  }, [initialInstagram]);
 
   useEffect(() => {
     setEmail(initialEmail || "");
@@ -59,18 +66,26 @@ export default function BioSection({
     mutationFn: async ({ 
       bio: newBio, 
       link: newLink, 
+      instagram: newInstagram,
       email: newEmail, 
       whatsappNumber: newWhatsappNumber 
     }: { 
       bio: string; 
       link: string; 
+      instagram: string;
       email: string; 
       whatsappNumber: string 
     }) => {
       const response = await fetch(`/api/user/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio: newBio, link: newLink, email: newEmail, whatsappNumber: newWhatsappNumber }),
+        body: JSON.stringify({ 
+          bio: newBio, 
+          link: newLink, 
+          instagram: newInstagram,
+          email: newEmail, 
+          whatsappNumber: newWhatsappNumber 
+        }),
       });
       if (!response.ok) throw new Error("Failed to save");
       return response.json();
@@ -82,6 +97,7 @@ export default function BioSection({
         ...old,
         bio: newData.bio,
         link: newData.link,
+        instagram: newData.instagram,
         email: newData.email,
         whatsappNumber: newData.whatsappNumber,
       }));
@@ -112,7 +128,7 @@ export default function BioSection({
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex items-center gap-3 mb-2">
            <User className="w-5 h-5 text-slate-400" />
-           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Tactical Identity</h3>
+           <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Identity</h3>
         </div>
 
         <div className="space-y-4">
@@ -127,7 +143,7 @@ export default function BioSection({
                />
              ) : (
                <p className="text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-50 italic">
-                 {bio || "No tactical background provided."}
+                 {bio || "No background provided."}
                </p>
              )}
            </div>
@@ -170,7 +186,7 @@ export default function BioSection({
               </div>
            </div>
 
-           <div>
+            <div>
               <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">External Signal (Website)</label>
               <div className="relative">
                 <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -195,7 +211,34 @@ export default function BioSection({
                   <div className="pl-12 py-3 text-slate-400 italic">No external link provided.</div>
                 )}
               </div>
-           </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Instagram Signal</label>
+              <div className="relative">
+                <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                {isOwnProfile ? (
+                  <Input
+                    type="text"
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    className="pl-12 bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all"
+                    placeholder="@username"
+                  />
+                ) : instagram ? (
+                  <a
+                    href={`https://instagram.com/${instagram.replace("@", "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pl-12 py-3 block text-indigo-600 font-bold hover:underline"
+                  >
+                    {instagram.startsWith("@") ? instagram : `@${instagram}`}
+                  </a>
+                ) : (
+                  <div className="pl-12 py-3 text-slate-400 italic">No Instagram link provided.</div>
+                )}
+              </div>
+            </div>
         </div>
 
         {isOwnProfile && (
@@ -205,6 +248,7 @@ export default function BioSection({
                 updateProfileMutation.mutate({
                   bio,
                   link,
+                  instagram,
                   email,
                   whatsappNumber,
                 })
