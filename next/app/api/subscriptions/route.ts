@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.email && !authToken) {
     console.log("[subscriptions] Unauthorized: No session and no auth-token found");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", redirectTo: "/auth/signin?callbackUrl=/pricing" }, { status: 401 });
   }
 
   try {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
           if (envUrl?.includes("localhost")) {
             return envUrl.replace("localhost", "127.0.0.1");
           }
-          return envUrl || "http://127.0.0.1:4005";
+          return envUrl || "http://127.0.0.1:4050";
         }
 
         // In production, use production backend (Google Cloud Run)
@@ -226,7 +226,7 @@ async function handleCreate(promoCode?: string) {
         if (envUrl?.includes("localhost")) {
           return envUrl.replace("localhost", "127.0.0.1");
         }
-        return envUrl || "http://127.0.0.1:4005";
+        return envUrl || "http://127.0.0.1:4050";
       }
 
       // In production, use production backend (Google Cloud Run)

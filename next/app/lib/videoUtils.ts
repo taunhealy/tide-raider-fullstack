@@ -3,7 +3,7 @@
  */
 export function parseVideoUrl(url: string): {
   id: string;
-  platform: "youtube" | "vimeo" | "short" | "upload" | null;
+  platform: "youtube" | "vimeo" | "short" | "upload" | "instagram" | null;
 } {
   if (!url) return { id: "", platform: null };
 
@@ -28,9 +28,15 @@ export function parseVideoUrl(url: string): {
     return { id: vimeoMatch[1], platform: "vimeo" };
   }
 
-  // Fallback for uploaded videos (if it's a direct URL to a video file or our storage)
   if (url.includes("r2.tideraider.com") || url.match(/\.(mp4|webm|mov|avi)$/i)) {
     return { id: url, platform: "upload" };
+  }
+
+  // Instagram
+  if (url.includes("instagram.com/p/") || url.includes("instagram.com/reels/") || url.includes("instagram.com/reel/")) {
+    const parts = url.split(/\/p\/|\/reels\/|\/reel\//);
+    const id = parts[1]?.split("/")[0] || "";
+    return { id, platform: "instagram" };
   }
 
   return { id: "", platform: null };
@@ -41,7 +47,7 @@ export function parseVideoUrl(url: string): {
  */
 export function getVideoId(
   url: string,
-  platform: "youtube" | "vimeo" | "short" | "upload" = "youtube"
+  platform: "youtube" | "vimeo" | "short" | "upload" | "instagram" = "youtube"
 ): string {
   const result = parseVideoUrl(url);
   if (result.platform === platform || (platform === "youtube" && result.platform === "short")) {
@@ -55,7 +61,7 @@ export function getVideoId(
  */
 export function getVideoThumbnail(
   url: string,
-  platform?: "youtube" | "vimeo" | "short" | "upload"
+  platform?: "youtube" | "vimeo" | "short" | "upload" | "instagram"
 ): string {
   if (!url) return "/images/placeholder.jpg";
 
@@ -73,6 +79,10 @@ export function getVideoThumbnail(
   } else if (finalPlatform === "upload") {
     // For uploaded videos, we might show a video icon or a generic thumbnail
     return "/images/video-placeholder.jpg";
+  } else if (finalPlatform === "instagram") {
+    // Instagram doesn't provide a direct thumbnail URL easily without API, 
+    // but we can use a generic icon or eventually scrape it.
+    return "/images/instagram-placeholder.png";
   }
 
   return "/images/placeholder.jpg";
@@ -90,6 +100,8 @@ export function getEmbedUrl(url: string): string {
     return `https://www.youtube.com/embed/${id}`;
   } else if (platform === "vimeo") {
     return `https://player.vimeo.com/video/${id}`;
+  } else if (platform === "instagram") {
+    return `https://www.instagram.com/p/${id}/embed`;
   }
   
   return url;

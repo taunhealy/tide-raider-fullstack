@@ -1,9 +1,12 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { authenticateToken, optionalAuth, AuthRequest } from "../middleware/auth";
+import { sendEmail } from "../lib/email";
+import { logCommentTemplate } from "../lib/emailTemplates";
 
 const router = Router();
 
+// GET /api/comments?entityId=xxx&entityType=xxx
 // GET /api/comments?entityId=xxx&entityType=xxx
 router.get("/", optionalAuth, async (req: Request, res: Response) => {
   try {
@@ -72,6 +75,44 @@ router.post("/", authenticateToken, async (req: Request, res: Response) => {
         },
       },
     });
+
+    // Handle Notifications for LogEntry comments
+    if (entityType === "LogEntry") {
+      try {
+        const logEntry = await prisma.logEntry.findUnique({
+          where: { id: entityId },
+          include: { user: true }
+        });
+
+        if (logEntry && logEntry.userId && logEntry.userId !== authReq.user.id) {
+          const logger = logEntry.user;
+          const commenter = comment.user;
+
+          if (logger) {
+            // 1. In-app Notification
+            await prisma.notification.create({
+              data: {
+                userId: logger.id,
+                type: "LOG_COMMENT",
+                title: "New Log Comment",
+                message: `${commenter.name} commented on your log: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
+              }
+            }).catch(err => console.error("[comments] Failed to create in-app notification:", err));
+
+            // 2. Email Notification
+            if (logger.email) {
+              await sendEmail(
+                logger.email,
+                "New Comment on your Raid Log 💬",
+                logCommentTemplate(logger.name || "Explorer", commenter.name || "Agent", entityId, text)
+              ).catch(err => console.error("[comments] Failed to send email notification:", err));
+            }
+          }
+        }
+      } catch (notifyErr) {
+        console.error("[comments] Error during notification process:", notifyErr);
+      }
+    }
 
     return res.json(comment);
   } catch (error) {

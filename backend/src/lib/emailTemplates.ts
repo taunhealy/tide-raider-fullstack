@@ -332,3 +332,23 @@ export const analyticsReportTemplate = (stats: any) => emailLayout(
   </div>
   `
 );
+/**
+ * Log Comment Notification Email
+ */
+export const logCommentTemplate = (loggerName: string, commenterName: string, logId: string, commentText: string) => emailLayout(
+  "New Intel on your Mission Log 💬",
+  `
+  <p class="text">Hey ${loggerName},</p>
+  <p class="text"><strong>${commenterName}</strong> just contributed new intelligence to your mission log.</p>
+  
+  <div class="highlight-box">
+    <p style="font-style: italic; color: #4b5563; margin-bottom: 0;">"${commentText}"</p>
+  </div>
+
+  <p class="text">Head over to the log to view the full discussion and respond.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raidlogs/${logId}" class="button">View Mission Log</a>
+  </div>
+  `
+);

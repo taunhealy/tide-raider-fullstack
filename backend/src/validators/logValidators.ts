@@ -33,7 +33,7 @@ export const createRaidLogSchema = z.object({
   videoUrl: z.string().url().optional().or(z.literal("")),
   videoUrls: z.array(z.object({
     url: z.string().url(),
-    type: z.enum(["upload", "youtube", "vimeo", "short"]),
+    type: z.enum(["upload", "youtube", "vimeo", "short", "instagram"]),
     thumbnail: z.string().optional()
   })).optional(),
   videoPlatform: z.string().nullable().optional(), // Allow null for uploaded videos
@@ -73,7 +73,7 @@ export const updateRaidLogSchema = z.object({
   videoUrl: z.string().url().optional().or(z.literal("")),
   videoUrls: z.array(z.object({
     url: z.string().url(),
-    type: z.enum(["upload", "youtube", "vimeo", "short"]),
+    type: z.enum(["upload", "youtube", "vimeo", "short", "instagram"]),
     thumbnail: z.string().optional()
   })).optional(),
   videoPlatform: z.string().nullable().optional(), // Allow null for uploaded videos

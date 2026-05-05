@@ -107,12 +107,22 @@ export class ScoreService {
         } else {
           penalty = 3;
         }
-        score -= penalty;
-        deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°)`);
+
+        // Scale penalty based on wind strength - light winds don't ruin a session
+        let windFactor = 1.0;
+        if (conditions.windSpeed <= 8) windFactor = 0.2;
+        else if (conditions.windSpeed <= 12) windFactor = 0.5;
+        
+        const finalPenalty = penalty * windFactor;
+        score -= finalPenalty;
+        
+        if (finalPenalty > 0) {
+          deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°, penalty scaled by ${windFactor}x due to ${conditions.windSpeed}kt wind)`);
+        }
       }
 
       // Wind strength scoring - Only penalize if NOT optimal wind (onshore/cross)
-      const isOptimalWind = profile.optimalWindDirections.includes(windCardinal);
+      const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
       
       if (!isOptimalWind && !beach.sheltered) {
         if (conditions.windSpeed > 25) {

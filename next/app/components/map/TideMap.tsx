@@ -13,7 +13,7 @@ import { Vector as VectorSource, Cluster, XYZ } from "ol/source";
 import { Style, Icon, Text, Fill, Stroke, Circle as CircleStyle } from "ol/style";
 import Overlay from "ol/Overlay";
 import { cn } from "@/app/lib/utils";
-import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon, Cloud } from "lucide-react";
+import { Check, X, ChevronDown, ChevronUp, Wind, Waves, Clock, Info as InfoIcon, Cloud, MapPin, Sparkles } from "lucide-react";
 import { getConditionReasons } from "@/app/lib/surfUtils";
 import { degreesToCardinal } from "@/app/lib/forecastUtils";
 import api from "@/app/lib/api-client";
@@ -51,8 +51,10 @@ interface TideMapProps {
   center?: [number, number];
   zoom?: number;
   showWindHeatmap?: boolean;
+  showSwellHeatmap?: boolean;
   selectedRegionId?: string | null;
   variant?: "hero" | "default";
+  loading?: boolean;
 }
 
 export default function TideMap({ 
@@ -65,7 +67,8 @@ export default function TideMap({
   zoom = 12,
   showWindHeatmap = false,
   showSwellHeatmap = false,
-  selectedRegionId = null
+  selectedRegionId = null,
+  loading = false
 }: TideMapProps) {
   const mapElement = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -536,8 +539,25 @@ export default function TideMap({
             setIsPopupLoading(true);
             api.getBeach(beach.id).then(res => {
               if (res?.beach) {
-                // Update the popup beach with full details
-                setPopupBeach(prev => prev?.id === beach.id ? { ...prev, ...res.beach } : prev);
+                // Map the array of scores to a dictionary format by date
+                const scoresByDate: Record<string, any> = {};
+                (res.beach.beachDailyScores || []).forEach((score: any) => {
+                  const d = score.date.split('T')[0];
+                  if (!scoresByDate[d]) {
+                    scoresByDate[d] = {
+                      date: d,
+                      rating: score.starRating,
+                      conditions: score.conditions
+                    };
+                  }
+                });
+
+                // Merge with existing data
+                setPopupBeach((prev: Beach | null) => prev?.id === beach.id ? { 
+                  ...prev, 
+                  ...res.beach,
+                  dailyScores: { ...prev?.dailyScores, ...scoresByDate }
+                } : prev);
               }
             }).catch(err => {
               console.error("[TideMap] Failed to fetch beach details:", err);
@@ -710,6 +730,22 @@ export default function TideMap({
     <div className="relative w-full h-full group overflow-hidden">
       <div ref={mapElement} className="w-full h-full" />
       
+      {/* Loading Overlay */}
+      {loading && beaches.length === 0 && (
+        <div className="absolute inset-0 z-[40] flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl flex flex-col items-center gap-4 border border-white/20 animate-in zoom-in-95 duration-300">
+            <div className="relative">
+              <div className="w-12 h-12 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin" />
+              <MapPin className="absolute inset-0 m-auto w-4 h-4 text-gray-400" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-black text-gray-900 uppercase tracking-widest mb-1">Calibrating Intel</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Syncing global break coordinates...</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Particle Canvas */}
       <canvas 
         ref={canvasRef}
@@ -730,7 +766,7 @@ export default function TideMap({
           const conditions = beachData.dailyScores?.[dateKey]?.conditions || null;
           const rating = beachData.dailyScores?.[dateKey]?.rating ?? beachData.rating ?? 0;
           
-          const conditionReasons = conditions ? getConditionReasons(beachData, conditions) : null;
+          const conditionReasons = getConditionReasons(beachData, conditions);
           
           return (
             <div className="relative">
@@ -769,22 +805,37 @@ export default function TideMap({
               )}
 
               <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 <button 
                   onClick={() => setShowConditions(!showConditions)}
-                  disabled={isPopupLoading}
-                  className="w-full py-2.5 bg-white/5 border border-white/10 text-white text-[9px] font-bold tracking-widest rounded-xl hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className={cn(
+                    "py-2.5 rounded-xl text-[9px] font-bold tracking-widest transition-all flex items-center justify-center gap-2",
+                    showConditions 
+                      ? "bg-[var(--color-tertiary)] text-white" 
+                      : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                  )}
                 >
-                  {isPopupLoading ? "Loading Intel..." : showConditions ? "Hide conditions" : "View conditions"}
-                  {!isPopupLoading && (showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
+                  Conditions
+                  {showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                 </button>
+                <button 
+                  onClick={() => onAIReportClick(popupBeach)}
+                  className="py-2.5 bg-white/5 border border-white/10 text-white rounded-xl text-[9px] font-bold tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                >
+                  AI Report
+                  <Sparkles className="w-2.5 h-2.5" />
+                </button>
+              </div>
 
-                {showConditions && (
-                  <div className="mt-4 p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    {conditionReasons ? (
-                      <div className="space-y-2">
-                        {conditionReasons.optimalConditions?.filter(Boolean).map((cond: any, idx: number) => (
+              {showConditions && (
+                <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {conditionReasons ? (
+                    <div className="space-y-2">
+                      {conditionReasons.optimalConditions?.filter(Boolean).map((cond: any, idx: number) => (
                           <div key={idx} className="flex items-start gap-2 group">
-                            {cond.isMet ? (
+                            {!conditions ? (
+                              <InfoIcon className="w-3 h-3 text-blue-400 mt-0.5 flex-shrink-0" />
+                            ) : cond.isMet ? (
                               <Check className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />
                             ) : (
                               <X className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
@@ -793,32 +844,15 @@ export default function TideMap({
                               {cond.text}
                             </span>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-[9px] text-white/30 font-bold text-center py-2 italic uppercase tracking-widest">
-                        No condition data
-                      </div>
-                    )}
-                    
-                    <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-2">
-                      <button 
-                        onClick={() => (window.location.href = `/beaches/${popupBeach.id}`)}
-                        className="py-2.5 bg-white/5 border border-white/10 rounded-lg text-[8px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-1 group"
-                      >
-                        Details
-                        <ChevronDown className="w-2 h-2 rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={() => onAIReportClick(popupBeach)}
-                        className="py-2.5 bg-brand-3 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-brand-3/20 transition-all flex items-center justify-center gap-1.5"
-                      >
-                        AI Report
-                        <Cloud className="w-2.5 h-2.5" />
-                      </button>
+                      ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-[9px] text-white/30 font-bold text-center py-2 italic uppercase tracking-widest">
+                      No condition data
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
             </div>
           );

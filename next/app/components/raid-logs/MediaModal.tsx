@@ -14,7 +14,7 @@ interface MediaModalProps {
   imageUrl?: string | null;
   imageUrls?: string[];
   videoUrl?: string | null;
-  videoPlatform?: "youtube" | "vimeo" | "short" | "upload" | null;
+  videoPlatform?: "youtube" | "vimeo" | "short" | "upload" | "instagram" | null;
   videoUrls?: { url: string; type: string; thumbnail?: string }[];
   initialImageIndex?: number;
   initialVideoIndex?: number;
@@ -96,6 +96,12 @@ export function MediaModal({
     if (platform === "vimeo") {
       const videoId = url.split("/").pop();
       return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1` : null;
+    }
+
+    if (platform === "instagram") {
+      const parts = url.split(/\/p\/|\/reels\/|\/reel\//);
+      const videoId = parts[1]?.split("/")[0] || "";
+      return videoId ? `https://www.instagram.com/p/${videoId}/embed` : null;
     }
 
     return null;
@@ -182,7 +188,10 @@ export function MediaModal({
                   src={embedUrl}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  className="w-full h-full border-0 max-w-5xl aspect-video"
+                  className={cn(
+                    "w-full h-full border-0 max-w-5xl",
+                    currentVideo?.type !== "instagram" && "aspect-video"
+                  )}
                   title="Video player"
                 />
               ) : (currentVideo?.type === "upload" && currentVideo?.url) ? (

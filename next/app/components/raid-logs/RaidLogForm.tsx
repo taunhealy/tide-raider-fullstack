@@ -789,7 +789,7 @@ export function RaidLogForm({
                     <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-tertiary)] text-white mr-2 text-sm">
                       3
                     </span>
-                    When did you surf?
+                    When was the session?
                   </h3>
                   <div className="grid grid-cols-3 gap-2">
                     {[

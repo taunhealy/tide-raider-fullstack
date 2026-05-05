@@ -714,6 +714,7 @@ export default function HeroSection({ data }: HeroProps) {
             <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                <TideMap 
                  beaches={beaches.filter(Boolean)} 
+                 loading={loadingBeaches}
                  selectedDayIndex={0}
                  showWindHeatmap={true}
                  showSwellHeatmap={true}

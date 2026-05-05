@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface VideoObject {
   url: string;
-  type: "upload" | "youtube" | "vimeo" | "short";
+  type: "upload" | "youtube" | "vimeo" | "short" | "instagram";
   thumbnail?: string;
 }
 
@@ -36,8 +36,8 @@ export function MultiVideoUploader({
     if (!videoLink.trim()) return;
 
     const { id, platform } = parseVideoUrl(videoLink);
-    if (!platform || (platform !== "youtube" && platform !== "vimeo" && platform !== "short")) {
-      toast.error("Invalid video URL. Please provide a YouTube, YouTube Shorts, or Vimeo link.");
+    if (!platform || (platform !== "youtube" && platform !== "vimeo" && platform !== "short" && platform !== "instagram")) {
+      toast.error("Invalid video URL. Please provide a YouTube, YouTube Shorts, Vimeo, or Instagram link.");
       return;
     }
 
@@ -141,7 +141,7 @@ export function MultiVideoUploader({
               type="text"
               value={videoLink}
               onChange={(e) => setVideoLink(e.target.value)}
-              placeholder="Paste YouTube, Shorts, or Vimeo link..."
+              placeholder="Paste YouTube, Shorts, Vimeo, or Instagram link..."
               className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-[var(--color-tertiary)] outline-none"
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddLink())}
             />
@@ -205,6 +205,22 @@ export function MultiVideoUploader({
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                 {video.type === "youtube" || video.type === "short" ? (
                   <Youtube className="w-8 h-8 text-red-600 fill-white" />
+                ) : video.type === "instagram" ? (
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] flex items-center justify-center shadow-lg">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
+                    >
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
+                  </div>
                 ) : (
                   <Video className="w-8 h-8 text-white" />
                 )}

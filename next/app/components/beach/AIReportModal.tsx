@@ -410,7 +410,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] leading-[22px] font-bold text-black mb-1">Expert AI Guidance</h3>
+                  <h3 className="text-[16px] leading-[22px] font-bold text-black mb-1">AI Guidance</h3>
                   <p className="text-[14px] leading-[20px] font-normal text-black opacity-60">
                     Get a complete outlook synthesized from raw forecast data. We'll identify the best windows for your specific break and give you gear advice for the time ahead.
                   </p>

@@ -586,6 +586,7 @@ export default function GlobalMapPage() {
               </div>
               <TideMap 
                 beaches={filteredBeaches} 
+                loading={loading}
                 onBeachSelect={(beach) => {
                   updateFilter("regionId", beach.regionId);
                 }}

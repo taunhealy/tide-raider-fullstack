@@ -228,16 +228,23 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       conditionProfiles: {
         where: { category: "GENERAL" }
       },
-      sourceAccuracy: true
+      sourceAccuracy: true,
+      beachDailyScores: {
+        where: {
+          date: {
+            gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
+            lt: new Date(new Date().setUTCHours(0, 0, 0, 0) + 7 * 24 * 60 * 60 * 1000)
+          }
+        },
+        orderBy: { date: "asc" } as any
+      }
     };
 
-    if (isUUID) {
-      // Try to find by ID first
-      beach = await prisma.beach.findUnique({
-        where: { id: decodedName },
-        include: commonIncludes,
-      });
-    }
+    // Always try to find by ID first (supports both UUIDs and custom slugs)
+    beach = await prisma.beach.findUnique({
+      where: { id: decodedName },
+      include: commonIncludes,
+    });
 
     // If not found by ID, try by name
     if (!beach) {

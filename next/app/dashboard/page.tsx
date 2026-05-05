@@ -75,6 +75,11 @@ export default function DashboardPage() {
         body: JSON.stringify({ action: "start-trial" }),
       });
 
+      if (response.status === 401) {
+        window.location.href = "/auth/signin?callbackUrl=/dashboard";
+        return null;
+      }
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({
           error: `HTTP ${response.status}: ${response.statusText}`,

@@ -107,6 +107,13 @@ export default function PricingPage() {
           body: JSON.stringify({ action: "start-trial", promoCode }),
         });
         
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}));
+          const redirectTo = errorData.redirectTo || "/auth/signin?callbackUrl=/pricing";
+          window.location.href = redirectTo;
+          return;
+        }
+        
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || errorData.error || "Failed to start trial");

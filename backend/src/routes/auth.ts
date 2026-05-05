@@ -59,7 +59,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             ? `${process.env.BACKEND_URL}/api/auth/google/callback`
             : process.env.NODE_ENV === "production"
               ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-              : `http://localhost:4001/api/auth/google/callback`,
+              : `http://localhost:4050/api/auth/google/callback`,
         passReqToCallback: true,
       },
       async (req, accessToken, refreshToken, profile, done) => {
@@ -243,7 +243,7 @@ const handleGoogleOAuth = (req: Request, res: Response, next: any) => {
       ? `${process.env.BACKEND_URL}/api/auth/google/callback`
       : process.env.NODE_ENV === "production"
         ? `https://tide-raider-backend-o6rx5gs5rq-ew.a.run.app/api/auth/google/callback`
-        : `http://localhost:4001/api/auth/google/callback`;
+        : `http://localhost:4050/api/auth/google/callback`;
 
   console.log("[auth] 📍 Callback URL:", callbackURL);
   const clientID = process.env.GOOGLE_CLIENT_ID?.trim() || "NOT SET";
