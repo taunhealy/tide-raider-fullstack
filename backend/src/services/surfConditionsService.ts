@@ -217,7 +217,7 @@ export async function getLatestConditions(
   let scrapeUrl = "";
   const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   const SUPERFORECAST_LIMIT_DAYS = 3;
-  const useRegularForecast = source === "WINDFINDER" && diffDays > SUPERFORECAST_LIMIT_DAYS && !!region.sourceA.forecastUrl;
+  const useRegularForecast = source === "WINDFINDER" && diffDays >= SUPERFORECAST_LIMIT_DAYS && !!region.sourceA.forecastUrl;
 
   if (source === "WINDFINDER") {
     scrapeUrl = useRegularForecast

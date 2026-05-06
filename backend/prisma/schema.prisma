@@ -533,6 +533,8 @@ model Forecast {
   swellDirection Float          @default(0)
   trend          String?
   tide           String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
   alerts         Alert[]
   region         Region         @relation(fields: [regionId], references: [id])
   logEntries     LogEntry[]
@@ -541,6 +543,7 @@ model Forecast {
   @@index([regionId])
   @@index([source])
   @@index([date, regionId])
+  @@index([createdAt])
 }
 
 model Feedback {

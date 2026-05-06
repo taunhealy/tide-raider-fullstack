@@ -171,7 +171,7 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
                       // Pass a target date 4 days out so surfConditionsService selects the regular URL
                       new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
                       undefined,
-                      SUPERFORECAST_LIMIT_DAYS + 1 // startDayOffset: protect first 3 days
+                      SUPERFORECAST_LIMIT_DAYS // startDayOffset: ensure we capture from Day 3 onwards
                     );
                     if (extendedConditions) {
                       console.log(`  ✅ Extended Windfinder forecast fetched for ${region.id}`);
