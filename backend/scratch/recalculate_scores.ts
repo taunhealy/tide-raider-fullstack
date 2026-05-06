@@ -1,47 +1,39 @@
-
-import { prisma } from "../src/lib/prisma";
-import { ScoreService } from "../src/services/scoreService";
+import { ScoreService } from '../src/services/scoreService';
+import { prisma } from '../src/lib/prisma';
 
 async function main() {
-  console.log("🚀 Recalculating scores for all beaches in Western Cape...");
-  
-  const regionId = "western-cape";
-  
-  // 1. Get all forecasts for the region from today onwards
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  
-  const forecasts = await prisma.forecast.findMany({
-    where: {
-      regionId,
-      date: { gte: today }
-    }
-  });
-  
-  console.log(`Found ${forecasts.length} forecasts to process.`);
-  
-  for (const forecast of forecasts) {
-    console.log(`Processing forecast for ${forecast.date.toISOString().split('T')[0]} [${forecast.source}] [${forecast.timeSlot}]`);
-    
-    try {
-      await ScoreService.calculateAndStoreScores(regionId, {
-        windSpeed: forecast.windSpeed,
-        windDirection: forecast.windDirection,
-        swellHeight: forecast.swellHeight,
-        swellDirection: forecast.swellDirection,
-        swellPeriod: forecast.swellPeriod,
-        date: forecast.date,
-        source: forecast.source,
-        timeSlot: forecast.timeSlot
-      });
-    } catch (error) {
-      console.error(`Failed for forecast ${forecast.id}:`, error);
+  const regionId = 'western-cape';
+  console.log(`Recalculating scores for ${regionId} for the next 10 days...`);
+
+  for (let i = 0; i < 11; i++) {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + i);
+    targetDate.setUTCHours(0, 0, 0, 0);
+
+    const forecasts = await prisma.forecast.findMany({
+      where: {
+        regionId,
+        date: targetDate,
+      },
+    });
+
+    console.log(`--- Day ${i}: ${targetDate.toISOString().split('T')[0]} ---`);
+    console.log(`Found ${forecasts.length} forecasts`);
+
+    for (const forecast of forecasts) {
+      console.log(`Calculating scores for ${forecast.source} - ${forecast.timeSlot}...`);
+      await ScoreService.calculateAndStoreScores(regionId, forecast as any);
     }
   }
-  
-  console.log("✅ Done! Scores updated for all beaches in Western Cape.");
+
+  console.log('Done!');
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source");
     const timeSlot = searchParams.get("timeSlot");
+    const regionId = searchParams.get("regionId");
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
@@ -18,20 +19,28 @@ export async function GET(request: Request) {
     sevenDaysLater.setDate(today.getDate() + 7);
 
     // Create cache key
-    const cacheKey = `map-data-v2:${source || 'all'}:${timeSlot || 'all'}`;
+    const cacheKey = `map-data-v3:${source || 'all'}:${timeSlot || 'all'}:${regionId || 'all'}`;
     let cached;
     try {
       cached = await redis.get(cacheKey);
       if (cached) {
-        console.log(`[api/map-data] 🚀 Serving from cache`);
+        console.log(`[api/map-data] 🚀 Serving from cache (Region: ${regionId || 'all'})`);
         return NextResponse.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
       }
     } catch (redisError) {
       console.error("[api/map-data] Redis error (continuing without cache):", redisError);
     }
 
-    // Fetch all beaches and their scores for the next week
+    // Fetch beaches and their scores for the next week
     const beaches = await prisma.beach.findMany({
+      where: {
+        ...(regionId ? { 
+          OR: [
+            { regionId: regionId },
+            { countryId: regionId }
+          ]
+        } : {})
+      },
       select: {
         id: true,
         name: true,

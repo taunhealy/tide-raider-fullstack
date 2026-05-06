@@ -474,7 +474,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                               forecastData={beachForecastData}
                               isLoading={!hasScore && isLoading && !data}
                               distance={(beach as any).distance}
-                              scoreInsights={Array.isArray(beachScores[beach.id]?.beach?.beachDailyScores?.[0]?.conditions) ? beachScores[beach.id].beach.beachDailyScores[0].conditions : []}
+                              scoreInsights={beachScores?.[beach.id]?.beach?.beachDailyScores?.[0]?.conditions || []}
                             />
                           );
                         })

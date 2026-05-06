@@ -700,8 +700,8 @@ const BeachCard = memo(function BeachCard({
                         )}
                       {beach.sharkAttack?.hasAttack && (
                         <span title="At least 1 shark attack reported">
-                          {(beach.sharkAttack.incidents || [])?.some(
-                            (incident) =>
+                          {beach.sharkAttack?.incidents?.some(
+                            (incident: any) =>
                               incident?.date && new Date(incident.date).getTime() >
                               new Date().getTime() -
                                 5 * 365 * 24 * 60 * 60 * 1000

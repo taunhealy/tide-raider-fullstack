@@ -108,10 +108,16 @@ export class ScoreService {
           penalty = 3;
         }
 
-        // Scale penalty based on wind strength - light winds don't ruin a session
+        // Scale penalty based on wind strength - light winds don't ruin a session for reef/point breaks
+        // but beach breaks are much more sensitive to even light onshore winds
         let windFactor = 1.0;
-        if (conditions.windSpeed <= 8) windFactor = 0.2;
-        else if (conditions.windSpeed <= 12) windFactor = 0.5;
+        const isReefOrPoint = beach.waveType === "REEF_BREAK" || beach.waveType === "POINT_BREAK";
+        
+        if (conditions.windSpeed <= 8) {
+          windFactor = isReefOrPoint ? 0.2 : 0.7; // Beach breaks more affected by light onshore
+        } else if (conditions.windSpeed <= 12) {
+          windFactor = isReefOrPoint ? 0.5 : 0.9;
+        }
         
         const finalPenalty = penalty * windFactor;
         score -= finalPenalty;
@@ -191,17 +197,21 @@ export class ScoreService {
         deductions.push(`Swell direction ${conditions.swellDirection}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
       }
 
-      // Swell period scoring - Wave type aware
-      const isBeachBreak = beach.waveType === "BEACH_BREAK";
-      const periodThreshold = isBeachBreak ? 9 : 12;
+      // Swell period scoring - 12s+ is ideal for quality surf
+      const periodBaseline = 12;
 
-      if (conditions.swellPeriod < (periodThreshold - 3)) {
-        // Severe penalty for very short swell period
-        score -= 2;
-        deductions.push(`Very short swell period: ${conditions.swellPeriod}s`);
-      } else if (conditions.swellPeriod < periodThreshold) {
-        // Slight penalty for moderate period
-        score -= 0.5;
+      if (conditions.swellPeriod < 8) {
+        // Severe penalty for very short "wind swell"
+        score -= 2.5;
+        deductions.push(`Very short swell period (${conditions.swellPeriod}s) - high probability of "messy" conditions`);
+      } else if (conditions.swellPeriod < 10) {
+        // Significant penalty for short period
+        score -= 1.5;
+        deductions.push(`Short swell period (${conditions.swellPeriod}s) - suboptimal for quality lines`);
+      } else if (conditions.swellPeriod < periodBaseline) {
+        // Slight penalty for 10-11s period
+        score -= 0.8;
+        deductions.push(`Moderate swell period (${conditions.swellPeriod}s) - 12s+ is ideal`);
       } else if (
         !(
           conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&

@@ -75,25 +75,41 @@ export default function HeroSection({ data }: HeroProps) {
   const featureCardRef = useRef<HTMLDivElement>(null);
   const dotsContainerRef = useRef<HTMLDivElement>(null);
 
+  const [fetchedRegions, setFetchedRegions] = useState<Set<string>>(new Set(["western-cape"]));
   const [beaches, setBeaches] = useState<any[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
 
-  useEffect(() => {
-    async function fetchBeaches() {
-      try {
-        const res = await fetch("/api/map-data");
-        const data = await res.json();
-        if (data.beaches) {
-          setBeaches(data.beaches.filter(Boolean));
-        }
-      } catch (error) {
-        console.error("Error fetching hero map data:", error);
-      } finally {
-        setLoadingBeaches(false);
+  const fetchBeaches = async (regionId: string = "western-cape") => {
+    try {
+      setLoadingBeaches(true);
+      const res = await fetch(`/api/map-data?regionId=${regionId}`);
+      const data = await res.json();
+      if (data.beaches) {
+        setBeaches(prev => {
+          const newBeaches = data.beaches.filter(Boolean);
+          // Combine and filter duplicates
+          const combined = [...prev, ...newBeaches];
+          const unique = Array.from(new Map(combined.map(b => [b.id, b])).values());
+          return unique;
+        });
+        setFetchedRegions(prev => new Set(prev).add(regionId));
       }
+    } catch (error) {
+      console.error("Error fetching hero map data:", error);
+    } finally {
+      setLoadingBeaches(false);
     }
-    fetchBeaches();
+  };
+
+  useEffect(() => {
+    fetchBeaches("western-cape");
   }, []);
+
+  const handleRegionSelect = (regionId: string) => {
+    if (!fetchedRegions.has(regionId)) {
+      fetchBeaches(regionId);
+    }
+  };
 
   const productFeatures: ProductFeature[] = [
     {
@@ -719,10 +735,10 @@ export default function HeroSection({ data }: HeroProps) {
                  showWindHeatmap={true}
                  showSwellHeatmap={true}
                  onBeachSelect={() => {}}
-                 onRegionSelect={() => {}}
+                 onRegionSelect={handleRegionSelect}
                  onAIReportClick={() => {}}
-                 center={[0, 0]}
-                 zoom={2}
+                 center={[18.4233, -33.9249]}
+                 zoom={10}
                  variant="hero"
                />
                <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-2xl md:rounded-3xl"></div>
