@@ -94,7 +94,9 @@ export async function scraperA(
             '[class*="Container"]',
             '[class*="label"]',
             '[class*="hour"]',
-            '.fc-table-horizon'
+            '.fc-table-horizon',
+            '[class*="day-section"]',
+            '[class*="column"]'
           ];
           return selectors.some(s => !!document.querySelector(s));
         });

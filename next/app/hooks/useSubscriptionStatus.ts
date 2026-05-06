@@ -87,6 +87,30 @@ export function useSubscriptionStatus() {
     refetchOnWindowFocus: true, // Refetch when window is focused
   });
 
+  // Combine direct query data with session-based flags for maximum reliability
+  const subscriptionData = data as SubscriptionStatus | undefined;
+  const isSubscribed = (subscriptionData ? subscriptionData.subscriptionStatus === "ACTIVE" : false) || (session?.user?.isSubscribed || false);
+  const hasActiveTrial = (subscriptionData ? subscriptionData.hasActiveTrial : false) || (session?.user?.hasActiveTrial || false);
+  const isPremium = isSubscribed || hasActiveTrial;
+
+  // Granular logging for debugging subscription gating
+  useEffect(() => {
+    if (authStatus === "authenticated") {
+      console.log("[useSubscriptionStatus] 🛡️ AUTH STATE:", {
+        userId: session?.user?.id,
+        isPremium,
+        isSubscribed,
+        hasActiveTrial,
+        subscriptionStatus: subscriptionData?.subscriptionStatus,
+        sessionUser: {
+          isSubscribed: session?.user?.isSubscribed,
+          hasActiveTrial: session?.user?.hasActiveTrial,
+          trialEndDate: session?.user?.trialEndDate
+        }
+      });
+    }
+  }, [isPremium, isSubscribed, hasActiveTrial, subscriptionData, session, authStatus]);
+
   // For unauthenticated users, immediately return default values (not loading)
   if (authStatus === "unauthenticated") {
     return {
@@ -101,12 +125,6 @@ export function useSubscriptionStatus() {
       error: null,
     };
   }
-
-  // Combine direct query data with session-based flags for maximum reliability
-  const subscriptionData = data as SubscriptionStatus | undefined;
-  const isSubscribed = (subscriptionData ? subscriptionData.subscriptionStatus === "ACTIVE" : false) || (session?.user?.isSubscribed || false);
-  const hasActiveTrial = (subscriptionData ? subscriptionData.hasActiveTrial : false) || (session?.user?.hasActiveTrial || false);
-  const isPremium = isSubscribed || hasActiveTrial;
 
   return {
     subscriptionStatus: subscriptionData?.subscriptionStatus || null,

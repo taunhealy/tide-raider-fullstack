@@ -311,11 +311,6 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     }
 
     return processedBeaches.sort((a, b) => {
-      // If Hidden Gems filter is active, prioritize them at the top
-      if (filters.isHiddenGem === "true" || filters.isHiddenGem === true) {
-        if (a.isHiddenGem && !b.isHiddenGem) return -1;
-        if (!a.isHiddenGem && b.isHiddenGem) return 1;
-      }
 
       const hasScoreA = a.id in beachScores;
       const hasScoreB = b.id in beachScores;

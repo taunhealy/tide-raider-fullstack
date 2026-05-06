@@ -284,10 +284,10 @@ export default function BeachHeaderControls({
 
                     <div className="flex flex-wrap items-center gap-2">
                       <RegularButton
-                        active={filters.isRegular === undefined ? true : filters.isRegular === "true" || filters.isRegular === true}
+                        active={filters.isRegular !== false}
                         size="sm"
                         onClick={() => {
-                          const currentActive = filters.isRegular === undefined ? true : filters.isRegular === "true" || filters.isRegular === true;
+                          const currentActive = filters.isRegular !== false;
                           updateFilter("isRegular", !currentActive ? "true" : "false");
                         }}
                       >
@@ -320,10 +320,10 @@ export default function BeachHeaderControls({
 
                     <div className="flex items-center gap-2">
                       <RegularButton
-                        active={filters.isRegular !== "false"}
+                        active={filters.isRegular !== false}
                         size="sm"
                         onClick={() => {
-                          const currentActive = filters.isRegular !== "false";
+                          const currentActive = filters.isRegular !== false;
                           updateFilter("isRegular", !currentActive ? "true" : "false");
                         }}
                       >
@@ -350,7 +350,7 @@ export default function BeachHeaderControls({
                                   {hiddenGemCount}
                                 </span>
                               )}
-                              {(!isAuthenticated || !isPremium) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
+                              {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
                             </HiddenGemsButton>
                           </div>
                         </TooltipTrigger>

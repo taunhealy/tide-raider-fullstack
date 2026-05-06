@@ -322,15 +322,13 @@ function RegionalHighScoresContent({
                     
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-[var(--color-text-primary)] truncate font-primary flex items-center gap-2">
-                        {isLocked ? (
-                          <div className="flex items-center gap-2">
-                            <span className="blur-[4px] select-none text-gray-400 text-xs">TOP SECRET BREAK</span>
-                            <div className="bg-amber-100 p-1 rounded">
-                              <Lock className="w-2.5 h-2.5 text-amber-700" />
-                            </div>
+                        <span className={cn(isLocked && "blur-[4px] select-none opacity-80 text-gray-400 text-xs")}>
+                          {beach.name}
+                        </span>
+                        {isLocked && (
+                          <div className="bg-amber-100 p-1 rounded">
+                            <Lock className="w-2.5 h-2.5 text-amber-700" />
                           </div>
-                        ) : (
-                          beach.name
                         )}
                       </h4>
                       <div className="mt-1">
@@ -352,7 +350,7 @@ function RegionalHighScoresContent({
                         className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <span className="bg-amber-600 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded shadow-lg">
+                        <span className="bg-blue-700 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded shadow-lg">
                           UNLOCK NOW
                         </span>
                       </Link>

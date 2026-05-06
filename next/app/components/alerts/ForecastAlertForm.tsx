@@ -316,13 +316,15 @@ function AlertFormBody({
     });
   }, [logEntries, mode, logEntry]);
 
-  // Auto-set mode to "logEntry" when a logEntry is provided
+  // Auto-set mode to "logEntry" only ONCE when a logEntry is initially provided
+  const hasAutoSetMode = useRef(false);
   useEffect(() => {
-    if (logEntry && mode !== "logEntry") {
-      console.log("Setting mode to logEntry because logEntry is provided");
+    if (logEntry && !hasAutoSetMode.current) {
+      console.log("Auto-setting mode to logEntry because logEntry is provided");
       setMode("logEntry");
+      hasAutoSetMode.current = true;
     }
-  }, [logEntry, mode, setMode]);
+  }, [logEntry, setMode]);
 
   // Initialize starRating to 3 when in starRating mode if not already set
   useEffect(() => {

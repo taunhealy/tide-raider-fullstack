@@ -607,59 +607,72 @@ router.get(
       const missingSources = expectedSources.filter(s => !foundSources.has(s));
 
       // Fallback: If scores are missing for some sources, calculate them on the fly
-      // Only attempt fetching for recent or future dates to avoid slow scraper timeouts for old historical data
+      // We allow archive retrieval for ANY date, but skip scrapers for old historical data
       const isHistorical = targetDate < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       
-      if (missingSources.length > 0 && !isHistorical) {
-        const beach = await prisma.beach.findUnique({
-          where: { id: beachId as string },
-          select: { regionId: true }
-        });
+      if (missingSources.length > 0) {
+        // If it's historical, we should only try to fetch OPENMETEO_ARCHIVE
+        const sourcesToFetchNow = isHistorical 
+          ? missingSources.filter(s => s === "OPENMETEO_ARCHIVE" || foundSources.size === 0) // Try archive if anything is missing or specifically archive
+          : missingSources;
 
-        if (beach) {
-          let forecasts = await prisma.forecast.findMany({
-            where: {
-              regionId: beach.regionId,
-              date: targetDate
-            }
+        if (sourcesToFetchNow.length > 0) {
+          const beach = await prisma.beach.findUnique({
+            where: { id: beachId as string },
+            select: { regionId: true }
           });
 
-          const foundForecastSources = new Set(forecasts.map(f => f.source));
-          const sourcesToFetch = missingSources.filter(s => !foundForecastSources.has(s));
+          if (beach) {
+            let forecasts = await prisma.forecast.findMany({
+              where: {
+                regionId: beach.regionId,
+                date: targetDate
+              }
+            });
 
-          // If forecasts are missing for the missing sources, try to fetch them
-          if (sourcesToFetch.length > 0) {
-            console.log(`[beach-ratings/beach-scores] Missing forecasts for ${sourcesToFetch.join(', ')} for ${beachId} on ${date}. Triggering fetch/archive...`);
-            try {
-              // Trigger fetches for missing sources in parallel
-              await Promise.all(
-                sourcesToFetch.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
-              );
-              
-              // Re-fetch forecasts
-              forecasts = await prisma.forecast.findMany({
-                where: {
-                  regionId: beach.regionId,
-                  date: targetDate
-                }
-              });
-            } catch (fetchErr) {
-              console.error(`[beach-ratings/beach-scores] Failed to fetch conditions:`, fetchErr);
-            }
-          }
+            const foundForecastSources = new Set(forecasts.map(f => f.source));
+            const sourcesToFetch = missingSources.filter(s => !foundForecastSources.has(s));
 
-          if (forecasts.length > 0) {
-            console.log(`[beach-ratings/beach-scores] Ensuring scores exist for ${beachId} on ${date}`);
-            for (const forecast of forecasts) {
+            if (sourcesToFetch.length > 0) {
+              console.log(`[beach-ratings/beach-scores] Missing forecasts for ${sourcesToFetch.join(', ')} for ${beachId} on ${date}. Triggering fetch/archive...`);
               try {
-                // This will skip if scores already exist
-                await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
-              } catch (calcErr) {
-                console.error(`[beach-ratings/beach-scores] Failed calc for ${forecast.source}:`, calcErr);
+                // Trigger fetches for missing sources in parallel
+                // Filter out scrapers if historical
+                const safeSources = isHistorical 
+                  ? sourcesToFetch.filter(s => s === "OPENMETEO_ARCHIVE")
+                  : sourcesToFetch;
+
+                if (safeSources.length > 0) {
+                  await Promise.all(
+                    safeSources.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
+                  );
+                }
+                
+                // Re-fetch forecasts
+                forecasts = await prisma.forecast.findMany({
+                  where: {
+                    regionId: beach.regionId,
+                    date: targetDate
+                  }
+                });
+              } catch (fetchErr) {
+                console.error(`[beach-ratings/beach-scores] Failed to fetch conditions:`, fetchErr);
               }
             }
-            // Re-fetch scores
-            scores = await getScores();
+
+            if (forecasts.length > 0) {
+              console.log(`[beach-ratings/beach-scores] Ensuring scores exist for ${beachId} on ${date}`);
+              for (const forecast of forecasts) {
+                try {
+                  // This will skip if scores already exist
+                  await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
+                } catch (calcErr) {
+                  console.error(`[beach-ratings/beach-scores] Failed calc for ${forecast.source}:`, calcErr);
+                }
+              }
+              // Re-fetch scores
+              scores = await getScores();
+            }
           }
         }
       }

@@ -38,7 +38,9 @@ router.get(
         req.query.timeSlot,
         req.query.source,
         req.query.isHiddenGem,
+        req.query.isRegular,
         req.query.isLongboarding,
+        req.query.isFoiling,
         req.query.searchQuery,
         (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial ? "premium" : "free"
       ];
@@ -154,8 +156,10 @@ router.get(
       const hasActiveTrial = user?.hasActiveTrial;
       const isPremium = isSubscribed || hasActiveTrial;
       
-      const showHiddenGems = req.query.isHiddenGem === "true" || (req.query.isHiddenGem === undefined && isPremium);
-      const showRegular = req.query.isRegular === "true" || req.query.isRegular === undefined;
+      // Debug
+      // console.log("Filters parsed");
+      const showHiddenGems = String(req.query.isHiddenGem) === "true" || (req.query.isHiddenGem === undefined && isPremium);
+      const showRegular = String(req.query.isRegular) === "true" || req.query.isRegular === undefined;
 
       const typeFilters: Prisma.BeachWhereInput[] = [];
 
@@ -478,7 +482,7 @@ router.get(
               : null;
           
           acc[beach.id] = {
-            score: isGated ? 0 : (dailyScore?.score ?? 0),
+            score: dailyScore?.score ?? 0,
             beach: {
               ...beach,
               beachDailyScores: isGated ? [] : (dailyScore ? [dailyScore] : []),

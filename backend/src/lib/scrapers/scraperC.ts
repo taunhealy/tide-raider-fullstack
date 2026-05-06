@@ -59,15 +59,15 @@ export async function scraperC(
     console.log(`[scraperC] 🔍 Navigating to ${url}...`);
     await page.goto(url, {
       waitUntil: "domcontentloaded",
-      timeout: 60000,
+      timeout: 120000,
     });
 
     console.log(`[scraperC] ✅ Page loaded successfully`);
 
     // Wait for the forecast widget table to load
     console.log(`[scraperC] 🔍 Waiting for Windy forecast table...`);
-    await page.waitForSelector("tr.windywidgetwindSpeed, tr.id-wind-speed", {
-      timeout: 30000,
+    await page.waitForSelector("tr.windywidgetwindSpeed, tr.id-wind-speed, .forecast-table, table", {
+      timeout: 60000,
     });
 
     console.log(`[scraperC] ✅ Found Windy forecast table`);

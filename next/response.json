@@ -1,0 +1,24 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"beaches":[{"id":"hout-bay-harbour-wedge","name":"Hidden Gem 
+                    Break","continent":"Africa","regionId":"western-cape","location":"Secret 
+                    Location","distanceFromCT":20,"bestSeasons":["WINTER"],"descripti...
+RawContent        : HTTP/1.1 200 OK
+                    vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch
+                    Connection: keep-alive
+                    Keep-Alive: timeout=5
+                    Transfer-Encoding: chunked
+                    Content-Type: applica...
+Forms             : {}
+Headers           : {[vary, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch], 
+                    [Connection, keep-alive], [Keep-Alive, timeout=5], [Transfer-Encoding, chunked]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 455892
+
+
+

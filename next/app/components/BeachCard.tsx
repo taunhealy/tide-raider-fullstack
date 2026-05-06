@@ -261,6 +261,7 @@ const BeachCard = memo(function BeachCard({
       {/* Main Card Container */}
       <div
         ref={cardRef}
+        onClick={isLocked ? () => router.push('/pricing') : undefined}
         className={`
         relative 
         group 
@@ -276,6 +277,7 @@ const BeachCard = memo(function BeachCard({
         hover:shadow-md
         w-full
         ${isLocalLoading ? "animate-pulse" : ""}
+        ${isLocked ? "cursor-pointer" : ""}
       `}
       >
         <div className="px-4 py-3 md:px-6 md:py-4">
@@ -291,9 +293,13 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
-                      {isLocked ? (
-                        <span className="blur-[8px] select-none text-[#1d4ed8]">Hidden Gem Break</span>
-                      ) : beach.name}
+                      <span 
+                        title={isLocked ? "Unlock this Hidden Gem by becoming a Premium member" : undefined}
+                      >
+                        <span className={cn(isLocked && "blur-[8px] select-none pointer-events-none opacity-80")}>
+                          {beach.name}
+                        </span>
+                      </span>
                       {beach.isHiddenGem && (
                         <span className={cn(
                           "inline-flex items-center px-1.5 py-0 rounded-full text-[8px] font-black uppercase tracking-widest border transition-all duration-300 h-4 md:h-[18px]",
@@ -680,9 +686,13 @@ const BeachCard = memo(function BeachCard({
                   {/* Beach Information */}
                   <div>
                     <h4 className="text-lg font-primary font-bold text-[var(--color-text-primary)] md:text-xl flex items-center flex-wrap gap-2 transition-all">
-                      {isLocked ? (
-                        <span className="blur-[8px] select-none text-[#1d4ed8]">Hidden Gem Break</span>
-                      ) : beach.name}
+                      <span 
+                        title={isLocked ? "Unlock this Hidden Gem by becoming a Premium member" : undefined}
+                      >
+                        <span className={cn(isLocked && "blur-[8px] select-none pointer-events-none opacity-80")}>
+                          {beach.name}
+                        </span>
+                      </span>
                       {beach.isHiddenGem && (
                         <span className={cn(
                           "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
