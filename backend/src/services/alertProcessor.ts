@@ -93,6 +93,8 @@ export async function processUserAlerts(userId: string, today: Date) {
       beachId: string;
       score: number;
       starRating: number;
+      timeSlot: string;
+      source: string;
     }> = [];
     if (beachIds.length > 0) {
       try {
@@ -119,7 +121,9 @@ export async function processUserAlerts(userId: string, today: Date) {
             beachId: true,
             score: true,
             starRating: true,
-            date: true, // Fetch date to verify
+            date: true, 
+            timeSlot: true,
+            source: true,
           },
         });
 
@@ -131,6 +135,8 @@ export async function processUserAlerts(userId: string, today: Date) {
         beachRatings = ratingsData.map((br) => ({
           beachId: br.beachId,
           score: br.score,
+          timeSlot: br.timeSlot,
+          source: br.source,
           starRating:
             br.starRating ?? Math.max(1, Math.min(5, Math.floor(br.score / 2))),
         }));
@@ -188,9 +194,14 @@ export async function processUserAlerts(userId: string, today: Date) {
 
         // We inner-loop through target slots to check conditions for each
         for (const slot of ["MORNING", "NOON", "EVENING"]) {
-          // Find the forecast and rating for this specific slot
+          // Find the forecast and rating for this specific slot and source
+          // We prioritize the alert's preferred sources
           const slotForecast = matchingForecasts.find(f => f.timeSlot === slot);
-          const slotRating = beachRatings.find(br => br.beachId === beachId && (br as any).timeSlot === slot);
+          const slotRating = beachRatings.find(br => 
+            br.beachId === beachId && 
+            (br as any).timeSlot === slot && 
+            alertSources.includes(br.source as any)
+          );
 
           if (!slotForecast && !slotRating) continue;
 
@@ -228,6 +239,7 @@ export async function processUserAlerts(userId: string, today: Date) {
           } else if ((alert.alertType as any) === AlertType.RATING && slotRating) {
             const currentStarRating = slotRating.starRating;
             shouldSendAlert = currentStarRating >= alert.starRating!;
+            console.log(`[Alert Processor] Checking RATING alert ${alert.name} for slot ${slot}: current=${currentStarRating}, target=${alert.starRating} -> result=${shouldSendAlert}`);
             match.matchedProperties.push({
               property: "starRating",
               logValue: alert.starRating,
@@ -241,8 +253,14 @@ export async function processUserAlerts(userId: string, today: Date) {
             const { sendAlertNotification } = await import("./notificationService");
             // Check if we've already notified for this specific alert today for this slot
             // To prevent spam if re-run, but for now we follow "all slots" literal
+            console.log(`[Alert Processor] TRIGGERING notification for alert ${alert.name} (${slot})`);
             const success = await sendAlertNotification(match, alert as any, beachName);
-            if (success) result.notificationsSent++;
+            if (success) {
+              console.log(`[Alert Processor] SUCCESS: Notification sent for alert ${alert.id}`);
+              result.notificationsSent++;
+            } else {
+              console.log(`[Alert Processor] FAILED: Notification not sent for alert ${alert.id}`);
+            }
           }
         }
       } catch (error) {

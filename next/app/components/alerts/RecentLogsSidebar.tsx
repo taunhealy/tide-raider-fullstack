@@ -10,7 +10,7 @@ import { MapPin, Clock, Lock } from "lucide-react";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
 import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
 import { useSession } from "next-auth/react";
-import { api } from "@/app/lib/api";
+import { api } from "@/app/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 
 export function RecentLogsSidebar() {
@@ -21,7 +21,7 @@ export function RecentLogsSidebar() {
   // Get subscription details to handle gated content
   const { data: subscriptionDetails } = useQuery({
     queryKey: ["subscription", session?.user?.id],
-    queryFn: () => api.getSubscriptionDetails(),
+    queryFn: () => api.getSubscriptionStatus(),
     enabled: !!session?.user?.id,
   });
 

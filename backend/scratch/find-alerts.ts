@@ -5,11 +5,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🔍 Searching for active alerts...");
   
-  const alerts = await prisma.alertConfig.findMany({
+  const alerts = await prisma.alert.findMany({
     where: {
       active: true,
       name: {
-        contains: "Long Beach"
+        contains: "Long Beach",
+        mode: "insensitive"
       }
     },
     include: {
@@ -20,7 +21,7 @@ async function main() {
   if (alerts.length === 0) {
     console.log("❌ No active 'Long Beach' alerts found.");
     // Search all alerts to see what we have
-    const allAlerts = await prisma.alertConfig.findMany({
+    const allAlerts = await prisma.alert.findMany({
       take: 5,
       include: { user: true }
     });
@@ -30,9 +31,9 @@ async function main() {
     alerts.forEach(alert => {
       console.log(`- Alert: ${alert.name}`);
       console.log(`  User: ${alert.user.email}`);
-      console.log(`  Target Star Rating: ${alert.targetStarRating}`);
+      console.log(`  Target Star Rating: ${alert.starRating}`);
       console.log(`  Beach ID: ${alert.beachId}`);
-      console.log(`  Notification: ${JSON.stringify(alert.notificationType)}`);
+      console.log(`  Notification: ${alert.notificationMethod}`);
     });
   }
 }

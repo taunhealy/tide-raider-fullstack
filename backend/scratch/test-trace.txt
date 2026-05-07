@@ -1,0 +1,665 @@
+﻿
+--- TACTICAL ALERT TEST: taunhealy@gmail.com ---
+
+Γ£à Found user: cmn4owtab0000s60f0dosfbck
+Γ£à Found 2 matching alerts:
+   - [93fb3a8c-b1c7-4d0a-ae4c-2396950b30cf] Long Beach: target 4 stars, method email
+   - [f33460a6-7144-4b5e-9dec-be496a2d59b1] Long Beach 3 stars: target 3 stars, method both
+
+≡ƒöì Checking 'long-beach' scores for today (2026-05-07T00:00:00.000Z):
+Γ£à Found 11 scores:
+   - MORNING: 2 stars (score: 4)
+   - NOON: 1 stars (score: 1)
+   - EVENING: 1 stars (score: 1)
+   - MORNING: 1 stars (score: 3)
+   - NOON: 1 stars (score: 3)
+   - MORNING: 1 stars (score: 3)
+   - NOON: 3 stars (score: 5)
+   - EVENING: 4 stars (score: 7)
+   - MORNING: 4 stars (score: 7)
+   - NOON: 4 stars (score: 8)
+   - EVENING: 4 stars (score: 8)
+
+≡ƒÜÇ EXECUTING Alert Processor...
+prisma:query BEGIN
+prisma:query DEALLOCATE ALL
+prisma:query SELECT "public"."Alert"."id", "public"."Alert"."name", "public"."Alert"."beachId", "public"."Alert"."regionId", "public"."Alert"."notificationMethod", "public"."Alert"."contactInfo", "public"."Alert"."active", "public"."Alert"."userId", "public"."Alert"."logEntryId", "public"."Alert"."alertType"::text, "public"."Alert"."starRating", "public"."Alert"."forecastDate", "public"."Alert"."forecastId", "public"."Alert"."sources"::text[] FROM "public"."Alert" WHERE ("public"."Alert"."userId" = $1 AND "public"."Alert"."active" = $2) OFFSET $3
+prisma:query SELECT "public"."User"."id", "public"."User"."name", "public"."User"."email" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."LogEntry"."id", "public"."LogEntry"."date", "public"."LogEntry"."surferName", "public"."LogEntry"."surferEmail", "public"."LogEntry"."beachName", "public"."LogEntry"."surferRating", "public"."LogEntry"."comments", "public"."LogEntry"."imageUrl", "public"."LogEntry"."videoUrl", "public"."LogEntry"."videoPlatform", "public"."LogEntry"."isPrivate", "public"."LogEntry"."isAnonymous", "public"."LogEntry"."waveType", "public"."LogEntry"."beachId", "public"."LogEntry"."user_id", "public"."LogEntry"."regionId", "public"."LogEntry"."category"::text, "public"."LogEntry"."forecastId", "public"."LogEntry"."videoUrls", "public"."LogEntry"."imageUrls", "public"."LogEntry"."hiddenGemId", "public"."LogEntry"."surfTimeSlot"::text, "public"."LogEntry"."mostAccurateSource"::text FROM "public"."LogEntry" WHERE "public"."LogEntry"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."Forecast"."id", "public"."Forecast"."date", "public"."Forecast"."timeSlot"::text, "public"."Forecast"."regionId", "public"."Forecast"."source"::text, "public"."Forecast"."windSpeed", "public"."Forecast"."windDirection", "public"."Forecast"."swellHeight", "public"."Forecast"."swellPeriod", "public"."Forecast"."swellDirection", "public"."Forecast"."trend", "public"."Forecast"."tide", "public"."Forecast"."createdAt", "public"."Forecast"."updatedAt" FROM "public"."Forecast" WHERE "public"."Forecast"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."Beach"."id", "public"."Beach"."name", "public"."Beach"."continent", "public"."Beach"."regionId", "public"."Beach"."location", "public"."Beach"."distanceFromCT", "public"."Beach"."bestSeasons"::text[], "public"."Beach"."description", "public"."Beach"."difficulty"::text, "public"."Beach"."waveType"::text, "public"."Beach"."waterTemp", "public"."Beach"."hazards"::text[], "public"."Beach"."crimeLevel"::text, "public"."Beach"."sharkAttack"::text, "public"."Beach"."image", "public"."Beach"."coordinates", "public"."Beach"."videos", "public"."Beach"."profileImage", "public"."Beach"."advertisingPrice", "public"."Beach"."coffeeShop", "public"."Beach"."hasSharkAlert", "public"."Beach"."bestMonthOfYear"::text, "public"."Beach"."isHiddenGem", "public"."Beach"."sheltered", "public"."Beach"."countryId", "public"."Beach"."isLongboarding", "public"."Beach"."isFoiling" FROM "public"."Beach" WHERE "public"."Beach"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."Beach"."id", "public"."Beach"."name" FROM "public"."Beach" WHERE "public"."Beach"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT "public"."AlertProperty"."id", "public"."AlertProperty"."alertId", "public"."AlertProperty"."property", "public"."AlertProperty"."optimalValue", "public"."AlertProperty"."range" FROM "public"."AlertProperty" WHERE "public"."AlertProperty"."alertId" IN ($1,$2,$3,$4,$5,$6) OFFSET $7
+prisma:query COMMIT
+prisma:query BEGIN
+prisma:query DEALLOCATE ALL
+prisma:query SELECT "public"."Forecast"."id", "public"."Forecast"."date", "public"."Forecast"."timeSlot"::text, "public"."Forecast"."regionId", "public"."Forecast"."source"::text, "public"."Forecast"."windSpeed", "public"."Forecast"."windDirection", "public"."Forecast"."swellHeight", "public"."Forecast"."swellPeriod", "public"."Forecast"."swellDirection", "public"."Forecast"."trend", "public"."Forecast"."tide", "public"."Forecast"."createdAt", "public"."Forecast"."updatedAt" FROM "public"."Forecast" WHERE ("public"."Forecast"."regionId" IN ($1) AND "public"."Forecast"."date" >= $2 AND "public"."Forecast"."date" < $3) OFFSET $4
+prisma:query COMMIT
+[Alert Processor] Collected 6 beach IDs from 6 alerts: [
+  'muizenberg-beach',
+  'long-beach',
+  'witsand',
+  'muizenberg-beach',
+  'glencairn',
+  'long-beach'
+]
+[Alert Processor] Fetching beach ratings for 6 beaches: [
+  'muizenberg-beach',
+  'long-beach',
+  'witsand',
+  'muizenberg-beach',
+  'glencairn',
+  'long-beach'
+]
+[Alert Processor] Querying beach ratings for date range: 2026-05-06T22:00:00.000Z to 2026-05-07T21:59:59.999Z
+prisma:query BEGIN
+prisma:query DEALLOCATE ALL
+prisma:query SELECT "public"."BeachDailyScore"."id", "public"."BeachDailyScore"."beachId", "public"."BeachDailyScore"."score", "public"."BeachDailyScore"."starRating", "public"."BeachDailyScore"."date" FROM "public"."BeachDailyScore" WHERE ("public"."BeachDailyScore"."beachId" IN ($1,$2,$3,$4,$5,$6) AND "public"."BeachDailyScore"."date" >= $7 AND "public"."BeachDailyScore"."date" < $8) OFFSET $9
+prisma:query COMMIT
+[Alert Processor] Raw ratings data from DB (110 items): [
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 3,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'glencairn',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'long-beach',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 1,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 0,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 2,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 7,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 6,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 8,
+    starRating: 4,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 5,
+    starRating: 3,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 10,
+    starRating: 5,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'muizenberg-beach',
+    score: 3,
+    starRating: 1,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  {
+    beachId: 'witsand',
+    score: 4,
+    starRating: 2,
+    date: '2026-05-07T00:00:00.000Z'
+  },
+  ... 10 more items
+]
+[Alert Processor] Processed 110 beach ratings mappings
+
+--- TEST COMPLETE ---
+Final Result: { alertsChecked: 6, notificationsSent: 0, errors: 0 }

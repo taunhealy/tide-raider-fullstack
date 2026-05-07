@@ -16,6 +16,7 @@ import { client } from "@/app/lib/sanity";
 import { Shield, MapPin, Zap, Calendar, Instagram } from "lucide-react";
 import { formatDate } from "@/app/lib/utils";
 import UserLogsSection from "@/app/components/profile/UserLogsSection";
+import NationalitySelector from "@/app/components/profile/NationalitySelector";
 
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();

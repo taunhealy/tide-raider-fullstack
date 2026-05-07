@@ -239,7 +239,7 @@ export const api = {
 
   // Subscriptions & Sponsors
   getSubscriptionStatus: async () =>
-    apiRequest<any>("/api/subscription/status"),
+    apiRequest<any>("/api/subscriptions/status"),
   getSponsors: async () => apiRequest<any[]>("/api/sponsors"),
 
   // Health

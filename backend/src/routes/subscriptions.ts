@@ -5,6 +5,49 @@ import { notifyAdminNewTrial, notifyAdminTrialFailure } from "../lib/adminNotifi
 
 const router = Router();
 
+// GET /api/subscriptions/status - Get user's subscription status
+router.get(
+  "/status",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      if (!authReq.user?.id) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: authReq.user.id },
+        select: {
+          subscriptionStatus: true,
+          hasActiveTrial: true,
+          trialEndDate: true,
+          subscriptionEndsAt: true,
+        },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const now = new Date();
+      const isSubscribed = user.subscriptionStatus === "ACTIVE";
+      const hasActiveTrial = user.hasActiveTrial && user.trialEndDate && new Date(user.trialEndDate) > now;
+
+      return res.json({
+        isSubscribed,
+        hasActiveTrial,
+        subscriptionStatus: user.subscriptionStatus,
+        trialEndDate: user.trialEndDate,
+        subscriptionEndsAt: user.subscriptionEndsAt,
+      });
+    } catch (error) {
+      console.error("[subscriptions] ❌ Get status error:", error);
+      return res.status(500).json({ error: "Failed to fetch subscription status" });
+    }
+  }
+);
+
 // POST /api/subscriptions/start-trial - Start a free trial for the user
 router.post(
   "/start-trial",
