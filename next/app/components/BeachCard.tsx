@@ -471,7 +471,7 @@ const BeachCard = memo(function BeachCard({
                               {beachSessions[0].videoUrl ? (
                                 <>
                                   <Image
-                                    src={getVideoThumbnail(beachSessions[0].videoUrl, beachSessions[0].videoPlatform || "youtube")}
+                                    src={beachSessions[0].videoUrls?.[0]?.thumbnail || getVideoThumbnail(beachSessions[0].videoUrl, beachSessions[0].videoPlatform || "youtube")}
                                     alt=""
                                     fill
                                     className="object-cover transition-transform duration-700 group-hover/log:scale-110"

@@ -317,6 +317,7 @@ router.get(
           select: {
             score: true,
             beachId: true,
+            updatedAt: true,
           },
         }) : Promise.resolve(null),
         // Get available dates
@@ -494,6 +495,7 @@ router.get(
                 imageUrl: true,
                 videoUrl: true,
                 videoPlatform: true,
+                videoUrls: true,
                 surferName: true,
                 forecast: true,
               }

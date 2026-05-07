@@ -3,12 +3,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function run() {
-  const beach = await prisma.beach.findFirst({
+  const count = await prisma.beach.count({
     where: {
-      name: { contains: 'Elands', mode: 'insensitive' }
+      regionId: 'western-cape',
+      isHiddenGem: true
     }
   });
-  console.log('Elands Bay:', beach);
+  console.log('Hidden Gems in Western Cape:', count);
 }
 
 run()

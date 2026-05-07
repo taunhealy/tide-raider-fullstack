@@ -92,6 +92,8 @@ async function sync() {
           sharkAttack: normalizeShark(beachData.sharkAttack),
           coordinates: beachData.coordinates,
           isHiddenGem: beachData.isHiddenGem || false,
+          isLongboarding: beachData.isLongboarding || false,
+          isFoiling: beachData.isFoiling || false,
         },
         create: {
           id: beachData.id,
@@ -111,6 +113,8 @@ async function sync() {
           sharkAttack: normalizeShark(beachData.sharkAttack),
           coordinates: beachData.coordinates,
           isHiddenGem: beachData.isHiddenGem || false,
+          isLongboarding: beachData.isLongboarding || false,
+          isFoiling: beachData.isFoiling || false,
         }
       });
 

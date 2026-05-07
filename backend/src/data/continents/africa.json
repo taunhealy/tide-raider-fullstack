@@ -119,6 +119,8 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "False Bay",
+    "isLongboarding": true,
+    "isFoiling": true,
     "distanceFromCT": 25,
     "bestSeasons": [
       "winter"
@@ -629,6 +631,7 @@
   },
   {
     "id": "big-bay",
+    "isFoiling": true,
     "name": "Big Bay",
     "continent": "Africa",
     "countryId": "za",
@@ -1699,8 +1702,8 @@
           "SSE"
         ],
         "optimalSwellDirections": {
-          "min": 215,
-          "max": 235,
+          "min": 180,
+          "max": 215,
           "cardinal": "SW"
         },
         "optimalTide": "MID",
@@ -1717,6 +1720,9 @@
   },
   {
     "id": "elands-bay-the-point",
+    "isHiddenGem": true,
+    "isLongboarding": true,
+    "isFoiling": true,
     "name": "Elands Bay The Point",
     "continent": "Africa",
     "countryId": "za",
@@ -1829,6 +1835,7 @@
   },
   {
     "id": "melkbos",
+    "isFoiling": true,
     "name": "Melkbos",
     "continent": "Africa",
     "countryId": "za",

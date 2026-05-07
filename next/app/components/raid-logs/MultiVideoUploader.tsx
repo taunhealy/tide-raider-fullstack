@@ -91,7 +91,7 @@ export function MultiVideoUploader({
       const newVideo: VideoObject = {
         url: data.videoUrl,
         type: "upload",
-        thumbnail: "/images/video-placeholder.jpg"
+        thumbnail: getVideoThumbnail(data.videoUrl, "upload")
       };
 
       onVideosChange([...videos, newVideo]);
@@ -197,7 +197,7 @@ export function MultiVideoUploader({
               )}
             >
               <img
-                src={video.thumbnail || "/images/video-placeholder.jpg"}
+                src={video.thumbnail || getVideoThumbnail(video.url, video.type)}
                 alt={`Video ${index + 1}`}
                 className="w-full h-full object-cover"
               />

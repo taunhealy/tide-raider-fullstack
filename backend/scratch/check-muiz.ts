@@ -1,15 +1,14 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  const muiz = await prisma.beach.findUnique({
-    where: { id: "muizenberg-beach" },
-    include: { conditionProfiles: true }
+async function run() {
+  const beach = await prisma.beach.findUnique({
+    where: { id: 'muizenberg-beach' }
   });
-  console.log("Muizenberg Data from DB:", JSON.stringify(muiz, null, 2));
+  console.log('Muizenberg isLongboarding:', beach?.isLongboarding);
 }
 
-main()
+run()
   .catch(console.error)
   .finally(() => prisma.$disconnect());

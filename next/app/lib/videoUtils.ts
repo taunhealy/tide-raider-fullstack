@@ -77,8 +77,11 @@ export function getVideoThumbnail(
   } else if (finalPlatform === "vimeo") {
     return `https://vumbnail.com/${id}.jpg`;
   } else if (finalPlatform === "upload") {
-    // For uploaded videos, we might show a video icon or a generic thumbnail
-    return "/images/video-placeholder.jpg";
+    // For uploaded videos, check if it's on our R2 domain and try to use the .webp companion
+    if (url.includes("media.tideraider.com")) {
+      return url.replace(/\.(mp4|webm|mov|avi)$/i, ".webp");
+    }
+    return "/images/placeholder.jpg";
   } else if (finalPlatform === "instagram") {
     // Attempt to extract username for unavatar fallback
     const usernameMatch = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)\/(?:p|reels|reel)\//);

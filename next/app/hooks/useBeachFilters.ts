@@ -100,6 +100,9 @@ export const useBeachFilters = () => {
         params.set("regionId", filters.regionId);
       }
 
+      // Always reset to page 1 when filters change
+      params.delete("page");
+
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname, searchParams, filters.regionId]
@@ -125,8 +128,9 @@ export const useBeachFilters = () => {
       params.delete("continent");
     }
 
-    // Always clear searchQuery when changing regions
+    // Always clear searchQuery and page when changing regions
     params.delete("searchQuery");
+    params.delete("page");
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
@@ -142,15 +146,13 @@ export const useBeachFilters = () => {
       params.set("regionId", beach.regionId.toLowerCase());
       params.set("searchQuery", beach.name);
 
-      // Optional UI state params
-      if (beach.region?.name) params.set("region", beach.region.name);
-      if (beach.region?.country?.name)
-        params.set("country", beach.region.country.name);
-      if (beach.region?.continent)
-        params.set("continent", beach.region.continent);
-    }
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        if (beach.region?.continent)
+          params.set("continent", beach.region.continent);
+      }
+  
+      params.delete("page");
+  
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return {
