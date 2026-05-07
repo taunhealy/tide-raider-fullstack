@@ -543,7 +543,8 @@ export function CustomVideoPlayer({
         {/* Progress Bar */}
         <div
           ref={progressBarRef}
-          className="absolute bottom-20 left-0 right-0 h-1 bg-white/20 cursor-pointer group"
+          className="absolute left-0 right-0 h-1 bg-white/20 cursor-pointer group"
+          style={{ bottom: 'calc(80px + env(safe-area-inset-bottom))' }}
           onClick={handleProgressClick}
           onMouseDown={handleProgressDragStart}
         >
@@ -556,7 +557,10 @@ export function CustomVideoPlayer({
         </div>
 
         {/* Controls Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 flex items-center gap-2 md:gap-4">
+        <div 
+          className="absolute bottom-0 left-0 right-0 p-3 md:p-4 flex items-center gap-2 md:gap-4"
+          style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}
+        >
           {/* Play/Pause */}
           <button
             onClick={togglePlay}

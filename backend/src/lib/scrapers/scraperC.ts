@@ -66,20 +66,20 @@ export async function scraperC(
 
     // Wait for the forecast widget table to load
     console.log(`[scraperC] 🔍 Waiting for Windy forecast table...`);
-    await page.waitForSelector("tr.windywidgetwindSpeed, tr.id-wind-speed, .forecast-table, table", {
+    await page.waitForSelector("#windywidgettable, tr.windywidgetwindSpeed, tr.id-wind-speed, .forecast-table, table", {
       timeout: 60000,
     });
 
     console.log(`[scraperC] ✅ Found Windy forecast table`);
 
-    // Wait for the days row with id to be present and have multiple cells
-    console.log(`[scraperC] 🔍 Waiting for days row to load...`);
+    // Wait for the table rows to be present and have data
+    console.log(`[scraperC] 🔍 Waiting for forecast rows to load...`);
     await page.waitForFunction(
       `() => {
-        const daysRow = document.querySelector("tr#windyWidgetDays");
-        if (!daysRow) return false;
-        const cells = daysRow.querySelectorAll("td, th");
-        return cells.length > 5;
+        const table = document.querySelector("#windywidgettable");
+        if (!table) return false;
+        const rows = table.querySelectorAll("tr");
+        return rows.length > 5;
       }`,
       { timeout: 30000 }
     );

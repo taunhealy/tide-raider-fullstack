@@ -718,7 +718,7 @@ export default function HeroSection({ data }: HeroProps) {
               </Link>
               <Link 
                 href="/dashboard/alerts"
-                className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-brand-3 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md transform-gpu flex items-center justify-center min-w-[140px]"
+                className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-white font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md transform-gpu flex items-center justify-center min-w-[140px]"
               >
                 Set Alerts
               </Link>

@@ -6,12 +6,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { MapPin, Clock } from "lucide-react";
+import { MapPin, Clock, Lock } from "lucide-react";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { VideoThumbnail } from "@/app/components/raid-logs/VideoThumbnail";
+import { useSession } from "next-auth/react";
+import { api } from "@/app/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 export function RecentLogsSidebar() {
+  const { data: session } = useSession();
   const { data, isLoading } = useRaidLogs({ limit: 5 }, false);
   const entries = data?.entries || [];
+
+  // Get subscription details to handle gated content
+  const { data: subscriptionDetails } = useQuery({
+    queryKey: ["subscription", session?.user?.id],
+    queryFn: () => api.getSubscriptionDetails(),
+    enabled: !!session?.user?.id,
+  });
+
+  const isSubscribed = subscriptionDetails?.isSubscribed || subscriptionDetails?.hasActiveTrial;
 
   return (
     <aside className="hidden lg:block w-80 shrink-0 sticky top-24 self-start space-y-6">
@@ -46,6 +60,11 @@ export function RecentLogsSidebar() {
                 className="group flex gap-4 transition-all duration-300 hover:translate-x-1"
               >
                 <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-slate-700 shadow-sm">
+                  {entry.isPrivate && entry.userId !== session?.user?.id && !isSubscribed && (
+                    <div className="absolute inset-0 z-10 bg-black/40 flex items-center justify-center">
+                      <Lock className="w-4 h-4 text-white/70" />
+                    </div>
+                  )}
                   {entry.imageUrl ? (
                     <Image
                       src={entry.imageUrl}
@@ -54,19 +73,49 @@ export function RecentLogsSidebar() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : entry.videoUrl ? (
-                    <Image
-                      src={getVideoThumbnail(entry.videoUrl)}
-                      alt={entry.beachName || "Surf session"}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                    (() => {
+                      const platform = entry.videoPlatform || "upload";
+                      if (platform === "upload") {
+                        return (
+                          <VideoThumbnail 
+                            videoUrl={entry.videoUrl} 
+                            className="w-full h-full border-none" 
+                            showOverlay={false} 
+                            autoPlay={false} 
+                          />
+                        );
+                      }
+                      return (
+                        <Image
+                          src={getVideoThumbnail(entry.videoUrl, platform)}
+                          alt={entry.beachName || "Surf session"}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      );
+                    })()
                   ) : (entry as any).videoUrls?.[0] ? (
-                    <Image
-                      src={(entry as any).videoUrls[0].thumbnail || getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
-                      alt={entry.beachName || "Surf session"}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                    (() => {
+                      const video = (entry as any).videoUrls[0];
+                      if (video.type === "upload") {
+                        return (
+                          <VideoThumbnail 
+                            videoUrl={video.url} 
+                            className="w-full h-full border-none" 
+                            showOverlay={false} 
+                            autoPlay={false} 
+                          />
+                        );
+                      }
+                      return (
+                        <Image
+                          src={video.thumbnail || getVideoThumbnail(video.url, video.type)}
+                          alt={entry.beachName || "Surf session"}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      );
+                    })()
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-600">
                       <MapPin className="w-6 h-6" />

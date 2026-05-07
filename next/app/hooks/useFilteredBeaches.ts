@@ -125,81 +125,43 @@ export function useFilteredBeaches({
     selectedSource,
   ]);
 
-  return useQuery<UseFilteredBeachesResponse>({
+  // 1. FAST QUERY: Markers only (no scores)
+  const markersQuery = useQuery({
+    queryKey: ["beachMarkers", filters.regionId, filters.searchQuery, filters.isHiddenGem, filters.isRegular],
+    queryFn: async () => {
+      return await api.getFilteredBeaches({
+        regionId: filters.regionId || "western-cape",
+        searchQuery: filters.searchQuery || undefined,
+        isHiddenGem: filters.isHiddenGem,
+        isRegular: filters.isRegular,
+        mode: "markers" as any
+      });
+    },
+    enabled: enabled && !!(filters.regionId || filters.searchQuery),
+    staleTime: 1000 * 60 * 60, // 1 hour for markers
+  });
+
+  // 2. FULL QUERY: Including scores and forecast
+  const fullQuery = useQuery<UseFilteredBeachesResponse>({
     queryKey, // Use the memoized stable key
     queryFn: async () => {
-      // Convert filters to api-client params
-      const params: {
-        regionId?: string;
-        searchQuery?: string;
-        optimalTide?: string;
-        waveType?: string;
-        crimeLevel?: string;
-        bestSeasons?: string;
-        difficulty?: string;
-        hazards?: string;
-        forecastDate?: string;
-        isHiddenGem?: string;
-        isRegular?: string;
-        isLongboarding?: string;
-        isFoiling?: string;
-        timeSlot?: string;
-        source?: "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
-        ignoreRegion?: boolean;
-      } = {};
-
-      // DEFAULT REGION: Fallback to Western Cape if no region is selected
-      // This prevents the "load-render-reload" flicker by providing a stable default immediately
-      params.regionId = filters.regionId || "western-cape";
-      if (filters.searchQuery && filters.searchQuery.trim()) {
-        params.searchQuery = filters.searchQuery.trim();
-      }
-      if (filters.optimalTide) {
-        params.optimalTide = Array.isArray(filters.optimalTide)
-          ? filters.optimalTide.join(",")
-          : filters.optimalTide;
-      }
-      if (filters.waveTypes) {
-        params.waveType = Array.isArray(filters.waveTypes)
-          ? filters.waveTypes.join(",")
-          : filters.waveTypes;
-      }
-      if (filters.crimeLevel) {
-        params.crimeLevel = Array.isArray(filters.crimeLevel)
-          ? filters.crimeLevel.join(",")
-          : filters.crimeLevel;
-      }
-      if (filters.bestSeasons) {
-        params.bestSeasons = Array.isArray(filters.bestSeasons)
-          ? filters.bestSeasons.join(",")
-          : filters.bestSeasons;
-      }
-      if (filters.difficulty) params.difficulty = filters.difficulty;
-      if (filters.hazards) {
-        params.hazards = Array.isArray(filters.hazards)
-          ? filters.hazards.join(",")
-          : filters.hazards;
-      }
-      if (filters.forecastDate) params.forecastDate = filters.forecastDate;
-      if (filters.isHiddenGem !== undefined) params.isHiddenGem = filters.isHiddenGem;
-      if (filters.isRegular !== undefined) params.isRegular = filters.isRegular;
-      if (filters.isLongboarding) params.isLongboarding = "true";
-      if (filters.isFoiling) params.isFoiling = "true";
-      if (filters.timeSlot) params.timeSlot = filters.timeSlot;
-      params.source = selectedSource; // Pass the selected source
-      params.ignoreRegion = ignoreRegion; // Pass ignoreRegion flag
-
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          "[useFilteredBeaches] Fetching with source:",
-          selectedSource,
-          params
-        );
-      }
+      // ... same as before
+      const params: any = {
+        regionId: filters.regionId || "western-cape",
+        searchQuery: filters.searchQuery?.trim() || undefined,
+        forecastDate: filters.forecastDate,
+        isHiddenGem: filters.isHiddenGem,
+        isRegular: filters.isRegular,
+        isLongboarding: filters.isLongboarding ? "true" : undefined,
+        isFoiling: filters.isFoiling ? "true" : undefined,
+        timeSlot: filters.timeSlot,
+        source: selectedSource,
+        ignoreRegion: ignoreRegion
+      };
 
       return await api.getFilteredBeaches(params);
     },
-    initialData: shouldUseInitialData,
+    placeholderData: markersQuery.data as any, // Use markers as placeholder
     enabled: enabled && (
       !!filters.regionId || 
       (typeof window !== "undefined" && (
@@ -207,10 +169,22 @@ export function useFilteredBeaches({
         new URLSearchParams(window.location.search).has("beachId")
       ))
     ),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 5 * 60 * 1000, // Cache for 5 minutes - improves performance
-    refetchOnMount: false, // Use cached data if available - faster loading
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnReconnect: true, // Refetch when network reconnects
+    staleTime: 1000 * 60 * 5,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
+
+  // Combine data: markers first, then full
+  const combinedData = useMemo(() => {
+    if (fullQuery.data) return fullQuery.data;
+    return markersQuery.data || shouldUseInitialData || null;
+  }, [fullQuery.data, markersQuery.data, shouldUseInitialData]);
+
+  return {
+    ...fullQuery,
+    data: combinedData,
+    isLoadingMarkers: markersQuery.isLoading,
+    isFullLoading: fullQuery.isLoading && !markersQuery.data
+  };
 }

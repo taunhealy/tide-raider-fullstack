@@ -739,6 +739,38 @@ export default function RaidLogTable({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
+  // Get visible page numbers for responsive pagination
+  const visiblePageNumbers = useMemo(() => {
+    const pages: (number | "ellipsis")[] = [];
+    const maxVisible = isMobile ? 3 : 5;
+    
+    if (totalPages <= maxVisible + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      let start = Math.max(2, currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(totalPages - 1, start + maxVisible - 1);
+      
+      if (end === totalPages - 1) {
+        start = Math.max(2, end - maxVisible + 1);
+      } else if (start === 2) {
+        end = Math.min(totalPages - 1, maxVisible + 1);
+      }
+      
+      if (start > 2) pages.push("ellipsis");
+      
+      for (let i = start; i <= end; i++) pages.push(i);
+      
+      if (end < totalPages - 1) pages.push("ellipsis");
+      
+      // Always show last page
+      pages.push(totalPages);
+    }
+    return pages;
+  }, [totalPages, currentPage, isMobile]);
+
   // Force card view on mobile
   useEffect(() => {
     if (isMobile && viewMode === "table") {
@@ -1141,18 +1173,29 @@ export default function RaidLogTable({
                                 )}
                               </>
                             ) : hasVideo && videoUrls.length > 0 ? (
-                              <>
-                                <Image
-                                  src={(!videoUrls[0].thumbnail || videoUrls[0].thumbnail.includes("instagram-placeholder")) 
-                                      ? getVideoThumbnail(videoUrls[0].url, videoUrls[0].type) 
-                                      : videoUrls[0].thumbnail}
-                                  alt="Video thumbnail"
-                                  fill={true}
-                                  className="object-cover rounded-md hover:opacity-90 transition-opacity"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <VideoIcon className="w-8 h-8 text-white" />
-                                </div>
+                              <div className="relative w-full h-full">
+                                {videoUrls[0].type === "upload" ? (
+                                  <VideoThumbnail 
+                                    videoUrl={videoUrls[0].url} 
+                                    className="w-full h-full border-none" 
+                                    showOverlay={false} 
+                                    autoPlay={false} 
+                                  />
+                                ) : (
+                                  <>
+                                    <Image
+                                      src={(!videoUrls[0].thumbnail || videoUrls[0].thumbnail.includes("instagram-placeholder")) 
+                                          ? getVideoThumbnail(videoUrls[0].url, videoUrls[0].type) 
+                                          : videoUrls[0].thumbnail}
+                                      alt="Video thumbnail"
+                                      fill={true}
+                                      className="object-cover rounded-md hover:opacity-90 transition-opacity"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                      <VideoIcon className="w-8 h-8 text-white" />
+                                    </div>
+                                  </>
+                                )}
                                 {/* Video count badge */}
                                 {videoUrls.length > 1 && (
                                   <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white rounded-full px-2 py-0.5 flex items-center gap-1 shadow-lg border border-white/10 z-10">
@@ -1162,7 +1205,7 @@ export default function RaidLogTable({
                                     </span>
                                   </div>
                                 )}
-                              </>
+                              </div>
                             ) : null}
                           </button>
                         </div>
@@ -1372,14 +1415,23 @@ export default function RaidLogTable({
                                     className="object-cover transition-transform hover:scale-105 duration-300"
                                   />
                                 ) : (entry as any).videoUrls && (entry as any).videoUrls.length > 0 ? (
-                                  <Image
-                                    src={((entry as any).videoUrls[0].thumbnail && !(entry as any).videoUrls[0].thumbnail.includes("instagram-placeholder")) 
-                                      ? (entry as any).videoUrls[0].thumbnail 
-                                      : getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
-                                    alt="Video thumbnail"
-                                    fill
-                                    className="object-cover transition-transform hover:scale-105 duration-300"
-                                  />
+                                  (entry as any).videoUrls[0].type === "upload" ? (
+                                    <VideoThumbnail 
+                                      videoUrl={(entry as any).videoUrls[0].url} 
+                                      className="w-full h-full aspect-square border-none" 
+                                      showOverlay={false} 
+                                      autoPlay={false} 
+                                    />
+                                  ) : (
+                                    <Image
+                                      src={((entry as any).videoUrls[0].thumbnail && !(entry as any).videoUrls[0].thumbnail.includes("instagram-placeholder")) 
+                                        ? (entry as any).videoUrls[0].thumbnail 
+                                        : getVideoThumbnail((entry as any).videoUrls[0].url, (entry as any).videoUrls[0].type)}
+                                      alt="Video thumbnail"
+                                      fill
+                                      className="object-cover transition-transform hover:scale-105 duration-300"
+                                    />
+                                  )
                                 ) : entry.imageUrl ? (
                                   <Image
                                     src={entry.imageUrl}
@@ -1388,15 +1440,24 @@ export default function RaidLogTable({
                                     className="object-cover transition-transform hover:scale-105 duration-300"
                                   />
                                 ) : entry.videoUrl && entry.videoPlatform ? (
-                                  <Image
-                                    src={getVideoThumbnail(
-                                      entry.videoUrl,
-                                      entry.videoPlatform
-                                    )}
-                                    alt="Video thumbnail"
-                                    fill
-                                    className="object-cover transition-transform hover:scale-105 duration-300"
-                                  />
+                                  entry.videoPlatform === "upload" ? (
+                                    <VideoThumbnail 
+                                      videoUrl={entry.videoUrl} 
+                                      className="w-full h-full aspect-square border-none" 
+                                      showOverlay={false} 
+                                      autoPlay={false} 
+                                    />
+                                  ) : (
+                                    <Image
+                                      src={getVideoThumbnail(
+                                        entry.videoUrl,
+                                        entry.videoPlatform
+                                      )}
+                                      alt="Video thumbnail"
+                                      fill
+                                      className="object-cover transition-transform hover:scale-105 duration-300"
+                                    />
+                                  )
                                 ) : (
                                   <ImageIcon className="w-4 h-4 text-gray-200" />
                                 )}
@@ -1501,14 +1562,18 @@ export default function RaidLogTable({
                       />
                     </PaginationItem>
 
-                    {Array.from({ length: totalPages }).map((_, i) => (
+                    {visiblePageNumbers.map((page, i) => (
                       <PaginationItem key={`table-page-${i}`}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(i + 1)}
-                          isActive={currentPage === i + 1}
-                        >
-                          {i + 1}
-                        </PaginationLink>
+                        {page === "ellipsis" ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        )}
                       </PaginationItem>
                     ))}
 

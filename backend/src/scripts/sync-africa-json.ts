@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 async function sync() {
-  const africaPath = path.join(__dirname, '../../../next/app/data/continents/africa.json');
+  const africaPath = path.join(__dirname, '../data/continents/africa.json');
   const beaches = JSON.parse(fs.readFileSync(africaPath, 'utf8'));
 
   console.log(`📡 Syncing ${beaches.length} beaches to DB...`);

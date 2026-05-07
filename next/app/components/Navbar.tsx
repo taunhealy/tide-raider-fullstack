@@ -159,7 +159,7 @@ export default function Navbar() {
     >
       <div
         className={cn(
-          "flex justify-between items-center px-4 md:px-8 py-4 bg-white",
+          "flex justify-between items-center px-3 md:px-10 py-5 bg-white",
           "relative z-[10000]"
         )}
       >
@@ -177,10 +177,10 @@ export default function Navbar() {
               }}
               className="flex items-center transition-all duration-300"
             >
-              <span className="text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase">
+              <span className="text-[16px] sm:text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase truncate">
                 TIDE RAIDER
               </span>
-              <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest">
+              <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest hidden sm:inline-block">
                 BETA
               </span>
             </Link>
@@ -190,7 +190,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-5 lg:gap-8">
           {isLoading ? (
             <>
               <nav>
@@ -293,7 +293,6 @@ export default function Navbar() {
                   <ProfileImage />
                 </div>
               )}
-              <AuthButton />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 hover:bg-gray-50 rounded-md transition-colors"
@@ -308,7 +307,7 @@ export default function Navbar() {
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
         <>
-          <nav className="md:hidden absolute w-full px-4 py-4 bg-white border-t border-[var(--color-border-light)] z-[10000]">
+          <nav className="md:hidden absolute w-full px-3 py-5 bg-white border-t border-[var(--color-border-light)] z-[10000] max-h-[calc(100svh-80px)] overflow-y-auto shadow-2xl">
             <ul className="space-y-2">
               {session && (
                 <>
@@ -395,6 +394,9 @@ export default function Navbar() {
                   <div className="border-t border-[var(--color-border-light)] mt-3" />
                 </li>
               ))}
+              <li className="px-2 py-5 flex justify-center">
+                <AuthButton />
+              </li>
             </ul>
           </nav>
           <div

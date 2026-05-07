@@ -60,6 +60,51 @@ router.get(
       const sourceParam =
         (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER") ||
         "WINDFINDER";
+      const mode = req.query.mode as string | undefined;
+
+      // Handle 'markers' mode for ultra-fast initial map load
+      if (mode === "markers") {
+        const markersCacheKey = `markers:${regionIdParam}:${searchQuery}:${req.query.isHiddenGem}:${req.query.isRegular}`;
+        const cachedMarkers = await getCachedApiResponse(markersCacheKey);
+        if (cachedMarkers) {
+          console.log("[filtered-beaches] 🚀 Serving markers from cache");
+          return res.json(typeof cachedMarkers === 'string' ? JSON.parse(cachedMarkers) : cachedMarkers);
+        }
+
+        // Fast query for basic marker info
+        const beaches = await prisma.beach.findMany({
+          where: {
+            ...(regionIdParam && { regionId: regionIdParam }),
+            ...(searchQuery && { name: { contains: searchQuery, mode: 'insensitive' } }),
+            ...(req.query.isHiddenGem === "true" ? { isHiddenGem: true } : {}),
+            ...(req.query.isRegular === "true" ? { isHiddenGem: false } : {}),
+          },
+          select: {
+            id: true,
+            name: true,
+            coordinates: true,
+            location: true,
+            isHiddenGem: true,
+            regionId: true,
+          }
+        });
+
+        const isPremiumUser = (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
+
+        const markerResponse = {
+          beaches: beaches.map(b => ({
+            ...b,
+            // Basic gated names
+            name: (b.isHiddenGem && !isPremiumUser) ? "Hidden Gem Break" : b.name,
+            location: (b.isHiddenGem && !isPremiumUser) ? "Secret Location" : b.location,
+          })),
+          totalCount: beaches.length,
+          mode: "markers"
+        };
+
+        await cacheApiResponse(markersCacheKey, markerResponse, 86400); // Cache for 24h
+        return res.json(markerResponse);
+      }
 
       let regionId: string | undefined = undefined;
 
@@ -431,14 +476,19 @@ router.get(
                 timeSlot: true,
               },
             },
-            // Fetch the single latest public log entry to eliminate frontend N+1 fetches
             logEntries: {
-              where: { isPrivate: false, isAnonymous: false },
+              where: { 
+                OR: [
+                  { isPrivate: false, isAnonymous: false },
+                  { userId: user?.id }
+                ]
+              },
               orderBy: { date: 'desc' },
-              take: 1,
+              take: 5, // Take a few to ensure we find the user's log or the latest public one
               select: {
                 id: true,
                 date: true,
+                userId: true,
                 surferRating: true,
                 comments: true,
                 imageUrl: true,
@@ -516,7 +566,8 @@ router.get(
               hazards: [],
               videos: [],
               coffeeShop: [],
-              logEntries: [],
+              // For hidden gems, non-premium users ONLY see their own logs
+              logEntries: (beach.logEntries || []).filter((log: any) => log.userId === user?.id),
             })
           };
         }),

@@ -118,7 +118,7 @@ export function MediaModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[11000] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0"
+        className="!fixed !inset-0 !w-screen !h-[100dvh] !max-w-none !max-h-none !m-0 !p-0 overflow-hidden bg-black border-0 z-[11000] !translate-x-0 !translate-y-0 rounded-none !left-0 !top-0"
       >
         <DialogTitle className="sr-only">{getModalTitle()}</DialogTitle>
 

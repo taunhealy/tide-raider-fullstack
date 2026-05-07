@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Video as VideoIcon, Play } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";
+import { VideoThumbnail } from "./VideoThumbnail";
 
 import { VideoPlatform } from "@/app/types/raidlogs";
 
@@ -63,6 +64,11 @@ export function MultimediaGrid({
             priority
             sizes="100vw"
           />
+        ) : heroMedia.platformType === "upload" ? (
+          <VideoThumbnail 
+            videoUrl={heroMedia.url} 
+            className="w-full h-full border-none" 
+          />
         ) : (
           <>
             <Image
@@ -103,6 +109,11 @@ export function MultimediaGrid({
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+              ) : media.platformType === "upload" ? (
+                <VideoThumbnail 
+                  videoUrl={media.url} 
+                  className="w-full h-full border-none" 
                 />
               ) : (
                 <>

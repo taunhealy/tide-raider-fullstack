@@ -91,19 +91,37 @@ export default function RecentRaidLogs() {
                   {entry.imageUrl ? (
                     <Image src={entry.imageUrl} alt="" fill className="object-cover" />
                   ) : entry.videoUrl ? (
-                    <Image 
-                      src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform as any)} 
-                      alt="" 
-                      fill 
-                      className="object-cover" 
-                    />
+                    entry.videoPlatform === "upload" ? (
+                      <VideoThumbnail 
+                        videoUrl={entry.videoUrl} 
+                        className="w-full h-full aspect-square" 
+                        showOverlay={false} 
+                        autoPlay={false} 
+                      />
+                    ) : (
+                      <Image 
+                        src={getVideoThumbnail(entry.videoUrl, entry.videoPlatform as any)} 
+                        alt="" 
+                        fill 
+                        className="object-cover" 
+                      />
+                    )
                   ) : entry.videoUrls?.[0] ? (
-                    <Image 
-                      src={entry.videoUrls[0].thumbnail || getVideoThumbnail(entry.videoUrls[0].url, entry.videoUrls[0].type)} 
-                      alt="" 
-                      fill 
-                      className="object-cover" 
-                    />
+                    entry.videoUrls[0].type === "upload" ? (
+                      <VideoThumbnail 
+                        videoUrl={entry.videoUrls[0].url} 
+                        className="w-full h-full aspect-square" 
+                        showOverlay={false} 
+                        autoPlay={false} 
+                      />
+                    ) : (
+                      <Image 
+                        src={entry.videoUrls[0].thumbnail || getVideoThumbnail(entry.videoUrls[0].url, entry.videoUrls[0].type)} 
+                        alt="" 
+                        fill 
+                        className="object-cover" 
+                      />
+                    )
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
                       <MapPin className="w-4 h-4" />

@@ -94,11 +94,12 @@ export async function scraperB(
     const page = await context.newPage();
 
     console.log(`[scraperB] 🌐 Navigating to ${url}...`);
+    // Use 'commit' instead of 'domcontentloaded' to avoid hanging on slow 3rd party scripts/ads
     await page.goto(url, { 
-      waitUntil: "domcontentloaded", 
-      timeout: 60000 
+      waitUntil: "commit", 
+      timeout: 120000 
     });
-    console.log(`[scraperB] ✅ Page loaded successfully`);
+    console.log(`[scraperB] ✅ Navigation committed, waiting for content...`);
 
     // Wait additional time for JavaScript to render the table
     console.log(`[scraperB] ⏳ Waiting for dynamic content to render...`);
@@ -145,7 +146,7 @@ export async function scraperB(
       `[scraperB] 🔍 Waiting for Windguru table selector (.tabulka)...`
     );
     try {
-      await targetFrame.waitForSelector(".tabulka, [id*='tabid_'], .forecast-table", { timeout: 30000 });
+      await targetFrame.waitForSelector(".tabulka, [id*='tabid_'], .forecast-table", { timeout: 60000 });
       console.log("✅ Found Windguru table container");
     } catch (selectorError) {
       console.error(

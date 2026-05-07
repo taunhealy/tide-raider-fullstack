@@ -3,22 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import Image from "next/image";
+import { cn } from "@/app/lib/utils";
 
 interface VideoThumbnailProps {
   videoUrl: string;
   className?: string;
   onPlay?: () => void;
+  showOverlay?: boolean;
+  autoPlay?: boolean;
 }
 
 /**
  * VideoThumbnail component that generates a 360p thumbnail from video
  * Plays video on hover to minimize server costs (only loads when hovered)
- * Maintains 16:9 aspect ratio
+ * Default aspect ratio is 16:9 but can be overridden via className
  */
 export function VideoThumbnail({
   videoUrl,
   className = "",
   onPlay,
+  showOverlay = true,
+  autoPlay = true,
 }: VideoThumbnailProps) {
   const thumbnailVideoRef = useRef<HTMLVideoElement>(null); // For thumbnail generation
   const playbackVideoRef = useRef<HTMLVideoElement>(null); // For hover playback
@@ -190,7 +195,7 @@ export function VideoThumbnail({
 
   // Handle hover to play/pause video (desktop only)
   const handleMouseEnter = () => {
-    if (isMobile) return; // Ignore hover on mobile
+    if (isMobile || !autoPlay) return; // Ignore hover on mobile or if autoPlay is disabled
     setIsHovered(true);
     if (playbackVideoRef.current) {
       // Enable volume on hover (set to 0.4 for comfortable playback)
@@ -242,7 +247,11 @@ export function VideoThumbnail({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full aspect-video ${className}`}
+      className={cn(
+        "relative w-full overflow-hidden rounded-md",
+        !className.includes("aspect-") && "aspect-video",
+        className
+      )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -298,7 +307,7 @@ export function VideoThumbnail({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           {/* Play icon overlay - shows when video is not playing */}
-          {!shouldShowVideo && (
+          {showOverlay && !shouldShowVideo && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 hover:bg-black/20 transition-colors rounded-md">
               <div className="bg-white/90 rounded-full p-3 mb-2">
                 <Play className="w-6 h-6 text-gray-900 fill-gray-900" />

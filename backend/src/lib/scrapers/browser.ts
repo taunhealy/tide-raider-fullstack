@@ -75,13 +75,13 @@ export async function getBrowser(): Promise<Browser> {
         ],
         timeout: 180000,
       });
-    } catch (err) {
+    } catch (err: any) {
       lastError = err;
       console.error(`[getBrowser] ⚠️ Attempt ${i + 1} failed:`, err.message);
       
       // If it's a timeout, it might be worth retrying. 
       // If it's a "executable not found", retrying won't help.
-      if (err.message.includes("executable") || err.message.includes("not found")) {
+      if (err.message && (err.message.includes("executable") || err.message.includes("not found"))) {
         break;
       }
     }

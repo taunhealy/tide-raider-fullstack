@@ -8,9 +8,13 @@ function extractWindyData() {
   console.log("[scraperC] [page.evaluate] Found " + allTables.length + " table(s) on page");
   
   // Try to find the table containing the windy widget
-  let targetTable = null;
+  let targetTable = document.querySelector("#windywidgettable");
   let targetTbody = null;
-  for (let i = 0; i < allTables.length; i++) {
+  
+  if (targetTable) {
+    console.log("[scraperC] [page.evaluate] Found target table by ID #windywidgettable");
+  } else {
+    for (let i = 0; i < allTables.length; i++) {
     const table = allTables[i];
     // First try to find the row directly in the table
     let daysRow = table.querySelector("tr.windywidgetdays, tr#windyWidgetDays");
@@ -29,6 +33,7 @@ function extractWindyData() {
         console.log("[scraperC] [page.evaluate] Found target table " + i + " containing windy widget (in tbody)");
         break;
       }
+    }
     }
   }
   
@@ -128,22 +133,31 @@ function extractWindyData() {
     }
   }
   
-  // Priority 3: Fallback - find by class containing "day" and "windy"
+
+  
+  // Priority 4: Search inside #windywidgettable specifically
   if (!daysRow) {
-    const rowsWithDays = Array.from(allRows).filter(function(row) {
-      const className = (row.className || "").toLowerCase();
-      return className.indexOf("day") !== -1 && className.indexOf("windy") !== -1;
-    });
-    if (rowsWithDays.length > 0) {
-      // Prefer the row with the most cells
-      rowsWithDays.sort(function(a, b) {
-        const aCells = Array.from(a.querySelectorAll("td, th")).length;
-        const bCells = Array.from(b.querySelectorAll("td, th")).length;
-        return bCells - aCells;
-      });
-      daysRow = rowsWithDays[0];
-      const cellCount = Array.from(daysRow.querySelectorAll("td, th")).length;
-      console.log("[scraperC] [page.evaluate] Found days row using fallback selector (cells=" + cellCount + ")");
+    const table = document.querySelector("#windywidgettable");
+    if (table) {
+      console.log("[scraperC] [page.evaluate] Searching inside #windywidgettable...");
+      const rows = Array.from(table.querySelectorAll("tr"));
+      for (const row of rows) {
+        const cells = Array.from(row.querySelectorAll("td, th"));
+        if (cells.length > 5) {
+          // Check if any cell has a day-like text (TODAY, TOMORROW, or day names)
+          const hasDayText = cells.some(c => {
+            const txt = (c.textContent || "").toUpperCase();
+            return txt.includes("TODAY") || txt.includes("TOMORROW") || 
+                   txt.includes("MON") || txt.includes("TUE") || txt.includes("WED") || 
+                   txt.includes("THU") || txt.includes("FRI") || txt.includes("SAT") || txt.includes("SUN");
+          });
+          if (hasDayText) {
+            daysRow = row;
+            console.log("[scraperC] [page.evaluate] ✅ Found days row in #windywidgettable (cells=" + cells.length + ")");
+            break;
+          }
+        }
+      }
     }
   }
   

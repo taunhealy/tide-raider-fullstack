@@ -250,7 +250,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
         <div className="bg-brand-dark rounded-3xl overflow-hidden border border-white/10 ring-1 ring-white/5 shadow-2xl">
               {/* Content Grid */}
-              <div className="grid lg:grid-cols-3 gap-8 md:gap-12 p-6 md:p-10 relative">
+              <div className="grid lg:grid-cols-3 gap-10 p-5 md:p-10 relative">
                 {isGatedGem && (
                   <div className="absolute inset-0 z-30 flex items-start justify-center pointer-events-none p-10 pt-24 md:pt-32">
                     <div className="bg-slate-900/90 text-white px-8 py-10 rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.8)] border border-white/10 backdrop-blur-2xl flex flex-col items-center gap-4 pointer-events-auto max-w-[340px] text-center transform transition-all hover:scale-[1.02]">
@@ -370,11 +370,11 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                         </div>
                       )}
                     </div>
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                           <h2 className="font-primary text-2xl lg:text-3xl font-bold text-white tracking-tighter">
                             Forecast Reliability
                           </h2>
-                          <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
+                          <div className="flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full border border-white/10 w-fit">
                             <Sparkles className="w-3.5 h-3.5 text-[var(--color-tertiary)]" />
                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Crowdsourced Intelligence</span>
                           </div>
@@ -537,8 +537,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                   </div>
 
               {/* Session Date */}
-              <div className="px-6 md:px-10 pb-6">
-                <div className="bg-white/5 rounded-2xl p-5 md:p-6 flex items-center gap-4 border border-white/5 hover:bg-white/10 transition-colors">
+              <div className="px-5 md:px-10 pb-5">
+                <div className="bg-white/5 rounded-2xl p-5 md:p-5 flex items-center gap-5 border border-white/5 hover:bg-white/10 transition-colors">
                   <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[var(--color-tertiary)]/10 flex items-center justify-center border border-[var(--color-tertiary)]/20 shadow-lg">
                     <Calendar className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-tertiary)]" />
                   </div>
@@ -566,12 +566,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
               {/* Comments Section */}
               {entry.comments && (
-                <div className="px-6 md:px-10 pb-10">
-                  <div className="space-y-4 pt-4">
+                <div className="px-5 md:px-10 pb-10">
+                  <div className="space-y-5 pt-5">
                     <h2 className="text-xs text-white font-black uppercase tracking-[0.2em]">
                       Logger comments
                     </h2>
-                    <div className={cn("bg-white/5 rounded-2xl p-6 md:p-8 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden", isGatedGem && "blur-[10px] select-none opacity-40")}>
+                    <div className={cn("bg-white/5 rounded-2xl p-5 md:p-10 border-l-4 border-[var(--color-tertiary)] border border-white/5 shadow-2xl relative overflow-hidden", isGatedGem && "blur-[10px] select-none opacity-40")}>
                       <div className="absolute top-0 right-0 p-4 opacity-5">
                         <svg className="w-12 h-12 text-[var(--color-tertiary)]" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C20.1216 16 21.017 16.8954 21.017 18V21C21.017 22.1046 20.1216 23 19.017 23H16.017C14.9124 23 14.017 22.1046 14.017 21ZM5.017 21V18C5.017 16.8954 5.91243 16 7.017 16H10.017C11.1216 16 12.017 16.8954 12.017 18V21C12.017 22.1046 11.1216 23 10.017 23H7.017C5.91243 23 5.017 22.1046 5.017 21ZM19.017 13C17.9124 13 17.017 12.1046 17.017 11V5C17.017 3.89543 17.9124 3 19.017 3H21.017C22.1216 3 23.017 3.89543 23.017 5V11C23.017 12.1046 22.1216 13 21.017 13H19.017ZM10.017 13C8.91243 13 8.017 12.1046 8.017 11V5C8.017 3.89543 8.91243 3 10.017 3H12.017C13.1216 3 14.017 3.89543 14.017 5V11C14.017 12.1046 13.1216 13 12.017 13H10.017Z" />

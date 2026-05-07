@@ -50,12 +50,12 @@ export function Header({
           Recent surf logs and community intelligence.
         </p>
       </div>
-      <div className="flex flex-row gap-3 md:gap-4 items-center w-full md:w-auto">
+      <div className="flex flex-wrap gap-3 md:gap-5 items-center w-full md:w-auto">
         <LogVisibilityToggle isPrivate={isPrivate} onChange={onPrivateToggle} />
         <Button
           variant="action"
           size="sm"
-          className="whitespace-nowrap px-6 h-10 shadow-md active:scale-95"
+          className="whitespace-nowrap px-6 h-10 shadow-md active:scale-95 flex-1 sm:flex-none"
           onClick={handlePostClick}
         >
           Post
@@ -64,7 +64,7 @@ export function Header({
           onClick={onFilterOpen}
           variant="outline"
           size="sm"
-          className="inline-flex h-10 px-5 border-gray-200 hover:bg-gray-50 transition-all font-bold uppercase tracking-widest text-[11px] rounded-xl shadow-sm active:scale-95"
+          className="inline-flex h-10 px-5 border-gray-200 hover:bg-gray-50 transition-all font-bold uppercase tracking-widest text-[11px] rounded-xl shadow-sm active:scale-95 flex-1 sm:flex-none"
         >
           Filter
         </Button>
