@@ -37,81 +37,52 @@ export class CronScheduler {
 
     console.log("🕐 Starting cron scheduler...");
 
-    // Schedule: Run once daily at 01:00 UTC (3am SA time)
-    const task = cron.schedule(
+    // 1. Schedule: Western Cape Daily at 01:00 UTC (3am SAST)
+    const wcTask = cron.schedule(
       "0 1 * * *",
       async () => {
-        await this.runScheduledJob();
+        await this.runScheduledJob(["western-cape"]);
       },
-      {
-        timezone: "UTC",
-      }
+      { timezone: "UTC" }
     );
+    this.tasks.push(wcTask);
 
-    this.tasks.push(task);
-    console.log(
-      "✅ Cron job scheduled: Once daily at 01:00 UTC (3am SAST)"
+    // 2. Schedule: Eastern Cape Daily at 01:10 UTC (3:10am SAST)
+    const ecTask = cron.schedule(
+      "10 1 * * *",
+      async () => {
+        await this.runScheduledJob(["eastern-cape"]);
+      },
+      { timezone: "UTC" }
     );
+    this.tasks.push(ecTask);
+
+    console.log("✅ Main Scrapers staggered: WC @ 01:00, EC @ 01:10 UTC");
 
     // Dynamic Heartbeat Accelerator (1-hour tactical pulse)
     // Automatically scales to high-frequency when active subscribers are present
     const serverStartTime = Date.now();
     const STARTUP_GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes — allows DB pool to stabilize
 
-    const heartbeatTask = cron.schedule(
+    const heartbeatWCTask = cron.schedule(
       "0 * * * *",
       async () => {
-        try {
-          const now = new Date();
-          // Skip if it's the 01:00 slot (handled by the main daily task)
-          if (now.getUTCHours() === 1) return;
-
-          // Guard: skip if server just started — DB pool may not be ready
-          if (Date.now() - serverStartTime < STARTUP_GRACE_PERIOD_MS) {
-            console.log("[cron] ⏳ Heartbeat skipped — within startup grace period (DB pool warming up)");
-            return;
-          }
-
-          const { prisma } = require("../lib/prisma");
-          const { processAllUserAlerts } = await import("./alertProcessor");
-          
-          const subscriberCount = await prisma.user.count({
-            where: {
-              OR: [
-                { subscriptionStatus: "ACTIVE" },
-                { hasActiveTrial: true },
-              ],
-            },
-          });
-
-          if (subscriberCount === 0) {
-            // Low-cost mode: only run every 4 hours if no active subscribers
-            if (now.getUTCHours() % 4 === 0) {
-              console.log("[cron] 💓 Maintenance: Running 4-hour background sync (no active subscribers)");
-              await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
-              await processAllUserAlerts();
-            }
-            return;
-          }
-
-          console.log(`[cron] 💓 Heartbeat: Pulsing for ${subscriberCount} active subscribers`);
-          
-          // Tactical Sync: Refresh forecast data every 4 hours
-          if (now.getUTCHours() % 4 === 0) {
-            await fetchAllRegionsData(3, ["western-cape", "eastern-cape"]);
-          }
-
-          await processAllUserAlerts(true); // Accelerated mode (filters for active users)
-        } catch (error) {
-          console.error("❌ [cron] Heartbeat accelerator failed:", error);
-        }
+        await this.handleHeartbeatPulse("western-cape");
       },
-      {
-        timezone: "UTC",
-      }
+      { timezone: "UTC" }
     );
-    this.tasks.push(heartbeatTask);
-    console.log("✅ Dynamic Heartbeat Accelerator active: 1h Pulse (Dynamic Scaling)");
+    this.tasks.push(heartbeatWCTask);
+
+    const heartbeatECTask = cron.schedule(
+      "10 * * * *",
+      async () => {
+        await this.handleHeartbeatPulse("eastern-cape");
+      },
+      { timezone: "UTC" }
+    );
+    this.tasks.push(heartbeatECTask);
+
+    console.log("✅ Heartbeat pulses staggered: WC @ 00m, EC @ 10m past hour");
  
     // Sunday Morning Newsletter (Run every Sunday at 07:00 UTC / 9:00 AM SAST)
     const newsletterTask = cron.schedule(
@@ -164,9 +135,56 @@ export class CronScheduler {
   }
 
   /**
+   * Internal logic for heartbeat pulse, extracted to handle staggering
+   */
+  private async handleHeartbeatPulse(regionId: string) {
+    const STARTUP_GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes
+    const serverStartTime = (global as any).serverStartTime || 0;
+
+    try {
+      const now = new Date();
+      // Skip if it's the 01:00 slot (handled by the main daily tasks)
+      if (now.getUTCHours() === 1) return;
+
+      // Guard: skip if server just started
+      if (Date.now() - serverStartTime < STARTUP_GRACE_PERIOD_MS) {
+        console.log(`[cron] ⏳ Heartbeat [${regionId}] skipped — within startup grace period`);
+        return;
+      }
+
+      const { prisma } = require("../lib/prisma");
+      
+      // 1. Tactical Sync: Refresh forecast data twice per day (staggered 13:00 pass)
+      // The 01:00 pass is handled by the main scheduled jobs
+      if (now.getUTCHours() === 13) {
+        console.log(`[cron] 💓 Scheduled Sync: Running 12-hour refresh for ${regionId}`);
+        await fetchAllRegionsData(3, [regionId]);
+      }
+
+      // 2. Alerts: Still check hourly, but only if we have active subscribers/trials
+      const subscriberCount = await prisma.user.count({
+        where: {
+          OR: [
+            { subscriptionStatus: "ACTIVE" },
+            { hasActiveTrial: true },
+          ],
+        },
+      });
+
+      if (subscriberCount > 0 && regionId === "western-cape") {
+        console.log(`[cron] 💓 Heartbeat: Processing alerts for ${subscriberCount} active subscribers`);
+        const { processAllUserAlerts } = await import("./alertProcessor");
+        await processAllUserAlerts(true); // Accelerated mode
+      }
+    } catch (error) {
+      console.error(`❌ [cron] Heartbeat pulse failed for ${regionId}:`, error);
+    }
+  }
+
+  /**
    * Run the scheduled job (fetch regions + process alerts)
    */
-  private async runScheduledJob() {
+  private async runScheduledJob(regionIds?: string[]) {
     const startTime = Date.now();
     const timestamp = new Date().toISOString();
 
@@ -202,19 +220,19 @@ export class CronScheduler {
       }
 
       // Step 1: Fetch and store surf conditions for all regions
-      console.log("📊 Step 1: Fetching surf conditions for all regions");
+      console.log(`📊 Step 1: Fetching surf conditions for regions: ${regionIds?.join(", ") || "core"}`);
       let regionResults;
       try {
-        // Limited Daily run: Only fetch 7 days for core South Africa regions
-        // All other regions are fetched 'On-Demand' when a user requests them
-        const coreRegions = ["western-cape", "eastern-cape"];
-        regionResults = await fetchAllRegionsData(7, coreRegions);
-        console.log("✅ Core region data fetch completed:", {
+        // Limited Daily run: Only fetch 7 days for specific core South Africa regions
+        const targetRegions = regionIds || ["western-cape", "eastern-cape"];
+        regionResults = await fetchAllRegionsData(7, targetRegions);
+        console.log(`✅ Region data fetch completed [${targetRegions.join(", ")}]:`, {
           regionsProcessed: regionResults.regionsProcessed,
           regionsSucceeded: regionResults.regionsSucceeded,
           regionsFailed: regionResults.regionsFailed,
         });
       } catch (error) {
+        console.error("❌ Region data fetch failed:", error);
       }
  
       // Step 1.5: Process User Subscription Life Cycle (Trial Expirations)
@@ -272,6 +290,12 @@ export class CronScheduler {
       }
 
       // Step 2: Process alerts for all users
+      // Only process alerts once if this is part of a staggered run (e.g., only on Western Cape)
+      if (regionIds && !regionIds.includes("western-cape")) {
+        console.log("🔔 Step 2: Skipping alerts (handled by Western Cape job)");
+        return { success: true, staggered: true };
+      }
+
       console.log("🔔 Step 2: Processing alerts for all users");
       let alertResults;
       try {

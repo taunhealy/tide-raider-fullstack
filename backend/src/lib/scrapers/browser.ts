@@ -42,14 +42,51 @@ export async function getBrowser(): Promise<Browser> {
     console.log(`[getBrowser] Launching with default Playwright discovery`);
   }
 
-  return await chromium.launch({
-    headless: true,
-    executablePath,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu"
-    ],
-  });
+  const maxRetries = 2;
+  let lastError;
+
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      if (i > 0) {
+        console.log(`[getBrowser] 🔄 Retry ${i}/${maxRetries}...`);
+        // Wait a bit before retry to let resources clear
+        await new Promise(r => setTimeout(r, 5000 * i));
+      }
+
+      console.log(`[getBrowser] Launching Chromium (timeout: 180s)...`);
+      return await chromium.launch({
+        headless: true,
+        executablePath,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+          "--disable-software-rasterizer",
+          "--hide-scrollbars",
+          "--mute-audio",
+          "--disable-breakpad",
+          "--no-first-run",
+          "--no-zygote",
+          "--disable-extensions",
+          "--disable-notifications",
+          "--disable-default-apps",
+          "--font-render-hinting=none"
+        ],
+        timeout: 180000,
+      });
+    } catch (err) {
+      lastError = err;
+      console.error(`[getBrowser] ⚠️ Attempt ${i + 1} failed:`, err.message);
+      
+      // If it's a timeout, it might be worth retrying. 
+      // If it's a "executable not found", retrying won't help.
+      if (err.message.includes("executable") || err.message.includes("not found")) {
+        break;
+      }
+    }
+  }
+
+  console.error(`[getBrowser] ❌ FAILED to launch browser after ${maxRetries + 1} attempts`);
+  throw lastError;
 }

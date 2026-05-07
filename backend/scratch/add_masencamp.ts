@@ -75,19 +75,20 @@ async function main() {
     },
     update: {
       optimalWindDirections: ["SE"],
-      optimalSwellDirections: { min: 210, max: 250 }, // SW is ~225. 230 is requested.
+      optimalWindDirections: ["SE"],
+      optimalSwellDirections: { min: 180, max: 200 },
       optimalTide: OptimalTide.MID,
-      swellSize: { min: 2.3, max: 6.0 },
-      idealSwellPeriod: { min: 9, max: 20 }
+      swellSize: { min: 2.0, max: 6.0 },
+      idealSwellPeriod: { min: 12, max: 22 }
     },
     create: {
       beachId: beachId,
       category: SportCategory.GENERAL,
       optimalWindDirections: ["SE"],
-      optimalSwellDirections: { min: 210, max: 250 },
+      optimalSwellDirections: { min: 180, max: 200 },
       optimalTide: OptimalTide.MID,
-      swellSize: { min: 2.3, max: 6.0 },
-      idealSwellPeriod: { min: 9, max: 20 }
+      swellSize: { min: 2.0, max: 6.0 },
+      idealSwellPeriod: { min: 12, max: 22 }
     }
   });
 

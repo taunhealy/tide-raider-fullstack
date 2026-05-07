@@ -158,7 +158,7 @@ router.get(
       
       // Debug
       // console.log("Filters parsed");
-      const showHiddenGems = String(req.query.isHiddenGem) === "true" || (req.query.isHiddenGem === undefined && isPremium);
+      const showHiddenGems = String(req.query.isHiddenGem) === "true";
       const showRegular = String(req.query.isRegular) === "true" || req.query.isRegular === undefined;
 
       const typeFilters: Prisma.BeachWhereInput[] = [];

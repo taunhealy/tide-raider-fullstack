@@ -21,10 +21,11 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
 
   try {
     // Get all regions from database or target specific ones
+    // We now default to CORE_REGIONS if none are specified to prevent server overload
+    const targetIds = regionIds && regionIds.length > 0 ? regionIds : CORE_REGIONS;
+    
     const regions = await prisma.region.findMany({
-      where: regionIds && regionIds.length > 0
-        ? { id: { in: regionIds } }
-        : undefined,
+      where: { id: { in: targetIds } },
       select: {
         id: true,
         name: true,
@@ -35,7 +36,7 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
 
     // Process regions in parallel chunks to speed up execution
     // Cloud Run has a 5 min timeout, so we need to be efficient
-    const CONCURRENCY = 5; // Process 5 regions at a time
+    const CONCURRENCY = 2; // Process 2 regions at a time (reduced from 5 to prevent OOM/CPU timeouts)
     const chunks = [];
     
     for (let i = 0; i < regions.length; i += CONCURRENCY) {

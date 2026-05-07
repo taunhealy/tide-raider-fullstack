@@ -276,6 +276,152 @@
     }
   },
   {
+    "id": "clovelly-wedge",
+    "name": "Clovelly Wedge",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Fish Hoek",
+    "description": "Clovelly Wedge is a surf spot located at the far end of Fish Hoek Beach. This spot features a sand bottom and is known for its short, powerful left waves that break best at high tide off the wall. The wave can be hollow and fast when the conditions are right.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 20,
+      "winter": 15
+    },
+    "hazards": [
+      "Rip currents",
+      "Undertow",
+      "Rocks",
+      "Pollution",
+      "Sharks",
+      "Localism"
+    ],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.132767,
+      "lng": 18.440717
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NW"
+        ],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 157.5,
+          "cardinal": "SE"
+        },
+        "optimalTide": "HIGH",
+        "swellSize": {
+          "min": 0.8,
+          "max": 2.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "off-the-wall-kalk-bay",
+    "name": "Off The Wall Kalk Bay",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Kalk Bay",
+    "description": "Off The Wall Kalk Bay is a technical refraction wave located next to the harbour wall. Known for its short, powerful waves that bounce off the wall creating hollow sections, it is a favorite for bodyboarders. The bottom is a mix of coral reef and sand.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "REEF_BREAK",
+    "isHiddenGem": true,
+    "waterTemp": {
+      "summer": 20,
+      "winter": 15
+    },
+    "hazards": [
+      "Rocks",
+      "Buoys",
+      "Man-made Obstacles",
+      "Localism"
+    ],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.129742,
+      "lng": 18.450359
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NW",
+          "N"
+        ],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 180,
+          "cardinal": "SE"
+        },
+        "optimalTide": "MID_HIGH",
+        "swellSize": {
+          "min": 1.2,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "baileys-cottage",
+    "name": "Baileys Cottage",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "Muizenberg",
+    "description": "Baileys Cottage is a rare and technical reef break near Muizenberg Corner. It features three main reefs (1st, 2nd, and 3rd) that break over a rocky/boulder bottom. Known for short, hollow barrels, it only works a few times a year when the swell is large enough to wrap into the bay.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "isHiddenGem": true,
+    "waterTemp": {
+      "summer": 19,
+      "winter": 15
+    },
+    "hazards": [
+      "Rocks",
+      "Sea Urchins",
+      "Sharks"
+    ],
+    "crimeLevel": "Medium",
+    "coordinates": {
+      "lat": -34.112333,
+      "lng": 18.466683
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NW",
+          "NNW"
+        ],
+        "optimalSwellDirections": {
+          "min": 112.5,
+          "max": 180,
+          "cardinal": "SE"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 0.9,
+          "max": 3.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
     "id": "long-beach",
     "name": "Long Beach",
     "continent": "Africa",
@@ -336,13 +482,13 @@
           "S"
         ],
         "optimalSwellDirections": {
-          "min": 225,
+          "min": 180,
           "max": 245,
           "cardinal": "SW"
         },
         "optimalTide": "ALL",
         "swellSize": {
-          "min": 1.8,
+          "min": 1.4,
           "max": 6
         },
         "idealSwellPeriod": {
@@ -3522,7 +3668,7 @@
       "GENERAL": {
         "optimalWindDirections": [
           "SE",
-          "NW"
+          "E"
         ],
         "optimalSwellDirections": {
           "min": 195,
@@ -3571,8 +3717,8 @@
     },
     "image": "",
     "coordinates": {
-      "lat": -34.19,
-      "lng": 18.27
+      "lat": -34.32425,
+      "lng": 18.466
     },
     "videos": [
       {
@@ -14578,6 +14724,53 @@
         "idealSwellPeriod": {
           "min": 10,
           "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "masencamp-reef",
+    "name": "Masencamp",
+    "continent": "Africa",
+    "countryId": "za",
+    "regionId": "western-cape",
+    "location": "False Bay / Kogelberg",
+    "description": "Tactical reef break. High performance wave for advanced riders. Needs specific S/SSW swell to wrap into the bay.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 18,
+      "winter": 14
+    },
+    "hazards": [
+      "Rocks",
+      "Sharks",
+      "Strong Currents"
+    ],
+    "crimeLevel": "Low",
+    "coordinates": {
+      "lat": -34.272639,
+      "lng": 18.838389
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "SE",
+          "ESE"
+        ],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 200,
+          "cardinal": "S"
+        },
+        "optimalTide": "MID",
+        "swellSize": {
+          "min": 2,
+          "max": 6
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 22
         }
       }
     }

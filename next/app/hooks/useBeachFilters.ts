@@ -135,12 +135,8 @@ export const useBeachFilters = () => {
     const params = new URLSearchParams(searchParams);
 
     if (!beach) {
-      // Clear all beach-related params
-      params.delete("regionId");
+      // Clear only the search query to revert to the regional view
       params.delete("searchQuery");
-      params.delete("region");
-      params.delete("country");
-      params.delete("continent");
     } else {
       // Set all beach-related params
       params.set("regionId", beach.regionId.toLowerCase());

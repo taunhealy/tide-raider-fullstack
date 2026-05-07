@@ -78,7 +78,7 @@ export async function scraperA(
       try {
         attempts++;
         // Use networkidle2 for more reliable loading of dynamic content
-        await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.goto(currentUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
         
         // Wait a bit extra for Astro/JS components to hydrate
         await new Promise(r => setTimeout(r, 2000));

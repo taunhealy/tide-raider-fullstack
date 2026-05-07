@@ -16,3 +16,4 @@ if (existsSync(envLocalPath)) {
 dotenv.config({ path: envPath });
 
 console.log(`[setup] 🚀 DATABASE_URL check: ${process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + "..." : "NOT SET"}`);
+(global as any).serverStartTime = Date.now();

@@ -81,12 +81,14 @@ export class ScoreService {
               : []
       };
 
-      let score = 5;
+      let score = 5.0;
+      const isReefOrPoint = beach.waveType === "REEF_BREAK" || beach.waveType === "POINT_BREAK";
 
-      // Wind direction scoring
+      // 1. Wind direction scoring
       const windCardinal = this.degreesToCardinal(conditions.windDirection);
+      const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
 
-      if (!parsedProfile.optimalWindDirections.includes(windCardinal)) {
+      if (!isOptimalWind) {
         const minAngleDiff = parsedProfile.optimalWindDirections.reduce(
           (minDiff: number, optimalDir: string) => {
             const optimalDegrees = this.cardinalToDegreesMap[optimalDir];
@@ -101,117 +103,98 @@ export class ScoreService {
         if (minAngleDiff <= 22.5) {
           penalty = 0.5;
         } else if (minAngleDiff <= 45) {
-          penalty = 1;
+          penalty = 1.0;
         } else if (minAngleDiff <= 90) {
-          penalty = 2;
+          penalty = 2.0;
         } else {
-          penalty = 3;
+          penalty = 3.0;
         }
 
-        // Scale penalty based on wind strength - light winds don't ruin a session for reef/point breaks
-        // but beach breaks are much more sensitive to even light onshore winds
+        // Scale penalty based on wind strength
         let windFactor = 1.0;
-        const isReefOrPoint = beach.waveType === "REEF_BREAK" || beach.waveType === "POINT_BREAK";
-        
         if (conditions.windSpeed <= 8) {
-          windFactor = isReefOrPoint ? 0.2 : 0.7; // Beach breaks more affected by light onshore
+          windFactor = isReefOrPoint ? 0.2 : 0.6; // Reefs/Points hold light onshore better
         } else if (conditions.windSpeed <= 12) {
-          windFactor = isReefOrPoint ? 0.5 : 0.9;
+          windFactor = isReefOrPoint ? 0.5 : 0.8;
         }
         
         const finalPenalty = penalty * windFactor;
         score -= finalPenalty;
         
         if (finalPenalty > 0) {
-          deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°, penalty scaled by ${windFactor}x due to ${conditions.windSpeed}kt wind)`);
+          deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°, penalty scaled by ${windFactor.toFixed(1)}x due to ${conditions.windSpeed}kt wind)`);
         }
       }
 
-      // Wind strength scoring - Only penalize if NOT optimal wind (onshore/cross)
-      const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
-      
+      // 2. Wind strength scoring
       if (!isOptimalWind && !beach.sheltered) {
-        if (conditions.windSpeed > 25) {
-          score -= 2.5; 
-        } else if (conditions.windSpeed > 15) {
-          score -= 1.5;
-        } else if (conditions.windSpeed > 10) {
-          score -= 0.5;
-        }
+        if (conditions.windSpeed > 25) score -= 2.5; 
+        else if (conditions.windSpeed > 15) score -= 1.5;
+        else if (conditions.windSpeed > 10) score -= 0.5;
       } else if (conditions.windSpeed > 35) {
-        // Even if offshore, 35kts+ is too much
-        score -= 2;
+        score -= 2.0; // Even offshore, 35kts+ is too much
       }
 
-      // Wave size scoring
-      if (
-        !(
-          conditions.swellHeight >= parsedProfile.swellSize.min &&
-          conditions.swellHeight <= parsedProfile.swellSize.max
-        )
-      ) {
-        const heightDiff = Math.min(
-          Math.abs(conditions.swellHeight - parsedProfile.swellSize.min),
-          Math.abs(conditions.swellHeight - parsedProfile.swellSize.max)
-        );
+      // 3. Wave size scoring - Aggressive penalty for under-sized swell
+      const isTooSmall = conditions.swellHeight < parsedProfile.swellSize.min;
+      const isTooLarge = conditions.swellHeight > parsedProfile.swellSize.max;
+
+      if (isTooSmall || isTooLarge) {
+        const heightDiff = isTooSmall 
+          ? parsedProfile.swellSize.min - conditions.swellHeight
+          : conditions.swellHeight - parsedProfile.swellSize.max;
+
         let sizePenalty = 0;
-        if (heightDiff <= 0.5) {
-          sizePenalty = 0.5;
-        } else if (heightDiff <= 1) {
-          sizePenalty = 1;
+        if (isTooSmall) {
+          // Being under-sized is a deal-breaker for certain spots
+          const smallFactor = isReefOrPoint ? 2.5 : 1.5; 
+          if (heightDiff <= 0.3) sizePenalty = 0.5 * smallFactor;
+          else if (heightDiff <= 0.8) sizePenalty = 1.5 * smallFactor;
+          else sizePenalty = 3.5 * smallFactor;
         } else {
-          sizePenalty = 3;
+          // Too big is messy but sometimes surfable
+          if (heightDiff <= 0.5) sizePenalty = 0.5;
+          else if (heightDiff <= 1.5) sizePenalty = 1.5;
+          else sizePenalty = 3.0;
         }
+
         score -= sizePenalty;
-        deductions.push(`Swell height ${conditions.swellHeight}m is ${conditions.swellHeight < parsedProfile.swellSize.min ? "too small" : "too large"} for this spot (Optimal: ${parsedProfile.swellSize.min}-${parsedProfile.swellSize.max}m).`);
+        deductions.push(`Swell height ${conditions.swellHeight}m is ${isTooSmall ? "too small" : "too large"} (Optimal: ${parsedProfile.swellSize.min}-${parsedProfile.swellSize.max}m).`);
       }
 
-      // Swell direction scoring
+      // 4. Swell direction scoring
       if (
         !(
           conditions.swellDirection >= parsedProfile.optimalSwellDirections.min &&
           conditions.swellDirection <= parsedProfile.optimalSwellDirections.max
         )
       ) {
-        // Calculate minimum angle difference considering wrap-around (0° = 360°)
-        const minDiff = Math.abs(
-          conditions.swellDirection - parsedProfile.optimalSwellDirections.min
-        );
-        const maxDiff = Math.abs(
-          conditions.swellDirection - parsedProfile.optimalSwellDirections.max
-        );
-        // Consider wrap-around for both differences
-        const minDiffWrapped = Math.min(minDiff, 360 - minDiff);
-        const maxDiffWrapped = Math.min(maxDiff, 360 - maxDiff);
-        const swellDirDiff = Math.min(minDiffWrapped, maxDiffWrapped);
+        const minDiff = Math.abs(conditions.swellDirection - parsedProfile.optimalSwellDirections.min);
+        const maxDiff = Math.abs(conditions.swellDirection - parsedProfile.optimalSwellDirections.max);
+        const swellDirDiff = Math.min(Math.min(minDiff, 360 - minDiff), Math.min(maxDiff, 360 - maxDiff));
 
         let dirPenalty = 0;
-        if (swellDirDiff <= 20) {
-          dirPenalty = 1;
-        } else if (swellDirDiff <= 45) {
-          dirPenalty = 2;
-        } else {
-          dirPenalty = 3;
-        }
+        if (swellDirDiff <= 20) dirPenalty = 0.8;
+        else if (swellDirDiff <= 45) dirPenalty = 1.5;
+        else dirPenalty = 2.5;
+
         score -= dirPenalty;
         deductions.push(`Swell direction ${conditions.swellDirection}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
       }
 
-      // Swell period scoring - 12s+ is ideal for quality surf
-      const periodBaseline = 12;
-
+      // 5. Swell period scoring
       if (conditions.swellPeriod < 8) {
-        // Severe penalty for very short "wind swell"
         score -= 2.5;
-        deductions.push(`Very short swell period (${conditions.swellPeriod}s) - high probability of "messy" conditions`);
+        deductions.push(`Very short period (${conditions.swellPeriod}s) - high probability of "wind slop"`);
       } else if (conditions.swellPeriod < 10) {
-        // Significant penalty for short period
-        score -= 1.5;
-        deductions.push(`Short swell period (${conditions.swellPeriod}s) - suboptimal for quality lines`);
-      } else if (conditions.swellPeriod < periodBaseline) {
-        // Slight penalty for 10-11s period
-        score -= 0.8;
-        deductions.push(`Moderate swell period (${conditions.swellPeriod}s) - 12s+ is ideal`);
+        score -= 1.2;
+        deductions.push(`Short period (${conditions.swellPeriod}s) - suboptimal quality`);
+      } else if (conditions.swellPeriod < 12) {
+        // Minor penalty for 10-11s period if 12s is the baseline
+        if (parsedProfile.idealSwellPeriod.min >= 12) {
+          score -= 0.4;
+          deductions.push(`Moderate period (${conditions.swellPeriod}s) - 12s+ is ideal`);
+        }
       } else if (
         !(
           conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&
@@ -222,11 +205,7 @@ export class ScoreService {
           Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.min),
           Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.max)
         );
-        if (periodDiff <= 2) {
-          score -= 0.5;
-        } else {
-          score -= 1;
-        }
+        score -= periodDiff <= 2 ? 0.3 : 0.8;
       }
 
       const finalScore = Math.min(5, Math.max(0, score));
@@ -269,16 +248,19 @@ export class ScoreService {
       beaches.forEach((beach: any) => {
         const profiles = beach.conditionProfiles || [];
         
-        // If a beach has no profiles, we skip it or could fallback to a dummy GENERAL profile
         profiles.forEach((profile: any) => {
           const result = this.calculateScore(beach, profile, forecastData);
           const calculatedScore = result?.score ?? 0;
           const deductions = result?.deductions ?? [];
 
+          // Star Rating Logic: More intuitive rounding
+          // 4.5 - 5.0 -> 5 stars
+          // 3.5 - 4.4 -> 4 stars
+          // etc.
+          const starRating = Math.max(1, Math.min(5, Math.round(calculatedScore)));
+          
+          // Legacy score out of 10 for backward compatibility
           const integerScore = Math.round(calculatedScore * 2);
-
-          const scoreOutOfFive = Math.floor(integerScore / 2);
-          const starRating = Math.max(1, Math.min(5, scoreOutOfFive));
 
           scores.push({
             beachId: beach.id,
@@ -301,6 +283,7 @@ export class ScoreService {
           });
         });
       });
+
 
       console.log(
         `Attempting to upsert ${scores.length} scores for date ${forecastData.date} (${forecastData.timeSlot})`
