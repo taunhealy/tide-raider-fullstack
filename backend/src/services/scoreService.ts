@@ -148,13 +148,45 @@ export class ScoreService {
         score -= 2.0; // Even offshore, 35kts+ is too much
       }
 
-      // 3. Wave size scoring - Aggressive penalty for under-sized swell
-      const isTooSmall = conditions.swellHeight < parsedProfile.swellSize.min;
+      // 3. Swell Alignment & Size Analysis
+      const optSwell = parsedProfile.optimalSwellDirections;
+      const curSwellDir = conditions.swellDirection;
+      
+      const minSwellDiff = Math.abs(curSwellDir - optSwell.min);
+      const maxSwellDiff = Math.abs(curSwellDir - optSwell.max);
+      const swellDirDiff = Math.min(Math.min(minSwellDiff, 360 - minSwellDiff), Math.min(maxSwellDiff, 360 - maxSwellDiff));
+
+      let isOptimalSwellDir = false;
+      if (optSwell.min <= optSwell.max) {
+        isOptimalSwellDir = curSwellDir >= optSwell.min && curSwellDir <= optSwell.max;
+      } else {
+        // Wrap around case (e.g. 350 to 20)
+        isOptimalSwellDir = curSwellDir >= optSwell.min || curSwellDir <= optSwell.max;
+      }
+
+      // Wave Science: Period-Dependent Refraction (Wrap)
+      // Long period swells (12s+) "feel" the bottom deeper and turn much better than short period swells.
+      const periodWrapFactor = Math.max(0.7, Math.min(1.3, conditions.swellPeriod / 12));
+      
+      // Dynamic swell min: Perfect direction + Long period needs significantly less buoy height.
+      let effectiveMinHeight = parsedProfile.swellSize.min;
+      if (isOptimalSwellDir) {
+        // Apply refraction bonus: 15% base + up to 15% period bonus for deep-water energy
+        const refractionBonus = 0.15 + (Math.max(0, periodWrapFactor - 1) * 0.5);
+        effectiveMinHeight *= (1 - Math.min(0.3, refractionBonus)); 
+      } else {
+        // Poor direction is exacerbated by short periods (they won't turn/refract efficiently)
+        const baseAlignmentPenalty = (swellDirDiff / 15) * 0.25;
+        const periodPenaltyScale = 1 / periodWrapFactor; 
+        effectiveMinHeight += Math.min(1.2, baseAlignmentPenalty * periodPenaltyScale);
+      }
+
+      const isTooSmall = conditions.swellHeight < effectiveMinHeight;
       const isTooLarge = conditions.swellHeight > parsedProfile.swellSize.max;
 
       if (isTooSmall || isTooLarge) {
         const heightDiff = isTooSmall 
-          ? parsedProfile.swellSize.min - conditions.swellHeight
+          ? effectiveMinHeight - conditions.swellHeight
           : conditions.swellHeight - parsedProfile.swellSize.max;
 
         let sizePenalty = 0;
@@ -172,27 +204,27 @@ export class ScoreService {
         }
 
         score -= sizePenalty;
-        deductions.push(`Swell height ${conditions.swellHeight}m is ${isTooSmall ? "too small" : "too large"} (Optimal: ${parsedProfile.swellSize.min}-${parsedProfile.swellSize.max}m).`);
+        
+        const wrapReason = isOptimalSwellDir 
+          ? (conditions.swellPeriod >= 12 ? 'enhanced wrap' : 'clean wrap')
+          : (conditions.swellPeriod < 10 ? 'poor refraction' : 'poor angle');
+          
+        const sizeMsg = isTooSmall 
+          ? `${conditions.swellHeight}m is too small (Effective min: ${effectiveMinHeight.toFixed(1)}m due to ${wrapReason})`
+          : `${conditions.swellHeight}m is too large (Max: ${parsedProfile.swellSize.max}m)`;
+          
+        deductions.push(`Swell height ${sizeMsg}.`);
       }
 
-      // 4. Swell direction scoring
-      if (
-        !(
-          conditions.swellDirection >= parsedProfile.optimalSwellDirections.min &&
-          conditions.swellDirection <= parsedProfile.optimalSwellDirections.max
-        )
-      ) {
-        const minDiff = Math.abs(conditions.swellDirection - parsedProfile.optimalSwellDirections.min);
-        const maxDiff = Math.abs(conditions.swellDirection - parsedProfile.optimalSwellDirections.max);
-        const swellDirDiff = Math.min(Math.min(minDiff, 360 - minDiff), Math.min(maxDiff, 360 - maxDiff));
-
+      // 4. Swell direction scoring (Reuse calculated diff)
+      if (!isOptimalSwellDir) {
         let dirPenalty = 0;
         if (swellDirDiff <= 20) dirPenalty = 0.8;
         else if (swellDirDiff <= 45) dirPenalty = 1.5;
         else dirPenalty = 2.5;
 
         score -= dirPenalty;
-        deductions.push(`Swell direction ${conditions.swellDirection}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
+        deductions.push(`Swell direction ${curSwellDir}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
       }
 
       // 5. Swell period scoring
