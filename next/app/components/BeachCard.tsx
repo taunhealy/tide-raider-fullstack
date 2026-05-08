@@ -176,48 +176,6 @@ const BeachCard = memo(function BeachCard({
   ]);
   const beachSessions = (beach as any).logEntries || [];
 
-  const renderRating = () => {
-    // Convert 0-10 score to 1-5 star rating consistent with backend logic
-    const starsToFill = Math.round((score || 0) / 2);
-    
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((rating) => {
-            const filled = rating <= starsToFill;
-            return (
-              <Star
-                key={rating}
-                className={cn(
-                  "w-4 h-4",
-                  filled
-                    ? "text-[var(--color-tertiary)] fill-current"
-                    : "text-gray-300"
-                )}
-              />
-            );
-          })}
-        </div>
-        {(beach.hasAIReport || beach.hasFreshIntel) && (
-          <div 
-            className={cn(
-              "flex items-center gap-1 px-1.5 py-0.5 rounded-md border",
-              beach.hasRecentAIReport 
-                ? "bg-indigo-50 text-indigo-500 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.3)] animate-pulse"
-                : "bg-gray-50 text-gray-400 border-gray-100"
-            )}
-            title={beach.hasRecentAIReport ? "Recent Strategic Intel Available" : "Historical Intel Available in Archive"}
-          >
-            <Sparkles className={cn("w-2.5 h-2.5", beach.hasRecentAIReport ? "fill-indigo-500/20 text-indigo-500" : "text-gray-500")} />
-            <span className="text-[8px] font-black uppercase tracking-tighter">
-              {beach.hasRecentAIReport ? "Intel" : "Archive"}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const isModalOpen = searchParams.get("beach") === beach.name;
 
   const { trackBeach } = useSearchTracking();

@@ -30,24 +30,26 @@ export function BlueStarRating({
   size?: number;
 }) {
   const scoreOutOfFive = outOfFive ? score : score / 2;
-  const fullStars = Math.round(scoreOutOfFive);
-  const hasHalfStar = false;
+  const fullStars = Math.floor(scoreOutOfFive);
+  const remainder = scoreOutOfFive % 1;
+  const hasHalfStar = remainder >= 0.25 && remainder < 0.75;
+  const finalFullStars = remainder >= 0.75 ? fullStars + 1 : fullStars;
 
   return (
     <div className="flex gap-1">
       {[...Array(5)].map((_, i) => {
         const rating = i + 1;
-        if (rating <= fullStars) {
+        if (rating <= finalFullStars) {
           return (
             <StarIcon key={rating} size={size} className="text-[var(--color-tertiary)] drop-shadow-[0_0_8px_rgba(96,165,250,0.4)] transition-all duration-300" />
           );
         }
-        if (hasHalfStar && rating === fullStars + 1) {
+        if (hasHalfStar && rating === finalFullStars + 1) {
           return (
             <div key={rating} className="relative transition-all duration-300">
                <StarIcon size={size} className="text-white/10" />
                <div className="absolute inset-0 overflow-hidden w-1/2">
-                 <StarIcon size={size} className="text-[var(--color-tertiary)] opacity-70" />
+                 <StarIcon size={size} className="text-[var(--color-tertiary)] opacity-90" />
                </div>
             </div>
           );

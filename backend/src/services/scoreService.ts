@@ -134,7 +134,8 @@ export class ScoreService {
         score -= finalPenalty;
         
         if (finalPenalty > 0) {
-          deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°, penalty scaled by ${windFactor.toFixed(1)}x due to ${conditions.windSpeed}kt wind)`);
+          const reductionMsg = windFactor < 1.0 ? `, penalty reduced due to ${conditions.windSpeed}kt wind` : "";
+          deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°${reductionMsg})`);
         }
       }
 
