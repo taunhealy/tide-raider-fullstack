@@ -6,7 +6,7 @@ import { scraperB } from "../lib/scrapers/scraperB";
 import { ScoreService } from "./scoreService";
 import { PythonBridge } from "../lib/pythonBridge";
 import { sendEmail } from "../lib/email"; // Added for failure alerts
-
+import { BaseForecastData } from "../lib/types";
 const ADMIN_EMAIL = "taunhealy@gmail.com";
 
 async function sendScrapeFailureAlert(regionId: string, source: string, error: string, url: string) {
@@ -318,9 +318,36 @@ export async function getLatestConditions(
 
   pendingScrapes.set(scrapeKey, scrapePromise);
 
-  let scrapedForecasts;
+  let scrapedForecasts: BaseForecastData[] = [];
+  let isActuallyRegular = false;
+
   try {
-    scrapedForecasts = await scrapePromise;
+    const rawResult = await scrapePromise;
+    
+    if (source === "WINDFINDER" && rawResult && typeof rawResult === 'object' && 'forecasts' in rawResult) {
+      const windfinderResult = rawResult as unknown as { forecasts: BaseForecastData[], isSuperforecast: boolean };
+      scrapedForecasts = windfinderResult.forecasts;
+      isActuallyRegular = !windfinderResult.isSuperforecast;
+
+      // 🚨 TACTICAL ALERT: If we wanted Superforecast but got Regular (Fallback)
+      if (!useRegularForecast && isActuallyRegular) {
+        console.log(`[getLatestConditions] ⚠️ Superforecast Fallback detected for ${region.regionId}. Sending alert...`);
+        const { sendEmail } = await import("../lib/email");
+        const html = `
+          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #f59e0b; border-radius: 10px;">
+            <h2 style="color: #d97706;">⚠️ Superforecast Fallback Alert</h2>
+            <p><strong>Region:</strong> ${region.regionId}</p>
+            <p><strong>Status:</strong> The Superforecast URL failed to load or parse, and the system automatically fell back to the Regular forecast.</p>
+            <p><strong>Impact:</strong> Today's data for this region is using lower-precision forecast data.</p>
+            <hr/>
+            <p style="font-size: 12px; color: #666;">This is an automated tactical alert from Tide Raider Backend.</p>
+          </div>
+        `;
+        sendEmail(ADMIN_EMAIL, `⚠️ Superforecast Fallback: ${region.regionId}`, html).catch(e => console.error("Failed to send fallback alert:", e));
+      }
+    } else {
+      scrapedForecasts = Array.isArray(rawResult) ? rawResult : [];
+    }
   } finally {
     pendingScrapes.delete(scrapeKey);
   }
@@ -330,7 +357,7 @@ export async function getLatestConditions(
   }
 
   console.log(
-    `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database...`
+    `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database... (Actually Regular: ${isActuallyRegular})`
   );
 
   // Store all scraped forecasts
@@ -348,9 +375,11 @@ export async function getLatestConditions(
     const forecastDate = new Date(scrapedForecast.date);
     forecastDate.setUTCHours(0, 0, 0, 0);
     
-    // 🚨 DATA INTEGRITY: If using regular forecast, skip days covered by Superforecast (offset)
+    // 🚨 DATA INTEGRITY: If using regular forecast (either by intent or fallback), skip days covered by Superforecast (offset)
     const dayDiff = Math.round((forecastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    if (source === "WINDFINDER" && useRegularForecast && dayDiff < startDayOffset) {
+    const isRegularSource = useRegularForecast || isActuallyRegular;
+    
+    if (source === "WINDFINDER" && isRegularSource && dayDiff < startDayOffset) {
       console.log(`[getLatestConditions] ⏭️ Skipping regular forecast upsert for ${forecastDate.toISOString().split('T')[0]} (offset: ${startDayOffset})`);
       continue;
     }
@@ -376,6 +405,13 @@ export async function getLatestConditions(
         swellHeight: scrapedForecast.swellHeight,
         swellPeriod: scrapedForecast.swellPeriod,
         swellDirection: scrapedForecast.swellDirection,
+        swellHeight2: scrapedForecast.swellHeight2 || 0,
+        swellPeriod2: scrapedForecast.swellPeriod2 || 0,
+        swellDirection2: scrapedForecast.swellDirection2 || 0,
+        swellHeight3: scrapedForecast.swellHeight3 || 0,
+        swellPeriod3: scrapedForecast.swellPeriod3 || 0,
+        swellDirection3: scrapedForecast.swellDirection3 || 0,
+        swellEnergy: scrapedForecast.swellEnergy || 0,
         trend: scrapedForecast.trend,
         tide: scrapedForecast.tide,
       },
@@ -390,6 +426,13 @@ export async function getLatestConditions(
         swellHeight: scrapedForecast.swellHeight,
         swellPeriod: scrapedForecast.swellPeriod,
         swellDirection: scrapedForecast.swellDirection,
+        swellHeight2: scrapedForecast.swellHeight2 || 0,
+        swellPeriod2: scrapedForecast.swellPeriod2 || 0,
+        swellDirection2: scrapedForecast.swellDirection2 || 0,
+        swellHeight3: scrapedForecast.swellHeight3 || 0,
+        swellPeriod3: scrapedForecast.swellPeriod3 || 0,
+        swellDirection3: scrapedForecast.swellDirection3 || 0,
+        swellEnergy: scrapedForecast.swellEnergy || 0,
         trend: scrapedForecast.trend,
         tide: scrapedForecast.tide,
       },

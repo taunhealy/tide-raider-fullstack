@@ -144,9 +144,14 @@ router.get(
           where: {
             OR: [
               { id: resolvedRegionId },
+              { countryId: resolvedRegionId },
+              { name: { equals: resolvedRegionId, mode: "insensitive" } },
               { name: { contains: resolvedRegionId, mode: "insensitive" } },
             ],
           },
+          orderBy: [
+            { id: 'asc' }
+          ],
           select: { id: true },
         });
 

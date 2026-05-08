@@ -343,7 +343,9 @@ router.get(
       let forecast = exactForecast;
 
       // 🔄 CROSS-SOURCE FALLBACK (Alternative Provider)
-      if (!forecast && regionId) {
+      // Only fallback if explicitly allowed or not explicitly disabled
+      const allowFallback = req.query.fallback !== "false";
+      if (!forecast && regionId && allowFallback) {
         const alternateSource = effectiveSource === "WINDFINDER" ? "WINDGURU" : "WINDFINDER";
         forecast = await prisma.forecast.findFirst({
           where: {
@@ -355,7 +357,7 @@ router.get(
           select: forecastSelect,
         });
         if (forecast) {
-          console.log(`[filtered-beaches] 🔀 Using alternate source ${alternateSource} cache to prevent reload.`);
+          console.log(`[filtered-beaches] 🔀 Using alternate source ${alternateSource} fallback.`);
         }
       }
 
@@ -461,6 +463,11 @@ router.get(
                 category: "GENERAL"
               }
             },
+            intelligenceReports: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              select: { id: true, createdAt: true }
+            },
             beachDailyScores: {
               where: {
                 date: targetDate,
@@ -562,6 +569,14 @@ router.get(
             swellSize: profile.swellSize || { min: 0, max: 10 },
             idealSwellPeriod: profile.idealSwellPeriod || { min: 0, max: 25 },
             optimalTide: profile.optimalTide || "ALL",
+            hasAIReport: beach.intelligenceReports.length > 0,
+            hasRecentAIReport: beach.intelligenceReports.some((r: any) => 
+              new Date(r.createdAt).getTime() > Date.now() - 24 * 60 * 60 * 1000
+            ),
+            // hasFreshIntel kept for backward compatibility if needed, but using new logic
+            hasFreshIntel: beach.intelligenceReports.some((r: any) => 
+              new Date(r.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+            ),
             // Gate sensitive data
             ...(isGated && {
               description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",

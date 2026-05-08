@@ -14,7 +14,14 @@ export const revalidate = 0; // Never cache this page
  * Server component that renders the raid page
  * Data fetching is handled client-side to avoid Vercel timeout issues
  */
-export default function RaidPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default async function RaidPage({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<any>,
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
+}) {
+  const resolvedSearchParams = await searchParams;
   // Pass params to wrapper which will pass them to the container
-  return <BeachContainerWrapper searchParams={searchParams} />;
+  return <BeachContainerWrapper searchParams={resolvedSearchParams} />;
 }

@@ -9,22 +9,6 @@ import { BaseForecastData, TimeSlot } from "../types";
 
 const proxyManager = new ProxyManager();
 
-// Convert m/s to m/s (Windy.app already shows in m/s, but we'll keep this for consistency)
-const msToMs = (ms: number): number => {
-  return Math.round(ms * 10) / 10;
-};
-
-// Parse wind direction from rotation degrees (Windy.app uses CSS transform rotate)
-const parseWindDirection = (rotationDegrees: number): number => {
-  // Windy.app arrows point in the direction the wind/waves are GOING TO (direction of travel)
-  // Meteorological convention reports the direction wind/waves are COMING FROM
-  // To convert: add 180° (or subtract 180° and handle wrap-around)
-  // Example: Arrow pointing NNW (342°) = wind going towards NNW = wind coming FROM SSE (162°)
-  let fromDirection = (rotationDegrees + 180) % 360;
-  if (fromDirection < 0) fromDirection += 360;
-  return Math.round(fromDirection);
-};
-
 export async function scraperC(
   url: string,
   region: string
@@ -34,16 +18,16 @@ export async function scraperC(
     // Validate URL
     if (!url || url.includes("SPOT_ID") || url.includes("PLACEHOLDER")) {
       throw new Error(
-        `Invalid Windy.app URL for region ${region}: ${url}. Please configure a valid spot URL.`
+        `Invalid Windy URL for region ${region}: ${url}. Please configure a valid spot URL.`
       );
     }
 
-    console.log(`[scraperC] 🌐 Starting Windy.app scrape for ${region}`);
+    console.log(`[scraperC] 🌐 Starting Windy.com scrape for ${region}`);
     console.log(`[scraperC] 📍 URL: ${url}`);
 
     browser = await getBrowser();
     const context = await browser.newContext({
-      userAgent: USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)],
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1920, height: 1080 }
     });
     const page = await context.newPage();
@@ -56,99 +40,91 @@ export async function scraperC(
       }
     });
 
-    console.log(`[scraperC] 🔍 Navigating to ${url}...`);
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
+    // TACTICAL: Append ',d:waves' if missing to force open the forecast detail pane
+    const tacticalUrl = url.includes(',d:') ? url : `${url},d:waves`;
+
+    console.log(`[scraperC] 🔍 Navigating to ${tacticalUrl}...`);
+    await page.goto(tacticalUrl, {
+      waitUntil: "domcontentloaded", 
       timeout: 120000,
     });
 
-    console.log(`[scraperC] ✅ Page loaded successfully`);
+    console.log(`[scraperC] ✅ Navigation committed.`);
 
-    // Wait for the forecast widget table to load
+    // TACTICAL: Force clear overlays and wait for table
+    try {
+      console.log(`[scraperC] 🛡️ Neutralizing obstructions...`);
+      
+      // 1. Wait for initial load
+      await new Promise(r => setTimeout(r, 5000));
+      
+      // 2. Dismiss cookie banner if present
+      const cookieButtons = await page.$$('.ok-button, .btn-ok, #consent-layer button');
+      if (cookieButtons.length > 0) {
+        console.log(`[scraperC] 🍪 Dismissing cookie banner...`);
+        await cookieButtons[0].click();
+      }
+
+      // 3. Ensure forecast pane is open (o shortcut is robust as a backup)
+      await page.keyboard.press('o');
+      await new Promise(r => setTimeout(r, 2000));
+
+    } catch (e) {
+      console.log(`[scraperC] ⚠️ Obstruction neutralization failed: ${e.message}`);
+    }
+
+    // Wait for the forecast table to load
     console.log(`[scraperC] 🔍 Waiting for Windy forecast table...`);
-    await page.waitForSelector("#windywidgettable, tr.windywidgetwindSpeed, tr.id-wind-speed, .forecast-table, table", {
-      timeout: 60000,
-    });
+    try {
+      await page.waitForSelector(".main-table__data-table, tr[data-t='wind'], tr[data-t='swell1']", {
+        timeout: 90000,
+      });
+    } catch (e) {
+      console.log(`[scraperC] ❌ Table not found. Capturing visual intel...`);
+      await page.screenshot({ path: join(process.cwd(), 'windy-failure.png'), fullPage: true });
+      throw e;
+    }
 
     console.log(`[scraperC] ✅ Found Windy forecast table`);
 
-    // Wait for the table rows to be present and have data
-    console.log(`[scraperC] 🔍 Waiting for forecast rows to load...`);
-    await page.waitForFunction(
-      `() => {
-        const table = document.querySelector("#windywidgettable");
-        if (!table) return false;
-        const rows = table.querySelectorAll("tr");
-        return rows.length > 5;
-      }`,
-      { timeout: 30000 }
-    );
-
-    console.log(`[scraperC] ✅ Found days row with multiple cells`);
-
-    // Wait a bit for all data to load
-    console.log(`[scraperC] ⏳ Waiting 2 seconds for table to fully load...`);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait for data populate
+    console.log(`[scraperC] ⏳ Synchronizing tactical data...`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     console.log(`[scraperC] 🔍 Extracting forecast data from page...`);
-
     // Load evaluation code from separate JS file
     // @ts-ignore
-    const evalCodePath = join(__dirname, "windy-eval.js");
+    const evalCodePath = join(__dirname, "windy-com-eval.js");
     const evalCode = readFileSync(evalCodePath, "utf-8");
 
     const forecastData = await page.evaluate(`
       (function() {
         ${evalCode}
-        return extractWindyData();
+        return extractWindyComData();
       })()
     `);
 
-    // Check if we got an error object with debug info
     if (
       forecastData &&
       typeof forecastData === "object" &&
       "error" in forecastData
     ) {
-      const errorData = forecastData as { error: unknown; debug?: unknown };
-      console.error(`[scraperC] ❌ No forecast data extracted from page`);
-      console.error(
-        `[scraperC] 🔍 Debug info:`,
-        JSON.stringify(errorData.debug, null, 2)
-      );
-      throw new Error(
-        `Failed to parse Windy.app table: ${errorData.error}. Debug: ${JSON.stringify(errorData.debug)}`
-      );
+      throw new Error(`Failed to parse Windy.com table: ${forecastData.error}`);
     }
 
-    if (
-      !forecastData ||
-      (Array.isArray(forecastData) && forecastData.length === 0)
-    ) {
-      console.error(`[scraperC] ❌ No forecast data extracted from page`);
-      console.error(`[scraperC] 🔍 Received:`, forecastData);
-      throw new Error(
-        "Failed to parse Windy.app table"
-      );
+    if (!forecastData || !Array.isArray(forecastData) || forecastData.length === 0) {
+      throw new Error("Failed to parse Windy.com table or no data found");
     }
 
-    // Ensure forecastData is an array
-    if (!Array.isArray(forecastData)) {
-      throw new Error("Forecast data is not an array");
-    }
+    console.log(`[scraperC] 🔍 Raw hourly forecast data extracted (${forecastData.length} items)`);
 
-    console.log(
-      `[scraperC] 🔍 Raw hourly forecast data extracted (${forecastData.length} items)`
-    );
-
-    // Convert and parse the data for each date/slot
     const forecasts: BaseForecastData[] = [];
+    const now = new Date();
 
     for (const data of forecastData) {
       const hour = data.hour;
       let slot: TimeSlot | null = null;
       
-      // Map hours to slots (consistent with scraperA)
       if (hour >= 5 && hour <= 9) {
         slot = TimeSlot.MORNING;
       } else if (hour >= 11 && hour <= 15) {
@@ -159,9 +135,19 @@ export async function scraperC(
 
       if (!slot) continue;
 
-      // Check if we already have a forecast for this date and slot
-      // Windy often provides data every 3 hours (0, 3, 6, 9, 12, 15, 18, 21)
-      const forecastDate = new Date(data.date);
+      // Parse date from Windy's day text (e.g. "Monday 10")
+      let forecastDate = new Date();
+      if (data.day && data.day !== "Today") {
+          const dayMatch = data.day.match(/(\w+)\s+(\d+)/);
+          if (dayMatch) {
+              const dayOfMonth = parseInt(dayMatch[2]);
+              forecastDate.setUTCDate(dayOfMonth);
+              // Handle month wrap-around if needed
+              if (dayOfMonth < now.getDate()) {
+                  forecastDate.setUTCMonth(forecastDate.getUTCMonth() + 1);
+              }
+          }
+      }
       forecastDate.setUTCHours(0, 0, 0, 0);
       
       const existingIdx = forecasts.findIndex(f => 
@@ -179,7 +165,6 @@ export async function scraperC(
         const existingForecast = forecasts[existingIdx] as any;
         const existingHour = existingForecast.rawHour || 0;
 
-        // If this hour is closer to our target hour for the slot, replace it
         if (Math.abs(hour - target) < Math.abs(existingHour - target)) {
           forecasts.splice(existingIdx, 1);
         } else {
@@ -192,32 +177,35 @@ export async function scraperC(
         regionId: region,
         timeSlot: slot,
         windSpeed: Math.round(data.windSpeed || 0),
-        windDirection: data.windDirection !== null ? parseWindDirection(data.windDirection) : 0,
-        swellHeight: parseFloat(data.swellHeight) || 0,
+        windDirection: data.windDirection || 0,
+        swellHeight: parseFloat(data.swellHeight) || parseFloat(data.waveHeight) || 0,
         swellPeriod: Math.round(data.swellPeriod || 0),
-        swellDirection: data.swellDirection !== null ? parseWindDirection(data.swellDirection) : 0,
+        swellDirection: data.swellDirection || 0,
+        swellHeight2: parseFloat(data.swellHeight2) || 0,
+        swellPeriod2: Math.round(data.swellPeriod2 || 0),
+        swellDirection2: data.swellDirection2 || 0,
+        swellHeight3: parseFloat(data.swellHeight3) || 0,
+        swellPeriod3: Math.round(data.swellPeriod3 || 0),
+        swellDirection3: data.swellDirection3 || 0,
+        swellEnergy: Math.round(data.swellEnergy || 0),
       };
       (forecast as any).rawHour = hour;
 
       forecasts.push(forecast);
     }
 
-    console.log(
-      `[scraperC] ✅ Successfully categorized into ${forecasts.length} forecast(s) across slots`
-    );
+    console.log(`[scraperC] ✅ Successfully categorized into ${forecasts.length} forecast(s) across slots`);
     return forecasts;
   } catch (error) {
-    console.error("\n❌ Windy.app scraping failed:", {
+    console.error("\n❌ Windy.com scraping failed:", {
       url,
       region,
       error: (error as Error).message,
-      stack: (error as Error).stack,
     });
     throw error;
   } finally {
     if (browser) {
       await browser.close();
-      console.log("\n🔚 Browser closed");
     }
   }
 }

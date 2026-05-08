@@ -71,7 +71,8 @@ export async function getBrowser(): Promise<Browser> {
           "--disable-extensions",
           "--disable-notifications",
           "--disable-default-apps",
-          "--font-render-hinting=none"
+          "--font-render-hinting=none",
+          "--disable-blink-features=AutomationControlled"
         ],
         timeout: 180000,
       });

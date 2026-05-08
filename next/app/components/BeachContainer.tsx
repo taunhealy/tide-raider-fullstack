@@ -290,7 +290,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
   const sortedBeaches = useMemo(() => {
     if (!beaches) return [];
     
-    let processedBeaches = (beaches || []).filter(Boolean).map(b => {
+    let processedBeaches = (beaches || []).filter(Boolean).map((b: Beach) => {
       const score = beachScores[b.id]?.score ?? 0;
       let distance = null;
       if (userLocation && b.coordinates?.lat && b.coordinates?.lng) {
@@ -305,12 +305,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     });
 
     if (maxDistance !== null && userLocation) {
-      processedBeaches = processedBeaches.filter(b => 
+      processedBeaches = processedBeaches.filter((b: any) => 
         b.distance !== null && b.distance <= maxDistance
       );
     }
 
-    return processedBeaches.sort((a, b) => {
+    return processedBeaches.sort((a: any, b: any) => {
 
       const hasScoreA = a.id in beachScores;
       const hasScoreB = b.id in beachScores;
@@ -469,7 +469,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                               forecastData={beachForecastData}
                               isLoading={!hasScore && isLoading && !data}
                               distance={(beach as any).distance}
-                              scoreInsights={beachScores?.[beach.id]?.beach?.beachDailyScores?.[0]?.conditions || []}
+                              scoreInsights={beachScores?.[beach.id]?.beach?.beachDailyScores?.[0]?.conditions?.deductions || []}
                             />
                           );
                         })

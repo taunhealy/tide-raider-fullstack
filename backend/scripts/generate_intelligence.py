@@ -70,7 +70,8 @@ async def generate_report(beach_name: str, wind_speed: float, wind_dir: str, swe
             "3. HISTORICAL CORRELATION: If 'HISTORICAL MEMORY' is provided, cross-reference it. If a user logged a 'shallow sandbar' yesterday, warn that today's high-period swell may cause heavy close-outs.\n"
             "4. VERIFIED RATINGS: Assign Star Ratings (⭐⭐⭐⭐⭐/5) based on 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐).\n"
             "5. DEDUCTION REASONING: Use the 'Deductions' provided in the context to explain why a rating might be suppressed (e.g., 'Rating suppressed due to cross-shore wind component').\n"
-            "6. TONE: {persona}.\n\n"
+            "6. MULTI-SWELL ANALYSIS: Explicitly look for 'Swell 2' and 'Swell 3' in the provided tactical snapshots. If secondary or tertiary swell trains are present, analyze their impact on face integrity and set frequency. For example, a crossing Swell 2 can cause peaky, unstable conditions, while a reinforcing Swell 2 can lead to double-up sets.\n"
+            "7. TONE: {persona}.\n\n"
             
             "Format: 3-4 specialized maritime paragraphs. No markdown. No bolding. No hashtags. Absolute technical precision required."
         )

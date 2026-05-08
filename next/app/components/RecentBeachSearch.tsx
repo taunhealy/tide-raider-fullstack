@@ -14,12 +14,14 @@ interface RecentBeachSearchProps {
   className?: string;
   onBeachSelect: (beach: Beach) => void;
   selectedBeachId?: string;
+  labelClassName?: string;
 }
 
 export default function RecentBeachSearch({
   className,
   onBeachSelect,
   selectedBeachId,
+  labelClassName,
 }: RecentBeachSearchProps) {
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,7 @@ export default function RecentBeachSearch({
 
   return (
     <div ref={containerRef} className={cn("flex flex-col gap-2 mt-4", className)}>
-      <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 px-1">Target History</label>
+      <label className={cn("text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 px-1", labelClassName)}>Target History</label>
       <div className="flex flex-wrap gap-2">
         {uniqueBeaches.map((search: UserSearch) => {
           const isSelected = selectedBeachId === search.beach?.id;
@@ -92,10 +94,10 @@ export default function RecentBeachSearch({
               key={search.id}
               onClick={() => handleButtonClick(search)}
               className={cn(
-                "group flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border shadow-sm",
+                "group flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border",
                 isSelected
-                  ? "bg-slate-900 border-slate-800 text-white shadow-lg shadow-slate-200"
-                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+                  ? "bg-slate-900 border-slate-800 text-white"
+                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
               )}
             >
               <MapPin className={cn("w-3 h-3", isSelected ? "text-white" : "text-slate-400 group-hover:text-indigo-500")} />

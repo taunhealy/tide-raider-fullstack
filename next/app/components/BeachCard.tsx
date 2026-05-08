@@ -19,7 +19,8 @@ import {
   Wind, 
   Droplets, 
   MapPin, 
-  Gem 
+  Gem,
+  Check
 } from "lucide-react";
 import AIReportModal from "./beach/AIReportModal";
 import BeachDetailsModal from "@/app/components/BeachDetailsModal";
@@ -177,24 +178,42 @@ const BeachCard = memo(function BeachCard({
 
   const renderRating = () => {
     // Convert 0-10 score to 1-5 star rating consistent with backend logic
-    const starsToFill = Math.floor((score || 0) / 2);
+    const starsToFill = Math.round((score || 0) / 2);
     
     return (
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((rating) => {
-          const filled = rating <= starsToFill;
-          return (
-            <Star
-              key={rating}
-              className={cn(
-                "w-4 h-4",
-                filled
-                  ? "text-[var(--color-tertiary)] fill-current"
-                  : "text-gray-300"
-              )}
-            />
-          );
-        })}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((rating) => {
+            const filled = rating <= starsToFill;
+            return (
+              <Star
+                key={rating}
+                className={cn(
+                  "w-4 h-4",
+                  filled
+                    ? "text-[var(--color-tertiary)] fill-current"
+                    : "text-gray-300"
+                )}
+              />
+            );
+          })}
+        </div>
+        {(beach.hasAIReport || beach.hasFreshIntel) && (
+          <div 
+            className={cn(
+              "flex items-center gap-1 px-1.5 py-0.5 rounded-md border",
+              beach.hasRecentAIReport 
+                ? "bg-indigo-50 text-indigo-500 border-indigo-100 shadow-[0_0_10px_-2px_rgba(79,70,229,0.3)] animate-pulse"
+                : "bg-gray-50 text-gray-400 border-gray-100"
+            )}
+            title={beach.hasRecentAIReport ? "Recent Strategic Intel Available" : "Historical Intel Available in Archive"}
+          >
+            <Sparkles className={cn("w-2.5 h-2.5", beach.hasRecentAIReport ? "fill-indigo-500/20 text-indigo-500" : "text-gray-500")} />
+            <span className="text-[8px] font-black uppercase tracking-tighter">
+              {beach.hasRecentAIReport ? "Intel" : "Archive"}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -351,6 +370,29 @@ const BeachCard = memo(function BeachCard({
                         {isLocked ? "Secret Region" : formatRegionName(beach.region?.name, beach.regionId)}
                       </span>
                     </h6>
+
+                    {/* Most Accurate Source Indicator */}
+                    {!isLocked && beach.mostAccurateSource && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-100 rounded-full">
+                          <Check className="w-2.5 h-2.5" />
+                          <span className="text-[9px] font-black uppercase tracking-wider">
+                            Verified Source: {
+                              beach.mostAccurateSource === "WINDFINDER" ? "Alpha" :
+                              beach.mostAccurateSource === "WINDGURU" ? "Beta" :
+                              beach.mostAccurateSource === "WINDY" ? "Gamma" :
+                              beach.mostAccurateSource === "TIDE_RAIDER" ? "Delta" :
+                              beach.mostAccurateSource
+                            }
+                          </span>
+                        </div>
+                        {beach.sourceAccuracyCount && beach.sourceAccuracyCount > 0 && (
+                          <span className="text-[9px] font-bold text-gray-400">
+                            ({beach.sourceAccuracyCount} logs)
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -367,14 +409,22 @@ const BeachCard = memo(function BeachCard({
                     <button
                       type="button"
                       onClick={handleOpenAIModal}
-                      className="p-1.5 md:p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors group/ai relative"
-                      aria-label="AI Weekly Report"
+                      className={cn(
+                        "p-1.5 md:p-2 rounded-full transition-all group/ai relative",
+                        beach.hasRecentAIReport 
+                          ? "bg-indigo-50 hover:bg-indigo-100 shadow-lg shadow-indigo-500/10"
+                          : "bg-gray-50 hover:bg-gray-100 grayscale opacity-60 hover:opacity-100 hover:grayscale-0"
+                      )}
+                      title={beach.hasRecentAIReport ? "Recent Strategic Intel Available" : "Open Intelligence Terminal"}
                     >
-                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 text-[6px] text-white items-center justify-center font-bold">AI</span>
-                      </span>
+                      <Sparkles className={cn("w-4 h-4 md:w-5 md:h-5", beach.hasRecentAIReport ? "text-indigo-400" : "text-gray-500")} />
+                      
+                      {beach.hasRecentAIReport && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-indigo-400"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 text-[6px] text-white items-center justify-center font-bold bg-indigo-500">AI</span>
+                        </span>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -753,13 +803,24 @@ const BeachCard = memo(function BeachCard({
                         e.stopPropagation();
                         setIsAIModalOpen(true);
                       }}
-                      className="p-1.5 md:p-2 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors group/ai relative"
-                      aria-label="AI Weekly Report"
+                      className={cn(
+                        "p-1.5 md:p-2 rounded-full transition-colors group/ai relative",
+                        beach.hasFreshIntel 
+                          ? "bg-purple-50 hover:bg-purple-100" 
+                          : "bg-blue-50 hover:bg-blue-100"
+                      )}
+                      title={beach.hasFreshIntel ? "Community Intel Available for this week" : "AI Weekly Report"}
                     >
-                      <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                      <Sparkles className={cn("w-4 h-4 md:w-5 md:h-5", beach.hasFreshIntel ? "text-purple-600" : "text-blue-600")} />
                       <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 text-[6px] text-white items-center justify-center font-bold">AI</span>
+                        <span className={cn(
+                          "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                          beach.hasFreshIntel ? "bg-purple-400" : "bg-blue-400"
+                        )}></span>
+                        <span className={cn(
+                          "relative inline-flex rounded-full h-3 w-3 text-[6px] text-white items-center justify-center font-bold",
+                          beach.hasFreshIntel ? "bg-purple-500" : "bg-blue-500"
+                        )}>AI</span>
                       </span>
                     </button>
                     <button

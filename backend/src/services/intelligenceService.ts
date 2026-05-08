@@ -35,19 +35,36 @@ export class IntelligenceService {
       reportDate.setUTCHours(0, 0, 0, 0);
 
       if (beachRef) {
+         // Check for ANY existing report for this beach/date/persona (Crowdfunded model)
          const dbReport = await prisma.intelligenceReport.findFirst({
             where: {
               beachId: beachRef.id,
-              userId: null, // Global cache reports have no user ID
               date: reportDate,
               persona: persona,
               duration: 1
+            },
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  instagram: true,
+                  link: true
+                }
+              }
             }
          });
          
          if (dbReport) {
-            this.cache[cacheKey] = { report: dbReport.content, timestamp: Date.now() };
-            return dbReport.content;
+            let content = dbReport.content;
+            // Add pioneer credit if it was a user-generated report
+            if (dbReport.user) {
+              const pioneerInfo = `\n\n---
+*Intelligence pioneered by **${dbReport.user.name}***
+${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.instagram.replace('@', '')})` : ''} ${dbReport.user.link ? `| [Website](${dbReport.user.link})` : ''}`;
+              content += pioneerInfo;
+            }
+            this.cache[cacheKey] = { report: content, timestamp: Date.now() };
+            return content;
          }
       }
 
@@ -55,7 +72,7 @@ export class IntelligenceService {
         where: {
           regionId: beachRef?.regionId || "western-cape",
           date: reportDate,
-          source: "WINDFINDER"
+          // source: "WINDFINDER" // Allow any source to provide data for the report
         }
       });
 
@@ -74,7 +91,7 @@ export class IntelligenceService {
             where: {
                intel_history_unique: {
                   beachId: beachRef.id,
-                  userId: null,
+                  userId: "cmnhjq35d000cs60fxss02p4o",
                   date: reportDate,
                   persona: persona,
                   duration: 1
@@ -83,7 +100,7 @@ export class IntelligenceService {
             update: { content: report },
             create: {
                beachId: beachRef.id,
-               userId: null,
+               userId: "cmnhjq35d000cs60fxss02p4o",
                date: reportDate,
                persona: persona,
                content: report,
@@ -143,13 +160,48 @@ export class IntelligenceService {
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + days);
 
+    // 2b. Check if an identical report already exists (Community Sharing)
+    const existingCommunityReport = await prisma.intelligenceReport.findFirst({
+      where: {
+        beachId,
+        date: startDate,
+        persona: (personaOverride || "AUTO").toUpperCase(),
+        duration: days,
+        category: category.toUpperCase()
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            instagram: true,
+            link: true
+          }
+        }
+      }
+    });
+
+    if (existingCommunityReport) {
+      console.log(`[IntelligenceService] 🤝 Found existing community report. Sharing access.`);
+      return {
+        id: existingCommunityReport.id,
+        report: existingCommunityReport.content,
+        presenterName: existingCommunityReport.persona,
+        creditsRemaining: user.credits,
+        pioneer: existingCommunityReport.user ? {
+          name: existingCommunityReport.user.name,
+          instagram: existingCommunityReport.user.instagram,
+          link: existingCommunityReport.user.link
+        } : null
+      };
+    }
+
     // 3. Deduct credit immediately (Atomic update)
     let updatedUser;
     try {
       updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { credits: { decrement: creditCost } },
-        select: { id: true, credits: true }
+        select: { id: true, credits: true, name: true, instagram: true, link: true }
       });
       console.log(`[IntelligenceService] 💸 Credits deducted. Remaining: ${updatedUser.credits}`);
     } catch (error) {
@@ -176,15 +228,30 @@ export class IntelligenceService {
 
       // 5. Generate Report
 
-      const forecasts = await prisma.forecast.findMany({
+      // 5. Generate Report
+      // Prefer WINDY as it contains richer triple-swell data
+      let forecasts = await prisma.forecast.findMany({
         where: {
           regionId: beachRef.regionId,
           date: { gte: startDate, lt: endDate },
           timeSlot: "NOON",
-          source: "WINDFINDER"
+          source: "WINDY"
         },
         orderBy: { date: 'asc' }
       });
+
+      // Fallback to WINDFINDER if WINDY data is missing
+      if (forecasts.length === 0) {
+        forecasts = await prisma.forecast.findMany({
+          where: {
+            regionId: beachRef.regionId,
+            date: { gte: startDate, lt: endDate },
+            timeSlot: "NOON",
+            source: "WINDFINDER"
+          },
+          orderBy: { date: 'asc' }
+        });
+      }
 
       console.log(`[IntelligenceService] 📊 Found ${forecasts.length} noon forecasts for the next ${days} days`);
 
@@ -239,10 +306,21 @@ export class IntelligenceService {
            deductions = result?.deductions || [];
          }
          
-         const scoreDisplay = (scoreValue * 2).toFixed(1); // Scale to 10
-         const deductionStr = deductions.length > 0 ? ` (Deductions: ${deductions.join(', ')})` : "";
+          const scoreDisplay = (scoreValue * 2).toFixed(1); // Scale to 10
+          const deductionStr = deductions.length > 0 ? ` (Deductions: ${deductions.join(', ')})` : "";
 
-         return `${dateStr}: ${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°, wind ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${scoreDisplay}/10${deductionStr}`;
+          // Multi-Swell Data for AI Analysis
+          const mainSwell = `${f.swellHeight}m @ ${f.swellPeriod}s ${f.swellDirection}°`;
+          let secondarySwellStr = "";
+          if (f.swellHeight2 && f.swellHeight2 > 0) {
+            secondarySwellStr += `, Swell 2: ${f.swellHeight2}m @ ${f.swellPeriod2}s ${f.swellDirection2}°`;
+          }
+          if (f.swellHeight3 && f.swellHeight3 > 0) {
+            secondarySwellStr += `, Swell 3: ${f.swellHeight3}m @ ${f.swellPeriod3}s ${f.swellDirection3}°`;
+          }
+          const energyStr = f.swellEnergy && f.swellEnergy > 0 ? `, Energy: ${f.swellEnergy}kJ` : "";
+
+          return `${dateStr}: ${mainSwell}${secondarySwellStr}${energyStr}, Wind: ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${scoreDisplay}/10${deductionStr}`;
       }).join("\n");
 
       // Construct Spot Rules to guide the AI with specific expertise
@@ -321,10 +399,29 @@ export class IntelligenceService {
         }
       });
 
+      // 6. Find the report ID (since we used upsert, we need to fetch or handle result)
+      const savedReport = await prisma.intelligenceReport.findFirst({
+        where: {
+          beachId,
+          userId,
+          date: startDate,
+          persona,
+          duration: days,
+          category
+        },
+        select: { id: true }
+      });
+
       return { 
+        id: savedReport?.id,
         report: finalReport, 
         presenterName: activePersona.name,
-        creditsRemaining: updatedUser.credits
+        creditsRemaining: updatedUser.credits,
+        pioneer: {
+          name: updatedUser.name,
+          instagram: updatedUser.instagram,
+          link: updatedUser.link
+        }
       };
     } catch (error) {
       // REFUND ON FAILURE

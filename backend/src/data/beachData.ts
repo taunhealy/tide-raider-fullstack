@@ -335,14 +335,14 @@ export const beachData: Beach[] = [
     ],
   },
   {
-    id: "long-beach",
-    name: "Long Beach",
+    id: "365-kommetjie",
+    name: "365",
     continent: "Africa",
     countryId: "za",
     regionId: "western-cape",
     location: "Kommetjie",
+    optimalWindDirections: ["SE", "E", "NE"],
     distanceFromCT: 40,
-    optimalWindDirections: ["SE", "SSE", "S"],
     optimalSwellDirections: {
       min: 225,
       max: 245,
@@ -1710,13 +1710,13 @@ export const beachData: Beach[] = [
   },
   {
     id: "witsand",
-    name: "Witsand",
+    name: "Witsands",
     continent: "Africa",
     countryId: "za",
     regionId: "western-cape",
     location: "Kommetjie",
     distanceFromCT: 30,
-    optimalWindDirections: ["SE", "NW"],
+    optimalWindDirections: ["NE", "E"],
     optimalSwellDirections: {
       min: 195,
       max: 225,

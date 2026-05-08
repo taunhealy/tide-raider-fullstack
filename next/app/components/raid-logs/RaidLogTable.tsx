@@ -54,6 +54,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/app/components/ui/pagination";
 import { useContentGating } from "@/app/lib/gateUtils";
 import { getVideoThumbnail } from "@/app/lib/videoUtils";

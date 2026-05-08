@@ -17,9 +17,10 @@ async function checkData() {
       orderBy: { timeSlot: 'asc' }
     });
   
-  forecasts.forEach(f => {
-    console.log(`[${f.timeSlot}] Swell: ${f.swellHeight}m @ ${f.swellPeriod}s, Wind: ${f.windSpeed}kts`);
-  });
+    forecasts.forEach(f => {
+      console.log(`[${f.timeSlot}] Swell: ${f.swellHeight}m @ ${f.swellPeriod}s, Wind: ${f.windSpeed}kts`);
+    });
+  }
 
   await prisma.$disconnect();
 }

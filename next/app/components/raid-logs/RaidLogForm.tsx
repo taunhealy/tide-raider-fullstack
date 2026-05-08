@@ -209,7 +209,7 @@ export function RaidLogForm({
       
       await Promise.all(sources.map(async (source) => {
         try {
-          const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&forecastDate=${dateStr}&source=${source}&timeSlot=${surfTimeSlot}`;
+          const url = `/api/surf-conditions?regionId=${selectedBeach.regionId}&forecastDate=${dateStr}&source=${source}&timeSlot=${surfTimeSlot}&fallback=false`;
           const res = await fetch(url, { credentials: "include" });
           if (res.ok) {
             const data = await res.json();

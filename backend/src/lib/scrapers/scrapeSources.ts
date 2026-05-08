@@ -33,7 +33,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperB,
     },
     sourceC: {
-      url: "https://windy.app/forecast2/spot/89110/Muizenberg",
+      url: "https://www.windy.com/-34.359/18.497/ecmwfWaves/waves?waves,-34.506,18.520,10",
       scraper: scraperC,
     },
   },
@@ -48,10 +48,6 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       url: "https://www.windguru.cz/68531", // TODO: Find Windguru spot ID for Jeffreys Bay
       scraper: scraperB,
     },
-    sourceC: {
-      url: "https://windy.app/forecast2/spot/200805/Jeffreys+Bay+South+Africa",
-      scraper: scraperC,
-    },
   },
   "kwazulu-natal": {
     regionId: "kwazulu-natal",
@@ -63,10 +59,6 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     sourceB: {
       url: "https://www.windguru.cz/4865", // TODO: Find Windguru spot ID for Durban Bluff
       scraper: scraperB,
-    },
-    sourceC: {
-      url: "https://windy.app/forecast2/spot/30655/Durban", // TODO: Verify WINDY spot ID for Durban Bluff
-      scraper: scraperC,
     },
   },
   "northern-cape": {
@@ -164,10 +156,6 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       url: "https://www.windguru.cz/335490", // TODO: Find Windguru spot ID for Maputo Costa do Sol
       scraper: scraperB,
     },
-    sourceC: {
-      url: "https://windy.app/forecast2/spot/175672/Tofo+Beach+Praia+Tofo",
-      scraper: scraperC,
-    },
   },
   zambia: {
     regionId: "zambia",
@@ -191,10 +179,6 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     sourceB: {
       url: "https://www.windguru.cz/50205", // TODO: Find Windguru spot ID for Cabo Ledo
       scraper: scraperB,
-    },
-    sourceC: {
-      url: "https://windy.app/forecast2/spot/326137/Luanda+Ilha+de+Luanda",
-      scraper: scraperC,
     },
   },
   benguela: {
@@ -243,10 +227,6 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
     sourceB: {
       url: "https://www.windguru.cz/185336", // TODO: Find Windguru spot ID for Bali Uluwatu
       scraper: scraperB,
-    },
-    sourceC: {
-      url: "https://windy.app/forecast2/spot/63559/Uluwatu+Beach+Indonesia+Pantai+Uluwatu",
-      scraper: scraperC,
     },
   },
   "puntarenas-province": {

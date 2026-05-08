@@ -154,6 +154,7 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
         id: { in: matchingIds }
       },
       include: {
+        region: true,
         conditionProfiles: {
           where: { category: "GENERAL" }
         },
@@ -205,6 +206,55 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
   } catch (error) {
     console.error("[beaches/search] Unexpected error:", error);
     return res.json([]);
+  }
+});
+
+// GET /api/beaches/:id/rating?date=2024-04-18
+// Simplified endpoint for live dashboards
+router.get("/:id/rating", dataRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const dateParam = req.query.date as string || new Date().toISOString().split('T')[0];
+    const source = req.query.source as string || "WINDFINDER";
+
+    const [year, month, day] = dateParam.split("-").map(Number);
+    const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const nextDay = new Date(targetDate);
+    nextDay.setUTCDate(targetDate.getUTCDate() + 1);
+
+    console.log(`[beaches/:id/rating] Searching for: beachId=${id}, dateRange=[${targetDate.toISOString()}, ${nextDay.toISOString()}], source=${source}`);
+
+    const scoreRecord = await prisma.beachDailyScore.findFirst({
+      where: {
+        beachId: id,
+        date: {
+          gte: targetDate,
+          lt: nextDay
+        },
+        source: source
+      },
+      select: { 
+        score: true,
+        conditions: true
+      },
+      orderBy: { date: 'asc' } // Pick the earliest for the day if multiples exist
+    });
+
+    if (!scoreRecord) {
+      console.log(`[beaches/:id/rating] ❌ No score found for ${id} on ${dateParam} (${source})`);
+    } else {
+      console.log(`[beaches/:id/rating] ✅ Found score: ${scoreRecord.score}`);
+    }
+
+    res.json({ 
+      beachId: id,
+      date: dateParam,
+      score: scoreRecord?.score ?? 0,
+      conditions: scoreRecord?.conditions || null
+    });
+  } catch (error) {
+    console.error("Failed to fetch beach rating:", error);
+    res.json({ score: 0 }); // Fail gracefully for dashboard
   }
 });
 
@@ -334,34 +384,47 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/beaches/:id/rating?date=2024-04-18
-// Simplified endpoint for live dashboards
-router.get("/:id/rating", dataRateLimiter, async (req: Request, res: Response) => {
+// POST /api/beaches/:id/accuracy-vote
+// Manual accuracy logging for admins and users
+router.post("/:id/accuracy-vote", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const dateParam = req.query.date as string || new Date().toISOString().split('T')[0];
-    const source = req.query.source as string || "WINDFINDER";
+    const { source } = req.body;
 
-    const [year, month, day] = dateParam.split("-").map(Number);
-    const targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    if (!source) {
+      return res.status(400).json({ error: "Source is required" });
+    }
 
-    const scoreRecord = await prisma.beachDailyScore.findFirst({
+    const accuracy = await prisma.beachSourceAccuracy.upsert({
       where: {
-        beachId: id,
-        date: targetDate,
-        source: source
+        beachId_source: {
+          beachId: id,
+          source: source as any,
+        },
       },
-      select: { score: true }
+      create: {
+        beachId: id,
+        source: source as any,
+        voteCount: 1,
+      },
+      update: {
+        voteCount: { increment: 1 },
+      },
     });
 
-    res.json({ 
-      beachId: id,
-      date: dateParam,
-      score: scoreRecord?.score ?? 0 
-    });
+    // Clear related caches
+    const cacheKeyAll = `beaches:list:all`;
+    await redis.del(cacheKeyAll);
+    
+    // Also clear the specific beach cache if it exists (though usually it's by name/id)
+    // For simplicity, we just clear the main lists
+    
+    console.log(`[beaches] Accuracy vote recorded for ${id} -> ${source}`);
+
+    res.json({ success: true, accuracy });
   } catch (error) {
-    console.error("Failed to fetch beach rating:", error);
-    res.json({ score: 0 }); // Fail gracefully for dashboard
+    console.error("Failed to submit accuracy vote:", error);
+    res.status(500).json({ error: "Failed to submit accuracy vote" });
   }
 });
 

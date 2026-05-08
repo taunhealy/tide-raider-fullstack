@@ -1,23 +1,11 @@
 {
-  "count": 30,
+  "count": 9,
   "daysFound": [
-    "Thursday, May 07",
     "Friday, May 08",
     "Saturday, May 09",
-    "Sunday, May 10",
-    "Monday, May 11",
-    "Tuesday, May 12",
-    "Wednesday, May 13",
-    "Thursday, May 14",
-    "Friday, May 15",
-    "Saturday, May 16"
+    "Sunday, May 10"
   ],
   "summary": {
-    "2026-05-07": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
     "2026-05-08": [
       "MORNING",
       "NOON",
@@ -29,36 +17,6 @@
       "EVENING"
     ],
     "2026-05-10": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-11": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-12": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-13": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-14": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-15": [
-      "MORNING",
-      "NOON",
-      "EVENING"
-    ],
-    "2026-05-16": [
       "MORNING",
       "NOON",
       "EVENING"

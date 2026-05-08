@@ -45,26 +45,26 @@ function extractWindfinderData() {
   };
 
   // Day detection: Try class-based sections first, then fallback to header-based splitting
-  let daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"], [class*="day-container"], [class*="day-section"], [class*="DaySection"]'));
+  let daySections = Array.from(document.querySelectorAll('.fc-day, [class*="_day_"], .forecast-day, [class*="day-wrapper"], [class*="day-container"], [class*="day-section"], [class*="DaySection"], [class*="FcTableDay"]'));
   
   if (daySections.length === 0) {
     console.log("⚠️ No class-based day sections found. Falling back to header-based detection...");
-    // Find all day headers
-    const headers = Array.from(document.querySelectorAll('h3, h4, [class*="header"], [class*="daylabel"]'))
-      .filter(h => h.innerText.match(/\w+, \w+ \d+/)); // e.g. "Monday, May 04"
+    // Find all day headers - updated to match "Friday, May 08" pattern
+    const headers = Array.from(document.querySelectorAll('h3, h4, [class*="header"], [class*="daylabel"], [class*="DayHeader"]'))
+      .filter(h => h.innerText.match(/\w+, \w+ \d+/) || h.innerText.match(/(?:Today|Tomorrow|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i));
     
     if (headers.length > 0) {
-      // Group elements between headers
       daySections = headers.map((header, idx) => {
         const nextHeader = headers[idx + 1];
         const section = document.createElement('div');
         section.appendChild(header.cloneNode(true));
-        let next = header.nextElementSibling;
-        while (next && next !== nextHeader) {
+        
+        // Find the nearest common ancestor or just siblings
+        let next = header.nextElementSibling || header.parentElement?.nextElementSibling;
+        while (next && (!nextHeader || !next.contains(nextHeader)) && next !== nextHeader) {
           section.appendChild(next.cloneNode(true));
           next = next.nextElementSibling;
         }
-        // Artificial class to help our internal selectors
         section.className = 'pseudo-day-section';
         return section;
       });
@@ -76,27 +76,28 @@ function extractWindfinderData() {
     if (!headerEl) return null;
     const dateText = headerEl.textContent.trim().split('\n')[0];
     
-    const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell, [class*="Column"], [class*="Cell"]'))
+    // Find all columns (hour cells)
+    const columns = Array.from(day.querySelectorAll('.fc-table-horizon, .forecast-column, [class*="column"], [class*="col"], td, .forecast-row__cell, [class*="Column"], [class*="Cell"], [class*="HourCell"]'))
       .filter(el => {
          const t = el.textContent || "";
+         // Match "07h", "08:00", etc.
          return /(\d{1,2}h|\d{2}:\d{2})/.test(t) && t.length < 50; 
       });
 
-    // Optimize: Index rows by label once per day
-    const rowEls = Array.from(day.querySelectorAll('.forecast-row, [class*="row"], [class*="_row_"]'));
+    // Row mapping: Search for labels and identify their parent row/container
     const rowMap = {};
-    rowEls.forEach(r => {
-      const labelEl = r.querySelector('._label-cell, .row-label, [class*="label"], [class*="tide"]');
-      const label = labelEl?.textContent.toLowerCase().trim() || "";
-      const name = r.getAttribute('data-row-name') || "";
-      const rowClasses = r.className.toLowerCase();
-      
-      if (name) rowMap[name] = r;
-      if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave') && !label.includes('gust')) rowMap['wind-speed'] = r;
-      if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = r;
-      if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = r;
-      if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = r;
-      if (label.includes('tide') || label.includes('maritime') || rowClasses.includes('tide')) rowMap['tide-type'] = r;
+    const possibleLabels = Array.from(day.querySelectorAll('._label_9d49l_73, [class*="label"], [class*="Label"], span, a'));
+    
+    possibleLabels.forEach(labelEl => {
+      const label = labelEl.textContent.toLowerCase().trim();
+      const parentRow = labelEl.closest('.forecast-row, [class*="row"], [class*="Row"], [class*="row-wrapper"]');
+      if (!parentRow) return;
+
+      if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave') && !label.includes('gust')) rowMap['wind-speed'] = parentRow;
+      if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = parentRow;
+      if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = parentRow;
+      if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = parentRow;
+      if (label.includes('tide') || label.includes('maritime') || label.includes('tide height')) rowMap['tide-type'] = parentRow;
     });
 
     const rows = columns.map(col => {

@@ -20,7 +20,7 @@ interface GradientButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
   badge?: string | number;
   fullWidth?: boolean;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 const variantStyles: Record<GradientButtonVariant, { active: string; inactive: string }> = {

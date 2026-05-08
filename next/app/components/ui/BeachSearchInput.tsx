@@ -16,6 +16,7 @@ interface BeachSearchInputProps {
   onBeachSelect?: (beach: Beach | null) => void;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
   showSelectedBadge?: boolean;
   minSearchLength?: number;
   regionId?: string | null;
@@ -27,6 +28,7 @@ export function BeachSearchInput({
   onBeachSelect,
   placeholder = "Search beaches...",
   className,
+  inputClassName,
   showSelectedBadge = true,
   minSearchLength = 2,
   regionId,
@@ -200,7 +202,8 @@ export function BeachSearchInput({
           className={cn(
             "flex h-11 w-full rounded-lg border border-gray-200 bg-white px-10 py-2 text-sm ring-offset-background font-primary",
             "placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:bg-gray-50 focus-visible:border-gray-300",
-            "transition-all duration-200"
+            "transition-all duration-200",
+            inputClassName
           )}
         />
         {isLoading && (
@@ -226,7 +229,9 @@ export function BeachSearchInput({
                 >
                   <div className="font-medium font-primary">{beach.name}</div>
                   <div className="text-sm text-gray-500 font-primary">
-                    {beach.location ? `${beach.location}, ` : ""}{beach.region?.name}, {beach.countryId}
+                    {[beach.location, beach.region?.name, beach.countryId]
+                      .filter(Boolean)
+                      .join(", ")}
                   </div>
                 </button>
               ))}

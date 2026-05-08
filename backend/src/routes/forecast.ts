@@ -52,13 +52,18 @@ router.get(
         where: {
           OR: [
             { id: regionIdParam },
-            { name: { equals: nameFromSlug, mode: "insensitive" } },
+            { countryId: regionIdParam },
             { name: { equals: regionIdParam, mode: "insensitive" } },
+            { name: { equals: nameFromSlug, mode: "insensitive" } },
             { name: { contains: regionIdParam, mode: "insensitive" } },
             { name: { contains: nameFromSlug, mode: "insensitive" } },
           ],
         },
-        select: { id: true, name: true }, // Only select what we need
+        orderBy: [
+          // This is a trick to prioritize exact matches if multiple regions match
+          { id: 'asc' }
+        ],
+        select: { id: true, name: true },
       });
 
       if (!region) {

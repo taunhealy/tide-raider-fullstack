@@ -131,12 +131,14 @@ export function useSubscriptionStatus() {
     hasActiveTrial,
     isSubscribed,
     isPremium,
-    credits: subscriptionData?.credits || 0,
+    // Use session credits as a fallback if the specific subscription query is still loading
+    credits: subscriptionData?.credits ?? session?.user?.credits ?? 0,
     referralCode: subscriptionData?.referralCode || null,
     paypalSubscriptionId: subscriptionData?.paypalSubscriptionId || null,
-    // Only show loading if auth is loading OR subscription query is loading
+    // Only show loading if we have NO credit info at all and both auth and query are pending
     isLoading:
-      authStatus === "loading" || (authStatus === "authenticated" && isLoading),
+      authStatus === "loading" || 
+      (authStatus === "authenticated" && isLoading && subscriptionData === undefined && session?.user?.credits === undefined),
     error,
   };
 }

@@ -61,13 +61,23 @@ export function useFilteredBeaches({
       "forecastSourceChanged",
       handleSourceChange as EventListener
     );
+
+    const handleIntelligenceUpdate = () => {
+      console.log("[useFilteredBeaches] Intelligence updated, refreshing breaks...");
+      queryClient.invalidateQueries({ queryKey: ["filteredBeaches"] });
+      queryClient.invalidateQueries({ queryKey: ["beachMarkers"] });
+    };
+
+    window.addEventListener("intelligence-updated", handleIntelligenceUpdate);
+
     return () => {
       window.removeEventListener(
         "forecastSourceChanged",
         handleSourceChange as EventListener
       );
+      window.removeEventListener("intelligence-updated", handleIntelligenceUpdate);
     };
-  }, []);
+  }, [queryClient]);
 
   // Source is now managed via localStorage and events from WeatherForecastWidget
   // No need for complex query cache detection

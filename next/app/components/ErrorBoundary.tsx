@@ -6,7 +6,7 @@ import { Button } from "./ui/Button";
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: (reset: () => void) => ReactNode;
 }
 
 interface State {
@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
-      if (this.fallback) return this.fallback;
+      if (this.props.fallback) return this.props.fallback(() => this.setState({ hasError: false, error: null }));
 
       return (
         <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center bg-white rounded-3xl border border-red-100 shadow-sm">

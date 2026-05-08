@@ -30,8 +30,8 @@ export function BlueStarRating({
   size?: number;
 }) {
   const scoreOutOfFive = outOfFive ? score : score / 2;
-  const fullStars = Math.floor(scoreOutOfFive);
-  const hasHalfStar = outOfFive ? false : score % 2 === 1;
+  const fullStars = Math.round(scoreOutOfFive);
+  const hasHalfStar = false;
 
   return (
     <div className="flex gap-1">

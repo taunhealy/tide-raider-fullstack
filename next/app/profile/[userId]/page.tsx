@@ -16,12 +16,16 @@ import { client } from "@/app/lib/sanity";
 import { Shield, MapPin, Zap, Calendar, Instagram } from "lucide-react";
 import { formatDate } from "@/app/lib/utils";
 import UserLogsSection from "@/app/components/profile/UserLogsSection";
+import UserReportsSection from "@/app/components/profile/UserReportsSection";
 import NationalitySelector from "@/app/components/profile/NationalitySelector";
+import { User, Activity, TrendingUp } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { data: session } = useBackendAuth();
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [activeTab, setActiveTab] = useState<"identity" | "logs" | "reports">("identity");
 
   const {
     data: userData,
@@ -165,33 +169,76 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Right Column: Profile Identity Settings */}
+          {/* Right Column: Profile Content Tabs */}
           <div className="lg:flex-1">
-             <div className="bg-white border border-slate-200 rounded-[40px] p-2 shadow-sm min-h-[600px] flex flex-col">
-                <div className="p-8 pb-4">
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Operator Profile</h2>
-                  <p className="text-slate-500 font-medium">Configure your tactical metadata and deployment settings.</p>
+             <div className="bg-white border border-slate-200 rounded-[40px] shadow-sm min-h-[700px] flex flex-col overflow-hidden">
+                {/* Tab Navigation */}
+                <div className="bg-slate-50/50 border-b border-slate-100 px-4 pt-4">
+                  <div className="flex gap-2">
+                    {[
+                      { id: "identity", label: "Identity", icon: User },
+                      { id: "logs", label: "Mission Logs", icon: Activity },
+                      { id: "reports", label: "Tactical Reports", icon: TrendingUp }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                          "px-6 py-4 rounded-t-2xl flex items-center gap-2.5 text-[11px] font-black uppercase tracking-widest transition-all",
+                          activeTab === tab.id
+                            ? "bg-white border-x border-t border-slate-200 text-indigo-600 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]"
+                            : "text-slate-400 hover:text-slate-600"
+                        )}
+                      >
+                        <tab.icon className={cn("w-3.5 h-3.5", activeTab === tab.id ? "text-indigo-500" : "text-slate-400")} />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                
-                <div className="flex-1 p-2">
-                  <BioSection
-                    className="p-6"
-                    initialBio={userData?.bio}
-                    initialLink={userData?.link}
-                    initialInstagram={userData?.instagram}
-                    initialEmail={userData?.email}
-                    initialWhatsappNumber={userData?.whatsappNumber}
-                    isOwnProfile={isOwnProfile}
-                    userId={userId}
-                  />
+
+                <div className="flex-1 flex flex-col">
+                  {activeTab === "identity" && (
+                    <div className="p-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="p-8 pb-4">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Operator Identity</h2>
+                        <p className="text-slate-500 font-medium">Configure your tactical metadata and deployment settings.</p>
+                      </div>
+                      <BioSection
+                        className="p-6"
+                        initialBio={userData?.bio}
+                        initialLink={userData?.link}
+                        initialInstagram={userData?.instagram}
+                        initialEmail={userData?.email}
+                        initialWhatsappNumber={userData?.whatsappNumber}
+                        isOwnProfile={isOwnProfile}
+                        userId={userId}
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === "logs" && (
+                    <div className="p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Mission Log History</h2>
+                        <p className="text-slate-500 font-medium">Chronological record of verified field logs and surf entries.</p>
+                      </div>
+                      <UserLogsSection userId={userId} />
+                    </div>
+                  )}
+
+                  {activeTab === "reports" && (
+                    <div className="p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Intelligence</h2>
+                        <p className="text-slate-500 font-medium">Archived AI briefings and strategic window analyses anchored by this operator.</p>
+                      </div>
+                      <UserReportsSection userId={userId} />
+                    </div>
+                  )}
                 </div>
              </div>
           </div>
-        </div>
-
-        {/* User Logs Section */}
-        <div className="mt-12 mb-20">
-           <UserLogsSection userId={userId} />
         </div>
       </div>
       

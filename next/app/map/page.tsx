@@ -46,6 +46,59 @@ export default function GlobalMapPage() {
   // Source selection state (shared with WeatherForecastWidget)
   const [selectedSource, setSelectedSource] = useState<string>("WINDFINDER");
 
+  // Track which beaches have full scores loaded
+  const [beachesWithScores, setBeachesWithScores] = useState<Set<string>>(new Set());
+
+  const fetchDetailedScores = async (ids: string[]) => {
+    // Filter out IDs that already have scores
+    const missingIds = ids.filter(id => !beachesWithScores.has(id));
+    if (missingIds.length === 0) return;
+
+    // Limit to 40 beaches per request to keep it fast
+    const batch = missingIds.slice(0, 40);
+
+    try {
+      const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
+      const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
+      
+      const res = await fetch(`/api/map-data?ids=${batch.join(',')}${sourceParam}${timeSlotParam}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.beaches) {
+          setBeaches(prev => {
+            const newBeaches = [...prev];
+            data.beaches.forEach((detailedBeach: Beach) => {
+              const idx = newBeaches.findIndex(b => b?.id === detailedBeach.id);
+              if (idx !== -1) {
+                // Merge detailed data into existing marker data
+                newBeaches[idx] = { ...newBeaches[idx], ...detailedBeach };
+              }
+            });
+            return newBeaches;
+          });
+          setBeachesWithScores(prev => {
+            const next = new Set(prev);
+            batch.forEach(id => next.add(id));
+            return next;
+          });
+        }
+      }
+    } catch (error) {
+      console.error("[GlobalMap] Background sync failed:", error);
+    }
+  };
+
+  const [lastMoveTime, setLastMoveTime] = useState(0);
+  const moveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMapMove = (visibleIds: string[]) => {
+    if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
+    
+    moveTimeoutRef.current = setTimeout(() => {
+      fetchDetailedScores(visibleIds);
+    }, 500); // 500ms debounce
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
@@ -141,22 +194,27 @@ export default function GlobalMapPage() {
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
-        const res = await fetch(`/api/map-data?${sourceParam}${timeSlotParam}`);
         
-        if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status}`);
+        // 🚀 LITE SYNC: Load markers and basic metadata globally
+        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}`);
+        if (liteRes.ok) {
+          const liteData = await liteRes.json();
+          if (liteData.beaches) {
+            setBeaches(liteData.beaches);
+            setLoading(false); 
+          }
         }
         
-        const data = await res.json();
-        if (data.beaches) {
-          setBeaches(data.beaches);
-        }
+        // NOTE: Full scores are now fetched dynamically via onMoveEnd
       } catch (error) {
         console.error("Error fetching map data:", error);
       } finally {
         setLoading(false);
       }
     }
+    
+    // Clear score cache when source or slot changes
+    setBeachesWithScores(new Set());
     fetchData();
   }, [selectedSource, filters.timeSlot]);
 
@@ -620,6 +678,7 @@ export default function GlobalMapPage() {
                 }}
                 showWindHeatmap={showWindHeatmap}
                 showSwellHeatmap={showSwellHeatmap}
+                onMoveEnd={handleMapMove}
               />
             </div>
           ) : (

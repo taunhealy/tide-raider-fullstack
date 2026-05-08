@@ -54,6 +54,7 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
     if (!isOwner) {
       delete (user as any).email;
       delete (user as any).whatsappNumber;
+      delete (user as any).credits;
     }
 
     return res.json(user);

@@ -152,17 +152,22 @@ export function getConditionReasons(
   const optimalConditions = [
     {
       text: `Optimal Wind: ${windDirs.join(", ")}`,
-      isMet: hasGoodWind,
+      isMet: windDirs.some(dir => {
+        const optimalDeg = cardinalToDegreesMap[dir];
+        const diff = Math.abs(forecastData.windDirection - optimalDeg);
+        const angleDiff = Math.min(diff, 360 - diff);
+        return angleDiff <= 22.5; // Match backend 'suboptimal' threshold
+      }),
     },
     {
-      text: `Wind Speed: 0-25kts${forecastData.windSpeed > 25 && !beach.sheltered ? "" : ""}`,
+      text: `Wind Speed: 0-25kts`,
       isMet: forecastData.windSpeed <= 25 || beach.sheltered,
     },
     {
       text: `Optimal Swell Direction: ${swellDirs.min}° - ${swellDirs.max}°`,
       isMet:
-        swellDeg >= swellDirs.min &&
-        swellDeg <= swellDirs.max,
+        (swellDeg >= swellDirs.min - 5 && swellDeg <= swellDirs.max + 5) ||
+        (swellDirs.min > swellDirs.max && (swellDeg >= swellDirs.min - 5 || swellDeg <= swellDirs.max + 5)),
     },
     {
       text: `Optimal Wave Size: ${swellSz.min}m - ${swellSz.max}m`,
@@ -171,8 +176,8 @@ export function getConditionReasons(
     {
       text: `Optimal Swell Period: ${swellPd.min}s - ${swellPd.max}s`,
       isMet:
-        forecastData.swellPeriod >= swellPd.min &&
-        forecastData.swellPeriod <= swellPd.max,
+        Math.round(forecastData.swellPeriod) >= swellPd.min &&
+        Math.round(forecastData.swellPeriod) <= swellPd.max,
     },
   ];
 

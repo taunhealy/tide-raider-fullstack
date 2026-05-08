@@ -9,6 +9,7 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "esModuleInterop": true,
+    "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,

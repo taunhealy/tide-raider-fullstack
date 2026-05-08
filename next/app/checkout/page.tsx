@@ -1,5 +1,11 @@
+"use client";
+
 import { Zap, ShieldCheck, Sparkles, Waves, ArrowRight, Lock, CheckCircle2, CreditCard } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -8,7 +14,7 @@ export default function CheckoutPage() {
     isSubscribed,
     hasActiveTrial,
     isLoading: subscriptionLoading,
-  } = useSubscription();
+  } = useSubscriptionStatus();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);

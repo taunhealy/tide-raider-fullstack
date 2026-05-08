@@ -162,7 +162,7 @@ export default function BioSection({
                       placeholder="email@tideraider.com"
                     />
                   ) : (
-                    <div className="pl-12 py-3 text-slate-600 font-medium">{email || "Encrypted"}</div>
+                    <div className="pl-12 py-3 text-slate-400 font-medium italic">Secured Signal</div>
                   )}
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function BioSection({
                       placeholder="+27..."
                     />
                   ) : (
-                    <div className="pl-12 py-3 text-slate-600 font-medium">{whatsappNumber ? "Active Relay" : "Offline"}</div>
+                    <div className="pl-12 py-3 text-slate-400 font-medium italic">Relay Restricted</div>
                   )}
                 </div>
               </div>

@@ -201,6 +201,11 @@ export interface Beach {
     imageUrl?: string;
     surferName?: string;
   }[];
+  mostAccurateSource?: string | null;
+  sourceAccuracyCount?: number;
+  hasAIReport?: boolean;
+  hasFreshIntel?: boolean;
+  hasRecentAIReport?: boolean;
 }
 
 export interface AdSlot {

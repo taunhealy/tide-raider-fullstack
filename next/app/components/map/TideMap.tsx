@@ -56,6 +56,7 @@ interface TideMapProps {
   variant?: "hero" | "default";
   loading?: boolean;
   selectedDateString?: string;
+  onMoveEnd?: (visibleBeachIds: string[]) => void;
 }
 
 export default function TideMap({ 
@@ -70,7 +71,8 @@ export default function TideMap({
   showSwellHeatmap = false,
   selectedRegionId = null,
   loading = false,
-  selectedDateString = ""
+  selectedDateString = "",
+  onMoveEnd
 }: TideMapProps) {
   const mapElement = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,11 +86,31 @@ export default function TideMap({
   const selectedDateStringRef = useRef("");
   const beachesRef = useRef(beaches);
   const onRegionSelectRef = useRef(onRegionSelect);
+  const onBeachSelectRef = useRef(onBeachSelect);
+  const onAIReportClickRef = useRef(onAIReportClick);
+  const selectedRegionIdRef = useRef(selectedRegionId);
+  const onMoveEndRef = useRef(onMoveEnd);
 
-  // Sync ref with current prop to avoid closure issues in listeners
+  // Sync refs with current props to avoid closure issues in listeners
   useEffect(() => {
     onRegionSelectRef.current = onRegionSelect;
   }, [onRegionSelect]);
+
+  useEffect(() => {
+    onBeachSelectRef.current = onBeachSelect;
+  }, [onBeachSelect]);
+
+  useEffect(() => {
+    onAIReportClickRef.current = onAIReportClick;
+  }, [onAIReportClick]);
+
+  useEffect(() => {
+    selectedRegionIdRef.current = selectedRegionId;
+  }, [selectedRegionId]);
+
+  useEffect(() => {
+    onMoveEndRef.current = onMoveEnd;
+  }, [onMoveEnd]);
 
   // Particle System State
   const windParticles = useRef<any[]>([]);
@@ -552,7 +574,7 @@ export default function TideMap({
           const beach = representative.get("beach");
           setPopupBeach(beach);
           overlay.setPosition(evt.coordinate);
-          onBeachSelect(beach);
+          onBeachSelectRef.current(beach);
           
           // Fetch full beach details on demand
           if (beach?.id) {
@@ -593,57 +615,85 @@ export default function TideMap({
       }
     });
 
-    // Detect visible region on pan/zoom
+    // Detect visible region on pan/zoom with debouncing
+    let regionSelectTimeout: NodeJS.Timeout;
     initialMap.on("moveend", () => {
-      const gZoom = initialMap.getView().getZoom();
-      const center = initialMap.getView().getCenter();
-      if (!center || !gZoom || gZoom < 4) return;
-
-      const extent = initialMap.getView().calculateExtent(initialMap.getSize());
-      // We check clusterSource because that's what's actually on the layer
-      if (!clusterSourceRef.current) return;
+      clearTimeout(regionSelectTimeout);
       
-      const featuresInView = clusterSourceRef.current.getFeaturesInExtent(extent);
-      
-      if (featuresInView.length > 0) {
-        let closestFeature = null;
-        let minDistance = Infinity;
+      regionSelectTimeout = setTimeout(() => {
+        const gZoom = initialMap.getView().getZoom();
+        const center = initialMap.getView().getCenter();
+        if (!center || !gZoom) return;
 
-        featuresInView.forEach(f => {
-          const geom = f.getGeometry() as Point;
-          if (!geom) return;
-          const coord = geom.getCoordinates();
-          const dx = coord[0] - center[0];
-          const dy = coord[1] - center[1];
-          const dist = dx*dx + dy*dy;
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestFeature = f;
-          }
-        });
+        // If zoomed out very far, don't auto-select to avoid jitter
+        if (gZoom < 4) return;
 
-        if (closestFeature) {
-          const feature = closestFeature as Feature;
-          // For clusters, we need to look at the underlying features
-          const clusterFeatures = feature.get("features") || [];
-          if (clusterFeatures.length === 0) return;
-          
-          const representative = clusterFeatures[0];
-          const type = representative.get("type");
-          let targetRegion = "";
+        const extent = initialMap.getView().calculateExtent(initialMap.getSize());
+        if (!clusterSourceRef.current) return;
+        
+        let featuresInView = clusterSourceRef.current.getFeaturesInExtent(extent);
+        
+        // Fallback: If no features in current view, expand search slightly
+        if (featuresInView.length === 0) {
+          const buffer = (extent[2] - extent[0]) * 0.2;
+          const expandedExtent = [extent[0] - buffer, extent[1] - buffer, extent[2] + buffer, extent[3] + buffer];
+          featuresInView = clusterSourceRef.current.getFeaturesInExtent(expandedExtent);
+        }
 
-          if (type === "country" || type === "continent") {
-            targetRegion = representative.get("countryId") || representative.get("beach")?.countryId;
-          } else if (type === "beach") {
-            targetRegion = representative.get("beach")?.regionId || representative.get("beach")?.countryId;
-          }
+        if (featuresInView.length > 0) {
+          let closestFeature = null;
+          let minDistance = Infinity;
 
-          if (targetRegion && targetRegion !== selectedRegionId) {
-            console.log(`[TideMap] 📍 Auto-selecting region: ${targetRegion} (was: ${selectedRegionId})`);
-            onRegionSelectRef.current(targetRegion);
+          featuresInView.forEach(f => {
+            const geom = f.getGeometry() as Point;
+            if (!geom) return;
+            const coord = geom.getCoordinates();
+            const dx = coord[0] - center[0];
+            const dy = coord[1] - center[1];
+            const dist = dx*dx + dy*dy;
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestFeature = f;
+            }
+          });
+
+          if (closestFeature) {
+            const feature = closestFeature as Feature;
+            const clusterFeatures = feature.get("features") || [];
+            if (clusterFeatures.length === 0) return;
+            
+            const representative = clusterFeatures[0];
+            const type = representative.get("type");
+            let targetRegion = "";
+
+            if (type === "country" || type === "continent") {
+              targetRegion = representative.get("countryId") || representative.get("beach")?.countryId;
+            } else if (type === "beach") {
+              targetRegion = representative.get("beach")?.regionId || representative.get("beach")?.countryId;
+            }
+
+            if (targetRegion && targetRegion !== selectedRegionIdRef.current) {
+              console.log(`[TideMap] 📍 Auto-selecting region: ${targetRegion} (was: ${selectedRegionIdRef.current})`);
+              onRegionSelectRef.current(targetRegion);
+            }
           }
         }
-      }
+
+        // Notify parent of all visible beach IDs
+        if (onMoveEndRef.current) {
+          const visibleIds = featuresInView
+            .map(f => {
+              const cluster = f.get("features") || [];
+              return cluster.map((cf: any) => cf.get("beach")?.id);
+            })
+            .flat()
+            .filter(Boolean);
+          
+          if (visibleIds.length > 0) {
+            onMoveEndRef.current(visibleIds);
+          }
+        }
+      }, 300); // 300ms debounce
     });
 
     initialMap.on("pointermove", (evt) => {
@@ -688,7 +738,7 @@ export default function TideMap({
         feature.set("type", "continent");
         return feature;
       }).filter(Boolean) as Feature[];
-    } else if (currentZoom < 7) {
+    } else if (currentZoom < 5) {
       const countries: Record<string, Beach[]> = {};
       currentBeaches.forEach(b => {
         const cId = b.countryId || "unknown";
@@ -708,6 +758,7 @@ export default function TideMap({
         feature.set("beach", items[0]);
         feature.set("allBeaches", items);
         feature.set("type", "country");
+        feature.set("countryId", items[0].countryId);
         return feature;
       }).filter(Boolean) as Feature[];
     } else {
@@ -839,7 +890,7 @@ export default function TideMap({
                   {showConditions ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                 </button>
                 <button 
-                  onClick={() => onAIReportClick(popupBeach)}
+                  onClick={() => onAIReportClickRef.current(popupBeach)}
                   className="py-2.5 bg-white/5 border border-white/10 text-white rounded-xl text-[9px] font-bold tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                 >
                   AI Report

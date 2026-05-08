@@ -96,7 +96,9 @@ export async function scraperA(
             '[class*="hour"]',
             '.fc-table-horizon',
             '[class*="day-section"]',
-            '[class*="column"]'
+            '[class*="column"]',
+            '[class*="FcTable"]',
+            '.tabs-item'
           ];
           return selectors.some(s => !!document.querySelector(s));
         });
@@ -352,7 +354,11 @@ export async function scraperA(
     console.log(`✅ Successfully scraped ${forecasts.length} forecast(s) across ${new Set(forecasts.map(f => f.date.toISOString().split('T')[0])).size} days`);
     console.log("Scrape Summary:", JSON.stringify(summary, null, 2));
 
-    return forecasts;
+    return { 
+      forecasts, 
+      sourceUrl: currentUrl,
+      isSuperforecast: currentUrl.includes('weatherforecast')
+    };
   } catch (error) {
     console.error("\n❌ Scraping failed:", (error as Error).message);
     throw error;

@@ -12,17 +12,24 @@ export interface AlertMatch {
   alertName: string;
   region: string;
   timestamp: Date;
-  matchedProperties: Array<{
-    property: string;
-    logValue: any;
-    forecastValue: any;
-    difference: number;
-    withinRange: boolean;
+  slots: Array<{
+    slot: string;
+    matchedProperties: Array<{
+      property: string;
+      logValue: any;
+      forecastValue: any;
+      difference: number;
+      withinRange: boolean;
+    }>;
   }>;
   matchDetails: string;
 }
 
 export async function processUserAlerts(userId: string, today: Date) {
+  // Ensure today is at UTC midnight
+  const targetDate = new Date(today);
+  targetDate.setUTCHours(0, 0, 0, 0);
+
   const result = {
     alertsChecked: 0,
     notificationsSent: 0,
@@ -60,10 +67,7 @@ export async function processUserAlerts(userId: string, today: Date) {
     const todaysForecasts = await prisma.forecast.findMany({
       where: {
         regionId: { in: regions },
-        date: {
-          gte: new Date(new Date(today).setHours(0, 0, 0, 0)),
-          lt: new Date(new Date(today).setHours(23, 59, 59, 999)),
-        },
+        date: targetDate, // Exact date match for UTC 00:00:00
       },
     });
 
@@ -112,10 +116,7 @@ export async function processUserAlerts(userId: string, today: Date) {
         const ratingsData = await prisma.beachDailyScore.findMany({
           where: {
             beachId: { in: beachIds },
-            date: {
-              gte: todayStart,
-              lt: todayEnd,
-            },
+            date: targetDate,
           },
           select: {
             beachId: true,
@@ -157,45 +158,31 @@ export async function processUserAlerts(userId: string, today: Date) {
       try {
         result.alertsChecked++;
 
-        // Get the beach name and ID from logEntry or direct beach relation
         const beachName =
           (alert.logEntry as any)?.beach?.name ||
           (alert.beach as any)?.name ||
           "Unknown location";
         const beachId = (alert.logEntry as any)?.beach?.id || alert.beachId;
 
-        // Find today's forecasts for this alert's region and preferred sources
         const alertSources =
           alert.sources && alert.sources.length > 0
             ? alert.sources
-            : ["WINDFINDER"]; // Default to WINDFINDER if not specified
+            : ["WINDFINDER"];
 
-        // Get all matching forecasts for today (across all time slots)
         const matchingForecasts = todaysForecasts.filter(
           (f) => f.regionId === alert.regionId && alertSources.includes(f.source as any)
         );
 
-        if (matchingForecasts.length === 0 && (alert.alertType as any) === AlertType.VARIABLES) {
-          console.log(`No forecast found for region ${alert.regionId} today - skipping VARIABLES alert`);
-          continue;
-        }
+        const match: AlertMatch = {
+          alertId: alert.id,
+          alertName: alert.name,
+          region: alert.regionId,
+          timestamp: new Date(),
+          slots: [],
+          matchDetails: "",
+        };
 
-        // Define which ratings correspond to which forecasts
-        // For RATING alerts, we'll check all slots available in beachRatings
-        const targetSlots = matchingForecasts.map(f => f.timeSlot);
-        if (targetSlots.length === 0 && (alert.alertType as any) === AlertType.RATING) {
-          // If no forecasts recorded, check all slots that have ratings
-          const uniqueSlots = [...new Set(beachRatings.filter(br => br.beachId === beachId).map(br => (br as any).timeSlot))];
-          targetSlots.push(...(uniqueSlots as any[]));
-        }
-
-        // Track seen alerts to prevent duplicate notifications for same slot/source
-        const processedSlots = new Set<string>();
-
-        // We inner-loop through target slots to check conditions for each
         for (const slot of ["MORNING", "NOON", "EVENING"]) {
-          // Find the forecast and rating for this specific slot and source
-          // We prioritize the alert's preferred sources
           const slotForecast = matchingForecasts.find(f => f.timeSlot === slot);
           const slotRating = beachRatings.find(br => 
             br.beachId === beachId && 
@@ -205,18 +192,11 @@ export async function processUserAlerts(userId: string, today: Date) {
 
           if (!slotForecast && !slotRating) continue;
 
-          let shouldSendAlert = false;
-          const match: AlertMatch = {
-            alertId: alert.id,
-            alertName: `${alert.name} (${slot})`,
-            region: alert.regionId,
-            timestamp: new Date(),
-            matchedProperties: [],
-            matchDetails: "",
-          };
+          let slotMatches = false;
+          const matchedProperties: any[] = [];
 
           if ((alert.alertType as any) === AlertType.VARIABLES && slotForecast) {
-            shouldSendAlert = true;
+            slotMatches = true;
             for (const prop of alert.properties) {
               const propertyName = (prop as any).property;
               const range = (prop as any).range;
@@ -226,41 +206,42 @@ export async function processUserAlerts(userId: string, today: Date) {
               if (logValue !== undefined && forecastValue !== undefined) {
                 const difference = Math.abs(Number(forecastValue) - Number(logValue));
                 const withinRange = difference <= Number(range);
-                match.matchedProperties.push({
+                matchedProperties.push({
                   property: propertyName,
                   logValue: logValue,
                   forecastValue: forecastValue,
                   difference: difference,
                   withinRange: withinRange,
                 });
-                if (!withinRange) shouldSendAlert = false;
+                if (!withinRange) slotMatches = false;
               }
             }
           } else if ((alert.alertType as any) === AlertType.RATING && slotRating) {
             const currentStarRating = slotRating.starRating;
-            shouldSendAlert = currentStarRating >= alert.starRating!;
-            console.log(`[Alert Processor] Checking RATING alert ${alert.name} for slot ${slot}: current=${currentStarRating}, target=${alert.starRating} -> result=${shouldSendAlert}`);
-            match.matchedProperties.push({
+            slotMatches = currentStarRating >= alert.starRating!;
+            matchedProperties.push({
               property: "starRating",
               logValue: alert.starRating,
               forecastValue: currentStarRating.toString(),
               difference: Math.abs(currentStarRating - alert.starRating!),
-              withinRange: shouldSendAlert,
+              withinRange: slotMatches,
             });
           }
 
-          if (shouldSendAlert) {
-            const { sendAlertNotification } = await import("./notificationService");
-            // Check if we've already notified for this specific alert today for this slot
-            // To prevent spam if re-run, but for now we follow "all slots" literal
-            console.log(`[Alert Processor] TRIGGERING notification for alert ${alert.name} (${slot})`);
-            const success = await sendAlertNotification(match, alert as any, beachName);
-            if (success) {
-              console.log(`[Alert Processor] SUCCESS: Notification sent for alert ${alert.id}`);
-              result.notificationsSent++;
-            } else {
-              console.log(`[Alert Processor] FAILED: Notification not sent for alert ${alert.id}`);
-            }
+          if (slotMatches) {
+            match.slots.push({
+              slot,
+              matchedProperties,
+            });
+          }
+        }
+
+        if (match.slots.length > 0) {
+          const { sendAlertNotification } = await import("./notificationService");
+          console.log(`[Alert Processor] TRIGGERING aggregated notification for alert ${alert.name} (${match.slots.length} slots)`);
+          const success = await sendAlertNotification(match, alert as any, beachName);
+          if (success) {
+            result.notificationsSent++;
           }
         }
       } catch (error) {
@@ -292,7 +273,7 @@ export async function processAllUserAlerts(isAccelerated = false) {
 
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Get users with active alerts
     // If accelerated, only get students with ACTIVE subscription or TRIAL

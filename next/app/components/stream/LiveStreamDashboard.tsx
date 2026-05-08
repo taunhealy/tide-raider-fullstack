@@ -498,7 +498,7 @@ const StreamCard = React.memo(({ beachId, name, region, regionId, beachScores, f
                
                <div className="inline-flex self-start items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded">
                   <span className="text-sm">{scoreInfo.emoji}</span>
-                  <span className="text-[10px] font-black text-white uppercase tracking-tighter">{scoreInfo.description || scoreInfo.label}</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-tighter">{scoreInfo.description}</span>
                </div>
             </div>
 

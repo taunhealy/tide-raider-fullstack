@@ -3186,7 +3186,7 @@
   },
   {
     "id": "witsand",
-    "name": "Witsand",
+    "name": "Witsands",
     "continent": "Africa",
     "countryId": "za",
     "regionId": "western-cape",
@@ -3228,8 +3228,8 @@
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "SE",
-          "NW"
+          "NE",
+          "E"
         ],
         "optimalSwellDirections": {
           "min": 195,
@@ -14564,9 +14564,9 @@
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "NW",
-          "WNW",
-          "NNW"
+          "SE",
+          "E",
+          "NE"
         ],
         "optimalSwellDirections": {
           "min": 247.5,

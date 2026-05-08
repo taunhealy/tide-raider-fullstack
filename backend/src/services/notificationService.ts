@@ -68,17 +68,22 @@ export function getPlainTextMessage(
     }).join(", ");
   };
 
-  // Build details from matchedProperties
-  const details = alertMatch.matchedProperties
-    .filter((p) => p.withinRange)
-    .map((p) => {
-      const propertyName = formatPropertyName(p.property);
-      const currentValue = formatPropertyValue(p.property, p.forecastValue);
-      const requiredValue = formatPropertyValue(p.property, p.logValue);
+  // Build details from all slots
+  const slotsDetails = alertMatch.slots.map(slotData => {
+    const slotTitle = slotData.slot.charAt(0).toUpperCase() + slotData.slot.slice(1).toLowerCase();
+    const details = slotData.matchedProperties
+      .filter((p) => p.withinRange)
+      .map((p) => {
+        const propertyName = formatPropertyName(p.property);
+        const currentValue = formatPropertyValue(p.property, p.forecastValue);
+        const requiredValue = formatPropertyValue(p.property, p.logValue);
 
-      return `${propertyName}: ${currentValue} (target: ${requiredValue})`;
-    })
-    .join("\n");
+        return `  • ${propertyName}: ${currentValue} (target: ${requiredValue})`;
+      })
+      .join("\n");
+    
+    return `*${slotTitle}*\n${details}`;
+  }).join("\n\n");
 
   return `*Tide Raider*
 🌊 *Alert Triggered!*
@@ -100,9 +105,9 @@ Alert Sources:
 ${mapSourceToAlias(alertSources)}
 
 *✅ Conditions Met*
-Surf conditions at ${beachName} have met your alert criteria:
+Surf conditions at ${beachName} have met your alert criteria for the following slots:
 
-${details}
+${slotsDetails}
 
 ---
 *Tide Raider Intelligence*
@@ -178,10 +183,9 @@ export async function sendAlertNotification(
     const existingNotification = await prisma.alertNotification.findFirst({
       where: {
         alertId: alert.id,
-        alertName: alertMatch.alertName,
         createdAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)), // Today
-          lt: new Date(new Date().setHours(24, 0, 0, 0)),
+          gte: new Date(new Date().setUTCHours(0, 0, 0, 0)), // Today UTC
+          lt: new Date(new Date().setUTCHours(24, 0, 0, 0)),
         },
         success: true, 
       },
@@ -394,15 +398,25 @@ function createNotificationMessage(
     }).join(", ");
   };
 
-  const details = alertMatch.matchedProperties
-    .filter((p) => p.withinRange)
-    .map((p) => {
-      const propertyName = formatPropertyName(p.property);
-      const currentValue = formatPropertyValue(p.property, p.forecastValue);
-      const requiredValue = formatPropertyValue(p.property, p.logValue);
-      return `• ${propertyName}: ${currentValue} (target: ${requiredValue})`;
-    })
-    .join("<br>");
+  const slotsDetails = alertMatch.slots.map(slotData => {
+    const slotTitle = slotData.slot.charAt(0).toUpperCase() + slotData.slot.slice(1).toLowerCase();
+    const details = slotData.matchedProperties
+      .filter((p) => p.withinRange)
+      .map((p) => {
+        const propertyName = formatPropertyName(p.property);
+        const currentValue = formatPropertyValue(p.property, p.forecastValue);
+        const requiredValue = formatPropertyValue(p.property, p.logValue);
+        return `• ${propertyName}: ${currentValue} (target: ${requiredValue})`;
+      })
+      .join("<br>");
+    
+    return `
+      <div style="margin-top: 16px;">
+        <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">${slotTitle}</div>
+        <div style="font-size: 13px; color: #334155; line-height: 1.6; padding-left: 12px; border-left: 2px solid #e2e8f0;">${details}</div>
+      </div>
+    `;
+  }).join("");
 
   const htmlMessage = `
     <!DOCTYPE html>
@@ -438,8 +452,8 @@ function createNotificationMessage(
           
           <div class="conditions">
             <div class="section-label" style="margin-top: 0; color: #0ea5e9;">✅ Conditions Met</div>
-            <p style="font-size: 14px; margin-bottom: 12px;">Surf conditions at <strong>${beachName}</strong> have met your criteria:</p>
-            <p style="font-size: 14px; color: #334155; line-height: 1.6;">${details}</p>
+            <p style="font-size: 14px; margin-bottom: 4px;">Surf conditions at <strong>${beachName}</strong> have met your criteria for the following slots:</p>
+            ${slotsDetails}
           </div>
         </div>
         <div class="footer">

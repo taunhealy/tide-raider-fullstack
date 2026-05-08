@@ -529,10 +529,17 @@ model Forecast {
   source         ForecastSource
   windSpeed      Int            @default(0)
   windDirection  Float          @default(0)
-  swellHeight    Float          @default(0)
-  swellPeriod    Int            @default(0)
-  swellDirection Float          @default(0)
-  trend          String?
+  swellHeight      Float          @default(0)
+  swellPeriod      Int            @default(0)
+  swellDirection   Float          @default(0)
+  swellHeight2     Float?         @default(0)
+  swellPeriod2     Int?           @default(0)
+  swellDirection2  Float?         @default(0)
+  swellHeight3     Float?         @default(0)
+  swellPeriod3     Int?           @default(0)
+  swellDirection3  Float?         @default(0)
+  swellEnergy      Int?           @default(0)
+  trend            String?
   tide           String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @default(now()) @updatedAt

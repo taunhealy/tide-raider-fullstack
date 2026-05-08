@@ -103,19 +103,31 @@ export class ScoreService {
         if (minAngleDiff <= 22.5) {
           penalty = 0.5;
         } else if (minAngleDiff <= 45) {
-          penalty = 1.0;
+          penalty = 1.2;
         } else if (minAngleDiff <= 90) {
-          penalty = 2.0;
+          penalty = 2.5;
+        } else if (minAngleDiff <= 135) {
+          penalty = 3.5;
         } else {
-          penalty = 3.0;
+          // Direct onshore
+          penalty = 4.5; 
         }
 
         // Scale penalty based on wind strength
         let windFactor = 1.0;
         if (conditions.windSpeed <= 8) {
-          windFactor = isReefOrPoint ? 0.2 : 0.6; // Reefs/Points hold light onshore better
+          // Onshore wind ruins beach breaks even at low speeds
+          // If it's direct onshore (> 90), we don't scale it down as much
+          const onshoreThreshold = 90;
+          const isOnshore = minAngleDiff > onshoreThreshold;
+          
+          if (isOnshore) {
+            windFactor = isReefOrPoint ? 0.4 : 0.75; // More punishing for onshore even if light
+          } else {
+            windFactor = isReefOrPoint ? 0.2 : 0.5; // Very light offshore is negligible penalty
+          }
         } else if (conditions.windSpeed <= 12) {
-          windFactor = isReefOrPoint ? 0.5 : 0.8;
+          windFactor = isReefOrPoint ? 0.6 : 0.85;
         }
         
         const finalPenalty = penalty * windFactor;
@@ -184,17 +196,14 @@ export class ScoreService {
 
       // 5. Swell period scoring
       if (conditions.swellPeriod < 8) {
-        score -= 2.5;
-        deductions.push(`Very short period (${conditions.swellPeriod}s) - high probability of "wind slop"`);
+        score -= 3.0;
+        deductions.push(`Critical: Very short period (${conditions.swellPeriod}s) - high probability of "wind slop"`);
       } else if (conditions.swellPeriod < 10) {
-        score -= 1.2;
-        deductions.push(`Short period (${conditions.swellPeriod}s) - suboptimal quality`);
+        score -= 1.8;
+        deductions.push(`Significant: Short period (${conditions.swellPeriod}s) - suboptimal quality`);
       } else if (conditions.swellPeriod < 12) {
-        // Minor penalty for 10-11s period if 12s is the baseline
-        if (parsedProfile.idealSwellPeriod.min >= 12) {
-          score -= 0.4;
-          deductions.push(`Moderate period (${conditions.swellPeriod}s) - 12s+ is ideal`);
-        }
+        score -= 0.8;
+        deductions.push(`Suboptimal: Moderate period (${conditions.swellPeriod}s) - 12s+ is optimal`);
       } else if (
         !(
           conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&
@@ -205,7 +214,9 @@ export class ScoreService {
           Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.min),
           Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.max)
         );
-        score -= periodDiff <= 2 ? 0.3 : 0.8;
+        // Penalize deviations from the spot-specific ideal range
+        score -= periodDiff <= 2 ? 0.4 : 1.0;
+        deductions.push(`Period ${conditions.swellPeriod}s is outside spot-specific ideal range (${parsedProfile.idealSwellPeriod.min}-${parsedProfile.idealSwellPeriod.max}s)`);
       }
 
       const finalScore = Math.min(5, Math.max(0, score));
@@ -488,6 +499,14 @@ export class ScoreService {
           take: 1,
         },
         region: true,
+        intelligenceReports: {
+          where: {
+            date: normalizedDate,
+            duration: 1
+          },
+          select: { id: true },
+          take: 1
+        }
       },
     });
 
@@ -504,6 +523,7 @@ export class ScoreService {
         beach.id,
         {
           score: beach.beachDailyScores[0]?.score ?? 0,
+          hasAIReport: (beach as any).intelligenceReports?.length > 0,
           beach: beach,
         },
       ])

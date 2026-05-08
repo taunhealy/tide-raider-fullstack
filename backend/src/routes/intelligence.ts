@@ -168,6 +168,42 @@ router.post("/share-whatsapp", authenticateToken, async (req, res: Response) => 
 });
 
 /**
+ * GET /api/intelligence/user/:userId/history
+ * Fetch tactical reports contributed by a specific operator
+ */
+router.get("/user/:userId/history", async (req, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const { prisma } = await import("../lib/prisma");
+    const reports = await prisma.intelligenceReport.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        beach: {
+          select: {
+            name: true,
+            id: true
+          }
+        },
+        user: {
+          select: {
+             id: true,
+             name: true,
+             image: true
+          }
+        }
+      }
+    });
+
+    res.json(reports);
+  } catch (error) {
+    console.error("[IntelligenceRoute] User reports fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch operator's tactical log." });
+  }
+});
+
+/**
  * GET /api/intelligence/history
  * Fetch historical reports for the current user
  */
@@ -218,10 +254,19 @@ router.get("/latest", authenticateToken, async (req, res: Response) => {
     const { prisma } = await import("../lib/prisma");
     const report = await prisma.intelligenceReport.findFirst({
       where: { 
-        userId, 
         beachId: beachId as string 
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            instagram: true,
+            link: true
+          }
+        }
+      }
     });
 
     res.json(report || null);
@@ -247,12 +292,25 @@ router.get("/beach/:beachId/history", authenticateToken, async (req, res: Respon
   try {
     const { prisma } = await import("../lib/prisma");
     const reports = await prisma.intelligenceReport.findMany({
-      where: { userId, beachId },
+      where: { beachId },
       orderBy: { createdAt: "desc" },
-      select: { id: true }
+      select: { 
+        id: true,
+        date: true,
+        duration: true,
+        category: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            instagram: true,
+            link: true
+          }
+        }
+      }
     });
 
-    res.json(reports.map(r => r.id));
+    res.json(reports);
   } catch (error) {
     console.error("[IntelligenceRoute] Beach history fetch error:", error);
     res.status(500).json({ error: "Failed to fetch beach report sequence" });
@@ -265,19 +323,22 @@ router.get("/beach/:beachId/history", authenticateToken, async (req, res: Respon
  */
 router.get("/report/:id", authenticateToken, async (req, res: Response) => {
   const authReq = req as AuthRequest;
-  const userId = authReq.user?.id;
   const { id } = req.params;
-
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
 
   try {
     const { prisma } = await import("../lib/prisma");
     const report = await prisma.intelligenceReport.findUnique({
-      where: { id, userId },
+      where: { id },
       include: {
-        beach: true
+        beach: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            instagram: true,
+            link: true
+          }
+        }
       }
     });
 
