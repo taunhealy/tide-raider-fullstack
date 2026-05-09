@@ -239,38 +239,54 @@ router.get(
       console.log("🧪 Force testing alert:", alertToTest.id, alertToTest.name);
 
       // Create a mock match to force trigger the notification
+      // Note: This must match the AlertMatch interface in alertProcessor.ts
       type AlertMatch = {
         alertId: string;
         alertName: string;
         region: string;
         timestamp: Date;
-        matchedProperties: Array<{
-          property: string;
-          logValue: any;
-          forecastValue: any;
-          difference: number;
-          withinRange: boolean;
+        slots: Array<{
+          slot: string;
+          matchedProperties: Array<{
+            property: string;
+            logValue: any;
+            forecastValue: any;
+            difference: number;
+            withinRange: boolean;
+          }>;
         }>;
         matchDetails: string;
       };
+
+      const properties = alertToTest.properties?.map((prop: any) => ({
+        property: prop.property,
+        logValue: prop.optimalValue,
+        forecastValue: prop.optimalValue, // Match exactly for testing
+        difference: 0,
+        withinRange: true,
+      })) || [
+        {
+          property: "swellHeight",
+          logValue: 1.5,
+          forecastValue: 1.5,
+          difference: 0,
+          withinRange: true,
+        },
+      ];
+
       const mockMatch: AlertMatch = {
         alertId: alertToTest.id,
         alertName: alertToTest.name,
         region: alertToTest.regionId,
         timestamp: new Date(),
-        matchedProperties: alertToTest.properties?.map((prop: any) => ({
-          property: prop.property,
-          logValue: prop.optimalValue,
-          forecastValue: prop.optimalValue, // Match exactly for testing
-          difference: 0,
-          withinRange: true,
-        })) || [
+        slots: [
           {
-            property: "swellHeight",
-            logValue: 1.5,
-            forecastValue: 1.5,
-            difference: 0,
-            withinRange: true,
+            slot: "MORNING",
+            matchedProperties: properties,
+          },
+          {
+            slot: "NOON",
+            matchedProperties: properties,
           },
         ],
         matchDetails: "Test alert - conditions match (forced for testing)",
@@ -298,7 +314,8 @@ router.get(
         success = await sendAlertNotification(
           mockMatch,
           alertToTest as any,
-          beachName
+          beachName,
+          new Date()
         );
 
         if (!success) {

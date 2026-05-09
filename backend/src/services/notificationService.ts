@@ -135,7 +135,8 @@ interface Alert {
 export async function sendAlertNotification(
   alertMatch: AlertMatch,
   alert: Alert,
-  beachName: string = "Unknown location"
+  beachName: string = "Unknown location",
+  matchDate: Date = new Date()
 ): Promise<boolean> {
   try {
     // Get the associated LogEntry's beach information if it exists
@@ -168,18 +169,18 @@ export async function sendAlertNotification(
     });
     const regionName = region?.name || alertMatch.region;
 
-    // Get the forecast date from the alert or log entry
-    const alertRecord = await prisma.alert.findUnique({
-      where: { id: alert.id },
-      select: {
-        forecastDate: true,
-      },
-    });
-    const forecastDate =
-      alertRecord?.forecastDate || logEntry?.date || new Date();
+    // The date shown in the notification should be the date of the match (today)
+    // rather than the original alert creation date (forecastDate)
+    const displayDate = matchDate;
 
-    // Check for existing notification first
-    // Deduplicate by alertId AND alertName (the name includes the time slot like "(MORNING)")
+    // Format date string for deduplication check (e.g., "May 10, 2026")
+    const dateString = displayDate.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Check for existing notification for THIS alert AND THIS target date TODAY
     const existingNotification = await prisma.alertNotification.findFirst({
       where: {
         alertId: alert.id,
@@ -187,12 +188,15 @@ export async function sendAlertNotification(
           gte: new Date(new Date().setUTCHours(0, 0, 0, 0)), // Today UTC
           lt: new Date(new Date().setUTCHours(24, 0, 0, 0)),
         },
+        details: {
+          contains: dateString,
+        },
         success: true, 
       },
     });
 
     if (existingNotification) {
-      console.log(`[Notification] ⏭️ Already sent ${alertMatch.alertName} today, skipping.`);
+      console.log(`[Notification] ⏭️ Already sent alert for ${dateString} today, skipping.`);
       return true;
     }
 
@@ -201,7 +205,7 @@ export async function sendAlertNotification(
       alertMatch,
       resolvedBeachName,
       regionName,
-      forecastDate,
+      displayDate,
       alert.sources || []
     );
 
@@ -226,7 +230,7 @@ export async function sendAlertNotification(
                 alertMatch,
                 resolvedBeachName,
                 regionName,
-                forecastDate
+                displayDate
               ),
               read: false,
             },
@@ -261,7 +265,7 @@ export async function sendAlertNotification(
             alertMatch,
             resolvedBeachName,
             regionName,
-            forecastDate,
+            displayDate,
             alert.sources || []
           );
           
@@ -278,7 +282,7 @@ export async function sendAlertNotification(
             alertMatch,
             resolvedBeachName,
             regionName,
-            forecastDate,
+            displayDate,
             alert.sources || []
           );
 

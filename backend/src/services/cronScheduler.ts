@@ -161,7 +161,8 @@ export class CronScheduler {
         await fetchAllRegionsData(3, [regionId]);
       }
 
-      // 2. Alerts: Still check hourly, but only if we have active subscribers/trials
+      // 2. Alerts: Only process twice a day (01:00 UTC and 13:00 UTC)
+      // We only check if we have active subscribers/trials to process
       const subscriberCount = await prisma.user.count({
         where: {
           OR: [
@@ -171,8 +172,10 @@ export class CronScheduler {
         },
       });
 
-      if (subscriberCount > 0 && regionId === "western-cape") {
-        console.log(`[cron] 💓 Heartbeat: Processing alerts for ${subscriberCount} active subscribers`);
+      // The 01:00 UTC run is handled by the main runScheduledJob above.
+      // Here we only trigger alerts during the 13:00 UTC heartbeat sync.
+      if (subscriberCount > 0 && regionId === "western-cape" && now.getUTCHours() === 13) {
+        console.log(`[cron] 💓 Sync Pulse: Processing alerts for ${subscriberCount} active subscribers (13:00 UTC Pass)`);
         const { processAllUserAlerts } = await import("./alertProcessor");
         await processAllUserAlerts(true); // Accelerated mode
       }

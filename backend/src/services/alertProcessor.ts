@@ -239,7 +239,7 @@ export async function processUserAlerts(userId: string, today: Date) {
         if (match.slots.length > 0) {
           const { sendAlertNotification } = await import("./notificationService");
           console.log(`[Alert Processor] TRIGGERING aggregated notification for alert ${alert.name} (${match.slots.length} slots)`);
-          const success = await sendAlertNotification(match, alert as any, beachName);
+          const success = await sendAlertNotification(match, alert as any, beachName, today);
           if (success) {
             result.notificationsSent++;
           }
@@ -307,18 +307,29 @@ export async function processAllUserAlerts(isAccelerated = false) {
 
     console.log(`[Heartbeat] ${isAccelerated ? 'Accelerated' : 'Full'} Mode: Found ${usersWithAlerts.length} users to process`);
 
-    // Process alerts for each user
+    // Process alerts for each user across a 3-day tactical window (Today + 2 days ahead)
     for (const user of usersWithAlerts) {
       try {
         console.log(
-          `Processing alerts for user: ${user.id} (${user.email || "no email"})`
+          `[Alert Processor] Processing 3-day window for user: ${user.id} (${user.email || "no email"})`
         );
-        const userResult = await processUserAlerts(user.id, today);
+        
+        for (let i = 0; i < 3; i++) {
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() + i);
+          
+          const dateLabel = i === 0 ? "TODAY" : i === 1 ? "TOMORROW" : "DAY AFTER";
+          console.log(`[Alert Processor] Checking ${dateLabel} (${targetDate.toISOString().split('T')[0]})`);
+          
+          const userResult = await processUserAlerts(user.id, targetDate);
 
+          // results.usersProcessed++; // Moved outside the inner loop
+          results.alertsChecked += userResult.alertsChecked;
+          results.notificationsSent += userResult.notificationsSent;
+          results.errors += userResult.errors;
+        }
+        
         results.usersProcessed++;
-        results.alertsChecked += userResult.alertsChecked;
-        results.notificationsSent += userResult.notificationsSent;
-        results.errors += userResult.errors;
       } catch (error) {
         console.error(`Error processing alerts for user ${user.id}:`, error);
         results.errors++;
