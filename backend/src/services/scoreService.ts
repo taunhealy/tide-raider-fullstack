@@ -168,50 +168,90 @@ export class ScoreService {
       // Long period swells (12s+) "feel" the bottom deeper and turn much better than short period swells.
       const periodWrapFactor = Math.max(0.7, Math.min(1.3, conditions.swellPeriod / 12));
       
-      // Dynamic swell min: Perfect direction + Long period needs significantly less buoy height.
+      // Dynamic swell min/max: Handle 'Refraction' (Raw vs Refracted energy)
+      // Refracted swells (e.g. SW at Muizenberg) lose size as they wrap, so they need more size at the buoy 
+      // but can handle much larger buoy heights before becoming hectic.
+      // Direct swells (e.g. S or E at Muizenberg) hit with raw power, so they work when small 
+      // but become chaotic/hectic very quickly.
       let effectiveMinHeight = parsedProfile.swellSize.min;
-      if (isOptimalSwellDir) {
-        // Apply refraction bonus: 15% base + up to 15% period bonus for deep-water energy
-        const refractionBonus = 0.15 + (Math.max(0, periodWrapFactor - 1) * 0.5);
-        effectiveMinHeight *= (1 - Math.min(0.3, refractionBonus)); 
+      let effectiveMaxHeight = parsedProfile.swellSize.max;
+      let isHectic = false;
+
+      if (parsedProfile.swellSize.exposureDirection !== undefined) {
+        // Calculate 'Refraction Quality' (0 = direct/raw, 1 = fully refracted/groomed)
+        // We assume 90-120 degrees of wrap is optimal for grooming.
+        const exposureDiff = Math.abs(curSwellDir - parsedProfile.swellSize.exposureDirection);
+        const normalizedExposureDiff = Math.min(exposureDiff, 360 - exposureDiff);
+        
+        // Refraction Factor: 0 at exposureDirection, 1 at 45+ degrees away
+        const refractionFactor = Math.min(1, normalizedExposureDiff / 45) * (periodWrapFactor >= 1 ? 1 : 0.7);
+        
+        // If it's a refracted swell (refractionFactor > 0.5):
+        // - It needs more size to reach the beach (increase min)
+        // - It can handle much more size (increase max)
+        if (refractionFactor > 0.3) {
+          const sizeLossFactor = 1 + (refractionFactor * 0.4); // Up to 40% more buoy size needed
+          effectiveMinHeight *= sizeLossFactor;
+          
+          // Max height increases significantly for refracted swells
+          const capacityBonus = (parsedProfile.swellSize.max - (parsedProfile.swellSize.exposureLimit || parsedProfile.swellSize.max)) * refractionFactor;
+          effectiveMaxHeight = (parsedProfile.swellSize.exposureLimit || parsedProfile.swellSize.max) + capacityBonus;
+        } else {
+          // It's a direct swell:
+          // - It works at smaller sizes (keep or slightly lower min)
+          // - It becomes hectic early (use exposureLimit as max)
+          effectiveMaxHeight = parsedProfile.swellSize.exposureLimit || effectiveMaxHeight;
+          if (conditions.swellHeight > effectiveMaxHeight) {
+            isHectic = true;
+          }
+        }
+        
+        // Bonus for long period (they are cleaner/more organized even when big)
+        const periodBonus = Math.max(0, (conditions.swellPeriod - 12) * 0.1); 
+        effectiveMaxHeight += periodBonus;
       } else {
-        // Poor direction is exacerbated by short periods (they won't turn/refract efficiently)
-        const baseAlignmentPenalty = (swellDirDiff / 15) * 0.25;
-        const periodPenaltyScale = 1 / periodWrapFactor; 
-        effectiveMinHeight += Math.min(1.2, baseAlignmentPenalty * periodPenaltyScale);
+        // Fallback for spots without exposure metadata
+        if (isOptimalSwellDir) {
+          const refractionBonus = 0.15 + (Math.max(0, periodWrapFactor - 1) * 0.5);
+          effectiveMinHeight *= (1 - Math.min(0.3, refractionBonus)); 
+        } else {
+          const baseAlignmentPenalty = (swellDirDiff / 15) * 0.25;
+          const periodPenaltyScale = 1 / periodWrapFactor; 
+          effectiveMinHeight += Math.min(1.2, baseAlignmentPenalty * periodPenaltyScale);
+        }
       }
 
       const isTooSmall = conditions.swellHeight < effectiveMinHeight;
-      const isTooLarge = conditions.swellHeight > parsedProfile.swellSize.max;
+      const isTooLarge = conditions.swellHeight > effectiveMaxHeight;
 
       if (isTooSmall || isTooLarge) {
         const heightDiff = isTooSmall 
           ? effectiveMinHeight - conditions.swellHeight
-          : conditions.swellHeight - parsedProfile.swellSize.max;
+          : conditions.swellHeight - effectiveMaxHeight;
 
         let sizePenalty = 0;
         if (isTooSmall) {
-          // Being under-sized is a deal-breaker for certain spots
           const smallFactor = isReefOrPoint ? 2.5 : 1.5; 
           if (heightDiff <= 0.3) sizePenalty = 0.5 * smallFactor;
           else if (heightDiff <= 0.8) sizePenalty = 1.5 * smallFactor;
           else sizePenalty = 3.5 * smallFactor;
         } else {
-          // Too big is messy but sometimes surfable
-          if (heightDiff <= 0.5) sizePenalty = 0.5;
-          else if (heightDiff <= 1.5) sizePenalty = 1.5;
-          else sizePenalty = 3.0;
+          if (heightDiff <= 0.5) sizePenalty = 0.8;
+          else if (heightDiff <= 1.5) sizePenalty = 2.0;
+          else sizePenalty = 3.5;
+
+          if (isHectic) sizePenalty += 1.0; 
         }
 
         score -= sizePenalty;
         
-        const wrapReason = isOptimalSwellDir 
-          ? (conditions.swellPeriod >= 12 ? 'enhanced wrap' : 'clean wrap')
-          : (conditions.swellPeriod < 10 ? 'poor refraction' : 'poor angle');
+        const wrapType = (parsedProfile.swellSize.exposureDirection !== undefined)
+          ? (Math.abs(curSwellDir - parsedProfile.swellSize.exposureDirection) > 45 ? 'refracted' : 'direct')
+          : 'standard';
           
         const sizeMsg = isTooSmall 
-          ? `${conditions.swellHeight}m is too small (Effective min: ${effectiveMinHeight.toFixed(1)}m due to ${wrapReason})`
-          : `${conditions.swellHeight}m is too large (Max: ${parsedProfile.swellSize.max}m)`;
+          ? `${conditions.swellHeight}m is too small (Min: ${effectiveMinHeight.toFixed(1)}m for ${wrapType} swell)`
+          : `${conditions.swellHeight}m is too large/chaotic (Max: ${effectiveMaxHeight.toFixed(1)}m for ${wrapType} swell)`;
           
         deductions.push(`Swell height ${sizeMsg}.`);
       }

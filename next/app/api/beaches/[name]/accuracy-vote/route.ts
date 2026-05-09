@@ -3,9 +3,9 @@ import { API_CONFIG } from "@/app/lib/api-config";
 
 export async function POST(
   request: Request,
-  { params }: { params: { name: string } }
+  { params }: { params: Promise<{ name: string }> }
 ) {
-  const { name } = params;
+  const { name } = await params;
   const body = await request.json();
   const backendUrl = API_CONFIG.baseUrl;
 
