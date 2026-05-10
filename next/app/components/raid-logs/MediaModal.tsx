@@ -83,19 +83,26 @@ export function MediaModal({
   }, [isOpen, currentType, images.length, videos.length, onClose]);
 
   const handleEmbedVideo = (url: string, platform: string) => {
-    if (!url || !platform) return null;
+    if (!url) return null;
 
     if (platform === "youtube" || platform === "short") {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
       const match = url.match(regExp);
       const videoId = match && match[2].length === 11 ? match[2] : null;
 
-      return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1` : null;
+      if (videoId) {
+        // Add mute=1 to help with autoplay policies in modern browsers
+        // Add rel=0 to prevent showing related videos from other channels
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&enablejsapi=1`;
+      }
+      return null;
     }
 
     if (platform === "vimeo") {
-      const videoId = url.split("/").pop();
-      return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1` : null;
+      const regExp = /vimeo\.com\/([0-9]+)/;
+      const match = url.match(regExp);
+      const videoId = match ? match[1] : url.split("/").pop();
+      return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1` : null;
     }
 
     if (platform === "instagram") {

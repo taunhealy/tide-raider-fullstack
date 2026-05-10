@@ -288,13 +288,35 @@ router.get("/forecast", async (req: Request, res: Response) => {
     });
 
     if (!forecast) {
+      // Try to find ANY BeachDailyScore in this region to seed the regional forecast
+      const seedingScore = await prisma.beachDailyScore.findFirst({
+        where: {
+          regionId: region as string,
+          date: new Date(dateOnly),
+          source: "WINDFINDER"
+        }
+      }) || await prisma.beachDailyScore.findFirst({
+        where: {
+          regionId: region as string,
+          date: new Date(dateOnly)
+        }
+      });
+
       const { randomUUID } = await import("crypto");
+      const conditions = (seedingScore?.conditions as any) || {};
+
       const createdForecast = await prisma.forecast.create({
         data: {
           id: randomUUID(),
           date: new Date(dateOnly),
           regionId: region as string,
-          source: "WINDFINDER", // Default to WINDFINDER
+          source: (seedingScore?.source as any) || "WINDFINDER",
+          windSpeed: conditions.windSpeed || 0,
+          windDirection: conditions.windDirection || 0,
+          swellHeight: conditions.swellHeight || 0,
+          swellPeriod: conditions.swellPeriod || 0,
+          swellDirection: conditions.swellDirection || 0,
+          timeSlot: (seedingScore?.timeSlot as any) || "NOON"
         },
       });
       return res.json(createdForecast);
