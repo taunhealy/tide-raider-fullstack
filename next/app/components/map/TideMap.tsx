@@ -216,7 +216,8 @@ export default function TideMap({
     }
   }, [center, zoom]);
 
-  const getBrandedColor = (r: number) => {
+  const getBrandedColor = (r: number | null | undefined) => {
+    if (r === null || r === undefined) return "#e2e8f0"; // slate-200 (Skeleton/Pending)
     if (r >= 4.5) return "#1d4ed8"; // blue-700 (Peak)
     if (r >= 3.8) return "#3b82f6"; // blue-500 (Excellent)
     if (r >= 3.0) return "#60a5fa"; // blue-400 (Target Brand Color)
@@ -428,15 +429,15 @@ export default function TideMap({
 
             const getRatingForBeach = (b: any) => {
               const dateKey = selectedDateStringRef.current;
-              return b?.dailyScores?.[dateKey]?.rating ?? b?.rating ?? 3;
+              return b?.dailyScores?.[dateKey]?.rating ?? b?.rating ?? null;
             };
 
             if (type === "continent" || type === "country") {
               const items = representative.get("allBeaches") || [];
-              const ratings = items.filter(Boolean).map((b: any) => getRatingForBeach(b));
+              const ratings = items.filter(Boolean).map((b: any) => getRatingForBeach(b)).filter(r => r !== null) as number[];
               const avgRating = ratings.length > 0 
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
-                : 3;
+                : null;
 
             return new Style({
                 image: new CircleStyle({
@@ -457,8 +458,12 @@ export default function TideMap({
             if (size > 1) {
               const ratings = clusterFeatures
                 .filter(Boolean)
-                .map((f: any) => getRatingForBeach(f.get("beach")));
-              const avgRating = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
+                .map((f: any) => getRatingForBeach(f.get("beach")))
+                .filter(r => r !== null) as number[];
+              
+              const avgRating = ratings.length > 0
+                ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
+                : null;
 
               return new Style({
                 image: new CircleStyle({
@@ -477,7 +482,8 @@ export default function TideMap({
             // Single Marker Style
             const beach = representative.get("beach");
             const dateKey = selectedDateStringRef.current;
-            const rating = beach?.dailyScores?.[dateKey]?.rating ?? beach?.rating ?? 3;
+            const rating = beach?.dailyScores?.[dateKey]?.rating ?? beach?.rating;
+            const isPending = rating === null || rating === undefined;
             
             return new Style({
               image: new Icon({
@@ -486,7 +492,7 @@ export default function TideMap({
                   <svg width="30" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 29C12 29 22 20 22 10C22 4.47715 17.5228 0 12 0C6.47715 0 2 4.47715 2 10C2 20 12 29 12 29Z" fill="${getBrandedColor(rating)}" stroke="white" stroke-width="1"/>
                     <circle cx="12" cy="10" r="7" fill="white"/>
-                    <text x="12" y="13" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${Number(rating || 0).toFixed(0)}</text>
+                    <text x="12" y="13" font-family="Inter, sans-serif" font-size="${isPending ? '12' : '9'}" font-weight="900" text-anchor="middle" fill="${getBrandedColor(rating)}">${isPending ? '...' : Number(rating || 0).toFixed(0)}</text>
                   </svg>
                 `)}`,
                 scale: 0.75,

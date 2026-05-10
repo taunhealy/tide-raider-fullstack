@@ -676,6 +676,19 @@ async function main() {
         console.log(
           `  - Pruning ${beachesToDelete.length} obsolete beaches: ${beachesToDelete.join(", ")}`
         );
+        
+        // 🚨 Delete dependent records first to avoid foreign key violations
+        console.log("    - Cleaning up dependent records...");
+        await prisma.beachDailyScore.deleteMany({ where: { beachId: { in: beachesToDelete } } });
+        await prisma.intelligenceReport.deleteMany({ where: { beachId: { in: beachesToDelete } } });
+        await prisma.beachConditionProfile.deleteMany({ where: { beachId: { in: beachesToDelete } } });
+        await prisma.adBeachConnection.deleteMany({ where: { beachId: { in: beachesToDelete } } });
+        await prisma.beachRentalConnection.deleteMany({ where: { beachId: { in: beachesToDelete } } });
+        await prisma.logEntry.updateMany({ 
+          where: { beachId: { in: beachesToDelete } },
+          data: { beachId: null }
+        });
+        
         await prisma.beach.deleteMany({
           where: { id: { in: beachesToDelete } },
         });

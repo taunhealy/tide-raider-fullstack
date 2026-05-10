@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const timeSlot = searchParams.get("timeSlot");
     const regionId = searchParams.get("regionId");
     const lite = searchParams.get("lite") === "true";
+    const superlite = searchParams.get("superlite") === "true";
     const ids = searchParams.get("ids")?.split(",");
 
     const today = new Date();
@@ -32,13 +33,14 @@ export async function GET(request: Request) {
 
     // Create cache key - include ids if present (limited to 50 for key stability)
     const idsHash = ids ? crypto.createHash('md5').update(ids.slice(0, 50).join(',')).digest('hex').slice(0, 8) : 'all';
-    const cacheKey = `map-data-v7:${effectiveSource || 'all'}:${timeSlot || 'all'}:${regionId || 'all'}:${lite ? 'lite' : 'full'}:${idsHash}:${targetDateStr}`;
+    const mode = superlite ? 'superlite' : (lite ? 'lite' : 'full');
+    const cacheKey = `map-data-v8:${effectiveSource || 'all'}:${timeSlot || 'all'}:${regionId || 'all'}:${mode}:${idsHash}:${targetDateStr}`;
     
     let cached;
     try {
       cached = await redis.get(cacheKey);
       if (cached) {
-        console.log(`[api/map-data] 🚀 Serving from cache (Lite: ${lite})`);
+        console.log(`[api/map-data] 🚀 Serving from cache (Mode: ${mode})`);
         return NextResponse.json(typeof cached === 'string' ? JSON.parse(cached) : cached);
       }
     } catch (redisError) {
@@ -69,22 +71,24 @@ export async function GET(request: Request) {
         isHiddenGem: true,
         isLongboarding: true,
         isFoiling: true,
-        beachDailyScores: {
-          where: {
-            date: lite ? targetDate : { gte: today, lt: sevenDaysLater },
-            ...(effectiveSource ? { source: effectiveSource } : {}),
-            ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
-            category: "GENERAL"
-          },
-          select: {
-            date: true,
-            starRating: true,
-            ...(!lite ? { conditions: true } : {})
-          },
-          orderBy: {
-            date: 'desc'
+        ...(!superlite ? {
+          beachDailyScores: {
+            where: {
+              date: lite ? targetDate : { gte: today, lt: sevenDaysLater },
+              ...(effectiveSource ? { source: effectiveSource } : {}),
+              ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
+              category: "GENERAL"
+            },
+            select: {
+              date: true,
+              starRating: true,
+              ...(!lite ? { conditions: true } : {})
+            },
+            orderBy: {
+              date: 'desc'
+            }
           }
-        },
+        } : {}),
         region: {
           select: {
             name: true
@@ -96,7 +100,7 @@ export async function GET(request: Request) {
             continentId: true
           }
         },
-        ...(!lite ? {
+        ...((!lite && !superlite) ? {
           sourceAccuracy: {
             select: {
               source: true,
@@ -182,7 +186,7 @@ export async function GET(request: Request) {
           optimalTide: profile.optimalTide || "ALL",
           mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
           sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
-          rating: dailyScores[targetDateStr]?.rating ?? (Object.values(dailyScores) as any[])[0]?.rating ?? beach.rating ?? 3
+          rating: dailyScores[targetDateStr]?.rating ?? (Object.values(dailyScores) as any[])[0]?.rating ?? (superlite ? null : (beach.rating ?? 3))
         };
       } catch (e) {
         console.error(`[api/map-data] Error mapping beach at index ${index} (${beach?.id || "unknown"}):`, e);

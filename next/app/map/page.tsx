@@ -20,8 +20,8 @@ export default function GlobalMapPage() {
   const user = authData?.user;
   const isSubscribed = user?.isSubscribed || user?.hasActiveTrial || false;
 
-  const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSyncingRatings, setIsSyncingRatings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
@@ -190,26 +190,48 @@ export default function GlobalMapPage() {
 
   useEffect(() => {
     async function fetchData() {
-      setLoading(true);
+      // 🚀 PHASE 1: SUPER LITE SYNC
+      // Load markers and basic metadata globally with NO scores (sub-second)
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
         
-        // 🚀 LITE SYNC: Load markers and basic metadata globally
+        const superLiteRes = await fetch(`/api/map-data?superlite=true${sourceParam}${timeSlotParam}`);
+        if (superLiteRes.ok) {
+          const superLiteData = await superLiteRes.json();
+          if (superLiteData.beaches) {
+            setBeaches(superLiteData.beaches);
+            setLoading(false); // Map becomes interactive NOW
+          }
+        }
+
+        // 🚀 PHASE 2: LITE SYNC (Background)
+        // Load ratings for everyone so filters work and markers get color
+        setIsSyncingRatings(true);
         const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}`);
         if (liteRes.ok) {
           const liteData = await liteRes.json();
           if (liteData.beaches) {
-            setBeaches(liteData.beaches);
-            setLoading(false); 
+            setBeaches(prev => {
+              const updated = [...prev];
+              liteData.beaches.forEach((lb: Beach) => {
+                const idx = updated.findIndex(b => b.id === lb.id);
+                if (idx !== -1) {
+                  // Merge while prioritizing existing detailed data if it was already fetched by onMoveEnd
+                  updated[idx] = { ...updated[idx], ...lb };
+                } else {
+                  updated.push(lb);
+                }
+              });
+              return updated;
+            });
           }
         }
-        
-        // NOTE: Full scores are now fetched dynamically via onMoveEnd
       } catch (error) {
         console.error("Error fetching map data:", error);
       } finally {
         setLoading(false);
+        setIsSyncingRatings(false);
       }
     }
     
@@ -645,10 +667,12 @@ export default function GlobalMapPage() {
           </div>
 
           {/* Subtle loading indicator overlay */}
-          {loading && (
+          {(loading || isSyncingRatings) && (
             <div className="absolute top-24 right-6 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-gray-100 animate-in fade-in slide-in-from-right-4 duration-500">
               <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
-              <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">Syncing Intel...</p>
+              <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
+                {loading ? "Syncing Intel..." : "Syncing Ratings..."}
+              </p>
             </div>
           )}
 
