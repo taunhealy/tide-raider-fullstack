@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { format } from "date-fns";
+import { safeFormat } from "@/app/lib/dateUtils";
 import { 
   FileText, 
   ChevronRight, 
@@ -124,7 +125,7 @@ export default function AIReportsPage() {
                         <div>
                           <p className="font-bold text-[14px] text-black group-hover:text-black transition-colors">{report.beach.name}</p>
                           <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest">
-                            Tactical Intel [{format(new Date(report.date), "MMM d")}{report.duration > 1 && report.endDate ? ` - ${format(new Date(report.endDate), "MMM d")}` : ""}]
+                            Tactical Intel [{safeFormat(report.date, "MMM d")}{report.duration > 1 && report.endDate ? ` - ${safeFormat(report.endDate, "MMM d")}` : ""}]
                           </p>
                         </div>
                       </div>
@@ -133,15 +134,15 @@ export default function AIReportsPage() {
                       <div className="flex items-center gap-3">
                         <Calendar className="w-4 h-4 text-black opacity-20" />
                         <p className="text-[12px] font-semibold text-black/70">
-                          {format(new Date(report.date), "MMM d")}
-                          {report.duration > 1 && report.endDate && ` — ${format(new Date(report.endDate), "MMM d, yyyy")}`}
-                          {report.duration <= 1 && `, ${format(new Date(report.date), "yyyy")}`}
+                          {safeFormat(report.date, "MMM d")}
+                          {report.duration > 1 && report.endDate && ` — ${safeFormat(report.endDate, "MMM d, yyyy")}`}
+                          {report.duration <= 1 && `, ${safeFormat(report.date, "yyyy")}`}
                         </p>
                       </div>
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-[12px] font-medium text-black opacity-40">
-                        {format(new Date(report.createdAt), "dd/MM/yyyy HH:mm")}
+                        {safeFormat(report.createdAt, "dd/MM/yyyy HH:mm")}
                       </p>
                     </td>
                     <td className="px-8 py-6">

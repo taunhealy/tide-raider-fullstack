@@ -281,6 +281,14 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                           Top Rated
                         </span>
                       )}
+                      {entry.mostAccurateSource && !isGatedGem && (
+                        <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-emerald-500/30">
+                          {entry.mostAccurateSource === "WINDFINDER" ? "Source A Verified" :
+                           entry.mostAccurateSource === "WINDGURU" ? "Source B Verified" :
+                           entry.mostAccurateSource === "WINDY" ? "Source C Verified" :
+                           `${entry.mostAccurateSource} Verified`}
+                        </span>
+                      )}
                     </div>
 
                     <div className={cn("flex items-center gap-2 text-white/50 font-primary text-sm md:text-base", isGatedGem && "blur-[10px] select-none opacity-40")}>

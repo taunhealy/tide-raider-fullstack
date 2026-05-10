@@ -70,7 +70,10 @@ export interface LogEntry {
     swellHeight: number;
     swellPeriod: number;
     swellDirection: number;
+    source?: string;
   } | null;
+  mostAccurateSource?: string;
+  surfTimeSlot?: string;
   user: {
     id: string;
     nationality: string | null;

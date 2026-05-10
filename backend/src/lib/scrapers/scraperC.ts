@@ -26,8 +26,9 @@ export async function scraperC(
     console.log(`[scraperC] 📍 URL: ${url}`);
 
     browser = await getBrowser();
+    const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
     const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      userAgent,
       viewport: { width: 1920, height: 1080 }
     });
     const page = await context.newPage();
@@ -41,11 +42,18 @@ export async function scraperC(
     });
 
     // TACTICAL: Append ',d:waves' if missing to force open the forecast detail pane
-    const tacticalUrl = url.includes(',d:') ? url : `${url},d:waves`;
+    // Using /ecmwfWaves/waves in the path is more robust than just the param
+    let tacticalUrl = url;
+    if (!tacticalUrl.includes('ecmwfWaves')) {
+      tacticalUrl = tacticalUrl.replace('/waves', '/ecmwfWaves/waves');
+    }
+    if (!tacticalUrl.includes(',d:')) {
+      tacticalUrl = tacticalUrl.includes('?') ? `${tacticalUrl},d:waves` : `${tacticalUrl}?waves,d:waves`;
+    }
 
     console.log(`[scraperC] 🔍 Navigating to ${tacticalUrl}...`);
     await page.goto(tacticalUrl, {
-      waitUntil: "domcontentloaded", 
+      waitUntil: "load", 
       timeout: 120000,
     });
 
@@ -56,18 +64,36 @@ export async function scraperC(
       console.log(`[scraperC] 🛡️ Neutralizing obstructions...`);
       
       // 1. Wait for initial load
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise(r => setTimeout(r, 10000));
       
       // 2. Dismiss cookie banner if present
-      const cookieButtons = await page.$$('.ok-button, .btn-ok, #consent-layer button');
+      const cookieButtons = await page.$$('.ok-button, .btn-ok, #consent-layer button, .consent-banner button');
       if (cookieButtons.length > 0) {
         console.log(`[scraperC] 🍪 Dismissing cookie banner...`);
         await cookieButtons[0].click();
+        await new Promise(r => setTimeout(r, 2000));
       }
 
-      // 3. Ensure forecast pane is open (o shortcut is robust as a backup)
-      await page.keyboard.press('o');
-      await new Promise(r => setTimeout(r, 2000));
+      // 3. Clear search overlay / Focus map
+      console.log(`[scraperC] 🗺️ Focusing map...`);
+      await page.mouse.click(500, 300);
+      await page.keyboard.press('Escape');
+
+      // 4. Try to open the forecast pane if not visible
+      const tableVisible = await page.isVisible('.main-table__data-table');
+      if (!tableVisible) {
+        console.log(`[scraperC] 📋 Table not visible. Attempting to open...`);
+        await page.keyboard.press('o');
+        await new Promise(r => setTimeout(r, 3000));
+        
+        // Try clicking "Waves & Tides" button if still not visible
+        const wavesBtn = await page.getByText('Waves & Tides', { exact: false });
+        if (await wavesBtn.count() > 0) {
+           console.log(`[scraperC] 🌊 Clicking Waves & Tides button...`);
+           await wavesBtn.first().click();
+           await new Promise(r => setTimeout(r, 3000));
+        }
+      }
 
     } catch (e) {
       console.log(`[scraperC] ⚠️ Obstruction neutralization failed: ${e.message}`);
@@ -76,13 +102,14 @@ export async function scraperC(
     // Wait for the forecast table to load
     console.log(`[scraperC] 🔍 Waiting for Windy forecast table...`);
     try {
-      await page.waitForSelector(".main-table__data-table, tr[data-t='wind'], tr[data-t='swell1']", {
-        timeout: 90000,
+      await page.waitForSelector(".main-table__data-table", {
+        timeout: 60000,
+        state: 'visible'
       });
     } catch (e) {
       console.log(`[scraperC] ❌ Table not found. Capturing visual intel...`);
       await page.screenshot({ path: join(process.cwd(), 'windy-failure.png'), fullPage: true });
-      throw e;
+      throw new Error(`Windy table not found after navigation and interaction. Check windy-failure.png for clues.`);
     }
 
     console.log(`[scraperC] ✅ Found Windy forecast table`);

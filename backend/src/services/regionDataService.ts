@@ -96,17 +96,26 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
           
           for (const source of sourcesToScrape) {
             try {
-              // Freshness Check: If we already have recent data (< 6 hours), skip redundant scraping
+              // Freshness Check: When was the last time we synced this source for this region?
+              // We use updatedAt because createdAt stays the same on upserts.
               const latestForecast = await prisma.forecast.findFirst({
                 where: { regionId: region.id, source: source },
-                orderBy: { createdAt: 'desc' }
+                orderBy: { updatedAt: 'desc' }
               });
 
-              const isStale = !latestForecast || (Date.now() - new Date(latestForecast.createdAt).getTime() > STALE_THRESHOLD_MS);
+              // Also check if we actually HAVE data for today. 
+              // If we have "fresh" data but it doesn't include today, we still need to scrape.
+              const today = new Date();
+              today.setUTCHours(0, 0, 0, 0);
+              const hasToday = await prisma.forecast.findFirst({
+                where: { regionId: region.id, source: source, date: today }
+              });
 
-              if (!isStale && !forceRefresh) {
-                console.log(`  ✅ Data for ${region.id} from ${source} is still fresh (updated ${Math.round((Date.now() - new Date(latestForecast!.createdAt).getTime()) / 60000)}m ago). Skipping scrape.`);
-                results.sourcesScraped++; // Count as success since we have fresh data
+              const isStale = !latestForecast || (Date.now() - new Date(latestForecast.updatedAt).getTime() > STALE_THRESHOLD_MS);
+
+              if (!isStale && hasToday && !forceRefresh) {
+                console.log(`  ✅ Data for ${region.id} from ${source} is still fresh (updated ${Math.round((Date.now() - new Date(latestForecast!.updatedAt).getTime()) / 60000)}m ago). Skipping scrape.`);
+                results.sourcesScraped++; 
                 hasAnyConditions = true;
                 continue;
               }
@@ -257,10 +266,10 @@ export async function ensureRegionDataFresh(regionId: string) {
     // 1. Check most recent forecast for this region
     const latestForecast = await prisma.forecast.findFirst({
       where: { regionId: regionId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { updatedAt: 'desc' }
     });
 
-    const isStale = !latestForecast || (Date.now() - new Date(latestForecast.createdAt).getTime() > STALE_THRESHOLD_MS);
+    const isStale = !latestForecast || (Date.now() - new Date(latestForecast.updatedAt).getTime() > STALE_THRESHOLD_MS);
 
     if (isStale) {
       console.log(`📡 [Pulse] Region ${regionId} is stale or missing. Triggering background scrape...`);

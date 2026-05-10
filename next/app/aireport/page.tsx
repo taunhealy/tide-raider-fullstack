@@ -43,6 +43,7 @@ import { useSearchTracking } from "@/app/hooks/useSearchTracking";
 import RecentBeachSearch from "@/app/components/RecentBeachSearch";
 import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 import { format } from "date-fns";
+import { safeFormat } from "@/app/lib/dateUtils";
 
 function AIReportContent() {
   const { credits, isLoading: isCreditsLoading } = useSubscriptionStatus();
@@ -101,13 +102,20 @@ function AIReportContent() {
       fetch(`/api/backend/intelligence/beach/${archiveBeach.id}/history`)
         .then(res => res.json())
         .then(data => {
-          setArchive(data);
-          // If no specific report is in URL, load the latest one automatically
-          if (!activeReportId && data.length > 0) {
-             router.push(`/aireport?beachId=${archiveBeach.id}&report=${data[0].id}`, { scroll: false });
+          if (Array.isArray(data)) {
+            setArchive(data);
+            // If no specific report is in URL, load the latest one automatically
+            if (!activeReportId && data.length > 0) {
+               router.push(`/aireport?beachId=${archiveBeach.id}&report=${data[0].id}`, { scroll: false });
+            }
+          } else {
+            setArchive([]);
           }
         })
-        .catch(err => console.error("Archive fetch failed", err))
+        .catch(err => {
+          console.error("Archive fetch failed", err);
+          setArchive([]);
+        })
         .finally(() => setIsLoadingArchive(false));
     } else {
       setArchive([]);
@@ -194,7 +202,10 @@ function AIReportContent() {
         
         // Refresh archive
         const arcRes = await fetch(`/api/backend/intelligence/beach/${generationBeach.id}/history`);
-        if (arcRes.ok) setArchive(await arcRes.json());
+        if (arcRes.ok) {
+          const arcData = await arcRes.json();
+          if (Array.isArray(arcData)) setArchive(arcData);
+        }
       }
     } catch (err: any) {
       toast.error("Comms Failure", { description: err.message });
@@ -407,7 +418,7 @@ function AIReportContent() {
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-black text-white/60">{archiveBeach.name}</span>
                 <div className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">{archive.length} Signals</span>
+                <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">{Array.isArray(archive) ? archive.length : 0} Signals</span>
               </div>
             )}
           </div>
@@ -427,7 +438,7 @@ function AIReportContent() {
                            <h2 className="text-3xl font-black tracking-tighter text-white">Active Intelligence</h2>
                         </div>
                         <p className="text-[12px] font-medium text-white/40 tracking-wide uppercase tracking-[0.1em]">
-                          {reportData.category} Briefing • {format(new Date(reportData.date), "MMMM d, yyyy")}
+                          {reportData.category} Briefing • {safeFormat(reportData.date, "MMMM d, yyyy")}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -457,7 +468,7 @@ function AIReportContent() {
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Auth Token</span>
-                            <p className="text-[15px] font-bold text-white/30 font-mono">TR-{reportData.id?.slice(0, 8).toUpperCase()}</p>
+                            <p className="text-[15px] font-bold text-white/30 font-mono">TR-{String(reportData.id || '').slice(0, 8).toUpperCase()}</p>
                           </div>
                         </div>
 
@@ -480,13 +491,13 @@ function AIReportContent() {
                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Intelligence Contributor</span>
                                 <h4 className="text-[20px] font-black text-white tracking-tight">{reportData.user.name}</h4>
                                 <div className="flex items-center gap-4">
-                                  {reportData.user.instagram && (
+                                  {reportData.user.instagram && typeof reportData.user.instagram === 'string' && (
                                     <Link href={`https://instagram.com/${reportData.user.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-white/30 hover:text-white transition-colors">
                                       <Instagram className="w-3.5 h-3.5" />
                                       {reportData.user.instagram}
                                     </Link>
                                   )}
-                                  {reportData.user.link && (
+                                  {reportData.user.link && typeof reportData.user.link === 'string' && (
                                     <Link href={reportData.user.link.startsWith('http') ? reportData.user.link : `https://${reportData.user.link}`} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-white/30 hover:text-white transition-colors">
                                       <Link2 className="w-3.5 h-3.5" />
                                       {reportData.user.link.replace(/^https?:\/\//, '')}
@@ -562,14 +573,14 @@ function AIReportContent() {
                           </div>
                           
                           <div>
-                             <p className={cn("text-[14px] font-bold tracking-tight mb-1", activeReportId === item.id ? "text-black" : "text-white")}>
-                               {format(new Date(item.date), "EEE, MMM d")}
+                           <p className={cn("text-[14px] font-bold tracking-tight mb-1", activeReportId === item.id ? "text-black" : "text-white")}>
+                             {safeFormat(item.date, "EEE, MMM d")}
+                           </p>
+                           <div className="flex items-center justify-between">
+                             <p className={cn("text-[11px] font-medium", activeReportId === item.id ? "text-black/60" : "text-white/40")}>
+                               Captured at {safeFormat(item.date, "HH:mm")}
                              </p>
-                             <div className="flex items-center justify-between">
-                               <p className={cn("text-[11px] font-medium", activeReportId === item.id ? "text-black/60" : "text-white/40")}>
-                                 Captured at {format(new Date(item.date), "HH:mm")}
-                               </p>
-                             </div>
+                           </div>
                           </div>
 
                           <div className={cn(

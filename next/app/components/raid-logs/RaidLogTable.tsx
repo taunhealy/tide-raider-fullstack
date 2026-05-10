@@ -204,6 +204,21 @@ function ForecastInfo({
         </div>
       )}
       <div className={cn("flex flex-wrap gap-1.5 items-center", isActuallyGated && "blur-[10px] select-none opacity-30")}>
+        {!isActuallyGated && (entry.mostAccurateSource || forecast?.source) && (
+          <div className={cn(
+            "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border",
+            (entry.mostAccurateSource === "WINDFINDER" || forecast?.source === "WINDFINDER") ? "bg-blue-50 text-blue-700 border-blue-200" :
+            (entry.mostAccurateSource === "WINDGURU" || forecast?.source === "WINDGURU") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+            (entry.mostAccurateSource === "WINDY" || forecast?.source === "WINDY") ? "bg-red-50 text-red-700 border-red-200" :
+            "bg-gray-50 text-gray-700 border-gray-200"
+          )}>
+            {(entry.mostAccurateSource === "WINDFINDER" || forecast?.source === "WINDFINDER") ? "Source A" :
+             (entry.mostAccurateSource === "WINDGURU" || forecast?.source === "WINDGURU") ? "Source B" :
+             (entry.mostAccurateSource === "WINDY" || forecast?.source === "WINDY") ? "Source C" :
+             (entry.mostAccurateSource === "OPENMETEO_ARCHIVE" || forecast?.source === "OPENMETEO_ARCHIVE") ? "Archive" : 
+             entry.mostAccurateSource || forecast?.source}
+          </div>
+        )}
         {(hasWind || hasWindDirection) && (
           <div className="inline-flex items-center bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-primary border border-blue-100">
             {hasWind && (

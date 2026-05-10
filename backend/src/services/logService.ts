@@ -640,20 +640,38 @@ export class LogService {
       const logDate = new Date(data.date);
       logDate.setUTCHours(0, 0, 0, 0);
 
-      // Try WINDFINDER first (most common)
-      forecast = await prisma.forecast.findFirst({
-        where: {
-          regionId: region.id,
-          date: logDate,
-          source: "WINDFINDER",
-        },
-      });
+      // Try user's most accurate source first if provided
+      if (data.mostAccurateSource) {
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+            source: data.mostAccurateSource as any,
+          },
+        });
+        
+        if (forecast) {
+          console.log(`[createRaidLogEntry] Forecast found for user's most accurate source (${data.mostAccurateSource})`);
+        }
+      }
+
+      // If still not found, try WINDFINDER (default preference)
+      if (!forecast) {
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+            source: "WINDFINDER",
+          },
+        });
+      }
 
       if (forecast) {
         console.log(
-          "[createRaidLogEntry] Forecast found by date/region (WINDFINDER):",
+          "[createRaidLogEntry] Forecast found by date/region:",
           {
             forecastId: forecast.id,
+            source: forecast.source,
             date: forecast.date,
           }
         );
@@ -882,20 +900,38 @@ export class LogService {
       const logDate = new Date(updateData.date);
       logDate.setUTCHours(0, 0, 0, 0);
 
-      // Try WINDFINDER first (most common)
-      forecast = await prisma.forecast.findFirst({
-        where: {
-          regionId: region.id,
-          date: logDate,
-          source: "WINDFINDER",
-        },
-      });
+      // Try user's most accurate source first
+      const sourceToTry = updateData.mostAccurateSource || existingEntry.mostAccurateSource;
+      if (sourceToTry) {
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+            source: sourceToTry as any,
+          },
+        });
+        if (forecast) {
+          console.log(`[updateLogEntry] Forecast found for most accurate source (${sourceToTry})`);
+        }
+      }
+
+      // Try WINDFINDER if still not found
+      if (!forecast) {
+        forecast = await prisma.forecast.findFirst({
+          where: {
+            regionId: region.id,
+            date: logDate,
+            source: "WINDFINDER",
+          },
+        });
+      }
 
       if (forecast) {
         console.log(
-          "[updateLogEntry] Forecast found by date/region (WINDFINDER):",
+          "[updateLogEntry] Forecast found by date/region:",
           {
             forecastId: forecast.id,
+            source: forecast.source,
             date: forecast.date,
           }
         );

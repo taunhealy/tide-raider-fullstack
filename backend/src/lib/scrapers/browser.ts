@@ -61,8 +61,6 @@ export async function getBrowser(): Promise<Browser> {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
-          "--disable-gpu",
-          "--disable-software-rasterizer",
           "--hide-scrollbars",
           "--mute-audio",
           "--disable-breakpad",

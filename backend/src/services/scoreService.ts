@@ -268,15 +268,19 @@ export class ScoreService {
       }
 
       // 5. Swell period scoring
+      const idealMinPeriod = parsedProfile.idealSwellPeriod.min || 12;
+      
       if (conditions.swellPeriod < 8) {
         score -= 3.0;
         deductions.push(`Critical: Very short period (${conditions.swellPeriod}s) - high probability of "wind slop"`);
-      } else if (conditions.swellPeriod < 10) {
+      } else if (conditions.swellPeriod < Math.min(10, idealMinPeriod)) {
         score -= 1.8;
         deductions.push(`Significant: Short period (${conditions.swellPeriod}s) - suboptimal quality`);
-      } else if (conditions.swellPeriod < 12) {
-        score -= 0.8;
-        deductions.push(`Suboptimal: Moderate period (${conditions.swellPeriod}s) - 12s+ is optimal`);
+      } else if (conditions.swellPeriod < idealMinPeriod) {
+        // If the spot's ideal min is lower (e.g. 10s for Muizenberg), don't penalize as hard for 10-12s
+        const periodPenalty = idealMinPeriod <= 10 ? 0.3 : 0.8;
+        score -= periodPenalty;
+        deductions.push(`Suboptimal: Moderate period (${conditions.swellPeriod}s) - ${idealMinPeriod}s+ is optimal`);
       } else if (
         !(
           conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&
