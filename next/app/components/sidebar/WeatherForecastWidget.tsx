@@ -322,11 +322,11 @@ export default function WeatherForecastWidget() {
           <span className="text-xs text-gray-400 font-primary uppercase tracking-wide whitespace-nowrap">
             Sources:
           </span>
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center h-full px-3 gap-1.5">
             <button
               onClick={() => setSelectedSource("WINDFINDER_SUPER")}
               suppressHydrationWarning
-              className={`flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+              className={`flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "WINDFINDER_SUPER"
                   ? "bg-brand-3 text-white shadow-lg shadow-brand-3/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-brand-3/50"
@@ -337,7 +337,7 @@ export default function WeatherForecastWidget() {
             <button
               onClick={() => setSelectedSource("WINDFINDER")}
               suppressHydrationWarning
-              className={`flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+              className={`flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -348,7 +348,7 @@ export default function WeatherForecastWidget() {
             <button
               onClick={() => setSelectedSource("WINDGURU")}
               suppressHydrationWarning
-              className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center gap-0.5 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -359,7 +359,7 @@ export default function WeatherForecastWidget() {
             <button
               onClick={() => setSelectedSource("WINDY")}
               suppressHydrationWarning
-              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -370,7 +370,7 @@ export default function WeatherForecastWidget() {
             <button
               onClick={() => setSelectedSource("TIDE_RAIDER")}
               suppressHydrationWarning
-              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "TIDE_RAIDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
@@ -493,7 +493,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDFINDER_SUPER")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDFINDER_SUPER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
@@ -505,7 +505,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDFINDER")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDFINDER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
@@ -517,7 +517,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDGURU")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDGURU"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
@@ -529,7 +529,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("WINDY")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDY"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
@@ -541,7 +541,7 @@ export default function WeatherForecastWidget() {
                 onClick={() => setSelectedSource("TIDE_RAIDER")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "TIDE_RAIDER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"

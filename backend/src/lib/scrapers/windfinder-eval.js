@@ -86,17 +86,17 @@ function extractWindfinderData() {
 
     // Row mapping: Search for labels and identify their parent row/container
     const rowMap = {};
-    const possibleLabels = Array.from(day.querySelectorAll('._label_9d49l_73, [class*="label"], [class*="Label"], span, a'));
+    const possibleLabels = Array.from(day.querySelectorAll('[class*="label"], [class*="Label"], [class*="_label_"], span, a, div'));
     
     possibleLabels.forEach(labelEl => {
       const label = labelEl.textContent.toLowerCase().trim();
-      const parentRow = labelEl.closest('.forecast-row, [class*="row"], [class*="Row"], [class*="row-wrapper"]');
-      if (!parentRow) return;
+      const parentRow = labelEl.closest('.forecast-row, [class*="row"], [class*="Row"], [class*="row-wrapper"], [class*="FcTableRow"], [class*="Container"]');
+      if (!parentRow || !label) return;
 
-      if ((label.includes('wind speed') || label.includes('speed')) && !label.includes('wave') && !label.includes('gust')) rowMap['wind-speed'] = parentRow;
-      if ((label.includes('wave height') || label.includes('swell height') || label.includes('height')) && !label.includes('tide')) rowMap['wave-height'] = parentRow;
-      if (label.includes('wave period') || label.includes('swell period') || (label.includes('period') && !label.includes('tide'))) rowMap['wave-period'] = parentRow;
-      if ((label.includes('tide height') || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = parentRow;
+      if ((label === 'wind speed' || label.startsWith('wind speed') || label === 'speed') && !label.includes('wave') && !label.includes('gust')) rowMap['wind-speed'] = parentRow;
+      if ((label === 'wave height' || label === 'swell height' || label.startsWith('wave height') || label === 'height') && !label.includes('tide')) rowMap['wave-height'] = parentRow;
+      if (label === 'wave period' || label === 'swell period' || label.startsWith('wave period') || (label === 'period' && !label.includes('tide'))) rowMap['wave-period'] = parentRow;
+      if ((label === 'tide height' || label.includes('tide (m)')) && !label.includes('period') && !label.includes('wave')) rowMap['tide-height'] = parentRow;
       if (label.includes('tide') || label.includes('maritime') || label.includes('tide height')) rowMap['tide-type'] = parentRow;
     });
 

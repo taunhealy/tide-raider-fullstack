@@ -93,6 +93,7 @@ export async function scraperA(
             '[class*="day-wrapper"]',
             '[class*="Container"]',
             '[class*="label"]',
+            '[class*="_label_"]',
             '[class*="hour"]',
             '.fc-table-horizon',
             '[class*="day-section"]',
@@ -100,7 +101,10 @@ export async function scraperA(
             '[class*="FcTable"]',
             '.tabs-item'
           ];
-          return selectors.some(s => !!document.querySelector(s));
+          return selectors.some(s => {
+            const el = document.querySelector(s);
+            return el && el.getBoundingClientRect().height > 0;
+          });
         });
 
         if (hasRows) {
