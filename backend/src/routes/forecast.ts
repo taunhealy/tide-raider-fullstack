@@ -26,10 +26,10 @@ router.get(
 
       // Validate and normalize source parameter
       const sourceParamRaw = req.query.source as string | undefined;
-      const validSources = ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"] as const;
-      const sourceParam: "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" =
+      const validSources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"] as const;
+      const sourceParam: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" =
         sourceParamRaw && (validSources as readonly string[]).includes(sourceParamRaw)
-          ? (sourceParamRaw as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER")
+          ? (sourceParamRaw as "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER")
           : "WINDFINDER";
 
       if (sourceParamRaw && !validSources.includes(sourceParamRaw as any)) {
@@ -119,7 +119,7 @@ router.get(
           where: {
             date: targetDate,
             regionId: resolvedRegionId,
-            source: sourceParam,
+            source: sourceParam as any,
             timeSlot: timeSlotParam as any,
           },
           select: {
@@ -185,11 +185,11 @@ router.get(
             today.setUTCHours(0, 0, 0, 0);
             const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             
-            let effectiveSource: "WINDFINDER" | "WINDGURU" | "WINDY" = sourceParam as any;
+            let effectiveSource: "WINDFINDER" | "WINDGURU" | "WINDY" = (sourceParam === "WINDFINDER_SUPER" ? "WINDFINDER" : sourceParam) as any;
             // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
-            if (sourceParam === "WINDFINDER" && diffDays > 3) {
-              console.log(`[forecast] 📅 Date ${dateStr} is ${diffDays} days away (beyond Superforecast window). Switching to WINDGURU.`);
-              effectiveSource = "WINDGURU";
+            if (sourceParam === "WINDFINDER_SUPER" && diffDays > 3) {
+               console.log(`[forecast] 📅 Date ${dateStr} is ${diffDays} days away (beyond Superforecast window). Switching to regular WINDFINDER.`);
+               effectiveSource = "WINDFINDER";
             }
 
             const scrapedForecast = await getLatestConditions(
@@ -217,25 +217,39 @@ router.get(
               );
 
               // Query the forecast again after scraping
-              const finalSource = (sourceParam === "WINDFINDER" && diffDays > 3) ? "WINDGURU" : sourceParam;
+              let finalSource = sourceParam;
+              if (sourceParam === "WINDFINDER_SUPER" && diffDays > 3) finalSource = "WINDFINDER";
               forecast = await prisma.forecast.findFirst({
                 where: {
                   date: targetDate,
                   regionId: resolvedRegionId,
-                  source: finalSource,
+                  source: finalSource as any,
                   timeSlot: timeSlotParam as any,
                 },
               });
 
-              // SECONDARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
-              if (!forecast && sourceParam === "WINDFINDER" && diffDays <= 3) {
-                 console.log(`[forecast] 🔄 SECONDARY FALLBACK: Windfinder null for ${dateStr}, attempting WINDGURU extraction...`);
+              // SECONDARY FALLBACK: If Superforecast returned null (e.g. due to scraper fallback), try Regular Windfinder
+              if (!forecast && sourceParam === "WINDFINDER_SUPER") {
+                console.log(`[forecast] 🔄 SECONDARY FALLBACK: Superforecast null for ${dateStr}, checking Regular Windfinder...`);
+                forecast = await prisma.forecast.findFirst({
+                  where: {
+                    date: targetDate,
+                    regionId: resolvedRegionId,
+                    source: "WINDFINDER" as any,
+                    timeSlot: timeSlotParam as any,
+                  },
+                });
+              }
+
+              // TERTIARY FALLBACK: If Windfinder returned null (even for near dates), try Windguru
+              if (!forecast && (sourceParam === "WINDFINDER" || sourceParam === "WINDFINDER_SUPER") && diffDays <= 3) {
+                 console.log(`[forecast] 🔄 TERTIARY FALLBACK: Windfinder null for ${dateStr}, attempting WINDGURU extraction...`);
                  await getLatestConditions(resolvedRegionId, forceRefresh, "WINDGURU");
                  forecast = await prisma.forecast.findFirst({
                    where: {
                      date: targetDate,
                      regionId: resolvedRegionId,
-                     source: "WINDGURU",
+                     source: "WINDGURU" as any,
                      timeSlot: timeSlotParam as any,
                    },
                  });
@@ -255,7 +269,7 @@ router.get(
                       where: {
                         regionId: resolvedRegionId,
                         date: targetDate,
-                        source: sourceParam,
+                        source: sourceParam as any,
                         timeSlot: timeSlotParam as any,
                       },
                     }

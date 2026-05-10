@@ -171,7 +171,7 @@ export const api = {
   getForecast: async (
     regionId: string,
     forecastDate?: string,
-    source?: "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER",
+    source?: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER",
     timeSlot?: string
   ) => {
     const params = new URLSearchParams({ regionId });

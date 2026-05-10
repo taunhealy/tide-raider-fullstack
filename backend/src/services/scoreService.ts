@@ -354,7 +354,7 @@ export class ScoreService {
             beachId: beach.id,
             regionId,
             category: profile.category,
-            source: forecastData.source,
+            source: forecastData.source as any,
             timeSlot: (forecastData as any).timeSlot || "MORNING",
             score: integerScore,
             starRating: starRating,
@@ -382,7 +382,7 @@ export class ScoreService {
         where: {
           regionId,
           date: forecastData.date,
-          source: forecastData.source,
+          source: forecastData.source as any,
           timeSlot: (forecastData as any).timeSlot || "MORNING",
         },
       });
@@ -420,7 +420,7 @@ export class ScoreService {
       where: {
         regionId,
         date: normalizedDate,
-        ...(source ? { source } : {}),
+        ...(source ? { source: source as any } : {}),
         ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
       },
       include: {
@@ -568,7 +568,7 @@ export class ScoreService {
             regionId,
             timeSlot: queryTimeSlot,
             category: queryCategory,
-            ...(filters.source ? { source: filters.source } : {}),
+            ...(filters.source ? { source: filters.source as any } : {}),
           },
           orderBy: {
             score: "desc",

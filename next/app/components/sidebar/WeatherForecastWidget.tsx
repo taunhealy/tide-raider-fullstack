@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 
-type ForecastSource = "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
+type ForecastSource = "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
 
 const LoadingState = () => (
   <div className="col-span-2 flex items-center justify-center p-6">
@@ -52,7 +52,7 @@ export default function WeatherForecastWidget() {
     setMounted(true);
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
-      if (stored && ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
+      if (stored && ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
         setSelectedSource(stored as ForecastSource);
       }
     }
@@ -285,10 +285,12 @@ export default function WeatherForecastWidget() {
       // Show which source doesn't have data
       const sourceLabel =
         selectedSource === "WINDFINDER"
-          ? "A"
-          : selectedSource === "WINDGURU"
-            ? "B"
-            : "C";
+          ? "Alpha"
+          : selectedSource === "WINDFINDER_SUPER"
+            ? "Super"
+            : selectedSource === "WINDGURU"
+              ? "Beta"
+              : "Gamma";
       return `No data for source ${sourceLabel}`;
     }
     return null;
@@ -322,48 +324,59 @@ export default function WeatherForecastWidget() {
           </span>
           <div className="flex items-center gap-2 flex-1">
             <button
+              onClick={() => setSelectedSource("WINDFINDER_SUPER")}
+              suppressHydrationWarning
+              className={`flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
+                selectedSource === "WINDFINDER_SUPER"
+                  ? "bg-brand-3 text-white shadow-lg shadow-brand-3/30"
+                  : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-brand-3/50"
+              }`}
+            >
+              Super
+            </button>
+            <button
               onClick={() => setSelectedSource("WINDFINDER")}
               suppressHydrationWarning
-              className={`flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              className={`flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
                 selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
-              A
+              Alpha
             </button>
             <button
               onClick={() => setSelectedSource("WINDGURU")}
               suppressHydrationWarning
-              className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              className={`relative flex flex-1 items-center justify-center gap-0.5 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
                 selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
-              B
+              Beta
             </button>
             <button
               onClick={() => setSelectedSource("WINDY")}
               suppressHydrationWarning
-              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
                 selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
-              C
+              Gamma
             </button>
             <button
               onClick={() => setSelectedSource("TIDE_RAIDER")}
               suppressHydrationWarning
-              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-xs font-primary transition-all duration-200 ${
+              className={`relative flex-1 ${mobileBarHeight} px-3 rounded text-[10px] font-primary transition-all duration-200 ${
                 selectedSource === "TIDE_RAIDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
-              D
+              Delta
             </button>
           </div>
         </div>
@@ -476,6 +489,18 @@ export default function WeatherForecastWidget() {
               Data Source
             </h4>
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setSelectedSource("WINDFINDER_SUPER")}
+                suppressHydrationWarning
+                className={cn(
+                  "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  selectedSource === "WINDFINDER_SUPER"
+                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
+                    : "bg-white/5 text-white/40 hover:bg-white/10"
+                )}
+              >
+                Super
+              </button>
               <button
                 onClick={() => setSelectedSource("WINDFINDER")}
                 suppressHydrationWarning

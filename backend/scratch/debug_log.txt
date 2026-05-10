@@ -1,0 +1,5 @@
+[2026-05-10T17:54:06.894Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-10T17:54:43.144Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-10T17:54:43.147Z] Scraped forecasts length: 30
+[2026-05-10T17:55:19.435Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-10T17:55:19.438Z] Scraped forecasts length: 30

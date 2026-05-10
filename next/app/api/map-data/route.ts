@@ -27,8 +27,9 @@ export async function GET(request: Request) {
     const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
     let effectiveSource = source;
-    if (diffDays > 3 && source === "WINDFINDER") {
-      effectiveSource = "WINDGURU";
+    // If user specifically wants Superforecast but it's out of range, fall back to Regular Windfinder (Alpha)
+    if (source === "WINDFINDER_SUPER" && diffDays > 3) {
+      effectiveSource = "WINDFINDER";
     }
 
     // Create cache key - include ids if present (limited to 50 for key stability)
@@ -75,7 +76,7 @@ export async function GET(request: Request) {
           beachDailyScores: {
             where: {
               date: lite ? targetDate : { gte: today, lt: sevenDaysLater },
-              ...(effectiveSource ? { source: effectiveSource } : {}),
+              ...(effectiveSource ? { source: effectiveSource as any } : {}),
               ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
               category: "GENERAL"
             },

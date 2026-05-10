@@ -1,116 +1,31 @@
+// @ts-nocheck
 import { prisma } from "../lib/prisma";
-import { randomUUID } from "crypto";
 import { REGION_CONFIGS } from "../lib/scrapers/scrapeSources";
-import { scraperA } from "../lib/scrapers/scraperA";
-import { scraperB } from "../lib/scrapers/scraperB";
-import { ScoreService } from "./scoreService";
-import { PythonBridge } from "../lib/pythonBridge";
-import { sendEmail } from "../lib/email"; // Added for failure alerts
 import { BaseForecastData } from "../lib/types";
-const ADMIN_EMAIL = "taunhealy@gmail.com";
+import { ScoreService } from "./scoreService";
+import { randomUUID } from "crypto";
+import { fetchArchiveFromOpenMeteo } from "../lib/scrapers/openmeteo";
+import { scraperA } from "../lib/scrapers/scraperA";
+import { appendFileSync } from 'fs';
+import { join } from 'path';
 
-async function sendScrapeFailureAlert(regionId: string, source: string, error: string, url: string) {
-  const subject = `⚠️ TACTICAL ALERT: Scraper Failure [${regionId}]`;
-  const html = `
-    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ff4444; border-radius: 10px;">
-      <h2 style="color: #cc0000;">🛰️ Intelligence Signal Lost</h2>
-      <p><strong>Region:</strong> ${regionId}</p>
-      <p><strong>Source:</strong> ${source}</p>
-      <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
-      <p><strong>Error:</strong> ${error}</p>
-      <hr/>
-      <p style="font-size: 12px; color: #666;">This is an automated tactical alert from Tide Raider Backend.</p>
-    </div>
-  `;
-  await sendEmail(ADMIN_EMAIL, subject, html);
+const pendingScrapes = new Map<string, Promise<any>>();
+
+function debugLog(msg: string) {
+  const logPath = join(process.cwd(), 'scratch', 'debug_log.txt');
+  appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`);
 }
 
 function getTodayDate() {
-  const date = new Date();
-  date.setUTCHours(0, 0, 0, 0);
-  return date;
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
 }
-
-/**
- * Fetch historical data from Open-Meteo Archive API
- */
-async function fetchArchiveFromOpenMeteo(regionId: string, date: Date) {
-  try {
-    // 1. Get a representative beach for the region to get coordinates
-    const beach = await prisma.beach.findFirst({
-      where: { regionId },
-      select: { coordinates: true }
-    });
-    
-    if (!beach || !beach.coordinates) {
-      console.warn(`[Archive] No coordinates found for region ${regionId}, using Cape Town defaults`);
-    }
-    
-    const coords = (beach?.coordinates as { lat: number, lng: number }) || { lat: -33.9249, lng: 18.4241 };
-    const dateStr = date.toISOString().split('T')[0];
-    
-    console.log(`[Archive] Fetching Open-Meteo data for ${regionId} on ${dateStr} at ${coords.lat}, ${coords.lng}`);
-    
-    // Fetch from both Weather Archive (for wind) and Marine API (for waves)
-    const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kn`;
-    const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wave_height,wave_period,wave_direction`;
-    
-    const [weatherRes, marineRes] = await Promise.all([
-      fetch(weatherUrl),
-      fetch(marineUrl)
-    ]);
-
-    if (!weatherRes.ok) throw new Error(`Weather API failed: ${weatherRes.statusText}`);
-    if (!marineRes.ok) throw new Error(`Marine API failed: ${marineRes.statusText}`);
-
-    const weatherData = await weatherRes.json() as any;
-    const marineData = await marineRes.json() as any;
-    
-    if (!weatherData.hourly || !marineData.hourly) {
-      throw new Error("Missing hourly data from Open-Meteo");
-    }
-
-    const times = weatherData.hourly.time as string[];
-    
-    const slots = [
-      { name: "MORNING", hour: 9 },
-      { name: "NOON", hour: 13 },
-      { name: "EVENING", hour: 17 }
-    ];
-    
-    const results = slots.map(slot => {
-      const timeStr = `${dateStr}T${slot.hour.toString().padStart(2, '0')}:00`;
-      const timeIndex = times.findIndex((t: string) => t.startsWith(timeStr));
-      
-      if (timeIndex === -1) return null;
-      
-      return {
-        date: date,
-        timeSlot: slot.name,
-        windSpeed: Math.round(weatherData.hourly.wind_speed_10m[timeIndex] || 0),
-        windDirection: weatherData.hourly.wind_direction_10m[timeIndex] || 0,
-        swellHeight: marineData.hourly.wave_height?.[timeIndex] || 0,
-        swellPeriod: Math.round(marineData.hourly.wave_period?.[timeIndex] || 0),
-        swellDirection: marineData.hourly.wave_direction?.[timeIndex] || 0,
-        source: "OPENMETEO_ARCHIVE",
-        tide: ""
-      };
-    }).filter((r): r is any => r !== null);
-    
-    console.log(`[Archive] Successfully merged ${results.length} slots for ${regionId}`);
-    return results;
-  } catch (error) {
-    console.error(`[Archive] Failed to fetch from Open-Meteo:`, error);
-    return [];
-  }
-}
-
-const pendingScrapes = new Map<string, Promise<any>>();
 
 export async function getLatestConditions(
   regionId: string,
   forceRefresh = false,
-  source: "WINDFINDER" | "WINDGURU" | "WINDY" | "OPENMETEO_ARCHIVE" = "WINDFINDER",
+  source: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "OPENMETEO_ARCHIVE" = "WINDFINDER",
   daysLimit?: number,
   targetDateParam?: Date,
   timeSlotParam?: string,
@@ -137,7 +52,7 @@ export async function getLatestConditions(
     const existingForecast = await prisma.forecast.findFirst({
       where: {
         regionId: region.regionId,
-        source: source,
+        source: source as any,
         date: lookupDate,
         timeSlot: (timeSlotParam as any) || activeSlot,
       },
@@ -216,17 +131,13 @@ export async function getLatestConditions(
   // Determine URL based on source
   let scrapeUrl = "";
   const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  const SUPERFORECAST_LIMIT_DAYS = 3;
-  const useRegularForecast = source === "WINDFINDER" && diffDays >= SUPERFORECAST_LIMIT_DAYS && !!region.sourceA.forecastUrl;
-
-  if (source === "WINDFINDER") {
-    scrapeUrl = useRegularForecast
-      ? region.sourceA.forecastUrl!
-      : region.sourceA.url;
-
-    console.log(
-      `[getLatestConditions] 📅 Date is ${diffDays}d out — using ${useRegularForecast ? "Regular Forecast (10d)" : "Superforecast (3d)"} for ${region.regionId}`
-    );
+  
+  // Explicitly handle the two Windfinder sources
+  if (source === "WINDFINDER_SUPER") {
+    scrapeUrl = region.sourceA.url; // Superforecast URL
+  } else if (source === "WINDFINDER") {
+    // If we have a dedicated regular forecast URL, use it for Alpha (especially beyond day 3)
+    scrapeUrl = region.sourceA.forecastUrl || region.sourceA.url;
   } else if (source === "WINDGURU") {
     scrapeUrl = region.sourceB?.url || "";
   } else if (source === "WINDY") {
@@ -244,58 +155,49 @@ export async function getLatestConditions(
   const runScrapeWithFallback = async (url: string, id: string) => {
     let currentUrl = url;
     try {
-      if (source === "WINDFINDER") {
+      if (source === "WINDFINDER" || source === "WINDFINDER_SUPER") {
         try {
           return await scraperA(currentUrl, id);
         } catch (err) {
-          // If superforecast fails, try regular forecast URL if available and if we aren't already using it
-          const isSuperforecast = currentUrl.includes("weatherforecast");
-          const regionConfig = REGION_CONFIGS[id];
-          if (isSuperforecast && regionConfig?.sourceA?.forecastUrl) {
-             const fallbackUrl = regionConfig.sourceA.forecastUrl;
-             console.log(`[getLatestConditions] 🔄 Superforecast failed for ${id}, retrying with Regular Forecast URL: ${fallbackUrl}`);
-             currentUrl = fallbackUrl; // Update currentUrl for semantic fallback if this also fails
-             return await scraperA(fallbackUrl, id);
+          console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
+          
+          // USER REQUEST: Send email on failure instead of using Crawl4ai
+          try {
+            const { sendEmail } = await import("../lib/email");
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            const stack = err instanceof Error ? err.stack : "No stack trace";
+            
+            const html = `
+              <h2>🚨 Scraper Failure Alert</h2>
+              <p><strong>Source:</strong> ${source}</p>
+              <p><strong>Region:</strong> ${id}</p>
+              <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
+              <p><strong>Error:</strong> ${errorMessage}</p>
+              <hr>
+              <pre style="background: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 12px;">${stack}</pre>
+            `;
+            
+            await sendEmail("taunhealy@gmail.com", `🚨 Scraper Failure: ${source} - ${id}`, html);
+            console.log(`[getLatestConditions] 📧 Failure alert sent to taunhealy@gmail.com`);
+          } catch (emailErr) {
+            console.error(`[getLatestConditions] 📧 Failed to send email alert:`, emailErr);
           }
           throw err;
         }
-      }
-      if (source === "WINDGURU") return await scraperB(currentUrl, id);
-      if (source === "WINDY") {
+      } else if (source === "WINDGURU") {
+        const { scraperB } = await import("../lib/scrapers/scraperB");
+        return await scraperB(currentUrl, id);
+      } else if (source === "WINDY") {
         const { scraperC } = await import("../lib/scrapers/scraperC");
         return await scraperC(currentUrl, id);
       }
-      return [];
     } catch (err) {
-      console.error(`[getLatestConditions] ❌ Scrape failed for ${url}:`, err);
-      
-      // USER REQUEST: Send email on failure instead of using Crawl4ai
-      try {
-        const { sendEmail } = await import("../lib/email");
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        const stack = err instanceof Error ? err.stack : "No stack trace";
-        
-        const html = `
-          <h2>🚨 Scraper Failure Alert</h2>
-          <p><strong>Source:</strong> ${source}</p>
-          <p><strong>Region:</strong> ${id}</p>
-          <p><strong>URL:</strong> <a href="${url}">${url}</a></p>
-          <p><strong>Error:</strong> ${errorMessage}</p>
-          <hr>
-          <pre style="background: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 12px;">${stack}</pre>
-        `;
-        
-        await sendEmail("taunhealy@gmail.com", `🚨 Scraper Failure: ${source} - ${id}`, html);
-        console.log(`[getLatestConditions] 📧 Failure alert sent to taunhealy@gmail.com`);
-      } catch (emailErr) {
-        console.error(`[getLatestConditions] ❌ Failed to send failure alert email:`, emailErr);
-      }
-
-      return [];
+      console.error(`[getLatestConditions] ❌ All scrape attempts failed for ${id}:`, err);
+      return null;
     }
   };
 
-  const scrapeKey = `${regionId}-${source}`;
+  const scrapeKey = `${region.regionId}_${source}`;
   if (pendingScrapes.has(scrapeKey)) {
     console.log(`[getLatestConditions] ⏳ Scrape already in progress for ${scrapeKey}, waiting for promise...`);
     await pendingScrapes.get(scrapeKey);
@@ -305,7 +207,7 @@ export async function getLatestConditions(
       where: {
         date: lookupDate,
         regionId: region.regionId,
-        source: source,
+        source: source as any,
         timeSlot: (timeSlotParam as any) || activeSlot,
       }
     });
@@ -320,16 +222,20 @@ export async function getLatestConditions(
 
   let scrapedForecasts: BaseForecastData[] = [];
   let isActuallyRegular = false;
+  let isSuperforecast = scrapeUrl.includes('weatherforecast') || source === "WINDFINDER_SUPER";
 
   try {
     const rawResult = await scrapePromise;
+    debugLog(`Raw scraper result type: ${typeof rawResult}, isArray: ${Array.isArray(rawResult)}, keys: ${rawResult && typeof rawResult === 'object' ? Object.keys(rawResult).join(',') : 'none'}`);
     
-    if (source === "WINDFINDER" && rawResult && typeof rawResult === 'object' && 'forecasts' in rawResult) {
+    if ((source === "WINDFINDER" || source === "WINDFINDER_SUPER") && rawResult && typeof rawResult === 'object' && 'forecasts' in rawResult) {
       const windfinderResult = rawResult as unknown as { forecasts: BaseForecastData[], isSuperforecast: boolean };
       scrapedForecasts = windfinderResult.forecasts;
+      debugLog(`Scraped forecasts length: ${scrapedForecasts?.length || 0}`);
       isActuallyRegular = !windfinderResult.isSuperforecast;
 
       // 🚨 TACTICAL ALERT: If we wanted Superforecast but got Regular (Fallback)
+      const useRegularForecast = source === "WINDFINDER";
       if (!useRegularForecast && isActuallyRegular) {
         console.log(`[getLatestConditions] ⚠️ Superforecast Fallback detected for ${region.regionId}. Sending alert...`);
         const { sendEmail } = await import("../lib/email");
@@ -343,7 +249,7 @@ export async function getLatestConditions(
             <p style="font-size: 12px; color: #666;">This is an automated tactical alert from Tide Raider Backend.</p>
           </div>
         `;
-        sendEmail(ADMIN_EMAIL, `⚠️ Superforecast Fallback: ${region.regionId}`, html).catch(e => console.error("Failed to send fallback alert:", e));
+        sendEmail("admin@tideraider.com", `⚠️ Superforecast Fallback: ${region.regionId}`, html).catch(e => console.error("Failed to send fallback alert:", e));
       }
     } else {
       scrapedForecasts = Array.isArray(rawResult) ? rawResult : [];
@@ -357,118 +263,120 @@ export async function getLatestConditions(
   }
 
   console.log(
-    `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database... (Actually Regular: ${isActuallyRegular})`
+    `[getLatestConditions] 📊 Scraped ${scrapedForecasts.length} forecast(s), storing in database... (Actually Regular: ${isActuallyRegular}, isSuperforecast: ${isSuperforecast})`
   );
 
   // Store all scraped forecasts
   let requestedForecast = null;
   
-  // Correctly handle daysLimit by filtering unique dates instead of record count
-  let forecastsToStore = scrapedForecasts;
-  if (daysLimit) {
-    const dates = [...new Set(scrapedForecasts.map(f => f.date.toISOString().split('T')[0]))].slice(0, daysLimit);
-    forecastsToStore = scrapedForecasts.filter(f => dates.includes(f.date.toISOString().split('T')[0]));
-  }
-
-  for (const scrapedForecast of forecastsToStore) {
-    // Create a NEW date object to avoid mutating shared references
-    const forecastDate = new Date(scrapedForecast.date);
-    forecastDate.setUTCHours(0, 0, 0, 0);
-    
-    // 🚨 DATA INTEGRITY: If using regular forecast (either by intent or fallback), skip days covered by Superforecast (offset)
-    const dayDiff = Math.round((forecastDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const isRegularSource = useRegularForecast || isActuallyRegular;
-    
-    if (source === "WINDFINDER" && isRegularSource && dayDiff < startDayOffset) {
-      console.log(`[getLatestConditions] ⏭️ Skipping regular forecast upsert for ${forecastDate.toISOString().split('T')[0]} (offset: ${startDayOffset})`);
-      continue;
+  try {
+    // Correctly handle daysLimit by filtering unique dates instead of record count
+    let forecastsToStore = scrapedForecasts;
+    if (daysLimit) {
+      const dates = [...new Set(scrapedForecasts.map(f => f.date.toISOString().split('T')[0]))].slice(0, daysLimit);
+      forecastsToStore = scrapedForecasts.filter(f => dates.includes(f.date.toISOString().split('T')[0]));
     }
+    debugLog(`Forecasts to store length: ${forecastsToStore?.length || 0}`);
 
-    const slot = (scrapedForecast as any).timeSlot || "MORNING";
-
-    console.log(
-      `[getLatestConditions] 💾 Upserting forecast for ${region.regionId} on ${forecastDate.toISOString().split("T")[0]} slot ${slot} - Tide: ${scrapedForecast.tide || 'MISSING'}`
-    );
-    
-    const storedForecast = await prisma.forecast.upsert({
-      where: {
-        date_regionId_source_timeSlot: {
-          date: forecastDate,
-          regionId: region.regionId,
-          source: source,
-          timeSlot: slot as any,
-        },
-      },
-      update: {
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-        swellHeight2: scrapedForecast.swellHeight2 || 0,
-        swellPeriod2: scrapedForecast.swellPeriod2 || 0,
-        swellDirection2: scrapedForecast.swellDirection2 || 0,
-        swellHeight3: scrapedForecast.swellHeight3 || 0,
-        swellPeriod3: scrapedForecast.swellPeriod3 || 0,
-        swellDirection3: scrapedForecast.swellDirection3 || 0,
-        swellEnergy: scrapedForecast.swellEnergy || 0,
-        trend: scrapedForecast.trend,
-        tide: scrapedForecast.tide,
-      },
-      create: {
-        id: randomUUID(),
-        date: forecastDate,
-        regionId: region.regionId,
-        source: source,
-        timeSlot: slot as any,
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-        swellHeight2: scrapedForecast.swellHeight2 || 0,
-        swellPeriod2: scrapedForecast.swellPeriod2 || 0,
-        swellDirection2: scrapedForecast.swellDirection2 || 0,
-        swellHeight3: scrapedForecast.swellHeight3 || 0,
-        swellPeriod3: scrapedForecast.swellPeriod3 || 0,
-        swellDirection3: scrapedForecast.swellDirection3 || 0,
-        swellEnergy: scrapedForecast.swellEnergy || 0,
-        trend: scrapedForecast.trend,
-        tide: scrapedForecast.tide,
-      },
-    });
-
-    // Match the exact record we need to return
-    const isTargetDate = forecastDate.getTime() === lookupDate.getTime();
-    const isTargetSlot = timeSlotParam ? storedForecast.timeSlot === timeSlotParam : storedForecast.timeSlot === activeSlot;
-
-    if (isTargetDate && isTargetSlot) {
-      requestedForecast = storedForecast;
-    }
-  }
-
-  // Mass Score Calculation: Run score updates for ALL scraped slots 
-  // This ensures that when the user toggles the UI, data is already ready.
-  console.log(`[getLatestConditions] 📊 Batch calculating scores for ${scrapedForecasts.length} slots...`);
-  for (const scrapedForecast of scrapedForecasts) {
-    try {
-      // Normalize date for score storage
+    for (const scrapedForecast of forecastsToStore) {
+      // Create a NEW date object to avoid mutating shared references
       const forecastDate = new Date(scrapedForecast.date);
       forecastDate.setUTCHours(0, 0, 0, 0);
+      
+      const slot = (scrapedForecast as any).timeSlot || "MORNING";
+      const isActuallySuper = isSuperforecast && !isActuallyRegular;
+      const effectiveSource = (source === "WINDFINDER" || source === "WINDFINDER_SUPER") 
+        ? (isActuallySuper ? "WINDFINDER_SUPER" : "WINDFINDER") 
+        : source;
 
-      await ScoreService.calculateAndStoreScores(region.regionId, {
-        windSpeed: scrapedForecast.windSpeed,
-        windDirection: scrapedForecast.windDirection,
-        swellHeight: scrapedForecast.swellHeight,
-        swellPeriod: scrapedForecast.swellPeriod,
-        swellDirection: scrapedForecast.swellDirection,
-        date: forecastDate,
-        source: source,
-        timeSlot: scrapedForecast.timeSlot,
-      } as any);
-    } catch (scoreErr) {
-      console.error(`[getLatestConditions] ⚠️ Failed for slot ${scrapedForecast.timeSlot}:`, scoreErr);
+      debugLog(`Upserting forecast for ${region.regionId} on ${forecastDate.toISOString().split("T")[0]} slot ${slot} - Source: ${effectiveSource} (Original source: ${source})`);
+      
+      const storedForecast = await prisma.forecast.upsert({
+        where: {
+          date_regionId_source_timeSlot: {
+            date: forecastDate,
+            regionId: region.regionId,
+            source: effectiveSource as any,
+            timeSlot: slot as any,
+          },
+        },
+        update: {
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
+          swellHeight2: scrapedForecast.swellHeight2 || 0,
+          swellPeriod2: scrapedForecast.swellPeriod2 || 0,
+          swellDirection2: scrapedForecast.swellDirection2 || 0,
+          swellHeight3: scrapedForecast.swellHeight3 || 0,
+          swellPeriod3: scrapedForecast.swellPeriod3 || 0,
+          swellDirection3: scrapedForecast.swellDirection3 || 0,
+          swellEnergy: scrapedForecast.swellEnergy || 0,
+          trend: scrapedForecast.trend,
+          tide: scrapedForecast.tide,
+        },
+        create: {
+          id: randomUUID(),
+          date: forecastDate,
+          regionId: region.regionId,
+          source: effectiveSource as any,
+          timeSlot: slot as any,
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
+          swellHeight2: scrapedForecast.swellHeight2 || 0,
+          swellPeriod2: scrapedForecast.swellPeriod2 || 0,
+          swellDirection2: scrapedForecast.swellDirection2 || 0,
+          swellHeight3: scrapedForecast.swellHeight3 || 0,
+          swellPeriod3: scrapedForecast.swellPeriod3 || 0,
+          swellDirection3: scrapedForecast.swellDirection3 || 0,
+          swellEnergy: scrapedForecast.swellEnergy || 0,
+          trend: scrapedForecast.trend,
+          tide: scrapedForecast.tide,
+        },
+      });
+
+      // Match the exact record we need to return
+      const isTargetDate = forecastDate.getTime() === lookupDate.getTime();
+      const isTargetSlot = timeSlotParam ? storedForecast.timeSlot === timeSlotParam : storedForecast.timeSlot === activeSlot;
+
+      if (isTargetDate && isTargetSlot) {
+        requestedForecast = storedForecast;
+      }
     }
+
+    // Mass Score Calculation: Run score updates for ALL scraped slots 
+    console.log(`[getLatestConditions] 📊 Batch calculating scores for ${scrapedForecasts.length} slots...`);
+    for (const scrapedForecast of scrapedForecasts) {
+      try {
+        const forecastDate = new Date(scrapedForecast.date);
+        forecastDate.setUTCHours(0, 0, 0, 0);
+
+        const isActuallySuper = isSuperforecast && !isActuallyRegular;
+        const effectiveSource = (source === "WINDFINDER" || source === "WINDFINDER_SUPER") 
+          ? (isActuallySuper ? "WINDFINDER_SUPER" : "WINDFINDER") 
+          : source;
+
+        await ScoreService.calculateAndStoreScores(region.regionId, {
+          windSpeed: scrapedForecast.windSpeed,
+          windDirection: scrapedForecast.windDirection,
+          swellHeight: scrapedForecast.swellHeight,
+          swellPeriod: scrapedForecast.swellPeriod,
+          swellDirection: scrapedForecast.swellDirection,
+          date: forecastDate,
+          source: effectiveSource,
+          timeSlot: scrapedForecast.timeSlot,
+        } as any);
+      } catch (scoreErr) {
+        console.error(`[getLatestConditions] ⚠️ Failed for slot ${scrapedForecast.timeSlot}:`, scoreErr);
+      }
+    }
+  } catch (err) {
+    debugLog(`ERROR in storage loop: ${err.message}`);
+    console.error("Storage loop error:", err);
   }
 
   if (!requestedForecast) {

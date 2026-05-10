@@ -1191,6 +1191,7 @@ enum HiddenGemStatus {
 
 enum ForecastSource {
   WINDFINDER
+  WINDFINDER_SUPER
   WINDGURU
   WINDY
   OPENMETEO_ARCHIVE
