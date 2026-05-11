@@ -224,34 +224,46 @@ router.get("/:id/rating", dataRateLimiter, async (req: Request, res: Response) =
 
     console.log(`[beaches/:id/rating] Searching for: beachId=${id}, dateRange=[${targetDate.toISOString()}, ${nextDay.toISOString()}], source=${source}`);
 
-    const scoreRecord = await prisma.beachDailyScore.findFirst({
+    const scoreRecords = await prisma.beachDailyScore.findMany({
       where: {
         beachId: id,
         date: {
           gte: targetDate,
           lt: nextDay
         },
-        source: source
+        ...(req.query.source ? { source: req.query.source as any } : {})
       },
       select: { 
+        source: true,
         score: true,
-        conditions: true
+        starRating: true,
+        conditions: true,
+        timeSlot: true
       },
-      orderBy: { date: 'asc' } // Pick the earliest for the day if multiples exist
+      orderBy: { date: 'asc' }
     });
 
-    if (!scoreRecord) {
-      console.log(`[beaches/:id/rating] ❌ No score found for ${id} on ${dateParam} (${source})`);
+    if (scoreRecords.length === 0) {
+      console.log(`[beaches/:id/rating] ❌ No scores found for ${id} on ${dateParam}`);
     } else {
-      console.log(`[beaches/:id/rating] ✅ Found score: ${scoreRecord.score}`);
+      console.log(`[beaches/:id/rating] ✅ Found ${scoreRecords.length} scores`);
     }
 
-    res.json({ 
-      beachId: id,
-      date: dateParam,
-      score: scoreRecord?.score ?? 0,
-      conditions: scoreRecord?.conditions || null
-    });
+    // If a specific source was requested, we still return the legacy object format 
+    // for backward compatibility, but we prefer the array format for the new UI.
+    if (req.query.source) {
+      const scoreRecord = scoreRecords[0];
+      return res.json({ 
+        beachId: id,
+        date: dateParam,
+        score: scoreRecord?.score ?? 0,
+        conditions: scoreRecord?.conditions || null,
+        starRating: scoreRecord?.starRating || 0,
+        source: scoreRecord?.source
+      });
+    }
+
+    res.json(scoreRecords);
   } catch (error) {
     console.error("Failed to fetch beach rating:", error);
     res.json({ score: 0 }); // Fail gracefully for dashboard

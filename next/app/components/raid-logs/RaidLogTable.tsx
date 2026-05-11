@@ -22,6 +22,7 @@ import {
   getWindEmoji,
   getSwellEmoji,
   degreesToCardinal,
+  getSourceName,
 } from "@/app/lib/forecastUtils";
 import Image from "next/image";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
@@ -213,11 +214,7 @@ function ForecastInfo({
             "bg-gray-50 text-gray-700 border-gray-200"
           )}>
             <span className="flex items-center gap-1">
-              {(forecast?.source === "WINDFINDER") ? "Source A" :
-               (forecast?.source === "WINDGURU") ? "Source B" :
-               (forecast?.source === "WINDY") ? "Source C" :
-               (forecast?.source === "OPENMETEO_ARCHIVE") ? "Archive" : 
-               forecast?.source || entry.mostAccurateSource}
+              {getSourceName(forecast?.source || entry.mostAccurateSource)}
               
               {forecast?.source && entry.mostAccurateSource && forecast.source === entry.mostAccurateSource && (
                 <span className="text-[8px] opacity-70 font-bold ml-1 border-l border-current pl-1">Logger Choice</span>

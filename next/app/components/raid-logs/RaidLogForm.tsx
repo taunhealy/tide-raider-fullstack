@@ -16,8 +16,8 @@ import { toast } from "sonner";
 import Image from "next/image";
 import {
   getWindEmoji,
-  getSwellEmoji,
   degreesToCardinal,
+  getSourceName,
 } from "@/app/lib/forecastUtils";
 import { useCreateLog } from "@/app/hooks/useCreateLog";
 import { useUpdateLog } from "@/app/hooks/useUpdateLog";
@@ -837,9 +837,9 @@ export function RaidLogForm({
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { value: "WINDFINDER", label: "Source A", color: "text-blue-600" },
-                      { value: "WINDGURU", label: "Source B", color: "text-emerald-600" },
-                      { value: "WINDY", label: "Source C", color: "text-red-600" },
+                      { value: "WINDFINDER", label: getSourceName("WINDFINDER"), color: "text-blue-600" },
+                      { value: "WINDGURU", label: getSourceName("WINDGURU"), color: "text-emerald-600" },
+                      { value: "WINDY", label: getSourceName("WINDY"), color: "text-red-600" },
                     ].map((source) => {
                       const forecast = allForecasts?.[source.value];
                       return (

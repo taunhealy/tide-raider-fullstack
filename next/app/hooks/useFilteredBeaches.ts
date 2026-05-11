@@ -31,12 +31,12 @@ export function useFilteredBeaches({
 
   // Get selected source from localStorage (shared with WeatherForecastWidget)
   const [selectedSource, setSelectedSource] = useState<
-    "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER"
+    "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER"
   >(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
-      if (stored && ["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
-        return stored as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
+      if (stored && ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(stored)) {
+        return stored as any;
       }
     }
     return "WINDFINDER";
@@ -45,8 +45,8 @@ export function useFilteredBeaches({
   // Listen for source changes from WeatherForecastWidget
   useEffect(() => {
     const handleSourceChange = (event: CustomEvent) => {
-      const newSource = event.detail as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
-      if (["WINDFINDER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(newSource)) {
+      const newSource = event.detail;
+      if (["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"].includes(newSource)) {
         setSelectedSource(newSource);
         if (process.env.NODE_ENV === "development") {
           console.log(

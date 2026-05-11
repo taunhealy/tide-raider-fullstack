@@ -11,6 +11,7 @@ import { useSubscription } from "@/app/providers/SubscriptionProvider";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { getSourceName } from "@/app/lib/forecastUtils";
 
 type ForecastSource = "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER";
 
@@ -282,16 +283,7 @@ export default function WeatherForecastWidget() {
       return <LoadingSpinner />;
     }
     if (!forecastData) {
-      // Show which source doesn't have data
-      const sourceLabel =
-        selectedSource === "WINDFINDER"
-          ? "Alpha"
-          : selectedSource === "WINDFINDER_SUPER"
-            ? "Super"
-            : selectedSource === "WINDGURU"
-              ? "Beta"
-              : "Gamma";
-      return `No data for source ${sourceLabel}`;
+      return `No data for ${getSourceName(selectedSource)}`;
     }
     return null;
   };
@@ -309,7 +301,7 @@ export default function WeatherForecastWidget() {
     <>
       {/* Mobile Compact Bar Version - Show below region selection on mobile only */}
       <div
-        className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 ${mobileBarHeight}`}
+        className={`lg:hidden bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-700 p-2`}
         style={{
           borderColor: "rgba(96, 165, 250, 0.4)",
           boxShadow:
@@ -322,62 +314,64 @@ export default function WeatherForecastWidget() {
           <span className="text-xs text-gray-400 font-primary uppercase tracking-wide whitespace-nowrap">
             Sources:
           </span>
-          <div className="flex items-center h-full px-3 gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5 w-full">
             <button
               onClick={() => setSelectedSource("WINDFINDER_SUPER")}
               suppressHydrationWarning
-              className={`flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
+              className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "WINDFINDER_SUPER"
                   ? "bg-brand-3 text-white shadow-lg shadow-brand-3/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-brand-3/50"
               }`}
             >
-              Super
+              {getSourceName("WINDFINDER_SUPER")}
             </button>
             <button
               onClick={() => setSelectedSource("WINDFINDER")}
               suppressHydrationWarning
-              className={`flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
+              className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
                 selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
             >
-              Alpha
+              {getSourceName("WINDFINDER")}
             </button>
-            <button
-              onClick={() => setSelectedSource("WINDGURU")}
-              suppressHydrationWarning
-              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center gap-0.5 ${
-                selectedSource === "WINDGURU"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-              }`}
-            >
-              Beta
-            </button>
-            <button
-              onClick={() => setSelectedSource("WINDY")}
-              suppressHydrationWarning
-              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "WINDY"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-              }`}
-            >
-              Gamma
-            </button>
-            <button
-              onClick={() => setSelectedSource("TIDE_RAIDER")}
-              suppressHydrationWarning
-              className={`relative flex-1 py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "TIDE_RAIDER"
-                  ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
-                  : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
-              }`}
-            >
-              Delta
-            </button>
+            <div className="col-span-2 grid grid-cols-3 gap-1.5">
+              <button
+                onClick={() => setSelectedSource("WINDGURU")}
+                suppressHydrationWarning
+                className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center gap-0.5 ${
+                  selectedSource === "WINDGURU"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                {getSourceName("WINDGURU")}
+              </button>
+              <button
+                onClick={() => setSelectedSource("WINDY")}
+                suppressHydrationWarning
+                className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
+                  selectedSource === "WINDY"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                {getSourceName("WINDY")}
+              </button>
+              <button
+                onClick={() => setSelectedSource("TIDE_RAIDER")}
+                suppressHydrationWarning
+                className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
+                  selectedSource === "TIDE_RAIDER"
+                    ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
+                    : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
+                }`}
+              >
+                {getSourceName("TIDE_RAIDER")}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -488,67 +482,69 @@ export default function WeatherForecastWidget() {
             <h4 className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">
               Data Source
             </h4>
-            <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 w-full">
               <button
                 onClick={() => setSelectedSource("WINDFINDER_SUPER")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
+                  "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDFINDER_SUPER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
               >
-                Super
+                {getSourceName("WINDFINDER_SUPER")}
               </button>
               <button
                 onClick={() => setSelectedSource("WINDFINDER")}
                 suppressHydrationWarning
                 className={cn(
-                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
+                  "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
                   selectedSource === "WINDFINDER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
               >
-                Alpha
+                {getSourceName("WINDFINDER")}
               </button>
-              <button
-                onClick={() => setSelectedSource("WINDGURU")}
-                suppressHydrationWarning
-                className={cn(
-                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDGURU"
-                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
-                    : "bg-white/5 text-white/40 hover:bg-white/10"
-                )}
-              >
-                Beta
-              </button>
-              <button
-                onClick={() => setSelectedSource("WINDY")}
-                suppressHydrationWarning
-                className={cn(
-                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDY"
-                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
-                    : "bg-white/5 text-white/40 hover:bg-white/10"
-                )}
-              >
-                Gamma
-              </button>
-              <button
-                onClick={() => setSelectedSource("TIDE_RAIDER")}
-                suppressHydrationWarning
-                className={cn(
-                  "flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "TIDE_RAIDER"
-                    ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
-                    : "bg-white/5 text-white/40 hover:bg-white/10"
-                )}
-              >
-                Delta
-              </button>
+              <div className="col-span-2 grid grid-cols-3 gap-1.5">
+                <button
+                  onClick={() => setSelectedSource("WINDGURU")}
+                  suppressHydrationWarning
+                  className={cn(
+                    "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
+                    selectedSource === "WINDGURU"
+                      ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
+                      : "bg-white/5 text-white/40 hover:bg-white/10"
+                  )}
+                >
+                  {getSourceName("WINDGURU")}
+                </button>
+                <button
+                  onClick={() => setSelectedSource("WINDY")}
+                  suppressHydrationWarning
+                  className={cn(
+                    "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
+                    selectedSource === "WINDY"
+                      ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
+                      : "bg-white/5 text-white/40 hover:bg-white/10"
+                  )}
+                >
+                  {getSourceName("WINDY")}
+                </button>
+                <button
+                  onClick={() => setSelectedSource("TIDE_RAIDER")}
+                  suppressHydrationWarning
+                  className={cn(
+                    "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
+                    selectedSource === "TIDE_RAIDER"
+                      ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
+                      : "bg-white/5 text-white/40 hover:bg-white/10"
+                  )}
+                >
+                  {getSourceName("TIDE_RAIDER")}
+                </button>
+              </div>
             </div>
           </div>
         </div>

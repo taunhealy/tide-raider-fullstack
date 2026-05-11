@@ -186,16 +186,28 @@ export class ScoreService {
         // Refraction Factor: 0 at exposureDirection, 1 at 45+ degrees away
         const refractionFactor = Math.min(1, normalizedExposureDiff / 45) * (periodWrapFactor >= 1 ? 1 : 0.7);
         
-        // If it's a refracted swell (refractionFactor > 0.5):
+        // If it's a refracted swell (refractionFactor > 0.3):
         // - It needs more size to reach the beach (increase min)
         // - It can handle much more size (increase max)
         if (refractionFactor > 0.3) {
-          const sizeLossFactor = 1 + (refractionFactor * 0.4); // Up to 40% more buoy size needed
+          let sizeLossFactor = 1 + (refractionFactor * 0.4); // Up to 40% more buoy size needed
+          
+          // EXTREME WRAP: For swells hitting from "behind the corner" (> 65 degrees from exposure)
+          // The loss of energy is much more severe. This handles spots like Muizenberg during West swells.
+          if (normalizedExposureDiff > 65) {
+            // Rapidly increase the buoy size requirement as the angle increases
+            const extremeWrapSeverity = Math.pow((normalizedExposureDiff - 65) / 20, 2);
+            sizeLossFactor += extremeWrapSeverity * 2.5; 
+          }
+          
           effectiveMinHeight *= sizeLossFactor;
           
           // Max height increases significantly for refracted swells
           const capacityBonus = (parsedProfile.swellSize.max - (parsedProfile.swellSize.exposureLimit || parsedProfile.swellSize.max)) * refractionFactor;
-          effectiveMaxHeight = (parsedProfile.swellSize.exposureLimit || parsedProfile.swellSize.max) + capacityBonus;
+          
+          // For extreme wrap, even a very large buoy swell (6m+) might be manageable at the beach
+          const capacityMultiplier = normalizedExposureDiff > 65 ? (sizeLossFactor * 0.8) : 1;
+          effectiveMaxHeight = ((parsedProfile.swellSize.exposureLimit || parsedProfile.swellSize.max) + capacityBonus) * capacityMultiplier;
         } else {
           // It's a direct swell:
           // - It works at smaller sizes (keep or slightly lower min)

@@ -58,7 +58,7 @@ router.get(
         ? (req.query.searchQuery as string).trim()
         : undefined;
       const sourceParam =
-        (req.query.source as "WINDFINDER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER") ||
+        (req.query.source as "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER") ||
         "WINDFINDER";
       const mode = req.query.mode as string | undefined;
 

@@ -20,7 +20,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { degreesToCardinal } from "@/app/lib/forecastUtils";
+import { degreesToCardinal, getSourceName } from "@/app/lib/forecastUtils";
 import { cn } from "@/app/lib/utils";
 import { BlueStarRating } from "@/app/lib/scoreDisplayBlueStars";
 import CommentThread from "@/app/components/comments/CommentThread";
@@ -283,10 +283,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                       )}
                       {entry.mostAccurateSource && !isGatedGem && (
                         <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-3 py-1 rounded-full font-primary font-bold tracking-wider border border-emerald-500/30">
-                          {entry.mostAccurateSource === "WINDFINDER" ? "Source A Verified" :
-                           entry.mostAccurateSource === "WINDGURU" ? "Source B Verified" :
-                           entry.mostAccurateSource === "WINDY" ? "Source C Verified" :
-                           `${entry.mostAccurateSource} Verified`}
+                          {getSourceName(entry.mostAccurateSource)} Selected
                         </span>
                       )}
                     </div>
@@ -399,10 +396,12 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                             }) || [];
 
                             const sources = [
-                              { id: 'WINDFINDER', name: 'Source A', color: 'text-blue-400' },
-                              { id: 'WINDGURU', name: 'Source B', color: 'text-emerald-400' },
-                              { id: 'WINDY', name: 'Source C', color: 'text-red-400' },
-                              { id: 'OPENMETEO_ARCHIVE', name: 'Archive Data', color: 'text-gray-400' }
+                              { id: 'WINDFINDER', name: getSourceName('WINDFINDER'), color: 'text-blue-400' },
+                              { id: 'WINDFINDER_SUPER', name: getSourceName('WINDFINDER_SUPER'), color: 'text-sky-400' },
+                              { id: 'WINDGURU', name: getSourceName('WINDGURU'), color: 'text-emerald-400' },
+                              { id: 'WINDY', name: getSourceName('WINDY'), color: 'text-red-400' },
+                              { id: 'TIDE_RAIDER', name: getSourceName('TIDE_RAIDER'), color: 'text-[var(--color-tertiary)]' },
+                              { id: 'OPENMETEO_ARCHIVE', name: getSourceName('OPENMETEO_ARCHIVE'), color: 'text-gray-400' }
                             ];
 
                             // Check if this slot is the one the user actually surfed

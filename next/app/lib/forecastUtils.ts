@@ -1,3 +1,17 @@
+export const FORECAST_SOURCE_MAP: Record<string, string> = {
+  WINDFINDER: "Windfinder",
+  WINDFINDER_SUPER: "Windfinder Super",
+  WINDGURU: "Windguru",
+  WINDY: "Windy",
+  TIDE_RAIDER: "Tide Raider",
+  OPENMETEO_ARCHIVE: "Archive Data",
+};
+
+export const getSourceName = (source?: string): string => {
+  if (!source) return "Unknown Source";
+  return FORECAST_SOURCE_MAP[source] || source;
+};
+
 // ... existing utils ...
 
 export const getWindEmoji = (speed: number): string => {

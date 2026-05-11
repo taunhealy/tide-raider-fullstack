@@ -607,7 +607,7 @@ router.get(
 
       let scores = await getScores();
 
-      const expectedSources = ["WINDFINDER", "WINDGURU", "WINDY"];
+      const expectedSources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"];
       const foundSources = new Set(scores.map(s => s.source));
       const missingSources = expectedSources.filter(s => !foundSources.has(s));
 
@@ -684,10 +684,10 @@ router.get(
 
       // Map source names to display names
       const sourceMap: Record<string, string> = {
-        WINDFINDER: "Source A",
-        WINDGURU: "Source B",
-        WINDY: "Source C",
-        OPENMETEO_ARCHIVE: "OpenMeteo"
+        WINDFINDER: "Windfinder",
+        WINDGURU: "Windguru",
+        WINDY: "Windy",
+        OPENMETEO_ARCHIVE: "Archive Data"
       };
 
       const formattedScores = scores.map((score) => ({
