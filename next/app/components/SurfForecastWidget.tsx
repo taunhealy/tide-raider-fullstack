@@ -17,6 +17,14 @@ export default function SurfForecastWidget({
     console.log("Forecast Data:", forecast);
   }, [forecast]);
 
+  if (!forecast) {
+    return (
+      <div className="bg-white p-4 rounded-lg border border-gray-100 flex items-center justify-center min-h-[100px]">
+        <span className="text-gray-400 text-sm italic">No forecast data available</span>
+      </div>
+    );
+  }
+
   // Helper function to check if value is 'unknown'
   const isUnknown = (value: any): boolean => {
     return value === 'unknown' || value === null || value === undefined;

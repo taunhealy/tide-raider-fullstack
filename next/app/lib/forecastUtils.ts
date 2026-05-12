@@ -14,7 +14,8 @@ export const getSourceName = (source?: string): string => {
 
 // ... existing utils ...
 
-export const getWindEmoji = (speed: number): string => {
+export const getWindEmoji = (speed: number | null | undefined): string => {
+  if (speed === null || speed === undefined) return "💨"; // Default
   if (speed < 5) return "🪶"; // Light
   if (speed < 12) return "💨"; // Moderate
   if (speed < 20) return "🌪️"; // Strong
@@ -43,7 +44,8 @@ export function getCardinalDirection(angle: number) {
   return directions[Math.round(angle / 22.5) % 16];
 }
 
-export const getSwellEmoji = (height: number): string => {
+export const getSwellEmoji = (height: number | null | undefined): string => {
+  if (height === null || height === undefined) return "🌊"; // Default
   if (height < 0.5) return "🥱"; // Flat
   if (height < 1) return "🌊"; // Small
   if (height < 2) return "🌊🌊"; // Medium
@@ -58,7 +60,8 @@ export const getDirectionEmoji = (direction: string | number): string => {
   return ["⬆️", "↗️", "➡️", "↘️", "⬇️", "↙️", "⬅️", "↖️"][dirIndex] || "➿";
 };
 
-export function degreesToCardinal(degrees: number): string {
+export function degreesToCardinal(degrees: number | null | undefined): string {
+  if (degrees === null || degrees === undefined) return "N/A";
   const cardinals = [
     "N",
     "NNE",

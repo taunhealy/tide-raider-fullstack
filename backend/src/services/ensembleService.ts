@@ -30,12 +30,24 @@ export class EnsembleService {
       console.log(`📊 [Ensemble] Averaging ${forecasts.length} sources for ${regionId}...`);
 
       // 2. Calculate Averages
+      const validWindSpeeds = forecasts.map(f => f.windSpeed).filter((v): v is number => v !== null);
+      const validSwellHeights = forecasts.map(f => f.swellHeight).filter((v): v is number => v !== null);
+      const validSwellPeriods = forecasts.map(f => f.swellPeriod).filter((v): v is number => v !== null);
+      const validWindDirs = forecasts.map(f => f.windDirection).filter((v): v is number => v !== null);
+      const validSwellDirs = forecasts.map(f => f.swellDirection).filter((v): v is number => v !== null);
+
       const averageData = {
-        windSpeed: Math.round(forecasts.reduce((sum, f) => sum + f.windSpeed, 0) / forecasts.length),
-        windDirection: this.calculateAverageDirection(forecasts.map(f => f.windDirection)),
-        swellHeight: Number((forecasts.reduce((sum, f) => sum + f.swellHeight, 0) / forecasts.length).toFixed(2)),
-        swellPeriod: Math.round(forecasts.reduce((sum, f) => sum + f.swellPeriod, 0) / forecasts.length),
-        swellDirection: this.calculateAverageDirection(forecasts.map(f => f.swellDirection)),
+        windSpeed: validWindSpeeds.length > 0 
+          ? Math.round(validWindSpeeds.reduce((sum, v) => sum + v, 0) / validWindSpeeds.length) 
+          : 0,
+        windDirection: this.calculateAverageDirection(validWindDirs),
+        swellHeight: validSwellHeights.length > 0 
+          ? Number((validSwellHeights.reduce((sum, v) => sum + v, 0) / validSwellHeights.length).toFixed(2)) 
+          : 0,
+        swellPeriod: validSwellPeriods.length > 0 
+          ? Math.round(validSwellPeriods.reduce((sum, v) => sum + v, 0) / validSwellPeriods.length) 
+          : 0,
+        swellDirection: this.calculateAverageDirection(validSwellDirs),
         tide: forecasts.find(f => f.tide)?.tide || null,
         trend: `Ensemble average of ${forecasts.length} sources (${forecasts.map(f => f.source).join(', ')})`
       };

@@ -85,14 +85,15 @@ export class ScoreService {
       const isReefOrPoint = beach.waveType === "REEF_BREAK" || beach.waveType === "POINT_BREAK";
 
       // 1. Wind direction scoring
-      const windCardinal = this.degreesToCardinal(conditions.windDirection);
+      const windDirection = conditions.windDirection ?? 0;
+      const windCardinal = this.degreesToCardinal(windDirection);
       const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
 
       if (!isOptimalWind) {
         const minAngleDiff = parsedProfile.optimalWindDirections.reduce(
           (minDiff: number, optimalDir: string) => {
             const optimalDegrees = this.cardinalToDegreesMap[optimalDir];
-            const diff = Math.abs(conditions.windDirection - optimalDegrees);
+            const diff = Math.abs(windDirection - optimalDegrees);
             const angleDiff = Math.min(diff, 360 - diff);
             return Math.min(minDiff, angleDiff);
           },
@@ -114,8 +115,9 @@ export class ScoreService {
         }
 
         // Scale penalty based on wind strength
+        const windSpeed = conditions.windSpeed ?? 0;
         let windFactor = 1.0;
-        if (conditions.windSpeed <= 8) {
+        if (windSpeed <= 8) {
           // Onshore wind ruins beach breaks even at low speeds
           // If it's direct onshore (> 90), we don't scale it down as much
           const onshoreThreshold = 90;
@@ -140,11 +142,12 @@ export class ScoreService {
       }
 
       // 2. Wind strength scoring
+      const windSpeedValue = conditions.windSpeed ?? 0;
       if (!isOptimalWind && !beach.sheltered) {
-        if (conditions.windSpeed > 25) score -= 2.5; 
-        else if (conditions.windSpeed > 15) score -= 1.5;
-        else if (conditions.windSpeed > 10) score -= 0.5;
-      } else if (conditions.windSpeed > 35) {
+        if (windSpeedValue > 25) score -= 2.5; 
+        else if (windSpeedValue > 15) score -= 1.5;
+        else if (windSpeedValue > 10) score -= 0.5;
+      } else if (windSpeedValue > 35) {
         score -= 2.0; // Even offshore, 35kts+ is too much
       }
 
@@ -166,7 +169,8 @@ export class ScoreService {
 
       // Wave Science: Period-Dependent Refraction (Wrap)
       // Long period swells (12s+) "feel" the bottom deeper and turn much better than short period swells.
-      const periodWrapFactor = Math.max(0.7, Math.min(1.3, conditions.swellPeriod / 12));
+      const swellPeriod = conditions.swellPeriod ?? 10;
+      const periodWrapFactor = Math.max(0.7, Math.min(1.3, swellPeriod / 12));
       
       // Dynamic swell min/max: Handle 'Refraction' (Raw vs Refracted energy)
       // Refracted swells (e.g. SW at Muizenberg) lose size as they wrap, so they need more size at the buoy 
@@ -180,7 +184,7 @@ export class ScoreService {
       if (parsedProfile.swellSize.exposureDirection !== undefined) {
         // Calculate 'Refraction Quality' (0 = direct/raw, 1 = fully refracted/groomed)
         // We assume 90-120 degrees of wrap is optimal for grooming.
-        const exposureDiff = Math.abs(curSwellDir - parsedProfile.swellSize.exposureDirection);
+        const exposureDiff = Math.abs(swellDirection - parsedProfile.swellSize.exposureDirection);
         const normalizedExposureDiff = Math.min(exposureDiff, 360 - exposureDiff);
         
         // Refraction Factor: 0 at exposureDirection, 1 at 45+ degrees away
@@ -213,13 +217,13 @@ export class ScoreService {
           // - It works at smaller sizes (keep or slightly lower min)
           // - It becomes hectic early (use exposureLimit as max)
           effectiveMaxHeight = parsedProfile.swellSize.exposureLimit || effectiveMaxHeight;
-          if (conditions.swellHeight > effectiveMaxHeight) {
+          if (swellHeight > effectiveMaxHeight) {
             isHectic = true;
           }
         }
         
         // Bonus for long period (they are cleaner/more organized even when big)
-        const periodBonus = Math.max(0, (conditions.swellPeriod - 12) * 0.1); 
+        const periodBonus = Math.max(0, (swellPeriod - 12) * 0.1); 
         effectiveMaxHeight += periodBonus;
       } else {
         // Fallback for spots without exposure metadata
@@ -233,13 +237,14 @@ export class ScoreService {
         }
       }
 
-      const isTooSmall = conditions.swellHeight < effectiveMinHeight;
-      const isTooLarge = conditions.swellHeight > effectiveMaxHeight;
+      const swellHeight = conditions.swellHeight ?? 0;
+      const isTooSmall = swellHeight < effectiveMinHeight;
+      const isTooLarge = swellHeight > effectiveMaxHeight;
 
       if (isTooSmall || isTooLarge) {
         const heightDiff = isTooSmall 
-          ? effectiveMinHeight - conditions.swellHeight
-          : conditions.swellHeight - effectiveMaxHeight;
+          ? effectiveMinHeight - swellHeight
+          : swellHeight - effectiveMaxHeight;
 
         let sizePenalty = 0;
         if (isTooSmall) {
@@ -258,17 +263,18 @@ export class ScoreService {
         score -= sizePenalty;
         
         const wrapType = (parsedProfile.swellSize.exposureDirection !== undefined)
-          ? (Math.abs(curSwellDir - parsedProfile.swellSize.exposureDirection) > 45 ? 'refracted' : 'direct')
+          ? (Math.abs(swellDirection - parsedProfile.swellSize.exposureDirection) > 45 ? 'refracted' : 'direct')
           : 'standard';
           
         const sizeMsg = isTooSmall 
-          ? `${conditions.swellHeight}m is too small (Min: ${effectiveMinHeight.toFixed(1)}m for ${wrapType} swell)`
-          : `${conditions.swellHeight}m is too large/chaotic (Max: ${effectiveMaxHeight.toFixed(1)}m for ${wrapType} swell)`;
+          ? `${swellHeight}m is too small (Min: ${effectiveMinHeight.toFixed(1)}m for ${wrapType} swell)`
+          : `${swellHeight}m is too large/chaotic (Max: ${effectiveMaxHeight.toFixed(1)}m for ${wrapType} swell)`;
           
         deductions.push(`Swell height ${sizeMsg}.`);
       }
 
       // 4. Swell direction scoring (Reuse calculated diff)
+      const swellDirection = conditions.swellDirection ?? 0;
       if (!isOptimalSwellDir) {
         let dirPenalty = 0;
         if (swellDirDiff <= 20) dirPenalty = 0.8;
@@ -276,39 +282,44 @@ export class ScoreService {
         else dirPenalty = 2.5;
 
         score -= dirPenalty;
-        deductions.push(`Swell direction ${curSwellDir}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
+        deductions.push(`Swell direction ${swellDirection}° is out of alignment (Off by ${Math.round(swellDirDiff)}°).`);
       }
 
       // 5. Swell period scoring
       const idealMinPeriod = parsedProfile.idealSwellPeriod.min || 12;
       
-      if (conditions.swellPeriod < 8) {
+      if (swellPeriod < 8) {
         score -= 3.0;
-        deductions.push(`Critical: Very short period (${conditions.swellPeriod}s) - high probability of "wind slop"`);
-      } else if (conditions.swellPeriod < Math.min(10, idealMinPeriod)) {
+        deductions.push(`Critical: Very short period (${swellPeriod}s) - high probability of "wind slop"`);
+      } else if (swellPeriod < Math.min(10, idealMinPeriod)) {
         score -= 1.8;
-        deductions.push(`Significant: Short period (${conditions.swellPeriod}s) - suboptimal quality`);
-      } else if (conditions.swellPeriod < idealMinPeriod) {
+        deductions.push(`Significant: Short period (${swellPeriod}s) - suboptimal quality`);
+      } else if (swellPeriod < idealMinPeriod) {
         // If the spot's ideal min is lower (e.g. 10s for Muizenberg), don't penalize as hard for 10-12s
         const periodPenalty = idealMinPeriod <= 10 ? 0.3 : 0.8;
         score -= periodPenalty;
-        deductions.push(`Suboptimal: Moderate period (${conditions.swellPeriod}s) - ${idealMinPeriod}s+ is optimal`);
+        deductions.push(`Suboptimal: Moderate period (${swellPeriod}s) - ${idealMinPeriod}s+ is optimal`);
       } else if (
         !(
-          conditions.swellPeriod >= parsedProfile.idealSwellPeriod.min &&
-          conditions.swellPeriod <= parsedProfile.idealSwellPeriod.max
+          swellPeriod >= parsedProfile.idealSwellPeriod.min &&
+          swellPeriod <= parsedProfile.idealSwellPeriod.max
         )
       ) {
         const periodDiff = Math.min(
-          Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.min),
-          Math.abs(conditions.swellPeriod - parsedProfile.idealSwellPeriod.max)
+          Math.abs(swellPeriod - parsedProfile.idealSwellPeriod.min),
+          Math.abs(swellPeriod - parsedProfile.idealSwellPeriod.max)
         );
         // Penalize deviations from the spot-specific ideal range
         score -= periodDiff <= 2 ? 0.4 : 1.0;
-        deductions.push(`Period ${conditions.swellPeriod}s is outside spot-specific ideal range (${parsedProfile.idealSwellPeriod.min}-${parsedProfile.idealSwellPeriod.max}s)`);
+        deductions.push(`Period ${swellPeriod}s is outside spot-specific ideal range (${parsedProfile.idealSwellPeriod.min}-${parsedProfile.idealSwellPeriod.max}s)`);
       }
 
-      const finalScore = Math.min(5, Math.max(0, score));
+      let finalScore = Math.min(5, Math.max(0, score));
+      if (isNaN(finalScore)) {
+        console.warn(`[ScoreService] ⚠️ Calculated score for beach ${beach.id} is NaN. Defaulting to 0.`);
+        finalScore = 0;
+      }
+
       return { 
         score: Number(finalScore.toFixed(1)), 
         deductions 

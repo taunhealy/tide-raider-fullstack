@@ -20,6 +20,7 @@ export default function GlobalMapPage() {
   const user = authData?.user;
   const isSubscribed = user?.isSubscribed || user?.hasActiveTrial || false;
 
+  const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncingRatings, setIsSyncingRatings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

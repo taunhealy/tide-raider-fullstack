@@ -163,7 +163,7 @@ function ForecastInfo({
 
   // Only show if forecast exists and has at least one valid value
   if (!forecast && !isGated) {
-    return <span className="text-gray-500 text-xs font-primary font-medium">No conditions</span>;
+    return <span className="text-gray-400 text-xs font-primary italic">Conditions pending</span>;
   }
 
   const isActuallyGated = isGated;
@@ -191,7 +191,7 @@ function ForecastInfo({
     !hasSwellPeriod &&
     !hasSwellDirection
   ) {
-    return <span className="text-gray-500 text-xs font-primary font-medium">No conditions</span>;
+    return <span className="text-gray-400 text-xs font-primary italic">Conditions pending</span>;
   }
 
   return (
