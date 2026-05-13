@@ -137,9 +137,19 @@ export async function sendAlertNotification(
   alertMatch: AlertMatch,
   alert: Alert,
   beachName: string = "Unknown location",
-  matchDate: Date = new Date()
+  matchDate?: Date | string | number
 ): Promise<boolean> {
   try {
+    // Ensure matchDate is a valid Date object
+    let displayDate: Date;
+    if (matchDate) {
+      displayDate = new Date(matchDate);
+      if (isNaN(displayDate.getTime())) {
+        displayDate = new Date();
+      }
+    } else {
+      displayDate = new Date();
+    }
     // Get the associated LogEntry's beach information if it exists
     const logEntry = alert.logEntryId
       ? await prisma.logEntry.findUnique({
@@ -170,10 +180,10 @@ export async function sendAlertNotification(
     });
     const regionName = region?.name || alertMatch.region;
 
-    // The date shown in the notification should be the date of the match (today)
-    // rather than the original alert creation date (forecastDate)
-    const displayDate = matchDate;
-
+    // The date shown in the notification should be the date of the match (today/tomorrow/etc)
+    // rather than the original alert creation date or any other historical date.
+    // We explicitly use displayDate which is derived from matchDate.
+    
     // Format date string for deduplication check (e.g., "May 10, 2026")
     const dateString = displayDate.toLocaleDateString("en-US", {
       month: "long",
@@ -182,12 +192,18 @@ export async function sendAlertNotification(
     });
 
     // Check for existing notification for THIS alert AND THIS target date TODAY
+    // This prevents multiple alerts for the same beach/date being sent in a single day
+    const todayStart = new Date();
+    todayStart.setUTCHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setUTCHours(23, 59, 59, 999);
+
     const existingNotification = await prisma.alertNotification.findFirst({
       where: {
         alertId: alert.id,
         createdAt: {
-          gte: new Date(new Date().setUTCHours(0, 0, 0, 0)), // Today UTC
-          lt: new Date(new Date().setUTCHours(24, 0, 0, 0)),
+          gte: todayStart,
+          lte: todayEnd,
         },
         details: {
           contains: dateString,

@@ -1,0 +1,25 @@
+[
+  {
+    "name": "delete-stale-images",
+    "action": {"type": "DELETE"},
+    "condition": {
+      "tagState": "ANY",
+      "olderThan": "14d"
+    }
+  },
+  {
+    "name": "delete-untagged-fast",
+    "action": {"type": "DELETE"},
+    "condition": {
+      "tagState": "UNTAGGED",
+      "olderThan": "2d"
+    }
+  },
+  {
+    "name": "keep-minimal-versions",
+    "action": {"type": "KEEP"},
+    "mostRecentVersions": {
+      "keepCount": 3
+    }
+  }
+]

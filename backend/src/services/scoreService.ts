@@ -59,6 +59,14 @@ export class ScoreService {
   ): { score: number; deductions: string[] } | null {
     try {
       const deductions: string[] = [];
+      
+      // Extract and normalize conditions with defaults
+      const windSpeed = conditions.windSpeed ?? 0;
+      const windDirection = conditions.windDirection ?? 0;
+      const swellHeight = conditions.swellHeight ?? 0;
+      const swellDirection = conditions.swellDirection ?? 0;
+      const swellPeriod = conditions.swellPeriod ?? 10;
+
       const parsedProfile = {
         ...profile,
         optimalSwellDirections:
@@ -85,7 +93,6 @@ export class ScoreService {
       const isReefOrPoint = beach.waveType === "REEF_BREAK" || beach.waveType === "POINT_BREAK";
 
       // 1. Wind direction scoring
-      const windDirection = conditions.windDirection ?? 0;
       const windCardinal = this.degreesToCardinal(windDirection);
       const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
 
@@ -115,7 +122,6 @@ export class ScoreService {
         }
 
         // Scale penalty based on wind strength
-        const windSpeed = conditions.windSpeed ?? 0;
         let windFactor = 1.0;
         if (windSpeed <= 8) {
           // Onshore wind ruins beach breaks even at low speeds
@@ -128,7 +134,7 @@ export class ScoreService {
           } else {
             windFactor = isReefOrPoint ? 0.2 : 0.5; // Very light offshore is negligible penalty
           }
-        } else if (conditions.windSpeed <= 12) {
+        } else if (windSpeed <= 12) {
           windFactor = isReefOrPoint ? 0.6 : 0.85;
         }
         
@@ -136,40 +142,37 @@ export class ScoreService {
         score -= finalPenalty;
         
         if (finalPenalty > 0) {
-          const reductionMsg = windFactor < 1.0 ? `, penalty reduced due to ${conditions.windSpeed}kt wind` : "";
+          const reductionMsg = windFactor < 1.0 ? `, penalty reduced due to ${windSpeed}kt wind` : "";
           deductions.push(`Wind direction ${windCardinal} is suboptimal (Off by ${Math.round(minAngleDiff)}°${reductionMsg})`);
         }
       }
 
       // 2. Wind strength scoring
-      const windSpeedValue = conditions.windSpeed ?? 0;
       if (!isOptimalWind && !beach.sheltered) {
-        if (windSpeedValue > 25) score -= 2.5; 
-        else if (windSpeedValue > 15) score -= 1.5;
-        else if (windSpeedValue > 10) score -= 0.5;
-      } else if (windSpeedValue > 35) {
+        if (windSpeed > 25) score -= 2.5; 
+        else if (windSpeed > 15) score -= 1.5;
+        else if (windSpeed > 10) score -= 0.5;
+      } else if (windSpeed > 35) {
         score -= 2.0; // Even offshore, 35kts+ is too much
       }
 
       // 3. Swell Alignment & Size Analysis
       const optSwell = parsedProfile.optimalSwellDirections;
-      const curSwellDir = conditions.swellDirection;
       
-      const minSwellDiff = Math.abs(curSwellDir - optSwell.min);
-      const maxSwellDiff = Math.abs(curSwellDir - optSwell.max);
+      const minSwellDiff = Math.abs(swellDirection - optSwell.min);
+      const maxSwellDiff = Math.abs(swellDirection - optSwell.max);
       const swellDirDiff = Math.min(Math.min(minSwellDiff, 360 - minSwellDiff), Math.min(maxSwellDiff, 360 - maxSwellDiff));
 
       let isOptimalSwellDir = false;
       if (optSwell.min <= optSwell.max) {
-        isOptimalSwellDir = curSwellDir >= optSwell.min && curSwellDir <= optSwell.max;
+        isOptimalSwellDir = swellDirection >= optSwell.min && swellDirection <= optSwell.max;
       } else {
         // Wrap around case (e.g. 350 to 20)
-        isOptimalSwellDir = curSwellDir >= optSwell.min || curSwellDir <= optSwell.max;
+        isOptimalSwellDir = swellDirection >= optSwell.min || swellDirection <= optSwell.max;
       }
 
       // Wave Science: Period-Dependent Refraction (Wrap)
       // Long period swells (12s+) "feel" the bottom deeper and turn much better than short period swells.
-      const swellPeriod = conditions.swellPeriod ?? 10;
       const periodWrapFactor = Math.max(0.7, Math.min(1.3, swellPeriod / 12));
       
       // Dynamic swell min/max: Handle 'Refraction' (Raw vs Refracted energy)
@@ -194,7 +197,7 @@ export class ScoreService {
         // - It needs more size to reach the beach (increase min)
         // - It can handle much more size (increase max)
         if (refractionFactor > 0.3) {
-          let sizeLossFactor = 1 + (refractionFactor * 0.4); // Up to 40% more buoy size needed
+          let sizeLossFactor = 1 + (refractionFactor * 0.4); 
           
           // EXTREME WRAP: For swells hitting from "behind the corner" (> 65 degrees from exposure)
           // The loss of energy is much more severe. This handles spots like Muizenberg during West swells.
@@ -237,7 +240,7 @@ export class ScoreService {
         }
       }
 
-      const swellHeight = conditions.swellHeight ?? 0;
+
       const isTooSmall = swellHeight < effectiveMinHeight;
       const isTooLarge = swellHeight > effectiveMaxHeight;
 
@@ -274,7 +277,6 @@ export class ScoreService {
       }
 
       // 4. Swell direction scoring (Reuse calculated diff)
-      const swellDirection = conditions.swellDirection ?? 0;
       if (!isOptimalSwellDir) {
         let dirPenalty = 0;
         if (swellDirDiff <= 20) dirPenalty = 0.8;

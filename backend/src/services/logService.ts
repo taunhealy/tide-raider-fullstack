@@ -490,6 +490,7 @@ export class LogService {
           userId: true,
           beachName: true,
           beachId: true,
+          regionId: true,
           surfTimeSlot: true,
           mostAccurateSource: true,
           region: {
@@ -527,6 +528,7 @@ export class LogService {
               swellPeriod: true,
               swellDirection: true,
               timeSlot: true,
+              source: true,
             },
           },
           user: {

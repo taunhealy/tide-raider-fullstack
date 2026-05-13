@@ -30,6 +30,8 @@ export async function processUserAlerts(userId: string, today: Date) {
   const targetDate = new Date(today);
   targetDate.setUTCHours(0, 0, 0, 0);
 
+  console.log(`[Alert Processor] 🛰️ Processing alerts for user ${userId} on target date: ${targetDate.toISOString().split('T')[0]}`);
+
   const result = {
     alertsChecked: 0,
     notificationsSent: 0,
