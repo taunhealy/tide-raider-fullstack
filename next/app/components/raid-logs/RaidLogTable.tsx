@@ -147,15 +147,7 @@ function ForecastInfo({
   entry,
   isGated,
 }: {
-  forecast:
-    | {
-        windSpeed?: number;
-        windDirection?: number;
-        swellHeight?: number;
-        swellPeriod?: number;
-        swellDirection?: number;
-      }
-    | null
+  forecast: LogEntry["forecast"];
   entry: LogEntry;
   isGated?: boolean;
 }) {
