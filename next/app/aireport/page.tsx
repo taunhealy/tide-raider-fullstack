@@ -142,6 +142,29 @@ function AIReportContent() {
     }
   }, [activeReportId]);
 
+  // Load most recent signal on initial page load if no parameters exist
+  useEffect(() => {
+    if (!beachIdParam && !activeReportId && !isGenerating) {
+      const fetchInitialSignal = async () => {
+        try {
+          // Fetch the user's report history
+          const res = await fetch('/api/backend/intelligence/history');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              const latest = data[0];
+              // Automatically navigate to the most recent report
+              router.replace(`/aireport?beachId=${latest.beachId}&report=${latest.id}`, { scroll: false });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch initial signal history", err);
+        }
+      };
+      fetchInitialSignal();
+    }
+  }, [beachIdParam, activeReportId, isGenerating]);
+
   const handleGenerationBeachSelect = (beach: Beach | null) => {
     setGenerationBeach(beach);
     if (beach?.id) {
@@ -223,7 +246,7 @@ function AIReportContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 selection:text-white font-primary overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 selection:text-white font-primary lg:overflow-hidden flex flex-col">
       {/* Top Navigation / Status */}
       <header className="h-16 border-b border-white/5 bg-black/40 backdrop-blur-xl px-8 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-4">
@@ -248,10 +271,10 @@ function AIReportContent() {
       </header>
 
       {/* Dashboard Grid */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
         
         {/* Left Column: Command & Configuration */}
-        <aside className="w-[400px] border-r border-white/5 bg-[#080808] flex flex-col shrink-0 overflow-y-auto custom-scrollbar p-8 space-y-10">
+        <aside className="w-full lg:w-[400px] border-b lg:border-r border-white/5 bg-[#080808] flex flex-col shrink-0 lg:overflow-y-auto custom-scrollbar p-6 lg:p-8 space-y-8 lg:space-y-10">
           
           <div className="space-y-2">
             <h2 className="text-[14px] font-black uppercase tracking-[0.2em] text-white">Briefing Command</h2>
@@ -272,10 +295,10 @@ function AIReportContent() {
             </div>
             
             <div className="space-y-4">
-              <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Target History</label>
               <RecentBeachSearch 
                 onBeachSelect={handleGenerationBeachSelect}
                 selectedBeachId={generationBeach?.id}
+                vertical={true}
               />
             </div>
           </div>
@@ -396,14 +419,14 @@ function AIReportContent() {
           </div>
 
           {/* Top Info Bar: Archive Controller */}
-          <div className="h-20 px-8 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md z-10 shrink-0">
-            <div className="flex items-center gap-8 flex-1">
+          <div className="min-h-20 lg:h-20 px-4 lg:px-8 py-4 lg:py-0 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-black/20 backdrop-blur-md z-10 shrink-0 gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-8 flex-1 w-full">
               <div className="flex items-center gap-3 shrink-0">
                 <History className="w-4 h-4 text-white/30" />
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/40">Archive</h3>
               </div>
               
-              <div className="w-[300px]">
+              <div className="w-full sm:w-[300px]">
                 <BeachSearchInput 
                   selectedBeach={archiveBeach}
                   onBeachSelect={handleArchiveBeachSelect}
@@ -424,20 +447,20 @@ function AIReportContent() {
           </div>
 
           {/* Scrollable Feed */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar-hidden p-10 z-10">
+          <div className="flex-1 lg:overflow-y-auto custom-scrollbar-hidden p-4 lg:p-10 z-10">
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
               
               {/* Active Report Section */}
               <div className="space-y-12">
                 {reportData ? (
                   <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                            <TrendingUp className="w-4 h-4 text-indigo-400" />
-                           <h2 className="text-3xl font-black tracking-tighter text-white">Active Intelligence</h2>
+                           <h2 className="text-2xl lg:text-3xl font-black tracking-tighter text-white">Active Intelligence</h2>
                         </div>
-                        <p className="text-[12px] font-medium text-white/40 tracking-wide uppercase tracking-[0.1em]">
+                        <p className="text-[10px] lg:text-[12px] font-medium text-white/40 tracking-wide uppercase tracking-[0.1em]">
                           {reportData.category} Briefing • {safeFormat(reportData.date, "MMMM d, yyyy")}
                         </p>
                       </div>
@@ -452,54 +475,54 @@ function AIReportContent() {
                       </div>
                     </div>
 
-                    <div className="bg-[#0c0c0c] border border-white/5 rounded-[3rem] overflow-hidden shadow-2xl shadow-indigo-500/5">
-                      <div className="p-12 space-y-10">
+                    <div className="bg-[#0c0c0c] border border-white/5 rounded-[2rem] lg:rounded-[3rem] overflow-hidden shadow-2xl shadow-indigo-500/5">
+                      <div className="p-6 lg:p-12 space-y-8 lg:space-y-10">
                         {/* Report Header Metadata */}
-                        <div className="grid grid-cols-3 gap-8 pb-10 border-b border-white/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8 pb-8 lg:pb-10 border-b border-white/5">
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Tactical Window</span>
-                            <p className="text-[15px] font-bold text-white">{reportData.duration} Day{reportData.duration > 1 ? 's' : ''}</p>
+                            <p className="text-[14px] lg:text-[15px] font-bold text-white">{reportData.duration} Day{reportData.duration > 1 ? 's' : ''}</p>
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Source Reliability</span>
-                            <p className="text-[15px] font-bold text-indigo-400 flex items-center gap-2">
+                            <p className="text-[14px] lg:text-[15px] font-bold text-indigo-400 flex items-center gap-2">
                               98.4% <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
                             </p>
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Auth Token</span>
-                            <p className="text-[15px] font-bold text-white/30 font-mono">TR-{String(reportData.id || '').slice(0, 8).toUpperCase()}</p>
+                            <p className="text-[14px] lg:text-[15px] font-bold text-white/30 font-mono">TR-{String(reportData.id || '').slice(0, 8).toUpperCase()}</p>
                           </div>
                         </div>
 
-                        <div className="text-[18px] leading-[1.8] font-medium text-white/80 whitespace-pre-wrap selection:bg-indigo-500/40">
+                        <div className="text-[16px] lg:text-[18px] leading-[1.8] font-medium text-white/80 whitespace-pre-wrap selection:bg-indigo-500/40">
                           {reportData.content}
                         </div>
 
                         {/* Contributor Section */}
                         {reportData.user && (
-                          <div className="mt-12 pt-10 border-t border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                              <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                          <div className="mt-8 lg:mt-12 pt-8 lg:pt-10 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                            <div className="flex items-center gap-4 lg:gap-6">
+                              <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
                                 {reportData.user.image ? (
                                   <img src={reportData.user.image} alt="" className="w-full h-full object-cover opacity-80" />
                                 ) : (
-                                  <Users className="w-8 h-8 text-white/20" />
+                                  <Users className="w-6 h-6 lg:w-8 lg:h-8 text-white/20" />
                                 )}
                               </div>
                               <div className="space-y-1">
                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Intelligence Contributor</span>
-                                <h4 className="text-[20px] font-black text-white tracking-tight">{reportData.user.name}</h4>
-                                <div className="flex items-center gap-4">
+                                <h4 className="text-[18px] lg:text-[20px] font-black text-white tracking-tight">{reportData.user.name}</h4>
+                                <div className="flex flex-wrap items-center gap-3 lg:gap-4">
                                   {reportData.user.instagram && typeof reportData.user.instagram === 'string' && (
-                                    <Link href={`https://instagram.com/${reportData.user.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-white/30 hover:text-white transition-colors">
-                                      <Instagram className="w-3.5 h-3.5" />
+                                    <Link href={`https://instagram.com/${reportData.user.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-1.5 text-[10px] lg:text-[11px] font-bold text-white/30 hover:text-white transition-colors">
+                                      <Instagram className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                                       {reportData.user.instagram}
                                     </Link>
                                   )}
                                   {reportData.user.link && typeof reportData.user.link === 'string' && (
-                                    <Link href={reportData.user.link.startsWith('http') ? reportData.user.link : `https://${reportData.user.link}`} target="_blank" className="flex items-center gap-1.5 text-[11px] font-bold text-white/30 hover:text-white transition-colors">
-                                      <Link2 className="w-3.5 h-3.5" />
+                                    <Link href={reportData.user.link.startsWith('http') ? reportData.user.link : `https://${reportData.user.link}`} target="_blank" className="flex items-center gap-1.5 text-[10px] lg:text-[11px] font-bold text-white/30 hover:text-white transition-colors">
+                                      <Link2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
                                       {reportData.user.link.replace(/^https?:\/\//, '')}
                                     </Link>
                                   )}
@@ -507,7 +530,7 @@ function AIReportContent() {
                               </div>
                             </div>
                             
-                            <Link href={`/profile/${reportData.user.id}`} className="h-12 px-6 rounded-xl bg-white text-black text-[11px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-200 transition-colors">
+                            <Link href={`/profile/${reportData.user.id}`} className="w-full sm:w-auto h-11 lg:h-12 px-6 rounded-xl bg-white text-black text-[10px] lg:text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors">
                               View Profile <ArrowUpRight className="w-4 h-4" />
                             </Link>
                           </div>
@@ -530,9 +553,9 @@ function AIReportContent() {
 
               {/* Sidebar Archive: History Feed */}
               <div className="space-y-8">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col gap-6 mb-8">
                   <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/50" />
                     <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/40">Tactical Logs</h3>
                   </div>
                   
@@ -541,6 +564,7 @@ function AIReportContent() {
                     selectedBeachId={archiveBeach?.id}
                     className="mt-0"
                     labelClassName="hidden"
+                    vertical={true}
                   />
                 </div>
 
