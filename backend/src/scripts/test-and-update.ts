@@ -12,7 +12,7 @@ async function main() {
   try {
     // getLatestConditions(regionId, forceRefresh, source, daysLimit)
     // We force refresh and set 10 days to get the upcoming week+
-    const result = await getLatestConditions(regionId, true, "WINDFINDER", 10);
+    const result = await getLatestConditions(regionId, true, "WINDFINDER_SUPER", 10);
     
     if (result) {
       console.log("✅ Success! Database updated with fresh data.");
