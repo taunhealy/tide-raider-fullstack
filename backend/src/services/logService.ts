@@ -549,89 +549,86 @@ export class LogService {
       prisma.logEntry.count({ where: whereClause }),
     ]);
 
-    const enhancedEntries = await Promise.all(logEntries.map(async (entry) => {
+    // Batch fetch forecasts and scores to avoid N+1 queries
+    const uniqueRegions = [...new Set(logEntries.map(e => e.regionId))];
+    const uniqueDates = [...new Set(logEntries.map(e => {
+      const d = new Date(e.date);
+      d.setUTCHours(0, 0, 0, 0);
+      return d.toISOString();
+    }))].map(d => new Date(d));
+
+    const [bulkForecasts, bulkScores] = await Promise.all([
+      prisma.forecast.findMany({
+        where: {
+          regionId: { in: uniqueRegions },
+          date: { in: uniqueDates }
+        }
+      }),
+      prisma.beachDailyScore.findMany({
+        where: {
+          beachId: { in: [...new Set(logEntries.map(e => e.beachId).filter((id): id is string => !!id))] },
+          date: { in: uniqueDates }
+        }
+      })
+    ]);
+
+    const forecastMap = new Map();
+    bulkForecasts.forEach(f => {
+      const dStr = f.date.toISOString().split('T')[0];
+      forecastMap.set(`${f.regionId}_${dStr}_${f.timeSlot}_${f.source}`, f);
+      if (!forecastMap.has(`${f.regionId}_${dStr}_${f.timeSlot}`)) {
+        forecastMap.set(`${f.regionId}_${dStr}_${f.timeSlot}`, f);
+      }
+    });
+
+    const scoreMap = new Map();
+    bulkScores.forEach(s => {
+      const dStr = s.date.toISOString().split('T')[0];
+      scoreMap.set(`${s.beachId}_${dStr}_${s.timeSlot}_${s.source}`, s);
+      if (!scoreMap.has(`${s.beachId}_${dStr}_${s.timeSlot}`)) {
+        scoreMap.set(`${s.beachId}_${dStr}_${s.timeSlot}`, s);
+      }
+    });
+
+    const enhancedEntries = logEntries.map((entry) => {
       let displayForecast = entry.forecast;
 
-      // If forecast is missing or doesn't match the most accurate source, try to find a better match
-      // Only do this if it's a real entry (not gated or if it's the owner/subscribed)
       if (!displayForecast || (entry.mostAccurateSource && displayForecast.source !== entry.mostAccurateSource)) {
-        const logDate = new Date(entry.date);
-        logDate.setUTCHours(0, 0, 0, 0);
+        const dStr = new Date(entry.date).toISOString().split('T')[0];
+        const slot = entry.surfTimeSlot || 'NOON';
 
-        // 1. Try most accurate source
-        if (entry.mostAccurateSource) {
-           const match = await prisma.forecast.findFirst({
-             where: {
-               regionId: entry.regionId,
-               date: logDate,
-               source: entry.mostAccurateSource as any,
-               timeSlot: (entry.surfTimeSlot as any) || undefined
-             }
-           });
-           if (match) displayForecast = match as any;
-        }
+        const accKey = `${entry.regionId}_${dStr}_${slot}_${entry.mostAccurateSource}`;
+        const winKey = `${entry.regionId}_${dStr}_${slot}_WINDFINDER`;
+        const genKey = `${entry.regionId}_${dStr}_${slot}`;
 
-        // 2. Fallback to Source A (WINDFINDER) if still missing or not Source A
-        if (!displayForecast || (displayForecast.source !== "WINDFINDER" && displayForecast.source !== entry.mostAccurateSource)) {
-           const fallback = await prisma.forecast.findFirst({
-             where: {
-               regionId: entry.regionId,
-               date: logDate,
-               source: "WINDFINDER",
-               timeSlot: (entry.surfTimeSlot as any) || undefined
-             }
-           });
-           if (fallback) displayForecast = fallback as any;
-        }
+        displayForecast = forecastMap.get(accKey) || forecastMap.get(winKey) || forecastMap.get(genKey) || displayForecast;
 
-        // 3. Absolute fallback: any regional source
-        if (!displayForecast) {
-          const anyMatch = await prisma.forecast.findFirst({
-            where: {
-              regionId: entry.regionId,
-              date: logDate,
-              timeSlot: (entry.surfTimeSlot as any) || undefined
-            },
-            orderBy: { source: 'asc' }
-          });
-          if (anyMatch) displayForecast = anyMatch as any;
-        }
-
-        // 4. Critical fallback: BeachDailyScore (beach-specific data)
-        // This is important because most historical data is in BeachDailyScore, not Forecast
         if (!displayForecast && entry.beachId) {
-          const beachScore = await prisma.beachDailyScore.findFirst({
-            where: {
-              beachId: entry.beachId,
-              date: logDate,
-              timeSlot: (entry.surfTimeSlot as any) || undefined,
-              source: (entry.mostAccurateSource as any) || "WINDFINDER"
-            }
-          }) || await prisma.beachDailyScore.findFirst({
-            where: {
-              beachId: entry.beachId,
-              date: logDate,
-              timeSlot: (entry.surfTimeSlot as any) || undefined
-            },
-            orderBy: { source: 'asc' }
-          });
-
-          if (beachScore && beachScore.conditions) {
-            const cond = beachScore.conditions as any;
-            displayForecast = {
-              id: beachScore.id,
-              date: beachScore.date,
-              timeSlot: beachScore.timeSlot,
-              source: beachScore.source as any,
-              windSpeed: cond.windSpeed ?? 0,
-              windDirection: cond.windDirection ?? 0,
-              swellHeight: cond.swellHeight ?? 0,
-              swellPeriod: cond.swellPeriod ?? 0,
-              swellDirection: cond.swellDirection ?? 0,
-            } as any;
-          }
+           const sKey = entry.mostAccurateSource 
+             ? `${entry.beachId}_${dStr}_${slot}_${entry.mostAccurateSource}`
+             : `${entry.beachId}_${dStr}_${slot}`;
+             
+           const beachScore = scoreMap.get(sKey) || scoreMap.get(`${entry.beachId}_${dStr}_${slot}`);
+           if (beachScore?.conditions) {
+             const cond = beachScore.conditions as any;
+             displayForecast = {
+               id: beachScore.id,
+               date: beachScore.date,
+               timeSlot: beachScore.timeSlot,
+               source: beachScore.source as any,
+               windSpeed: cond.windSpeed ?? 0,
+               windDirection: cond.windDirection ?? 0,
+               swellHeight: cond.swellHeight ?? 0,
+               swellPeriod: cond.swellPeriod ?? 0,
+               swellDirection: cond.swellDirection ?? 0,
+             } as any;
+           }
         }
       }
+
+
+
+
 
       return {
         ...entry,
@@ -640,7 +637,7 @@ export class LogService {
         alertId: entry.alerts[0]?.id || null,
         isMyAlert: entry.alerts.some((alert) => alert.userId === currentUserId),
       };
-    }));
+    });
 
     return {
       entry: null,
@@ -728,104 +725,43 @@ export class LogService {
       const logDate = new Date(data.date);
       logDate.setUTCHours(0, 0, 0, 0);
 
-      // Try user's most accurate source first if provided
-      if (data.mostAccurateSource) {
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            source: data.mostAccurateSource as any,
-            timeSlot: (data.surfTimeSlot as any) || undefined,
-          },
-        });
-        
-        if (forecast) {
-          console.log(`[createRaidLogEntry] Forecast found for user's most accurate source (${data.mostAccurateSource}) at ${data.surfTimeSlot}`);
-        }
-      }
+      // Fetch all relevant forecasts in one go
+      const regionalForecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: region.id,
+          date: logDate,
+        },
+        orderBy: [
+          { source: "asc" },
+          { timeSlot: "asc" }
+        ]
+      });
 
-      // If still not found, try WINDFINDER (default preference / Source A)
-      if (!forecast) {
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            source: "WINDFINDER",
-            timeSlot: (data.surfTimeSlot as any) || undefined,
-          },
-        });
-        
-        if (forecast) {
-          console.log(`[createRaidLogEntry] Fallback: Forecast found for Source A (WINDFINDER) at ${data.surfTimeSlot}`);
-        }
-      }
+      const targetSlot = data.surfTimeSlot || 'MORNING';
+
+      // Find best match in memory
+      forecast = regionalForecasts.find(f => 
+        f.source === data.mostAccurateSource && 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts.find(f => 
+        f.source === "WINDFINDER" && 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts.find(f => 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts[0] || null;
 
       if (forecast) {
-        console.log(
-          "[createRaidLogEntry] Forecast linked successfully:",
-          {
-            forecastId: forecast.id,
-            source: forecast.source,
-            timeSlot: forecast.timeSlot,
-            date: forecast.date,
-          }
-        );
+         console.log(`[createRaidLogEntry] Forecast linked successfully (${forecast.source} at ${forecast.timeSlot})`);
       } else {
-        // Try other sources with the same timeSlot
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            timeSlot: (data.surfTimeSlot as any) || undefined,
-          },
-          orderBy: {
-            source: "asc", // Prefer WINDFINDER, then WINDGURU, then WINDY
-          },
-        });
-
-        if (forecast) {
-          console.log(
-            "[createRaidLogEntry] Forecast found by date/region/timeSlot (any source):",
-            {
-              forecastId: forecast.id,
-              source: forecast.source,
-              timeSlot: forecast.timeSlot,
-              date: forecast.date,
-            }
-          );
-        } else {
-          // Absolute fallback: try ANY forecast for this day and region (ignore timeSlot)
-          forecast = await prisma.forecast.findFirst({
-            where: {
-              regionId: region.id,
-              date: logDate,
-            },
-            orderBy: [
-              { source: "asc" },
-              { timeSlot: "asc" }
-            ]
-          });
-
-          if (forecast) {
-             console.log("[createRaidLogEntry] Last resort: linked random forecast for the day:", forecast.id);
-          } else {
-            console.warn(
-              "[createRaidLogEntry] No forecast found for date/region/timeSlot:",
-              {
-                date: logDate.toISOString(),
-                regionId: region.id,
-                timeSlot: data.surfTimeSlot
-              }
-            );
-          }
           console.warn(
-            "[createRaidLogEntry] No forecast found for date/region:",
+            "[createRaidLogEntry] No forecast found for date/region/timeSlot:",
             {
               date: logDate.toISOString(),
               regionId: region.id,
+              timeSlot: data.surfTimeSlot
             }
           );
-
+          
           // Last resort: if the client submitted forecast conditions directly, create a record from them
           if (data.forecast && typeof data.forecast === 'object') {
             const { randomUUID } = await import("crypto");
@@ -845,7 +781,6 @@ export class LogService {
             });
             console.log("[createRaidLogEntry] ✅ Created forecast from submitted conditions:", forecast.id);
           }
-        }
       }
     }
 
@@ -1021,94 +956,39 @@ export class LogService {
       const logDate = new Date(updateData.date);
       logDate.setUTCHours(0, 0, 0, 0);
 
-      // Try user's most accurate source first
+      // Fetch all relevant forecasts in one go
+      const regionalForecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: region.id,
+          date: logDate,
+        },
+        orderBy: [
+          { source: "asc" },
+          { timeSlot: "asc" }
+        ]
+      });
+
       const sourceToTry = updateData.mostAccurateSource || existingEntry.mostAccurateSource;
-      const timeSlotToTry = updateData.surfTimeSlot || (existingEntry as any).surfTimeSlot;
+      const targetSlot = updateData.surfTimeSlot || (existingEntry as any).surfTimeSlot || 'MORNING';
 
-      if (sourceToTry) {
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            source: sourceToTry as any,
-            timeSlot: (timeSlotToTry as any) || undefined,
-          },
-        });
-        if (forecast) {
-          console.log(`[updateLogEntry] Forecast found for most accurate source (${sourceToTry}) at ${timeSlotToTry}`);
-        }
-      }
-
-      // Try WINDFINDER (Source A) if still not found
-      if (!forecast) {
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            source: "WINDFINDER",
-            timeSlot: (timeSlotToTry as any) || undefined,
-          },
-        });
-        if (forecast) {
-          console.log(`[updateLogEntry] Fallback: Forecast found for Source A (WINDFINDER) at ${timeSlotToTry}`);
-        }
-      }
+      // Find best match in memory
+      forecast = regionalForecasts.find(f => 
+        f.source === sourceToTry && 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts.find(f => 
+        f.source === "WINDFINDER" && 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts.find(f => 
+        f.timeSlot === targetSlot
+      ) || regionalForecasts[0] || null;
 
       if (forecast) {
-        console.log(
-          "[updateLogEntry] Forecast linked successfully:",
-          {
-            forecastId: forecast.id,
-            source: forecast.source,
-            timeSlot: forecast.timeSlot,
-            date: forecast.date,
-          }
-        );
+         console.log(`[updateLogEntry] Forecast linked successfully (${forecast.source} at ${forecast.timeSlot})`);
       } else {
-        // Try any source with same timeSlot
-        forecast = await prisma.forecast.findFirst({
-          where: {
-            regionId: region.id,
-            date: logDate,
-            timeSlot: (timeSlotToTry as any) || undefined,
-          },
-          orderBy: {
-            source: "asc",
-          },
-        });
-
-        if (forecast) {
-          console.log(
-            "[updateLogEntry] Forecast found by date/region/timeSlot (any source):",
-            {
-              forecastId: forecast.id,
-              source: forecast.source,
-              timeSlot: forecast.timeSlot,
-              date: forecast.date,
-            }
-          );
-        } else {
-          // Last resort: any forecast for this day/region
-          forecast = await prisma.forecast.findFirst({
-            where: {
-              regionId: region.id,
-              date: logDate,
-            },
-            orderBy: [
-              { source: "asc" },
-              { timeSlot: "asc" }
-            ]
-          });
-
-          if (forecast) {
-            console.log("[updateLogEntry] Last resort: linked random forecast for the day:", forecast.id);
-          } else {
-            console.warn("[updateLogEntry] No forecast found for date/region:", {
-              date: logDate.toISOString(),
-              regionId: region.id,
-            });
-          }
-        }
+         console.warn("[updateLogEntry] No forecast found for date/region:", {
+           date: logDate.toISOString(),
+           regionId: region.id,
+         });
       }
     }
 

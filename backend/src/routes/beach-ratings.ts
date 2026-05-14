@@ -685,8 +685,10 @@ router.get(
       // Map source names to display names
       const sourceMap: Record<string, string> = {
         WINDFINDER: "Windfinder",
+        WINDFINDER_SUPER: "Windfinder Super",
         WINDGURU: "Windguru",
         WINDY: "Windy",
+        TIDE_RAIDER: "Tide Raider",
         OPENMETEO_ARCHIVE: "Archive Data"
       };
 

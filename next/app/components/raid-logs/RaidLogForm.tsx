@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import {
   getWindEmoji,
+  getSwellEmoji,
   degreesToCardinal,
   getSourceName,
 } from "@/app/lib/forecastUtils";
@@ -104,19 +105,24 @@ export function RaidLogForm({
   const beaches = beachesProp || beachesFromContext || beachesFromHook || [];
   const isBeachesLoading = needsHookFetch && isBeachesLoadingFromHook;
 
-  // Debug: Log overall loading state
+  // Relaxed loading condition: only block if auth is still determining if we're signed in
+  // or if we're EDITING and need beaches to resolve the current selection
+  const shouldBlock = (isAuthLoading && !user && !userEmail) || (entry && isBeachesLoading && beaches.length === 0);
+
   useEffect(() => {
     if (isOpen) {
-      console.log("[RaidLogForm] Rendering state:", {
+      console.log("[RaidLogForm] 🔄 Rendering state update:", {
         isAuthLoading,
+        authStatus,
+        hasUser: !!user,
+        userId: user?.id,
         isBeachesLoading,
         needsHookFetch,
         beachesCount: beaches.length,
-        hasUser: !!user,
-        authStatus
+        shouldBlock
       });
     }
-  }, [isOpen, isAuthLoading, isBeachesLoading, beaches.length, user, authStatus, needsHookFetch]);
+  }, [isOpen, isAuthLoading, isBeachesLoading, beaches.length, user, authStatus, needsHookFetch, shouldBlock]);
 
   const [selectedDate, setSelectedDate] = useState<string>(
     (() => {
@@ -205,7 +211,14 @@ export function RaidLogForm({
       
       const sources = ["WINDFINDER", "WINDGURU", "WINDY"];
       const results: Record<string, any> = {};
-      const dateStr = new Date(selectedDate).toISOString().split("T")[0];
+      const dateObj = new Date(selectedDate);
+      if (isNaN(dateObj.getTime())) {
+        console.error("[RaidLogForm] Invalid selectedDate:", selectedDate);
+        return {};
+      }
+      const dateStr = dateObj.toISOString().split("T")[0];
+      
+      console.log(`[RaidLogForm] Fetching forecasts for ${selectedBeach.regionId} on ${dateStr} slot ${surfTimeSlot}`);
       
       await Promise.all(sources.map(async (source) => {
         try {
@@ -657,18 +670,25 @@ export function RaidLogForm({
     };
   }, [user]);
 
-  // Relaxed loading condition: if we have a user from props/session, don't block for auth
-  const shouldBlock = (isAuthLoading && !user && !userEmail) || (isBeachesLoading && beaches.length === 0);
-
   if (!isOpen) return null;
 
   if (shouldBlock) {
-    // Show loader while auth or beaches are loading
+    // Show loader while auth or beaches (if editing) are loading
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="bg-white p-6 rounded-lg text-center">
-          <p className="font-primary font-semibold mb-2 text-[var(--color-primary)]">Loading Discovery Data...</p>
-          <p className="text-xs text-gray-500 font-primary">Fetching latest beach coordinates</p>
+        <div className="bg-white p-8 rounded-2xl text-center shadow-2xl border border-gray-100 max-w-xs animate-in fade-in zoom-in duration-300">
+          <div className="mb-4 flex justify-center">
+             <div className="relative">
+                <div className="w-12 h-12 rounded-full border-4 border-gray-100 border-t-[var(--color-tertiary)] animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-2 h-2 bg-[var(--color-tertiary)] rounded-full animate-pulse"></div>
+                </div>
+             </div>
+          </div>
+          <p className="font-primary font-bold mb-1 text-[var(--color-primary)] text-lg">Discovery Mode</p>
+          <p className="text-sm text-gray-400 font-primary leading-relaxed px-4">
+            {isAuthLoading ? "Verifying your identity..." : "Fetching beach coordinates..."}
+          </p>
         </div>
       </div>
     );
