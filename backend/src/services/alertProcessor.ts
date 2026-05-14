@@ -318,7 +318,7 @@ export async function processAllUserAlerts(isAccelerated = false) {
         
         for (let i = 0; i < 3; i++) {
           const targetDate = new Date(today);
-          targetDate.setDate(today.getDate() + i);
+          targetDate.setUTCDate(today.getUTCDate() + i);
           
           const dateLabel = i === 0 ? "TODAY" : i === 1 ? "TOMORROW" : "DAY AFTER";
           console.log(`[Alert Processor] Checking ${dateLabel} (${targetDate.toISOString().split('T')[0]})`);

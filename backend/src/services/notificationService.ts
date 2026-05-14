@@ -191,6 +191,14 @@ export async function sendAlertNotification(
       year: "numeric",
     });
 
+    // Safety check: Don't send notifications for dates in the past
+    const todayMidnight = new Date();
+    todayMidnight.setUTCHours(0, 0, 0, 0);
+    if (displayDate < todayMidnight) {
+      console.log(`[Notification] ⏭️ Skipping notification for past date: ${dateString} (Today is ${todayMidnight.toISOString().split('T')[0]})`);
+      return true; // Skip
+    }
+
     // Check for existing notification for THIS alert AND THIS target date TODAY
     // This prevents multiple alerts for the same beach/date being sent in a single day
     const todayStart = new Date();

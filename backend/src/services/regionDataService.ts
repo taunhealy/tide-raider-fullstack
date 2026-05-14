@@ -124,10 +124,13 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
                 `  🔍 Fetching fresh conditions for ${region.id} from ${source}...`
               );
               // forceRefresh in getLatestConditions means "ignore DB cache for the requested slot"
+              // For WINDFINDER, we specifically want to request SUPER if it's the main sync
+              const requestedSource = source === "WINDFINDER" ? "WINDFINDER_SUPER" : source;
+              
               const conditions = await getLatestConditions(
                 region.id,
                 true, // We still pass true here because we already decided to scrape
-                source,
+                requestedSource as any,
                 daysLimit // Pass the limit here
               );
 

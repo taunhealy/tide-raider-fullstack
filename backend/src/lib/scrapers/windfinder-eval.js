@@ -7,26 +7,34 @@ function extractWindfinderData() {
   const getDirFromEl = (el) => {
     if (!el) return null;
     
-    // Check for alt attribute
+    // Check for alt attribute (often contains rotation degrees on Windfinder)
     const img = el.tagName === 'IMG' ? el : el.querySelector('img');
     const alt = img?.getAttribute('alt') || el.getAttribute('alt') || "";
     if (alt) {
       const match = alt.match(/(\d+(?:\.\d+)?)\u00B0/);
-      if (match) return Math.round(parseFloat(match[1])).toString();
+      if (match) {
+        // Windfinder attributes already refer to the wind direction (where it comes FROM).
+        return Math.round(parseFloat(match[1])).toString();
+      }
     }
 
     // Check for style transform rotate
     const style = img?.getAttribute('style') || el.getAttribute('style') || "";
     if (style.includes('rotate')) {
       const match = style.match(/rotate\((\d+(?:\.\d+)?)deg\)/);
-      if (match) return Math.round(parseFloat(match[1])).toString();
+      if (match) {
+        // Rotation degrees correspond directly to wind direction.
+        return Math.round(parseFloat(match[1])).toString();
+      }
     }
 
     // Fallback to title
     const title = el.getAttribute('title') || el.parentElement?.getAttribute('title') || el.querySelector('[title]')?.getAttribute('title') || "";
     if (title) {
       const match = title.match(/(\d+)\u00B0/);
-      if (match) return match[1];
+      if (match) {
+        return Math.round(parseFloat(match[1])).toString();
+      }
     }
     
     // Fallback to cardinal

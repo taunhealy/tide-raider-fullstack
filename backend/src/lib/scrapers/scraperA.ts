@@ -74,7 +74,7 @@ export async function scraperA(
     let attempts = 0;
     let currentUrl = url;
 
-    while (attempts < 2 && !navigationSuccessful) {
+    while (attempts < 1 && !navigationSuccessful) {
       try {
         attempts++;
         // Use networkidle2 for more reliable loading of dynamic content
@@ -83,7 +83,7 @@ export async function scraperA(
         // Wait a bit extra for Astro/JS components to hydrate
         await new Promise(r => setTimeout(r, 2000));
 
-        // Check if we actually see forecast rows - added more inclusive selectors for Superforecast/CSS Modules
+        // Check if we actually see forecast rows
         const hasRows = await page.evaluate(() => {
           const selectors = [
             '.forecast-row', 
@@ -109,17 +109,13 @@ export async function scraperA(
 
         if (hasRows) {
           navigationSuccessful = true;
-          console.log(`✅ Forecast detected on attempt ${attempts} at ${currentUrl}`);
+          console.log(`✅ Forecast detected at ${currentUrl}`);
         } else {
           throw new Error("No forecast rows detected in DOM");
         }
       } catch (e) {
-        console.log(`⚠️ Attempt ${attempts} failed for ${currentUrl}: ${e.message}`);
-        if (attempts < 2) {
-          console.log("🔄 Retrying with Basic Forecast fallback URL...");
-          currentUrl = currentUrl.includes('weatherforecast') ? currentUrl.replace('weatherforecast', 'forecast') : currentUrl;
-          if (currentUrl.includes('?')) currentUrl = currentUrl.split('?')[0];
-        }
+        console.log(`⚠️ Navigation failed for ${currentUrl}: ${e.message}`);
+        // No more fallback as per user request
       }
     }
  

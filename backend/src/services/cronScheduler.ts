@@ -201,13 +201,13 @@ export class CronScheduler {
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
         
-        // Remove anything older than 2 days
+        // Remove anything older than 1 day in the past (yesterday)
         const pastDate = new Date(today);
-        pastDate.setDate(today.getDate() - 2);
+        pastDate.setUTCDate(today.getUTCDate() - 1);
         
-        // Remove anything further than 10 days in the future
+        // Remove anything further than 8 days in the future
         const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + 10);
+        futureDate.setUTCDate(today.getUTCDate() + 8);
 
         const deletedStale = await prisma.forecast.deleteMany({
           where: {
