@@ -133,6 +133,25 @@ export async function GET(request: Request) {
           ? JSON.parse(beach.coordinates) 
           : beach.coordinates;
 
+        if (superlite) {
+          return {
+            id: beach.id,
+            name: beach.name,
+            coordinates: {
+              lat: Number(coords?.lat || 0),
+              lng: Number(coords?.lng || 0)
+            },
+            regionId: beach.regionId,
+            region: beach.region?.name || "Unknown Region",
+            difficulty: beach.difficulty,
+            waveType: beach.waveType,
+            isHiddenGem: beach.isHiddenGem || false,
+            isLongboarding: beach.isLongboarding || false,
+            isFoiling: beach.isFoiling || false,
+            rating: null
+          };
+        }
+
         // Group scores by date
         const scoresByDate: Record<string, any[]> = {};
         if (beach.beachDailyScores) {
@@ -187,7 +206,7 @@ export async function GET(request: Request) {
           optimalTide: profile.optimalTide || "ALL",
           mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
           sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
-          rating: dailyScores[targetDateStr]?.rating ?? (Object.values(dailyScores) as any[])[0]?.rating ?? (superlite ? null : (beach.rating ?? 3))
+          rating: dailyScores[targetDateStr]?.rating ?? (Object.values(dailyScores) as any[])[0]?.rating ?? (beach.rating ?? 3)
         };
       } catch (e) {
         console.error(`[api/map-data] Error mapping beach at index ${index} (${beach?.id || "unknown"}):`, e);

@@ -402,7 +402,23 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                               { id: 'WINDY', name: getSourceName('WINDY'), color: 'text-red-400' },
                               { id: 'TIDE_RAIDER', name: getSourceName('TIDE_RAIDER'), color: 'text-[var(--color-tertiary)]' },
                               { id: 'OPENMETEO_ARCHIVE', name: getSourceName('OPENMETEO_ARCHIVE'), color: 'text-gray-400' }
-                            ];
+                            ].sort((a, b) => {
+                              // Prioritize sources that actually have data in apiScores
+                              const aHasData = apiScores.some((s: any) => s.source === a.id);
+                              const bHasData = apiScores.some((s: any) => s.source === b.id);
+                              if (aHasData && !bHasData) return -1;
+                              if (!aHasData && bHasData) return 1;
+                              return 0;
+                            });
+
+                            // For historical logs (> 3 days old), if we have archive data, 
+                            // hide the other sources that have no data to reduce clutter.
+                            const isOldLog = logDateRaw && (new Date().getTime() - logDateRaw.getTime() > 3 * 24 * 60 * 60 * 1000);
+                            const hasArchive = apiScores.some((s: any) => s.source === 'OPENMETEO_ARCHIVE');
+                            
+                            const filteredSources = isOldLog && hasArchive 
+                              ? sources.filter(s => apiScores.some((score: any) => score.source === s.id) || s.id === 'OPENMETEO_ARCHIVE')
+                              : sources;
 
                             // Check if this slot is the one the user actually surfed
                             const entryTimeSlot = (entry as any).surfTimeSlot || entry.timeSlot;
@@ -439,7 +455,7 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
                                   </div>
                                 ) : (
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                    {sources.map((sourceInfo) => {
+                                    {filteredSources.map((sourceInfo) => {
                                       const score = apiScores.find((s: any) => s.source === sourceInfo.id);
                                       let conditions = score?.conditions;
                                       

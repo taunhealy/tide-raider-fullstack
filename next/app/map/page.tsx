@@ -192,12 +192,13 @@ export default function GlobalMapPage() {
   useEffect(() => {
     async function fetchData() {
       // 🚀 PHASE 1: SUPER LITE SYNC
-      // Load markers and basic metadata globally with NO scores (sub-second)
+      // Load markers and basic metadata for the current region (or globally)
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
+        const regionParam = filters.regionId ? `&regionId=${filters.regionId}` : "";
         
-        const superLiteRes = await fetch(`/api/map-data?superlite=true${sourceParam}${timeSlotParam}`);
+        const superLiteRes = await fetch(`/api/map-data?superlite=true${sourceParam}${timeSlotParam}${regionParam}`);
         if (superLiteRes.ok) {
           const superLiteData = await superLiteRes.json();
           if (superLiteData.beaches) {
@@ -209,7 +210,9 @@ export default function GlobalMapPage() {
         // 🚀 PHASE 2: LITE SYNC (Background)
         // Load ratings for everyone so filters work and markers get color
         setIsSyncingRatings(true);
-        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}`);
+        // We still fetch the whole world in Phase 2 so that panning works, 
+        // but we prioritize the current region if it's set.
+        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${regionParam}`);
         if (liteRes.ok) {
           const liteData = await liteRes.json();
           if (liteData.beaches) {
@@ -218,7 +221,7 @@ export default function GlobalMapPage() {
               liteData.beaches.forEach((lb: Beach) => {
                 const idx = updated.findIndex(b => b.id === lb.id);
                 if (idx !== -1) {
-                  // Merge while prioritizing existing detailed data if it was already fetched by onMoveEnd
+                  // Merge while prioritizing existing detailed data
                   updated[idx] = { ...updated[idx], ...lb };
                 } else {
                   updated.push(lb);
@@ -239,7 +242,7 @@ export default function GlobalMapPage() {
     // Clear score cache when source or slot changes
     setBeachesWithScores(new Set());
     fetchData();
-  }, [selectedSource, filters.timeSlot]);
+  }, [selectedSource, filters.timeSlot, filters.regionId]);
 
   const filteredBeaches = useMemo(() => {
     return beaches.filter(Boolean).filter(beach => {

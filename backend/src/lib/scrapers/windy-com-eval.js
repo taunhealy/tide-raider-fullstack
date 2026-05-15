@@ -14,13 +14,13 @@ function extractWindyComData() {
   // Row 8: Swell Energy / Wave Power
   // Row 9: Tides
 
-  const hoursRow = dataRows[1]; 
-  const windRow = dataRows[4];
-  const wavesRow = dataRows[5];
-  const swell1Row = dataRows[6];
-  const period1Row = dataRows[7];
-  const energyRow = dataRows[8];
-  const tideRow = dataRows[9];
+  const hoursRow = dataRows[0]; 
+  const windRow = dataRows[3];
+  const wavesRow = dataRows[4];
+  const swell1Row = dataRows[5];
+  const period1Row = dataRows[6];
+  const energyRow = dataRows[7];
+  const tideRow = dataRows[8];
 
   const hourCells = Array.from(hoursRow.querySelectorAll('td'));
   const results = [];
