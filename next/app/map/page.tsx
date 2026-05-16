@@ -18,7 +18,8 @@ export default function GlobalMapPage() {
   const { filters, updateFilter } = useBeachFilters();
   const { data: authData } = useBackendAuth();
   const user = authData?.user;
-  const isSubscribed = user?.isSubscribed || user?.hasActiveTrial || false;
+  const isGateEnabled = process.env.NEXT_PUBLIC_GATE !== 'false';
+  const isSubscribed = !isGateEnabled || (user?.isSubscribed || user?.hasActiveTrial || false);
 
   const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);

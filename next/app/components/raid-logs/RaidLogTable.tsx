@@ -503,7 +503,8 @@ export default function RaidLogTable({
     subscriptionDetails?.status === SubscriptionStatus.ACTIVE || 
     subscriptionDetails?.hasActiveTrial ||
     session?.user?.hasActiveTrial;
-  const hasAccess = isUserPremium;
+  const isGateEnabled = process.env.NEXT_PUBLIC_GATE !== 'false';
+  const hasAccess = !isGateEnabled || isUserPremium;
 
   // Set default view mode based on screen size
   const [viewMode, setViewMode] = useLocalStorage<"table" | "card">(

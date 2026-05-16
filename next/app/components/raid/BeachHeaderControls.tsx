@@ -140,6 +140,10 @@ export default function BeachHeaderControls({
   const [isMounted, setIsMounted] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string>("WINDFINDER");
 
+  const isGateEnabled = process.env.NEXT_PUBLIC_GATE !== 'false';
+  const effectiveIsAuthenticated = !isGateEnabled || isAuthenticated;
+  const effectiveIsSubscribed = !isGateEnabled || isSubscribed;
+
   useEffect(() => {
     setIsMounted(true);
     
@@ -341,7 +345,7 @@ export default function BeachHeaderControls({
                                 updateFilter("isHiddenGem", !currentActive ? "true" : "false");
                               }}
                               className={cn(
-                                (!isAuthenticated || !isSubscribed) && "shadow-[0_0_15px_-5px_rgba(79,70,229,0.4)]"
+                                (!effectiveIsAuthenticated || !effectiveIsSubscribed) && "shadow-[0_0_15px_-5px_rgba(79,70,229,0.4)]"
                               )}
                             >
                               Hidden Gems
@@ -350,11 +354,11 @@ export default function BeachHeaderControls({
                                   {hiddenGemCount}
                                 </span>
                               )}
-                              {(!isAuthenticated || !isSubscribed) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
+                              {(!effectiveIsAuthenticated || !effectiveIsSubscribed) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
                             </HiddenGemsButton>
                           </div>
                         </TooltipTrigger>
-                        {(!isAuthenticated || !isSubscribed) && (
+                        {(!effectiveIsAuthenticated || !effectiveIsSubscribed) && (
                           <TooltipContent side="top" className="bg-black text-white border-white/10 p-3">
                             <div className="flex flex-col gap-1">
                               <span className="font-bold text-[11px] uppercase tracking-wider">Subscription Access Required</span>
