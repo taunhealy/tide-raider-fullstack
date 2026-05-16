@@ -196,9 +196,9 @@ export default function GlobalMapPage() {
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
-        const regionParam = filters.regionId ? `&regionId=${filters.regionId}` : "";
+        const phase1RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "";
         
-        const superLiteRes = await fetch(`/api/map-data?superlite=true${sourceParam}${timeSlotParam}${regionParam}`);
+        const superLiteRes = await fetch(`/api/map-data?superlite=true${sourceParam}${timeSlotParam}${phase1RegionParam}`);
         if (superLiteRes.ok) {
           const superLiteData = await superLiteRes.json();
           if (superLiteData.beaches) {
@@ -208,11 +208,11 @@ export default function GlobalMapPage() {
         }
 
         // 🚀 PHASE 2: LITE SYNC (Background)
-        // Load ratings for everyone so filters work and markers get color
+        // Load ratings. Prioritize current region, or default to western-cape to save time globally
         setIsSyncingRatings(true);
-        // We still fetch the whole world in Phase 2 so that panning works, 
-        // but we prioritize the current region if it's set.
-        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${regionParam}`);
+        const phase2RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "&regionId=western-cape";
+        
+        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${phase2RegionParam}`);
         if (liteRes.ok) {
           const liteData = await liteRes.json();
           if (liteData.beaches) {

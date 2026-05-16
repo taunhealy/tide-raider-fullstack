@@ -135,6 +135,14 @@ export default function TideMap({
     }
     
     console.log(`[TideMap] 📅 Day changed to index ${selectedDayIndex}, key: ${selectedDateStringRef.current}`);
+
+    // Trigger map redraw so marker ratings reflect the new date
+    if (vectorSourceRef.current) {
+      vectorSourceRef.current.changed();
+    }
+    if (clusterSourceRef.current) {
+      clusterSourceRef.current.changed();
+    }
   }, [selectedDayIndex, selectedDateString]);
 
   useEffect(() => {
