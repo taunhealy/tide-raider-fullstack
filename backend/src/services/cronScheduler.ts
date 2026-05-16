@@ -209,15 +209,7 @@ export class CronScheduler {
         const futureDate = new Date(today);
         futureDate.setUTCDate(today.getUTCDate() + 8);
 
-        const deletedStale = await prisma.forecast.deleteMany({
-          where: {
-            OR: [
-              { date: { lt: pastDate } },
-              { date: { gt: futureDate } }
-            ]
-          }
-        });
-        console.log(`✅ Cleanup complete: Removed ${deletedStale.count} invalid/stale forecast records`);
+        console.log(`[Cleanup] 🧹 Historical data cleanup skipped per policy change.`);
       } catch (cleanupError) {
         console.error("❌ Cleanup failed:", cleanupError);
       }

@@ -30,6 +30,15 @@ export async function processUserAlerts(userId: string, today: Date) {
   const targetDate = new Date(today);
   targetDate.setUTCHours(0, 0, 0, 0);
 
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  if (targetDate < todayStart) {
+    console.log(`[Alert Processor] ⏭️ Skipping historical target date: ${targetDate.toISOString().split('T')[0]}`);
+    return { alertsChecked: 0, notificationsSent: 0, errors: 0 };
+  }
+
   console.log(`[Alert Processor] 🛰️ Processing alerts for user ${userId} on target date: ${targetDate.toISOString().split('T')[0]}`);
 
   const result = {
@@ -66,10 +75,17 @@ export async function processUserAlerts(userId: string, today: Date) {
     // Fetch ALL sources, we will filter in memory based on alert preferences
     const regions = [...new Set(userAlerts.map((alert) => alert.regionId))];
 
+    // Use a range for safer date matching
+    const targetDateEnd = new Date(targetDate);
+    targetDateEnd.setUTCHours(23, 59, 59, 999);
+
     const todaysForecasts = await prisma.forecast.findMany({
       where: {
         regionId: { in: regions },
-        date: targetDate, // Exact date match for UTC 00:00:00
+        date: {
+          gte: targetDate,
+          lte: targetDateEnd
+        }
       },
     });
 
@@ -118,7 +134,10 @@ export async function processUserAlerts(userId: string, today: Date) {
         const ratingsData = await prisma.beachDailyScore.findMany({
           where: {
             beachId: { in: beachIds },
-            date: targetDate,
+            date: {
+              gte: targetDate,
+              lte: targetDateEnd
+            }
           },
           select: {
             beachId: true,

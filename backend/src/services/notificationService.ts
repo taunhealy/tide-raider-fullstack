@@ -137,19 +137,15 @@ export async function sendAlertNotification(
   alertMatch: AlertMatch,
   alert: Alert,
   beachName: string = "Unknown location",
-  matchDate?: Date | string | number
+  matchDate: Date | string | number = new Date()
 ): Promise<boolean> {
   try {
-    // Ensure matchDate is a valid Date object
-    let displayDate: Date;
-    if (matchDate) {
-      displayDate = new Date(matchDate);
-      if (isNaN(displayDate.getTime())) {
-        displayDate = new Date();
-      }
-    } else {
+    // Ensure matchDate is a valid Date object and normalized to UTC midnight
+    let displayDate = new Date(matchDate);
+    if (isNaN(displayDate.getTime())) {
       displayDate = new Date();
     }
+    displayDate.setUTCHours(0, 0, 0, 0);
     // Get the associated LogEntry's beach information if it exists
     const logEntry = alert.logEntryId
       ? await prisma.logEntry.findUnique({

@@ -555,7 +555,7 @@ export class LogService {
       const d = new Date(e.date);
       d.setUTCHours(0, 0, 0, 0);
       return d.toISOString();
-    }))].map(d => new Date(d));
+    }))].map((d: any) => new Date(d as string));
 
     const [bulkForecasts, bulkScores] = await Promise.all([
       prisma.forecast.findMany({

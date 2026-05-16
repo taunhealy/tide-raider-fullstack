@@ -117,7 +117,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
     }
   }
   
-  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string, category: string = "GENERAL"): Promise<{ report: string, presenterName: string, creditsRemaining: number }> {
+  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string, category: string = "GENERAL"): Promise<{ id?: string, report: string, presenterName: string, creditsRemaining: number, pioneer?: any }> {
     console.log(`[IntelligenceService] 📋 Starting report generation: Beach=${beachId}, User=${userId}, Days=${days}, Persona=${personaOverride || 'AUTO'}`);
     
     // 1. Authenticate user and check credits

@@ -77,7 +77,7 @@ export async function fetchArchiveFromOpenMeteo(regionId: string, date: Date): P
         swellHeight: wave_height?.[index] || 0,
         swellPeriod: wave_period?.[index] || 0,
         swellDirection: wave_direction?.[index] || 0,
-        source: "OPENMETEO_ARCHIVE"
+        regionId: regionId
       });
     }
     
