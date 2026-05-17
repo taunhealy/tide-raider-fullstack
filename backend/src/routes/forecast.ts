@@ -185,7 +185,7 @@ router.get(
             today.setUTCHours(0, 0, 0, 0);
             const diffDays = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             
-            let effectiveSource: "WINDFINDER" | "WINDGURU" | "WINDY" = (sourceParam === "WINDFINDER_SUPER" ? "WINDFINDER" : sourceParam) as any;
+            let effectiveSource: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" = (sourceParam === "TIDE_RAIDER" ? "WINDFINDER" : sourceParam) as any;
             // 🚨 AUTOMATIC SOURCE SWITCHING: If date > 3 days out, Superforecast won't have it.
             if (sourceParam === "WINDFINDER_SUPER" && diffDays > 3) {
                console.log(`[forecast] 📅 Date ${dateStr} is ${diffDays} days away (beyond Superforecast window). Switching to regular WINDFINDER.`);

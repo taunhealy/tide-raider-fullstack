@@ -270,11 +270,33 @@ export async function getLatestConditions(
   let requestedForecast = null;
   
   try {
-    // Correctly handle daysLimit by filtering unique dates instead of record count
+    // Correctly handle daysLimit and startDayOffset by filtering unique dates
     let forecastsToStore = scrapedForecasts;
+
+    // Filter out dates before startDayOffset if provided
+    if (startDayOffset > 0) {
+      const today = getTodayDate();
+      const cutoffDate = new Date(today.getTime() + startDayOffset * 24 * 60 * 60 * 1000);
+      cutoffDate.setUTCHours(0, 0, 0, 0);
+      forecastsToStore = forecastsToStore.filter(f => {
+        const fDate = new Date(f.date);
+        fDate.setUTCHours(0, 0, 0, 0);
+        return fDate >= cutoffDate;
+      });
+      console.log(`[getLatestConditions] ✂️ Applied startDayOffset: ${startDayOffset}. Filtered ${scrapedForecasts.length} down to ${forecastsToStore.length} forecasts.`);
+    }
+
     if (daysLimit) {
-      const dates = [...new Set(scrapedForecasts.map(f => f.date.toISOString().split('T')[0]))].slice(0, daysLimit);
-      forecastsToStore = scrapedForecasts.filter(f => dates.includes(f.date.toISOString().split('T')[0]));
+      const uniqueDates = [...new Set(forecastsToStore.map(f => {
+        const d = new Date(f.date);
+        d.setUTCHours(0, 0, 0, 0);
+        return d.toISOString().split('T')[0];
+      }))].slice(0, daysLimit);
+      forecastsToStore = forecastsToStore.filter(f => {
+        const d = new Date(f.date);
+        d.setUTCHours(0, 0, 0, 0);
+        return uniqueDates.includes(d.toISOString().split('T')[0]);
+      });
     }
     debugLog(`Forecasts to store length: ${forecastsToStore?.length || 0}`);
 
@@ -349,8 +371,8 @@ export async function getLatestConditions(
     }
 
     // Mass Score Calculation: Run score updates for ALL scraped slots 
-    console.log(`[getLatestConditions] 📊 Batch calculating scores for ${scrapedForecasts.length} slots...`);
-    for (const scrapedForecast of scrapedForecasts) {
+    console.log(`[getLatestConditions] 📊 Batch calculating scores for ${forecastsToStore.length} slots...`);
+    for (const scrapedForecast of forecastsToStore) {
       try {
         const forecastDate = new Date(scrapedForecast.date);
         forecastDate.setUTCHours(0, 0, 0, 0);
