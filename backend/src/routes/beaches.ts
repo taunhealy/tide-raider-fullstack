@@ -169,7 +169,10 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
       const user = (req as any).user;
       const isSubscribed = user?.isSubscribed;
       const hasActiveTrial = user?.hasActiveTrial;
-      const isPremium = isSubscribed || hasActiveTrial;
+      
+      const gateHeader = req.headers['x-gate-enabled'];
+      const isGateEnabled = gateHeader !== 'false' && process.env.GATE !== 'false' && process.env.NEXT_PUBLIC_GATE !== 'false';
+      const isPremium = !isGateEnabled || isSubscribed || hasActiveTrial;
       
       const isGated = beach.isHiddenGem && !isPremium;
 
@@ -367,7 +370,10 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
     const user = (req as any).user;
     const isSubscribed = user?.isSubscribed;
     const hasActiveTrial = user?.hasActiveTrial;
-    const isPremium = isSubscribed || hasActiveTrial;
+    
+    const gateHeader = req.headers['x-gate-enabled'];
+    const isGateEnabled = gateHeader !== 'false' && process.env.GATE !== 'false' && process.env.NEXT_PUBLIC_GATE !== 'false';
+    const isPremium = !isGateEnabled || isSubscribed || hasActiveTrial;
     
     const isGated = beach.isHiddenGem && !isPremium;
 

@@ -17,6 +17,7 @@ export async function backendFetch(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "x-gate-enabled": process.env.NEXT_PUBLIC_GATE || "true",
     ...((options.headers as Record<string, string>) || {}),
   };
 

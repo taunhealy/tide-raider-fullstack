@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "x-gate-enabled": process.env.NEXT_PUBLIC_GATE || "true",
         // Forward auth info
         ...(request.headers.get("authorization") && {
           "Authorization": request.headers.get("authorization") as string,

@@ -199,7 +199,10 @@ router.get(
       const user = (req as any).user;
       const isSubscribed = user?.isSubscribed;
       const hasActiveTrial = user?.hasActiveTrial;
-      const isPremium = isSubscribed || hasActiveTrial;
+      
+      const gateHeader = req.headers['x-gate-enabled'];
+      const isGateEnabled = gateHeader !== 'false' && process.env.GATE !== 'false' && process.env.NEXT_PUBLIC_GATE !== 'false';
+      const isPremium = !isGateEnabled || isSubscribed || hasActiveTrial;
       
       // Debug
       // console.log("Filters parsed");
@@ -532,7 +535,7 @@ router.get(
           >,
           beach
         ) => {
-          const isPremiumUser = (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
+          const isPremiumUser = !isGateEnabled || (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
           const isGated = beach.isHiddenGem && !isPremiumUser;
           
           const dailyScore =
@@ -557,7 +560,7 @@ router.get(
           const { beachDailyScores, conditionProfiles, ...beachData } = beach as any;
           const profile = conditionProfiles?.[0] || {};
           
-           const isPremiumUser = (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
+           const isPremiumUser = !isGateEnabled || (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial;
            const isGated = beach.isHiddenGem && !isPremiumUser;
 
           return {

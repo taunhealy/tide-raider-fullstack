@@ -27,6 +27,7 @@ export async function GET(
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "x-gate-enabled": process.env.NEXT_PUBLIC_GATE || "true",
       },
     });
 
