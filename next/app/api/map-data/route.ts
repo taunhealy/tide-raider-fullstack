@@ -11,10 +11,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source");
     const timeSlot = searchParams.get("timeSlot");
-    const regionId = searchParams.get("regionId");
     const lite = searchParams.get("lite") === "true";
     const superlite = searchParams.get("superlite") === "true";
     const ids = searchParams.get("ids")?.split(",");
+    const regionId = searchParams.get("regionId") || (ids ? null : "western-cape");
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);

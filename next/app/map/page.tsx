@@ -124,6 +124,12 @@ export default function GlobalMapPage() {
   }, []);
 
   useEffect(() => {
+    if (mounted && !filters.regionId) {
+      updateFilter("regionId", "western-cape");
+    }
+  }, [mounted, filters.regionId, updateFilter]);
+
+  useEffect(() => {
     if (mounted) {
       localStorage.setItem("showWindHeatmap", String(showWindHeatmap));
       localStorage.setItem("showSwellHeatmap", String(showSwellHeatmap));

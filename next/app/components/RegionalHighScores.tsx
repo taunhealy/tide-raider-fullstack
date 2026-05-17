@@ -285,8 +285,8 @@ function RegionalHighScoresContent({
                 const displayScore = beach.totalScore;
                 const roundedScore = Math.round(displayScore);
 
-                // Lock the first 5 items AND any Hidden Gems for non-premium users
-                const isLocked = (index < 5 || beach.isHiddenGem) && !isPremium && !isSubscribed && !hasActiveTrial;
+                // Always unlocked per user request
+                const isLocked = false;
 
                 // Debug logging for first item to verify gating
                 if (index === 0 && !isSubscriptionLoading) {
@@ -360,18 +360,7 @@ function RegionalHighScoresContent({
               })}
           </div>
           
-          {!isPremium && apiBeaches.length >= 5 && (
-            <div className="mt-4 p-4 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl text-center space-y-3 shadow-lg shadow-blue-100">
-              <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest">Premium Content</p>
-              <h5 className="text-white text-xs font-bold leading-tight">Unlock the Top 5 <br/>Regional Breaks</h5>
-              <Button 
-                asChild
-                className="w-full h-8 bg-white text-blue-900 hover:bg-blue-50 text-[10px] font-black rounded-lg shadow-sm"
-              >
-                <Link href="/pricing#affiliate">UPGRADE TO UNLOCK</Link>
-              </Button>
-            </div>
-          )}
+          {/* Gating prompt removed per user request */}
         </>
       )}
     </>

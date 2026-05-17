@@ -61,10 +61,54 @@ const createRedisClient = () => {
   }
 
   try {
-    return new Redis({
+    const rawRedis = new Redis({
       url: (process.env.UPSTASH_REDIS_REST_URL || "").trim(),
       token: (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim(),
     });
+
+    const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1500): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Redis timeout after ${timeoutMs}ms`)), timeoutMs)
+        )
+      ]);
+    };
+
+    return {
+      get: async (key: string) => {
+        try {
+          return await withTimeout(rawRedis.get(key));
+        } catch (err) {
+          console.error(`[Redis Client] GET ${key} failed or timed out:`, err);
+          return null;
+        }
+      },
+      set: async (key: string, value: any, options?: any) => {
+        try {
+          return await withTimeout(rawRedis.set(key, value, options));
+        } catch (err) {
+          console.error(`[Redis Client] SET ${key} failed or timed out:`, err);
+          return null;
+        }
+      },
+      setex: async (key: string, seconds: number, value: string) => {
+        try {
+          return await withTimeout(rawRedis.setex(key, seconds, value));
+        } catch (err) {
+          console.error(`[Redis Client] SETEX ${key} failed or timed out:`, err);
+          return null;
+        }
+      },
+      del: async (key: string) => {
+        try {
+          return await withTimeout(rawRedis.del(key));
+        } catch (err) {
+          console.error(`[Redis Client] DEL ${key} failed or timed out:`, err);
+          return null;
+        }
+      },
+    } as unknown as Redis;
   } catch (error) {
     console.error("Failed to initialize Redis client:", error);
     return {

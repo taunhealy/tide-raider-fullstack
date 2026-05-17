@@ -442,7 +442,7 @@ export default function TideMap({
 
             if (type === "continent" || type === "country") {
               const items = representative.get("allBeaches") || [];
-              const ratings = items.filter(Boolean).map((b: any) => getRatingForBeach(b)).filter(r => r !== null) as number[];
+              const ratings = items.filter(Boolean).map((b: any) => getRatingForBeach(b)).filter((r: number | null) => r !== null) as number[];
               const avgRating = ratings.length > 0 
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
                 : null;
@@ -467,7 +467,7 @@ export default function TideMap({
               const ratings = clusterFeatures
                 .filter(Boolean)
                 .map((f: any) => getRatingForBeach(f.get("beach")))
-                .filter(r => r !== null) as number[];
+                .filter((r: number | null) => r !== null) as number[];
               
               const avgRating = ratings.length > 0
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
