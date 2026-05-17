@@ -171,25 +171,37 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
       return Array.isArray(data) ? data : [];
     },
     staleTime: 1000 * 60 * 5,
-    enabled: !filters.regionId && !hasAutoRedirected.current, // Only fetch if no regionId and haven't redirected yet
+    enabled: !!user && !filters.regionId && !hasAutoRedirected.current, // Only fetch if logged in, no regionId, and haven't redirected yet
   });
 
   useEffect(() => {
     // Only redirect if:
     // 1. No regionId in URL
-    // 2. We have recent searches check completed
-    // 3. We haven't already redirected
-    // 4. We're on the /raid page
+    // 2. We haven't already redirected
+    // 3. We're on the /raid page
     if (
       !filters.regionId &&
       !hasAutoRedirected.current &&
       pathname === "/raid"
     ) {
-      // 1. Try to use most recent search
+      const params = new URLSearchParams(window.location.search);
+
+      // 1. If user is not logged in, default immediately to Western Cape
+      if (!user) {
+        params.set("regionId", "western-cape");
+        if (!params.get("timeSlot")) {
+          params.set("timeSlot", "MORNING");
+        }
+        console.log("[BeachContainer] 📍 Unauthenticated. Defaulting immediately to Western Cape.");
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        hasAutoRedirected.current = true;
+        return;
+      }
+
+      // 2. Try to use most recent search if user is logged in
       if (recentSearches && recentSearches.length > 0) {
         const mostRecentSearch = recentSearches[0];
         if (mostRecentSearch?.region?.id) {
-          const params = new URLSearchParams(window.location.search);
           const formattedRegionId = mostRecentSearch.region.id.toLowerCase().replace(/\s+/g, "-");
           params.set("regionId", formattedRegionId);
           
@@ -203,20 +215,19 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
         }
       }
 
-      // 2. Fallback to Western Cape if history check is done and empty
+      // 3. Fallback to Western Cape if history check is done and empty/failed
       if (!isLoadingHistory) {
-        const params = new URLSearchParams(window.location.search);
         params.set("regionId", "western-cape");
         if (!params.get("timeSlot")) {
           params.set("timeSlot", "MORNING");
         }
         
-        console.log("[BeachContainer] 📍 History empty. Defaulting URL to Western Cape.");
+        console.log("[BeachContainer] 📍 History checked. Defaulting URL to Western Cape.");
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
         hasAutoRedirected.current = true;
       }
     }
-  }, [filters.regionId, recentSearches, isLoadingHistory, pathname, router]);
+  }, [filters.regionId, recentSearches, isLoadingHistory, pathname, router, user]);
 
   // Track region searches when regionId changes
   const { mutate: trackSearch } = useMutation({
