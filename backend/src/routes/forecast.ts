@@ -328,20 +328,44 @@ router.get(
                 stack: scrapeError?.stack,
               }
             );
-            // Don't fail the request if scraping fails - just return 404
-            // The scraping might have failed due to network issues, but we don't want to return 500
+          }
+        }
+
+        // WINDY FALLBACK: If source was WINDY and no forecast was found, try finding WINDFINDER_SUPER, WINDFINDER, or WINDGURU
+        if (!forecast && sourceParam === "WINDY") {
+          console.log(`[forecast] 🔄 WINDY Fallback: Windy forecast missing for ${resolvedRegionId} on ${dateStr}. Trying alternatives...`);
+          const alternative = await prisma.forecast.findFirst({
+            where: {
+              regionId: resolvedRegionId,
+              date: targetDate,
+              timeSlot: timeSlotParam as any,
+              source: { in: ["WINDFINDER_SUPER", "WINDFINDER", "WINDGURU"] }
+            },
+            orderBy: {
+              source: 'desc' 
+            }
+          });
+
+          if (alternative) {
+            console.log(`[forecast] ✅ WINDY Fallback: Found alternative forecast from ${alternative.source}. Returning it.`);
+            forecast = {
+              ...alternative,
+              source: "WINDY" // Retain source as WINDY for the frontend
+            } as any;
           }
         }
 
         // Return 404 if still no forecast found
-        return res.status(404).json({
-          error: `No forecast data found`,
-          message: `No forecast data available for ${sourceParam} on ${dateStr} (${timeSlotParam}) in region ${region.name || resolvedRegionId}`,
-          regionId: resolvedRegionId,
-          date: dateStr,
-          source: sourceParam,
-          timeSlot: timeSlotParam,
-        });
+        if (!forecast) {
+          return res.status(404).json({
+            error: `No forecast data found`,
+            message: `No forecast data available for ${sourceParam} on ${dateStr} (${timeSlotParam}) in region ${region.name || resolvedRegionId}`,
+            regionId: resolvedRegionId,
+            date: dateStr,
+            source: sourceParam,
+            timeSlot: timeSlotParam,
+          });
+        }
       }
 
       return res.json(forecast);
