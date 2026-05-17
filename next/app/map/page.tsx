@@ -23,7 +23,7 @@ export default function GlobalMapPage() {
 
   const [beaches, setBeaches] = useState<Beach[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSyncingRatings, setIsSyncingRatings] = useState(false);
+  const [phase1Complete, setPhase1Complete] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
@@ -191,9 +191,9 @@ export default function GlobalMapPage() {
   };
 
   useEffect(() => {
-    async function fetchData() {
-      // 🚀 PHASE 1: SUPER LITE SYNC
-      // Load markers and basic metadata for the current region (or globally)
+    async function fetchPhase1() {
+      setPhase1Complete(false);
+      setLoading(true);
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
@@ -205,25 +205,48 @@ export default function GlobalMapPage() {
           if (superLiteData.beaches) {
             setBeaches(superLiteData.beaches);
             setLoading(false); // Map becomes interactive NOW
+            setPhase1Complete(true);
           }
         }
+      } catch (error) {
+        console.error("Error fetching map data (phase 1):", error);
+        setLoading(false);
+      }
+    }
+    
+    // Clear score cache when source or slot changes
+    setBeachesWithScores(new Set());
+    fetchPhase1();
+  }, [selectedSource, filters.timeSlot, filters.regionId]);
 
-        // 🚀 PHASE 2: FULL BACKGROUND SYNC
-        // Load ratings for next 7 days. Prioritize current region, or default to western-cape to save time globally
-        setIsSyncingRatings(true);
+  useEffect(() => {
+    if (!phase1Complete) return;
+
+    async function fetchPhase2() {
+      try {
+        const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
+        const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
         const phase2RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "&regionId=western-cape";
+        const dateParam = `&date=${selectedDateString}`;
         
-        const fullRes = await fetch(`/api/map-data?mode=full${sourceParam}${timeSlotParam}${phase2RegionParam}`);
-        if (fullRes.ok) {
-          const fullData = await fullRes.json();
-          if (fullData.beaches) {
+        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${phase2RegionParam}${dateParam}`);
+        if (liteRes.ok) {
+          const liteData = await liteRes.json();
+          if (liteData.beaches) {
             setBeaches(prev => {
               const updated = [...prev];
-              fullData.beaches.forEach((lb: Beach) => {
+              liteData.beaches.forEach((lb: Beach) => {
                 const idx = updated.findIndex(b => b.id === lb.id);
                 if (idx !== -1) {
-                  // Merge while prioritizing existing detailed data
-                  updated[idx] = { ...updated[idx], ...lb };
+                  // Merge while prioritizing existing detailed data, but keep old dates in dailyScores
+                  updated[idx] = { 
+                    ...updated[idx], 
+                    ...lb,
+                    dailyScores: {
+                      ...(updated[idx] as any).dailyScores,
+                      ...lb.dailyScores
+                    }
+                  };
                 } else {
                   updated.push(lb);
                 }
@@ -233,17 +256,12 @@ export default function GlobalMapPage() {
           }
         }
       } catch (error) {
-        console.error("Error fetching map data:", error);
-      } finally {
-        setLoading(false);
-        setIsSyncingRatings(false);
+        console.error("Error fetching map data (phase 2):", error);
       }
     }
-    
-    // Clear score cache when source or slot changes
-    setBeachesWithScores(new Set());
-    fetchData();
-  }, [selectedSource, filters.timeSlot, filters.regionId]);
+
+    fetchPhase2();
+  }, [selectedSource, filters.timeSlot, filters.regionId, selectedDateString, phase1Complete]);
 
   const filteredBeaches = useMemo(() => {
     return beaches.filter(Boolean).filter(beach => {
