@@ -208,18 +208,18 @@ export default function GlobalMapPage() {
           }
         }
 
-        // 🚀 PHASE 2: LITE SYNC (Background)
-        // Load ratings. Prioritize current region, or default to western-cape to save time globally
+        // 🚀 PHASE 2: FULL BACKGROUND SYNC
+        // Load ratings for next 7 days. Prioritize current region, or default to western-cape to save time globally
         setIsSyncingRatings(true);
         const phase2RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "&regionId=western-cape";
         
-        const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${phase2RegionParam}`);
-        if (liteRes.ok) {
-          const liteData = await liteRes.json();
-          if (liteData.beaches) {
+        const fullRes = await fetch(`/api/map-data?mode=full${sourceParam}${timeSlotParam}${phase2RegionParam}`);
+        if (fullRes.ok) {
+          const fullData = await fullRes.json();
+          if (fullData.beaches) {
             setBeaches(prev => {
               const updated = [...prev];
-              liteData.beaches.forEach((lb: Beach) => {
+              fullData.beaches.forEach((lb: Beach) => {
                 const idx = updated.findIndex(b => b.id === lb.id);
                 if (idx !== -1) {
                   // Merge while prioritizing existing detailed data
@@ -672,11 +672,11 @@ export default function GlobalMapPage() {
           </div>
 
           {/* Subtle loading indicator overlay */}
-          {(loading || isSyncingRatings) && (
+          {loading && (
             <div className="absolute top-24 right-6 z-50 flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-gray-100 animate-in fade-in slide-in-from-right-4 duration-500">
               <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
               <p className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
-                {loading ? "Syncing Intel..." : "Syncing Ratings..."}
+                Syncing Intel...
               </p>
             </div>
           )}
