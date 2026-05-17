@@ -204,6 +204,36 @@ router.get("/user/:userId/history", async (req, res: Response) => {
 });
 
 /**
+ * GET /api/intelligence/global-latest
+ * Fetch the absolute most recent intelligence report generated in the system
+ */
+router.get("/global-latest", async (req, res: Response) => {
+  try {
+    const { prisma } = await import("../lib/prisma");
+    const report = await prisma.intelligenceReport.findFirst({
+      orderBy: { createdAt: "desc" },
+      include: {
+        beach: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            instagram: true,
+            link: true
+          }
+        }
+      }
+    });
+
+    res.json(report || null);
+  } catch (error) {
+    console.error("[IntelligenceRoute] Global latest report fetch error:", error);
+    res.status(500).json({ error: "Failed to fetch absolute latest tactical signal." });
+  }
+});
+
+/**
  * GET /api/intelligence/history
  * Fetch historical reports for the current user
  */

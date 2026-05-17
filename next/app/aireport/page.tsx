@@ -147,13 +147,23 @@ function AIReportContent() {
     if (!beachIdParam && !activeReportId && !isGenerating) {
       const fetchInitialSignal = async () => {
         try {
-          // Fetch the user's report history
-          const res = await fetch('/api/backend/intelligence/history');
+          // Fetch the absolute latest report generated in the entire system
+          const res = await fetch('/api/backend/intelligence/global-latest');
           if (res.ok) {
-            const data = await res.json();
+            const latest = await res.json();
+            if (latest && latest.id) {
+              // Automatically navigate to the absolute most recent report in the system
+              router.replace(`/aireport?beachId=${latest.beachId}&report=${latest.id}`, { scroll: false });
+              return;
+            }
+          }
+          
+          // Fallback to user history if global latest fetch failed or returned empty
+          const historyRes = await fetch('/api/backend/intelligence/history');
+          if (historyRes.ok) {
+            const data = await historyRes.json();
             if (Array.isArray(data) && data.length > 0) {
               const latest = data[0];
-              // Automatically navigate to the most recent report
               router.replace(`/aireport?beachId=${latest.beachId}&report=${latest.id}`, { scroll: false });
             }
           }
@@ -218,9 +228,10 @@ function AIReportContent() {
       if (!response.ok) throw new Error("Generation failed");
 
       const data = await response.json();
-      if (data && data.reportId) {
+      const newReportId = data.id || data.reportId;
+      if (data && newReportId) {
         setArchiveBeach(generationBeach);
-        router.push(`/aireport?beachId=${generationBeach.id}&report=${data.reportId}`);
+        router.push(`/aireport?beachId=${generationBeach.id}&report=${newReportId}`);
         toast.success("Intelligence Compiling", { description: "Signal has been anchored to the archive." });
         
         // Refresh archive
@@ -485,9 +496,9 @@ function AIReportContent() {
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Source Reliability</span>
-                            <p className="text-[14px] lg:text-[15px] font-bold text-indigo-400 flex items-center gap-2">
-                              98.4% <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
-                            </p>
+                            <div className="text-[14px] lg:text-[15px] font-bold text-indigo-400 flex items-center gap-2">
+                              98.4% <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse inline-block" />
+                            </div>
                           </div>
                           <div className="space-y-1">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Auth Token</span>
