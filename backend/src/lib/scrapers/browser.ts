@@ -34,6 +34,9 @@ function findExecutablePath(): string | undefined {
 }
 
 export async function getBrowser(): Promise<Browser> {
+  // Disable DBus to avoid connection timeouts and overhead in serverless Docker containers
+  process.env.DBUS_SESSION_BUS_ADDRESS = "disabled:";
+
   const executablePath = findExecutablePath();
   
   if (executablePath) {
@@ -61,6 +64,14 @@ export async function getBrowser(): Promise<Browser> {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
+          "--disable-gpu", // Prevent hardware acceleration crashes
+          "--disable-software-rasterizer", // Reduce CPU/memory overhead
+          "--disable-features=IsolateOrigins,site-per-process", // Prevent spawning excess processes
+          "--disable-ipc-flooding-protection", // Prevent IPC throttling under CPU load
+          "--disable-background-networking", // Turn off background networking
+          "--disable-background-timer-throttling", // Keep JS execution steady
+          "--disable-backgrounding-occluded-windows",
+          "--disable-renderer-backgrounding",
           "--hide-scrollbars",
           "--mute-audio",
           "--disable-breakpad",

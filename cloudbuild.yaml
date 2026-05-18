@@ -42,7 +42,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --memory=2Gi
-      - --cpu=1
+      - --cpu=2
       - --timeout=600
       - --max-instances=10
       - --min-instances=0

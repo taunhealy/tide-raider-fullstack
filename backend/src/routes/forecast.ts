@@ -143,15 +143,38 @@ router.get(
         forecast = null;
       }
 
+      // 🕒 PAST DATE OPTIMIZATION: If looking for a past date and the requested source didn't exist,
+      // try to find ANY cached forecast (e.g. OPENMETEO_ARCHIVE) for this date/region/slot before fetching
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const isTodayOrFuture = targetDate >= today;
+
+      if (!forecast && !isTodayOrFuture) {
+        console.log(`[forecast] 🕒 Past date: checking if ANY forecast (including OPENMETEO_ARCHIVE) exists in DB...`);
+        try {
+          forecast = await prisma.forecast.findFirst({
+            where: {
+              date: targetDate,
+              regionId: resolvedRegionId,
+              timeSlot: timeSlotParam as any,
+            },
+            orderBy: [
+              { source: 'desc' } // Prioritizes source sorting
+            ]
+          });
+          if (forecast) {
+            console.log(`[forecast] 🕒 Found cached past forecast under source: ${forecast.source}`);
+          }
+        } catch (err) {
+          console.error("[forecast] Error querying past forecast fallback:", err);
+        }
+      }
+
       if (!forecast) {
         console.log(
           `[forecast] No forecast found for regionId: ${resolvedRegionId} (original: ${regionId}), date: ${dateStr}, source: ${sourceParam}, timeSlot: ${timeSlotParam}`
         );
 
-        // Check if this is today or a future date - if so, trigger scraping
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
-        const isTodayOrFuture = targetDate >= today;
         const isToday = targetDate.getTime() === today.getTime();
 
         if (isTodayOrFuture) {
@@ -328,6 +351,25 @@ router.get(
                 stack: scrapeError?.stack,
               }
             );
+          }
+        } else {
+          // 🕒 HISTORIC DATE FALLBACK: If looking for a past date and no forecast is found in DB,
+          // fetch it from the OpenMeteo archive on-demand!
+          console.log(`[forecast] 🕒 Past date detected (${dateStr}). Triggering Archive Fetch via getLatestConditions...`);
+          try {
+            const archiveForecast = await getLatestConditions(
+              resolvedRegionId,
+              forceRefresh,
+              "OPENMETEO_ARCHIVE",
+              undefined,
+              targetDate,
+              timeSlotParam
+            );
+            if (archiveForecast) {
+              forecast = archiveForecast;
+            }
+          } catch (archiveError) {
+            console.error("[forecast] Failed to fetch archive:", archiveError);
           }
         }
 
