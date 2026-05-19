@@ -129,7 +129,7 @@ export default function StickyForecastWidget({
   return (
     <div
       ref={widgetRef}
-      className="hidden md:flex fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-3rem)] max-w-6xl items-center justify-between bg-white/95 backdrop-blur-md py-2 px-4 rounded-xl border border-gray-200/60 shadow-[0_10px_35px_rgba(0,0,0,0.1)] transition-all"
+      className="hidden md:flex fixed bottom-[60px] left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-3rem)] max-w-6xl items-center justify-between bg-white/95 backdrop-blur-md py-2 px-4 rounded-xl border border-gray-200/60 shadow-[0_10px_35px_rgba(0,0,0,0.1)] transition-all"
     >
       <div className="flex flex-row items-center justify-between gap-4 w-full">
         {/* Left Section: Region and Tide Info */}
