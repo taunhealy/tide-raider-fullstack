@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import TideMap, { Beach } from "@/app/components/map/TideMap";
 import { Search, Filter, Star, Info, List, Map as MapIcon, ChevronRight, Waves, Cloud, Loader2, X, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LoggersButton, FoilingButton, HiddenGemsButton } from "@/app/components/ui/GradientButton";
+import { LoggersButton, FoilingButton, HiddenGemsButton, RegularButton } from "@/app/components/ui/GradientButton";
 import { cn } from "@/app/lib/utils";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import WeatherForecastWidget from "@/app/components/sidebar/WeatherForecastWidget";
@@ -138,11 +138,9 @@ export default function GlobalMapPage() {
   
   const isLoggersOnly = filters.isLongboarding || false;
   const isFoilingOnly = filters.isFoiling || false;
-  const isHiddenGemsOnly = filters.isHiddenGem || false;
 
   const setIsLoggersOnly = (val: boolean) => updateFilter("isLongboarding", val ? "true" : "");
   const setIsFoilingOnly = (val: boolean) => updateFilter("isFoiling", val ? "true" : "");
-  const setIsHiddenGemsOnly = (val: boolean) => updateFilter("isHiddenGem", val ? "true" : "");
 
   // Derive selectedDayIndex from URL filter
   const selectedDayIndex = useMemo(() => {
@@ -288,14 +286,18 @@ export default function GlobalMapPage() {
       const isLogger = (beach as any).isLongboarding || false;
       const isFoiler = (beach as any).isFoiling || false;
       const isGem = (beach as any).isHiddenGem || false;
+      const isRegular = !isGem;
 
+      const isRegularActive = filters.isRegular !== "false" && filters.isRegular !== false;
+      const isHiddenGemActive = (filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed;
+
+      const matchesVisibility = (isRegular && isRegularActive) || (isGem && isHiddenGemActive);
       const matchesLoggers = !isLoggersOnly || isLogger;
       const matchesFoiling = !isFoilingOnly || isFoiler;
-      const matchesHiddenGems = !isHiddenGemsOnly || isGem;
       
-      return matchesSearch && matchesRegion && matchesDifficulty && matchesRating && matchesLoggers && matchesFoiling && matchesHiddenGems;
+      return matchesSearch && matchesRegion && matchesDifficulty && matchesRating && matchesLoggers && matchesFoiling && matchesVisibility;
     });
-  }, [beaches, searchQuery, filters.regionId, selectedDifficulty, minRating, selectedDateString, isLoggersOnly, isFoilingOnly, isHiddenGemsOnly]);
+  }, [beaches, searchQuery, filters.regionId, selectedDifficulty, minRating, selectedDateString, isLoggersOnly, isFoilingOnly, filters.isRegular, filters.isHiddenGem, isSubscribed]);
 
   const toggleDifficulty = (d: string) => {
     setSelectedDifficulty(prev => 
@@ -437,7 +439,7 @@ export default function GlobalMapPage() {
               </div>
 
               {/* Active Badges */}
-              {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || isHiddenGemsOnly) && (
+              {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || filters.isRegular === "false" || filters.isHiddenGem === "true" || filters.isHiddenGem === true) && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {searchQuery && (
                     <button 
@@ -470,8 +472,19 @@ export default function GlobalMapPage() {
                       Foiling <X className="w-2 h-2" />
                     </button>
                   )}
-                  {isHiddenGemsOnly && (
-                    <button onClick={() => setIsHiddenGemsOnly(false)} className="flex items-center gap-1.5 px-2 py-1 bg-rose-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-rose-500 transition-all">
+                  {filters.isRegular === "false" && (
+                    <button 
+                      onClick={() => updateFilter("isRegular", "true")} 
+                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-500 transition-all"
+                    >
+                      No Public Breaks <X className="w-2 h-2" />
+                    </button>
+                  )}
+                  {(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && (
+                    <button 
+                      onClick={() => updateFilter("isHiddenGem", "false")} 
+                      className="flex items-center gap-1.5 px-2 py-1 bg-rose-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-rose-500 transition-all"
+                    >
                       Gems <X className="w-2 h-2" />
                     </button>
                   )}
@@ -483,7 +496,8 @@ export default function GlobalMapPage() {
                       setSelectedDifficulty([]);
                       setIsLoggersOnly(false);
                       setIsFoilingOnly(false);
-                      setIsHiddenGemsOnly(false);
+                      updateFilter("isRegular", "true");
+                      updateFilter("isHiddenGem", "false");
                     }}
                     className="text-[9px] font-black text-gray-400 uppercase tracking-tighter hover:text-gray-900 transition-all underline decoration-gray-200 underline-offset-4"
                   >
@@ -534,36 +548,45 @@ export default function GlobalMapPage() {
               </div>
             </div>
 
-            {/* Hidden Gems Gated Filter */}
+            {/* Spots Type Toggle Filter */}
             <div className="p-4 bg-white rounded-2xl border-2 border-gray-100 space-y-3 relative overflow-hidden group">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block">Exclusive Spots</label>
-                {!isSubscribed && (
-                   <span className="flex items-center gap-1 text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-amber-100">
-                     <Lock className="w-2.5 h-2.5" />
-                     Premium
-                   </span>
-                )}
-              </div>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block">Breaks Visibility</label>
               
-              <div className="flex flex-col gap-3">
-                <HiddenGemsButton
-                  active={isHiddenGemsOnly && isSubscribed}
+              <div className="flex flex-col gap-2.5">
+                <RegularButton
+                  active={filters.isRegular !== false && filters.isRegular !== "false"}
                   size="sm"
-                  disabled={!isSubscribed}
-                  onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}
-                  className={cn(
-                    "w-full justify-between h-12 px-4",
-                    !isSubscribed && "opacity-50 grayscale pointer-events-none"
-                  )}
+                  onClick={() => {
+                    const currentActive = filters.isRegular !== false && filters.isRegular !== "false";
+                    updateFilter("isRegular", !currentActive ? "true" : "false");
+                  }}
+                  className="w-full justify-center h-10 px-4"
                 >
-                  <span className="text-[11px]">Reveal Hidden Gems</span>
-                  {!isSubscribed && <Lock className="w-3 h-3" />}
-                </HiddenGemsButton>
+                  Public Breaks
+                </RegularButton>
+
+                <div className="relative w-full">
+                  <HiddenGemsButton
+                    active={(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed}
+                    size="sm"
+                    disabled={!isSubscribed}
+                    onClick={() => {
+                      const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
+                      updateFilter("isHiddenGem", !currentActive ? "true" : "false");
+                    }}
+                    className={cn(
+                      "w-full justify-center h-10 px-4",
+                      !isSubscribed && "opacity-50 grayscale pointer-events-none"
+                    )}
+                  >
+                    <span>Hidden Gems</span>
+                    {!isSubscribed && <Lock className="w-3.5 h-3.5 ml-1.5 text-[#1d4ed8]" />}
+                  </HiddenGemsButton>
+                </div>
 
                 {!isSubscribed && (
-                  <div className="pt-2 border-t border-gray-50">
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-3">
+                  <div className="pt-2 border-t border-gray-100">
+                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-2">
                       Unlock 150+ crowd-free "Hidden Gems" only visible to Intelligence subscribers.
                     </p>
                     <Link 
@@ -849,7 +872,27 @@ export default function GlobalMapPage() {
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Specialty Access</label>
                     <LoggersButton active={isLoggersOnly} onClick={() => setIsLoggersOnly(!isLoggersOnly)}>Loggers Only</LoggersButton>
                     <FoilingButton active={isFoilingOnly} onClick={() => setIsFoilingOnly(!isFoilingOnly)}>Foiling Only</FoilingButton>
-                    <HiddenGemsButton active={isHiddenGemsOnly} onClick={() => setIsHiddenGemsOnly(!isHiddenGemsOnly)}>Hidden Gems</HiddenGemsButton>
+                    <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                      <RegularButton 
+                        active={filters.isRegular !== false && filters.isRegular !== "false"} 
+                        onClick={() => {
+                          const currentActive = filters.isRegular !== false && filters.isRegular !== "false";
+                          updateFilter("isRegular", !currentActive ? "true" : "false");
+                        }}
+                      >
+                        Public Breaks
+                      </RegularButton>
+                      <HiddenGemsButton 
+                        active={(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed} 
+                        disabled={!isSubscribed}
+                        onClick={() => {
+                          const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
+                          updateFilter("isHiddenGem", !currentActive ? "true" : "false");
+                        }}
+                      >
+                        Hidden Gems {!isSubscribed && "🔒"}
+                      </HiddenGemsButton>
+                    </div>
                   </div>
 
                   {/* Rating */}

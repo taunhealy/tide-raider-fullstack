@@ -877,49 +877,6 @@ export const beachData: Beach[] = [
       lat: -34.475,
       lng: 21.2294,
     },
-  },
-  {
-    id: "i-and-js",
-    name: "I&Js",
-    continent: "Africa",
-    countryId: "za",
-    regionId: "western-cape",
-    location: "Gansbaai",
-    isHiddenGem: true,
-    distanceFromCT: 150,
-    optimalWindDirections: ["SSE", "SE", "ESE"],
-    optimalSwellDirections: {
-      min: 292.5,
-      max: 337.5,
-    },
-    bestSeasons: ["winter"],
-    optimalTide: "ALL",
-    description: "Works best with NW swell and SE winds (with some leniency).",
-    difficulty: "INTERMEDIATE",
-    waveType: "BEACH_BREAK",
-    swellSize: {
-      min: 1.6,
-      max: 4.0,
-    },
-    idealSwellPeriod: {
-      min: 12,
-      max: 24,
-    },
-    waterTemp: {
-      summer: 18,
-      winter: 14,
-    },
-    hazards: ["Sharks"],
-    crimeLevel: "Low",
-    sharkAttack: {
-      hasAttack: false,
-    },
-    image: "",
-    coordinates: {
-      lat: -34.6113611,
-      lng: 19.3116389,
-    },
-  },
   {
     id: "glen-beach",
     name: "Glen Beach",
@@ -2854,8 +2811,8 @@ export const beachData: Beach[] = [
     image:
       "https://images.unsplash.com/photo-1666022392607-2890a8b85b8f?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     coordinates: {
-      lat: -34.1123,
-      lng: 18.4876,
+      lat: -34.159455,
+      lng: 18.431866,
     },
   },
 

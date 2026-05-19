@@ -564,7 +564,12 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
         </div>
       </div>
 
-      <StickyForecastWidget />
+      <StickyForecastWidget 
+        availableDates={data?.availableDates || []}
+        forecast={forecast}
+        beaches={beaches}
+        isLoading={isLoading || isFetching}
+      />
 
       {deepLinkedBeach && (
         <AIReportModal
