@@ -2,6 +2,10 @@ import { prisma } from "../lib/prisma";
 import type { Beach, Forecast, Prisma } from "@prisma/client";
 
 export class ScoreService {
+  // Cache for beach profiles to avoid redundant DB queries during mass scoring
+  private static beachCache = new Map<string, { beaches: any[]; timestamp: number }>();
+  private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
   // Direction mapping utilities
   private static cardinalToDegreesMap: Record<string, number> = {
     N: 0,
@@ -359,10 +363,18 @@ export class ScoreService {
     let scores: any[] = [];
 
     try {
-      beaches = await prisma.beach.findMany({
-        where: { regionId },
-        include: { conditionProfiles: true }
-      });
+      const now = Date.now();
+      const cached = this.beachCache.get(regionId);
+      if (cached && (now - cached.timestamp < this.CACHE_TTL)) {
+        beaches = cached.beaches;
+      } else {
+        beaches = await prisma.beach.findMany({
+          where: { regionId },
+          include: { conditionProfiles: true }
+        });
+        this.beachCache.set(regionId, { beaches, timestamp: now });
+        console.log(`[ScoreService] 🗄️ Fetched and cached ${beaches.length} beaches/profiles for region ${regionId}`);
+      }
 
       console.log(`Found ${beaches.length} beaches for region ${regionId}`);
 
