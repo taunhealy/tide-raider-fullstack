@@ -56,7 +56,7 @@ export class ScoreService {
       | "swellDirection"
       | "swellPeriod"
     >
-  ): { score: number; deductions: string[] } | null {
+  ): { score: number; deductions: string[]; checklist: any } | null {
     try {
       const deductions: string[] = [];
       
@@ -95,9 +95,10 @@ export class ScoreService {
       // 1. Wind direction scoring
       const windCardinal = this.degreesToCardinal(windDirection);
       const isOptimalWind = parsedProfile.optimalWindDirections.includes(windCardinal);
+      let minAngleDiff = 0;
 
       if (!isOptimalWind) {
-        const minAngleDiff = parsedProfile.optimalWindDirections.reduce(
+        minAngleDiff = parsedProfile.optimalWindDirections.reduce(
           (minDiff: number, optimalDir: string) => {
             const optimalDegrees = this.cardinalToDegreesMap[optimalDir];
             const diff = Math.abs(windDirection - optimalDegrees);
@@ -324,10 +325,17 @@ export class ScoreService {
 
       return { 
         score: Number(finalScore.toFixed(1)), 
-        deductions 
+        deductions,
+        checklist: {
+          windDirection: isOptimalWind || (minAngleDiff <= 22.5),
+          windSpeed: windSpeed <= 25 || beach.sheltered,
+          swellDirection: isOptimalSwellDir || swellDirDiff <= 5,
+          swellHeight: !isTooSmall && !isTooLarge,
+          swellPeriod: Math.round(swellPeriod) >= parsedProfile.idealSwellPeriod.min && Math.round(swellPeriod) <= parsedProfile.idealSwellPeriod.max
+        }
       };
     } catch (error) {
-      return { score: 0, deductions: ["Internal calculation error"] };
+      return { score: 0, deductions: ["Internal calculation error"], checklist: null };
     }
   }
 
@@ -365,6 +373,7 @@ export class ScoreService {
           const result = this.calculateScore(beach, profile, forecastData);
           const calculatedScore = result?.score ?? 0;
           const deductions = result?.deductions ?? [];
+          const checklist = result?.checklist ?? null;
 
           // Star Rating Logic: More intuitive rounding
           // 4.5 - 5.0 -> 5 stars
@@ -392,6 +401,7 @@ export class ScoreService {
               swellPeriod: forecastData.swellPeriod,
               tide: (forecastData as any).tide || "",
               deductions: deductions,
+              checklist: checklist,
             },
           });
         });

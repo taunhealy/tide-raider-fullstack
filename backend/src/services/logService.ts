@@ -39,14 +39,14 @@ export class LogService {
       ...entry,
       hasAlert: entry.alerts.length > 0,
       alertId: entry.alerts[0]?.id || null,
-      forecast: entry.forecast
+      forecast: (entry.forecast || entry.forecastSnapshot)
         ? {
-            id: entry.forecast.id,
-            windSpeed: entry.forecast.windSpeed,
-            windDirection: entry.forecast.windDirection,
-            swellHeight: entry.forecast.swellHeight,
-            swellPeriod: entry.forecast.swellPeriod,
-            swellDirection: entry.forecast.swellDirection,
+            id: entry.forecast?.id || entry.id,
+            windSpeed: entry.forecast?.windSpeed ?? (entry.forecastSnapshot as any)?.windSpeed ?? 0,
+            windDirection: entry.forecast?.windDirection ?? (entry.forecastSnapshot as any)?.windDirection ?? 0,
+            swellHeight: entry.forecast?.swellHeight ?? (entry.forecastSnapshot as any)?.swellHeight ?? 0,
+            swellPeriod: entry.forecast?.swellPeriod ?? (entry.forecastSnapshot as any)?.swellPeriod ?? 0,
+            swellDirection: entry.forecast?.swellDirection ?? (entry.forecastSnapshot as any)?.swellDirection ?? 0,
           }
         : null,
       beach: entry.beach,
@@ -98,9 +98,26 @@ export class LogService {
       },
     });
 
+    let displayForecast = forecastData;
+    if (!displayForecast && logEntry.forecastSnapshot) {
+      const snap = logEntry.forecastSnapshot as any;
+      displayForecast = {
+        id: logEntry.id,
+        date: logEntry.date,
+        regionId: logEntry.regionId,
+        source: snap.source || "WINDFINDER",
+        timeSlot: logEntry.surfTimeSlot || "NOON",
+        windSpeed: snap.windSpeed ?? 0,
+        windDirection: snap.windDirection ?? 0,
+        swellHeight: snap.swellHeight ?? 0,
+        swellPeriod: snap.swellPeriod ?? 0,
+        swellDirection: snap.swellDirection ?? 0,
+      } as any;
+    }
+
     return {
       logEntry,
-      forecast: forecastData || null,
+      forecast: displayForecast || null,
     };
   }
 
@@ -156,6 +173,15 @@ export class LogService {
         date: new Date(data.date),
         userId,
         forecastId: forecast.id,
+        forecastSnapshot: {
+          windSpeed: forecast.windSpeed,
+          windDirection: forecast.windDirection,
+          swellHeight: forecast.swellHeight,
+          swellPeriod: forecast.swellPeriod,
+          swellDirection: forecast.swellDirection,
+          tide: (forecast as any).tide || "",
+          source: forecast.source || "WINDFINDER"
+        },
         regionId: region, // Set regionId directly
       },
       include: {
@@ -230,6 +256,7 @@ export class LogService {
           regionId: true,
           surfTimeSlot: true,
           mostAccurateSource: true,
+          forecastSnapshot: true,
           region: {
             select: {
               id: true,
@@ -308,9 +335,30 @@ export class LogService {
         isHiddenGem: entry.beach?.isHiddenGem
       });
 
+      let singleDisplayForecast = entry.forecast;
+      if (!singleDisplayForecast && entry.forecastSnapshot) {
+        const snap = entry.forecastSnapshot as any;
+        singleDisplayForecast = {
+          id: entry.id,
+          date: entry.date,
+          timeSlot: entry.surfTimeSlot || 'NOON',
+          source: snap.source || 'WINDFINDER',
+          windSpeed: snap.windSpeed ?? 0,
+          windDirection: snap.windDirection ?? 0,
+          swellHeight: snap.swellHeight ?? 0,
+          swellPeriod: snap.swellPeriod ?? 0,
+          swellDirection: snap.swellDirection ?? 0,
+        } as any;
+      }
+
+      const entryWithForecast = {
+        ...entry,
+        forecast: singleDisplayForecast
+      };
+
       return {
-        entry,
-        entries: [entry],
+        entry: entryWithForecast,
+        entries: [entryWithForecast],
         total: 1,
         page: 1,
         limit: 1,
@@ -493,6 +541,7 @@ export class LogService {
           regionId: true,
           surfTimeSlot: true,
           mostAccurateSource: true,
+          forecastSnapshot: true,
           region: {
             select: {
               id: true,
@@ -630,14 +679,29 @@ export class LogService {
 
 
 
-      return {
-        ...entry,
-        forecast: displayForecast,
-        hasAlert: entry.alerts.length > 0,
-        alertId: entry.alerts[0]?.id || null,
-        isMyAlert: entry.alerts.some((alert) => alert.userId === currentUserId),
-      };
-    });
+        if (!displayForecast && entry.forecastSnapshot) {
+          const snap = entry.forecastSnapshot as any;
+          displayForecast = {
+            id: entry.id,
+            date: entry.date,
+            timeSlot: entry.surfTimeSlot || 'NOON',
+            source: snap.source || 'WINDFINDER',
+            windSpeed: snap.windSpeed ?? 0,
+            windDirection: snap.windDirection ?? 0,
+            swellHeight: snap.swellHeight ?? 0,
+            swellPeriod: snap.swellPeriod ?? 0,
+            swellDirection: snap.swellDirection ?? 0,
+          } as any;
+        }
+
+        return {
+          ...entry,
+          forecast: displayForecast,
+          hasAlert: entry.alerts.length > 0,
+          alertId: entry.alerts[0]?.id || null,
+          isMyAlert: entry.alerts.some((alert) => alert.userId === currentUserId),
+        };
+      });
 
     return {
       entry: null,
@@ -825,6 +889,15 @@ export class LogService {
         ...(forecast && {
           forecast: {
             connect: { id: forecast.id },
+          },
+          forecastSnapshot: {
+            windSpeed: forecast.windSpeed,
+            windDirection: forecast.windDirection,
+            swellHeight: forecast.swellHeight,
+            swellPeriod: forecast.swellPeriod,
+            swellDirection: forecast.swellDirection,
+            tide: (forecast as any).tide || "",
+            source: forecast.source || ""
           },
         }),
       },

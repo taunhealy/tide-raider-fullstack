@@ -971,3 +971,30 @@
 [2026-05-23T08:22:32.398Z] Upserting forecast for western-cape on 2026-05-23 slot MORNING - Source: WINDY (Original source: WINDY)
 [2026-05-23T08:22:35.269Z] Upserting forecast for western-cape on 2026-05-23 slot NOON - Source: WINDY (Original source: WINDY)
 [2026-05-23T08:22:36.138Z] Upserting forecast for western-cape on 2026-05-23 slot EVENING - Source: WINDY (Original source: WINDY)
+[2026-05-23T09:35:01.954Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-23T09:35:01.960Z] Scraped forecasts length: 6
+[2026-05-23T09:35:01.966Z] Forecasts to store length: 6
+[2026-05-23T09:35:01.973Z] Upserting forecast for western-cape on 2026-05-24 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:02.857Z] Upserting forecast for western-cape on 2026-05-24 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:03.687Z] Upserting forecast for western-cape on 2026-05-24 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:04.519Z] Upserting forecast for western-cape on 2026-05-25 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:05.498Z] Upserting forecast for western-cape on 2026-05-25 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:06.334Z] Upserting forecast for western-cape on 2026-05-25 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:23.121Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-23T09:35:23.128Z] Scraped forecasts length: 6
+[2026-05-23T09:35:23.135Z] Forecasts to store length: 6
+[2026-05-23T09:35:23.141Z] Upserting forecast for western-cape on 2026-05-24 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:23.971Z] Upserting forecast for western-cape on 2026-05-24 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:24.785Z] Upserting forecast for western-cape on 2026-05-24 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:25.602Z] Upserting forecast for western-cape on 2026-05-25 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:26.418Z] Upserting forecast for western-cape on 2026-05-25 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:35:27.236Z] Upserting forecast for western-cape on 2026-05-25 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:05.992Z] Raw scraper result type: object, isArray: false, keys: forecasts,sourceUrl,isSuperforecast
+[2026-05-23T09:38:05.998Z] Scraped forecasts length: 6
+[2026-05-23T09:38:06.006Z] Forecasts to store length: 6
+[2026-05-23T09:38:06.012Z] Upserting forecast for western-cape on 2026-05-24 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:08.156Z] Upserting forecast for western-cape on 2026-05-24 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:08.956Z] Upserting forecast for western-cape on 2026-05-24 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:09.748Z] Upserting forecast for western-cape on 2026-05-25 slot MORNING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:10.627Z] Upserting forecast for western-cape on 2026-05-25 slot NOON - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)
+[2026-05-23T09:38:11.429Z] Upserting forecast for western-cape on 2026-05-25 slot EVENING - Source: WINDFINDER_SUPER (Original source: WINDFINDER_SUPER)

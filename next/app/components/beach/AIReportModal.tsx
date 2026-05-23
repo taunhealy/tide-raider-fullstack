@@ -22,7 +22,7 @@ import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { Input } from "@/app/components/ui/input";
 import Link from "next/link";
-import { Sparkles, Zap, ShieldAlert, CreditCard, Loader2, Bookmark, Share2, Mail, MessageSquare, Send, Users, ArrowRight, ArrowUpRight, Waves, Copy, Check, ChevronLeft, ChevronRight, Info, Instagram, Link2 } from "lucide-react";
+import { Sparkles, Zap, ShieldAlert, CreditCard, Loader2, Bookmark, Share2, Mail, MessageSquare, Send, Users, ArrowRight, ArrowUpRight, Waves, Copy, Check, ChevronLeft, ChevronRight, Info, Instagram, Link2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 
@@ -408,8 +408,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                   <span className="text-[13px] font-black text-black tracking-tight">{credits ?? 0} <span className="opacity-30 font-bold uppercase text-[9px] tracking-widest ml-1">Credits</span></span>
                )}
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-100">
-              <ChevronRight className="w-5 h-5 text-gray-400 rotate-90 md:rotate-0" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
+              <X className="w-5 h-5" />
             </Button>
           </div>
         </div>

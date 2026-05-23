@@ -425,7 +425,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <div className="h-px bg-black/10 w-full mt-10" />
 
             <div className="grid grid-cols-1 gap-5 relative mt-10">
-              {!filters.regionId || (isLoading && !data) ? (
+              {!filters.regionId || isLoading || !data || !data.scores || Object.keys(data.scores).length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 min-h-[400px]">
                   <Loader2 className="w-8 h-8 text-brand-3 animate-spin mb-4" />
                   <p className="text-slate-500 font-medium animate-pulse">
@@ -480,7 +480,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                               forecastData={beachForecastData}
                               isLoading={!hasScore && isLoading && !data}
                               distance={(beach as any).distance}
-                              scoreInsights={beachScores?.[beach.id]?.beach?.beachDailyScores?.[0]?.conditions?.deductions || []}
+                              scoreInsights={beachScores?.[beach.id]?.deductions || []}
+                              checklist={beachScores?.[beach.id]?.checklist || null}
                             />
                           );
                         })
@@ -580,7 +581,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             const params = new URLSearchParams(searchParams);
             params.delete("report");
             params.delete("beachId");
-            router.replace(`${pathname}?${params}`, { scroll: false });
+            params.delete("beachName");
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
           }}
           beach={deepLinkedBeach}
           reportId={searchParams.get("report") || undefined}

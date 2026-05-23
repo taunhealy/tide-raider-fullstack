@@ -179,6 +179,7 @@ export default function StickyForecastWidget({
                     <button
                       key={option.value}
                       onClick={() => updateFilter("forecastDate", option.value)}
+                      suppressHydrationWarning={true}
                       className={cn(
                         "flex flex-col items-center justify-center min-w-[46px] px-1 py-0.5 transition-all relative rounded-md border text-center",
                         isSelected
@@ -218,6 +219,7 @@ export default function StickyForecastWidget({
                   <button
                     key={slot.id}
                     onClick={() => updateFilter("timeSlot", slot.id)}
+                    suppressHydrationWarning={true}
                     className={cn(
                       "flex flex-col items-center justify-center min-w-[46px] py-0.5 transition-all relative rounded-md border text-center",
                       isSelected

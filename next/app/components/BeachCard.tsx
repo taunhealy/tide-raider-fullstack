@@ -58,6 +58,13 @@ interface BeachCardProps {
   isLoading: boolean;
   distance?: number | null;
   scoreInsights?: string[];
+  checklist?: {
+    windDirection: boolean;
+    windSpeed: boolean;
+    swellDirection: boolean;
+    swellHeight: boolean;
+    swellPeriod: boolean;
+  } | null;
 }
 
 const ConditionsSkeleton = () => (
@@ -107,6 +114,7 @@ const BeachCard = memo(function BeachCard({
   isLoading = false,
   distance,
   scoreInsights,
+  checklist,
 }: BeachCardProps) {
   if (!beach) return null;
 
@@ -180,17 +188,7 @@ const BeachCard = memo(function BeachCard({
 
   const { trackBeach } = useSearchTracking();
 
-  // Auto-open AI modal if deep-linked via URL (report history)
-  useEffect(() => {
-    const reportId = searchParams.get("report");
-    const reportBeachId = searchParams.get("beachId");
-    
-    // Support matching by ID (from history page) or Name (from regular UI)
-    if (reportId && (reportBeachId === beach.id || searchParams.get("beachName") === beach.name)) {
-      setIsAIModalOpen(true);
-      trackBeach(beach.id);
-    }
-  }, [searchParams, beach.id, beach.name, trackBeach]);
+
 
   const handleOpenAIModal = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -528,22 +526,26 @@ const BeachCard = memo(function BeachCard({
                           </div>
 
                           {/* Mini Conditions Bar if available */}
-                          {beachSessions[0].forecast && (
-                            <div className="flex items-center gap-4 px-3 py-2 bg-slate-50/50 border-t border-slate-100">
-                              <div className="flex items-center gap-1.5">
-                                <Wind className="w-2.5 h-2.5 text-slate-400" />
-                                <span className="text-[9px] font-black text-slate-600">
-                                  {Math.round(beachSessions[0].forecast.windSpeed)}<span className="text-slate-400">kts</span>
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <Droplets className="w-2.5 h-2.5 text-slate-400" />
-                                <span className="text-[9px] font-black text-slate-600">
-                                  {beachSessions[0].forecast.swellHeight.toFixed(1)}<span className="text-slate-400">m</span> @ {Math.round(beachSessions[0].forecast.swellPeriod)}s
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                          {(() => {
+                             const sessionForecast = beachSessions[0].forecast || (beachSessions[0] as any).forecastSnapshot;
+                             if (!sessionForecast) return null;
+                             return (
+                               <div className="flex items-center gap-4 px-3 py-2 bg-slate-50/50 border-t border-slate-100">
+                                 <div className="flex items-center gap-1.5">
+                                   <Wind className="w-2.5 h-2.5 text-slate-400" />
+                                   <span className="text-[9px] font-black text-slate-600">
+                                     {Math.round(sessionForecast.windSpeed)}<span className="text-slate-400">kts</span>
+                                   </span>
+                                 </div>
+                                 <div className="flex items-center gap-1.5">
+                                   <Droplets className="w-2.5 h-2.5 text-slate-400" />
+                                   <span className="text-[9px] font-black text-slate-600">
+                                     {sessionForecast.swellHeight.toFixed(1)}<span className="text-slate-400">m</span> @ {Math.round(sessionForecast.swellPeriod)}s
+                                   </span>
+                                 </div>
+                                </div>
+                             );
+                           })()}
                         </Link>
                       </div>
                     )}
@@ -572,37 +574,51 @@ const BeachCard = memo(function BeachCard({
                         className={`transition-all duration-300 overflow-hidden ${showIdealConditions ? "max-h-[500px] mt-2 opacity-100" : "max-h-0 opacity-0"}`}
                       >
                         <div className="grid grid-cols-1 gap-3 py-3 border-t border-gray-100">
-                          {getConditionReasons(beach, forecastData, false).optimalConditions?.filter(Boolean).map((condition, idx) => {
-                            const [label, value] = condition.text.split(":");
-                            return (
-                              <div key={idx} className="flex items-center gap-3">
-                                <div className={cn(
-                                  "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0",
-                                    condition.isMet 
-                                      ? "border-brand-3/20 bg-brand-3/10 text-brand-3 shadow-sm" 
-                                      : "border-gray-100 bg-gray-50 text-gray-300"
-                                )}>
-                                  {condition.isMet ? (
-                                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
-                                      <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : (
-                                    <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
-                                      <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
+                          {(() => {
+                            const conditionReasons = getConditionReasons(beach, forecastData, false);
+                            const optimalConditions = conditionReasons.optimalConditions?.map((cond, idx) => {
+                              if (!checklist) return cond;
+                              let isMet = cond.isMet;
+                              if (idx === 0) isMet = checklist.windDirection;
+                              else if (idx === 1) isMet = checklist.windSpeed;
+                              else if (idx === 2) isMet = checklist.swellDirection;
+                              else if (idx === 3) isMet = checklist.swellHeight;
+                              else if (idx === 4) isMet = checklist.swellPeriod;
+                              return { ...cond, isMet };
+                            }) || [];
+
+                            return optimalConditions.filter(Boolean).map((condition, idx) => {
+                              const [label, value] = condition.text.split(":");
+                              return (
+                                <div key={idx} className="flex items-center gap-3">
+                                  <div className={cn(
+                                    "w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-200 shrink-0",
+                                      condition.isMet 
+                                        ? "border-brand-3/20 bg-brand-3/10 text-brand-3 shadow-sm" 
+                                        : "border-gray-100 bg-gray-50 text-gray-300"
+                                  )}>
+                                    {condition.isMet ? (
+                                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                        <path d="M20 6L9 17L4 12" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    ) : (
+                                      <svg viewBox="0 0 24 24" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="4">
+                                        <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
+                                      {label}
+                                    </span>
+                                    <span className="font-primary text-[12px] font-semibold text-black leading-none truncate">
+                                      {value}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-[9px] font-black uppercase tracking-[0.15em] text-gray-400 leading-none mb-1">
-                                    {label}
-                                  </span>
-                                  <span className="font-primary text-[12px] font-semibold text-black leading-none truncate">
-                                    {value}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     </div>

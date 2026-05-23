@@ -8,8 +8,12 @@ import session from "express-session";
 import passport from "passport";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimiter } from "./middleware/rateLimiter";
+import compression from "compression";
 
 const app = express();
+
+// Enable network compression for all responses
+app.use(compression());
 const PORT = parseInt(process.env.PORT || "4001", 10);
 
 console.log(`[server] Backend source RELOADED at ${new Date().toISOString()}`);
