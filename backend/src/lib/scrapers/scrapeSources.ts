@@ -29,7 +29,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperA,
     },
     sourceB: {
-      url: "https://www.windguru.cz/95115",
+      url: "https://www.windguru.cz/131594",
       scraper: scraperB,
     },
     sourceC: {
