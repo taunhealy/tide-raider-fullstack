@@ -1,0 +1,31 @@
+{
+  "initialTranslations": [
+    0,
+    {
+      "lastUpdate": [
+        0,
+        "Last update"
+      ],
+      "nextUpdate": [
+        0,
+        "Next update"
+      ],
+      "localTime": [
+        0,
+        "local time"
+      ]
+    }
+  ],
+  "lastUpdate": [
+    0,
+    "Sat, 23 May 2026 02:11:35 GMT"
+  ],
+  "expires": [
+    0,
+    "Sat, 23 May 2026 08:28:53 UTC"
+  ],
+  "utcOffset": [
+    0,
+    120
+  ]
+}

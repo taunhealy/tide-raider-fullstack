@@ -877,6 +877,7 @@ export const beachData: Beach[] = [
       lat: -34.475,
       lng: 21.2294,
     },
+  },
   {
     id: "glen-beach",
     name: "Glen Beach",

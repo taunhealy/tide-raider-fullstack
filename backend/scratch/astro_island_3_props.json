@@ -1,0 +1,144 @@
+{
+  "anchor": [
+    0,
+    "header-button-menu"
+  ],
+  "onMap": [
+    0,
+    false
+  ],
+  "initialTranslationsMainNav": [
+    0,
+    {
+      "title": [
+        0,
+        "Wind forecasts, wind speed, live weather and wind map for kitesurfing, windsurfing, sailing and fishing"
+      ],
+      "help": [
+        0,
+        "Help"
+      ],
+      "settings": [
+        0,
+        "Settings"
+      ],
+      "careers": [
+        0,
+        "We are hiring!"
+      ],
+      "titleFindWeather": [
+        0,
+        "Find wind and weather"
+      ],
+      "weatherMap": [
+        0,
+        "Wind and weather map"
+      ],
+      "spotsAndLocations": [
+        0,
+        "Spots and locations"
+      ],
+      "titleTools": [
+        0,
+        "Tools"
+      ],
+      "windspeed": [
+        0,
+        "Wind speed tables and conversions"
+      ],
+      "widget": [
+        0,
+        "Weather widget"
+      ],
+      "titleAbout": [
+        0,
+        "About us"
+      ],
+      "windfinderApps": [
+        0,
+        "Windfinder apps"
+      ],
+      "historyPress": [
+        0,
+        "History and press"
+      ],
+      "aboutWindfinder": [
+        0,
+        "About Windfinder"
+      ],
+      "b2b": [
+        0,
+        "For businesses / API"
+      ],
+      "titleServices": [
+        0,
+        "Services"
+      ],
+      "getWeatherstation": [
+        0,
+        "Get a weather station"
+      ],
+      "weatherData": [
+        0,
+        "Historical weather data"
+      ],
+      "advertise": [
+        0,
+        "Advertise on Windfinder"
+      ],
+      "news": [
+        0,
+        "News and announcements"
+      ],
+      "titleLegal": [
+        0,
+        "Legal"
+      ],
+      "terms": [
+        0,
+        "Terms of use"
+      ],
+      "privacy": [
+        0,
+        "Privacy policy"
+      ],
+      "imprint": [
+        0,
+        "Imprint"
+      ],
+      "cookies": [
+        0,
+        "Manage Cookies"
+      ]
+    }
+  ],
+  "initialTranslationsAccountPanel": [
+    0,
+    {
+      "windfinderAccount": [
+        0,
+        "Windfinder account"
+      ],
+      "logIn": [
+        0,
+        "Log in"
+      ],
+      "signUp": [
+        0,
+        "Sign up"
+      ],
+      "learnMoreAccount": [
+        0,
+        "Learn more"
+      ],
+      "titleDashboard": [
+        0,
+        "Your Account"
+      ],
+      "lastSync": [
+        0,
+        "Last sync"
+      ]
+    }
+  ]
+}

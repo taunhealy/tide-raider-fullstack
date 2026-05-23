@@ -1,0 +1,26 @@
+{
+  "fcDataIndex": [
+    0,
+    0
+  ],
+  "forecastProductId": [
+    0,
+    "sfc"
+  ],
+  "sectionIndex": [
+    0,
+    1
+  ],
+  "spotId": [
+    0,
+    "za33"
+  ],
+  "spotName": [
+    0,
+    "Muizenberg"
+  ],
+  "utcOffset": [
+    0,
+    120
+  ]
+}

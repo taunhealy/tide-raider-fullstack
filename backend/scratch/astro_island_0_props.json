@@ -1,0 +1,31 @@
+{
+  "labels": [
+    0,
+    {
+      "search": [
+        0,
+        "Search"
+      ],
+      "fav": [
+        0,
+        "Favorites"
+      ],
+      "settings": [
+        0,
+        "Settings"
+      ],
+      "account": [
+        0,
+        "Account"
+      ],
+      "menu": [
+        0,
+        "More"
+      ]
+    }
+  ],
+  "onMap": [
+    0,
+    false
+  ]
+}

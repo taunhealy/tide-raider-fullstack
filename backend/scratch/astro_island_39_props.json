@@ -1,0 +1,27 @@
+{
+  "href": [
+    0,
+    "/forecast/firgrove_wiese"
+  ],
+  "className": [
+    0,
+    "spot-link d-block p-3 pb-4 pos-rel bb-1 bc-primary hover:bg-secondary cursor-pointer"
+  ],
+  "analytics": [
+    0,
+    {
+      "contentType": [
+        0,
+        "nearby_spot"
+      ],
+      "contentId": [
+        0,
+        "spot_ID_za752"
+      ]
+    }
+  ],
+  "data-astro-cid-ky6d57ew": [
+    0,
+    true
+  ]
+}

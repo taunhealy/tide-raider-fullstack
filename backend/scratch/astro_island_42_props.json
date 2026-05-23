@@ -1,0 +1,27 @@
+{
+  "addClass": [
+    0,
+    "p-4 hover:bg-secondary cursor-pointer"
+  ],
+  "analytics": [
+    0,
+    {
+      "pageSection": [
+        0,
+        "spot_main"
+      ],
+      "linkItem": [
+        0,
+        "locations_region"
+      ]
+    }
+  ],
+  "href": [
+    0,
+    "/locations/south_africa/western_cape"
+  ],
+  "id": [
+    0,
+    "nearby-ranking-region"
+  ]
+}

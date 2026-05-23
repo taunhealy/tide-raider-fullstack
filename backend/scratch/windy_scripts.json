@@ -1,0 +1,12 @@
+[
+  {
+    "idx": 0,
+    "preview": "window.W={detectedDevice:\"mobile\",preparedFetchRequests:{}},function(){const e=window.screen.width,t=window.screen.height,i=Math.min(e,t),n=Math.max(e,t),o=/iPhone|iPod|iPad|ios|android/i.test(window.navigator.userAgent),d=\"ontouchstart\"in window||navigator.maxTouchPoints>0,c=\"index\";let s;s=window.",
+    "length": 944
+  },
+  {
+    "idx": 1,
+    "preview": "{\n            \"imports\": {\n                \"@windyCore\": \"./v/50.0.3.ind.f4a2/index.js\",\n                \"@leafletGl\": \"./v/50.0.3.ind.f4a2/leaflet-gl.js\"\n            }\n        }",
+    "length": 178
+  }
+]

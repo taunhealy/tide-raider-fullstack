@@ -1,0 +1,120 @@
+{
+  "isSFC": [
+    0,
+    true
+  ],
+  "isNight": [
+    0,
+    false
+  ],
+  "initCC": [
+    0,
+    {
+      "at": [
+        0,
+        288.51
+      ],
+      "cl": [
+        0,
+        3.41
+      ],
+      "p": [
+        0
+      ],
+      "pt": [
+        0
+      ],
+      "wd": [
+        0,
+        59.55
+      ],
+      "ws": [
+        0,
+        0.3
+      ],
+      "wg": [
+        0,
+        0.91
+      ],
+      "tp": [
+        0,
+        "f"
+      ],
+      "dtl": [
+        0,
+        "2026-05-23T11:00:00+02:00"
+      ]
+    }
+  ],
+  "labels": [
+    0,
+    {
+      "dir": [
+        0,
+        "East-Northeast"
+      ],
+      "ws": [
+        0,
+        "1 kts"
+      ],
+      "sky": [
+        0,
+        "Sky clear"
+      ],
+      "measuredAt": [
+        0,
+        "Report from local weather station at"
+      ],
+      "localTime": [
+        0,
+        "local time"
+      ],
+      "dataFromModel": [
+        0,
+        "Data based on our forecast model"
+      ],
+      "precipitationLabels": [
+        0,
+        {
+          "rain": [
+            0,
+            "Rain"
+          ],
+          "rainsnow": [
+            0,
+            "Rainsnow"
+          ],
+          "snowrain": [
+            0,
+            "Rainsnow"
+          ],
+          "snow": [
+            0,
+            "Snow"
+          ]
+        }
+      ]
+    }
+  ],
+  "initU": [
+    0,
+    {
+      "windspeed": [
+        0,
+        "kts"
+      ],
+      "temperature": [
+        0,
+        "c"
+      ]
+    }
+  ],
+  "utcOffset": [
+    0,
+    120
+  ],
+  "data-astro-cid-qs2pi4lm": [
+    0,
+    true
+  ]
+}

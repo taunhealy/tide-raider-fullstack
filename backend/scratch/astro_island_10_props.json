@@ -1,0 +1,505 @@
+{
+  "spot": [
+    0,
+    {
+      "id": [
+        0,
+        "za33"
+      ],
+      "kw": [
+        0,
+        "muizenberg"
+      ],
+      "n": [
+        0,
+        "Muizenberg"
+      ],
+      "lat": [
+        0,
+        -34.0999
+      ],
+      "lon": [
+        0,
+        18.4578
+      ],
+      "el": [
+        0,
+        318
+      ],
+      "o_id": [
+        0,
+        "Africa/Johannesburg"
+      ],
+      "r_id": [
+        0,
+        7745
+      ],
+      "r": [
+        0,
+        "Western Cape"
+      ],
+      "c_id": [
+        0,
+        738
+      ],
+      "c": [
+        0,
+        "South Africa"
+      ],
+      "tags": [
+        1,
+        [
+          [
+            0,
+            "sports.kitesurfing"
+          ],
+          [
+            0,
+            "sports.windsurfing"
+          ],
+          [
+            0,
+            "topography.land"
+          ],
+          [
+            0,
+            "topography.mountain"
+          ],
+          [
+            0,
+            "meteo.has_tide"
+          ],
+          [
+            0,
+            "meteo.wind_fc_sfc"
+          ],
+          [
+            0,
+            "meteo.wind_fc_wf"
+          ],
+          [
+            0,
+            "meteo.statistic"
+          ],
+          [
+            0,
+            "meteo.wave_fc"
+          ],
+          [
+            0,
+            "topography.land_near_ocean"
+          ]
+        ]
+      ],
+      "forecast_products": [
+        1,
+        [
+          [
+            0,
+            {
+              "id": [
+                0,
+                "sfc"
+              ],
+              "name": [
+                0,
+                "Superforecast"
+              ],
+              "horizons": [
+                0,
+                72
+              ],
+              "update_interval": [
+                0,
+                360
+              ],
+              "run_days": [
+                0,
+                3
+              ],
+              "forecast_models": [
+                1,
+                [
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "wrf_za5_1"
+                      ],
+                      "name": [
+                        0,
+                        "Superforecast South Africa"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        5
+                      ],
+                      "horizon_interval": [
+                        0,
+                        60
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T02:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T08:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T14:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T20:30:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "ecmwf-wave"
+                      ],
+                      "name": [
+                        0,
+                        "ECMWF Wave Model"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        22
+                      ],
+                      "horizon_interval": [
+                        0,
+                        60
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T02:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T08:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T14:30:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T20:30:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            0,
+            {
+              "id": [
+                0,
+                "gfs"
+              ],
+              "name": [
+                0,
+                "Forecast"
+              ],
+              "horizons": [
+                0,
+                80
+              ],
+              "update_interval": [
+                0,
+                360
+              ],
+              "run_days": [
+                0,
+                10
+              ],
+              "forecast_models": [
+                1,
+                [
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "icon-global"
+                      ],
+                      "name": [
+                        0,
+                        "ICON Global"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        13
+                      ],
+                      "horizon_interval": [
+                        0,
+                        180
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T01:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T07:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T13:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T19:00:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "ecmwf-wave"
+                      ],
+                      "name": [
+                        0,
+                        "ECMWF Wave Model"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        22
+                      ],
+                      "horizon_interval": [
+                        0,
+                        180
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T01:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T07:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T13:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T19:00:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            0,
+            {
+              "id": [
+                0,
+                "gfs"
+              ],
+              "name": [
+                0,
+                "Forecast"
+              ],
+              "horizons": [
+                0,
+                80
+              ],
+              "update_interval": [
+                0,
+                360
+              ],
+              "run_days": [
+                0,
+                10
+              ],
+              "forecast_models": [
+                1,
+                [
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "gfs"
+                      ],
+                      "name": [
+                        0,
+                        "GFS"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        13
+                      ],
+                      "horizon_interval": [
+                        0,
+                        180
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T01:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T07:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T13:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T19:00:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    0,
+                    {
+                      "id": [
+                        0,
+                        "ww3"
+                      ],
+                      "name": [
+                        0,
+                        "GFS Wave Model"
+                      ],
+                      "resolution_hor": [
+                        0,
+                        22
+                      ],
+                      "horizon_interval": [
+                        0,
+                        180
+                      ],
+                      "update_times": [
+                        1,
+                        [
+                          [
+                            0,
+                            "2026-05-23T01:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T07:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T13:00:00Z"
+                          ],
+                          [
+                            0,
+                            "2026-05-23T19:00:00Z"
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ]
+        ]
+      ],
+      "has": [
+        0,
+        "1101011"
+      ]
+    }
+  ],
+  "utcOffset": [
+    0,
+    120
+  ],
+  "sunForecast": [
+    0,
+    {
+      "sunrise": [
+        0,
+        "2026-05-23T07:35:17+02:00"
+      ],
+      "sunset": [
+        0,
+        "2026-05-23T17:50:19+02:00"
+      ]
+    }
+  ],
+  "initLng": [
+    0,
+    "en"
+  ],
+  "initTrans": [
+    0,
+    {
+      "rise": [
+        0,
+        "Sunrise"
+      ],
+      "set": [
+        0,
+        "Sunset"
+      ],
+      "pDay": [
+        0,
+        "Polar day"
+      ],
+      "pNight": [
+        0,
+        "Polar night"
+      ],
+      "elev": [
+        0,
+        "Elevation"
+      ],
+      "time": [
+        0,
+        "Local time"
+      ]
+    }
+  ],
+  "initDtl": [
+    0,
+    1779521939255
+  ],
+  "addClass": [
+    0,
+    "visible-md bt-1 bc-primary"
+  ]
+}

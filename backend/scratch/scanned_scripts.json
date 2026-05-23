@@ -1,0 +1,26 @@
+[
+  {
+    "type": "ld+json",
+    "content": "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\",\"name\":\"Windfinder\",\"alternateName\":\"Windfinder.com\",\"url\":\"https://www.windfinder.com\",\"sameAs\":[\"https://de.windfinder.com\",\"https://es.windfinder.com\",\"https://fr.windfinder.com\",\"https://it.windfinder.com\",\"https://pt.windfinder.com\",\"https://nl.windfinder.com\"]}"
+  },
+  {
+    "type": "ld+json",
+    "content": "{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"legalName\":\"Windfinder.com GmbH & Co. KG\",\"name\":\"Windfinder.com\",\"url\":\"https://www.windfinder.com\",\"logo\":\"https://cdn.windfinder.net/prod/assets/windfinder_logo_type.Dr08vFkh.png\",\"foundingDate\":\"1999\",\"description\":\"Wind forecasts, wind map, live weather and webcams worldwide for water sports.\",\"sameAs\":[\"https://www.facebook.com/Windfindercom/\",\"https://www.instagram.com/windfindercom/\",\"https://www.linkedin.com/company/windfinder/\",\"https://apps.apple.com/de/app/windfinder-wind-wetter-tide/id336829635\",\"https://play.google.com/store/apps/details?id=com.studioeleven.windfinder\"],\"contactPoint\":{\"@type\":\"ContactPoint\",\"email\":\"support@windfinder.com\",\"contactType\":\"customer service\"}}"
+  },
+  {
+    "type": "js-variable",
+    "preview": "(function(){const adsPageConfig = {\"pageType\":\"weatherforecast\",\"isHBEnabled\":true,\"isAdFree\":false,\"targetingOptions\":{\"spotId\":\"za33\",\"cId\":\"738\",\"rId\":\"7745\"}};\n\n    window.__wfAdsPageConfig = adsPageConfig;\n  })();"
+  },
+  {
+    "type": "js-variable",
+    "preview": "(()=>{var A=Object.defineProperty;var C=(i,o,a)=>o in i?A(i,o,{enumerable:!0,configurable:!0,writable:!0,value:a}):i[o]=a;var l=(i,o,a)=>C(i,typeof o!=\"symbol\"?o+\"\":o,a);var E=new Set([\"__proto__\",\"constructor\",\"prototype\"]);{let i={0:t=>y(t),1:t=>a(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(a(t)),5:t=>new Set(a(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>Number.POSITIVE_INFINITY*t},o=t=>{let[h,e]=t;return h in i?i[h]("
+  },
+  {
+    "type": "js-variable",
+    "preview": "\n  const h = document.getElementById(\"siteheader\");\n\n  const isDesktopOnMobile =\n    document.documentElement.classList.contains(\"desktop-on-mobile\");\n\n  const isSticky = h?.dataset.headerBehaviour === \"sticky\";\n  const isTransparent = h?.dataset.headerLevel === \"transparent\";\n\n  if (h && isSticky && isTransparent) {\n    if (document.body.scrollTop >= 45 && !h.classList.contains(\"is-scrolled\")) {\n      h.classList.add(\"is-scrolled\");\n    }\n\n    if (!isDesktopOnMobile) {\n      window.addEventList"
+  },
+  {
+    "type": "js-variable",
+    "preview": "(function(){const ga4Id = \"G-TL4VNL23TN\";\n\n  window.dataLayer = window.dataLayer || [];\n  function gtag() {\n    // eslint-disable-next-line prefer-rest-params\n    window.dataLayer.push(arguments);\n  }\n  gtag(\"js\", new Date());\n\n  gtag(\"config\", ga4Id, { anonymize_ip: true, send_page_view: false });\n  window.gtag = gtag;\n})();"
+  }
+]

@@ -153,9 +153,16 @@ function ForecastInfo({
 }) {
   const router = useRouter();
 
-  // Try to load conditions dynamically if they aren't provided in the entry
+  // Check if initialForecast has valid wind/swell values (not null and non-zero)
+  const hasInitialValidData = !!(
+    initialForecast &&
+    ((typeof initialForecast.windSpeed === "number" && initialForecast.windSpeed !== null && initialForecast.windSpeed > 0) ||
+      (typeof initialForecast.swellHeight === "number" && initialForecast.swellHeight !== null && initialForecast.swellHeight > 0))
+  );
+
+  // Try to load conditions dynamically if they aren't provided or are invalid in the entry
   const regionId = entry.region?.id || entry.beach?.region?.id;
-  const shouldFetch = !initialForecast && !isGated && !!regionId && !!entry.date;
+  const shouldFetch = !hasInitialValidData && !isGated && !!regionId && !!entry.date;
 
   const { data: fetchedForecast, isLoading } = useQuery({
     queryKey: ["historicForecast", regionId, entry.date, entry.surfTimeSlot, entry.mostAccurateSource],
@@ -175,20 +182,39 @@ function ForecastInfo({
         }
         return archiveResponse.json();
       }
-      return response.json();
+      
+      const data = await response.json();
+      
+      // Check if fetched forecast data actually has valid conditions
+      const hasData = !!(
+        data &&
+        ((typeof data.windSpeed === "number" && data.windSpeed !== null && data.windSpeed > 0) ||
+          (typeof data.swellHeight === "number" && data.swellHeight !== null && data.swellHeight > 0))
+      );
+      
+      // If there's no valid source forecast data, render historical conditions as the fallback
+      if (!hasData) {
+        console.log("[ForecastInfo] Returned source forecast has no valid data. Fetching OPENMETEO_ARCHIVE fallback...");
+        const archiveResponse = await fetch(`/api/forecast?regionId=${regionId}&forecastDate=${dateStr}&timeSlot=${slot}&source=OPENMETEO_ARCHIVE`);
+        if (archiveResponse.ok) {
+          return archiveResponse.json();
+        }
+      }
+      
+      return data;
     },
     enabled: shouldFetch,
     staleTime: 10 * 60 * 1000, // cache for 10 minutes
     retry: false,
   });
 
-  const forecast = initialForecast || fetchedForecast;
+  const forecast = hasInitialValidData ? initialForecast : (fetchedForecast || initialForecast);
 
   if (isLoading && shouldFetch) {
     return (
       <div className="flex items-center gap-1.5 py-0.5">
         <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
-        <span className="text-gray-400 text-xs font-primary italic">Loading historic conditions...</span>
+        <span className="text-gray-400 text-xs font-primary italic">Loading conditions...</span>
       </div>
     );
   }

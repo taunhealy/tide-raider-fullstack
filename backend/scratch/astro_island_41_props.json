@@ -1,0 +1,27 @@
+{
+  "addClass": [
+    0,
+    "p-4 hover:bg-secondary cursor-pointer"
+  ],
+  "href": [
+    0,
+    "/locations/south_africa"
+  ],
+  "analytics": [
+    0,
+    {
+      "pageSection": [
+        0,
+        "spot_main"
+      ],
+      "linkItem": [
+        0,
+        "locations_country"
+      ]
+    }
+  ],
+  "id": [
+    0,
+    "nearby-ranking-country"
+  ]
+}

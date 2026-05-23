@@ -1,0 +1,1557 @@
+[
+  {
+    "url": "https://node.windy.com/services/umisteni?v=50.0.3&t=index&d=desktop",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/metadata/v1.0/forecast/ecmwf-hres/minifest.json?v=50.0.3&t=index&d=desktop",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/metadata/v1.0/forecast/ecmwf-hres/minifest.json?v=50.0.3&t=index&d=desktop&premium=true",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://account.windy.com/api/info?country=xx&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=1",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/metadata/v1.0/forecast/ecmwf-wam/minifest.json?pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=3",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/articles/startup/article?country=xx&device=desktop&language=en&lat=0&loginStatus=signed-out&lon=30&platform=desktop&target=index&userStatus=free&version=50.0.3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=4",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://www.windy.com/v/50.0.3.ind.f4a2/plugins/detail.js",
+    "method": "GET",
+    "type": "script"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/613.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/614.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/615.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/616.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/617.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/618.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/619.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/560/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/561/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/562/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/563/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/564/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/565/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/566/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/567/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/568/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/labels/v2.0/en/10/569/620.json",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/564/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/564/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/565/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/565/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/563/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/564/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/563/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/565/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/563/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/564/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/566/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/565/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/566/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/563/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/566/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/562/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://www.windy.com/v/50.0.3.ind.f4a2/plugins/_shared-forecast-table.js",
+    "method": "GET",
+    "type": "script"
+  },
+  {
+    "url": "https://www.windy.com/v/50.0.3.ind.f4a2/plugins/_shared-forecast-fragment.js",
+    "method": "GET",
+    "type": "script"
+  },
+  {
+    "url": "https://account.windy.com/api/info?country=za&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=6",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/567/617?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=7",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/Zm9yZWNhc3Q/ZWNtd2ZXYXZlcw/cG9pbnQvZWNtd2ZXYXZlcy92Mi45Ly0zNC4zNTkvMTguNDk3P3JlZlRpbWU9MjAyNi0wNS0yM1QwMDowMDowMFomc291cmNlPWRldGFpbCZzdGVwPTMmcHI9MSZzYz0wJnRva2VuMj1wZW5kaW5nJnVpZD1iYjVlNmI0Ny0xODM2LTg2NDEtN2U2OC05NzRlNzQ0NWU3OGUmdj01MC4wLjMmcG9jPTg",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/565/615?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=9",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/564/615?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=10",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/567/615?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=11",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/566/615?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=12",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/565/616?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=13",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/566/616?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=14",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/citytile/v1.0/ecmwf-hres/10/567/616?labelsVersion=v2.0&refTime=2026-05-22T12:00:00Z&step=3&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=15",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://ims.windy.com/im/v3.0/forecast/ecmwf-wam/2026052300/2026052309/wm_grid_257/3/4/4/waves-surface.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/reverse/v3/-34.359/18.497/14?lang=en&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=16",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/capalerts/-34.359/18.497?lang=en&maxCount=6&source=detail&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=17",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/webcams/v2.0/list?imageSize=thumbnail&lang=en&nearby=-34.359,18.497&pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=18",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/pois/v2/airq/-34.359/18.497?pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=19",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/pois/v2/stations/-34.359/18.497?pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=20",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://imgproxy.windy.com/_/thumbnail/plain/daylight/1626760973/original.jpg",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/pois/v2/radiation/-34.359/18.497?pr=1&sc=0&token2=pending&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=21",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=version/50.0.3&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1409&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=22",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=plugin/search-input&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=23",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=plugin/detail&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=24",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=startup/-34.359/18.497/ecmwfWaves/waves&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=2&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=25",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=overlay/waves&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=0&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=26",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=detail2/model/ecmwfWaves&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=27",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=detail2/display/waves&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=28",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=detail2/source/url&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=29",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=subscription/tier/none&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=3&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=30",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=events/user-logged/out&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=31",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=subscription/tier/none&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=2&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=32",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://node.windy.com/sedlina/ga/1?dp=events/user-logged/out&dl=https%253A%252F%252Fwww.windy.com%252F-34.359%252F18.497%252FecmwfWaves%252Fwaves%253Fwaves%252C-34.506%252C18.520%252C10%252Cp%253Afavs&an=Windy&cid=bb5e6b47-1836-8641-7e68-974e7445e78e&sr=1280x720&uh=1jp9ucet8062d8c1e2278218&ul=en-ZA&fv=false&ss=false&dt=1779524058025&et=1&pr=0&sc=0&token2=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtYWdpYyI6MTMwLCJpYXQiOjE3Nzk1MjQwNjAsImV4cCI6MTc3OTY5Njg2MH0.3PHVZ-fVrrCSsBGu68xWy82ZnL44TGczEhTlDPX7Ztc&uid=bb5e6b47-1836-8641-7e68-974e7445e78e&v=50.0.3&poc=33",
+    "method": "HEAD",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/564/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/565/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/563/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/566/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/562/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/567/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/561/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/568/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/560/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/614.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/619.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/613.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/569/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/559/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/620.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/612.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/570/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/621.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/558/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/611.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/grayland/10/571/622.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/562/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/562/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/566/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/567/616.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/562/618.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/567/617.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/567/615.png",
+    "method": "GET",
+    "type": "fetch"
+  },
+  {
+    "url": "https://tiles.windy.com/tiles/v11.2/darkmap/10/567/618.png",
+    "method": "GET",
+    "type": "fetch"
+  }
+]

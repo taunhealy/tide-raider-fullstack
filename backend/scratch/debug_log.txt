@@ -965,3 +965,9 @@
 [2026-05-17T15:10:22.075Z] Upserting forecast for eastern-cape on 2026-05-19 slot MORNING - Source: WINDFINDER (Original source: WINDFINDER)
 [2026-05-17T15:10:23.241Z] Upserting forecast for eastern-cape on 2026-05-19 slot NOON - Source: WINDFINDER (Original source: WINDFINDER)
 [2026-05-17T15:10:24.126Z] Upserting forecast for eastern-cape on 2026-05-19 slot EVENING - Source: WINDFINDER (Original source: WINDFINDER)
+[2026-05-23T08:12:46.665Z] Raw scraper result type: object, isArray: false, keys: none
+[2026-05-23T08:22:32.385Z] Raw scraper result type: object, isArray: true, keys: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17
+[2026-05-23T08:22:32.392Z] Forecasts to store length: 3
+[2026-05-23T08:22:32.398Z] Upserting forecast for western-cape on 2026-05-23 slot MORNING - Source: WINDY (Original source: WINDY)
+[2026-05-23T08:22:35.269Z] Upserting forecast for western-cape on 2026-05-23 slot NOON - Source: WINDY (Original source: WINDY)
+[2026-05-23T08:22:36.138Z] Upserting forecast for western-cape on 2026-05-23 slot EVENING - Source: WINDY (Original source: WINDY)

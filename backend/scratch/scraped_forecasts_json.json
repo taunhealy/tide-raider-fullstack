@@ -1,0 +1,74 @@
+[
+  {
+    "date": "2026-05-24T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "MORNING",
+    "windSpeed": 4,
+    "windDirection": 206,
+    "swellHeight": 0.86,
+    "swellPeriod": 10,
+    "swellDirection": 221,
+    "tide": "Rising (0.7m)",
+    "rawHour": 5
+  },
+  {
+    "date": "2026-05-24T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "NOON",
+    "windSpeed": 2,
+    "windDirection": 139,
+    "swellHeight": 0.86,
+    "swellPeriod": 10,
+    "swellDirection": 223,
+    "tide": "Falling (1.3m)",
+    "rawHour": 11
+  },
+  {
+    "date": "2026-05-24T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "EVENING",
+    "windSpeed": 8,
+    "windDirection": 169,
+    "swellHeight": 1,
+    "swellPeriod": 10,
+    "swellDirection": 223,
+    "tide": "Low (0.7m)",
+    "rawHour": 17
+  },
+  {
+    "date": "2026-05-25T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "MORNING",
+    "windSpeed": 7,
+    "windDirection": 208,
+    "swellHeight": 1.32,
+    "swellPeriod": 10,
+    "swellDirection": 223,
+    "tide": "Falling (0.6m)",
+    "rawHour": 5
+  },
+  {
+    "date": "2026-05-25T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "NOON",
+    "windSpeed": 7,
+    "windDirection": 162,
+    "swellHeight": 1.59,
+    "swellPeriod": 12,
+    "swellDirection": 227,
+    "tide": "Rising (1.3m)",
+    "rawHour": 11
+  },
+  {
+    "date": "2026-05-25T00:00:00.000Z",
+    "regionId": "western-cape",
+    "timeSlot": "EVENING",
+    "windSpeed": 3,
+    "windDirection": 189,
+    "swellHeight": 1.77,
+    "swellPeriod": 12,
+    "swellDirection": 227,
+    "tide": "Falling (0.7m)",
+    "rawHour": 17
+  }
+]
