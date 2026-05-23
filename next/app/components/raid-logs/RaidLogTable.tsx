@@ -985,7 +985,8 @@ export default function RaidLogTable({
                                             )
                                           )?.isHiddenGem;
                   const isPremium = hasAccess; // Use unified access logic
-                  const isGatedGem = !!(isHiddenGemEntry && !isPremium && !isOwner);
+                  // Always unlocked per user request
+                  const isGatedGem = false;
 
                   const cardHref = isGatedGem ? "/pricing" : `/raidlogs/${entry.id}`;
 
@@ -1390,7 +1391,8 @@ export default function RaidLogTable({
                                                 b.name?.toLowerCase() === entry.beach?.name?.toLowerCase()
                                               )?.isHiddenGem;
                       const isPremium = hasAccess; // Use unified access logic
-                      const isGatedGem = !!(isHiddenGemEntry && !isPremium && !isOwner);
+                      // Always unlocked per user request
+                      const isGatedGem = false;
 
                       return (
                         <tr

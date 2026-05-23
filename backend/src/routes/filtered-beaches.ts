@@ -352,7 +352,8 @@ async function fetchFilteredBeachesData(
       beach
     ) => {
       const isPremiumUser = !isGateEnabled || isPremium;
-      const isGated = beach.isHiddenGem && !isPremiumUser;
+      // Always unlocked per user request
+      const isGated = false;
       
       const dailyScore =
         beach.beachDailyScores.length > 0
@@ -376,7 +377,8 @@ async function fetchFilteredBeachesData(
       const profile = conditionProfiles?.[0] || {};
       
       const isPremiumUser = !isGateEnabled || isPremium;
-      const isGated = beach.isHiddenGem && !isPremiumUser;
+      // Always unlocked per user request
+      const isGated = false;
 
       return {
         ...beachData,
@@ -394,14 +396,6 @@ async function fetchFilteredBeachesData(
         hasFreshIntel: beach.intelligenceReports.some((r: any) => 
           new Date(r.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
         ),
-        // Gate sensitive data
-        ...(isGated && {
-          description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",
-          hazards: [],
-          videos: [],
-          coffeeShop: [],
-          logEntries: (beach.logEntries || []).filter((log: any) => log.userId === user?.id),
-        })
       };
     }),
     scores,
@@ -484,8 +478,8 @@ router.get(
         const markerResponse = {
           beaches: beaches.map(b => ({
             ...b,
-            name: (b.isHiddenGem && !isPremiumUser) ? "Hidden Gem Break" : b.name,
-            location: (b.isHiddenGem && !isPremiumUser) ? "Secret Location" : b.location,
+            name: b.name,
+            location: b.location,
           })),
           totalCount: beaches.length,
           mode: "markers"

@@ -597,7 +597,7 @@ export default function HeroSection({ data }: HeroProps) {
 
             {/* Learn More Button - Gaming style */}
             <div className="mt-3 sm:mt-4 md:mt-6 lg:mt-8 text-center">
-              <Link 
+              <Link
                 href={productFeatures[currentFeature].link}
                 className="inline-flex items-center justify-center font-primary text-xs sm:text-sm md:text-base bg-gradient-to-r from-[var(--color-tertiary)]/20 to-[var(--color-tertiary)]/10 border border-[var(--color-tertiary)] text-[var(--color-tertiary)] hover:bg-[var(--color-tertiary)]/30 transition-all duration-300 uppercase tracking-wider font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-md"
               >
@@ -637,11 +637,10 @@ export default function HeroSection({ data }: HeroProps) {
           <button
             key={index}
             onClick={() => goToFeature(index)}
-            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-              index === currentFeature
-                ? "bg-white w-6 sm:w-8 shadow-[0_0_10px_rgba(255,255,255,0.7)]"
-                : "bg-gray-600/70 w-1.5 sm:w-2 hover:bg-gray-500"
-            }`}
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${index === currentFeature
+              ? "bg-white w-6 sm:w-8 shadow-[0_0_10px_rgba(255,255,255,0.7)]"
+              : "bg-gray-600/70 w-1.5 sm:w-2 hover:bg-gray-500"
+              }`}
             aria-label={`Go to feature ${index + 1}`}
             suppressHydrationWarning
           />
@@ -706,17 +705,17 @@ export default function HeroSection({ data }: HeroProps) {
               Go Further
             </h1>
             <p className="text-xs sm:text-sm md:text-base text-white/50 font-primary font-regular mb-6 md:mb-8">
-              Get inspired to explore new surf breaks.
+              Find the best surf spots across the African coastline.
             </p>
-            
+
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-              <Link 
+              <Link
                 href="/raid"
                 className="px-8 py-3 bg-brand-3 text-gray-900 font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(28,217,255,0.4)] active:scale-95 transform-gpu flex items-center justify-center min-w-[140px]"
               >
                 Launch Raid
               </Link>
-              <Link 
+              <Link
                 href="/dashboard/alerts"
                 className="px-8 py-3 bg-transparent border-2 border-brand-3/50 text-white font-black uppercase tracking-widest text-[10px] md:text-xs rounded-xl hover:bg-brand-3/10 hover:border-brand-3 transition-all active:scale-95 backdrop-blur-md transform-gpu flex items-center justify-center min-w-[140px]"
               >
@@ -728,23 +727,23 @@ export default function HeroSection({ data }: HeroProps) {
           {/* Map Side */}
           <div className="w-full lg:w-1/2 max-w-[95%] lg:max-w-none aspect-[16/10] lg:aspect-[4/3] z-10 relative">
             <div className="absolute inset-0 bg-gray-900 border border-white/5 rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-               <TideMap 
-                 beaches={beaches.filter(Boolean)} 
-                 loading={loadingBeaches}
-                 selectedDayIndex={0}
-                 showWindHeatmap={true}
-                 showSwellHeatmap={true}
-                 onBeachSelect={() => {}}
-                 onRegionSelect={handleRegionSelect}
-                 onAIReportClick={() => {}}
-                 center={[18.4233, -33.9249]}
-                 zoom={10}
-                 variant="hero"
-               />
-               <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-2xl md:rounded-3xl"></div>
+              <TideMap
+                beaches={beaches.filter(Boolean)}
+                loading={loadingBeaches}
+                selectedDayIndex={0}
+                showWindHeatmap={true}
+                showSwellHeatmap={true}
+                onBeachSelect={() => { }}
+                onRegionSelect={handleRegionSelect}
+                onAIReportClick={() => { }}
+                center={[18.4233, -33.9249]}
+                zoom={10}
+                variant="hero"
+              />
+              <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-2xl md:rounded-3xl"></div>
             </div>
-            
-            
+
+
           </div>
         </div>
       </div>

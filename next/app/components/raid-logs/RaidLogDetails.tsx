@@ -116,7 +116,8 @@ export default function RaidLogDetails({ id }: RaidLogDetailsProps) {
 
   const isOwner = session?.user?.id === (entry as any)?.userId;
 
-  const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
+  // Always unlocked per user request
+  const isGatedGem = false;
 
   const beachId = entry ? (entry as any).beachId || entry.beach?.id : null;
   const logDateRaw = entry?.date ? new Date(entry.date) : null;

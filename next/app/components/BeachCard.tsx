@@ -137,8 +137,8 @@ const BeachCard = memo(function BeachCard({
   const queryClient = useQueryClient();
 
   // Hidden gems are locked for non-premium users
-  // We only lock if we're NOT loading the subscription status and we're sure they're not premium
-  const isLocked = !!beach.isHiddenGem && !directIsPremium && !isSubscriptionLoading;
+  // Always unlocked per user request
+  const isLocked = false;
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [isLocalLoading, setIsLocalLoading] = useState(false);

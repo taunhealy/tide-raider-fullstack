@@ -245,7 +245,7 @@ export default function BeachDetailsModal({
                         activeBeach.sharkAttack?.hasAttack
                           ? (activeBeach.sharkAttack.incidents || [])
                               ?.filter(Boolean)
-                              .map((i) => `${i?.date || 'N/A'}: ${i?.outcome || 'N/A' - i?.details || 'N/A'}`)
+                              .map((i) => `${i?.date || 'N/A'}: ${i?.outcome || 'N/A'} - ${i?.details || 'N/A'}`)
                               .join("\n")
                           : "No shark attacks reported"
                       }

@@ -79,7 +79,8 @@ export default function RecentRaidLogs() {
           {recentEntries.slice(0, 6).map((entry) => {
             const isOwner = session?.user?.id === entry.userId;
             const isHiddenGemEntry = !!(entry as any).beach?.isHiddenGem;
-            const isGatedGem = isHiddenGemEntry && !hasAccess && !isOwner;
+            // Always unlocked per user request
+            const isGatedGem = false;
 
             return (
               <Link

@@ -1,6 +1,6 @@
 import { Router, Response } from "express";
 import { IntelligenceService } from "../services/intelligenceService";
-import { authenticateToken, AuthRequest } from "../middleware/auth";
+import { authenticateToken, optionalAuth, AuthRequest } from "../middleware/auth";
 
 
 const router = Router();
@@ -271,12 +271,10 @@ router.get("/history", authenticateToken, async (req, res: Response) => {
  * GET /api/intelligence/latest
  * Find the most recent report for a specific beach/user
  */
-router.get("/latest", authenticateToken, async (req, res: Response) => {
-  const authReq = req as AuthRequest;
-  const userId = authReq.user?.id;
+router.get("/latest", optionalAuth, async (req, res: Response) => {
   const { beachId } = req.query;
 
-  if (!userId || !beachId) {
+  if (!beachId) {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
@@ -310,12 +308,10 @@ router.get("/latest", authenticateToken, async (req, res: Response) => {
  * GET /api/intelligence/beach/:beachId/history
  * Fetch chronological IDs for navigate through reports of a specific beach
  */
-router.get("/beach/:beachId/history", authenticateToken, async (req, res: Response) => {
-  const authReq = req as AuthRequest;
-  const userId = authReq.user?.id;
+router.get("/beach/:beachId/history", optionalAuth, async (req, res: Response) => {
   const { beachId } = req.params;
 
-  if (!userId || !beachId) {
+  if (!beachId) {
     return res.status(400).json({ error: "Missing parameters" });
   }
 
@@ -351,7 +347,7 @@ router.get("/beach/:beachId/history", authenticateToken, async (req, res: Respon
  * GET /api/intelligence/report/:id
  * Fetch a single report by ID
  */
-router.get("/report/:id", authenticateToken, async (req, res: Response) => {
+router.get("/report/:id", optionalAuth, async (req, res: Response) => {
   const authReq = req as AuthRequest;
   const { id } = req.params;
 

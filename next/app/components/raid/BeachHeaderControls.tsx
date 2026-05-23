@@ -334,46 +334,21 @@ export default function BeachHeaderControls({
                         Public Breaks
                       </RegularButton>
 
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex">
-                            <HiddenGemsButton
-                              active={filters.isHiddenGem === "true" || filters.isHiddenGem === true}
-                              size="sm"
-                              onClick={() => {
-                                const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
-                                updateFilter("isHiddenGem", !currentActive ? "true" : "false");
-                              }}
-                              className={cn(
-                                (!effectiveIsAuthenticated || !effectiveIsSubscribed) && "shadow-[0_0_15px_-5px_rgba(79,70,229,0.4)]"
-                              )}
-                            >
-                              Hidden Gems
-                              {hiddenGemCount > 0 && (
-                                <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-white text-brand-3 text-[10px] font-black shadow-sm">
-                                  {hiddenGemCount}
-                                </span>
-                              )}
-                              {(!effectiveIsAuthenticated || !effectiveIsSubscribed) && <Lock className="w-3 h-3 ml-1 text-[#1d4ed8]" />}
-                            </HiddenGemsButton>
-                          </div>
-                        </TooltipTrigger>
-                        {(!effectiveIsAuthenticated || !effectiveIsSubscribed) && (
-                          <TooltipContent side="top" className="bg-black text-white border-white/10 p-3">
-                            <div className="flex flex-col gap-1">
-                              <span className="font-bold text-[11px] uppercase tracking-wider">Subscription Access Required</span>
-                              <p className="text-[10px] text-gray-400">Hidden Gems are reserved for subscribers.</p>
-                              <Link 
-                                href="/pricing" 
-                                className="text-[10px] text-brand-3 font-black uppercase tracking-widest mt-1 hover:underline flex items-center gap-1"
-                              >
-                                Subscribe to unlock
-                                <div className="w-1 h-1 rounded-full bg-brand-3 animate-pulse" />
-                              </Link>
-                            </div>
-                          </TooltipContent>
+                      <HiddenGemsButton
+                        active={filters.isHiddenGem === "true" || filters.isHiddenGem === true}
+                        size="sm"
+                        onClick={() => {
+                          const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
+                          updateFilter("isHiddenGem", !currentActive ? "true" : "false");
+                        }}
+                      >
+                        Hidden Gems
+                        {hiddenGemCount > 0 && (
+                          <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-white text-brand-3 text-[10px] font-black shadow-sm">
+                            {hiddenGemCount}
+                          </span>
                         )}
-                      </Tooltip>
+                      </HiddenGemsButton>
                     </div>
                   </div>
 

@@ -119,7 +119,8 @@ export async function generateMetadata({
                         )
                       );
                       
-  const hasAccess = !isHiddenGem || isSubscribed || isOwner;
+  // Always unlocked per user request
+  const hasAccess = true;
 
   // Mask metadata if it's a gated hidden gem
   const beachName = hasAccess 

@@ -289,7 +289,7 @@ export default function GlobalMapPage() {
       const isRegular = !isGem;
 
       const isRegularActive = filters.isRegular !== "false" && filters.isRegular !== false;
-      const isHiddenGemActive = (filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed;
+      const isHiddenGemActive = (filters.isHiddenGem === "true" || filters.isHiddenGem === true);
 
       const matchesVisibility = (isRegular && isRegularActive) || (isGem && isHiddenGemActive);
       const matchesLoggers = !isLoggersOnly || isLogger;
@@ -419,7 +419,7 @@ export default function GlobalMapPage() {
                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Tactical Categories</span>
                       <div className="flex flex-col gap-1">
                         <button 
-                          onClick={() => { setIsHiddenGemsOnly(true); setSearchQuery(""); }}
+                          onClick={() => { updateFilter("isHiddenGem", "true"); setSearchQuery(""); }}
                           className="flex items-center gap-2 px-3 py-2 hover:bg-rose-50 rounded-lg text-[11px] font-bold text-gray-600 group/btn transition-all"
                         >
                           <div className="w-5 h-5 bg-rose-100 text-rose-600 rounded flex items-center justify-center group-hover/btn:bg-rose-600 group-hover/btn:text-white transition-colors">💎</div>
@@ -567,37 +567,17 @@ export default function GlobalMapPage() {
 
                 <div className="relative w-full">
                   <HiddenGemsButton
-                    active={(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed}
+                    active={filters.isHiddenGem === "true" || filters.isHiddenGem === true}
                     size="sm"
-                    disabled={!isSubscribed}
                     onClick={() => {
                       const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
                       updateFilter("isHiddenGem", !currentActive ? "true" : "false");
                     }}
-                    className={cn(
-                      "w-full justify-center h-10 px-4",
-                      !isSubscribed && "opacity-50 grayscale pointer-events-none"
-                    )}
+                    className="w-full justify-center h-10 px-4"
                   >
                     <span>Hidden Gems</span>
-                    {!isSubscribed && <Lock className="w-3.5 h-3.5 ml-1.5 text-[#1d4ed8]" />}
                   </HiddenGemsButton>
                 </div>
-
-                {!isSubscribed && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed mb-2">
-                      Unlock 150+ crowd-free "Hidden Gems" only visible to Intelligence subscribers.
-                    </p>
-                    <Link 
-                      href="/pricing" 
-                      className="inline-flex items-center gap-1.5 text-[9px] font-black text-brand-3 uppercase tracking-widest hover:underline group/cta"
-                    >
-                      Subscribe to unlock
-                      <ChevronRight className="w-2.5 h-2.5 group-hover/cta:translate-x-0.5 transition-transform" />
-                    </Link>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -883,14 +863,13 @@ export default function GlobalMapPage() {
                         Public Breaks
                       </RegularButton>
                       <HiddenGemsButton 
-                        active={(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && isSubscribed} 
-                        disabled={!isSubscribed}
+                        active={filters.isHiddenGem === "true" || filters.isHiddenGem === true} 
                         onClick={() => {
                           const currentActive = filters.isHiddenGem === "true" || filters.isHiddenGem === true;
                           updateFilter("isHiddenGem", !currentActive ? "true" : "false");
                         }}
                       >
-                        Hidden Gems {!isSubscribed && "🔒"}
+                        Hidden Gems
                       </HiddenGemsButton>
                     </div>
                   </div>

@@ -174,7 +174,8 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
       const isGateEnabled = gateHeader !== 'false' && process.env.GATE !== 'false' && process.env.NEXT_PUBLIC_GATE !== 'false';
       const isPremium = !isGateEnabled || isSubscribed || hasActiveTrial;
       
-      const isGated = beach.isHiddenGem && !isPremium;
+      // Always unlocked per user request
+      const isGated = false;
 
       return {
         ...beachData,
@@ -185,13 +186,6 @@ router.get("/search", dataRateLimiter, async (req: Request, res: Response) => {
         optimalTide: profile.optimalTide || "ALL",
         mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
         sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
-        // Gate sensitive data
-        ...(isGated && {
-          description: "Locked Hidden Gem - Subscribe to unlock full details.",
-          hazards: [],
-          videos: [],
-          coffeeShop: [],
-        })
       };
     });
 
@@ -375,7 +369,8 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
     const isGateEnabled = gateHeader !== 'false' && process.env.GATE !== 'false' && process.env.NEXT_PUBLIC_GATE !== 'false';
     const isPremium = !isGateEnabled || isSubscribed || hasActiveTrial;
     
-    const isGated = beach.isHiddenGem && !isPremium;
+    // Always unlocked per user request
+    const isGated = false;
 
     const mappedBeach = {
       ...beachData,
@@ -386,13 +381,6 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
       optimalTide: profile.optimalTide || "ALL",
       mostAccurateSource: beach.sourceAccuracy?.sort((a: any, b: any) => b.voteCount - a.voteCount)[0]?.source || null,
       sourceAccuracyCount: beach.sourceAccuracy?.reduce((sum: number, s: any) => sum + s.voteCount, 0) || 0,
-      // Gate sensitive data
-      ...(isGated && {
-        description: "Locked Hidden Gem - Subscribe to unlock full details and surf reports.",
-        hazards: [],
-        videos: [],
-        coffeeShop: [],
-      })
     };
 
     res.json({ beach: mappedBeach });
