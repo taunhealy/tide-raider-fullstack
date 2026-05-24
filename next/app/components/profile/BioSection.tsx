@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -16,6 +15,7 @@ interface BioSectionProps {
   initialInstagram?: string;
   initialEmail?: string;
   initialWhatsappNumber?: string;
+  initialName?: string;
   isOwnProfile: boolean;
   userId: string;
   className?: string;
@@ -27,6 +27,7 @@ export default function BioSection({
   initialInstagram = "",
   initialEmail = "",
   initialWhatsappNumber = "",
+  initialName = "",
   isOwnProfile,
   userId,
   className,
@@ -34,12 +35,12 @@ export default function BioSection({
   const queryClient = useQueryClient();
   
   // Use local state to manage input values and avoid cursor jumping issues
-  // caused by direct React Query cache updates on every keystroke.
   const [bio, setBio] = useState(initialBio || "");
   const [link, setLink] = useState(initialLink || "");
   const [instagram, setInstagram] = useState(initialInstagram || "");
   const [email, setEmail] = useState(initialEmail || "");
   const [whatsappNumber, setWhatsappNumber] = useState(initialWhatsappNumber || "");
+  const [name, setName] = useState(initialName || "");
 
   // Sync local state when initial values change (e.g. after a successful mutation or refetch)
   useEffect(() => {
@@ -62,19 +63,25 @@ export default function BioSection({
     setWhatsappNumber(initialWhatsappNumber || "");
   }, [initialWhatsappNumber]);
 
+  useEffect(() => {
+    setName(initialName || "");
+  }, [initialName]);
+
   const updateProfileMutation = useMutation({
     mutationFn: async ({ 
       bio: newBio, 
       link: newLink, 
       instagram: newInstagram,
       email: newEmail, 
-      whatsappNumber: newWhatsappNumber 
+      whatsappNumber: newWhatsappNumber,
+      name: newName
     }: { 
       bio: string; 
       link: string; 
       instagram: string;
       email: string; 
-      whatsappNumber: string 
+      whatsappNumber: string;
+      name: string;
     }) => {
       const response = await fetch(`/api/user/${userId}`, {
         method: "PUT",
@@ -84,7 +91,8 @@ export default function BioSection({
           link: newLink, 
           instagram: newInstagram,
           email: newEmail, 
-          whatsappNumber: newWhatsappNumber 
+          whatsappNumber: newWhatsappNumber,
+          name: newName
         }),
       });
       if (!response.ok) throw new Error("Failed to save");
@@ -100,6 +108,7 @@ export default function BioSection({
         instagram: newData.instagram,
         email: newData.email,
         whatsappNumber: newData.whatsappNumber,
+        name: newData.name,
       }));
       return { previousData };
     },
@@ -109,6 +118,7 @@ export default function BioSection({
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["profileHeader", userId] });
     },
     onSuccess: () => {
       toast.success("Profile updated successfully!");
@@ -132,6 +142,24 @@ export default function BioSection({
         </div>
 
         <div className="space-y-4">
+           {/* Username / Handle Field */}
+           <div>
+             <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Operator Handle (Username)</label>
+             {isOwnProfile ? (
+               <Input
+                 type="text"
+                 value={name}
+                 onChange={(e) => setName(e.target.value)}
+                 placeholder="Enter username..."
+                 className="bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all font-bold"
+               />
+             ) : (
+               <p className="text-slate-900 font-bold bg-slate-50 px-6 py-3 rounded-xl border border-slate-50">
+                 {name || "Anonymous"}
+               </p>
+             )}
+           </div>
+
            <div>
              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">About Operator</label>
              {isOwnProfile ? (
@@ -251,6 +279,7 @@ export default function BioSection({
                   instagram,
                   email,
                   whatsappNumber,
+                  name,
                 })
               }
               disabled={updateProfileMutation.isPending}

@@ -49,13 +49,15 @@ export async function GET(request: Request) {
     }
 
     // Fetch beaches and their scores for the next week
+    const isAllBreaks = regionId === "all";
     const beaches = await prisma.beach.findMany({
       where: {
         ...(ids ? { id: { in: ids } } : {}),
-        ...(regionId ? { 
+        ...(regionId && !isAllBreaks ? { 
           OR: [
             { regionId: regionId },
-            { countryId: regionId }
+            { countryId: regionId },
+            { continent: { equals: regionId, mode: "insensitive" } }
           ]
         } : {})
       },

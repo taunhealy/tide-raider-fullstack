@@ -50,7 +50,8 @@ router.get("/:userId", optionalAuth, async (req: Request, res: Response) => {
     }
 
     // Hide sensitive fields if not the owner
-    const isOwner = (req as any).user?.id === userId;
+    const isOwner = (req as any).user?.id === userId || 
+      ((req as any).user?.email === "taunhealy@gmail.com" && userId === "cmnhjq35d000cs60fxss02p4o");
     if (!isOwner) {
       delete (user as any).email;
       delete (user as any).whatsappNumber;
@@ -73,12 +74,14 @@ router.put(
       const authReq = req as AuthRequest;
       const { userId } = req.params;
 
-      // Users can only update their own profile
-      if (authReq.user?.id !== userId) {
+      // Users can only update their own profile (or dev mapping to seeded admin user)
+      const hasPermission = authReq.user?.id === userId || 
+        (authReq.user?.email === "taunhealy@gmail.com" && userId === "cmnhjq35d000cs60fxss02p4o");
+      if (!hasPermission) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      const { bio, name, link, instagram, whatsappNumber, email } = req.body;
+      const { bio, name, link, instagram, whatsappNumber, email, image } = req.body;
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -89,6 +92,7 @@ router.put(
           ...(typeof instagram === 'string' && { instagram: instagram.trim() }),
           ...(typeof whatsappNumber === 'string' && { whatsappNumber: whatsappNumber.trim() }),
           ...(typeof email === 'string' && { email: email.trim() }),
+          ...(typeof image === 'string' && { image: image.trim() }),
         },
         select: {
           id: true,
@@ -119,7 +123,9 @@ router.put(
       const authReq = req as AuthRequest;
       const { userId } = req.params;
 
-      if (authReq.user?.id !== userId) {
+      const hasPermission = authReq.user?.id === userId || 
+        (authReq.user?.email === "taunhealy@gmail.com" && userId === "cmnhjq35d000cs60fxss02p4o");
+      if (!hasPermission) {
         return res.status(403).json({ error: "Forbidden" });
       }
 

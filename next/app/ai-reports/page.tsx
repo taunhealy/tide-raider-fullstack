@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { format } from "date-fns";
+import { cn } from "@/app/lib/utils";
 import { safeFormat } from "@/app/lib/dateUtils";
 import { 
   FileText, 

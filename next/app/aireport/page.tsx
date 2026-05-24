@@ -21,7 +21,8 @@ import {
   History, 
   ChevronRight,
   TrendingUp,
-  Clock
+  Clock,
+  Lock
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
@@ -29,6 +30,7 @@ import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/input";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { handleSignIn } from "@/app/lib/auth-utils";
 import { 
   Tooltip, 
   TooltipContent, 
@@ -256,26 +258,61 @@ function AIReportContent() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const isGated = (!session?.user) || ((credits ?? 0) < 30);
+
+  if (!isCreditsLoading && isGated) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6 font-primary selection:bg-indigo-500/30 selection:text-white">
+        <div className="max-w-md w-full bg-white/5 border border-white/10 rounded-[2rem] p-8 text-center shadow-2xl relative overflow-hidden">
+           <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-600" />
+           <div className="w-16 h-16 bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+              <Lock className="w-6 h-6" />
+           </div>
+           <h2 className="text-xl font-black uppercase tracking-wider mb-2">Tactical Lockout</h2>
+           <p className="text-sm text-white/60 font-medium leading-relaxed mb-8">
+             Accessing strategic AI briefings and timed forecasts requires a minimum of <span className="font-bold text-white">30 intelligence points</span>. You currently have <span className="font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">{credits ?? 0} points</span>.
+           </p>
+           
+           {!session?.user ? (
+             <Button
+               onClick={() => handleSignIn(window.location.pathname)}
+               className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+             >
+               Sign In to Unlock
+             </Button>
+           ) : (
+             <Button
+               onClick={() => router.push("/pricing")}
+               className="w-full h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-indigo-600/20 transition-all active:scale-95"
+             >
+               Upgrade or Buy Credits
+             </Button>
+           )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 selection:text-white font-primary lg:overflow-hidden flex flex-col">
       {/* Top Navigation / Status */}
-      <header className="h-16 border-b border-white/5 bg-black/40 backdrop-blur-xl px-8 flex items-center justify-between shrink-0 z-20">
-        <div className="flex items-center gap-4">
-          <Link href="/raid" className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all group">
-            <ChevronRight className="w-5 h-5 text-gray-500 rotate-180 group-hover:text-white" />
+      <header className="min-h-16 py-3 sm:py-0 border-b border-white/5 bg-black/40 backdrop-blur-xl px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between shrink-0 z-20 gap-3 sm:gap-0">
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-start">
+          <Link href="/raid" className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all group shrink-0">
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 rotate-180 group-hover:text-white" />
           </Link>
-          <div className="h-4 w-px bg-white/10" />
-          <h1 className="text-[12px] font-black uppercase tracking-[0.3em] text-white/40">AI Intelligence Terminal</h1>
+          <div className="h-4 w-px bg-white/10 shrink-0" />
+          <h1 className="text-[10px] sm:text-[12px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/40 truncate">AI Intelligence Terminal</h1>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full flex items-center gap-3">
+        <div className="flex items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="bg-indigo-500/10 border border-indigo-500/20 px-3 sm:px-4 py-1.5 rounded-full flex items-center gap-2 sm:gap-3">
              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+             <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400">
                {isCreditsLoading ? "Syncing..." : `${credits ?? 0} Credits Available`}
              </span>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
             <Users className="w-4 h-4 text-gray-500" />
           </div>
         </div>
@@ -475,10 +512,10 @@ function AIReportContent() {
                           {reportData.category} Briefing • {safeFormat(reportData.date, "MMMM d, yyyy")}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
                         <Button 
                           onClick={handleCopyReport}
-                          className="h-12 px-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-black uppercase tracking-widest gap-3 transition-all"
+                          className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-black uppercase tracking-widest gap-3 transition-all"
                         >
                           {isCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                           {isCopied ? "Secured" : "Copy Signal"}

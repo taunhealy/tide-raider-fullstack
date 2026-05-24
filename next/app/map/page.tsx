@@ -13,6 +13,25 @@ import Link from "next/link";
 
 import AIReportModal from "@/app/components/beach/AIReportModal";
 
+const REGION_COORDINATES: Record<string, { center: [number, number]; zoom: number; label: string }> = {
+  "all": { center: [20.0, 0.0], zoom: 3, label: "All Breaks" },
+  "africa": { center: [20.0, 0.0], zoom: 4, label: "Africa" },
+  "za": { center: [24.0, -30.0], zoom: 5.5, label: "South Africa" },
+  "na": { center: [17.0, -22.0], zoom: 5.5, label: "Namibia" },
+  "ma": { center: [-8.0, 31.0], zoom: 6, label: "Morocco" },
+  "sn": { center: [-15.0, 14.5], zoom: 7.5, label: "Senegal" },
+  "mz": { center: [35.0, -18.0], zoom: 5.5, label: "Mozambique" },
+  "mg": { center: [47.0, -20.0], zoom: 5.5, label: "Madagascar" },
+  "cape-verde": { center: [-23.0, 16.0], zoom: 8, label: "Cape Verde" },
+  "western-cape": { center: [18.4233, -33.9249], zoom: 10, label: "Western Cape" },
+  "eastern-cape": { center: [25.6022, -33.9608], zoom: 10, label: "Eastern Cape" },
+  "kwazulu-natal": { center: [31.0292, -29.8587], zoom: 10, label: "KwaZulu-Natal" },
+  "swakopmund": { center: [14.4175, -22.9376], zoom: 9, label: "Namibia" },
+  "morocco": { center: [-9.7258, 30.5450], zoom: 9, label: "Morocco" },
+  "dakar": { center: [-17.5143, 14.7559], zoom: 11, label: "Senegal" },
+  "mozambique": { center: [32.8880, -26.8490], zoom: 9, label: "Mozambique" },
+  "madagascar-south": { center: [43.6038, -23.6482], zoom: 9, label: "Madagascar" }
+};
 
 export default function GlobalMapPage() {
   const { filters, updateFilter } = useBeachFilters();
@@ -128,6 +147,14 @@ export default function GlobalMapPage() {
       updateFilter("regionId", "western-cape");
     }
   }, [mounted, filters.regionId, updateFilter]);
+
+  useEffect(() => {
+    if (mounted && filters.regionId && REGION_COORDINATES[filters.regionId.toLowerCase()]) {
+      const { center, zoom } = REGION_COORDINATES[filters.regionId.toLowerCase()];
+      setMapCenter(center);
+      setMapZoom(zoom);
+    }
+  }, [mounted, filters.regionId]);
 
   useEffect(() => {
     if (mounted) {
@@ -275,8 +302,13 @@ export default function GlobalMapPage() {
                            beach.region.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesRegion = !filters.regionId || 
+                           filters.regionId.toLowerCase() === "all" ||
                            beach.regionId?.toLowerCase() === filters.regionId.toLowerCase() ||
-                           beach.region?.toLowerCase() === filters.regionId.toLowerCase().replace(/-/g, " ");
+                           beach.region?.toLowerCase() === filters.regionId.toLowerCase().replace(/-/g, " ") ||
+                           beach.countryId?.toLowerCase() === filters.regionId.toLowerCase() ||
+                           beach.country?.toLowerCase() === filters.regionId.toLowerCase().replace(/-/g, " ") ||
+                           beach.continentId?.toLowerCase() === filters.regionId.toLowerCase() ||
+                           beach.continent?.toLowerCase() === filters.regionId.toLowerCase().replace(/-/g, " ");
 
       const matchesDifficulty = selectedDifficulty.length === 0 || selectedDifficulty.includes(beach.difficulty);
       
@@ -400,16 +432,16 @@ export default function GlobalMapPage() {
                     <div>
                       <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-2">Popular Regions</span>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {["Western Cape", "Eastern Cape", "KwaZulu-Natal"].map(region => (
+                        {Object.entries(REGION_COORDINATES).map(([key, config]) => (
                           <button 
-                            key={region}
+                            key={key}
                             onClick={() => {
-                              setSearchQuery(region);
-                              updateFilter("regionId", region.toLowerCase().replace(/\s+/g, "-"));
+                              setSearchQuery(config.label);
+                              updateFilter("regionId", key);
                             }}
                             className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-[11px] font-bold text-gray-600 transition-all"
                           >
-                            {region}
+                            {config.label}
                           </button>
                         ))}
                       </div>
@@ -505,6 +537,35 @@ export default function GlobalMapPage() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Region Selector */}
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Continents</label>
+              <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+                {Object.entries(REGION_COORDINATES)
+                  .filter(([key]) => !["za", "na", "ma", "sn", "mz", "mg"].includes(key))
+                  .map(([key, config]) => {
+                    const isActive = (filters.regionId || "western-cape") === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          updateFilter("regionId", key);
+                        }}
+                        className={cn(
+                          "text-left px-3 py-2.5 rounded-xl text-[11px] font-bold border transition-all truncate flex items-center justify-between",
+                          isActive
+                            ? "bg-gray-900 border-gray-900 text-white shadow-md"
+                            : "bg-gray-50 border-transparent hover:bg-gray-100 text-gray-600"
+                        )}
+                      >
+                        <span>{config.label}</span>
+                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
 
             {/* Rating Filter */}
@@ -841,6 +902,34 @@ export default function GlobalMapPage() {
                         placeholder="Enter beach or region..."
                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Continents</label>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-[160px] overflow-y-auto pr-1 no-scrollbar">
+                      {Object.entries(REGION_COORDINATES)
+                        .filter(([key]) => !["za", "na", "ma", "sn", "mz", "mg"].includes(key))
+                        .map(([key, config]) => {
+                          const isActive = (filters.regionId || "western-cape") === key;
+                          return (
+                            <button
+                              key={key}
+                              onClick={() => {
+                                updateFilter("regionId", key);
+                              }}
+                              className={cn(
+                                "text-left px-3 py-2.5 rounded-xl text-[11px] font-bold border transition-all truncate flex items-center justify-between",
+                                isActive
+                                  ? "bg-gray-900 border-gray-900 text-white shadow-md"
+                                  : "bg-gray-50 border-transparent hover:bg-gray-100 text-gray-600"
+                              )}
+                            >
+                              <span>{config.label}</span>
+                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 ml-1" />}
+                            </button>
+                          );
+                        })}
                     </div>
                   </div>
 

@@ -22,9 +22,10 @@ import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { Input } from "@/app/components/ui/input";
 import Link from "next/link";
-import { Sparkles, Zap, ShieldAlert, CreditCard, Loader2, Bookmark, Share2, Mail, MessageSquare, Send, Users, ArrowRight, ArrowUpRight, Waves, Copy, Check, ChevronLeft, ChevronRight, Info, Instagram, Link2, X } from "lucide-react";
+import { Sparkles, Zap, ShieldAlert, CreditCard, Loader2, Bookmark, Share2, Mail, MessageSquare, Send, Users, ArrowRight, ArrowUpRight, Waves, Copy, Check, ChevronLeft, ChevronRight, Info, Instagram, Link2, X, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
+import { handleSignIn } from "@/app/lib/auth-utils";
 
 interface AIReportModalProps {
   beach: any;
@@ -44,6 +45,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     isLoading: isCreditsLoading,
   } = useSubscriptionStatus();
   const { data: session, status: authStatus } = useBackendAuth();
+  const isGated = (!session?.user || authStatus === "unauthenticated") || ((credits ?? 0) < 30);
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -66,16 +68,35 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   const [selectedDays, setSelectedDays] = useState(7);
   const [selectedSport, setSelectedSport] = useState("SURFING");
-  const [selectedSource, setSelectedSource] = useState<string>("WINDY");
+  const [selectedSource, setSelectedSource] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored) return stored;
+    }
+    return "WINDFINDER";
+  });
   const creditCost = selectedDays <= 1 ? 1 : 4;
 
   const handleSourceChange = (source: string) => {
     setSelectedSource(source);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("forecastSource", source);
+      window.dispatchEvent(new CustomEvent("forecastSourceChanged", { detail: source }));
+    }
     setActiveReportId(undefined);
     setReport(null);
     setPioneer(null);
     setExistingReportDate(null);
   };
+
+  useEffect(() => {
+    if (isOpen && typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored && stored !== selectedSource) {
+        setSelectedSource(stored);
+      }
+    }
+  }, [isOpen, selectedSource]);
 
   // Sync prop changes and user profile data to internal state
   useEffect(() => {
@@ -425,7 +446,33 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         </div>
 
         {/* Main Dashboard Body */}
-        <div className="flex flex-col md:grid md:grid-cols-[380px_1fr] flex-1 min-h-0 overflow-hidden">
+        {!isCreditsLoading && isGated ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center bg-white min-h-[350px] overflow-y-auto">
+            <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Lockout</h2>
+            <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed mb-8">
+              Accessing strategic AI briefings and timed forecasts requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">{credits ?? 0} points</span>.
+            </p>
+            {!session?.user ? (
+              <Button
+                onClick={() => handleSignIn(window.location.pathname)}
+                className="w-full max-w-sm h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95"
+              >
+                Sign In to Unlock
+              </Button>
+            ) : (
+              <Button
+                onClick={() => router.push("/pricing")}
+                className="w-full max-w-sm h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95 animate-pulse"
+              >
+                Upgrade or Buy Credits
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col md:grid md:grid-cols-[380px_1fr] flex-1 min-h-0 overflow-hidden">
 
           {/* Left Column: Configuration & Status */}
           <div className="bg-white border-r border-gray-100 p-8 space-y-10 overflow-y-auto custom-scrollbar">
@@ -980,6 +1027,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             </div>
           </div>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );

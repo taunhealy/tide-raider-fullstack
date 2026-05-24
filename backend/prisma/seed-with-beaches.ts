@@ -140,6 +140,7 @@ async function loadData() {
       { id: "sn", name: "Senegal", continent: "Africa" },
       { id: "yt", name: "Mayotte", continent: "Africa" },
       { id: "zm", name: "Zambia", continent: "Africa" },
+      { id: "cape-verde", name: "Cape Verde", continent: "Africa" },
     ];
   }
 
@@ -405,6 +406,7 @@ async function main() {
       th: "th",
       ie: "ie",
       ec: "ec",
+      "cape-verde": "cape-verde",
     };
 
     if (beachData.length > 0) {
@@ -447,6 +449,7 @@ async function main() {
       sn: "sn",
       yt: "yt",
       zm: "zm",
+      "cape-verde": "cape-verde",
     };
 
     const allRegions = [
@@ -619,6 +622,11 @@ async function main() {
         id: "mayotte",
         name: "Mayotte",
         countryId: countryCodeMap["yt"] || "mayotte",
+      },
+      {
+        id: "boa-vista",
+        name: "Boa Vista",
+        countryId: countryCodeMap["cape-verde"] || "cape-verde",
       },
       // Zambia not in HARDCODED_COUNTRIES, skip for now
     ];

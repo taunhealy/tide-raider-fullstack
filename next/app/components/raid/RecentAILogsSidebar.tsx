@@ -19,6 +19,8 @@ interface IntelligenceReport {
     name: string;
     id: string;
     regionId: string;
+    countryId?: string;
+    continent?: string;
   };
   category: string;
   source?: string;
@@ -76,8 +78,11 @@ export default function RecentAILogsSidebar() {
   });
 
   const filteredReports = reports?.filter(report => {
-    if (filters.regionId) {
-      return report.beach?.regionId === filters.regionId;
+    if (filters.regionId && filters.regionId !== "all") {
+      const matchRegion = report.beach?.regionId?.toLowerCase() === filters.regionId.toLowerCase();
+      const matchCountry = report.beach?.countryId?.toLowerCase() === filters.regionId.toLowerCase();
+      const matchContinent = report.beach?.continent?.toLowerCase() === filters.regionId.toLowerCase();
+      return matchRegion || matchCountry || matchContinent;
     }
     return true;
   }) ?? [];

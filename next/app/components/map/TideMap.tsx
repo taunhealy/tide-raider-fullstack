@@ -639,8 +639,8 @@ export default function TideMap({
         const center = initialMap.getView().getCenter();
         if (!center || !gZoom) return;
 
-        // If zoomed out very far, don't auto-select to avoid jitter
-        if (gZoom < 4) return;
+        // If zoomed out completely, don't auto-select to avoid noise
+        if (gZoom < 2) return;
 
         const extent = initialMap.getView().calculateExtent(initialMap.getSize());
         if (!clusterSourceRef.current) return;
@@ -680,14 +680,43 @@ export default function TideMap({
             const type = representative.get("type");
             let targetRegion = "";
 
-            if (type === "country" || type === "continent") {
+            if (type === "continent") {
+              const cId = (representative.get("beach")?.continentId || "africa").toLowerCase();
+              const MAP_CONTINENT_ID: Record<string, string> = {
+                "af": "africa",
+                "eu": "europe",
+                "as": "asia",
+                "na": "north-america",
+                "sa": "south-america",
+                "oc": "oceania",
+                "africa": "africa"
+              };
+              targetRegion = MAP_CONTINENT_ID[cId] || cId;
+            } else if (type === "country") {
               targetRegion = representative.get("countryId") || representative.get("beach")?.countryId;
             } else if (type === "beach") {
-              targetRegion = representative.get("beach")?.regionId || representative.get("beach")?.countryId;
+              const beach = representative.get("beach");
+              if (gZoom >= 2 && gZoom < 4) {
+                const cId = (beach?.continentId || "africa").toLowerCase();
+                const MAP_CONTINENT_ID: Record<string, string> = {
+                  "af": "africa",
+                  "eu": "europe",
+                  "as": "asia",
+                  "na": "north-america",
+                  "sa": "south-america",
+                  "oc": "oceania",
+                  "africa": "africa"
+                };
+                targetRegion = MAP_CONTINENT_ID[cId] || cId;
+              } else if (gZoom >= 4 && gZoom < 6) {
+                targetRegion = beach?.countryId || beach?.regionId;
+              } else {
+                targetRegion = beach?.regionId || beach?.countryId;
+              }
             }
 
             if (targetRegion && targetRegion !== selectedRegionIdRef.current) {
-              console.log(`[TideMap] 📍 Auto-selecting region: ${targetRegion} (was: ${selectedRegionIdRef.current})`);
+              console.log(`[TideMap] 📍 Auto-selecting region/country/continent: ${targetRegion} (was: ${selectedRegionIdRef.current})`);
               onRegionSelectRef.current(targetRegion);
             }
           }

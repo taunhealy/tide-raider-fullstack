@@ -15066,5 +15066,459 @@
         }
       }
     }
+  },
+  {
+    "id": "cape-cross",
+    "name": "Cape Cross",
+    "continent": "Africa",
+    "countryId": "na",
+    "regionId": "swakopmund",
+    "location": "Skeleton Coast",
+    "isHiddenGem": true,
+    "distanceFromCT": 1750,
+    "bestSeasons": [
+      "winter"
+    ],
+    "description": "A powerful and remote left-hand point break situated near the famous Cape Cross seal colony on Namibia's Skeleton Coast. Extremely consistent winter swells produce long, heavy waves peeling over sand and rock.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 15,
+      "winter": 13
+    },
+    "hazards": [
+      "Abundant marine life",
+      "Remote location",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -21.7725,
+      "lng": 13.9788
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "E",
+          "ENE",
+          "SE"
+        ],
+        "optimalSwellDirections": {
+          "min": 190,
+          "max": 240,
+          "cardinal": "SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.0,
+          "max": 4.0
+        },
+        "idealSwellPeriod": {
+          "min": 11,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "boilers",
+    "name": "Boilers",
+    "continent": "Africa",
+    "countryId": "ma",
+    "regionId": "morocco",
+    "location": "Taghazout",
+    "isHiddenGem": false,
+    "distanceFromCT": 8200,
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "description": "A legendary, fast and powerful right-hand point break named after the shipwreck boiler visible at the start of the wave. Offers intense, hollow barrels and fast walls, best suited for advanced and expert surfers.",
+    "difficulty": "EXPERT",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 21,
+      "winter": 17
+    },
+    "hazards": [
+      "Urchins",
+      "Sharp reef",
+      "Strong currents",
+      "Rocky entry/exit"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": 30.5901,
+      "lng": -9.8055
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NNE",
+          "NE",
+          "E"
+        ],
+        "optimalSwellDirections": {
+          "min": 290,
+          "max": 330,
+          "cardinal": "NW"
+        },
+        "optimalTide": "LOW",
+        "swellSize": {
+          "min": 1.2,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "anza",
+    "name": "Anza",
+    "continent": "Africa",
+    "countryId": "ma",
+    "regionId": "morocco",
+    "location": "Agadir",
+    "isHiddenGem": false,
+    "distanceFromCT": 8180,
+    "bestSeasons": [
+      "winter",
+      "spring"
+    ],
+    "description": "A highly consistent beach and reef break located just north of Agadir. Offers reliable lefts and rights that work on almost all swell sizes, making it a popular choice for all experience levels.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "BEACH_BREAK",
+    "waterTemp": {
+      "summer": 21,
+      "winter": 17
+    },
+    "hazards": [
+      "Crowds"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": 30.4392,
+      "lng": -9.6389
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "E",
+          "ENE",
+          "NE"
+        ],
+        "optimalSwellDirections": {
+          "min": 280,
+          "max": 320,
+          "cardinal": "NW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 0.8,
+          "max": 3.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "donkey-bay",
+    "name": "Donkey Bay",
+    "continent": "Africa",
+    "countryId": "na",
+    "regionId": "swakopmund",
+    "location": "Skeleton Coast",
+    "isHiddenGem": false,
+    "distanceFromCT": 1700,
+    "bestSeasons": [
+      "winter",
+      "spring"
+    ],
+    "description": "Widely regarded as the best and longest left-hand sand point break in the world, offering freight-train barrels that can wrap for over 2 kilometers along a remote desert shore.",
+    "difficulty": "EXPERT",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 15,
+      "winter": 13
+    },
+    "hazards": [
+      "Strong currents",
+      "Dehydration",
+      "Remote location",
+      "Sharks"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -22.9376,
+      "lng": 14.4175
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "S",
+          "SE",
+          "SSE"
+        ],
+        "optimalSwellDirections": {
+          "min": 190,
+          "max": 220,
+          "cardinal": "SW"
+        },
+        "optimalTide": "LOW",
+        "swellSize": {
+          "min": 2.0,
+          "max": 6.0
+        },
+        "idealSwellPeriod": {
+          "min": 14,
+          "max": 22
+        }
+      }
+    }
+  },
+  {
+    "id": "anchor-point",
+    "name": "Anchor Point",
+    "continent": "Africa",
+    "countryId": "ma",
+    "regionId": "morocco",
+    "location": "Taghazout",
+    "isHiddenGem": false,
+    "distanceFromCT": 8200,
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "description": "Morocco's most famous right-hand point break. Features fast, hollow sections and long walls peeling over a rocky shelf, holding massive swells with absolute perfection.",
+    "difficulty": "ADVANCED",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 21,
+      "winter": 17
+    },
+    "hazards": [
+      "Rocks",
+      "Crowds",
+      "Urchins"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": 30.5450,
+      "lng": -9.7258
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NE",
+          "ENE",
+          "E"
+        ],
+        "optimalSwellDirections": {
+          "min": 290,
+          "max": 330,
+          "cardinal": "NW"
+        },
+        "optimalTide": "LOW_TO_MID",
+        "swellSize": {
+          "min": 1.5,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 20
+        }
+      }
+    }
+  },
+  {
+    "id": "ngor-right",
+    "name": "N'Gor Right",
+    "continent": "Africa",
+    "countryId": "sn",
+    "regionId": "dakar",
+    "location": "N'Gor Island",
+    "isHiddenGem": true,
+    "distanceFromCT": 6500,
+    "bestSeasons": [
+      "winter"
+    ],
+    "description": "A legendary right-hand reef break made famous by 'The Endless Summer'. Offers super consistent, powerful walls peeling over a volcanic rocky bottom with sea urchins and deep takeoffs.",
+    "difficulty": "ADVANCED",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 25,
+      "winter": 19
+    },
+    "hazards": [
+      "Sharp reef",
+      "Urchins",
+      "Strong currents"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": 14.7570,
+      "lng": -17.5143
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "N",
+          "NE",
+          "NNE"
+        ],
+        "optimalSwellDirections": {
+          "min": 310,
+          "max": 350,
+          "cardinal": "NW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.0,
+          "max": 4.0
+        },
+        "idealSwellPeriod": {
+          "min": 11,
+          "max": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "ponta-do-ouro",
+    "name": "Ponta do Ouro",
+    "continent": "Africa",
+    "countryId": "mz",
+    "regionId": "mozambique",
+    "location": "Maputo Province",
+    "isHiddenGem": false,
+    "distanceFromCT": 1900,
+    "bestSeasons": [
+      "winter",
+      "autumn"
+    ],
+    "description": "An outstanding, sand-bottom right-hand point break that runs for hundreds of meters on a solid southeast swell. Warm water, dolphin sightings, and perfect peeling walls make this a tropical paradise.",
+    "difficulty": "INTERMEDIATE",
+    "waveType": "POINT_BREAK",
+    "waterTemp": {
+      "summer": 27,
+      "winter": 22
+    },
+    "hazards": [
+      "Currents",
+      "Submerged rocks",
+      "Sunburn"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -26.8490,
+      "lng": 32.8880
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "NW",
+          "WNW",
+          "W"
+        ],
+        "optimalSwellDirections": {
+          "min": 120,
+          "max": 160,
+          "cardinal": "SE"
+        },
+        "optimalTide": "MID_TO_HIGH",
+        "swellSize": {
+          "min": 1.2,
+          "max": 4.5
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 16
+        }
+      }
+    }
+  },
+  {
+    "id": "flame-balls",
+    "name": "Flame Balls",
+    "continent": "Africa",
+    "countryId": "mg",
+    "regionId": "madagascar-south",
+    "location": "Anakao",
+    "isHiddenGem": true,
+    "distanceFromCT": 3100,
+    "bestSeasons": [
+      "winter",
+      "spring"
+    ],
+    "description": "A world-class, ultra-fast left-hand reef break breaking on the outer reef edge off Nosy Ve island. Named for its blistering speed and hollow barrels, suited for advanced and expert surfers only.",
+    "difficulty": "EXPERT",
+    "waveType": "REEF_BREAK",
+    "waterTemp": {
+      "summer": 26,
+      "winter": 22
+    },
+    "hazards": [
+      "Shallow reef",
+      "Urchins",
+      "Remote location"
+    ],
+    "crimeLevel": "Low",
+    "sharkAttack": {
+      "hasAttack": false
+    },
+    "coordinates": {
+      "lat": -23.6395,
+      "lng": 43.6045
+    },
+    "conditionProfiles": {
+      "GENERAL": {
+        "optimalWindDirections": [
+          "E",
+          "ENE",
+          "NE"
+        ],
+        "optimalSwellDirections": {
+          "min": 180,
+          "max": 220,
+          "cardinal": "SW"
+        },
+        "optimalTide": "MID_TO_HIGH",
+        "swellSize": {
+          "min": 1.5,
+          "max": 4.0
+        },
+        "idealSwellPeriod": {
+          "min": 12,
+          "max": 20
+        }
+      }
+    }
   }
 ]

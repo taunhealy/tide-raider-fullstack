@@ -261,6 +261,7 @@ async function fetchFilteredBeachesData(
       select: {
         id: true,
         name: true,
+        coordinates: true,
         continent: true,
         regionId: true,
         location: true,

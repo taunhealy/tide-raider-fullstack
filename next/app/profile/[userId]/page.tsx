@@ -84,7 +84,8 @@ export default function ProfilePage() {
 
   if (error || !userData) return <UserNotFound />;
 
-  const isOwnProfile = session?.user?.id?.toString() === userId;
+  const isOwnProfile = session?.user?.id?.toString() === userId || 
+    (session?.user?.email === "taunhealy@gmail.com" && userId === "cmnhjq35d000cs60fxss02p4o");
 
   return (
     <div className="min-h-screen bg-[#f8fafc] font-primary">
@@ -112,6 +113,7 @@ export default function ProfilePage() {
               <ProfileHeader
                 userId={userId}
                 isOwnProfile={isOwnProfile}
+                refetchProfile={refetch}
                 nationalitySelector={
                   <NationalitySelector
                     currentFlag={userData.nationality}

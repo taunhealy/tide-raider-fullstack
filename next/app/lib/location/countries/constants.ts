@@ -46,4 +46,5 @@ export const HARDCODED_COUNTRIES: Country[] = [
   { id: "senegal", name: "Senegal", continent: "Africa" },
   { id: "mayotte", name: "Mayotte", continent: "Africa" },
   { id: "faroe-islands", name: "Faroe Islands", continent: "Europe" },
+  { id: "cape-verde", name: "Cape Verde", continent: "Africa" },
 ];

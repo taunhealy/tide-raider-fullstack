@@ -250,7 +250,9 @@ router.get("/history", optionalAuth, async (req, res: Response) => {
           select: {
             name: true,
             id: true,
-            regionId: true
+            regionId: true,
+            countryId: true,
+            continent: true
           }
         },
         user: {
