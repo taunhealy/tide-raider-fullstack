@@ -15,12 +15,12 @@ import { useBackendAuth } from "../hooks/useBackendAuth";
 
 // Keep navigation items at top level for easy editing
 const NAVIGATION_ITEMS = [
-  
+
   { href: "/raid", label: "Raid" },
   { href: "/map", label: "Map" },
   { href: "/logs", label: "Logs" },
   { href: "/dashboard/alerts", label: "Alerts" },
-  { href: "/ai-reports", label: "AI Reports" },
+  { href: "/aireports", label: "AI Reports" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },
@@ -374,7 +374,7 @@ export default function Navbar() {
                   </li>
                 </>
               )}
-              
+
 
 
               {NAVIGATION_ITEMS.map((link) => (
@@ -386,7 +386,7 @@ export default function Navbar() {
                       "block font-primary text-[var(--color-text-primary)] hover:text-[var(--color-text-primary)] hover:font-semibold",
                       "transition-all duration-300",
                       pathname === link.href &&
-                        "font-semibold text-[var(--color-text-primary)]"
+                      "font-semibold text-[var(--color-text-primary)]"
                     )}
                   >
                     {link.label}
