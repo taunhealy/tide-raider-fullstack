@@ -18,9 +18,11 @@ import { formatNotificationMethod } from "@/app/lib/formatters";
 
 // Map source names to display names
 const sourceMap: Record<string, string> = {
-  WINDFINDER: "A",
-  WINDGURU: "B",
-  WINDY: "C",
+  WINDFINDER: "Windfinder",
+  WINDFINDER_SUPER: "Windfinder Super",
+  WINDGURU: "Windguru",
+  WINDY: "Windy",
+  TIDE_RAIDER: "Tide Raider",
 };
 
 const formatSourceName = (source: string): string => {

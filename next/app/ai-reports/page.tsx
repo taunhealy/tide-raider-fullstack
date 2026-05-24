@@ -13,7 +13,9 @@ import {
   Search,
   Sparkles,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Instagram,
+  Link2
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -32,44 +34,51 @@ interface IntelligenceReport {
     name: string;
     id: string;
   };
+  category?: string;
+  source?: string;
+  user?: {
+    id: string;
+    name: string;
+    instagram?: string;
+    link?: string;
+  };
 }
+
+const sourceColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  WINDY:             { bg: "bg-indigo-50",    text: "text-indigo-600",   border: "border-indigo-100",   label: "Windy" },
+  WINDGURU:          { bg: "bg-cyan-50",      text: "text-cyan-600",     border: "border-cyan-100",     label: "Guru" },
+  WINDFINDER_SUPER:  { bg: "bg-fuchsia-50",   text: "text-fuchsia-600",  border: "border-fuchsia-100",  label: "Super" },
+  WINDFINDER:        { bg: "bg-sky-50",       text: "text-sky-600",      border: "border-sky-100",      label: "Finder" },
+  TIDE_RAIDER:       { bg: "bg-zinc-950",     text: "text-zinc-100",     border: "border-zinc-800",     label: "Raider" }
+};
 
 export default function AIReportsPage() {
   const { data: session, status } = useBackendAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: reports, isLoading } = useQuery<IntelligenceReport[]>({
-    queryKey: ["intelligence-history", session?.user?.id],
+    queryKey: ["intelligence-history"],
     queryFn: async () => {
       const response = await fetch("/api/backend/intelligence/history");
       if (!response.ok) throw new Error("Failed to fetch reports");
       return response.json();
     },
-    enabled: !!session?.user?.id,
+    enabled: true,
   });
 
-  const filteredReports = reports?.filter(report => 
-    report.beach.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.persona.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredReports = reports?.filter(report => {
+    const lowerSearch = searchTerm.toLowerCase();
+    const beachName = (report.beach?.name ?? "").toLowerCase();
+    const persona = (report.persona ?? "").toLowerCase();
+    const category = (report.category ?? "").toLowerCase();
+    return beachName.includes(lowerSearch) || persona.includes(lowerSearch) || category.includes(lowerSearch);
+  });
 
-  if (status === "loading" || (isLoading && !reports)) {
+  if (isLoading && !reports) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-black opacity-20" />
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black opacity-40">Syncing Intelligence History...</p>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-20 text-center">
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-4">Tactical Lockout</h1>
-        <p className="text-gray-500 mb-8">You must be authenticated to view strategic intelligence history.</p>
-        <Button asChild className="bg-black text-white hover:bg-gray-800 rounded-full px-8 h-12 font-bold uppercase tracking-widest text-[10px]">
-          <Link href="/">Return to Map</Link>
-        </Button>
       </div>
     );
   }
@@ -124,7 +133,43 @@ export default function AIReportsPage() {
                         </div>
                         <div>
                           <p className="font-bold text-[14px] text-black group-hover:text-black transition-colors">{report.beach.name}</p>
-                          <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest">
+                          {(() => {
+                            const user = report.user || {
+                              name: "gh0st",
+                              instagram: undefined,
+                              link: undefined
+                            };
+                            return (
+                              <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500/80 mt-1" onClick={(e) => e.stopPropagation()}>
+                                <span className="opacity-60">by {user.name}</span>
+                                <div className="flex items-center gap-1 ml-0.5">
+                                  {user.instagram && (
+                                    <a 
+                                      href={`https://instagram.com/${user.instagram.replace('@', '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="hover:text-pink-500 transition-colors p-0.5"
+                                      title={`Instagram: ${user.instagram}`}
+                                    >
+                                      <Instagram className="w-3 h-3 text-slate-400 hover:text-pink-500" />
+                                    </a>
+                                  )}
+                                  {user.link && (
+                                    <a 
+                                      href={user.link.startsWith('http') ? user.link : `https://${user.link}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="hover:text-indigo-500 transition-colors p-0.5"
+                                      title="Website"
+                                    >
+                                      <Link2 className="w-3 h-3 text-slate-400 hover:text-indigo-500" />
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest mt-1">
                             Tactical Intel [{safeFormat(report.date, "MMM d")}{report.duration > 1 && report.endDate ? ` - ${safeFormat(report.endDate, "MMM d")}` : ""}]
                           </p>
                         </div>
@@ -150,6 +195,16 @@ export default function AIReportsPage() {
                         <div className="px-2.5 py-1 rounded-md bg-gray-100 text-[10px] font-black uppercase tracking-widest text-black/60">
                           {report.persona}
                         </div>
+                        {report.source && (
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border",
+                            (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).bg,
+                            (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).text,
+                            (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).border
+                          )}>
+                            {(sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).label}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">

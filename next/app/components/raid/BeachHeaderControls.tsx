@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar";
 import RecentRegionSearch from "../RecentRegionSearch";
@@ -12,8 +12,8 @@ import { Beach } from "@/app/types/beaches";
 import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
-import { HiddenGemsButton, LoggersButton, FoilingButton, FiltersButton, RegularButton } from "@/app/components/ui/GradientButton";
-import { Filter, Lock } from "lucide-react";
+import GradientButton, { HiddenGemsButton, LoggersButton, FoilingButton, FiltersButton, RegularButton } from "@/app/components/ui/GradientButton";
+import { Filter, Lock, Calendar } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
 import LocationFilter from "../LocationFilter";
@@ -185,22 +185,43 @@ export default function BeachHeaderControls({
     }
   }, []);
 
+  // Timezone-safe local date calculation
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${year}-${month}-${day}`;
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const tomorrowYear = tomorrow.getFullYear();
+  const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const tomorrowDay = String(tomorrow.getDate()).padStart(2, "0");
+  const tomorrowStr = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
+
+  const pastLimit = new Date(today);
+  pastLimit.setDate(today.getDate() - 3);
+  const pastLimitYear = pastLimit.getFullYear();
+  const pastLimitMonth = String(pastLimit.getMonth() + 1).padStart(2, "0");
+  const pastLimitDay = String(pastLimit.getDate()).padStart(2, "0");
+  const pastLimitStr = `${pastLimitYear}-${pastLimitMonth}-${pastLimitDay}`;
+
+  const futureLimit = new Date(today);
+  futureLimit.setDate(today.getDate() + 7);
+  const futureLimitYear = futureLimit.getFullYear();
+  const futureLimitMonth = String(futureLimit.getMonth() + 1).padStart(2, "0");
+  const futureLimitDay = String(futureLimit.getDate()).padStart(2, "0");
+  const futureLimitStr = `${futureLimitYear}-${futureLimitMonth}-${futureLimitDay}`;
+
+  const tenDayDates = useMemo(() => {
+    if (availableDates.length === 0) return [];
+    return availableDates.filter(dateStr => dateStr >= pastLimitStr && dateStr <= futureLimitStr);
+  }, [availableDates, pastLimitStr, futureLimitStr]);
+
   // Default date windowing logic
   const [hasDefaulted, setHasDefaulted] = useState(false);
   
   useEffect(() => {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
-
-    const pastLimit = new Date(today);
-    pastLimit.setUTCDate(today.getUTCDate() - 3);
-    const pastLimitStr = pastLimit.toISOString().split("T")[0];
-
-    const futureLimit = new Date(today);
-    futureLimit.setUTCDate(today.getUTCDate() + 7);
-    const futureLimitStr = futureLimit.toISOString().split("T")[0];
-
     // Force Today if no date in URL OR if the date in URL is outside our 10-day tactical window
     const isOutOfBounds = selectedDate && (selectedDate < pastLimitStr || selectedDate > futureLimitStr);
 
@@ -212,7 +233,7 @@ export default function BeachHeaderControls({
       }
       setHasDefaulted(true);
     }
-  }, [selectedDate, availableDates, hasDefaulted]);
+  }, [selectedDate, availableDates, hasDefaulted, todayStr, pastLimitStr, futureLimitStr]);
 
   return (
     <>
@@ -224,14 +245,25 @@ export default function BeachHeaderControls({
             <div className="flex flex-col items-start gap-5">
                 <div className="flex flex-col gap-3 w-full">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
-                  <DateSelector
-                    selectedDate={selectedDate}
-                    onDateSelect={handleDateSelect}
-                    beaches={beaches}
-                    availableDates={availableDates}
-                    className="w-full sm:w-auto"
-                    isLoading={isLoading}
-                  />
+                  <div className="flex flex-wrap items-stretch gap-2 w-full">
+                    <DateSelector
+                      selectedDate={selectedDate}
+                      onDateSelect={handleDateSelect}
+                      beaches={beaches}
+                      availableDates={tenDayDates}
+                      className="w-full sm:w-auto"
+                      isLoading={isLoading}
+                    />
+                    <GradientButton
+                      variant="gray"
+                      onClick={() => setIsFilterOpen(true)}
+                      icon={<Calendar className="w-4 h-4 text-gray-500" />}
+                      className="h-auto py-2 font-black uppercase tracking-wider text-[10px] min-h-[48px]"
+                      title="Advanced filters & full date selector"
+                    >
+                      Expand
+                    </GradientButton>
+                  </div>
                 </div>
                
                 <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-5">
@@ -374,7 +406,73 @@ export default function BeachHeaderControls({
 
       {/* Include FilterSidebar directly in this component */}
       <FilterDrawer isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
-        <LocationFilter regions={regions} />
+        <div className="space-y-6">
+          <LocationFilter regions={regions} />
+
+          {/* Advanced Date Selection */}
+          <div className="space-y-4 pt-6 border-t border-gray-100/80">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                Forecast Date
+              </h3>
+              {selectedDate && selectedDate !== todayStr && (
+                <button
+                  onClick={() => {
+                    handleDateSelect(todayStr);
+                    setIsFilterOpen(false);
+                  }}
+                  className="text-[9px] font-black uppercase tracking-wider text-brand-3 hover:underline"
+                >
+                  Reset to Today
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {availableDates.map((dateStr) => {
+                const isSelected = selectedDate === dateStr;
+                const date = new Date(dateStr);
+                const isValid = !isNaN(date.getTime());
+
+                const label = dateStr === todayStr ? "Today" : 
+                              dateStr === tomorrowStr ? "Tomorrow" :
+                              isValid ? date.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }) : "N/A";
+
+                const subLabel = isValid ? date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "";
+
+                return (
+                  <button
+                    key={dateStr}
+                    onClick={() => {
+                      handleDateSelect(dateStr);
+                      setIsFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex flex-col items-center py-2.5 px-1.5 rounded-xl border text-center transition-all relative overflow-hidden group/btn",
+                      isSelected
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md scale-[1.02] z-10"
+                        : "bg-white hover:bg-slate-50 border-gray-200 text-gray-700 hover:border-gray-300"
+                    )}
+                  >
+                    {isSelected && (
+                      <div className="absolute bottom-0 left-0 right-0 h-1 bg-brand-3" />
+                    )}
+
+                    <span className={cn(
+                      "font-black uppercase tracking-wider text-[7px] transition-colors",
+                      isSelected ? "text-brand-3" : "text-gray-400 group-hover/btn:text-gray-500"
+                    )}>
+                      {label}
+                    </span>
+                    <span className="font-bold text-[11px] leading-tight mt-0.5">
+                      {subLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </FilterDrawer>
     </>
   );

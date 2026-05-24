@@ -117,8 +117,8 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
     }
   }
   
-  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string, category: string = "GENERAL"): Promise<{ id?: string, report: string, presenterName: string, creditsRemaining: number, pioneer?: any }> {
-    console.log(`[IntelligenceService] 📋 Starting report generation: Beach=${beachId}, User=${userId}, Days=${days}, Persona=${personaOverride || 'AUTO'}`);
+  static async getTimedReportForBeach(beachId: string, date: string, userId: string, days: number = 7, personaOverride?: string, category: string = "GENERAL", source: string = "WINDY"): Promise<{ id?: string, report: string, presenterName: string, creditsRemaining: number, pioneer?: any }> {
+    console.log(`[IntelligenceService] 📋 Starting report generation: Beach=${beachId}, User=${userId}, Days=${days}, Persona=${personaOverride || 'AUTO'}, Source=${source}`);
     
     // 1. Authenticate user and check credits
     const user = await prisma.user.findUnique({
@@ -167,7 +167,8 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
         date: startDate,
         persona: (personaOverride || "AUTO").toUpperCase(),
         duration: days,
-        category: category.toUpperCase()
+        category: category.toUpperCase(),
+        source: source.toUpperCase()
       },
       include: {
         user: {
@@ -201,7 +202,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { credits: { decrement: creditCost } },
-        select: { id: true, credits: true, name: true, instagram: true, link: true }
+        select: { id: true, credits: true, name: true, email: true, instagram: true, link: true }
       });
       console.log(`[IntelligenceService] 💸 Credits deducted. Remaining: ${updatedUser.credits}`);
     } catch (error) {
@@ -229,19 +230,35 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       // 5. Generate Report
 
       // 5. Generate Report
-      // Prefer WINDY as it contains richer triple-swell data
+      // Query forecasts using the requested source
+      const querySource = source.toUpperCase();
       let forecasts = await prisma.forecast.findMany({
         where: {
           regionId: beachRef.regionId,
           date: { gte: startDate, lt: endDate },
           timeSlot: "NOON",
-          source: "WINDY"
+          source: querySource as any
         },
         orderBy: { date: 'asc' }
       });
 
-      // Fallback to WINDFINDER if WINDY data is missing
+      // Fallback if the requested source has missing data
       if (forecasts.length === 0) {
+        console.log(`[IntelligenceService] ⚠️ No forecasts found for source ${querySource}, falling back to WINDY`);
+        forecasts = await prisma.forecast.findMany({
+          where: {
+            regionId: beachRef.regionId,
+            date: { gte: startDate, lt: endDate },
+            timeSlot: "NOON",
+            source: "WINDY"
+          },
+          orderBy: { date: 'asc' }
+        });
+      }
+
+      // If WINDY is also missing, fall back to WINDFINDER
+      if (forecasts.length === 0) {
+        console.log(`[IntelligenceService] ⚠️ No forecasts found for WINDY, falling back to WINDFINDER`);
         forecasts = await prisma.forecast.findMany({
           where: {
             regionId: beachRef.regionId,
@@ -264,7 +281,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
         
         return { 
           report: `Swell intelligence currently unavailable for this ${days}-day timeframe.`,
-          presenterName: "Tide Raider Central",
+          presenterName: "gh0st Central",
           creditsRemaining: updatedUser.credits + creditCost
         };
       }
@@ -380,7 +397,8 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
             date: startDate,
             persona,
             duration: days,
-            category
+            category,
+            source: querySource
           }
         },
         update: { 
@@ -395,7 +413,8 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
           content: finalReport,
           duration: days,
           endDate: endDate,
-          category
+          category,
+          source: querySource
         }
       });
 
@@ -407,10 +426,29 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
           date: startDate,
           persona,
           duration: days,
-          category
+          category,
+          source: querySource
         },
         select: { id: true }
       });
+
+      // Trigger background admin notification
+      if (savedReport) {
+        import("../lib/adminNotifications").then(({ notifyAdminNewReport }) => {
+          notifyAdminNewReport(
+            { id: userId, email: updatedUser.email || "unknown@tideraider.com", name: updatedUser.name },
+            {
+              id: savedReport.id,
+              date: startDate,
+              source: querySource,
+              category,
+              content: finalReport,
+              duration: days
+            },
+            { id: beachId, name: beachRef.name }
+          ).catch(err => console.error("Error sending admin report notification:", err));
+        }).catch(err => console.error("Failed to load adminNotifications module:", err));
+      }
 
       return { 
         id: savedReport?.id,
@@ -476,7 +514,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       
       return { report, presenterName: activePersona.name };
     } catch (error) {
-       return { report: "Systems offline.", presenterName: "Tide Raider" };
+       return { report: "Systems offline.", presenterName: "gh0st" };
     }
   }
 }

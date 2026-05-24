@@ -466,7 +466,7 @@ export const beachData: Beach[] = [
       max: 4,
     },
     idealSwellPeriod: {
-      min: 13,
+      min: 12,
       max: 24,
     },
     waterTemp: {

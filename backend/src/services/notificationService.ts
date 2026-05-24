@@ -416,9 +416,14 @@ function createNotificationMessage(
     if (sources.length === 0) return "Global Intelligence";
     return sources.map(s => {
       const source = s.toUpperCase();
-      if (source === "WINDFINDER") return "Source A";
-      if (source === "MSW" || source === "MAGICSEAWEED") return "Source B";
-      if (source === "SURFLINE") return "Source C";
+      if (source === "WINDFINDER") return "Windfinder";
+      if (source === "WINDFINDER_SUPER") return "Windfinder Super";
+      if (source === "WINDGURU" || source === "WINDGURU_G2") return "Windguru";
+      if (source === "WINDY" || source === "WINDY_COM") return "Windy";
+      if (source === "TIDE_RAIDER") return "Tide Raider";
+      if (source === "MSW" || source === "MAGICSEAWEED") return "Magicseaweed";
+      if (source === "SURFLINE") return "Surfline";
+      if (source === "OPENMETEO_ARCHIVE") return "Archive Data";
       return s;
     }).join(", ");
   };

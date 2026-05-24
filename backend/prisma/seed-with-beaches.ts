@@ -888,7 +888,7 @@ async function main() {
       update: { credits: 300 },
       create: {
         id: "cmnhjq35d000cs60fxss02p4o",
-        name: "Tide Raider",
+        name: "gh0st",
         email: "admin@tideraider.com",
         roles: ["SURFER"],
         credits: 300,

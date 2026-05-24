@@ -61,9 +61,12 @@ const createRedisClient = () => {
   }
 
   try {
+    const cleanUrl = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/^"|"$/g, "").trim();
+    const cleanToken = (process.env.UPSTASH_REDIS_REST_TOKEN || "").replace(/^"|"$/g, "").trim();
+    
     const rawRedis = new Redis({
-      url: (process.env.UPSTASH_REDIS_REST_URL || "").trim(),
-      token: (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim(),
+      url: cleanUrl,
+      token: cleanToken,
     });
 
     const withTimeout = <T>(promise: Promise<T>, timeoutMs = 1500): Promise<T> => {

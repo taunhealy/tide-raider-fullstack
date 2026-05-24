@@ -494,16 +494,22 @@ function AIReportContent() {
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Tactical Window</span>
                             <p className="text-[14px] lg:text-[15px] font-bold text-white">{reportData.duration} Day{reportData.duration > 1 ? 's' : ''}</p>
                           </div>
-                          <div className="space-y-1">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Source Reliability</span>
-                            <div className="text-[14px] lg:text-[15px] font-bold text-indigo-400 flex items-center gap-2">
-                              98.4% <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse inline-block" />
+                          {reportData.source && (
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Forecast Source</span>
+                              <p className="text-[14px] lg:text-[15px] font-bold text-white uppercase tracking-wider">
+                                {reportData.source === 'WINDFINDER_SUPER' ? 'Windfinder Super' : reportData.source === 'TIDE_RAIDER' ? 'Tide Raider' : reportData.source.charAt(0) + reportData.source.slice(1).toLowerCase()}
+                              </p>
                             </div>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Auth Token</span>
-                            <p className="text-[14px] lg:text-[15px] font-bold text-white/30 font-mono">TR-{String(reportData.id || '').slice(0, 8).toUpperCase()}</p>
-                          </div>
+                          )}
+                          {reportData.category && (
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">Discipline</span>
+                              <p className="text-[14px] lg:text-[15px] font-bold text-white uppercase tracking-wider">
+                                {reportData.category === 'SURFING' ? 'Surfing' : reportData.category === 'FOILING' ? 'Foiling' : 'Kitesurfing'}
+                              </p>
+                            </div>
+                          )}
                         </div>
 
                         <div className="text-[16px] lg:text-[18px] leading-[1.8] font-medium text-white/80 whitespace-pre-wrap selection:bg-indigo-500/40">

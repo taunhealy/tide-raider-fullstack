@@ -77,15 +77,23 @@ export default function StickyForecastWidget({
   const dateOptions = useMemo(() => {
     if (availableDates.length === 0) return [];
 
+    // Timezone-safe local today calculation
     const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
 
     const tomorrow = new Date(today);
-    tomorrow.setUTCDate(today.getUTCDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    tomorrow.setDate(today.getDate() + 1);
+    const tomorrowYear = tomorrow.getFullYear();
+    const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, "0");
+    const tomorrowDay = String(tomorrow.getDate()).padStart(2, "0");
+    const tomorrowStr = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
 
-    return availableDates.slice(0, 7).map((dateStr) => {
+    const futureOrTodayDates = availableDates.filter((dateStr) => dateStr >= todayStr);
+
+    return futureOrTodayDates.slice(0, 3).map((dateStr) => {
       const date = new Date(dateStr);
       const isValidDate = !isNaN(date.getTime());
       

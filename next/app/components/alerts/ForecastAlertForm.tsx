@@ -81,12 +81,14 @@ const forecastProperties = [
   },
 ] as const;
 
-// Map forecast source names to letters (A, B, C)
+// Map forecast source names to display names
 const getSourceDisplayName = (source: string): string => {
   const sourceMap: Record<string, string> = {
-    WINDFINDER: "A",
-    WINDGURU: "B",
-    WINDY: "C",
+    WINDFINDER: "Windfinder",
+    WINDFINDER_SUPER: "Windfinder Super",
+    WINDGURU: "Windguru",
+    WINDY: "Windy",
+    TIDE_RAIDER: "Tide Raider",
   };
   return sourceMap[source] || source;
 };
@@ -611,10 +613,10 @@ function AlertFormBody({
         <p className="text-sm text-gray-500">
           Select which forecast sources to monitor for this alert.
         </p>
-        <div className="flex gap-4">
-          {(["WINDFINDER", "WINDGURU", "WINDY"] as const).map((source) => (
+        <div className="flex flex-wrap gap-4">
+          {(["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"] as const).map((source) => (
             <div key={source} className="flex items-center space-x-2">
-              <Checkbox
+               <Checkbox
                 id={`source-${source}`}
                 checked={(alert.sources as string[])?.includes(source)}
                 onCheckedChange={(checked) => {

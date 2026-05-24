@@ -2,10 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Sparkles, ArrowRight, Calendar, MapPin, Loader2, Search } from "lucide-react";
+import { Sparkles, ArrowRight, Calendar, MapPin, Loader2, Search, Instagram, Link2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/app/lib/utils";
 import AIReportModal from "../beach/AIReportModal";
+import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 
 interface IntelligenceReport {
   id: string;
@@ -17,13 +18,30 @@ interface IntelligenceReport {
   beach: {
     name: string;
     id: string;
+    regionId: string;
   };
   category: string;
+  source?: string;
+  user?: {
+    id: string;
+    name: string;
+    instagram?: string;
+    link?: string;
+  };
 }
+
+const sourceColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
+  WINDY:             { bg: "bg-indigo-50",    text: "text-indigo-600",   border: "border-indigo-100",   label: "Windy" },
+  WINDGURU:          { bg: "bg-cyan-50",      text: "text-cyan-600",     border: "border-cyan-100",     label: "Guru" },
+  WINDFINDER_SUPER:  { bg: "bg-fuchsia-50",   text: "text-fuchsia-600",  border: "border-fuchsia-100",  label: "Super" },
+  WINDFINDER:        { bg: "bg-sky-50",       text: "text-sky-600",      border: "border-sky-100",      label: "Finder" },
+  TIDE_RAIDER:       { bg: "bg-zinc-950",     text: "text-zinc-100",     border: "border-zinc-800",     label: "Raider" }
+};
 
 export default function AIReportsView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<{ id: string; beach: any } | null>(null);
+  const { filters } = useBeachFilters();
 
   const { data: reports, isLoading } = useQuery<IntelligenceReport[]>({
     queryKey: ["intelligenceHistory"],
@@ -34,9 +52,14 @@ export default function AIReportsView() {
     }
   });
 
-  const filteredReports = reports?.filter(report => 
-    report?.beach?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredReports = reports?.filter(report => {
+    // Filter by selected region first if active
+    if (filters.regionId && report.beach?.regionId !== filters.regionId) {
+      return false;
+    }
+    // Filter by search query
+    return report?.beach?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
   
   const handleLoadSignal = (report: IntelligenceReport) => {
     if (!report?.beach) {
@@ -119,7 +142,43 @@ export default function AIReportsView() {
                         }
                       })()}
                     </span>
-                    <span className="text-[10px] text-gray-400 font-medium mt-0.5">
+                    {(() => {
+                      const user = report.user || {
+                        name: "gh0st",
+                        instagram: undefined,
+                        link: undefined
+                      };
+                      return (
+                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500/80 mt-1" onClick={(e) => e.stopPropagation()}>
+                          <span className="opacity-60">by {user.name}</span>
+                          <div className="flex items-center gap-1 ml-0.5">
+                            {user.instagram && (
+                              <a 
+                                href={`https://instagram.com/${user.instagram.replace('@', '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-pink-500 transition-colors p-0.5"
+                                title={`Instagram: ${user.instagram}`}
+                              >
+                                <Instagram className="w-3 h-3 text-slate-400 hover:text-pink-500" />
+                              </a>
+                            )}
+                            {user.link && (
+                              <a 
+                                href={user.link.startsWith('http') ? user.link : `https://${user.link}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-indigo-500 transition-colors p-0.5"
+                                title="Website"
+                              >
+                                <Link2 className="w-3 h-3 text-slate-400 hover:text-indigo-500" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <span className="text-[10px] text-gray-400 font-medium mt-1">
                       Tactical Intel [{(() => {
                         try {
                           const start = new Date(report.date);
@@ -154,6 +213,16 @@ export default function AIReportsView() {
                       {report.category === "KITESURFING" ? "KITE" : 
                        report.category === "FOILING" ? "FOIL" : "SURF"}
                     </span>
+                    {report.source && (
+                      <span className={cn(
+                        "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ml-1",
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).bg,
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).text,
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).border
+                      )}>
+                        {(sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).label}
+                      </span>
+                    )}
                   </div>
                 </td>
 

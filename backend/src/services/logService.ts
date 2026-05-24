@@ -909,6 +909,7 @@ export class LogService {
           select: {
             id: true,
             name: true,
+            email: true,
             nationality: true,
           },
         },
@@ -935,6 +936,22 @@ export class LogService {
         },
       });
       console.log(`[createRaidLogEntry] Incremented accuracy vote for ${data.mostAccurateSource} on beach ${logEntry.beachId}`);
+    }
+
+    // Trigger background admin notification
+    if (logEntry) {
+      import("../lib/adminNotifications").then(({ notifyAdminNewLog }) => {
+        notifyAdminNewLog(
+          { id: userId, email: (logEntry.user as any)?.email || data.surferEmail || "unknown@tideraider.com", name: (logEntry.user as any)?.name || data.surferName },
+          {
+            id: logEntry.id,
+            surferRating: logEntry.surferRating,
+            comments: logEntry.comments,
+            date: logEntry.date
+          },
+          logEntry.beach
+        ).catch(err => console.error("Error sending admin log notification:", err));
+      }).catch(err => console.error("Failed to load adminNotifications module:", err));
     }
 
     return logEntry;

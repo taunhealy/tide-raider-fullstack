@@ -3,20 +3,20 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
   DialogFooter
 } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/Button";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
 } from "@/app/components/ui/tooltip";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
@@ -48,7 +48,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const [activeReportId, setActiveReportId] = useState<string | undefined>(reportId || searchParams.get("report") || undefined);
-  const [reportSequence, setReportSequence] = useState<{id: string, date: string, duration: number}[]>([]);
+  const [reportSequence, setReportSequence] = useState<{ id: string, date: string, duration: number }[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingArchive, setIsLoadingArchive] = useState(false);
   const [report, setReport] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const [isCopied, setIsCopied] = useState(false);
   const [existingReportDate, setExistingReportDate] = useState<Date | null>(null);
   const [displayedReportDuration, setDisplayedReportDuration] = useState<number>(7);
-  
+
   // Sharing State
   const [targetEmail, setTargetEmail] = useState("");
   const [targetWhatsApp, setTargetWhatsApp] = useState("");
@@ -66,7 +66,16 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   const [selectedDays, setSelectedDays] = useState(7);
   const [selectedSport, setSelectedSport] = useState("SURFING");
+  const [selectedSource, setSelectedSource] = useState<string>("WINDY");
   const creditCost = selectedDays <= 1 ? 1 : 4;
+
+  const handleSourceChange = (source: string) => {
+    setSelectedSource(source);
+    setActiveReportId(undefined);
+    setReport(null);
+    setPioneer(null);
+    setExistingReportDate(null);
+  };
 
   // Sync prop changes and user profile data to internal state
   useEffect(() => {
@@ -97,7 +106,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     if (isOpen && beach?.id) {
       const fetchSequence = async () => {
         try {
-          const res = await fetch(`/api/backend/intelligence/beach/${beach.id}/history`);
+          const res = await fetch(`/api/backend/intelligence/beach/${beach.id}/history?source=${selectedSource}`);
           if (res.ok) {
             const data = await res.json();
             setReportSequence(data);
@@ -108,7 +117,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       };
       fetchSequence();
     }
-  }, [isOpen, beach?.id]);
+  }, [isOpen, beach?.id, selectedSource]);
 
   const handleCopyReport = () => {
     if (!report) return;
@@ -129,11 +138,11 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           if (activeReportId && activeReportId !== 'latest' && activeReportId !== 'true') {
             url = `/api/backend/intelligence/report/${activeReportId}`;
           } else {
-            url = `/api/backend/intelligence/latest?beachId=${beach.id}`;
+            url = `/api/backend/intelligence/latest?beachId=${beach.id}&source=${selectedSource}`;
           }
 
           const response = await fetch(url);
-          
+
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             // Only throw error for real failures, 404 for a report-not-found is okay for "latest"
@@ -142,7 +151,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               setPioneer(null);
               return;
             }
-            
+
             const errorMessage = errorData.error || errorData.message || `Signal fetch failed (Status: ${response.status})`;
             console.error("[AIReportModal] Tactical fetch failed:", {
               status: response.status,
@@ -153,7 +162,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           }
 
           const data = await response.json();
-          
+
           if (data && data.content) {
             setReport(data.content);
             setPioneer(data.user || data.pioneer || null);
@@ -178,7 +187,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           if (activeReportId && activeReportId !== 'latest') {
             toast.error(error.message || "Failed to load historical signal");
           } else if (activeReportId === 'latest') {
-             // Silence error for 'latest' if it was just a 404
+            // Silence error for 'latest' if it was just a 404
           }
         } finally {
           setIsLoadingArchive(false);
@@ -186,13 +195,13 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       };
       fetchReport();
     }
-  }, [activeReportId, isOpen, beach?.id]);
+  }, [activeReportId, isOpen, beach?.id, selectedSource]);
 
   const handleNavigate = (direction: 'next' | 'prev') => {
     if (reportSequence.length === 0) return;
-    
-    const currentIdx = activeReportId 
-      ? reportSequence.findIndex(r => r.id === activeReportId) 
+
+    const currentIdx = activeReportId
+      ? reportSequence.findIndex(r => r.id === activeReportId)
       : 0;
 
     if (direction === 'prev' && currentIdx < reportSequence.length - 1) {
@@ -203,8 +212,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   };
 
   // Is the report from today?
-  const isReportCurrent = existingReportDate ? 
-    new Date(existingReportDate).toDateString() === new Date().toDateString() : 
+  const isReportCurrent = existingReportDate ?
+    new Date(existingReportDate).toDateString() === new Date().toDateString() :
     true;
 
 
@@ -243,7 +252,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           date,
           persona: "BRO",
           days: selectedDays,
-          category: selectedSport
+          category: selectedSport,
+          source: selectedSource
         }),
       });
 
@@ -258,7 +268,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       if (data.id) setActiveReportId(data.id);
       window.dispatchEvent(new CustomEvent("credits-updated"));
       window.dispatchEvent(new CustomEvent("intelligence-updated"));
-      
+
       toast.success("Analysis Ready", {
         description: `Your ${selectedDays === 7 ? 'Weekly' : selectedDays + '-Day'} Strategic Report has been compiled.`
       });
@@ -302,13 +312,13 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     setIsSharingEmail(true);
     try {
       // Calculate date range for the header
-      const start = existingReportDate && !isNaN(new Date(existingReportDate).getTime()) 
-        ? new Date(existingReportDate) 
+      const start = existingReportDate && !isNaN(new Date(existingReportDate).getTime())
+        ? new Date(existingReportDate)
         : new Date();
-      
+
       const end = new Date(start);
       end.setDate(end.getDate() + (selectedDays - 1));
-      
+
       const formatDate = (d: Date) => {
         try {
           if (!d || isNaN(d.getTime())) return "Unknown";
@@ -332,12 +342,12 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
       if (!response.ok) throw new Error("Send failure");
 
-      toast.success("Intelligence Shared", { 
-        description: `Strategic report sent to ${targetEmail}` 
+      toast.success("Intelligence Shared", {
+        description: `Strategic report sent to ${targetEmail}`
       });
     } catch (err) {
-      toast.error("Comms Failure", { 
-        description: "Could not send report via email." 
+      toast.error("Comms Failure", {
+        description: "Could not send report via email."
       });
     } finally {
       setIsSharingEmail(false);
@@ -349,7 +359,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       toast.error("Number Required", { description: "Please enter a valid WhatsApp number." });
       return;
     }
-    
+
     setIsSharingWhatsApp(true);
     try {
       const response = await fetch("/api/backend/intelligence/share-whatsapp", {
@@ -367,12 +377,12 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         throw new Error(errorData.error || "Broadcast failure");
       }
 
-      toast.success("Intelligence Dispatched", { 
-        description: "Signal pushed through WhatsApp relay." 
+      toast.success("Intelligence Dispatched", {
+        description: "Signal pushed through WhatsApp relay."
       });
     } catch (err: any) {
-      toast.error("Transmission Error", { 
-        description: err.message || "Failed to dispatch WhatsApp signal." 
+      toast.error("Transmission Error", {
+        description: err.message || "Failed to dispatch WhatsApp signal."
       });
     } finally {
       setIsSharingWhatsApp(false);
@@ -383,30 +393,30 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] lg:max-w-7xl bg-white border-none shadow-2xl p-0 gap-0 overflow-hidden font-['Inter',_sans-serif] h-[95vh] md:h-auto md:max-h-[85vh] flex flex-col top-[52%] md:top-[50%] transition-all duration-500">
         <DialogTitle className="sr-only">AI Intelligence Dashboard: {beach.name}</DialogTitle>
-        
+
         {/* Unified Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white shadow-xl shadow-gray-200">
-                <Waves className="w-6 h-6" />
-             </div>
-              <div>
-                <h2 className="text-[22px] leading-tight font-black text-black tracking-tighter">{beach.name}</h2>
-                <div className="flex items-center gap-2">
-                  <p className="text-[10px] font-bold text-black opacity-30 uppercase tracking-[0.2em]">
-                    Tactical Intelligence Command
-                  </p>
-                </div>
+            <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center text-white shadow-xl shadow-gray-200">
+              <Waves className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-[22px] leading-tight font-black text-black tracking-tighter">{beach.name}</h2>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold text-black opacity-30 uppercase tracking-[0.2em]">
+                  Tactical Intelligence Command
+                </p>
               </div>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="bg-white border border-gray-200 px-3 py-2 rounded-xl flex items-center gap-3 shadow-sm">
-               <Zap className="w-4 h-4 text-blue-500 fill-current" />
-               {isCreditsLoading ? (
-                 <div className="w-8 h-4 bg-gray-100 animate-pulse rounded" />
-               ) : (
-                  <span className="text-[13px] font-black text-black tracking-tight">{credits ?? 0} <span className="opacity-30 font-bold uppercase text-[9px] tracking-widest ml-1">Credits</span></span>
-               )}
+              <Zap className="w-4 h-4 text-blue-500 fill-current" />
+              {isCreditsLoading ? (
+                <div className="w-8 h-4 bg-gray-100 animate-pulse rounded" />
+              ) : (
+                <span className="text-[13px] font-black text-black tracking-tight">{credits ?? 0} <span className="opacity-30 font-bold uppercase text-[9px] tracking-widest ml-1">Credits</span></span>
+              )}
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
               <X className="w-5 h-5" />
@@ -416,16 +426,16 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
         {/* Main Dashboard Body */}
         <div className="flex flex-col md:grid md:grid-cols-[380px_1fr] flex-1 min-h-0 overflow-hidden">
-          
+
           {/* Left Column: Configuration & Status */}
           <div className="bg-white border-r border-gray-100 p-8 space-y-10 overflow-y-auto custom-scrollbar">
-            
+
             {/* Column Label */}
             <div className="pb-6 border-b border-gray-50">
-               <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-black">Briefing Command</h3>
-               <p className="text-[10px] font-medium text-gray-400 mt-1 italic leading-relaxed">
-                 Synthesize new tactical data for this break.
-               </p>
+              <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-black">Briefing Command</h3>
+              <p className="text-[10px] font-medium text-gray-400 mt-1 italic leading-relaxed">
+                Synthesize new tactical data for this break.
+              </p>
             </div>
 
             {/* Intel Specs */}
@@ -458,6 +468,33 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                       >
                         <opt.icon className={cn("w-4 h-4", selectedSport === opt.value ? "text-white" : "text-gray-300")} />
                         {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Forecast Source</label>
+                  <div className="grid grid-cols-2 gap-2 bg-gray-50/50 p-2 rounded-2xl border border-gray-100/80">
+                    {[
+                      { label: "Windy", value: "WINDY" },
+                      { label: "Windguru", value: "WINDGURU" },
+                      { label: "Super", value: "WINDFINDER_SUPER" },
+                      { label: "Finder", value: "WINDFINDER" },
+                      { label: "Raider", value: "TIDE_RAIDER", fullWidth: true }
+                    ].map((src) => (
+                      <button
+                        key={src.value}
+                        onClick={() => handleSourceChange(src.value)}
+                        className={cn(
+                          "py-2 px-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
+                          src.fullWidth ? "col-span-2 py-2.5" : "",
+                          selectedSource === src.value
+                            ? "bg-black border-black text-white shadow-md scale-[1.01]"
+                            : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                        )}
+                      >
+                        {src.label}
                       </button>
                     ))}
                   </div>
@@ -505,8 +542,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
             {/* Action Area */}
             <div className="space-y-6 pt-4 border-t border-gray-50">
-              <Button 
-                onClick={handleGenerate} 
+              <Button
+                onClick={handleGenerate}
                 disabled={isGenerating || isCreditsLoading || (credits < creditCost)}
                 className="w-full h-14 bg-black hover:bg-gray-800 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[12px] shadow-xl shadow-gray-200 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
               >
@@ -526,13 +563,13 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               {credits < creditCost && (
                 <div className="bg-amber-50/50 rounded-2xl p-5 border border-amber-100 space-y-4">
                   <div className="flex items-center gap-2">
-                     <ShieldAlert className="w-4 h-4 text-amber-600" />
-                     <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Credits Required</h4>
+                    <ShieldAlert className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Credits Required</h4>
                   </div>
                   <p className="text-[11px] leading-relaxed font-medium text-amber-800 opacity-80">
                     You need {creditCost} credits to pioneer this briefing.
                   </p>
-                  <Button 
+                  <Button
                     asChild
                     variant="outline"
                     className="w-full rounded-xl h-10 text-[10px] font-bold uppercase tracking-widest border-amber-200 bg-white text-amber-900 hover:bg-amber-50"
@@ -545,26 +582,55 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
             {/* System Info */}
             <div className="pt-6">
-               <div className="p-5 rounded-2xl bg-gray-50/80 border border-gray-100 flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm shrink-0">
-                    <Info className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-[11px] font-bold text-black mb-1">AI Protocol v2.4</h4>
-                    <p className="text-[10px] leading-relaxed text-gray-500 font-medium italic">
-                      "Synthesizing ensemble forecasts with local historical patterns for tactical precision."
-                    </p>
-                  </div>
-               </div>
+              <div className="p-5 rounded-2xl bg-gray-50/80 border border-gray-100 flex items-start gap-4">
+                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm shrink-0">
+                  <Info className="w-4 h-4 text-gray-400" />
+                </div>
+                <div>
+                  <h4 className="text-[11px] font-bold text-black mb-1">AI Protocol v2.4</h4>
+                  <p className="text-[10px] leading-relaxed text-gray-500 font-medium italic">
+                    "Synthesizing ensemble forecasts with local historical patterns for tactical precision."
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Right Column: Intelligence Briefing Display */}
           <div className="flex-1 flex flex-col bg-gray-50/30 min-h-0 overflow-hidden relative">
-            
+
             {/* Column Label - Desktop Only Overlay */}
             <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.03] select-none">
-               <span className="text-[120px] font-black uppercase tracking-tighter">INTELLIGENCE</span>
+              <span className="text-[120px] font-black uppercase tracking-tighter">INTELLIGENCE</span>
+            </div>
+
+            {/* Dynamic Source Tabs Menu (Always visible) */}
+            <div className="px-8 py-3 bg-white border-b border-gray-100 flex items-center justify-between z-10 shadow-sm overflow-x-auto">
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Forecast Source:</span>
+                <div className="flex bg-gray-50 rounded-xl p-0.5 border border-gray-100/80">
+                  {[
+                    { id: "WINDY", label: "Windy" },
+                    { id: "WINDGURU", label: "Windguru" },
+                    { id: "WINDFINDER_SUPER", label: "Windfinder Super" },
+                    { id: "WINDFINDER", label: "Windfinder" },
+                    { id: "TIDE_RAIDER", label: "Tide Raider" }
+                  ].map((src) => (
+                    <button
+                      key={src.id}
+                      onClick={() => handleSourceChange(src.id)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0",
+                        selectedSource === src.id
+                          ? "bg-black text-white shadow-sm scale-[1.02]"
+                          : "text-gray-400 hover:text-black"
+                      )}
+                    >
+                      {src.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {isLoadingArchive ? (
@@ -579,14 +645,33 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 </div>
               </div>
             ) : !report ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center animate-in zoom-in-95 duration-500">
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center animate-in zoom-in-95 duration-500 overflow-y-auto">
                 <div className="w-24 h-24 rounded-3xl bg-white shadow-2xl shadow-gray-200 flex items-center justify-center mb-8 border border-gray-50">
                   <Zap className="w-10 h-10 text-gray-200" />
                 </div>
                 <h3 className="text-xl font-black text-black tracking-tight mb-3">No Active Signal</h3>
-                <p className="text-[14px] text-gray-400 max-w-sm font-medium leading-relaxed mb-10">
-                  This break hasn't been pioneered yet for this window. Be the first to generate a tactical brief and share intelligence with the crew.
+                <p className="text-[14px] text-gray-400 max-w-sm font-medium leading-relaxed mb-6">
+                  This break hasn't been pioneered yet for the <strong>{selectedSource === 'WINDFINDER_SUPER' ? 'Windfinder Super' : selectedSource === 'TIDE_RAIDER' ? 'Tide Raider' : selectedSource.charAt(0) + selectedSource.slice(1).toLowerCase()}</strong> forecast source. Be the first to generate a tactical brief and share intelligence with the crew.
                 </p>
+
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || isCreditsLoading || (credits < creditCost)}
+                  className="mb-8 px-6 h-12 bg-black hover:bg-gray-800 text-white rounded-xl text-[11px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-gray-200 transition-all active:scale-[0.98] disabled:opacity-30"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 text-white animate-pulse" />
+                      Pioneer {selectedSource === 'WINDFINDER_SUPER' ? 'Windfinder Super' : selectedSource === 'TIDE_RAIDER' ? 'Tide Raider' : selectedSource.charAt(0) + selectedSource.slice(1).toLowerCase()} Briefing
+                    </>
+                  )}
+                </Button>
+
                 <div className="flex items-center gap-3">
                   <div className="h-px w-8 bg-gray-200" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">Tactical Readiness: 100%</span>
@@ -599,8 +684,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <div className="px-8 py-4 bg-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-10 shadow-sm">
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
-                       <Zap className="w-3.5 h-3.5 text-indigo-600 fill-current" />
-                       <span className="text-[11px] font-black uppercase tracking-widest text-indigo-900">Briefing Active</span>
+                      <Zap className="w-3.5 h-3.5 text-indigo-600 fill-current" />
+                      <span className="text-[11px] font-black uppercase tracking-widest text-indigo-900">Briefing Active</span>
                     </div>
                     {existingReportDate && (
                       <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-100">
@@ -609,67 +694,67 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                       </div>
                     )}
                   </div>
-                  
-                    <div className="flex items-center gap-2">
-                      {reportSequence.length > 1 && (() => {
-                        const currentIdx = activeReportId 
-                          ? reportSequence.findIndex(r => r.id === activeReportId) 
-                          : 0;
-                        const prevReport = currentIdx < reportSequence.length - 1 ? reportSequence[currentIdx + 1] : null;
-                        const nextReport = currentIdx > 0 ? reportSequence[currentIdx - 1] : null;
 
-                        return (
-                          <div className="flex items-center gap-1 bg-gray-50 rounded-2xl border border-gray-100 mr-2 p-1">
-                            <button 
-                              onClick={() => handleNavigate('prev')}
-                              disabled={!prevReport}
-                              className="flex flex-col items-end px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all group disabled:opacity-30"
-                            >
-                              <div className="flex items-center gap-1.5 mb-0.5">
-                                <ChevronLeft className="w-3.5 h-3.5 text-black group-hover:-translate-x-0.5 transition-transform" />
-                                <span className="text-[9px] font-black uppercase tracking-widest text-black/30">Older Intel</span>
-                              </div>
-                              {prevReport && (
-                                <span className="text-[10px] font-bold text-black opacity-60">
-                                  {format(new Date(prevReport.date), "MMM d")} ({prevReport.duration}D)
-                                </span>
-                              )}
-                            </button>
-                            
-                            <div className="h-8 w-px bg-gray-200 mx-1" />
-                            
-                            <button 
-                              onClick={() => handleNavigate('next')}
-                              disabled={!nextReport}
-                              className="flex flex-col items-start px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all group disabled:opacity-30"
-                            >
-                              <div className="flex items-center gap-1.5 mb-0.5">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-black/30">Newer Intel</span>
-                                <ChevronRight className="w-3.5 h-3.5 text-black group-hover:translate-x-0.5 transition-transform" />
-                              </div>
-                              {nextReport && (
-                                <span className="text-[10px] font-bold text-black opacity-60">
-                                  {format(new Date(nextReport.date), "MMM d")} ({nextReport.duration}D)
-                                </span>
-                              )}
-                            </button>
-                          </div>
-                        );
-                      })()}
-                      <Button
-                        onClick={handleCopyReport}
-                        variant="outline"
-                        className="h-10 px-4 rounded-xl border-gray-200 text-[10px] font-black uppercase tracking-widest gap-2 bg-white shadow-sm hover:border-black transition-colors"
-                      >
-                        {isCopied ? <Check className="w-3.5 h-3.5 text-brand-3" /> : <Copy className="w-3.5 h-3.5" />}
-                        {isCopied ? "Secured" : "Copy Signal"}
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    {reportSequence.length > 1 && (() => {
+                      const currentIdx = activeReportId
+                        ? reportSequence.findIndex(r => r.id === activeReportId)
+                        : 0;
+                      const prevReport = currentIdx < reportSequence.length - 1 ? reportSequence[currentIdx + 1] : null;
+                      const nextReport = currentIdx > 0 ? reportSequence[currentIdx - 1] : null;
+
+                      return (
+                        <div className="flex items-center gap-1 bg-gray-50 rounded-2xl border border-gray-100 mr-2 p-1">
+                          <button
+                            onClick={() => handleNavigate('prev')}
+                            disabled={!prevReport}
+                            className="flex flex-col items-end px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all group disabled:opacity-30"
+                          >
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <ChevronLeft className="w-3.5 h-3.5 text-black group-hover:-translate-x-0.5 transition-transform" />
+                              <span className="text-[9px] font-black uppercase tracking-widest text-black/30">Older Intel</span>
+                            </div>
+                            {prevReport && (
+                              <span className="text-[10px] font-bold text-black opacity-60">
+                                {format(new Date(prevReport.date), "MMM d")} ({prevReport.duration}D)
+                              </span>
+                            )}
+                          </button>
+
+                          <div className="h-8 w-px bg-gray-200 mx-1" />
+
+                          <button
+                            onClick={() => handleNavigate('next')}
+                            disabled={!nextReport}
+                            className="flex flex-col items-start px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all group disabled:opacity-30"
+                          >
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-black/30">Newer Intel</span>
+                              <ChevronRight className="w-3.5 h-3.5 text-black group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                            {nextReport && (
+                              <span className="text-[10px] font-bold text-black opacity-60">
+                                {format(new Date(nextReport.date), "MMM d")} ({nextReport.duration}D)
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })()}
+                    <Button
+                      onClick={handleCopyReport}
+                      variant="outline"
+                      className="h-10 px-4 rounded-xl border-gray-200 text-[10px] font-black uppercase tracking-widest gap-2 bg-white shadow-sm hover:border-black transition-colors"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-brand-3" /> : <Copy className="w-3.5 h-3.5" />}
+                      {isCopied ? "Secured" : "Copy Signal"}
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                   <div className="max-w-3xl mx-auto space-y-10">
-                    
+
                     {!isReportCurrent && (
                       <div className="p-5 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-between gap-6 animate-in slide-in-from-top-4 duration-500">
                         <div className="flex items-center gap-4">
@@ -683,7 +768,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                             </p>
                           </div>
                         </div>
-                        <Button 
+                        <Button
                           onClick={handleGenerate}
                           disabled={isGenerating}
                           className="h-10 px-5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-amber-200/50 active:scale-[0.95] transition-all"
@@ -719,7 +804,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Intelligence Source</span>
                             <div className="text-[14px] font-bold text-black flex items-center gap-1">
                               {pioneer?.id ? (
-                                <Link 
+                                <Link
                                   href={`/profile/${pioneer.id}`}
                                   className="hover:text-indigo-600 transition-colors flex items-center gap-1.5"
                                 >
@@ -727,81 +812,93 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                   <ArrowUpRight className="w-3 h-3 opacity-30" />
                                 </Link>
                               ) : (
-                                <span>{pioneer?.name || "Tide Raider AI"}</span>
+                                <span>{pioneer?.name || "gh0st"}</span>
                               )}
                             </div>
                           </div>
                         </div>
 
                         {report}
-                        
-                        {pioneer && (
-                          <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
-                                  <Users className="w-3 h-3 text-white" />
+
+                        {(() => {
+                          const activePioneer = pioneer ? {
+                            ...pioneer,
+                            instagram: pioneer.instagram || undefined,
+                            link: pioneer.link || undefined
+                          } : {
+                            name: "gh0st",
+                            instagram: undefined,
+                            link: undefined
+                          };
+
+                          return (
+                            <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
+                                    <Users className="w-3 h-3 text-white" />
+                                  </div>
+                                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 underline decoration-indigo-500/30 underline-offset-4">AI Report provided by</span>
                                 </div>
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 underline decoration-indigo-500/30 underline-offset-4">AI Report provided by</span>
+                                <div className="space-y-2">
+                                  <h4 className="text-[20px] font-black text-black tracking-tighter">
+                                    {activePioneer.id ? (
+                                      <Link
+                                        href={`/profile/${activePioneer.id}`}
+                                        className="hover:text-indigo-600 transition-colors"
+                                      >
+                                        {activePioneer.name}
+                                      </Link>
+                                    ) : activePioneer.name}
+                                  </h4>
+                                  <div className="flex flex-col gap-1.5">
+                                    {activePioneer.instagram && (
+                                      <Link
+                                        href={`https://instagram.com/${activePioneer.instagram.replace('@', '')}`}
+                                        target="_blank"
+                                        className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
+                                      >
+                                        <Instagram className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                                        {activePioneer.instagram.startsWith('@') ? activePioneer.instagram : `@${activePioneer.instagram}`}
+                                      </Link>
+                                    )}
+                                    {activePioneer.link && (
+                                      <Link
+                                        href={activePioneer.link.startsWith('http') ? activePioneer.link : `https://${activePioneer.link}`}
+                                        target="_blank"
+                                        className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
+                                      >
+                                        <Link2 className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
+                                        {activePioneer.link.replace(/^https?:\/\//, '')}
+                                      </Link>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="space-y-2">
-                                <h4 className="text-[20px] font-black text-black tracking-tighter">
-                                  {pioneer?.id ? (
-                                    <Link 
-                                      href={`/profile/${pioneer.id}`}
-                                      className="hover:text-indigo-600 transition-colors"
-                                    >
-                                      {pioneer.name}
-                                    </Link>
-                                  ) : pioneer.name}
-                                </h4>
-                                <div className="flex flex-col gap-1.5">
-                                  {pioneer.instagram && (
-                                    <Link 
-                                      href={`https://instagram.com/${pioneer.instagram.replace('@', '')}`}
-                                      target="_blank"
-                                      className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
-                                    >
-                                      <Instagram className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                                      {pioneer.instagram.startsWith('@') ? pioneer.instagram : `@${pioneer.instagram}`}
-                                    </Link>
-                                  )}
-                                  {pioneer.link && (
-                                    <Link 
-                                      href={pioneer.link.startsWith('http') ? pioneer.link : `https://${pioneer.link}`}
-                                      target="_blank"
-                                      className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
-                                    >
-                                      <Link2 className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                                      {pioneer.link.replace(/^https?:\/\//, '')}
-                                    </Link>
-                                  )}
-                                </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                {activePioneer.instagram && (
+                                  <Link
+                                    href={`https://instagram.com/${activePioneer.instagram.replace('@', '')}`}
+                                    target="_blank"
+                                    className="h-10 px-5 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 text-[10px] font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white hover:border-black transition-all shadow-sm active:scale-95"
+                                  >
+                                    Instagram
+                                  </Link>
+                                )}
+                                {activePioneer.link && (
+                                  <Link
+                                    href={activePioneer.link.startsWith('http') ? activePioneer.link : `https://${activePioneer.link}`}
+                                    target="_blank"
+                                    className="h-10 px-5 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 text-[10px] font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white hover:border-black transition-all shadow-sm active:scale-95"
+                                  >
+                                    Website
+                                  </Link>
+                                )}
                               </div>
                             </div>
-                            
-                            <div className="flex flex-wrap gap-2">
-                              {pioneer.instagram && (
-                                <Link 
-                                  href={`https://instagram.com/${pioneer.instagram.replace('@', '')}`}
-                                  target="_blank"
-                                  className="h-10 px-5 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 text-[10px] font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white hover:border-black transition-all shadow-sm active:scale-95"
-                                >
-                                  Instagram
-                                </Link>
-                              )}
-                              {pioneer.link && (
-                                <Link 
-                                  href={pioneer.link.startsWith('http') ? pioneer.link : `https://${pioneer.link}`}
-                                  target="_blank"
-                                  className="h-10 px-5 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 text-[10px] font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white hover:border-black transition-all shadow-sm active:scale-95"
-                                >
-                                  Official Link
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -825,13 +922,13 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                             <span className="text-[10px] font-black text-black opacity-30 uppercase tracking-widest">Email Briefing</span>
                           </div>
                           <div className="flex gap-2">
-                            <Input 
+                            <Input
                               value={targetEmail}
                               onChange={(e) => setTargetEmail(e.target.value)}
                               placeholder="recipient@email.com"
                               className="h-12 text-[14px] rounded-xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-medium"
                             />
-                            <Button 
+                            <Button
                               onClick={shareViaEmail}
                               disabled={isSharingEmail}
                               size="icon"
@@ -850,13 +947,13 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                             <span className="text-[10px] font-black text-black opacity-30 uppercase tracking-widest">WhatsApp Direct</span>
                           </div>
                           <div className="flex gap-2">
-                             <Input 
+                            <Input
                               value={targetWhatsApp}
                               onChange={(e) => setTargetWhatsApp(e.target.value)}
                               placeholder="+27..."
                               className="h-12 text-[14px] rounded-xl border-gray-100 bg-gray-50/50 focus:bg-white transition-all font-medium"
                             />
-                            <Button 
+                            <Button
                               onClick={shareViaWhatsApp}
                               disabled={isSharingWhatsApp}
                               size="icon"
@@ -872,14 +969,14 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 </div>
               </>
             )}
-            
+
             {/* Minimal Status Bar */}
             <div className="px-8 py-4 border-t border-gray-100 bg-white/80 backdrop-blur-md flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-black/20">
-               <span>TR-SIGNAL SECURE</span>
-               <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  <span>Ensemble Live</span>
-               </div>
+              <span>TR-SIGNAL SECURE</span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span>Ensemble Live</span>
+              </div>
             </div>
           </div>
         </div>

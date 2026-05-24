@@ -2,6 +2,7 @@
 
 import LocationFilter from "../LocationFilter";
 import BlogPostsSidebar from "../BlogPostsSidebar";
+import RecentAILogsSidebar from "./RecentAILogsSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import { useRegions } from "@/app/hooks/useRegions";
@@ -31,14 +32,20 @@ export default function LeftSidebar() {
   return (
     <aside className="hidden lg:block lg:w-[280px] xl:w-[320px] flex-shrink-0 mt-5">
       <div className="hidden lg:block space-y-8 w-full">
+        <RecentAILogsSidebar />
         <LocationFilter regions={regions} />
-        {blogPosts && (
-          <BlogPostsSidebar
-            posts={blogPosts}
-            selectedCountry={filters.country}
-            selectedContinent={filters.continent}
-          />
-        )}
+
+        {/* Sticky container: AI Logs + Travel Posts scroll together */}
+        <div className="sticky top-24 space-y-6">
+
+          {blogPosts && (
+            <BlogPostsSidebar
+              posts={blogPosts}
+              selectedCountry={filters.country}
+              selectedContinent={filters.continent}
+            />
+          )}
+        </div>
       </div>
     </aside>
   );

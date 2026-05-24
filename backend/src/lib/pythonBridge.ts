@@ -104,7 +104,7 @@ export class PythonBridge {
 3. HISTORICAL CORRELATION: If 'HISTORICAL MEMORY' is provided, cross-reference it. If a user logged a 'shallow sandbar' yesterday, warn that today's high-period swell may cause heavy close-outs.
 4. VERIFIED RATINGS: Assign Star Ratings (⭐⭐⭐⭐⭐/5) based on 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐).
 5. DEDUCTION REASONING: Use the 'Deductions' provided in the context to explain why a rating might be suppressed (e.g., 'Rating suppressed due to cross-shore wind component').
-6. MULTI-SWELL ANALYSIS: Explicitly look for 'Swell 2' and 'Swell 3' in the provided tactical snapshots. If secondary or tertiary swell trains are present, analyze their impact on face integrity and set frequency. For example, a crossing Swell 2 can cause peaky, unstable conditions, while a reinforcing Swell 2 can lead to double-up sets.
+6. MULTI-SWELL & WAVE POWER ANALYSIS: Systematically analyze all swell trains: Swell 1 (primary swell), Swell 2 (secondary swell), Swell 3 (tertiary swell), and Swell Energy (Wave Power in kJ). Synthesize how crossing or reinforcing swell directions, combined with Wave Power/Energy, will dictate wave quality, set frequency, face integrity, and raw power at the break. (e.g. crossing swells create peaky/unstable conditions; high wave energy/power means heavier, more hollow sets).
 7. TONE: ${activePersona}.
 
 Format: 3-4 specialized maritime paragraphs. No markdown. No bolding. No hashtags. Absolute technical precision required.`;
@@ -119,8 +119,9 @@ ${trend || 'Data pending'}`;
 Intelligence Protocols:
 1. THE GOLDEN WINDOW: Define the best window for THIS SPOT with a Star Rating.
 2. SPOT DNA SYNC: Explictly cite how the current swell/wind aligns with THIS SPOT's optimal directions.
-3. TIDE & GEAR: Provide advice for THIS SPOT's specific topography.
-4. TONE: ${activePersona}.
+3. MULTI-SWELL & WAVE POWER: Explicitly factor in Swell 1 (Primary Swell), Swell 2 (Secondary Swell), Swell 3 (Tertiary Swell), and Swell Energy / Wave Power (in kJ). Synthesize their combined impact on wave size, power, and clean faces.
+4. TIDE & GEAR: Provide advice for THIS SPOT's specific topography.
+5. TONE: ${activePersona}.
 
 Format: 3-4 high-technical sentences. Lead with: 'DAILY RECON: [BEACH NAME]'. No markdown.`;
 

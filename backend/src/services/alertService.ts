@@ -194,7 +194,7 @@ export class AlertService {
       }),
     };
 
-    return await prisma.alert.create({
+    const alert = await prisma.alert.create({
       data: createInput,
       include: {
         properties: true,
@@ -208,6 +208,29 @@ export class AlertService {
         beach: true,
       },
     });
+
+    // Trigger background admin notification
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true }
+    }).then(user => {
+      if (user) {
+        import("../lib/adminNotifications").then(({ notifyAdminNewAlert }) => {
+          notifyAdminNewAlert(
+            user,
+            {
+              id: alert.id,
+              name: alert.name,
+              alertType: alert.alertType,
+              notificationMethod: alert.notificationMethod,
+              starRating: alert.starRating
+            }
+          ).catch(err => console.error("Error sending admin alert notification:", err));
+        }).catch(err => console.error("Failed to load adminNotifications module:", err));
+      }
+    }).catch(err => console.error("Error fetching user for alert notification:", err));
+
+    return alert;
   }
 
   /**

@@ -39,7 +39,7 @@ router.get("/report", async (req, res) => {
  */
 router.post("/weekly", authenticateToken, async (req, res: Response) => {
   const authReq = req as AuthRequest;
-  const { beachId, date, persona, days = 7, category = "GENERAL" } = req.body;
+  const { beachId, date, persona, days = 7, category = "GENERAL", source = "WINDY" } = req.body;
   const userId = authReq.user?.id;
 
   if (!beachId || !date || !userId) {
@@ -53,7 +53,8 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
       userId,
       parseInt(days as string),
       persona,
-      category
+      category,
+      source
     );
 
     res.json(result);
@@ -183,7 +184,8 @@ router.get("/user/:userId/history", async (req, res: Response) => {
         beach: {
           select: {
             name: true,
-            id: true
+            id: true,
+            regionId: true
           }
         },
         user: {
@@ -235,26 +237,29 @@ router.get("/global-latest", async (req, res: Response) => {
 
 /**
  * GET /api/intelligence/history
- * Fetch historical reports for the current user
+ * Fetch recent intelligence reports globally
  */
-router.get("/history", authenticateToken, async (req, res: Response) => {
-  const authReq = req as AuthRequest;
-  const userId = authReq.user?.id;
-
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
+router.get("/history", optionalAuth, async (req, res: Response) => {
   try {
     const { prisma } = await import("../lib/prisma");
     const reports = await prisma.intelligenceReport.findMany({
-      where: { userId },
       orderBy: { createdAt: "desc" },
+      take: 20,
       include: {
         beach: {
           select: {
             name: true,
-            id: true
+            id: true,
+            regionId: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            instagram: true,
+            link: true
           }
         }
       }
@@ -272,7 +277,7 @@ router.get("/history", authenticateToken, async (req, res: Response) => {
  * Find the most recent report for a specific beach/user
  */
 router.get("/latest", optionalAuth, async (req, res: Response) => {
-  const { beachId } = req.query;
+  const { beachId, source } = req.query;
 
   if (!beachId) {
     return res.status(400).json({ error: "Missing parameters" });
@@ -280,10 +285,12 @@ router.get("/latest", optionalAuth, async (req, res: Response) => {
 
   try {
     const { prisma } = await import("../lib/prisma");
+    const whereClause: any = { beachId: beachId as string };
+    if (source) {
+      whereClause.source = (source as string).toUpperCase();
+    }
     const report = await prisma.intelligenceReport.findFirst({
-      where: { 
-        beachId: beachId as string 
-      },
+      where: whereClause,
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -310,6 +317,7 @@ router.get("/latest", optionalAuth, async (req, res: Response) => {
  */
 router.get("/beach/:beachId/history", optionalAuth, async (req, res: Response) => {
   const { beachId } = req.params;
+  const { source } = req.query;
 
   if (!beachId) {
     return res.status(400).json({ error: "Missing parameters" });
@@ -317,8 +325,12 @@ router.get("/beach/:beachId/history", optionalAuth, async (req, res: Response) =
 
   try {
     const { prisma } = await import("../lib/prisma");
+    const whereClause: any = { beachId };
+    if (source) {
+      whereClause.source = (source as string).toUpperCase();
+    }
     const reports = await prisma.intelligenceReport.findMany({
-      where: { beachId },
+      where: whereClause,
       orderBy: { createdAt: "desc" },
       select: { 
         id: true,

@@ -20,7 +20,7 @@ const NAVIGATION_ITEMS = [
   { href: "/map", label: "Map" },
   { href: "/logs", label: "Logs" },
   { href: "/dashboard/alerts", label: "Alerts" },
-  { href: "/aireport", label: "AI Report" },
+  { href: "/ai-reports", label: "AI Reports" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },
