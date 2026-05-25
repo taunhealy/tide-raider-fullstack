@@ -1,5 +1,7 @@
 import { prisma } from "./prisma";
 import crypto from "crypto";
+import { sendEmail } from "./email";
+import { referralSuccessTemplate } from "./emailTemplates";
 
 /**
  * Generate a unique referral code for a user
@@ -24,7 +26,7 @@ export async function generateUniqueReferralCode(name?: string): Promise<string>
 /**
  * Reward a referrer with AI credits
  */
-export async function rewardReferrer(referrerId: string, credits: number = 30) {
+export async function rewardReferrer(referrerId: string, credits: number = 30, recruitName: string = "A new analyst") {
   try {
     const user = await prisma.user.update({
       where: { id: referrerId },
@@ -45,9 +47,21 @@ export async function rewardReferrer(referrerId: string, credits: number = 30) {
     });
 
     console.log(`[Referral] 🏆 Rewarded user ${referrerId} with ${credits} credits. New balance: ${user.credits}`);
+
+    // Send successful recruitment email to the referrer
+    if (user.email) {
+      const emailHtml = referralSuccessTemplate(user.name || "Commander", recruitName, credits);
+      await sendEmail(
+        user.email,
+        "Recruitment Successful! +30 Credits Added 🎯",
+        emailHtml
+      ).catch(err => console.error("[Referral] ❌ Failed to send success email:", err));
+    }
+
     return true;
   } catch (error) {
     console.error(`[Referral] ❌ Failed to reward referrer ${referrerId}:`, error);
     return false;
   }
 }
+

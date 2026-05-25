@@ -72,6 +72,7 @@ function ProfileHeaderContent({
     if (userData) {
       setEditUsername(userData.name || "");
       setEditAvatarUrl(userData.image || "");
+      setImageError(false);
     }
   }, [userData]);
 
@@ -130,6 +131,7 @@ function ProfileHeaderContent({
       toast.success("Identity updated successfully!");
       setIsEditingUsername(false);
       setIsEditingAvatar(false);
+      setImageError(false);
       
       // Invalidate queries to refresh view
       await refetch();

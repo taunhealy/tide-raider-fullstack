@@ -352,3 +352,52 @@ export const logCommentTemplate = (loggerName: string, commenterName: string, lo
   </div>
   `
 );
+
+/**
+ * Registration Welcome Email
+ */
+export const registrationWelcomeTemplate = (userName: string) => emailLayout(
+  "Account Activated: Welcome to Tide Raider! 🌊",
+  `
+  <p class="text">Hey ${userName},</p>
+  <p class="text">Welcome to **Tide Raider**—the ultimate maritime intelligence platform for dedicated ocean-goers.</p>
+  
+  <div class="highlight-box">
+    <p style="font-weight: 700; color: #000000; margin-bottom: 8px;">Here is how to get started:</p>
+    <ul style="list-style-type: none; padding: 0;">
+      <li style="margin-bottom: 10px;">🗺️ <strong>Sectors & Regions:</strong> Open the Interactive Map to see real-time surf intelligence for the Western Cape.</li>
+      <li style="margin-bottom: 10px;">🎯 <strong>Invite the Squad:</strong> Share your unique referral link found in your profile to earn +30 Intelligence Credits for every friend who joins!</li>
+      <li style="margin-bottom: 10px;">🛰️ <strong>AI Reports:</strong> Generate comprehensive forecast digests and tactical windows.</li>
+    </ul>
+  </div>
+
+  <p class="text">We've loaded your account with initial tactical credits to get you started.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raid" class="button">Access Tactical Dashboard</a>
+  </div>
+  `
+);
+
+/**
+ * Referral Success Email
+ */
+export const referralSuccessTemplate = (referrerName: string, recruitName: string, credits: number) => emailLayout(
+  "Recruitment Successful! +30 Credits Added 🎯",
+  `
+  <p class="text">Hey ${referrerName},</p>
+  <p class="text">Mission accomplished! **${recruitName}** has successfully signed up for Tide Raider using your tactical recruit link.</p>
+  
+  <div class="highlight-box" style="background-color: #f0fdf4; border-left-color: #10b981;">
+    <p style="font-weight: 700; color: #065f46; margin-bottom: 8px;">Reward Issued:</p>
+    <p class="text" style="margin-bottom: 0;">We've added <strong>+${credits} Intelligence Credits</strong> to your balance. Your updated credits are now available for generating strategic surf reports.</p>
+  </div>
+
+  <p class="text">Keep sharing your link to stack more credits and build the ultimate maritime squad.</p>
+  
+  <div class="button-container">
+    <a href="https://www.tideraider.com/raid" class="button">View Dashboard</a>
+  </div>
+  `
+);
+

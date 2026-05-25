@@ -57,12 +57,21 @@ export default function GlobalMapPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Map Navigation State
-  const [mapCenter, setMapCenter] = useState<[number, number]>([18.4233, -33.9249]);
-  const [mapZoom, setMapZoom] = useState(12);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(REGION_COORDINATES["all"].center);
+  const [mapZoom, setMapZoom] = useState(REGION_COORDINATES["all"].zoom);
 
   // AI Report Modal State
   const [reportBeach, setReportBeach] = useState<any | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  const handleRegionSelect = (regionId: string, shouldMoveMap: boolean = false) => {
+    updateFilter("regionId", regionId);
+    if (shouldMoveMap && REGION_COORDINATES[regionId.toLowerCase()]) {
+      const { center, zoom } = REGION_COORDINATES[regionId.toLowerCase()];
+      setMapCenter(center);
+      setMapZoom(zoom);
+    }
+  };
 
   // Source selection state (shared with WeatherForecastWidget)
   const [selectedSource, setSelectedSource] = useState<string>("WINDFINDER");
@@ -148,13 +157,6 @@ export default function GlobalMapPage() {
     }
   }, [mounted, filters.regionId, updateFilter]);
 
-  useEffect(() => {
-    if (mounted && filters.regionId && REGION_COORDINATES[filters.regionId.toLowerCase()]) {
-      const { center, zoom } = REGION_COORDINATES[filters.regionId.toLowerCase()];
-      setMapCenter(center);
-      setMapZoom(zoom);
-    }
-  }, [mounted, filters.regionId]);
 
   useEffect(() => {
     if (mounted) {
@@ -437,7 +439,7 @@ export default function GlobalMapPage() {
                             key={key}
                             onClick={() => {
                               setSearchQuery(config.label);
-                              updateFilter("regionId", key);
+                              handleRegionSelect(key, true);
                             }}
                             className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-[11px] font-bold text-gray-600 transition-all"
                           >
@@ -477,7 +479,7 @@ export default function GlobalMapPage() {
                     <button 
                       onClick={() => {
                         setSearchQuery("");
-                        updateFilter("regionId", "");
+                        handleRegionSelect("", false);
                       }} 
                       className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-800 transition-all"
                     >
@@ -523,7 +525,7 @@ export default function GlobalMapPage() {
                   <button 
                     onClick={() => {
                       setSearchQuery("");
-                      updateFilter("regionId", "");
+                      handleRegionSelect("", false);
                       setMinRating(0);
                       setSelectedDifficulty([]);
                       setIsLoggersOnly(false);
@@ -551,7 +553,7 @@ export default function GlobalMapPage() {
                       <button
                         key={key}
                         onClick={() => {
-                          updateFilter("regionId", key);
+                          handleRegionSelect(key, true);
                         }}
                         className={cn(
                           "text-left px-3 py-2.5 rounded-xl text-[11px] font-bold border transition-all truncate flex items-center justify-between",
@@ -779,10 +781,10 @@ export default function GlobalMapPage() {
                 beaches={filteredBeaches} 
                 loading={loading}
                 onBeachSelect={(beach) => {
-                  updateFilter("regionId", beach.regionId);
+                  handleRegionSelect(beach.regionId, false);
                 }}
                 onRegionSelect={(regionId) => {
-                  updateFilter("regionId", regionId);
+                  handleRegionSelect(regionId, false);
                 }}
                 selectedRegionId={filters.regionId}
                 center={mapCenter}
@@ -916,7 +918,7 @@ export default function GlobalMapPage() {
                             <button
                               key={key}
                               onClick={() => {
-                                updateFilter("regionId", key);
+                                handleRegionSelect(key, true);
                               }}
                               className={cn(
                                 "text-left px-3 py-2.5 rounded-xl text-[11px] font-bold border transition-all truncate flex items-center justify-between",

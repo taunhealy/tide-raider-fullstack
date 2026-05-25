@@ -639,8 +639,14 @@ export default function TideMap({
         const center = initialMap.getView().getCenter();
         if (!center || !gZoom) return;
 
-        // If zoomed out completely, don't auto-select to avoid noise
-        if (gZoom < 2) return;
+        // If zoomed out, reset regionId filter to 'all' so we don't restrict beaches and can see all countries at once
+        if (gZoom < 6) {
+          if (selectedRegionIdRef.current && selectedRegionIdRef.current !== "all") {
+            console.log(`[TideMap] 🔍 Zoomed out (${gZoom.toFixed(1)} < 6). Resetting region to 'all' to show all countries.`);
+            onRegionSelectRef.current("all");
+          }
+          return;
+        }
 
         const extent = initialMap.getView().calculateExtent(initialMap.getSize());
         if (!clusterSourceRef.current) return;
@@ -759,29 +765,7 @@ export default function TideMap({
 
     let features: Feature[] = [];
 
-    if (currentZoom < 4) {
-      const continents: Record<string, Beach[]> = {};
-      currentBeaches.forEach(b => {
-        const cId = b.continentId || "unknown";
-        if (!continents[cId]) continents[cId] = [];
-        continents[cId].push(b);
-      });
-      features = Object.entries(continents).map(([id, items]) => {
-        const validItems = items.filter(b => b.coordinates && typeof b.coordinates.lat === 'number' && typeof b.coordinates.lng === 'number');
-        if (validItems.length === 0) return null;
-        const avgLat = validItems.reduce((sum, b) => sum + b.coordinates.lat, 0) / validItems.length;
-        const avgLng = validItems.reduce((sum, b) => sum + b.coordinates.lng, 0) / validItems.length;
-        const feature = new Feature({
-          geometry: new Point(fromLonLat([avgLng, avgLat])),
-        });
-        feature.set("label", items[0].continent);
-        feature.set("count", items.length);
-        feature.set("beach", items[0]); 
-        feature.set("allBeaches", items);
-        feature.set("type", "continent");
-        return feature;
-      }).filter(Boolean) as Feature[];
-    } else if (currentZoom < 5) {
+    if (currentZoom < 5) {
       const countries: Record<string, Beach[]> = {};
       currentBeaches.forEach(b => {
         const cId = b.countryId || "unknown";
@@ -829,13 +813,7 @@ export default function TideMap({
     if (features.length > 0) {
       vectorSource.addFeatures(features);
       
-      // Only auto-fit on first load if we don't have a manual center override, 
-      // or if we're specifically looking at a region view (zoom 4-7).
-      // For general app load (zoom 10), we respect the Cape Town default center.
-      if (beaches.length > prevBeachesCount.current && currentZoom < 8) {
-        const extent = vectorSource.getExtent();
-        mapRef.current.getView().fit(extent, { padding: [100, 100, 100, 100], maxZoom: 12 });
-      }
+
     }
     prevBeachesCount.current = beaches.length;
   }, [beaches, selectedDayIndex, currentZoom]);

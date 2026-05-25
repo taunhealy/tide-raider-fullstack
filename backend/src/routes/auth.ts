@@ -6,6 +6,8 @@ import { prisma } from "../lib/prisma";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { notifyAdminNewUser } from "../lib/adminNotifications";
 import { generateUniqueReferralCode, rewardReferrer } from "../lib/referrals";
+import { sendEmail } from "../lib/email";
+import { registrationWelcomeTemplate } from "../lib/emailTemplates";
 
 const router = Router();
 
@@ -118,8 +120,17 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
             // Reward referrer if exists
             if (referrer) {
-              await rewardReferrer(referrer.id, 30);
+              await rewardReferrer(referrer.id, 30, user.name || user.email);
             }
+
+            // Send registration welcome email to the user
+            sendEmail(
+              user.email,
+              "Account Activated: Welcome to Tide Raider! 🌊",
+              registrationWelcomeTemplate(user.name || "Commander")
+            ).catch((err) =>
+              console.error("Failed to send registration welcome email:", err)
+            );
 
             // Notify admin of new user signup (async, don't wait)
             notifyAdminNewUser({
@@ -129,6 +140,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             }).catch((err) =>
               console.error("Failed to send admin notification:", err)
             );
+
           } else {
             // Only update name if it's empty/null (don't overwrite user's custom name)
             // Always update image if provided (Google profile pictures can change)
@@ -530,9 +542,18 @@ router.post("/login", async (req: Request, res: Response) => {
 
       // Reward referrer if exists
       if (referrer) {
-        await rewardReferrer(referrer.id, 30);
+        await rewardReferrer(referrer.id, 30, user.name || user.email);
         res.clearCookie("referral-code", { path: "/" });
       }
+
+      // Send registration welcome email to the user
+      sendEmail(
+        user.email,
+        "Account Activated: Welcome to Tide Raider! 🌊",
+        registrationWelcomeTemplate(user.name || "Commander")
+      ).catch((err) =>
+        console.error("Failed to send registration welcome email:", err)
+      );
 
       // Notify admin of new user signup (async, don't wait)
       notifyAdminNewUser({
@@ -542,6 +563,7 @@ router.post("/login", async (req: Request, res: Response) => {
       }).catch((err) =>
         console.error("Failed to send admin notification:", err)
       );
+
     } else {
       // Only update name if it's empty/null (don't overwrite user's custom name)
       // Always update image if provided (Google profile pictures can change)
