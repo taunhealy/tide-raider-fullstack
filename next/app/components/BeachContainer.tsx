@@ -354,12 +354,23 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     let processedBeaches = (beaches || []).filter(Boolean).map((b: Beach) => {
       const score = beachScores[b.id]?.score ?? 0;
       let distance = null;
-      if (userLocation && b.coordinates?.lat && b.coordinates?.lng) {
+      
+      let coords = b.coordinates;
+      if (typeof coords === "string") {
+        try {
+          coords = JSON.parse(coords);
+        } catch {}
+      }
+
+      const beachLat = coords && typeof coords === "object" ? parseFloat((coords as any).lat) : NaN;
+      const beachLng = coords && typeof coords === "object" ? parseFloat((coords as any).lng) : NaN;
+
+      if (userLocation && !isNaN(beachLat) && !isNaN(beachLng)) {
         distance = calculateDistance(
           userLocation.lat,
           userLocation.lng,
-          b.coordinates.lat,
-          b.coordinates.lng
+          beachLat,
+          beachLng
         );
       }
       return { ...b, score, distance };

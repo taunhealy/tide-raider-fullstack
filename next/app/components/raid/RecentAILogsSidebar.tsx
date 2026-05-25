@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Sparkles, MapPin, Calendar, ArrowRight, Loader2, Instagram, Link2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/app/lib/utils";
 import AIReportModal from "@/app/components/beach/AIReportModal";
 import { useBeachFilters } from "@/app/hooks/useBeachFilters";
@@ -66,7 +66,7 @@ export default function RecentAILogsSidebar() {
   const [selectedReport, setSelectedReport] = useState<{ id: string; beach: any } | null>(null);
   const { filters } = useBeachFilters();
 
-  const { data: reports, isLoading } = useQuery<IntelligenceReport[]>({
+  const { data: reports, isLoading, refetch } = useQuery<IntelligenceReport[]>({
     queryKey: ["intelligenceHistorySidebar"],
     queryFn: async () => {
       const res = await fetch("/api/backend/intelligence/history");
@@ -76,6 +76,16 @@ export default function RecentAILogsSidebar() {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      refetch();
+    };
+    window.addEventListener("intelligence-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("intelligence-updated", handleUpdate);
+    };
+  }, [refetch]);
 
   const filteredReports = reports?.filter(report => {
     if (filters.regionId && filters.regionId !== "all") {
