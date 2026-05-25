@@ -21,6 +21,15 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
+import type { Beach } from "@/app/types/beaches";
+import AIReportModal from "@/app/components/beach/AIReportModal";
 
 interface IntelligenceReport {
   id: string;
@@ -56,6 +65,15 @@ const sourceColors: Record<string, { bg: string; text: string; border: string; l
 export default function AIReportsPage() {
   const { data: session, status } = useBackendAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string | undefined>(undefined);
+
+  const handleLoadReport = (beach: Beach, reportId: string) => {
+    setSelectedBeach(beach);
+    setSelectedReportId(reportId);
+    setIsReportOpen(true);
+  };
 
   const { data: reports, isLoading } = useQuery<IntelligenceReport[]>({
     queryKey: ["intelligence-history"],
@@ -98,15 +116,25 @@ export default function AIReportsPage() {
           </h1>
         </div>
 
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black opacity-20" />
-          <input 
-            type="text"
-            placeholder="FILTER BY BEACH OR PERSONA..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <Button 
+            onClick={() => setIsReportOpen(true)}
+            className="w-full sm:w-auto h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 px-6 shrink-0"
+          >
+            <Sparkles className="w-4 h-4 text-white animate-pulse" />
+            Generate Report
+          </Button>
+
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black opacity-20" />
+            <input 
+              type="text"
+              placeholder="FILTER BY BEACH OR PERSONA..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
+            />
+          </div>
         </div>
       </div>
 
@@ -127,13 +155,16 @@ export default function AIReportsPage() {
               {filteredReports && filteredReports.length > 0 ? (
                 filteredReports.map((report) => (
                   <tr key={report.id} className="group hover:bg-gray-50/50 transition-colors">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover:bg-black group-hover:text-white transition-all shadow-sm">
+                    <td 
+                      className="px-8 py-6 cursor-pointer select-none"
+                      onClick={() => handleLoadReport(report.beach as any, report.id)}
+                    >
+                      <div className="flex items-center gap-4 group/asset">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover/asset:bg-black group-hover/asset:text-white transition-all shadow-sm">
                           <MapPin className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-bold text-[14px] text-black group-hover:text-black transition-colors">{report.beach.name}</p>
+                          <p className="font-bold text-[14px] text-black group-hover/asset:text-black transition-colors">{report.beach.name}</p>
                           {(() => {
                             const user = report.user || {
                               name: "gh0st",
@@ -250,6 +281,21 @@ export default function AIReportsPage() {
           <p className="text-[9px] font-medium text-black/20 uppercase tracking-[0.2em]">All intelligence reports are stored securely in the Tide Raider cloud.</p>
         </div>
       </div>
+
+      {/* AI Report Modal */}
+      {(isReportOpen || selectedBeach) && (
+        <AIReportModal
+          isOpen={isReportOpen}
+          onClose={() => {
+            setIsReportOpen(false);
+            setSelectedBeach(null);
+            setSelectedReportId(undefined);
+          }}
+          beach={selectedBeach}
+          reportId={selectedReportId}
+          date={new Date().toISOString()}
+        />
+      )}
     </div>
   );
 }

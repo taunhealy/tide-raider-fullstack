@@ -364,6 +364,7 @@ function AIReportContent() {
                   <button
                     key={opt.value}
                     onClick={() => setSelectedSport(opt.value)}
+                    suppressHydrationWarning
                     className={cn(
                       "py-4 px-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2",
                       selectedSport === opt.value
@@ -391,6 +392,7 @@ function AIReportContent() {
                       <TooltipTrigger asChild>
                         <button
                           onClick={() => setSelectedDays(opt.value)}
+                          suppressHydrationWarning
                           className={cn(
                             "flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative",
                             selectedDays === opt.value

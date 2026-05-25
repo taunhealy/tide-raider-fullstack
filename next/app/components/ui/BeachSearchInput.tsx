@@ -158,6 +158,10 @@ export function BeachSearchInput({
     }
   };
 
+  const hasBgClass = inputClassName?.split(" ").some(c => c.startsWith("bg-"));
+  const hasTextClass = inputClassName?.split(" ").some(c => c.startsWith("text-"));
+  const hasBorderClass = inputClassName?.split(" ").some(c => c.startsWith("border-"));
+
   return (
     <div className={cn("space-y-2", className)} ref={searchRef}>
       {/* Selected Beach Badge */}
@@ -200,9 +204,11 @@ export function BeachSearchInput({
           onBlur={handleBlur}
           placeholder={placeholder}
           className={cn(
-            "flex h-11 w-full rounded-lg border border-gray-200 bg-white px-10 py-2 text-sm ring-offset-background font-primary",
-            "placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0 focus-visible:bg-gray-50 focus-visible:border-gray-300",
-            "transition-all duration-200",
+            "flex h-11 w-full rounded-lg px-10 py-2 text-sm ring-offset-background font-primary transition-all duration-200",
+            !hasBgClass && "bg-white focus-visible:bg-gray-50",
+            !hasTextClass && "text-slate-900",
+            !hasBorderClass && "border border-gray-200 focus-visible:border-gray-300",
+            "placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-0",
             inputClassName
           )}
         />

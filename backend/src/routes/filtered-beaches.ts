@@ -44,7 +44,7 @@ async function fetchFilteredBeachesData(
 ) {
   let regionId: string | undefined = undefined;
 
-  if (regionIdParam) {
+  if (regionIdParam && regionIdParam.toLowerCase() !== "all") {
     // Resolve regionId to actual database region ID
     let region = await prisma.region.findUnique({
       where: { id: regionIdParam },
@@ -304,29 +304,6 @@ async function fetchFilteredBeachesData(
             timeSlot: true,
           },
         },
-        logEntries: {
-          where: { 
-            OR: [
-              { isPrivate: false, isAnonymous: false },
-              { userId: user?.id }
-            ]
-          },
-          orderBy: { date: 'desc' },
-          take: 5,
-          select: {
-            id: true,
-            date: true,
-            userId: true,
-            surferRating: true,
-            comments: true,
-            imageUrl: true,
-            videoUrl: true,
-            videoPlatform: true,
-            videoUrls: true,
-            surferName: true,
-            forecast: true,
-          }
-        }
       }
     }),
     prisma.beachDailyScore.count({
@@ -506,7 +483,7 @@ router.get(
       const ignoreRegion = req.query.ignoreRegion === "true";
       let regionId: string | undefined = undefined;
 
-      if (regionIdParam && !ignoreRegion) {
+      if (regionIdParam && regionIdParam.toLowerCase() !== "all" && !ignoreRegion) {
         // Quick resolve to verify region exists (full resolution happens in helper)
         const region = await prisma.region.findFirst({
           where: {

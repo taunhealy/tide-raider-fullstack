@@ -7,7 +7,7 @@ import { useFilteredBeaches } from "@/app/hooks/useFilteredBeaches";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/app/components/ui/Button";
-import { ChevronLeft, ChevronRight, Lock, Loader2, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Loader2, Info, MapPin } from "lucide-react";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { cn } from "@/app/lib/utils";
 
@@ -26,7 +26,9 @@ import type { LogEntry } from "@/app/types/raidlogs";
 
 import type { Beach, BeachInitialData } from "@/app/types/beaches";
 
-import { LocationFilter } from "../types/filters";
+import { LocationFilter as LocationFilterType } from "../types/filters";
+import LocationFilter from "./LocationFilter";
+import { useRegions } from "@/app/hooks/useRegions";
 
 // Remove the getBeachForecastData helper function
 
@@ -51,16 +53,33 @@ import AIReportModal from "./beach/AIReportModal";
 
 export default function BeachContainer({ initialData }: BeachContainerProps) {
   const { filters, updateFilter, selectRegion } = useBeachFilters();
+  const { data: regions = [] } = useRegions();
   const searchParams = useSearchParams();
   
-  // Sorting and Location state - Proximity active by default (45km)
-  const [maxDistance, setMaxDistance] = useState<number | null>(null);
+  // Sorting and Location state - Proximity active by default (100km)
+  const [maxDistance, setMaxDistance] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("maxDistance");
+      if (stored !== null) {
+        return stored === "null" ? null : parseInt(stored);
+      }
+    }
+    return 100;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("maxDistance", maxDistance === null ? "null" : maxDistance.toString());
+    }
+  }, [maxDistance]);
+
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
   // Deep Link Modal State
   const [deepLinkedBeach, setDeepLinkedBeach] = useState<Beach | null>(null);
   const [isDeepLinkModalOpen, setIsDeepLinkModalOpen] = useState(false);
+  const isClosingRef = useRef(false);
 
   const { data, isLoading, isFetching, error } = useFilteredBeaches({
     initialData: maxDistance !== null ? null : initialData, // Don't use initial regional data in proximity mode
@@ -101,7 +120,14 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     const beachId = searchParams.get("beachId");
     const reportId = searchParams.get("report");
 
-    if (beachId && reportId && data?.beaches) {
+    if (!beachId || !reportId) {
+      isClosingRef.current = false;
+      return;
+    }
+
+    if (isClosingRef.current) return;
+
+    if (data?.beaches) {
       const targetBeach = data.beaches.filter(Boolean).find((b: Beach) => 
         b?.id === beachId || 
         b?.name?.toLowerCase() === beachId.toLowerCase() ||
@@ -425,11 +451,24 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
             <div className="h-px bg-black/10 w-full mt-10" />
 
             <div className="grid grid-cols-1 gap-5 relative mt-10">
-              {!filters.regionId || isLoading || !data || !data.scores || Object.keys(data.scores).length === 0 ? (
+              {!filters.regionId ? (
+                <div className="flex flex-col items-center justify-center py-12 px-6 min-h-[400px] bg-white/40 backdrop-blur-sm rounded-[2rem] border border-black/5 text-center max-w-lg mx-auto w-full">
+                  <div className="w-14 h-14 bg-brand-3/10 text-brand-3 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-[16px] font-black text-slate-900 uppercase tracking-wider mb-2">No Region Selected</h3>
+                  <p className="text-xs text-slate-500 font-medium max-w-sm leading-relaxed mb-8">
+                    Choose a region below or search for a break using the header search to activate tactical surf scoring and live forecasts.
+                  </p>
+                  <div className="w-full text-left">
+                    <LocationFilter regions={regions} />
+                  </div>
+                </div>
+              ) : isLoading || !data || !data.scores || Object.keys(data.scores).length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 min-h-[400px]">
                   <Loader2 className="w-8 h-8 text-brand-3 animate-spin mb-4" />
                   <p className="text-slate-500 font-medium animate-pulse">
-                    {!filters.regionId ? "Initializing your region..." : "Fetching the best breaks..."}
+                    Fetching the best breaks...
                   </p>
                 </div>
               ) : error ? (
@@ -576,7 +615,9 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
         <AIReportModal
           isOpen={isDeepLinkModalOpen}
           onClose={() => {
+            isClosingRef.current = true;
             setIsDeepLinkModalOpen(false);
+            setDeepLinkedBeach(null);
             // Optional: Clear URL params to prevent re-opening on refresh
             const params = new URLSearchParams(searchParams);
             params.delete("report");

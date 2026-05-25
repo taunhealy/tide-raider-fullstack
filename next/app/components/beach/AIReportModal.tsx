@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
@@ -26,9 +26,10 @@ import { Sparkles, Zap, ShieldAlert, CreditCard, Loader2, Bookmark, Share2, Mail
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import { handleSignIn } from "@/app/lib/auth-utils";
+import { BeachSearchInput } from "@/app/components/ui/BeachSearchInput";
 
 interface AIReportModalProps {
-  beach: any;
+  beach?: any;
   isOpen: boolean;
   onClose: () => void;
   date: string;
@@ -36,7 +37,11 @@ interface AIReportModalProps {
 }
 
 export default function AIReportModal({ beach, isOpen, onClose, date, reportId }: AIReportModalProps) {
-  if (!beach && isOpen) return null;
+  const [currentBeach, setCurrentBeach] = useState<any>(beach || null);
+
+  useEffect(() => {
+    setCurrentBeach(beach || null);
+  }, [beach]);
 
   const {
     credits,
@@ -58,6 +63,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const [isCopied, setIsCopied] = useState(false);
   const [existingReportDate, setExistingReportDate] = useState<Date | null>(null);
   const [displayedReportDuration, setDisplayedReportDuration] = useState<number>(7);
+  const lastLoadedReportIdRef = useRef<string | null>(null);
 
   // Sharing State
   const [targetEmail, setTargetEmail] = useState("");
@@ -68,6 +74,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   const [selectedDays, setSelectedDays] = useState(7);
   const [selectedSport, setSelectedSport] = useState("SURFING");
+  const [selectedPersona, setSelectedPersona] = useState<string>("BRO");
   const [selectedSource, setSelectedSource] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("forecastSource");
@@ -105,14 +112,14 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   // Sync state to URL
   useEffect(() => {
-    if (isOpen && activeReportId && activeReportId !== 'latest' && activeReportId !== 'true') {
+    if (isOpen && activeReportId && activeReportId !== 'latest' && activeReportId !== 'true' && currentBeach) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("report", activeReportId);
-      params.set("beachId", beach.id);
-      params.set("beachName", beach.name);
+      params.set("beachId", currentBeach.id);
+      params.set("beachName", currentBeach.name);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [activeReportId, isOpen, beach.id, beach.name, pathname, router, searchParams]);
+  }, [activeReportId, isOpen, currentBeach?.id, currentBeach?.name, pathname, router, searchParams]);
 
   // Auto-populate contact fields from session when modal opens
   useEffect(() => {
@@ -124,10 +131,10 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   // Fetch chronological sequence for this beach
   useEffect(() => {
-    if (isOpen && beach?.id) {
+    if (isOpen && currentBeach?.id) {
       const fetchSequence = async () => {
         try {
-          const res = await fetch(`/api/backend/intelligence/beach/${beach.id}/history?source=${selectedSource}`);
+          const res = await fetch(`/api/backend/intelligence/beach/${currentBeach.id}/history?source=${selectedSource}`);
           if (res.ok) {
             const data = await res.json();
             setReportSequence(data);
@@ -138,7 +145,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       };
       fetchSequence();
     }
-  }, [isOpen, beach?.id, selectedSource]);
+  }, [isOpen, currentBeach?.id, selectedSource]);
 
   const handleCopyReport = () => {
     if (!report) return;
@@ -150,16 +157,22 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   // Load report if activeReportId is provided OR check for latest for this beach
   useEffect(() => {
+    if (activeReportId && activeReportId === lastLoadedReportIdRef.current) {
+      return;
+    }
+
     // Only proceed if modal is open and we have a valid beach object with an ID
-    if (isOpen && (activeReportId || beach?.id)) {
+    if (isOpen && (activeReportId || currentBeach?.id)) {
       const fetchReport = async () => {
         setIsLoadingArchive(true);
         try {
           let url = "";
           if (activeReportId && activeReportId !== 'latest' && activeReportId !== 'true') {
             url = `/api/backend/intelligence/report/${activeReportId}`;
+          } else if (currentBeach?.id) {
+            url = `/api/backend/intelligence/latest?beachId=${currentBeach.id}&source=${selectedSource}`;
           } else {
-            url = `/api/backend/intelligence/latest?beachId=${beach.id}&source=${selectedSource}`;
+            return;
           }
 
           const response = await fetch(url);
@@ -170,6 +183,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             if (response.status === 404 && (!activeReportId || activeReportId === 'latest' || activeReportId === 'true')) {
               setReport(null);
               setPioneer(null);
+              lastLoadedReportIdRef.current = null;
               return;
             }
 
@@ -188,6 +202,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             setReport(data.content);
             setPioneer(data.user || data.pioneer || null);
             if (data.id) {
+              lastLoadedReportIdRef.current = data.id;
               setActiveReportId(data.id);
             }
             if (data.createdAt || data.date) {
@@ -202,6 +217,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             setPioneer(null);
             setExistingReportDate(null);
             setDisplayedReportDuration(selectedDays);
+            lastLoadedReportIdRef.current = null;
           }
         } catch (error: any) {
           console.error("[AIReportModal] Detail load failed:", error);
@@ -216,7 +232,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       };
       fetchReport();
     }
-  }, [activeReportId, isOpen, beach?.id, selectedSource]);
+  }, [activeReportId, isOpen, currentBeach?.id, selectedSource]);
 
   const handleNavigate = (direction: 'next' | 'prev') => {
     if (reportSequence.length === 0) return;
@@ -248,6 +264,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       setActiveReportId(reportId);
       setReportSequence([]);
       setSelectedDays(7);
+      lastLoadedReportIdRef.current = null;
     }
   }, [isOpen, reportId]);
 
@@ -269,9 +286,9 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          beachId: beach.id,
+          beachId: currentBeach.id,
           date,
-          persona: "BRO",
+          persona: selectedPersona,
           days: selectedDays,
           category: selectedSport,
           source: selectedSource
@@ -355,7 +372,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: targetEmail,
-          beachName: beach.name,
+          beachName: currentBeach ? currentBeach.name : "Unknown Break",
           reportText: report,
           dateRange: dateRange
         }),
@@ -388,7 +405,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           number: targetWhatsApp,
-          beachName: beach.name,
+          beachName: currentBeach ? currentBeach.name : "Unknown Break",
           reportText: report
         }),
       });
@@ -413,7 +430,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] lg:max-w-7xl bg-white border-none shadow-2xl p-0 gap-0 overflow-hidden font-['Inter',_sans-serif] h-[95vh] md:h-auto md:max-h-[85vh] flex flex-col top-[52%] md:top-[50%] transition-all duration-500">
-        <DialogTitle className="sr-only">AI Intelligence Dashboard: {beach.name}</DialogTitle>
+        <DialogTitle className="sr-only">AI Intelligence Dashboard: {currentBeach ? currentBeach.name : "Tactical Briefing"}</DialogTitle>
 
         {/* Unified Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 backdrop-blur-md sticky top-0 z-10">
@@ -422,10 +439,27 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               <Waves className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-[22px] leading-tight font-black text-black tracking-tighter">{beach.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-[22px] leading-tight font-black text-black tracking-tighter">
+                  {currentBeach ? currentBeach.name : "Tactical Briefing"}
+                </h2>
+                {currentBeach && !beach && (
+                  <button 
+                    onClick={() => {
+                      setCurrentBeach(null);
+                      setReport(null);
+                      setActiveReportId(undefined);
+                      setReportSequence([]);
+                    }}
+                    className="text-[9px] font-black text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-[0.15em] px-2.5 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg ml-2 active:scale-95"
+                  >
+                    Change Break
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <p className="text-[10px] font-bold text-black opacity-30 uppercase tracking-[0.2em]">
-                  Tactical Intelligence Command
+                  {currentBeach ? "Tactical Intelligence Command" : "Select a break asset to begin"}
                 </p>
               </div>
             </div>
@@ -470,6 +504,29 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 Upgrade or Buy Credits
               </Button>
             )}
+          </div>
+        ) : !currentBeach ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center bg-white min-h-[450px] overflow-y-auto">
+            <div className="w-16 h-16 bg-gray-50 border border-gray-100 text-slate-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <Waves className="w-6 h-6 animate-pulse" />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Asset Search</h2>
+            <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed mb-8">
+              Identify a beach break below to analyze sea conditions, compile multi-model ensembles, and generate tactical briefs.
+            </p>
+            <div className="w-full max-w-md">
+              <BeachSearchInput 
+                selectedBeach={currentBeach}
+                onBeachSelect={(selected) => {
+                  if (selected) {
+                    setCurrentBeach(selected);
+                  }
+                }}
+                placeholder="Search beach breaks..."
+                showSelectedBadge={false}
+                inputClassName="h-14 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-slate-900/10 text-xs font-bold uppercase tracking-wider"
+              />
+            </div>
           </div>
         ) : (
           <div className="flex flex-col md:grid md:grid-cols-[380px_1fr] flex-1 min-h-0 overflow-hidden">
@@ -542,6 +599,30 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                         )}
                       >
                         {src.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Tone of Voice</label>
+                  <div className="grid grid-cols-3 gap-2 bg-gray-50/50 p-2 rounded-2xl border border-gray-100/80">
+                    {[
+                      { label: "Bro", value: "BRO" },
+                      { label: "Tactical", value: "ADVANCED" },
+                      { label: "Pirate", value: "PIRATE" }
+                    ].map((tone) => (
+                      <button
+                        key={tone.value}
+                        onClick={() => setSelectedPersona(tone.value)}
+                        className={cn(
+                          "py-2 px-1 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
+                          selectedPersona === tone.value
+                            ? "bg-black border-black text-white shadow-md scale-[1.01]"
+                            : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                        )}
+                      >
+                        {tone.label}
                       </button>
                     ))}
                   </div>
