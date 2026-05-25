@@ -46,12 +46,14 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
     return res.status(400).json({ error: "Missing required parameters: beachId, date, and user authentication are required." });
   }
 
+  const parsedDays = parseInt(days as string) || 7;
+
   try {
     const result = await IntelligenceService.getTimedReportForBeach(
       beachId,
       date,
       userId,
-      parseInt(days as string),
+      parsedDays,
       persona,
       category,
       source
@@ -62,10 +64,10 @@ router.post("/weekly", authenticateToken, async (req, res: Response) => {
     console.error("[IntelligenceRoute] Intelligence report error:", error);
     
     if (error.message === "INSUFFICIENT_CREDITS") {
-      const creditCost = parseInt(days as string) <= 1 ? 1 : 4;
+      const creditCost = parsedDays <= 1 ? 1 : 4;
       return res.status(402).json({ 
         error: "Insufficient credits", 
-        message: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : '' } to generate this ${days}-day report.` 
+        message: `You need at least ${creditCost} credit${creditCost > 1 ? 's' : '' } to generate this ${parsedDays}-day report.` 
       });
     }
 

@@ -13,7 +13,7 @@ import { FilterToggleButton } from "@/app/components/ui/FilterToggleButton";
 import { LocationFilter as LocationFilterType } from "@/app/types/filters";
 import { useRegionCounts } from "@/app/hooks/useRegionCounts";
 import GradientButton, { HiddenGemsButton, LoggersButton, FoilingButton, FiltersButton, RegularButton } from "@/app/components/ui/GradientButton";
-import { Filter, Lock, Calendar } from "lucide-react";
+import { Filter, Lock, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { FilterDrawer } from "@/app/components/ui/filterdrawer";
 import LocationFilter from "../LocationFilter";
@@ -42,77 +42,141 @@ interface BeachHeaderControlsProps {
   forecast?: Forecast | null;
   hiddenGemCount?: number;
   isLoading?: boolean;
+  userLocation: { lat: number; lng: number } | null;
+  onRescanLocation: () => void;
 }
 
 const ProximityFilterRow = ({ 
   maxDistance, 
   onChange, 
   onToggle,
-  isLocating 
+  isLocating,
+  userLocation,
+  onRescan
 }: { 
   maxDistance: number | null; 
   onChange: (val: number) => void;
   onToggle: () => void;
   isLocating: boolean;
-}) => (
-  <div className="mt-4 pt-4 border-t border-gray-100/60 flex flex-col gap-3">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">
-          Proximity
-        </h5>
-        {maxDistance !== null && (
-          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-3/10 text-brand-3 rounded-full">
-             <input
-              type="number"
-              value={maxDistance}
-              suppressHydrationWarning
-              onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-              className="w-10 bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 appearance-none"
-              min={0}
-              max={500}
-            />
-            <span className="text-[10px] font-bold">km Radius</span>
+  userLocation: { lat: number; lng: number } | null;
+  onRescan: () => void;
+}) => {
+  const [locationName, setLocationName] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
+  useEffect(() => {
+    if (userLocation) {
+      setIsGeocoding(true);
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lng}&format=json`, {
+        headers: {
+          "Accept-Language": "en"
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const address = data?.address || {};
+          const city = address.city || address.town || address.village || address.suburb || address.county || "";
+          const country = address.country || "";
+          if (city && country) {
+            setLocationName(`${city}, ${country}`);
+          } else if (country) {
+            setLocationName(country);
+          } else {
+            setLocationName(`${userLocation.lat.toFixed(3)}°, ${userLocation.lng.toFixed(3)}°`);
+          }
+        })
+        .catch(() => {
+          setLocationName(`${userLocation.lat.toFixed(3)}°, ${userLocation.lng.toFixed(3)}°`);
+        })
+        .finally(() => {
+          setIsGeocoding(false);
+        });
+    } else {
+      setLocationName(null);
+    }
+  }, [userLocation]);
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100/60 flex flex-col gap-3">
+      {/* Active GPS Coordinate Location Badge */}
+      {userLocation && (
+        <div className="flex items-center justify-between px-3 py-2 bg-gray-50/50 border border-gray-100 rounded-2xl">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider truncate">
+              Location: <span className="text-black font-black">{isGeocoding ? "Locating..." : locationName || "Acquired"}</span>
+            </span>
           </div>
-        )}
+          <button
+            onClick={onRescan}
+            disabled={isLocating || isGeocoding}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 hover:border-gray-300 rounded-lg text-[9px] font-black uppercase tracking-wider text-slate-500 transition-all shrink-0 active:scale-[0.95]"
+            title="Scan GPS Coordinates"
+          >
+            <RefreshCw className={cn("w-2.5 h-2.5", (isLocating || isGeocoding) && "animate-spin")} />
+            Rescan
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">
+            Proximity
+          </h5>
+          {maxDistance !== null && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-brand-3/10 text-brand-3 rounded-full">
+               <input
+                type="number"
+                value={maxDistance}
+                suppressHydrationWarning
+                onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+                className="w-10 bg-transparent border-none p-0 text-[10px] font-bold focus:ring-0 appearance-none"
+                min={0}
+                max={500}
+              />
+              <span className="text-[10px] font-bold">km Radius</span>
+            </div>
+          )}
+        </div>
+        
+        <button
+          onClick={onToggle}
+          disabled={isLocating}
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all font-primary text-[9px] font-black uppercase tracking-wider border",
+            maxDistance !== null 
+              ? "bg-brand-3 border-brand-3 text-white shadow-sm" 
+              : "bg-white border-gray-200 text-gray-400 hover:border-brand-3 hover:text-brand-3"
+          )}
+        >
+          <div className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            maxDistance !== null ? "bg-white animate-pulse" : "bg-gray-300"
+          )} />
+          {isLocating ? "Locating..." : maxDistance !== null ? "Enabled" : "Enable Filter"}
+        </button>
       </div>
       
-      <button
-        onClick={onToggle}
-        disabled={isLocating}
-        className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all font-primary text-[9px] font-black uppercase tracking-wider border",
-          maxDistance !== null 
-            ? "bg-brand-3 border-brand-3 text-white shadow-sm" 
-            : "bg-white border-gray-200 text-gray-400 hover:border-brand-3 hover:text-brand-3"
-        )}
-      >
-        <div className={cn(
-          "w-1.5 h-1.5 rounded-full",
-          maxDistance !== null ? "bg-white animate-pulse" : "bg-gray-300"
-        )} />
-        {isLocating ? "Locating..." : maxDistance !== null ? "Enabled" : "Enable Filter"}
-      </button>
-    </div>
-    
-    {maxDistance !== null && (
-      <div className="flex items-center gap-6 px-1">
-        <Slider
-          value={[Math.min(maxDistance, 500)]}
-          max={500}
-          min={5}
-          step={5}
-          onValueChange={(vals) => onChange(vals[0])}
-          className="flex-1"
-        />
-        <div className="flex flex-col items-end min-w-[40px]">
-          <span className="text-[12px] font-bold text-black">{maxDistance >= 500 ? "500km+" : `${maxDistance}km`}</span>
-          <span className="text-[8px] font-black uppercase tracking-tighter text-gray-400">MAX</span>
+      {maxDistance !== null && (
+        <div className="flex items-center gap-6 px-1">
+          <Slider
+            value={[Math.min(maxDistance, 500)]}
+            max={500}
+            min={5}
+            step={5}
+            onValueChange={(vals) => onChange(vals[0])}
+            className="flex-1"
+          />
+          <div className="flex flex-col items-end min-w-[40px]">
+            <span className="text-[12px] font-bold text-black">{maxDistance >= 500 ? "500km+" : `${maxDistance}km`}</span>
+            <span className="text-[8px] font-black uppercase tracking-tighter text-gray-400">MAX</span>
+          </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};
 
 export default function BeachHeaderControls({
   onSearch,
@@ -129,6 +193,8 @@ export default function BeachHeaderControls({
   forecast,
   hiddenGemCount = 0,
   isLoading = false,
+  userLocation,
+  onRescanLocation,
 }: BeachHeaderControlsProps) {
   // Manage filter sidebar state locally
   const [showFilters, setShowFilters] = useState(false);
@@ -400,6 +466,8 @@ export default function BeachHeaderControls({
                       onChange={onMaxDistanceChange}
                       onToggle={onToggleProximity}
                       isLocating={isLocating}
+                      userLocation={userLocation}
+                      onRescan={onRescanLocation}
                     />
                   )}
                 </div>

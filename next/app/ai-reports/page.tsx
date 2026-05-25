@@ -18,7 +18,8 @@ import {
   Instagram,
   Link2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
 import {
@@ -62,8 +63,15 @@ const sourceColors: Record<string, { bg: string; text: string; border: string; l
   TIDE_RAIDER:       { bg: "bg-zinc-950",     text: "text-zinc-100",     border: "border-zinc-800",     label: "Raider" }
 };
 
-export default function AIReportsPage() {
+function AIReportsContent() {
   const { data: session, status } = useBackendAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const reportParam = searchParams.get("report");
+  const beachIdParam = searchParams.get("beachId");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBeach, setSelectedBeach] = useState<Beach | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -74,6 +82,28 @@ export default function AIReportsPage() {
     setSelectedReportId(reportId);
     setIsReportOpen(true);
   };
+
+  // Deep-linking support on mount
+  useEffect(() => {
+    if (reportParam && beachIdParam && (!selectedBeach || selectedBeach.id !== beachIdParam)) {
+      const fetchBeach = async () => {
+        try {
+          const res = await fetch(`/api/backend/beaches/${beachIdParam}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.id) {
+              setSelectedBeach(data);
+              setSelectedReportId(reportParam);
+              setIsReportOpen(true);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load deep-linked beach", err);
+        }
+      };
+      fetchBeach();
+    }
+  }, [reportParam, beachIdParam]);
 
   const { data: reports, isLoading } = useQuery<IntelligenceReport[]>({
     queryKey: ["intelligence-history"],
@@ -105,15 +135,20 @@ export default function AIReportsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-500">Signal History • Verified</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Signal History • Verified</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-tight">
-            Strategic <br/> Intelligence
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+            Strategic Intelligence
           </h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">
+            Archived ocean intelligence and weekly strategic forecasts.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
@@ -160,14 +195,15 @@ export default function AIReportsPage() {
                       onClick={() => handleLoadReport(report.beach as any, report.id)}
                     >
                       <div className="flex items-center gap-4 group/asset">
-                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover/asset:bg-black group-hover/asset:text-white transition-all shadow-sm">
+                        {/* Premium AI Purple Hover Circle for Map Pin */}
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover/asset:bg-gradient-to-br group-hover/asset:from-violet-500 group-hover/asset:to-indigo-600 group-hover/asset:text-white transition-all shadow-sm">
                           <MapPin className="w-4 h-4" />
                         </div>
                         <div>
                           <p className="font-bold text-[14px] text-black group-hover/asset:text-black transition-colors">{report.beach.name}</p>
                           {(() => {
                             const user = report.user || {
-                              name: "gh0st",
+                              name: "Ryko",
                               instagram: undefined,
                               link: undefined
                             };
@@ -201,7 +237,7 @@ export default function AIReportsPage() {
                               </div>
                             );
                           })()}
-                          <p className="text-[10px] font-medium text-black opacity-40 uppercase tracking-widest mt-1">
+                          <p className="text-[10px] font-medium text-black/40 uppercase tracking-widest mt-1">
                             Tactical Intel [{safeFormat(report.date, "MMM d")}{report.duration > 1 && report.endDate ? ` - ${safeFormat(report.endDate, "MMM d")}` : ""}]
                           </p>
                         </div>
@@ -240,10 +276,13 @@ export default function AIReportsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <Button asChild variant="ghost" className="h-10 px-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2">
-                        <Link href={`/raid?beachId=${report.beachId}&report=${report.id}`}>
-                          VIEW INTEL <ExternalLink className="w-3 h-3" />
-                        </Link>
+                      {/* Clicking View Intel triggers modal right on this page */}
+                      <Button 
+                        onClick={() => handleLoadReport(report.beach as any, report.id)} 
+                        variant="ghost" 
+                        className="h-10 px-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2"
+                      >
+                        VIEW INTEL <ExternalLink className="w-3 h-3" />
                       </Button>
                     </td>
                   </tr>
@@ -290,6 +329,14 @@ export default function AIReportsPage() {
             setIsReportOpen(false);
             setSelectedBeach(null);
             setSelectedReportId(undefined);
+            
+            // Gracefully clean up deep-linked query parameters when closing modal
+            const params = new URLSearchParams(window.location.search);
+            params.delete("report");
+            params.delete("beachId");
+            params.delete("beachName");
+            const newQuery = params.toString();
+            router.replace(`${pathname}${newQuery ? `?${newQuery}` : ""}`, { scroll: false });
           }}
           beach={selectedBeach}
           reportId={selectedReportId}
@@ -297,5 +344,18 @@ export default function AIReportsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AIReportsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-black opacity-20" />
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black opacity-40">Initializing Intelligence Center...</p>
+      </div>
+    }>
+      <AIReportsContent />
+    </Suspense>
   );
 }

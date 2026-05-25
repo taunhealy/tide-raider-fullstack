@@ -152,7 +152,7 @@ export default function AIReportsView() {
                     </span>
                     {(() => {
                       const user = report.user || {
-                        name: "gh0st",
+                        name: "Ryko",
                         instagram: undefined,
                         link: undefined
                       };

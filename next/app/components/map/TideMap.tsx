@@ -447,16 +447,16 @@ export default function TideMap({
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
                 : null;
 
-            return new Style({
+              return new Style({
                 image: new CircleStyle({
                   radius: type === "continent" ? 28 : 22,
                   stroke: new Stroke({ color: "#fff", width: 2 }),
-                  fill: new Fill({ color: getBrandedColor(avgRating) }),
+                  fill: new Fill({ color: "#1e40af" }), // Beautiful, readable brand darker blue
                 }),
                 text: new Text({
                   text: `${manualLabel}\n${manualCount}`,
                   fill: new Fill({ color: "#fff" }),
-                  font: `900 ${type === "continent" ? '11px' : '9px'} Inter, sans-serif`,
+                  font: `600 ${type === "continent" ? '11px' : '9px'} Inter, sans-serif`, // More legible 600 weight
                   textAlign: "center",
                   offsetY: 2,
                 }),
@@ -482,7 +482,7 @@ export default function TideMap({
                 text: new Text({
                   text: size.toString(),
                   fill: new Fill({ color: "#fff" }),
-                  font: "900 11px Inter, sans-serif",
+                  font: "600 11px Inter, sans-serif", // Clean, readable 600 weight
                 }),
               });
             }
@@ -508,7 +508,7 @@ export default function TideMap({
               text: new Text({
                 text: beach?.name,
                 offsetY: -32,
-                font: "900 10px Inter, sans-serif",
+                font: "600 10px Inter, sans-serif", // Clean, readable 600 weight
                 fill: new Fill({ color: "#fff" }),
                 stroke: new Stroke({ color: "rgba(0,0,0,0.5)", width: 2 }),
               }),

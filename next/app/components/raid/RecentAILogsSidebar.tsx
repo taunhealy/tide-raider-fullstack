@@ -193,7 +193,7 @@ export default function RecentAILogsSidebar() {
                           </div>
                           {(() => {
                             const user = report.user || {
-                              name: "gh0st",
+                              name: "Ryko",
                               instagram: undefined,
                               link: undefined
                             };

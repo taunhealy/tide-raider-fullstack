@@ -187,6 +187,30 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     }
   };
 
+  const handleRescanLocation = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setIsLocating(false);
+        import("sonner").then(({ toast }) => {
+          toast.success("Location Synced", { description: "Coordinates updated successfully." });
+        });
+      },
+      (error) => {
+        console.error("Error rescanning location:", error);
+        setIsLocating(false);
+        import("sonner").then(({ toast }) => {
+          toast.error("Scan Failed", { description: "Could not sync your location. Check browser permissions." });
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   // Auto-redirect to last selected region if no regionId in URL
   const { data: recentSearches, isLoading: isLoadingHistory } = useQuery({
     queryKey: ["recentSearches"],
@@ -318,7 +342,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
     enabled: !!filters.regionId,
   });
 
-  const handleRegionSelect = (regionId: LocationFilter["regionId"]) => {
+  const handleRegionSelect = (regionId: LocationFilterType["regionId"]) => {
     updateFilter("regionId", regionId || "");
     setCurrentPage(1);
     // queryClient.invalidateQueries is redundant as queryKey includes regionId
@@ -440,6 +464,8 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
               forecast={forecast}
               hiddenGemCount={data?.hiddenGemCount}
               isLoading={isLoading || isFetching}
+              userLocation={userLocation}
+              onRescanLocation={handleRescanLocation}
             />
 
             {isFetching && data && !isLoading && (
@@ -499,7 +525,16 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
                     
                     <div className="grid grid-cols-1 gap-5">
                       {sortedBeaches.length === 0 ? (
-                        <EmptyState message="No breaks found in this region, change filters?" />
+                        <EmptyState 
+                          message={maxDistance !== null 
+                            ? `No breaks found within ${maxDistance}km of your location` 
+                            : "No breaks found in this region, change filters?"
+                          }
+                          helpText={maxDistance !== null
+                            ? "Try disabling the Proximity filter or expanding the distance range slider in the controls above to see regional surf breaks."
+                            : undefined
+                          }
+                        />
                       ) : (
                         currentBeaches.filter(Boolean).map((beach: Beach) => {
                           const score = beachScores[beach.id]?.score ?? 0;

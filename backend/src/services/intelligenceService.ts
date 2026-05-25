@@ -281,7 +281,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
         
         return { 
           report: `Swell intelligence currently unavailable for this ${days}-day timeframe.`,
-          presenterName: "gh0st Central",
+          presenterName: "Ryko Central",
           creditsRemaining: updatedUser.credits + creditCost
         };
       }
@@ -298,17 +298,22 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       console.log(`[IntelligenceService] 🎭 Using persona: ${activePersona.name} (${activePersona.id})`);
 
       // Fetch the specific condition profile for the requested sport category
-      const sportCategory = category.toUpperCase() as any;
-      const conditionProfile = await (prisma as any).beachConditionProfile.findUnique({
-        where: {
-          beachId_category: {
-            beachId: beachId,
-            category: sportCategory
+      let conditionProfile = null;
+      try {
+        const sportCategory = category.toUpperCase() as any;
+        conditionProfile = await (prisma as any).beachConditionProfile.findUnique({
+          where: {
+            beachId_category: {
+              beachId: beachId,
+              category: sportCategory
+            }
           }
-        }
-      }) || await (prisma as any).beachConditionProfile.findFirst({
-        where: { beachId: beachRef.id, category: "GENERAL" }
-      });
+        }) || await (prisma as any).beachConditionProfile.findFirst({
+          where: { beachId: beachRef.id, category: "GENERAL" }
+        });
+      } catch (err) {
+        console.warn("[IntelligenceService] ⚠️ Failed to query beachConditionProfile (table/model might be missing in DB), falling back:", err);
+      }
 
       const context = forecasts.map(f => {
          const dateObj = f.date instanceof Date ? f.date : new Date(f.date);
@@ -514,7 +519,7 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       
       return { report, presenterName: activePersona.name };
     } catch (error) {
-       return { report: "Systems offline.", presenterName: "gh0st" };
+       return { report: "Systems offline.", presenterName: "Ryko" };
     }
   }
 }
