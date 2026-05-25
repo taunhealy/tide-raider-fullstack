@@ -160,21 +160,22 @@ export default function BioSection({
              )}
            </div>
 
-           <div>
-             <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">About Operator</label>
-             {isOwnProfile ? (
-               <Textarea
-                 value={bio}
-                 onChange={(e) => setBio(e.target.value)}
-                 placeholder="Operator specializations, experience, equipment..."
-                 className="min-h-[120px] bg-slate-50 border-slate-100 rounded-2xl focus:bg-white transition-all"
-               />
-             ) : (
-               <p className="text-slate-700 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-50 italic">
-                 {bio || "No background provided."}
-               </p>
-             )}
-           </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 ml-1">Operator Title / Role</label>
+              {isOwnProfile ? (
+                <Input
+                  type="text"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="e.g. Surf Instructor, Foam Hunter, Wave Photographer..."
+                  className="bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all font-bold"
+                />
+              ) : (
+                <p className="text-slate-900 font-bold bg-slate-50 px-6 py-3 rounded-xl border border-slate-50 italic">
+                  {bio || "Operator"}
+                </p>
+              )}
+            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

@@ -87,43 +87,16 @@ export async function GET() {
 
     const userData = await userResponse.json();
 
-    // Get subscription status from Next.js API endpoint (more reliable than backend)
-    let subscriptionData = null;
-    try {
-      // Use the Next.js API route instead of backend
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3001";
-      const subscriptionResponse = await fetch(
-        `${baseUrl}/api/paypal/subscription-status`,
-        {
-          headers: {
-            Cookie: cookieStore.toString(),
-          },
-          cache: "no-store",
-        }
-      );
-
-      if (subscriptionResponse.ok) {
-        subscriptionData = await subscriptionResponse.json();
-      }
-    } catch (error) {
-      console.warn("[user/current] Subscription check failed:", error);
-      // Will use fallback below
-    }
-
     // Extract subscription status - prioritize backend subscriptionStatus from /api/auth/me
     let subscriptionStatus =
       userData.user?.subscriptionStatus ||
-      subscriptionData?.subscriptionStatus ||
       (userData.user?.isSubscribed ? "ACTIVE" : "INACTIVE");
     
-    const paypalSubscriptionId =
-      subscriptionData?.paypalSubscriptionId || null;
+    const paypalSubscriptionId = null;
     
     // Check for trial status from multiple sources
     const hasActiveTrial =
       userData.user?.hasActiveTrial || 
-      subscriptionData?.hasActiveTrial || 
       subscriptionStatus === "TRIAL" ||
       false;
 

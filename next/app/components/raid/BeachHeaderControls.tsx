@@ -243,28 +243,38 @@ export default function BeachHeaderControls({
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-col items-start gap-5">
-                <div className="flex flex-col gap-3 w-full">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
-                  <div className="flex flex-wrap items-stretch gap-2 w-full">
-                    <DateSelector
-                      selectedDate={selectedDate}
-                      onDateSelect={handleDateSelect}
-                      beaches={beaches}
-                      availableDates={tenDayDates}
-                      className="w-full sm:w-auto"
-                      isLoading={isLoading}
-                    />
-                    <GradientButton
-                      variant="gray"
-                      onClick={() => setIsFilterOpen(true)}
-                      icon={<Calendar className="w-4 h-4 text-gray-500" />}
-                      className="h-auto py-2 font-black uppercase tracking-wider text-[10px] min-h-[48px]"
-                      title="Advanced filters & full date selector"
-                    >
-                      Expand
-                    </GradientButton>
+                {!isMounted ? (
+                  <div className="flex flex-col gap-3 w-full">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
+                    </div>
+                    <div className="h-14 w-full bg-gray-100/50 animate-pulse rounded-2xl" />
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col gap-3 w-full animate-in fade-in duration-300">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(true)}
+                        className="p-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-500 hover:text-black rounded-lg shadow-sm transition-all flex items-center justify-center"
+                        title="Advanced filters & full date selector"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-stretch gap-2 w-full">
+                      <DateSelector
+                        selectedDate={selectedDate}
+                        onDateSelect={handleDateSelect}
+                        beaches={beaches}
+                        availableDates={tenDayDates}
+                        className="w-full sm:w-auto"
+                        isLoading={isLoading}
+                      />
+                    </div>
+                  </div>
+                )}
                
                 <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-5">
                    <div className="flex flex-col gap-3">

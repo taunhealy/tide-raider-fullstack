@@ -259,7 +259,7 @@ function ProfileHeaderContent({
         </div>
 
         <div className="text-sm text-gray-600 mt-1">
-          {userData?.nationality ? (
+          {userData?.nationality && (
             <>
               From{" "}
               {
@@ -269,10 +269,6 @@ function ProfileHeaderContent({
               }{" "}
               {getFlagEmoji(userData.nationality)}
             </>
-          ) : (
-            <span className="text-slate-400 font-bold uppercase text-[9px] tracking-widest">
-              🏴‍☠️ Ghost Operator
-            </span>
           )}
         </div>
 
@@ -410,7 +406,7 @@ function ProfileHeaderContent({
                 className="w-full px-4 py-2.5 text-left hover:bg-slate-50 rounded-lg flex items-center gap-3 transition-colors text-xs font-bold text-slate-700"
               >
                 <span className="text-lg">🏴‍☠️</span>
-                <span>Ghost Operator (Pirate Flag)</span>
+                <span>Secret / Private Location</span>
                 {!userData?.nationality && <Check className="ml-auto w-4 h-4 text-indigo-500" />}
               </button>
 

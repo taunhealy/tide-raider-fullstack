@@ -144,7 +144,7 @@ export default function GlobalMapPage() {
 
   useEffect(() => {
     if (mounted && !filters.regionId) {
-      updateFilter("regionId", "western-cape");
+      updateFilter("regionId", "all");
     }
   }, [mounted, filters.regionId, updateFilter]);
 
@@ -257,7 +257,7 @@ export default function GlobalMapPage() {
       try {
         const sourceParam = selectedSource ? `&source=${selectedSource}` : "";
         const timeSlotParam = filters.timeSlot ? `&timeSlot=${filters.timeSlot}` : "&timeSlot=MORNING";
-        const phase2RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "&regionId=western-cape";
+        const phase2RegionParam = filters.regionId ? `&regionId=${filters.regionId}` : "&regionId=all";
         const dateParam = `&date=${selectedDateString}`;
         
         const liteRes = await fetch(`/api/map-data?lite=true${sourceParam}${timeSlotParam}${phase2RegionParam}${dateParam}`);
@@ -541,12 +541,12 @@ export default function GlobalMapPage() {
 
             {/* Region Selector */}
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Continents</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Countries</label>
               <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
                 {Object.entries(REGION_COORDINATES)
-                  .filter(([key]) => !["za", "na", "ma", "sn", "mz", "mg"].includes(key))
+                  .filter(([key]) => !["africa"].includes(key))
                   .map(([key, config]) => {
-                    const isActive = (filters.regionId || "western-cape") === key;
+                    const isActive = (filters.regionId || "all") === key;
                     return (
                       <button
                         key={key}
@@ -906,12 +906,12 @@ export default function GlobalMapPage() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Continents</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Regions & Countries</label>
                     <div className="grid grid-cols-2 gap-1.5 max-h-[160px] overflow-y-auto pr-1 no-scrollbar">
                       {Object.entries(REGION_COORDINATES)
-                        .filter(([key]) => !["za", "na", "ma", "sn", "mz", "mg"].includes(key))
+                        .filter(([key]) => !["africa"].includes(key))
                         .map(([key, config]) => {
-                          const isActive = (filters.regionId || "western-cape") === key;
+                          const isActive = (filters.regionId || "all") === key;
                           return (
                             <button
                               key={key}
