@@ -87,26 +87,33 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       );
       
       if (beachRef) {
-         await prisma.intelligenceReport.upsert({
+         const existingDailyReport = await prisma.intelligenceReport.findFirst({
             where: {
-               intel_history_unique: {
-                  beachId: beachRef.id,
-                  userId: "cmnhjq35d000cs60fxss02p4o",
-                  date: reportDate,
-                  persona: persona,
-                  duration: 1
-               }
-            },
-            update: { content: report },
-            create: {
                beachId: beachRef.id,
                userId: "cmnhjq35d000cs60fxss02p4o",
                date: reportDate,
                persona: persona,
-               content: report,
                duration: 1
             }
          });
+
+         if (existingDailyReport) {
+            await prisma.intelligenceReport.update({
+               where: { id: existingDailyReport.id },
+               data: { content: report }
+            });
+         } else {
+            await prisma.intelligenceReport.create({
+               data: {
+                  beachId: beachRef.id,
+                  userId: "cmnhjq35d000cs60fxss02p4o",
+                  date: reportDate,
+                  persona: persona,
+                  content: report,
+                  duration: 1
+               }
+            });
+         }
       }
       
       this.cache[cacheKey] = { report, timestamp: Date.now() };
@@ -394,34 +401,41 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
       }
 
       // 5. Save report to history
-      await prisma.intelligenceReport.upsert({
+      const existingReport = await prisma.intelligenceReport.findFirst({
         where: {
-          intel_history_unique: {
-            beachId,
-            userId,
-            date: startDate,
-            persona,
-            duration: days,
-            category,
-            source: querySource
-          }
-        },
-        update: { 
-          content: finalReport,
-          endDate: endDate
-        },
-        create: {
           beachId,
           userId,
           date: startDate,
           persona,
-          content: finalReport,
           duration: days,
-          endDate: endDate,
           category,
           source: querySource
         }
       });
+
+      if (existingReport) {
+        await prisma.intelligenceReport.update({
+          where: { id: existingReport.id },
+          data: {
+            content: finalReport,
+            endDate: endDate
+          }
+        });
+      } else {
+        await prisma.intelligenceReport.create({
+          data: {
+            beachId,
+            userId,
+            date: startDate,
+            persona,
+            content: finalReport,
+            duration: days,
+            endDate: endDate,
+            category,
+            source: querySource
+          }
+        });
+      }
 
       // 6. Find the report ID (since we used upsert, we need to fetch or handle result)
       const savedReport = await prisma.intelligenceReport.findFirst({

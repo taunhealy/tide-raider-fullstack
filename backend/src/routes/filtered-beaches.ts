@@ -153,23 +153,8 @@ async function fetchFilteredBeachesData(
 
   let forecast = exactForecast;
 
-  // 🔄 CROSS-SOURCE FALLBACK (Alternative Provider)
-  const allowFallback = true;
-  if (!forecast && regionId && allowFallback) {
-    const alternateSource = effectiveSource === "WINDFINDER" ? "WINDGURU" : "WINDFINDER";
-    forecast = await prisma.forecast.findFirst({
-      where: {
-        regionId,
-        date: targetDate,
-        source: alternateSource as any,
-        timeSlot: timeSlotParam as any,
-      },
-      select: forecastSelect,
-    });
-    if (forecast) {
-      console.log(`[filtered-beaches] 🔀 Using alternate source ${alternateSource} fallback.`);
-    }
-  }
+  // 🔄 CROSS-SOURCE FALLBACK: Removed per user request to never fallback to another source.
+  const allowFallback = false;
 
   // 🕒 SLOT FALLBACK (Same Day, Different Time)
   if (!forecast && regionId) {

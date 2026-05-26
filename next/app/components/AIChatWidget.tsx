@@ -7,6 +7,7 @@ import { cn } from "@/app/lib/utils";
 import { Button } from "./ui/Button";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
+import { useRouter } from "next/navigation";
 
 interface Message {
   role: "user" | "model";
@@ -14,6 +15,7 @@ interface Message {
 }
 
 export default function AIChatWidget() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState("");
@@ -79,6 +81,91 @@ export default function AIChatWidget() {
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setInput("");
     chatMutation.mutate(userMessage);
+  };
+
+  const handleSelectRegion = (id: string, name: string) => {
+    setMessages(prev => [...prev, { role: "user", content: `Scout best breaks in ${name}` }]);
+    chatMutation.mutate(`[REGION_SELECT] ${id}`);
+  };
+
+  const REGION_OPTIONS = [
+    { id: "western-cape", name: "Western Cape (SA)" },
+    { id: "eastern-cape", name: "Eastern Cape (SA)" },
+    { id: "kwazulu-natal", name: "KwaZulu-Natal (SA)" },
+    { id: "northern-cape", name: "Northern Cape (SA)" },
+    { id: "swakopmund", name: "Swakopmund (Namibia)" },
+    { id: "inhambane-province", name: "Inhambane / Tofo (Mozambique)" },
+    { id: "ponta-do-ouro", name: "Ponta do Ouro (Mozambique)" },
+    { id: "madagascar-south", name: "Madagascar (South)" },
+    { id: "bali", name: "Bali (Indonesia)" },
+    { id: "queensland", name: "Queensland (Australia)" },
+    { id: "waikato", name: "Waikato / Raglan (NZ)" },
+    { id: "chicama", name: "Chicama (Peru)" },
+    { id: "california", name: "California (USA)" },
+    { id: "new-south-wales", name: "New South Wales / Bondi (Australia)" },
+    { id: "scotland", name: "Scotland (UK)" },
+    { id: "morocco", name: "Taghazout (Morocco)" },
+    { id: "basque-country", name: "Basque Country / Mundaka (Spain)" }
+  ];
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const renderMessageContent = (content: string) => {
+    if (content.includes("[PROMPT_REGION_SELECT]")) {
+      const cleanText = content.replace("[PROMPT_REGION_SELECT]", "").trim();
+      const filtered = REGION_OPTIONS.filter(r => 
+        r.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      return (
+        <div className="space-y-3 font-primary">
+          <p>{cleanText}</p>
+          <div className="bg-slate-800/90 p-3 rounded-xl border border-slate-700 space-y-2 mt-2">
+            <input 
+              type="text" 
+              placeholder="Search region..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-brand-3/50"
+            />
+            <div className="max-h-36 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+              {filtered.map(region => (
+                <button
+                  key={region.id}
+                  onClick={() => handleSelectRegion(region.id, region.name)}
+                  className="w-full text-left bg-slate-900 hover:bg-slate-950 text-slate-200 hover:text-white px-2.5 py-2 rounded-lg text-xs font-bold border border-slate-800 transition-all flex items-center gap-1.5"
+                >
+                  <span className="text-[10px]">📍</span> {region.name}
+                </button>
+              ))}
+              {filtered.length === 0 && (
+                <p className="text-[10px] text-slate-500 text-center py-2">No matching sectors found</p>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (content.includes("[REDIRECT: AI_REPORT_PAGE]")) {
+      const cleanText = content.replace("[REDIRECT: AI_REPORT_PAGE]", "").trim();
+      return (
+        <div className="space-y-3 font-primary">
+          <p>{cleanText}</p>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              router.push("/ai-reports");
+            }}
+            className="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black uppercase tracking-widest text-[9px] py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+          >
+            📊 Access AI Reports Sector
+          </button>
+        </div>
+      );
+    }
+
+    return content;
   };
 
   if (!user) return null;
@@ -148,7 +235,7 @@ export default function AIChatWidget() {
                         ? "bg-white border border-slate-200 text-slate-900 rounded-tr-none" 
                         : "bg-slate-900 text-slate-100 rounded-tl-none shadow-md"
                     )}>
-                      {msg.content}
+                      {renderMessageContent(msg.content)}
                     </div>
                   </div>
                 ))}
@@ -163,6 +250,30 @@ export default function AIChatWidget() {
                   </div>
                 )}
               </div>
+
+              {/* Welcome/FAQ Quick Suggestion Pills */}
+              {messages.length === 1 && !chatMutation.isPending && (
+                <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      setMessages(prev => [...prev, { role: "user", content: "Where is there good surf today?" }]);
+                      chatMutation.mutate("Where is there good surf today?");
+                    }}
+                    className="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-full transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                  >
+                    🌊 Where is there good surf today?
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMessages(prev => [...prev, { role: "user", content: "Show me forecasts beyond today" }]);
+                      chatMutation.mutate("Show me forecasts beyond today");
+                    }}
+                    className="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-full transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                  >
+                    🔮 Forecasts beyond today?
+                  </button>
+                </div>
+              )}
 
               {/* Input Area */}
               <div className="p-4 border-t border-slate-100 bg-white">

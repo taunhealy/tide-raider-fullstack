@@ -16,7 +16,8 @@
  * No hardcoded URLs anywhere else!
  */
 export const getBackendUrl = (): string => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const rawUrl = process.env.NEXT_PUBLIC_API_URL;
+  const envUrl = rawUrl ? rawUrl.trim().replace(/[\r\n]/g, "") : null;
   const isDevelopment = process.env.NODE_ENV === "development";
 
   // If NEXT_PUBLIC_API_URL is explicitly set and not localhost, use it

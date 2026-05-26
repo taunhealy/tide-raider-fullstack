@@ -268,6 +268,18 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
     }
   }, [isOpen, reportId]);
 
+  const handleClose = () => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("report");
+      params.delete("beachId");
+      params.delete("beachName");
+      const newQuery = params.toString();
+      router.replace(`${pathname}${newQuery ? `?${newQuery}` : ""}`, { scroll: false });
+    }
+    onClose();
+  };
+
   const handleGenerate = async () => {
     if (credits < creditCost) {
       toast.error("Insufficient Credits", {
@@ -428,10 +440,10 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-[95vw] lg:max-w-7xl bg-white border-none shadow-2xl p-0 gap-0 overflow-hidden font-['Inter',_sans-serif] h-[95vh] md:h-auto md:max-h-[85vh] flex flex-col top-[52%] md:top-[50%] transition-all duration-500">
         <DialogTitle className="sr-only">AI Intelligence Dashboard: {currentBeach ? currentBeach.name : "Tactical Briefing"}</DialogTitle>
-
+ 
         {/* Unified Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-4">
@@ -473,7 +485,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <span className="text-[13px] font-black text-black tracking-tight">{credits ?? 0} <span className="opacity-30 font-bold uppercase text-[9px] tracking-widest ml-1">Credits</span></span>
               )}
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
+            <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
               <X className="w-5 h-5" />
             </Button>
           </div>

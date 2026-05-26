@@ -373,29 +373,7 @@ router.get(
           }
         }
 
-        // WINDY FALLBACK: If source was WINDY and no forecast was found, try finding WINDFINDER_SUPER, WINDFINDER, or WINDGURU
-        if (!forecast && sourceParam === "WINDY") {
-          console.log(`[forecast] 🔄 WINDY Fallback: Windy forecast missing for ${resolvedRegionId} on ${dateStr}. Trying alternatives...`);
-          const alternative = await prisma.forecast.findFirst({
-            where: {
-              regionId: resolvedRegionId,
-              date: targetDate,
-              timeSlot: timeSlotParam as any,
-              source: { in: ["WINDFINDER_SUPER", "WINDFINDER", "WINDGURU"] }
-            },
-            orderBy: {
-              source: 'desc' 
-            }
-          });
-
-          if (alternative) {
-            console.log(`[forecast] ✅ WINDY Fallback: Found alternative forecast from ${alternative.source}. Returning it.`);
-            forecast = {
-              ...alternative,
-              source: "WINDY" // Retain source as WINDY for the frontend
-            } as any;
-          }
-        }
+        // WINDY FALLBACK: Removed per user request to never fallback to another source and show no data found instead.
 
         // Return 404 if still no forecast found
         if (!forecast) {
