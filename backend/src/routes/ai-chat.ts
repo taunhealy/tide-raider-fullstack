@@ -37,7 +37,7 @@ router.post("/message", authenticateToken, async (req, res: Response) => {
       });
     }
 
-    res.status(500).json({ error: "Tactical relay failed. Systems offline." });
+    res.status(500).json({ error: "Tactical signal lost. Please try again" });
   }
 });
 

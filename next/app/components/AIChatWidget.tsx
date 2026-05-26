@@ -40,11 +40,10 @@ export default function AIChatWidget() {
         content: m.content
       }));
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4050"}/api/ai-chat/message`, {
+      const res = await fetch("/api/backend/ai-chat/message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({ message, history })
       });
