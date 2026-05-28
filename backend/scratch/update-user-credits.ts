@@ -14,10 +14,18 @@ import { prisma } from '../src/lib/prisma';
 
 async function run() {
   try {
-    const beaches = await prisma.beach.findMany({
-      select: { id: true, name: true, regionId: true, countryId: true }
+    const updateResult = await prisma.user.updateMany({
+      data: {
+        credits: 100
+      }
     });
-    console.log('Beaches in DB:', beaches);
+    console.log(`✅ Successfully updated ${updateResult.count} users to have 100 credits/points.`);
+    
+    // Log the updated users
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true, credits: true }
+    });
+    console.log('--- UPDATED USERS ---', users);
   } catch (err) {
     console.error(err);
   } finally {

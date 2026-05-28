@@ -65,8 +65,145 @@ function getPrisma() {
     },
   });
 
-  (newInstance as any)._lastUsedUrl = optimizedDatabaseUrl;
-  prismaInstance = newInstance;
+  // Global backup client extension to safeguard users and logs outside database
+  const extendedInstance = newInstance.$extends({
+    query: {
+      user: {
+        async create({ args, query }) {
+          const result = await query(args);
+          try {
+            const userId = result?.id;
+            if (userId) {
+              // Dynamic import to avoid circular dependency
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupUser(userId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup user:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in create user hook:", e);
+          }
+          return result;
+        },
+        async update({ args, query }) {
+          const result = await query(args);
+          try {
+            const userId = result?.id;
+            if (userId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupUser(userId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup user:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in update user hook:", e);
+          }
+          return result;
+        },
+        async upsert({ args, query }) {
+          const result = await query(args);
+          try {
+            const userId = result?.id;
+            if (userId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupUser(userId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup user:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in upsert user hook:", e);
+          }
+          return result;
+        }
+      },
+      logEntry: {
+        async create({ args, query }) {
+          const result = await query(args);
+          try {
+            const logId = result?.id;
+            if (logId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupLogEntry(logId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup log:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in create log hook:", e);
+          }
+          return result;
+        },
+        async update({ args, query }) {
+          const result = await query(args);
+          try {
+            const logId = result?.id;
+            if (logId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupLogEntry(logId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup log:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in update log hook:", e);
+          }
+          return result;
+        },
+        async upsert({ args, query }) {
+          const result = await query(args);
+          try {
+            const logId = result?.id;
+            if (logId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.backupLogEntry(logId, newInstance).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to backup log:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in upsert log hook:", e);
+          }
+          return result;
+        },
+        async delete({ args, query }) {
+          const logId = args?.where?.id;
+          const result = await query(args);
+          try {
+            if (logId) {
+              import("../services/backupService").then(({ BackupService }) => {
+                BackupService.deleteLogBackup(logId).catch(err => {
+                  console.error("[Prisma Backup Extension] Failed to delete log backup:", err);
+                });
+              }).catch(err => {
+                console.error("[Prisma Backup Extension] Failed to import BackupService:", err);
+              });
+            }
+          } catch (e) {
+            console.error("[Prisma Backup Extension] Error in delete log hook:", e);
+          }
+          return result;
+        }
+      }
+    }
+  });
+
+  (extendedInstance as any)._lastUsedUrl = optimizedDatabaseUrl;
+  prismaInstance = extendedInstance as any;
 
   if (process.env.NODE_ENV !== "production") {
     globalForPrisma.prisma = prismaInstance;

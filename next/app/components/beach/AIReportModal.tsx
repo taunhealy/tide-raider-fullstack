@@ -926,7 +926,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                           <div className="mb-8 pb-8 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-6">
                             <div className="space-y-1">
                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Surf Break</span>
-                              <p className="text-[14px] font-bold text-black">{beach.name}</p>
+                              <p className="text-[14px] font-bold text-black">{currentBeach?.name || beach?.name || "Unknown Break"}</p>
                             </div>
                             <div className="space-y-1">
                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Tactical window</span>

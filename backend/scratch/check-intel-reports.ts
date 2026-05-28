@@ -14,10 +14,16 @@ import { prisma } from '../src/lib/prisma';
 
 async function run() {
   try {
-    const beaches = await prisma.beach.findMany({
-      select: { id: true, name: true, regionId: true, countryId: true }
-    });
-    console.log('Beaches in DB:', beaches);
+    const count = await prisma.intelligenceReport.count();
+    console.log('Total Intelligence Reports in DB:', count);
+    
+    if (count > 0) {
+      const reports = await prisma.intelligenceReport.findMany({
+        take: 5,
+        include: { beach: true }
+      });
+      console.log('Sample Reports:', reports);
+    }
   } catch (err) {
     console.error(err);
   } finally {

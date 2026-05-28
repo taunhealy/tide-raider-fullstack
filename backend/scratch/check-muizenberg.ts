@@ -1,16 +1,19 @@
+import { prisma } from '../src/lib/prisma';
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-async function checkMuizenberg() {
-  const beach = await prisma.beach.findFirst({
-    where: {
-      name: { contains: "Muizenberg", mode: "insensitive" }
-    }
-  });
-  console.log("Muizenberg Data:", JSON.stringify(beach, null, 2));
-  await prisma.$disconnect();
+async function run() {
+  try {
+    const beach = await prisma.beach.findFirst({
+      where: { name: 'Muizenberg' }
+    });
+    console.log('Muizenberg beach in DB:', beach);
+    
+    const count = await prisma.beach.count();
+    console.log('Total beaches count in DB:', count);
+  } catch (err) {
+    console.error('Error querying Muizenberg:', err);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-checkMuizenberg().catch(console.error);
+run();
