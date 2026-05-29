@@ -33,7 +33,7 @@
   },
   {
     "id": "cmpp7q3m90075s60ef1r056yz",
-    "name": "Taun Healy",
+    "name": "Ryko",
     "email": "admin@tideraider.com",
     "emailVerified": null,
     "image": "https://lh3.googleusercontent.com/a/ACg8ocJoOJQGYKHVikd3qVOwSaMt-P1UrSsvdaTnyUD0MVhjcwdyyw=s96-c",
@@ -41,7 +41,7 @@
     "password": null,
     "skillLevel": null,
     "createdAt": "2026-05-28T08:09:57.969Z",
-    "updatedAt": "2026-05-28T08:14:03.425Z",
+    "updatedAt": "2026-05-29T07:58:25.538Z",
     "lemonCustomerId": null,
     "lemonSubscriptionId": null,
     "savedFilters": null,
@@ -49,9 +49,9 @@
     "hasTrialEnded": false,
     "trialEndDate": null,
     "trialStartDate": null,
-    "bio": null,
-    "link": null,
-    "instagram": null,
+    "bio": "Web Designer & Developer",
+    "link": "",
+    "instagram": "",
     "subscriptionEndsAt": null,
     "subscriptionStatus": null,
     "paypalSubscriptionId": null,
@@ -60,8 +60,8 @@
     ],
     "referralCode": "TAU-7F1A5A",
     "referredById": null,
-    "credits": 100,
-    "whatsappNumber": null
+    "credits": 296,
+    "whatsappNumber": ""
   },
   {
     "id": "cmn4owtab0000s60f0dosfbck",
@@ -125,6 +125,38 @@
     "referralCode": null,
     "referredById": null,
     "credits": 100,
+    "whatsappNumber": null
+  },
+  {
+    "id": "cmnhjq35d000cs60fxss02p4o",
+    "name": "Recovered User",
+    "email": "recovered.cmnhjq35d000cs60fxss02p4o@tideraider.com",
+    "emailVerified": null,
+    "image": null,
+    "nationality": null,
+    "password": null,
+    "skillLevel": null,
+    "createdAt": "2026-05-28T09:11:56.039Z",
+    "updatedAt": "2026-05-28T09:11:56.039Z",
+    "lemonCustomerId": null,
+    "lemonSubscriptionId": null,
+    "savedFilters": null,
+    "hasActiveTrial": false,
+    "hasTrialEnded": false,
+    "trialEndDate": null,
+    "trialStartDate": null,
+    "bio": null,
+    "link": null,
+    "instagram": null,
+    "subscriptionEndsAt": null,
+    "subscriptionStatus": null,
+    "paypalSubscriptionId": null,
+    "roles": [
+      "SURFER"
+    ],
+    "referralCode": null,
+    "referredById": null,
+    "credits": 5,
     "whatsappNumber": null
   }
 ]

@@ -26,7 +26,7 @@ async function generateWesternCapeReport() {
     console.log("💳 Refilled operator credits to 100.");
   }
   
-  const forecastDate = "2026-05-25";
+  const forecastDate = "2026-05-29";
   const sources = ["WINDY", "WINDFINDER_SUPER", "WINDGURU"];
   
   for (const src of sources) {

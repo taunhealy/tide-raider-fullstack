@@ -291,15 +291,15 @@ export default function BeachHeaderControls({
     // Force Today if no date in URL OR if the date in URL is outside our 10-day tactical window
     const isOutOfBounds = selectedDate && (selectedDate < pastLimitStr || selectedDate > futureLimitStr);
 
-    if ((!selectedDate || isOutOfBounds) && availableDates.length > 0 && !hasDefaulted) {
-      if (availableDates.includes(todayStr)) {
+    if (!selectedDate || isOutOfBounds) {
+      if (!hasDefaulted) {
         handleDateSelect(todayStr);
-      } else {
-        handleDateSelect(availableDates[0]);
+        setHasDefaulted(true);
       }
+    } else {
       setHasDefaulted(true);
     }
-  }, [selectedDate, availableDates, hasDefaulted, todayStr, pastLimitStr, futureLimitStr]);
+  }, [selectedDate, hasDefaulted, todayStr, pastLimitStr, futureLimitStr]);
 
   return (
     <>

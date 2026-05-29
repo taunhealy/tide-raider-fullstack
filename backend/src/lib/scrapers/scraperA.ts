@@ -109,27 +109,32 @@ export async function scraperA(
     const html = response.data;
     const $ = cheerio.load(html);
     
-    // Find the astro-island containing fcSectionData
-    const island = $("astro-island").filter((_, el) => {
-      const props = $(el).attr("props");
-      return props ? props.includes("fcSectionData") : false;
+    // Find all astro-islands containing either fcSectionData or fcData in their props
+    const rawDays: any[] = [];
+
+    $("astro-island").each((_, el) => {
+      const propsStr = $(el).attr("props");
+      if (propsStr) {
+        try {
+          const parsed = parseAstroProp(JSON.parse(propsStr));
+          if (parsed.fcSectionData) {
+            const days = parsed.fcSectionData.flat();
+            rawDays.push(...days);
+          }
+          if (parsed.fcData) {
+            const days = [parsed.fcData].flat();
+            rawDays.push(...days);
+          }
+        } catch (e) {
+          // ignore parsing errors for non-matching islands
+        }
+      }
     });
 
-    if (island.length === 0) {
-      throw new Error("Could not find Astro Island containing fcSectionData in raw HTML");
+    if (rawDays.length === 0) {
+      throw new Error("Could not find fcSectionData or fcData in any Astro Islands raw HTML");
     }
 
-    const propsStr = island.attr("props") || "";
-    const rawProps = JSON.parse(propsStr);
-    const parsedProps = parseAstroProp(rawProps);
-    
-    const fcSectionData = parsedProps.fcSectionData;
-    if (!fcSectionData || !Array.isArray(fcSectionData)) {
-      throw new Error("fcSectionData is missing or invalid in parsed props");
-    }
-
-    // Flatten days
-    const rawDays = fcSectionData.flat();
     console.log(`[scraperA] ✅ Extracted ${rawDays.length} raw days from JSON`);
 
     const forecasts: any[] = [];
