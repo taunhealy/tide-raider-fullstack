@@ -1346,6 +1346,13 @@
       "lat": -34.1956,
       "lng": 18.3445
     },
+    "videos": [
+      {
+        "url": "https://www.youtube.com/watch?v=V2wN755pne8",
+        "title": "Jordy Smith a/t FACTORY",
+        "platform": "youtube"
+      }
+    ],
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [

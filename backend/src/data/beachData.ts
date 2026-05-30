@@ -1021,6 +1021,13 @@ export const beachData: Beach[] = [
       lat: -34.1123,
       lng: 18.4876,
     },
+    videos: [
+      {
+        url: "https://www.youtube.com/watch?v=V2wN755pne8",
+        title: "Jordy Smith a/t FACTORY",
+        platform: "youtube",
+      },
+    ],
   },
   {
     id: "betty's-bay",

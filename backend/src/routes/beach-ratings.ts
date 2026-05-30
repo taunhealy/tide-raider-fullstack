@@ -648,12 +648,66 @@ router.get(
                   : sourcesToFetch;
 
                 if (safeSources.length > 0) {
-                  await Promise.all(
-                    safeSources.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
-                  );
+                  const fastSources = safeSources.filter(s => s === "OPENMETEO_ARCHIVE");
+                  const slowSources = safeSources.filter(s => s !== "OPENMETEO_ARCHIVE" && s !== "TIDE_RAIDER");
+                  const ensembleSources = safeSources.filter(s => s === "TIDE_RAIDER");
+
+                  if (fastSources.length > 0) {
+                    console.log(`[beach-ratings/beach-scores] Awaiting fast sources: ${fastSources.join(', ')}`);
+                    await Promise.all(
+                      fastSources.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
+                    );
+                  }
+
+                  if (ensembleSources.length > 0) {
+                    console.log(`[beach-ratings/beach-scores] Generating Tide Raider ensemble on-demand`);
+                    try {
+                      const { EnsembleService } = require("../services/ensembleService");
+                      await Promise.all(
+                        ["MORNING", "NOON", "EVENING"].map(slot => 
+                          EnsembleService.updateEnsembleForecast(beach.regionId, targetDate, slot as any)
+                        )
+                      );
+                    } catch (ensembleErr) {
+                      console.error(`[beach-ratings/beach-scores] On-demand ensemble failed:`, ensembleErr);
+                    }
+                  }
+
+                  if (slowSources.length > 0) {
+                    console.log(`[beach-ratings/beach-scores] Triggering slow scrapers in background: ${slowSources.join(', ')}`);
+                    Promise.all(
+                      slowSources.map(source => getLatestConditions(beach.regionId, false, source as any, 1, targetDate))
+                    ).then(async () => {
+                      console.log(`[beach-ratings/beach-scores] Background scrapers completed for ${beachId} on ${date}. Calculating background scores.`);
+                      try {
+                        const bgForecasts = await prisma.forecast.findMany({
+                          where: {
+                            regionId: beach.regionId,
+                            date: targetDate,
+                            source: { in: slowSources }
+                          }
+                        });
+                        for (const forecast of bgForecasts) {
+                          await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
+                        }
+                        // Also trigger ensemble update so TIDE_RAIDER gets updated with the new background data
+                        console.log(`[beach-ratings/beach-scores] Re-triggering ensemble with background scraper data`);
+                        const { EnsembleService } = require("../services/ensembleService");
+                        await Promise.all(
+                          ["MORNING", "NOON", "EVENING"].map(slot => 
+                            EnsembleService.updateEnsembleForecast(beach.regionId, targetDate, slot as any)
+                          )
+                        );
+                      } catch (bgCalcErr) {
+                        console.error(`[beach-ratings/beach-scores] Background score/ensemble calculation failed:`, bgCalcErr);
+                      }
+                    }).catch(err => {
+                      console.error(`[beach-ratings/beach-scores] Background scraper error:`, err);
+                    });
+                  }
                 }
                 
-                // Re-fetch forecasts
+                // Re-fetch forecasts for whatever is currently stored in the DB (which will include fastSources)
                 forecasts = await prisma.forecast.findMany({
                   where: {
                     regionId: beach.regionId,
@@ -667,9 +721,32 @@ router.get(
 
             if (forecasts.length > 0) {
               console.log(`[beach-ratings/beach-scores] Ensuring scores exist for ${beachId} on ${date}`);
+              
+              // Get all unique source/timeslot combinations that already have scores for this region and date
+              const existingScores = await prisma.beachDailyScore.findMany({
+                where: {
+                  regionId: beach.regionId,
+                  date: targetDate,
+                },
+                select: {
+                  source: true,
+                  timeSlot: true,
+                },
+                distinct: ["source", "timeSlot"],
+              });
+
+              const existingSet = new Set(
+                existingScores.map(s => `${s.source}_${s.timeSlot}`)
+              );
+
               for (const forecast of forecasts) {
                 try {
-                  // This will skip if scores already exist
+                  const key = `${forecast.source}_${forecast.timeSlot}`;
+                  if (existingSet.has(key)) {
+                    continue;
+                  }
+
+                  console.log(`[beach-ratings/beach-scores] Calculating missing scores for ${forecast.source} on ${date} (${forecast.timeSlot})`);
                   await ScoreService.calculateAndStoreScores(beach.regionId, forecast);
                 } catch (calcErr) {
                   console.error(`[beach-ratings/beach-scores] Failed calc for ${forecast.source}:`, calcErr);
@@ -689,7 +766,7 @@ router.get(
         WINDGURU: "Windguru",
         WINDY: "Windy",
         TIDE_RAIDER: "Tide Raider",
-        OPENMETEO_ARCHIVE: "Archive Data"
+        OPENMETEO_ARCHIVE: "OpenMeteo"
       };
 
       const formattedScores = scores.map((score) => ({

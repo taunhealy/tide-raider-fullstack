@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // 30 seconds timeout to be safe and accommodate external database latency
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     let response;
     try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
       response = await fetch(backendUrl, {
         headers: {
           ...(authToken && { Authorization: `Bearer ${authToken}` }),
-          Cookie: cookieStore.toString(),
+          ...(cookieStore.toString() && { Cookie: cookieStore.toString() }),
         },
         credentials: "include",
         signal: controller.signal,

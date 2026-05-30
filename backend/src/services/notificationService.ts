@@ -64,7 +64,7 @@ export function getPlainTextMessage(
       if (source === "WINDFINDER") return "Windfinder";
       if (source === "WINDGURU" || source === "WINDGURU_G2") return "Windguru";
       if (source === "WINDY" || source === "WINDY_COM") return "Windy";
-      if (source === "OPENMETEO_ARCHIVE") return "Archive Data";
+      if (source === "OPENMETEO_ARCHIVE") return "OpenMeteo";
       return s;
     }).join(", ");
   };
@@ -423,7 +423,7 @@ function createNotificationMessage(
       if (source === "TIDE_RAIDER") return "Tide Raider";
       if (source === "MSW" || source === "MAGICSEAWEED") return "Magicseaweed";
       if (source === "SURFLINE") return "Surfline";
-      if (source === "OPENMETEO_ARCHIVE") return "Archive Data";
+      if (source === "OPENMETEO_ARCHIVE") return "OpenMeteo";
       return s;
     }).join(", ");
   };

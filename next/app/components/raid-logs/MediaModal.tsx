@@ -84,8 +84,9 @@ export function MediaModal({
 
   const handleEmbedVideo = (url: string, platform: string) => {
     if (!url) return null;
+    const lowerPlatform = platform ? platform.toLowerCase() : "";
 
-    if (platform === "youtube" || platform === "short") {
+    if (lowerPlatform === "youtube" || lowerPlatform === "short") {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
       const match = url.match(regExp);
       const videoId = match && match[2].length === 11 ? match[2] : null;
@@ -98,14 +99,14 @@ export function MediaModal({
       return null;
     }
 
-    if (platform === "vimeo") {
+    if (lowerPlatform === "vimeo") {
       const regExp = /vimeo\.com\/([0-9]+)/;
       const match = url.match(regExp);
       const videoId = match ? match[1] : url.split("/").pop();
       return videoId ? `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1` : null;
     }
 
-    if (platform === "instagram") {
+    if (lowerPlatform === "instagram") {
       const parts = url.split(/\/p\/|\/reels\/|\/reel\//);
       const videoId = parts[1]?.split("/")[0] || "";
       return videoId ? `https://www.instagram.com/p/${videoId}/embed` : null;
@@ -197,11 +198,11 @@ export function MediaModal({
                   allowFullScreen
                   className={cn(
                     "w-full h-full border-0 max-w-5xl",
-                    currentVideo?.type !== "instagram" && "aspect-video"
+                    currentVideo?.type?.toLowerCase() !== "instagram" && "aspect-video"
                   )}
                   title="Video player"
                 />
-              ) : (currentVideo?.type === "upload" && currentVideo?.url) ? (
+              ) : (currentVideo?.type?.toLowerCase() === "upload" && currentVideo?.url) ? (
                 <CustomVideoPlayer videoUrl={currentVideo.url} className="w-full h-full max-w-5xl" />
               ) : (
                 <div className="text-white">Video not available</div>

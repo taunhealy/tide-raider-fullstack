@@ -26,10 +26,10 @@ router.get(
 
       // Validate and normalize source parameter
       const sourceParamRaw = req.query.source as string | undefined;
-      const validSources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER"] as const;
-      const sourceParam: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" =
+      const validSources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER", "OPENMETEO_ARCHIVE"] as const;
+      const sourceParam: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" | "OPENMETEO_ARCHIVE" =
         sourceParamRaw && (validSources as readonly string[]).includes(sourceParamRaw)
-          ? (sourceParamRaw as "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER")
+          ? (sourceParamRaw as "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" | "OPENMETEO_ARCHIVE")
           : "WINDFINDER";
 
       if (sourceParamRaw && !validSources.includes(sourceParamRaw as any)) {
@@ -149,7 +149,7 @@ router.get(
       today.setUTCHours(0, 0, 0, 0);
       const isTodayOrFuture = targetDate >= today;
 
-      if (!forecast && !isTodayOrFuture) {
+      if (!forecast && !isTodayOrFuture && sourceParam !== "OPENMETEO_ARCHIVE") {
         console.log(`[forecast] 🕒 Past date: checking if ANY forecast (including OPENMETEO_ARCHIVE) exists in DB...`);
         try {
           forecast = await prisma.forecast.findFirst({

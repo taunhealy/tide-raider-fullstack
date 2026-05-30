@@ -4,7 +4,7 @@ export const FORECAST_SOURCE_MAP: Record<string, string> = {
   WINDGURU: "Windguru",
   WINDY: "Windy",
   TIDE_RAIDER: "Tide Raider",
-  OPENMETEO_ARCHIVE: "Archive Data",
+  OPENMETEO_ARCHIVE: "OpenMeteo",
 };
 
 export const getSourceName = (source?: string): string => {

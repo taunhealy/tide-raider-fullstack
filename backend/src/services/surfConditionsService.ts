@@ -99,10 +99,14 @@ export async function getLatestConditions(
                           timeSlot: f.timeSlot
                       }
                   },
-                  update: f,
+                  update: {
+                      ...f,
+                      source: "OPENMETEO_ARCHIVE"
+                  },
                   create: {
                       id: randomUUID(),
                       ...f,
+                      source: "OPENMETEO_ARCHIVE",
                       regionId: region.regionId
                   }
               });
@@ -110,6 +114,7 @@ export async function getLatestConditions(
               // Calculate scores
               await ScoreService.calculateAndStoreScores(region.regionId, {
                   ...f,
+                  source: "OPENMETEO_ARCHIVE",
                   regionId: region.regionId
               } as any);
 
