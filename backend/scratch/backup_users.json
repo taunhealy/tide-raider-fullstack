@@ -41,7 +41,7 @@
     "password": null,
     "skillLevel": null,
     "createdAt": "2026-05-28T08:09:57.969Z",
-    "updatedAt": "2026-05-29T07:58:25.538Z",
+    "updatedAt": "2026-05-30T05:19:49.657Z",
     "lemonCustomerId": null,
     "lemonSubscriptionId": null,
     "savedFilters": null,
@@ -68,12 +68,12 @@
     "name": "Taun",
     "email": "taunhealy@gmail.com",
     "emailVerified": null,
-    "image": null,
+    "image": "https://lh3.googleusercontent.com/a/ACg8ocLGSU0J9dDjdnFJX6TqbpynwLXVUprFa-1XDVRROrCBKTy62ibn=s96-c",
     "nationality": null,
     "password": null,
     "skillLevel": null,
     "createdAt": "2026-05-28T08:13:30.001Z",
-    "updatedAt": "2026-05-28T08:14:03.425Z",
+    "updatedAt": "2026-05-30T04:57:46.777Z",
     "lemonCustomerId": null,
     "lemonSubscriptionId": null,
     "savedFilters": null,
@@ -90,9 +90,9 @@
     "roles": [
       "SURFER"
     ],
-    "referralCode": null,
+    "referralCode": "DNS34QHF",
     "referredById": null,
-    "credits": 100,
+    "credits": 300,
     "whatsappNumber": null
   },
   {

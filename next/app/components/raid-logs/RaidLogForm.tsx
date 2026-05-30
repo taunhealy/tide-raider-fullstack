@@ -209,7 +209,7 @@ export function RaidLogForm({
     queryFn: async () => {
       if (!selectedBeach?.regionId || !selectedDate || !surfTimeSlot) return {};
       
-      const sources = ["WINDFINDER", "WINDGURU", "WINDY"];
+      const sources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "OPENMETEO_ARCHIVE"];
       const results: Record<string, any> = {};
       const dateObj = new Date(selectedDate);
       if (isNaN(dateObj.getTime())) {
@@ -238,7 +238,9 @@ export function RaidLogForm({
     enabled: !!selectedBeach?.regionId && !!selectedDate && !!surfTimeSlot
   });
 
-  const forecastData = allForecasts?.WINDFINDER || allForecasts?.WINDGURU || allForecasts?.WINDY;
+  const forecastData = mostAccurateSource
+    ? allForecasts?.[mostAccurateSource]
+    : (allForecasts?.WINDFINDER || allForecasts?.WINDFINDER_SUPER || allForecasts?.WINDGURU || allForecasts?.WINDY || allForecasts?.OPENMETEO_ARCHIVE);
 
   // Add debug logging
   useEffect(() => {
@@ -363,6 +365,12 @@ export function RaidLogForm({
       }
       if (entry.isPrivate !== undefined) {
         setIsPrivate(entry.isPrivate);
+      }
+      if ((entry as any).surfTimeSlot) {
+        setSurfTimeSlot((entry as any).surfTimeSlot);
+      }
+      if ((entry as any).mostAccurateSource) {
+        setMostAccurateSource((entry as any).mostAccurateSource);
       }
       // videoUrls is already initialized in useState
       // Populate email from entry or user profile
@@ -675,7 +683,7 @@ export function RaidLogForm({
   if (shouldBlock) {
     // Show loader while auth or beaches (if editing) are loading
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50">
         <div className="bg-white p-8 rounded-2xl text-center shadow-2xl border border-gray-100 max-w-xs animate-in fade-in zoom-in duration-300">
           <div className="mb-4 flex justify-center">
              <div className="relative">
@@ -696,7 +704,7 @@ export function RaidLogForm({
 
   // Render form (user may or may not be logged in - form handles that)
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50">
       <div className="bg-white max-h-[90vh] overflow-y-auto p-6 rounded-lg w-full max-w-md">
         <div className="relative">
           <button
@@ -855,11 +863,13 @@ export function RaidLogForm({
                   <p className="text-[11px] text-gray-500 mb-4 font-primary">
                     Compare the predictions for your <span className="font-bold text-[var(--color-tertiary)]">{surfTimeSlot.toLowerCase()}</span> session. Which was closest to reality?
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex flex-row overflow-x-auto gap-3 pb-2 scrollbar-thin">
                     {[
                       { value: "WINDFINDER", label: getSourceName("WINDFINDER"), color: "text-blue-600" },
+                      { value: "WINDFINDER_SUPER", label: getSourceName("WINDFINDER_SUPER"), color: "text-indigo-600" },
                       { value: "WINDGURU", label: getSourceName("WINDGURU"), color: "text-emerald-600" },
                       { value: "WINDY", label: getSourceName("WINDY"), color: "text-red-600" },
+                      { value: "OPENMETEO_ARCHIVE", label: getSourceName("OPENMETEO_ARCHIVE"), color: "text-amber-600" },
                     ].map((source) => {
                       const forecast = allForecasts?.[source.value];
                       return (
@@ -870,7 +880,7 @@ export function RaidLogForm({
                             mostAccurateSource === source.value ? undefined : source.value
                           )}
                           className={cn(
-                            "flex flex-col p-3 rounded-xl border-2 transition-all font-primary text-left relative overflow-hidden group",
+                            "flex flex-col p-3 rounded-xl border-2 transition-all font-primary text-left relative overflow-hidden group min-w-[140px] shrink-0",
                             mostAccurateSource === source.value
                               ? "border-[var(--color-tertiary)] bg-[var(--color-tertiary)]/5 ring-1 ring-[var(--color-tertiary)]/20"
                               : "border-gray-100 hover:border-gray-200 bg-white"
@@ -1075,7 +1085,7 @@ export function RaidLogForm({
                 type="submit"
                 variant="ghost"
                 disabled={
-                  (!forecastData && !entry?.forecast) ||
+                  (!forecastData && !entry?.forecast && !entry) ||
                   !selectedBeach ||
                   !selectedDate ||
                   isSubmitting

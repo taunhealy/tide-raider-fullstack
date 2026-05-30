@@ -13962,7 +13962,7 @@
     "countryId": "za",
     "regionId": "western-cape",
     "location": "Betty's Bay",
-    "description": "Crystal Road is a consistent right-hand break with a mix of sand and rocks. It offers rides under 50m and works best on medium to high tides with SE or NW winds. Watch out for rips and rocks.",
+    "description": "Crystal Road is a consistent right-hand break with a mix of sand and rocks. It offers rides under 50m and works best on medium to high tides with N or NW winds. Watch out for rips and rocks.",
     "difficulty": "ALL_LEVELS",
     "waveType": "REEF_BREAK",
     "waterTemp": {
@@ -13981,10 +13981,8 @@
     "conditionProfiles": {
       "GENERAL": {
         "optimalWindDirections": [
-          "SE",
-          "NW",
-          "ESE",
-          "WNW"
+          "N",
+          "NW"
         ],
         "optimalSwellDirections": {
           "min": 180,

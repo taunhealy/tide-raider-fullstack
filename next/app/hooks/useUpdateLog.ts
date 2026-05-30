@@ -25,6 +25,8 @@ export function useUpdateLog() {
       videoUrl?: string;
       videoUrls?: any[];
       videoPlatform?: string | null;
+      surfTimeSlot?: string;
+      mostAccurateSource?: string;
     }) => {
       if (!user) {
         throw new Error("You must be logged in to update a log entry");
@@ -73,6 +75,8 @@ export function useUpdateLog() {
         comments: data.comments || "",
         isPrivate: data.isPrivate,
         isAnonymous: data.isAnonymous,
+        surfTimeSlot: data.surfTimeSlot,
+        mostAccurateSource: data.mostAccurateSource,
         // Convert null/undefined to empty string for URL fields (schema expects valid URL string or empty string, not null)
         // Empty string is valid, but if a value exists it must be a valid URL
         // Use first image from imageUrls array if provided, otherwise use uploadedImageUrl

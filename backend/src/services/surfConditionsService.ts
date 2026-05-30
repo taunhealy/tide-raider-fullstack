@@ -133,6 +133,52 @@ export async function getLatestConditions(
       }
   }
 
+  // Handle OpenMeteo as a first-class source for Today and Future dates
+  if (source === "OPENMETEO_ARCHIVE") {
+    console.log(`[getLatestConditions] 🕒 Today/Future OpenMeteo requested for ${region.regionId}. Fetching via OpenMeteo Marine API...`);
+    const archiveForecasts = await fetchArchiveFromOpenMeteo(region.regionId, lookupDate);
+    
+    if (archiveForecasts.length > 0) {
+        const results = await Promise.all(archiveForecasts.map(async (f) => {
+            const stored = await prisma.forecast.upsert({
+                where: {
+                    date_regionId_source_timeSlot: {
+                        date: lookupDate,
+                        regionId: region.regionId,
+                        source: "OPENMETEO_ARCHIVE",
+                        timeSlot: f.timeSlot
+                    }
+                },
+                update: {
+                    ...f,
+                    source: "OPENMETEO_ARCHIVE"
+                },
+                create: {
+                    id: randomUUID(),
+                    ...f,
+                    source: "OPENMETEO_ARCHIVE",
+                    regionId: region.regionId
+                }
+            });
+
+            // Calculate scores
+            await ScoreService.calculateAndStoreScores(region.regionId, {
+                ...f,
+                source: "OPENMETEO_ARCHIVE",
+                regionId: region.regionId
+            } as any);
+
+            return stored;
+        }));
+
+        const targetSlot = timeSlotParam || activeSlot;
+        const requestedArchive = results.find(r => r.timeSlot === targetSlot) || results[0];
+        return requestedArchive;
+    } else {
+        throw new Error(`OpenMeteo fetch returned no data for ${region.regionId}`);
+    }
+  }
+
   // Determine URL based on source
   let scrapeUrl = "";
   const diffDays = Math.round((lookupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));

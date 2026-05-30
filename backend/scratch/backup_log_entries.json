@@ -1362,5 +1362,37 @@
     "hiddenGemId": null,
     "surfTimeSlot": null,
     "mostAccurateSource": "OPENMETEO_ARCHIVE"
+  },
+  {
+    "id": "4b2f0558-abf2-4111-9c37-7b3025983c9a",
+    "date": "2026-05-28T00:00:00.000Z",
+    "surferName": "Ryko",
+    "surferEmail": "admin@tideraider.com",
+    "beachName": "Crayfish Factory",
+    "surferRating": 5,
+    "comments": "Jordy Smith a/t FACTORY\nVideo by @cape | doctor",
+    "imageUrl": "",
+    "videoUrl": "https://www.youtube.com/watch?v=V2wN755pne8",
+    "videoPlatform": "youtube",
+    "isPrivate": false,
+    "isAnonymous": false,
+    "waveType": "POINT_BREAK",
+    "beachId": "crayfish-factory",
+    "userId": "cmpp7q3m90075s60ef1r056yz",
+    "regionId": "western-cape",
+    "category": "GENERAL",
+    "forecastId": "158dbabc-095a-4ceb-a614-2e90ec371a22",
+    "forecastSnapshot": null,
+    "videoUrls": [
+      {
+        "url": "https://www.youtube.com/watch?v=V2wN755pne8",
+        "type": "youtube",
+        "thumbnail": "https://img.youtube.com/vi/V2wN755pne8/hqdefault.jpg"
+      }
+    ],
+    "imageUrls": null,
+    "hiddenGemId": null,
+    "surfTimeSlot": "NOON",
+    "mostAccurateSource": "OPENMETEO_ARCHIVE"
   }
 ]

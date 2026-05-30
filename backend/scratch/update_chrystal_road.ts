@@ -1,13 +1,21 @@
 import { prisma } from '../src/lib/prisma';
 
 async function main() {
-  const beachName = 'Chrystal Road';
+  const beachName = 'Crystal Road';
   console.log(`Updating ${beachName}...`);
 
-  const beach = await prisma.beach.findFirst({
+  let beach = await prisma.beach.findFirst({
     where: { name: beachName },
     include: { conditionProfiles: true }
   });
+
+  if (!beach) {
+    console.log('Crystal Road not found, trying Chrystal Road...');
+    beach = await prisma.beach.findFirst({
+      where: { name: 'Chrystal Road' },
+      include: { conditionProfiles: true }
+    });
+  }
 
   if (!beach) {
     console.error('Beach not found');
@@ -18,9 +26,10 @@ async function main() {
   await prisma.beach.update({
     where: { id: beach.id },
     data: {
-      description: beach.description?.replace('SE or NW winds', 'N winds') || beach.description
+      description: "Crystal Road is a consistent right-hand break with a mix of sand and rocks. It offers rides under 50m and works best on medium to high tides with N or NW winds. Watch out for rips and rocks."
     }
   });
+  console.log('Updated beach description');
 
   // Update GENERAL profile wind directions
   const generalProfile = beach.conditionProfiles.find(p => p.category === 'GENERAL');
@@ -28,10 +37,10 @@ async function main() {
     await prisma.beachConditionProfile.update({
       where: { id: generalProfile.id },
       data: {
-        optimalWindDirections: ['N', 'NW', 'NE', 'NNE', 'NNW']
+        optimalWindDirections: ['N', 'NW']
       }
     });
-    console.log('Updated GENERAL profile optimal wind directions to N, NW, NE, NNE, NNW');
+    console.log('Updated GENERAL profile optimal wind directions to N, NW');
   }
 
   console.log('Done!');

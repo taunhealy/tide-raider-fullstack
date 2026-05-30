@@ -263,21 +263,23 @@ function ForecastInfo({
         </div>
       )}
       <div className={cn("flex flex-wrap gap-1.5 items-center", isActuallyGated && "blur-[10px] select-none opacity-30")}>
-        {!isActuallyGated && (forecast?.source || entry.mostAccurateSource) && (
+        {!isActuallyGated && (entry.mostAccurateSource || forecast?.source) && (
           <div className={cn(
             "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border",
-            (forecast?.source === "WINDFINDER") ? "bg-blue-50 text-blue-700 border-blue-200" :
-            (forecast?.source === "WINDGURU") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-            (forecast?.source === "WINDY") ? "bg-red-50 text-red-700 border-red-200" :
+            ((entry.mostAccurateSource || forecast?.source) === "WINDFINDER") ? "bg-blue-50 text-blue-700 border-blue-200" :
+            ((entry.mostAccurateSource || forecast?.source) === "WINDFINDER_SUPER") ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
+            ((entry.mostAccurateSource || forecast?.source) === "WINDGURU") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+            ((entry.mostAccurateSource || forecast?.source) === "WINDY") ? "bg-red-50 text-red-700 border-red-200" :
+            ((entry.mostAccurateSource || forecast?.source) === "OPENMETEO_ARCHIVE") ? "bg-amber-50 text-amber-700 border-amber-200" :
             "bg-gray-50 text-gray-700 border-gray-200"
           )}>
             <span className="flex items-center gap-1">
-              {getSourceName(forecast?.source || entry.mostAccurateSource)}
+              {getSourceName(entry.mostAccurateSource || forecast?.source)}
               
-              {forecast?.source && entry.mostAccurateSource && forecast.source === entry.mostAccurateSource && (
+              {entry.mostAccurateSource && (
                 <span className="text-[8px] opacity-70 font-bold ml-1 border-l border-current pl-1">Logger Choice</span>
               )}
-              {forecast?.source && entry.mostAccurateSource && forecast.source !== entry.mostAccurateSource && (
+              {!entry.mostAccurateSource && forecast?.source && (
                 <span className="text-[8px] opacity-70 font-bold ml-1 border-l border-current pl-1">Fallback</span>
               )}
             </span>
