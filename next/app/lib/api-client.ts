@@ -80,9 +80,10 @@ export const api = {
     return apiRequest<{ beaches: any[] }>(`/api/beaches${query}`);
   },
 
-  getBeach: async (name: string) => {
+  getBeach: async (name: string, source?: string) => {
+    const query = source ? `?source=${encodeURIComponent(source)}` : "";
     return apiRequest<{ beach: any }>(
-      `/api/beaches/${encodeURIComponent(name)}`
+      `/api/beaches/${encodeURIComponent(name)}${query}`
     );
   },
 
@@ -171,7 +172,7 @@ export const api = {
   getForecast: async (
     regionId: string,
     forecastDate?: string,
-    source?: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER",
+    source?: "WINDFINDER" | "WINDFINDER_SUPER" | "WINDGURU" | "WINDY" | "TIDE_RAIDER" | "OPENMETEO_ARCHIVE" | string,
     timeSlot?: string
   ) => {
     const params = new URLSearchParams({ regionId });

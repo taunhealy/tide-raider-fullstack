@@ -33,6 +33,21 @@ const REGION_COORDINATES: Record<string, { center: [number, number]; zoom: numbe
   "madagascar-south": { center: [43.6038, -23.6482], zoom: 9, label: "Madagascar" }
 };
 
+const getYoutubeThumbnail = (url: string) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  const videoId = (match && match[2].length === 11) ? match[2] : null;
+  if (videoId) {
+    return {
+      videoId,
+      thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      videoUrl: `https://www.youtube.com/watch?v=${videoId}`
+    };
+  }
+  return null;
+};
+
 export default function GlobalMapPage() {
   const { filters, updateFilter } = useBeachFilters();
   const { data: authData } = useBackendAuth();
@@ -63,6 +78,9 @@ export default function GlobalMapPage() {
   // AI Report Modal State
   const [reportBeach, setReportBeach] = useState<any | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  
+  // Selected Surf Break Media State
+  const [selectedBeach, setSelectedBeach] = useState<any | null>(null);
 
   const handleRegionSelect = (regionId: string, shouldMoveMap: boolean = false) => {
     updateFilter("regionId", regionId);
@@ -777,11 +795,95 @@ export default function GlobalMapPage() {
               <div className="absolute top-20 md:top-24 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
                 <WeatherForecastWidget />
               </div>
+
+              {/* Selected Surf Break Media Floating Horizontal Thumbnails Row */}
+              <AnimatePresence>
+                {selectedBeach && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="absolute top-[84px] md:top-6 right-4 md:right-6 z-30 flex items-center bg-gray-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 shadow-2xl gap-3 max-w-[calc(100vw-32px)] md:max-w-[450px]"
+                  >
+                    {/* Scrollable Container of Images */}
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-[280px] md:max-w-[340px]">
+                      {/* Break Main Image */}
+                      {(selectedBeach.image || selectedBeach.profileImage) && (
+                        <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 group">
+                          <img
+                            src={selectedBeach.image || selectedBeach.profileImage}
+                            alt={selectedBeach.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1 py-0.5 text-[7px] text-white/90 font-black text-center uppercase tracking-widest truncate">
+                            Photo
+                          </div>
+                        </div>
+                      )}
+
+                      {/* YouTube Video Thumbnails */}
+                      {selectedBeach.videos && Array.isArray(selectedBeach.videos) && selectedBeach.videos.length > 0 ? (
+                        selectedBeach.videos.map((vid: any, idx: number) => {
+                          const yt = getYoutubeThumbnail(vid.url);
+                          if (!yt) return null;
+                          return (
+                            <a
+                              key={idx}
+                              href={yt.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="relative w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 group cursor-pointer"
+                              title={vid.title || "Watch Video"}
+                            >
+                              <img
+                                src={yt.thumbnailUrl}
+                                alt={vid.title || "YouTube Video"}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all">
+                                {/* Play overlay button */}
+                                <div className="w-5 h-5 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                  <svg className="w-2.5 h-2.5 text-white fill-current ml-0.5" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <div className="absolute bottom-0 inset-x-0 bg-black/70 px-1 py-0.5 text-[7px] text-white/90 font-black text-center uppercase tracking-tighter truncate">
+                                Video
+                              </div>
+                            </a>
+                          );
+                        })
+                      ) : null}
+                    </div>
+
+                    {/* Vertical Divider */}
+                    <div className="w-px h-8 bg-white/10 shrink-0" />
+
+                    {/* Close Action */}
+                    <div className="flex items-center shrink-0">
+                      <button
+                        onClick={() => setSelectedBeach(null)}
+                        className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-all shrink-0 active:scale-95"
+                        title="Clear Selection"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <TideMap 
                 beaches={filteredBeaches} 
                 loading={loading}
+                selectedBeachId={selectedBeach?.id}
                 onBeachSelect={(beach) => {
-                  handleRegionSelect(beach.regionId, false);
+                  setSelectedBeach(beach);
+                  if (beach) {
+                    handleRegionSelect(beach.regionId, false);
+                  }
                 }}
                 onRegionSelect={(regionId) => {
                   handleRegionSelect(regionId, false);
@@ -791,6 +893,7 @@ export default function GlobalMapPage() {
                 zoom={mapZoom}
                 selectedDayIndex={selectedDayIndex}
                 selectedDateString={selectedDateString}
+                selectedSource={selectedSource}
                 onAIReportClick={(beach) => {
                   setReportBeach(beach);
                   setIsReportModalOpen(true);

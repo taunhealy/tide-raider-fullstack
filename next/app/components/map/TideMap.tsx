@@ -44,7 +44,7 @@ export interface Beach {
 
 interface TideMapProps {
   beaches: Beach[];
-  onBeachSelect: (beach: Beach) => void;
+  onBeachSelect: (beach: Beach | null) => void;
   onRegionSelect: (regionId: string) => void;
   onAIReportClick: (beach: Beach) => void;
   selectedDayIndex?: number;
@@ -56,7 +56,9 @@ interface TideMapProps {
   variant?: "hero" | "default";
   loading?: boolean;
   selectedDateString?: string;
+  selectedSource?: string;
   onMoveEnd?: (visibleBeachIds: string[]) => void;
+  selectedBeachId?: string | null;
 }
 
 export default function TideMap({ 
@@ -72,16 +74,42 @@ export default function TideMap({
   selectedRegionId = null,
   loading = false,
   selectedDateString = "",
-  onMoveEnd
+  selectedSource = "WINDFINDER",
+  onMoveEnd,
+  selectedBeachId = null
 }: TideMapProps) {
   const mapElement = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mapRef = useRef<Map | null>(null);
   const [popupBeach, setPopupBeach] = useState<any | null>(null);
+  
+  // Local state to keep track of active source, reactive to prop and global event
+  const [activeSource, setActiveSource] = useState<string>(selectedSource);
+
+  useEffect(() => {
+    if (selectedSource) {
+      setActiveSource(selectedSource);
+    }
+  }, [selectedSource]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("forecastSource");
+      if (stored) setActiveSource(stored);
+    }
+
+    const handleSourceChange = (e: any) => {
+      setActiveSource(e.detail);
+    };
+
+    window.addEventListener("forecastSourceChanged", handleSourceChange as any);
+    return () => window.removeEventListener("forecastSourceChanged", handleSourceChange as any);
+  }, []);
   const [currentZoom, setCurrentZoom] = useState(zoom);
   const [showConditions, setShowConditions] = useState(false);
   const [isPopupLoading, setIsPopupLoading] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<Overlay | null>(null);
   const selectedDayIndexRef = useRef(selectedDayIndex);
   const selectedDateStringRef = useRef("");
   const beachesRef = useRef(beaches);
@@ -143,7 +171,75 @@ export default function TideMap({
     if (clusterSourceRef.current) {
       clusterSourceRef.current.changed();
     }
-  }, [selectedDayIndex, selectedDateString]);
+  }, [selectedDayIndex, selectedDateString, activeSource]);
+
+  // Keep popupBeach in sync with the latest beaches prop and activeSource
+  useEffect(() => {
+    if (popupBeach) {
+      const updatedBeach = beaches.find(b => b.id === popupBeach.id);
+      if (updatedBeach) {
+        setPopupBeach((prev: any) => prev ? {
+          ...prev,
+          ...updatedBeach,
+          dailyScores: {
+            ...prev.dailyScores,
+            ...updatedBeach.dailyScores
+          }
+        } : null);
+      }
+    }
+  }, [beaches, activeSource]);
+
+  // Auto-fetch detailed scores for popupBeach when activeSource changes (while popup is open)
+  useEffect(() => {
+    if (popupBeach?.id && activeSource) {
+      setIsPopupLoading(true);
+      api.getBeach(popupBeach.id, activeSource).then(res => {
+        if (res?.beach) {
+          const scoresByDate: Record<string, any> = {};
+          (res.beach.beachDailyScores || [])
+            .filter((score: any) => score.source === activeSource.toUpperCase())
+            .forEach((score: any) => {
+              const d = score.date.split('T')[0];
+              if (!scoresByDate[d]) {
+                scoresByDate[d] = {
+                  date: d,
+                  rating: score.starRating,
+                  conditions: score.conditions
+                };
+              }
+            });
+
+          setPopupBeach((prev: Beach | null) => {
+            const nextBeach = prev?.id === popupBeach.id ? { 
+              ...prev, 
+              ...res.beach,
+              dailyScores: { ...prev?.dailyScores, ...scoresByDate }
+            } : prev;
+            if (nextBeach && onBeachSelectRef.current) {
+              onBeachSelectRef.current(nextBeach);
+            }
+            return nextBeach;
+          });
+        }
+      }).catch(err => {
+        console.error("[TideMap] Failed to fetch beach details on source change:", err);
+      }).finally(() => {
+        setIsPopupLoading(false);
+      });
+    }
+  }, [activeSource]);
+
+  // Sync map popup if selectedBeachId is cleared from outside
+  useEffect(() => {
+    if (!selectedBeachId) {
+      setPopupBeach(null);
+      setShowConditions(false);
+      if (overlayRef.current) {
+        overlayRef.current.setPosition(undefined);
+      }
+    }
+  }, [selectedBeachId]);
 
   useEffect(() => {
     // Use the provided date string or fall back to today
@@ -533,6 +629,7 @@ export default function TideMap({
       autoPan: true,
     });
     initialMap.addOverlay(overlay);
+    overlayRef.current = overlay;
 
     mapRef.current = initialMap;
     setIsMapReady(true);
@@ -593,27 +690,35 @@ export default function TideMap({
           // Fetch full beach details on demand
           if (beach?.id) {
             setIsPopupLoading(true);
-            api.getBeach(beach.id).then(res => {
+            api.getBeach(beach.id, activeSource).then(res => {
               if (res?.beach) {
-                // Map the array of scores to a dictionary format by date
+                // Map the array of scores to a dictionary format by date, filtering by activeSource
                 const scoresByDate: Record<string, any> = {};
-                (res.beach.beachDailyScores || []).forEach((score: any) => {
-                  const d = score.date.split('T')[0];
-                  if (!scoresByDate[d]) {
-                    scoresByDate[d] = {
-                      date: d,
-                      rating: score.starRating,
-                      conditions: score.conditions
-                    };
-                  }
-                });
+                (res.beach.beachDailyScores || [])
+                  .filter((score: any) => score.source === activeSource.toUpperCase())
+                  .forEach((score: any) => {
+                    const d = score.date.split('T')[0];
+                    if (!scoresByDate[d]) {
+                      scoresByDate[d] = {
+                        date: d,
+                        rating: score.starRating,
+                        conditions: score.conditions
+                      };
+                    }
+                  });
 
                 // Merge with existing data
-                setPopupBeach((prev: Beach | null) => prev?.id === beach.id ? { 
-                  ...prev, 
-                  ...res.beach,
-                  dailyScores: { ...prev?.dailyScores, ...scoresByDate }
-                } : prev);
+                setPopupBeach((prev: Beach | null) => {
+                  const nextBeach = prev?.id === beach.id ? { 
+                    ...prev, 
+                    ...res.beach,
+                    dailyScores: { ...prev?.dailyScores, ...scoresByDate }
+                  } : prev;
+                  if (nextBeach && onBeachSelectRef.current) {
+                    onBeachSelectRef.current(nextBeach);
+                  }
+                  return nextBeach;
+                });
               }
             }).catch(err => {
               console.error("[TideMap] Failed to fetch beach details:", err);
@@ -626,6 +731,9 @@ export default function TideMap({
         setPopupBeach(null);
         setShowConditions(false);
         overlay.setPosition(undefined);
+        if (onBeachSelectRef.current) {
+          onBeachSelectRef.current(null);
+        }
       }
     });
 

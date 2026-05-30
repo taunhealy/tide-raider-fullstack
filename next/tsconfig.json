@@ -33,5 +33,5 @@
     "../BeachCard.tsx",
     "../@/app/components/alerts/AlertsList.tsx"
 , "scripts/updateBeachVideos.js", "../WorkGallery.tsx"  ],
-  "exclude": ["node_modules", "app/lib/proxy/cf-proxy-worker"]
+  "exclude": ["node_modules", "app/lib/proxy/cf-proxy-worker", "scratch"]
 }

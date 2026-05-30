@@ -282,6 +282,7 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
 
     let beach = null;
 
+    const source = req.query.source as string | undefined;
     const commonIncludes = {
       region: true,
       conditionProfiles: {
@@ -293,11 +294,13 @@ router.get("/:name", optionalAuth, async (req: Request, res: Response) => {
           date: {
             gte: new Date(new Date().setUTCHours(0, 0, 0, 0)),
             lt: new Date(new Date().setUTCHours(0, 0, 0, 0) + 7 * 24 * 60 * 60 * 1000)
-          }
+          },
+          ...(source ? { source: source.toUpperCase() as any } : {})
         },
         orderBy: { date: "asc" } as any
       }
     };
+
 
     // Always try to find by ID first (supports both UUIDs and custom slugs)
     beach = await prisma.beach.findUnique({
