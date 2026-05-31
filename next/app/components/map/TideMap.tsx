@@ -178,14 +178,31 @@ export default function TideMap({
     if (popupBeach) {
       const updatedBeach = beaches.find(b => b.id === popupBeach.id);
       if (updatedBeach) {
-        setPopupBeach((prev: any) => prev ? {
-          ...prev,
-          ...updatedBeach,
-          dailyScores: {
-            ...prev.dailyScores,
-            ...updatedBeach.dailyScores
+        setPopupBeach((prev: any) => {
+          if (!prev) return null;
+          
+          const nextScoresBySource = { ...(prev.dailyScoresBySource || {}) };
+          const activeKey = activeSource.toUpperCase();
+          
+          // Merge updatedBeach.dailyScores (which matches the activeSource) into our cache
+          if (updatedBeach.dailyScores) {
+            const currentActiveScores = { ...(nextScoresBySource[activeKey] || {}) };
+            
+            Object.entries(updatedBeach.dailyScores).forEach(([dateStr, newScore]: [string, any]) => {
+              currentActiveScores[dateStr] = {
+                ...currentActiveScores[dateStr],
+                ...newScore
+              };
+            });
+            nextScoresBySource[activeKey] = currentActiveScores;
           }
-        } : null);
+
+          return {
+            ...prev,
+            ...updatedBeach,
+            dailyScoresBySource: nextScoresBySource
+          };
+        });
       }
     }
   }, [beaches, activeSource]);
@@ -205,17 +222,25 @@ export default function TideMap({
                 scoresByDate[d] = {
                   date: d,
                   rating: score.starRating,
-                  conditions: score.conditions
+                  conditions: score.conditions,
+                  source: score.source
                 };
               }
             });
 
-          setPopupBeach((prev: Beach | null) => {
-            const nextBeach = prev?.id === popupBeach.id ? { 
+          setPopupBeach((prev: any) => {
+            if (!prev || prev.id !== popupBeach.id) return prev;
+            
+            const nextScoresBySource = {
+              ...(prev.dailyScoresBySource || {}),
+              [activeSource.toUpperCase()]: scoresByDate
+            };
+            
+            const nextBeach = { 
               ...prev, 
               ...res.beach,
-              dailyScores: { ...prev?.dailyScores, ...scoresByDate }
-            } : prev;
+              dailyScoresBySource: nextScoresBySource
+            };
             if (nextBeach && onBeachSelectRef.current) {
               onBeachSelectRef.current(nextBeach);
             }
@@ -683,7 +708,13 @@ export default function TideMap({
           }
         } else {
           const beach = representative.get("beach");
-          setPopupBeach(beach);
+          const initialScoresBySource = {
+            [activeSource.toUpperCase()]: beach.dailyScores || {}
+          };
+          setPopupBeach({
+            ...beach,
+            dailyScoresBySource: initialScoresBySource
+          });
           overlay.setPosition(evt.coordinate);
           onBeachSelectRef.current(beach);
           
@@ -702,18 +733,26 @@ export default function TideMap({
                       scoresByDate[d] = {
                         date: d,
                         rating: score.starRating,
-                        conditions: score.conditions
+                        conditions: score.conditions,
+                        source: score.source
                       };
                     }
                   });
 
-                // Merge with existing data
-                setPopupBeach((prev: Beach | null) => {
-                  const nextBeach = prev?.id === beach.id ? { 
+                // Set new source scores directly without merging with previous sources' cached scores
+                setPopupBeach((prev: any) => {
+                  if (!prev || prev.id !== beach.id) return prev;
+                  
+                  const nextScoresBySource = {
+                    ...(prev.dailyScoresBySource || {}),
+                    [activeSource.toUpperCase()]: scoresByDate
+                  };
+                  
+                  const nextBeach = { 
                     ...prev, 
                     ...res.beach,
-                    dailyScores: { ...prev?.dailyScores, ...scoresByDate }
-                  } : prev;
+                    dailyScoresBySource: nextScoresBySource
+                  };
                   if (nextBeach && onBeachSelectRef.current) {
                     onBeachSelectRef.current(nextBeach);
                   }
@@ -963,8 +1002,10 @@ export default function TideMap({
         {popupBeach && (() => {
           const dateKey = selectedDateStringRef.current;
           const beachData = popupBeach;
-          const conditions = beachData.dailyScores?.[dateKey]?.conditions || null;
-          const rating = beachData.dailyScores?.[dateKey]?.rating ?? beachData.rating ?? 0;
+          const sourceKey = activeSource.toUpperCase();
+          const sourceScores = beachData.dailyScoresBySource?.[sourceKey] || beachData.dailyScores || {};
+          const conditions = sourceScores?.[dateKey]?.conditions || null;
+          const rating = sourceScores?.[dateKey]?.rating ?? beachData.rating ?? 0;
           
           const conditionReasons = getConditionReasons(beachData, conditions);
           

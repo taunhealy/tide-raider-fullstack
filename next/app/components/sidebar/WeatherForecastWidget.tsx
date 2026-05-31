@@ -120,8 +120,11 @@ export default function WeatherForecastWidget() {
     }
   }, [regionId, normalizedDate, normalizedTimeSlot, selectedSource, mounted]);
 
+  const MACRO_REGIONS = useMemo(() => ["all", "africa", "za", "na", "ma", "sn", "mz", "mg", "cape-verde"], []);
+  const isMacroRegion = regionId ? MACRO_REGIONS.includes(regionId.toLowerCase()) : false;
+
   // Only enable query after mount to prevent hydration issues
-  const queryEnabled = mounted && !!regionId && !!normalizedDate;
+  const queryEnabled = mounted && !!regionId && !isMacroRegion && !!normalizedDate;
 
   const {
     data: forecastData,
@@ -272,6 +275,9 @@ export default function WeatherForecastWidget() {
   const getWidgetContent = () => {
     if (!regionId) {
       return "Awaiting region selection";
+    }
+    if (isMacroRegion) {
+      return "Dive in to see conditions. Zoom or select a region.";
     }
     if (error) {
       console.error("[WeatherForecastWidget] Error state:", error);
