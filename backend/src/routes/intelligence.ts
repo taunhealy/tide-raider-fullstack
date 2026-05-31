@@ -269,6 +269,11 @@ router.get("/history", optionalAuth, async (req, res: Response) => {
       }
     });
 
+    console.log(`[IntelligenceRoute] /history returning ${reports.length} reports.`);
+    if (reports.length > 0) {
+      console.log(`[IntelligenceRoute] First report: beachId=${reports[0].beachId}, regionId=${reports[0].beach?.regionId}`);
+    }
+
     res.json(reports);
   } catch (error) {
     console.error("[IntelligenceRoute] History fetch error:", error);

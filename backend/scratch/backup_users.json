@@ -137,7 +137,7 @@
     "password": null,
     "skillLevel": null,
     "createdAt": "2026-05-28T09:11:56.039Z",
-    "updatedAt": "2026-05-28T09:11:56.039Z",
+    "updatedAt": "2026-05-31T18:47:26.813Z",
     "lemonCustomerId": null,
     "lemonSubscriptionId": null,
     "savedFilters": null,
@@ -156,7 +156,7 @@
     ],
     "referralCode": null,
     "referredById": null,
-    "credits": 5,
+    "credits": 92,
     "whatsappNumber": null
   }
 ]

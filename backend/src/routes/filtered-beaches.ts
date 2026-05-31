@@ -397,6 +397,7 @@ router.get(
         req.query.isLongboarding,
         req.query.isFoiling,
         req.query.searchQuery,
+        req.query.ignoreRegion,
         (req as any).user?.isSubscribed || (req as any).user?.hasActiveTrial ? "premium" : "free"
       ];
       const cacheKey = crypto.createHash('md5').update(JSON.stringify(cacheKeyParts)).digest('hex');
