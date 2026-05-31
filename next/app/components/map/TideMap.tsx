@@ -215,13 +215,24 @@ export default function TideMap({
     }
   }, [beaches, selectedSource]);
 
-  // Auto-fetch detailed scores for popupBeach when activeSource changes (while popup is open)
+  // Auto-fetch detailed scores for popupBeach when activeSource or selected beach changes
   useEffect(() => {
     if (popupBeach?.id && activeSource) {
       setIsPopupLoading(true);
-      api.getBeach(popupBeach.id, activeSource).then(res => {
-        const beachObj = res?.beach || res;
-        if (beachObj) {
+      const targetBeachId = popupBeach.id;
+      api.getBeach(targetBeachId, activeSource).then(res => {
+        const rawBeach = res?.beach || res;
+        if (rawBeach) {
+          const profile = (rawBeach.conditionProfiles && rawBeach.conditionProfiles[0]) || {};
+          const beachObj = {
+            ...rawBeach,
+            optimalWindDirections: profile.optimalWindDirections || rawBeach.optimalWindDirections || [],
+            optimalSwellDirections: profile.optimalSwellDirections || rawBeach.optimalSwellDirections || { min: 0, max: 360 },
+            swellSize: profile.swellSize || rawBeach.swellSize || { min: 0, max: 10 },
+            idealSwellPeriod: profile.idealSwellPeriod || rawBeach.idealSwellPeriod || { min: 0, max: 25 },
+            optimalTide: profile.optimalTide || rawBeach.optimalTide || "ALL"
+          };
+
           const scoresByDate: Record<string, any> = {};
           (beachObj.beachDailyScores || [])
             .filter((score: any) => score.source === activeSource.toUpperCase())
@@ -238,7 +249,7 @@ export default function TideMap({
             });
 
           setPopupBeach((prev: any) => {
-            if (!prev || prev.id !== popupBeach.id) return prev;
+            if (!prev || prev.id !== targetBeachId) return prev;
             
             const nextScoresBySource = {
               ...(prev.dailyScoresBySource || {}),
@@ -259,7 +270,7 @@ export default function TideMap({
         setIsPopupLoading(false);
       });
     }
-  }, [activeSource]);
+  }, [activeSource, popupBeach?.id]);
 
   // Synchronize parent state with the latest popupBeach details cleanly in the commit phase
   useEffect(() => {
@@ -734,8 +745,18 @@ export default function TideMap({
           if (beach?.id) {
             setIsPopupLoading(true);
             api.getBeach(beach.id, activeSource).then(res => {
-              const beachObj = res?.beach || res;
-              if (beachObj) {
+              const rawBeach = res?.beach || res;
+              if (rawBeach) {
+                const profile = (rawBeach.conditionProfiles && rawBeach.conditionProfiles[0]) || {};
+                const beachObj = {
+                  ...rawBeach,
+                  optimalWindDirections: profile.optimalWindDirections || rawBeach.optimalWindDirections || [],
+                  optimalSwellDirections: profile.optimalSwellDirections || rawBeach.optimalSwellDirections || { min: 0, max: 360 },
+                  swellSize: profile.swellSize || rawBeach.swellSize || { min: 0, max: 10 },
+                  idealSwellPeriod: profile.idealSwellPeriod || rawBeach.idealSwellPeriod || { min: 0, max: 25 },
+                  optimalTide: profile.optimalTide || rawBeach.optimalTide || "ALL"
+                };
+
                 // Map the array of scores to a dictionary format by date, filtering by activeSource
                 const scoresByDate: Record<string, any> = {};
                 (beachObj.beachDailyScores || [])
@@ -1010,9 +1031,9 @@ export default function TideMap({
           const dateKey = selectedDateStringRef.current;
           const beachData = popupBeach;
           const sourceKey = activeSource.toUpperCase();
-          const sourceScores = beachData.dailyScoresBySource?.[sourceKey] || beachData.dailyScores || {};
+          const sourceScores = beachData.dailyScoresBySource?.[sourceKey] || null;
           const conditions = sourceScores?.[dateKey]?.conditions || null;
-          const rating = sourceScores?.[dateKey]?.rating ?? beachData.rating ?? 0;
+          const rating = sourceScores?.[dateKey]?.rating ?? (isPopupLoading ? 0 : beachData.rating ?? 0);
           
           const conditionReasons = getConditionReasons(beachData, conditions);
           
@@ -1077,7 +1098,7 @@ export default function TideMap({
 
               {showConditions && (
                 <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {isPopupLoading ? (
+                  {isPopupLoading || !sourceScores ? (
                     <div className="space-y-3 py-1">
                       {[...Array(5)].map((_, idx) => (
                         <div key={idx} className="flex items-center gap-2 animate-pulse">
@@ -1086,13 +1107,11 @@ export default function TideMap({
                         </div>
                       ))}
                     </div>
-                  ) : conditionReasons ? (
+                  ) : conditions ? (
                     <div className="space-y-2">
                       {conditionReasons.optimalConditions?.filter(Boolean).map((cond: any, idx: number) => (
                           <div key={idx} className="flex items-start gap-2 group">
-                            {!conditions ? (
-                              <InfoIcon className="w-3 h-3 text-blue-400 mt-0.5 flex-shrink-0" />
-                            ) : cond.isMet ? (
+                            {cond.isMet ? (
                               <Check className="w-3 h-3 text-emerald-500 mt-0.5 flex-shrink-0" />
                             ) : (
                               <X className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
@@ -1105,7 +1124,7 @@ export default function TideMap({
                     </div>
                   ) : (
                     <div className="text-[9px] text-white/30 font-bold text-center py-2 italic uppercase tracking-widest">
-                      No condition data
+                      No forecast data for {activeSource === 'WINDFINDER' ? 'Source A' : activeSource === 'WINDGURU' ? 'Source B' : activeSource === 'WINDY' ? 'Source C' : activeSource}
                     </div>
                   )}
                 </div>

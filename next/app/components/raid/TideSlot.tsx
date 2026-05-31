@@ -17,7 +17,9 @@ const TideSlot: React.FC<TideSlotProps> = ({ tide, isLoading }) => {
 
   return (
     <div className="flex gap-2 p-1.5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 ring-1 ring-white/5 shadow-sm transition-all duration-500 animate-in fade-in slide-in-from-left-4">
-      <div className="w-16 sm:w-20 h-10 bg-black/90 border p-5 border-white/10 rounded-lg flex flex-col items-center justify-center relative overflow-hidden group shadow-xl">
+      <div className={cn(
+        "w-20 sm:w-24 h-10 bg-black/90 border px-2 py-1 border-white/10 rounded-lg flex flex-col items-center justify-center relative overflow-hidden group shadow-xl"
+      )}>
         {/* Selection indicator bar */}
         <div className={cn(
           "absolute bottom-0 left-0 right-0 h-0.5 transition-colors duration-500",

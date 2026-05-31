@@ -26,7 +26,9 @@ async function main() {
 
   console.log(`Found ${reports.length} reports total:`);
   reports.forEach((r, idx) => {
-    console.log(`[${idx + 1}] ID: ${r.id}, Date: ${r.date.toISOString().split('T')[0]}, Beach: ${r.beach?.name} (Region: ${r.beach?.regionId}), User: ${r.user?.name || 'NULL'} (ID: ${r.userId})`);
+    if (r.beachId === 'sunset-reef') {
+      console.log(`[${idx + 1}] ID: ${r.id}, Date: ${r.date.toISOString().split('T')[0]}, Source: ${r.source}, Duration: ${r.duration}, Content: ${r.content.substring(0, 150)}...`);
+    }
   });
 }
 

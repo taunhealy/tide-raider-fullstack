@@ -462,7 +462,7 @@ export const beachData: Beach[] = [
     difficulty: "ADVANCED",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 1.3,
+      min: 1.4,
       max: 4,
     },
     idealSwellPeriod: {
@@ -570,7 +570,7 @@ export const beachData: Beach[] = [
     difficulty: "ADVANCED",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 2.1,
+      min: 1.6,
       max: 5,
     },
     idealSwellPeriod: {
@@ -628,7 +628,7 @@ export const beachData: Beach[] = [
     difficulty: "ADVANCED",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 1.8,
+      min: 1.6,
       max: 6,
     },
     idealSwellPeriod: {
@@ -679,7 +679,7 @@ export const beachData: Beach[] = [
     difficulty: "ADVANCED",
     waveType: "REEF_BREAK",
     swellSize: {
-      min: 3.5,
+      min: 3.0,
       max: 20.0,
     },
     idealSwellPeriod: {
@@ -727,7 +727,7 @@ export const beachData: Beach[] = [
     difficulty: "ADVANCED",
     waveType: "BEACH_BREAK",
     swellSize: {
-      min: 3.2,
+      min: 3,
       max: 20.0,
     },
     idealSwellPeriod: {
@@ -2313,7 +2313,7 @@ export const beachData: Beach[] = [
     difficulty: "INTERMEDIATE",
     waveType: "BEACH_BREAK", // Updated to match info
     swellSize: {
-      min: 2.1,
+      min: 1.6,
       max: 4.0,
     },
     idealSwellPeriod: {

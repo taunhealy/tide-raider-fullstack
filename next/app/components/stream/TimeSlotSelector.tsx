@@ -26,9 +26,9 @@ export default function TimeSlotSelector({
   }, []);
 
   const slots = [
-    { id: TimeSlot.MORNING, label: "06:00", name: "MORNING" },
-    { id: TimeSlot.NOON, label: "12:00", name: "NOON" },
-    { id: TimeSlot.EVENING, label: "18:00", name: "EVENING" },
+    { id: TimeSlot.MORNING, label: "06:00", name: "Morning" },
+    { id: TimeSlot.NOON, label: "12:00", name: "Midday" },
+    { id: TimeSlot.EVENING, label: "18:00", name: "Evening" },
   ];
 
   const isVertical = orientation === "vertical";

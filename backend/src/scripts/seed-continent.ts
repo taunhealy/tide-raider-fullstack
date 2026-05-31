@@ -49,6 +49,7 @@ async function main() {
         // Normalize fields for Prisma enums
         const normalizedBeach = {
           ...beach,
+          distanceFromCT: beach.distanceFromCT ?? 0,
           bestSeasons: (beach.bestSeasons || []).flatMap((s: string) => {
             const val = String(s).toUpperCase().replace(/-/g, '_');
             if (val === "ALL" || val === "ALL_YEAR" || val === "YEAR_ROUND") return ["SUMMER", "AUTUMN", "WINTER", "SPRING"];
@@ -57,8 +58,22 @@ async function main() {
             if (val === "FALL") return ["AUTUMN"];
             return [val];
           }).filter((s: string) => ["SUMMER", "AUTUMN", "WINTER", "SPRING"].includes(s)),
-          difficulty: (beach.difficulty === "All Levels" ? "INTERMEDIATE" : (beach.difficulty || "INTERMEDIATE")).toUpperCase().trim(),
-          waveType: (beach.waveType || "BEACH_BREAK").toUpperCase().replace(/\s+/g, '_'),
+          difficulty: (() => {
+            const raw = String(beach.difficulty || "INTERMEDIATE").toUpperCase().trim().replace(/\s+/g, '_');
+            if (raw.includes("BEGINNER")) return "BEGINNER";
+            if (raw.includes("INTERMEDIATE") || raw.includes("ALL_LEVELS") || raw.includes("ALL")) return "INTERMEDIATE";
+            if (raw.includes("ADVANCED") || raw.includes("EXPERIENCED")) return "ADVANCED";
+            if (raw.includes("EXPERT")) return "EXPERT";
+            return "INTERMEDIATE"; // Fallback
+          })(),
+          waveType: (() => {
+            const raw = String(beach.waveType || "BEACH_BREAK").toUpperCase().replace(/\s+/g, '_');
+            if (raw.includes("POINT")) return "POINT_BREAK";
+            if (raw.includes("REEF") || raw === "SLAB") return "REEF_BREAK";
+            if (raw.includes("RIVER")) return "RIVER_MOUTH";
+            if (raw.includes("BEACH") || raw === "WEDGE" || raw === "SHOREBREAK") return "BEACH_BREAK";
+            return "BEACH_BREAK"; // Fallback
+          })(),
           crimeLevel: (beach.crimeLevel || "LOW").toUpperCase(),
           optimalTide: (beach.optimalTide || "UNKNOWN").toUpperCase().replace(/-/g, '_'),
           bestMonthOfYear: beach.bestMonthOfYear?.toUpperCase(),
@@ -78,13 +93,14 @@ async function main() {
             if (val.includes("OBJECT") || val.includes("HIDDEN")) return "SUBMERGED_OBJECTS";
             return "ROCKS"; // Fallback to ROCKS if nothing else matches
           }),
+          videos: beach.videos || (beach.video ? [{ url: beach.video, title: "Featured Video" }] : null),
         };
 
         // Prisma SharkRisk enum map
         // NONE, LOW, MODERATE, HIGH, EXTREME
         
         // Remove fields that are not in the Prisma model or need special handling
-        const { shaper, beer, advertisingPrice, ...dbBeach } = normalizedBeach;
+        const { shaper, beer, advertisingPrice, conditionProfiles, optimalTide, bestMonthOfYear, rating, video, ...dbBeach } = normalizedBeach;
 
         // 🏗️ ENSURE PARENTS EXIST
         // -----------------------
@@ -124,6 +140,50 @@ async function main() {
           update: dbBeach,
           create: dbBeach,
         });
+
+        // 5. Upsert Condition Profiles
+        if (conditionProfiles) {
+          const normalizeTide = (t: string) => {
+             const up = String(t).toUpperCase().replace(' ', '_').replace('-', '_');
+             if (up.includes('LOW_TO_MID') || up.includes('LOW_MID')) return 'LOW_TO_MID';
+             if (up.includes('MID_TO_HIGH') || up.includes('MID_HIGH')) return 'MID_TO_HIGH';
+             if (up.includes('ALL')) return 'ALL';
+             if (up.includes('LOW')) return 'LOW';
+             if (up.includes('MID')) return 'MID';
+             if (up.includes('HIGH')) return 'HIGH';
+             return 'UNKNOWN';
+          };
+
+          const profilePromises = Object.entries(conditionProfiles).map(async ([category, profile]) => {
+            const profileData: any = profile;
+            await prisma.beachConditionProfile.upsert({
+              where: {
+                beachId_category: {
+                  beachId: dbBeach.id,
+                  category: category as any
+                }
+              },
+              update: {
+                optimalWindDirections: profileData.optimalWindDirections || [],
+                optimalSwellDirections: profileData.optimalSwellDirections || { min: 0, max: 360 },
+                optimalTide: normalizeTide(profileData.optimalTide || ""),
+                swellSize: profileData.swellSize || { min: 0, max: 10 },
+                idealSwellPeriod: profileData.idealSwellPeriod || { min: 0, max: 25 },
+              },
+              create: {
+                beachId: dbBeach.id,
+                category: category as any,
+                optimalWindDirections: profileData.optimalWindDirections || [],
+                optimalSwellDirections: profileData.optimalSwellDirections || { min: 0, max: 360 },
+                optimalTide: normalizeTide(profileData.optimalTide || ""),
+                swellSize: profileData.swellSize || { min: 0, max: 10 },
+                idealSwellPeriod: profileData.idealSwellPeriod || { min: 0, max: 25 },
+              }
+            });
+          });
+          await Promise.all(profilePromises);
+        }
+
         process.stdout.write(".");
       } catch (error: any) {
         console.error(`\n❌ Error seeding beach ${beach.name}:`, error.message);

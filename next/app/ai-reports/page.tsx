@@ -173,9 +173,11 @@ function AIReportsContent() {
         </div>
       </div>
 
-      {/* Reports Table */}
-      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden mb-20">
-        <div className="overflow-x-auto">
+      {/* Reports Table / Card Container */}
+      <div className="bg-transparent md:bg-white rounded-[24px] md:rounded-[32px] border-none md:border md:border-gray-100 shadow-none md:shadow-sm overflow-hidden mb-20">
+        
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50">
@@ -305,6 +307,80 @@ function AIReportsContent() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card List View */}
+        <div className="block md:hidden space-y-4">
+          {filteredReports && filteredReports.length > 0 ? (
+            filteredReports.map((report) => (
+              <div 
+                key={report.id} 
+                onClick={() => handleLoadReport(report.beach as any, report.id)}
+                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm active:scale-[0.98] transition-all flex flex-col gap-4 cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-60">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-black leading-tight">{report.beach.name}</h4>
+                      <p className="text-[9px] font-medium text-black/40 uppercase tracking-widest mt-0.5">
+                        {safeFormat(report.date, "MMM d")}{report.duration > 1 && report.endDate ? ` - ${safeFormat(report.endDate, "MMM d")}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    {report.source && (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border leading-none",
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).bg,
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).text,
+                        (sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).border
+                      )}>
+                        {(sourceColors[report.source.toUpperCase()] || sourceColors.WINDY).label}
+                      </span>
+                    )}
+                    <span className="px-2 py-0.5 rounded bg-gray-100 text-[8px] font-black uppercase tracking-widest text-black/60 leading-none">
+                      {report.persona}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-px bg-gray-50" />
+
+                <div className="flex items-center justify-between text-[10px] text-gray-500 font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-gray-300" />
+                    <span>{safeFormat(report.createdAt, "dd/MM/yyyy HH:mm")}</span>
+                  </div>
+                  
+                  <Button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLoadReport(report.beach as any, report.id);
+                    }} 
+                    variant="ghost" 
+                    className="h-8 px-3 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white text-[9px] font-black uppercase tracking-widest gap-1 text-indigo-600"
+                  >
+                    View <ExternalLink className="w-2.5 h-2.5" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-16 text-center bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-black opacity-10 mx-auto mb-4">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-xs uppercase tracking-widest text-black/40">No Signal History Found</h4>
+              <p className="text-[11px] leading-relaxed text-black/30 mt-1">Strategic intelligence reports you generate will appear here.</p>
+              <Button asChild variant="outline" className="mt-4 h-10 px-6 rounded-full border-gray-200 text-[10px] font-bold uppercase tracking-widest">
+                <Link href="/raid">Go to Raid Hub</Link>
+              </Button>
+            </div>
+          )}
         </div>
         
         {/* Footer info */}

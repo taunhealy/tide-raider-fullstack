@@ -10,8 +10,11 @@ import { useBeachFilters } from "@/app/hooks/useBeachFilters";
 import WeatherForecastWidget from "@/app/components/sidebar/WeatherForecastWidget";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import Link from "next/link";
+import { TimeSlot } from "@/app/types/forecast";
+import TimeSlotSelector from "@/app/components/stream/TimeSlotSelector";
 
 import AIReportModal from "@/app/components/beach/AIReportModal";
+import TideSlot from "@/app/components/raid/TideSlot";
 
 const REGION_COORDINATES: Record<string, { center: [number, number]; zoom: number; label: string }> = {
   "all": { center: [20.0, 0.0], zoom: 3, label: "All Breaks" },
@@ -167,7 +170,24 @@ export default function GlobalMapPage() {
     const savedSwell = localStorage.getItem("showSwellHeatmap");
     if (savedWind !== null) setShowWindHeatmap(savedWind === "true");
     if (savedSwell !== null) setShowSwellHeatmap(savedSwell === "true");
+
+    // Initialize Hidden Gems visibility from URL, localStorage, or default to true
+    const hasUrlParam = new URLSearchParams(window.location.search).has("isHiddenGem");
+    const savedHiddenGem = localStorage.getItem("isHiddenGem");
+    if (!hasUrlParam) {
+      if (savedHiddenGem !== null) {
+        updateFilter("isHiddenGem", savedHiddenGem === "true" ? "true" : "false");
+      } else {
+        updateFilter("isHiddenGem", "true");
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    if (mounted && filters.isHiddenGem !== undefined) {
+      localStorage.setItem("isHiddenGem", String(filters.isHiddenGem));
+    }
+  }, [filters.isHiddenGem, mounted]);
 
   useEffect(() => {
     if (mounted && !filters.regionId) {
@@ -200,7 +220,7 @@ export default function GlobalMapPage() {
     const diffTime = targetDate.getTime() - today.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays >= 0 && diffDays <= 6) return diffDays;
+    if (diffDays >= 0 && diffDays <= 4) return diffDays;
     return 0;
   }, [filters.forecastDate]);
 
@@ -209,7 +229,7 @@ export default function GlobalMapPage() {
     const baselineDate = new Date();
     baselineDate.setUTCHours(0, 0, 0, 0);
     
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 5; i++) {
         const d = new Date(baselineDate);
         d.setUTCDate(baselineDate.getUTCDate() + i);
         const dateStr = d.toISOString().split('T')[0];
@@ -233,6 +253,22 @@ export default function GlobalMapPage() {
   const selectedDateString = useMemo(() => {
     return weekDays[selectedDayIndex]?.dateStr || new Date().toISOString().split('T')[0];
   }, [selectedDayIndex, weekDays]);
+
+  const selectedBeachTide = useMemo(() => {
+    if (!selectedBeach || !selectedDateString) return null;
+    
+    // 1. Try directly from dailyScores
+    const dailyScore = selectedBeach.dailyScores?.[selectedDateString];
+    if (dailyScore?.conditions?.tide) return dailyScore.conditions.tide;
+    
+    // 2. Try from detailed dailyScoresBySource
+    const activeSourceKey = selectedSource?.toUpperCase() || "WINDFINDER";
+    const sourceScores = selectedBeach.dailyScoresBySource?.[activeSourceKey];
+    const sourceScore = sourceScores?.[selectedDateString];
+    if (sourceScore?.conditions?.tide) return sourceScore.conditions.tide;
+    
+    return null;
+  }, [selectedBeach, selectedDateString, selectedSource]);
 
   const handleDaySelect = (index: number) => {
     const dateStr = weekDays[index]?.dateStr;
@@ -491,7 +527,7 @@ export default function GlobalMapPage() {
               </div>
 
               {/* Active Badges */}
-              {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || filters.isRegular === "false" || filters.isHiddenGem === "true" || filters.isHiddenGem === true) && (
+              {(searchQuery || minRating > 0 || selectedDifficulty.length > 0 || isLoggersOnly || isFoilingOnly || (filters.isRegular !== "false" && filters.isRegular !== false) || filters.isHiddenGem === "true" || filters.isHiddenGem === true) && (
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {searchQuery && (
                     <button 
@@ -524,12 +560,12 @@ export default function GlobalMapPage() {
                       Foiling <X className="w-2 h-2" />
                     </button>
                   )}
-                  {filters.isRegular === "false" && (
+                  {(filters.isRegular !== "false" && filters.isRegular !== false) && (
                     <button 
-                      onClick={() => updateFilter("isRegular", "true")} 
+                      onClick={() => updateFilter("isRegular", "false")} 
                       className="flex items-center gap-1.5 px-2 py-1 bg-gray-600 text-white text-[9px] font-black uppercase tracking-tighter rounded-md hover:bg-gray-500 transition-all"
                     >
-                      No Public Breaks <X className="w-2 h-2" />
+                      Public <X className="w-2 h-2" />
                     </button>
                   )}
                   {(filters.isHiddenGem === "true" || filters.isHiddenGem === true) && (
@@ -557,6 +593,36 @@ export default function GlobalMapPage() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Time Slot Filter */}
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Time Slot</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: TimeSlot.MORNING, name: "Morning", time: "06:00", icon: "🌅" },
+                  { id: TimeSlot.NOON, name: "Midday", time: "12:00", icon: "☀️" },
+                  { id: TimeSlot.EVENING, name: "Evening", time: "18:00", icon: "🌇" },
+                ].map((slot) => {
+                  const isSelected = ((filters.timeSlot as TimeSlot) || TimeSlot.MORNING) === slot.id;
+                  return (
+                    <button
+                      key={slot.id}
+                      onClick={() => updateFilter("timeSlot", slot.id)}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-300",
+                        isSelected
+                          ? "bg-gray-900 border-gray-900 text-white shadow-lg scale-105"
+                          : "bg-white border-gray-100 hover:border-gray-200 text-gray-500 hover:text-gray-900"
+                      )}
+                    >
+                      <span className="text-base mb-1">{slot.icon}</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider">{slot.name}</span>
+                      <span className="text-[8px] font-bold opacity-60 mt-0.5">{slot.time}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Region Selector */}
@@ -630,8 +696,8 @@ export default function GlobalMapPage() {
             </div>
 
             {/* Spots Type Toggle Filter */}
-            <div className="p-4 bg-white rounded-2xl border-2 border-gray-100 space-y-3 relative overflow-hidden group">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block">Breaks Visibility</label>
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Breaks Visibility</label>
               
               <div className="flex flex-col gap-2.5">
                 <RegularButton
@@ -747,35 +813,75 @@ export default function GlobalMapPage() {
 
         {/* Main View Area */}
         <main className="flex-1 relative bg-gray-100">
-          {/* Weekday Filter Floating Bar */}
-          <div className="absolute top-4 md:top-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 z-30 flex justify-center px-4">
-            <div className="flex gap-1 md:gap-2 bg-white/90 backdrop-blur-md p-1 md:p-1.5 rounded-xl md:rounded-2xl shadow-xl md:shadow-2xl border border-white/20 max-w-full overflow-x-auto no-scrollbar">
-              {mounted && weekDays.map((option) => {
-                const isSelected = selectedDayIndex === option.index;
-                return (
-                  <button
-                    key={option.index}
-                    onClick={() => handleDaySelect(option.index)}
-                    className={cn(
-                      "flex flex-col items-center min-w-[60px] md:min-w-[80px] px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all border border-transparent group shrink-0",
-                      loading && "cursor-wait opacity-70",
-                      isSelected
-                        ? "bg-gray-800 border-gray-800 text-white shadow-lg md:translate-y-[-1px]"
-                        : "bg-white border-gray-100/50 text-gray-900 hover:bg-gray-50 transition-all"
-                    )}
-                  >
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-tighter">
-                      {option.label}
-                    </span>
-                    <span className={cn(
-                      "text-[8px] md:text-[9px] font-bold",
-                      isSelected ? "text-white/70" : "text-gray-400 group-hover:text-gray-500"
-                    )}>
-                      {option.date}
-                    </span>
-                  </button>
-                );
-              })}
+          {/* Weekday & Time Slot Floating Control Bar */}
+          <div className="absolute top-4 md:top-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 z-30 flex justify-center px-4 pointer-events-none w-full max-w-full">
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 pointer-events-auto w-full max-w-full px-2 md:px-0 justify-center">
+              {/* Desktop Tide Floating Container */}
+              {mounted && selectedBeach && selectedBeachTide && (
+                <div className="hidden md:block flex-shrink-0 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <TideSlot tide={selectedBeachTide} isLoading={loading} />
+                </div>
+              )}
+
+              {/* Weekday Filter Floating Bar */}
+              <div className="flex gap-2 bg-white/90 backdrop-blur-md p-2 px-3 md:p-2.5 md:px-4 rounded-xl md:rounded-2xl shadow-xl border border-white/20 w-full md:w-auto overflow-x-auto no-scrollbar scroll-smooth snap-x">
+                {mounted && weekDays.map((option) => {
+                  const isSelected = selectedDayIndex === option.index;
+                  return (
+                    <button
+                      key={option.index}
+                      onClick={() => handleDaySelect(option.index)}
+                      className={cn(
+                        "flex-col items-center min-w-[60px] md:min-w-[80px] px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all border border-transparent group shrink-0 snap-center",
+                        option.index >= 3 ? "hidden md:flex" : "flex",
+                        loading && "cursor-wait opacity-70",
+                        isSelected
+                          ? "bg-gray-800 border-gray-800 text-white shadow-lg md:translate-y-[-1px]"
+                          : "bg-white border-gray-100/50 text-gray-900 hover:bg-gray-50 transition-all"
+                      )}
+                    >
+                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-tighter">
+                        {option.label}
+                      </span>
+                      <span className={cn(
+                        "text-[8px] md:text-[9px] font-bold",
+                        isSelected ? "text-white/70" : "text-gray-400 group-hover:text-gray-500"
+                      )}>
+                        {option.date}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Mobile Tide & Time Slot Row */}
+              {mounted && (
+                <div className="flex md:hidden items-center justify-center gap-2 w-full">
+                  {selectedBeach && selectedBeachTide && (
+                    <div className="flex-shrink-0 animate-in fade-in slide-in-from-left-2 duration-300">
+                      <TideSlot tide={selectedBeachTide} isLoading={loading} />
+                    </div>
+                  )}
+                  <div className="bg-white/90 backdrop-blur-md p-1 rounded-xl shadow-xl border border-white/20 flex-shrink-0 flex items-center justify-center">
+                    <TimeSlotSelector
+                      selectedSlot={(filters.timeSlot as TimeSlot) || TimeSlot.MORNING}
+                      onChange={(slot) => updateFilter("timeSlot", slot)}
+                      activeSlot={TimeSlot.MORNING}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Desktop Time Slot Floating Bar */}
+              {mounted && (
+                <div className="hidden md:flex bg-white/90 backdrop-blur-md p-1 rounded-xl md:rounded-2xl shadow-xl border border-white/20 flex-shrink-0 items-center justify-center">
+                  <TimeSlotSelector
+                    selectedSlot={(filters.timeSlot as TimeSlot) || TimeSlot.MORNING}
+                    onChange={(slot) => updateFilter("timeSlot", slot)}
+                    activeSlot={TimeSlot.MORNING}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -1007,6 +1113,36 @@ export default function GlobalMapPage() {
                         placeholder="Enter beach or region..."
                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none"
                       />
+                    </div>
+                  </div>
+
+                  {/* Time Slot Filter */}
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Time Slot</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: TimeSlot.MORNING, name: "Morning", time: "06:00", icon: "🌅" },
+                        { id: TimeSlot.NOON, name: "Midday", time: "12:00", icon: "☀️" },
+                        { id: TimeSlot.EVENING, name: "Evening", time: "18:00", icon: "🌇" },
+                      ].map((slot) => {
+                        const isSelected = ((filters.timeSlot as TimeSlot) || TimeSlot.MORNING) === slot.id;
+                        return (
+                          <button
+                            key={slot.id}
+                            onClick={() => updateFilter("timeSlot", slot.id)}
+                            className={cn(
+                              "flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-300",
+                              isSelected
+                                ? "bg-gray-900 border-gray-900 text-white shadow-lg scale-105"
+                                : "bg-white border-gray-100 hover:border-gray-200 text-gray-500 hover:text-gray-900"
+                            )}
+                          >
+                            <span className="text-base mb-1">{slot.icon}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider">{slot.name}</span>
+                            <span className="text-[8px] font-bold opacity-60 mt-0.5">{slot.time}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

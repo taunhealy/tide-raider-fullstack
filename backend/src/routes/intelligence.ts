@@ -282,6 +282,8 @@ router.get("/history", optionalAuth, async (req, res: Response) => {
  */
 router.get("/latest", optionalAuth, async (req, res: Response) => {
   const { beachId, source } = req.query;
+  
+  console.log(`[IntelligenceRoute] GET /latest called with beachId: ${beachId}, source: ${source}`);
 
   if (!beachId) {
     return res.status(400).json({ error: "Missing parameters" });
@@ -291,8 +293,9 @@ router.get("/latest", optionalAuth, async (req, res: Response) => {
     const { prisma } = await import("../lib/prisma");
     const whereClause: any = { beachId: beachId as string };
     if (source) {
-      whereClause.source = (source as string).toUpperCase();
+      whereClause.source = String(source).trim().toUpperCase();
     }
+    console.log(`[IntelligenceRoute] Querying latest report with clause:`, JSON.stringify(whereClause));
     const report = await prisma.intelligenceReport.findFirst({
       where: whereClause,
       orderBy: { createdAt: "desc" },

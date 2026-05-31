@@ -205,6 +205,9 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               lastLoadedReportIdRef.current = data.id;
               setActiveReportId(data.id);
             }
+            if (data.source && data.source !== selectedSource) {
+              setSelectedSource(data.source);
+            }
             if (data.createdAt || data.date) {
               setExistingReportDate(new Date(data.createdAt || data.date));
             }

@@ -1,0 +1,10 @@
+---
+description: Rule requiring the AI to ask for explicit user permission before utilizing or spending API AI credits (e.g. generating reports, pioneer actions).
+globs: *
+---
+
+# API AI Credit Rules
+
+- **Ask for Permission First**: You MUST always ask the user for explicit permission BEFORE executing any action that consumes or spends API AI credits, such as generating an AI report, intelligence briefing, or pioneering spot data.
+- **Explain the Cost**: Clearly state the credit cost (e.g., "1 credit" or "4 credits") associated with the action before requesting the user's approval.
+- **Do Not Auto-generate**: Never trigger background tasks or direct API calls that consume user credits automatically without prior written consent in the conversation.

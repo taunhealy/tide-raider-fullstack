@@ -226,8 +226,15 @@ export default function BeachHeaderControls({
     return () => window.removeEventListener("forecastSourceChanged", handleSourceChange as EventListener);
   }, []);
 
+  // Timezone-safe local date calculation
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${year}-${month}-${day}`;
+
   // Get selected date from URL params or default to today
-  const selectedDate = searchParams.get("forecastDate");
+  const selectedDate = searchParams.get("forecastDate") || todayStr;
 
   const handleDateSelect = (date: string) => {
     updateFilter("forecastDate", date);
@@ -250,13 +257,6 @@ export default function BeachHeaderControls({
        updateFilter("timeSlot", TimeSlot.MORNING);
     }
   }, []);
-
-  // Timezone-safe local date calculation
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${year}-${month}-${day}`;
 
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
