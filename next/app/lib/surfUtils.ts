@@ -151,8 +151,8 @@ export function getConditionReasons(
   // Add optimal conditions section with status
   const optimalConditions = [
     {
-      text: `Optimal Wind: ${windDirs.join(", ")}`,
-      isMet: windDirs.some(dir => {
+      text: `Optimal Wind: ${windDirs.length > 0 ? windDirs.join(", ") : "Any"}`,
+      isMet: windDirs.length === 0 ? true : windDirs.some(dir => {
         const optimalDeg = cardinalToDegreesMap[dir];
         const diff = Math.abs(forecastData.windDirection - optimalDeg);
         const angleDiff = Math.min(diff, 360 - diff);

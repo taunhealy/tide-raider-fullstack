@@ -182,19 +182,27 @@ export default function TideMap({
           if (!prev) return null;
           
           const nextScoresBySource = { ...(prev.dailyScoresBySource || {}) };
-          const activeKey = activeSource.toUpperCase();
           
-          // Merge updatedBeach.dailyScores (which matches the activeSource) into our cache
+          // CRITICAL: The scores in `updatedBeach.dailyScores` belong to the parent's `selectedSource` prop,
+          // NOT the local `activeSource` state which may have updated faster than the parent's network request!
+          const beachesSourceKey = selectedSource.toUpperCase();
+          
+          // Merge updatedBeach.dailyScores (which matches the selectedSource) into our cache
           if (updatedBeach.dailyScores) {
-            const currentActiveScores = { ...(nextScoresBySource[activeKey] || {}) };
+            const currentActiveScores = { ...(nextScoresBySource[beachesSourceKey] || {}) };
             
             Object.entries(updatedBeach.dailyScores).forEach(([dateStr, newScore]: [string, any]) => {
+              const existing = currentActiveScores[dateStr];
+              
               currentActiveScores[dateStr] = {
-                ...currentActiveScores[dateStr],
-                ...newScore
+                ...existing,
+                ...newScore,
+                // Explicitly preserve already loaded conditions if background update is null
+                conditions: existing?.conditions || newScore.conditions || null,
+                source: beachesSourceKey
               };
             });
-            nextScoresBySource[activeKey] = currentActiveScores;
+            nextScoresBySource[beachesSourceKey] = currentActiveScores;
           }
 
           return {
@@ -205,16 +213,17 @@ export default function TideMap({
         });
       }
     }
-  }, [beaches, activeSource]);
+  }, [beaches, selectedSource]);
 
   // Auto-fetch detailed scores for popupBeach when activeSource changes (while popup is open)
   useEffect(() => {
     if (popupBeach?.id && activeSource) {
       setIsPopupLoading(true);
       api.getBeach(popupBeach.id, activeSource).then(res => {
-        if (res?.beach) {
+        const beachObj = res?.beach || res;
+        if (beachObj) {
           const scoresByDate: Record<string, any> = {};
-          (res.beach.beachDailyScores || [])
+          (beachObj.beachDailyScores || [])
             .filter((score: any) => score.source === activeSource.toUpperCase())
             .forEach((score: any) => {
               const d = score.date.split('T')[0];
@@ -238,12 +247,9 @@ export default function TideMap({
             
             const nextBeach = { 
               ...prev, 
-              ...res.beach,
+              ...beachObj,
               dailyScoresBySource: nextScoresBySource
             };
-            if (nextBeach && onBeachSelectRef.current) {
-              onBeachSelectRef.current(nextBeach);
-            }
             return nextBeach;
           });
         }
@@ -254,6 +260,13 @@ export default function TideMap({
       });
     }
   }, [activeSource]);
+
+  // Synchronize parent state with the latest popupBeach details cleanly in the commit phase
+  useEffect(() => {
+    if (onBeachSelectRef.current) {
+      onBeachSelectRef.current(popupBeach);
+    }
+  }, [popupBeach]);
 
   // Sync map popup if selectedBeachId is cleared from outside
   useEffect(() => {
@@ -709,23 +722,23 @@ export default function TideMap({
         } else {
           const beach = representative.get("beach");
           const initialScoresBySource = {
-            [activeSource.toUpperCase()]: beach.dailyScores || {}
+            [selectedSource.toUpperCase()]: beach.dailyScores || {}
           };
           setPopupBeach({
             ...beach,
             dailyScoresBySource: initialScoresBySource
           });
           overlay.setPosition(evt.coordinate);
-          onBeachSelectRef.current(beach);
           
           // Fetch full beach details on demand
           if (beach?.id) {
             setIsPopupLoading(true);
             api.getBeach(beach.id, activeSource).then(res => {
-              if (res?.beach) {
+              const beachObj = res?.beach || res;
+              if (beachObj) {
                 // Map the array of scores to a dictionary format by date, filtering by activeSource
                 const scoresByDate: Record<string, any> = {};
-                (res.beach.beachDailyScores || [])
+                (beachObj.beachDailyScores || [])
                   .filter((score: any) => score.source === activeSource.toUpperCase())
                   .forEach((score: any) => {
                     const d = score.date.split('T')[0];
@@ -750,12 +763,9 @@ export default function TideMap({
                   
                   const nextBeach = { 
                     ...prev, 
-                    ...res.beach,
+                    ...beachObj,
                     dailyScoresBySource: nextScoresBySource
                   };
-                  if (nextBeach && onBeachSelectRef.current) {
-                    onBeachSelectRef.current(nextBeach);
-                  }
                   return nextBeach;
                 });
               }
@@ -770,9 +780,6 @@ export default function TideMap({
         setPopupBeach(null);
         setShowConditions(false);
         overlay.setPosition(undefined);
-        if (onBeachSelectRef.current) {
-          onBeachSelectRef.current(null);
-        }
       }
     });
 
@@ -1070,7 +1077,16 @@ export default function TideMap({
 
               {showConditions && (
                 <div className="p-3 bg-black/40 rounded-xl border border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                  {conditionReasons ? (
+                  {isPopupLoading ? (
+                    <div className="space-y-3 py-1">
+                      {[...Array(5)].map((_, idx) => (
+                        <div key={idx} className="flex items-center gap-2 animate-pulse">
+                          <div className="w-3 h-3 bg-white/10 rounded-full flex-shrink-0" />
+                          <div className="h-2.5 bg-white/10 rounded-md" style={{ width: `${Math.floor(Math.random() * 40) + 50}%` }} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : conditionReasons ? (
                     <div className="space-y-2">
                       {conditionReasons.optimalConditions?.filter(Boolean).map((cond: any, idx: number) => (
                           <div key={idx} className="flex items-start gap-2 group">
