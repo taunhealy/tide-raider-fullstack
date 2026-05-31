@@ -286,8 +286,7 @@ const BeachCard = memo(function BeachCard({
                           Hidden Gem
                         </span>
                       )}
-                      {forecastData?.windSpeed &&
-                        forecastData.windSpeed > 25 && (
+                      {(forecastData?.windSpeed ?? 0) > 25 && (
                           <span title="Strong winds">🌪️</span>
                         )}
                       {beach.sharkAttack?.hasAttack && (
@@ -342,7 +341,7 @@ const BeachCard = memo(function BeachCard({
                             }
                           </span>
                         </div>
-                        {beach.sourceAccuracyCount && beach.sourceAccuracyCount > 0 && (
+                        {(beach.sourceAccuracyCount ?? 0) > 0 && (
                           <span className="text-[9px] font-bold text-gray-400">
                             ({beach.sourceAccuracyCount} logs)
                           </span>
@@ -728,8 +727,7 @@ const BeachCard = memo(function BeachCard({
                           Hidden Gem
                         </span>
                       )}
-                      {forecastData?.windSpeed &&
-                        forecastData.windSpeed > 25 && (
+                      {(forecastData?.windSpeed ?? 0) > 25 && (
                           <span title="Strong winds">🌪️</span>
                         )}
                       {beach.sharkAttack?.hasAttack && (

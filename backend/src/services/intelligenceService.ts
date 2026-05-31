@@ -382,7 +382,8 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
         0, 
         persona, 
         `Current Reference Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\nTarget Timeframe: ${days}-Day Outlook\nSPORT CATEGORY: ${category}\n\nHISTORICAL MEMORY (User Logs):\n${historicalMemory || "No recent intelligence signals from this sector."}\n\nForecast Data Snippets:\n${context}\n\n${spotRules}`,
-        days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly"
+        days === 1 ? "daily" : days <= 3 ? "tactical" : "weekly",
+        category
       ).catch(err => {
 
         console.error(`[IntelligenceService] ❌ Python generation failed:`, err);

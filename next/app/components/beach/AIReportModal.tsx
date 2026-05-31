@@ -63,6 +63,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
   const [isCopied, setIsCopied] = useState(false);
   const [existingReportDate, setExistingReportDate] = useState<Date | null>(null);
   const [displayedReportDuration, setDisplayedReportDuration] = useState<number>(7);
+  const [reportCategory, setReportCategory] = useState<string>("GENERAL");
   const lastLoadedReportIdRef = useRef<string | null>(null);
 
   // Sharing State
@@ -214,12 +215,16 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             if (data.duration) {
               setDisplayedReportDuration(data.duration);
             }
+            if (data.category) {
+              setReportCategory(data.category);
+            }
           } else {
             // No report found for the latest check - this is a valid empty state
             setReport(null);
             setPioneer(null);
             setExistingReportDate(null);
             setDisplayedReportDuration(selectedDays);
+            setReportCategory("GENERAL");
             lastLoadedReportIdRef.current = null;
           }
         } catch (error: any) {
@@ -264,6 +269,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       setReport(null);
       setExistingReportDate(null);
       setDisplayedReportDuration(7);
+      setReportCategory("GENERAL");
       setActiveReportId(reportId);
       setReportSequence([]);
       setSelectedDays(7);
@@ -318,6 +324,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
       const data = await response.json();
       setReport(data.report);
       setPioneer(data.pioneer || null);
+      if (data.category) setReportCategory(data.category);
+      else setReportCategory(selectedSport);
       if (data.id) setActiveReportId(data.id);
       window.dispatchEvent(new CustomEvent("credits-updated"));
       window.dispatchEvent(new CustomEvent("intelligence-updated"));
@@ -926,7 +934,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                       <div className="relative group/report">
                         <div className="text-[16px] leading-[1.7] font-medium text-black/80 whitespace-pre-wrap bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/50 selection:bg-indigo-100 selection:text-indigo-900">
                           {/* Report Metadata Headings */}
-                          <div className="mb-8 pb-8 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                          <div className="mb-8 pb-8 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="space-y-1">
                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Surf Break</span>
                               <p className="text-[14px] font-bold text-black">{currentBeach?.name || beach?.name || "Unknown Break"}</p>
@@ -942,6 +950,10 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                   return `${fmt(start)} - ${fmt(end)}`;
                                 })()}
                               </p>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Category</span>
+                              <p className="text-[14px] font-bold text-black">{reportCategory}</p>
                             </div>
                             <div className="space-y-1">
                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/20">Intelligence Source</span>

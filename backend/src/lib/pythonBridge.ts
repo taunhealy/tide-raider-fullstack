@@ -80,7 +80,8 @@ export class PythonBridge {
     score: number,
     persona: string,
     trend?: string,
-    mode: string = "daily"
+    mode: string = "daily",
+    category: string = "GENERAL"
   ): Promise<string> {
     console.log(`[PythonBridge] 🧠 Executing Pure Node.js Gemini SDK for ${beach} (${mode})...`);
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
@@ -95,12 +96,13 @@ export class PythonBridge {
     let userPrompt = "";
 
     const activePersona = persona.toUpperCase();
+    const activeCategory = category.toUpperCase();
 
     if (mode === "weekly" || mode === "tactical") {
       const durationLabel = mode === "weekly" ? "7-Day" : "3-Day";
       systemPrompt = `You are a Precision Surf Intelligence AI assigned to a specific maritime asset in the Western Cape. MISSION CRITICAL: You must only report on the beach break specified in the USER PROMPT. Do not include data for neighboring beaches in the same sector. Strategic Reporting Protocols:
 1. IDENTIFIER: Every report must start with: 'TACTICAL BRIEFING: [BEACH NAME]'.
-2. SPORT DNA: You are generating this for the ${activePersona} category. Adjust your physics engine accordingly. (e.g., Foiling cares about period/energy; Kiting cares about wind speed/gusts; Surfing cares about face integrity).
+2. SPORT DNA: You are generating this specifically for the ${activeCategory} category. Adjust your physics engine accordingly and strongly consider the ideal conditions for ${activeCategory}. (e.g., Foiling cares about period/energy; Kiting cares about wind speed/gusts; Surfing cares about face integrity).
 3. HISTORICAL CORRELATION: If 'HISTORICAL MEMORY' is provided, cross-reference it. If a user logged a 'shallow sandbar' yesterday, warn that today's high-period swell may cause heavy close-outs.
 4. VERIFIED RATINGS: Assign Star Ratings (⭐⭐⭐⭐⭐/5) based on 'ALGO_SCORE': (8-10: ⭐⭐⭐⭐⭐, 6-8: ⭐⭐⭐⭐, 4-6: ⭐⭐⭐, 2-4: ⭐⭐, 0-2: ⭐).
 5. DEDUCTION REASONING: Use the 'Deductions' provided in the context to explain why a rating might be suppressed (e.g., 'Rating suppressed due to cross-shore wind component').
@@ -118,7 +120,7 @@ ${trend || 'Data pending'}`;
 
 Intelligence Protocols:
 1. THE GOLDEN WINDOW: Define the best window for THIS SPOT with a Star Rating.
-2. SPOT DNA SYNC: Explictly cite how the current swell/wind aligns with THIS SPOT's optimal directions.
+2. SPORT DNA SYNC: Explictly cite how the current swell/wind aligns with THIS SPOT's optimal directions for the ${activeCategory} category.
 3. MULTI-SWELL & WAVE POWER: Explicitly factor in Swell 1 (Primary Swell), Swell 2 (Secondary Swell), Swell 3 (Tertiary Swell), and Swell Energy / Wave Power (in kJ). Synthesize their combined impact on wave size, power, and clean faces.
 4. TIDE & GEAR: Provide advice for THIS SPOT's specific topography.
 5. TONE: ${activePersona}.
@@ -146,12 +148,12 @@ ${trend || 'Stable'}`;
     return resultText;
   }
 
-  static async generateIntelligenceReport(beach: string, windSpeed: number, windDir: string, swellHeight: number, swellPeriod: number, swellDir: string, score: number, persona: string, trend?: string, mode: string = "daily"): Promise<string> {
+  static async generateIntelligenceReport(beach: string, windSpeed: number, windDir: string, swellHeight: number, swellPeriod: number, swellDir: string, score: number, persona: string, trend?: string, mode: string = "daily", category: string = "GENERAL"): Promise<string> {
     console.log(`[PythonBridge] 🧠 Generating ${mode} ${persona} intel for ${beach}...`);
     
     // First, try running the pure Node.js Gemini SDK directly since it is 100x faster, uses less memory, and doesn't require Python setup in container!
     try {
-      return await this.generateIntelligenceReportNode(beach, windSpeed, windDir, swellHeight, swellPeriod, swellDir, score, persona, trend, mode);
+      return await this.generateIntelligenceReportNode(beach, windSpeed, windDir, swellHeight, swellPeriod, swellDir, score, persona, trend, mode, category);
     } catch (nodeError: any) {
       console.warn(`[PythonBridge] ⚠️ Pure Node.js Gemini SDK failed: ${nodeError?.message || nodeError}. Falling back to Python bridge...`);
     }
