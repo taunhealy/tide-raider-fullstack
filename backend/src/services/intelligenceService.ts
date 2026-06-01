@@ -352,24 +352,33 @@ ${dbReport.user.instagram ? `[Instagram](https://instagram.com/${dbReport.user.i
           return `${dateStr}: ${mainSwell}${secondarySwellStr}${energyStr}, Wind: ${f.windSpeed}kts ${f.windDirection}°, Tide: ${f.tide || 'N/A'}, ALGO_SCORE: ${scoreDisplay}/10${deductionStr}`;
       }).join("\n");
 
-      // Construct Spot Rules to guide the AI with specific expertise
       const optimalWind = Array.isArray(conditionProfile?.optimalWindDirections) 
         ? conditionProfile.optimalWindDirections.join(", ") 
         : "N/A";
         
-      // Safely access JSON fields
       const swellDirs = conditionProfile?.optimalSwellDirections as any;
       const swellDir = (swellDirs && typeof swellDirs === 'object' && 'min' in swellDirs)
         ? `${swellDirs.min}° to ${swellDirs.max}°`
         : "N/A";
       const idealTide = conditionProfile?.optimalTide || "Incoming Mid-to-High";
 
+      const categoryGuidance = (() => {
+        const cat = category.toUpperCase();
+        if (cat.includes("FOIL")) {
+          return " NOTE FOR FOILING: Standard surfing constraints DO NOT apply. Foilers require strong winds (15-30+ knots) for winging/kiting, or high-period crossing swells for prone glide. Strong winds and rougher water states are excellent for propulsion, not deductions.";
+        }
+        if (cat === "KITESURFING") {
+          return " NOTE FOR KITESURFING: Standard surfing constraints DO NOT apply. Kitesurfers require strong, consistent wind (15-35 knots) for propulsion. Crossing swells create great ramp kicker options.";
+        }
+        return "";
+      })();
+
       const spotRules = `
       SPOT DNA & OPTIMAL CONDITIONS for ${beachRef.name}:
       - Optimal Wind: ${optimalWind}
       - Optimal Swell: ${swellDir}
       - Ideal Tide: ${idealTide}
-      - Spot Knowledge: ${(beachRef as any).description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}
+      - Spot Knowledge: ${(beachRef as any).description || "Open beach break. Vulnerable to strong winds. Monitor local shifts."}${categoryGuidance}
       `;
 
       const report = await PythonBridge.generateIntelligenceReport(

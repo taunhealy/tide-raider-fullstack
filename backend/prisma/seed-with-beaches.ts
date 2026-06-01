@@ -782,12 +782,36 @@ async function main() {
             );
           }
 
-          // Extract condition data
-          const optimalWindDirections = beach.conditionProfiles?.GENERAL?.optimalWindDirections || beach.optimalWindDirections || [];
-          const optimalSwellDirections = beach.conditionProfiles?.GENERAL?.optimalSwellDirections || beach.optimalSwellDirections || {};
-          const optimalTide = beach.conditionProfiles?.GENERAL?.optimalTide || beach.optimalTide || "ALL";
-          const swellSize = beach.conditionProfiles?.GENERAL?.swellSize || beach.swellSize || {};
-          const idealSwellPeriod = beach.conditionProfiles?.GENERAL?.idealSwellPeriod || beach.idealSwellPeriod || {};
+          // 1. Gather all dynamic condition profiles
+          const conditionProfilesData = { ...(beach.conditionProfiles || {}) };
+
+          // Fallback to GENERAL if none are defined
+          if (Object.keys(conditionProfilesData).length === 0) {
+            conditionProfilesData.GENERAL = {
+              optimalWindDirections: beach.optimalWindDirections || [],
+              optimalSwellDirections: beach.optimalSwellDirections || {},
+              optimalTide: beach.optimalTide || "ALL",
+              swellSize: beach.swellSize || {},
+              idealSwellPeriod: beach.idealSwellPeriod || {}
+            };
+          }
+
+          // Clean up old profiles for this beach first to avoid constraint conflicts or orphans
+          await prisma.beachConditionProfile.deleteMany({
+            where: { beachId: beach.id }
+          });
+
+          // Map profiles to their creation array structure
+          const profilesToCreate = Object.entries(conditionProfilesData).map(([cat, profile]: [string, any]) => {
+            return {
+              category: cat.toUpperCase() as any, // e.g. GENERAL, FOILING, KITESURFING
+              optimalWindDirections: profile.optimalWindDirections || [],
+              optimalSwellDirections: profile.optimalSwellDirections || {},
+              optimalTide: mapOptimalTide(profile.optimalTide as string),
+              swellSize: profile.swellSize || {},
+              idealSwellPeriod: profile.idealSwellPeriod || {},
+            };
+          });
 
           await prisma.beach.upsert({
             where: { id: beach.id },
@@ -815,15 +839,7 @@ async function main() {
               isFoiling: beach.isFoiling || false,
               isLongboarding: beach.isLongboarding || false,
               conditionProfiles: {
-                deleteMany: { category: 'GENERAL' },
-                create: {
-                  category: 'GENERAL',
-                  optimalWindDirections: optimalWindDirections,
-                  optimalSwellDirections: optimalSwellDirections,
-                  optimalTide: mapOptimalTide(optimalTide as string),
-                  swellSize: swellSize,
-                  idealSwellPeriod: idealSwellPeriod,
-                }
+                create: profilesToCreate
               }
             },
             create: {
@@ -851,14 +867,7 @@ async function main() {
               isFoiling: beach.isFoiling || false,
               isLongboarding: beach.isLongboarding || false,
               conditionProfiles: {
-                create: {
-                  category: 'GENERAL',
-                  optimalWindDirections: optimalWindDirections,
-                  optimalSwellDirections: optimalSwellDirections,
-                  optimalTide: mapOptimalTide(optimalTide as string),
-                  swellSize: swellSize,
-                  idealSwellPeriod: idealSwellPeriod,
-                }
+                create: profilesToCreate
               }
             },
           });

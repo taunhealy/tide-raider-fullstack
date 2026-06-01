@@ -3207,6 +3207,55 @@
           "min": 12,
           "max": 18
         }
+      },
+      "FOILING": {
+        "optimalWindDirections": [
+          "SE",
+          "ESE",
+          "SSE",
+          "NW",
+          "WNW",
+          "W",
+          "NE",
+          "E"
+        ],
+        "optimalSwellDirections": {
+          "min": 195,
+          "max": 235,
+          "cardinal": "SSW-SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.2,
+          "max": 6.0
+        },
+        "idealSwellPeriod": {
+          "min": 10,
+          "max": 24
+        }
+      },
+      "KITESURFING": {
+        "optimalWindDirections": [
+          "SE",
+          "ESE",
+          "SSE",
+          "NW",
+          "WNW"
+        ],
+        "optimalSwellDirections": {
+          "min": 195,
+          "max": 235,
+          "cardinal": "SSW-SW"
+        },
+        "optimalTide": "ALL",
+        "swellSize": {
+          "min": 1.2,
+          "max": 5.0
+        },
+        "idealSwellPeriod": {
+          "min": 8,
+          "max": 20
+        }
       }
     }
   },
