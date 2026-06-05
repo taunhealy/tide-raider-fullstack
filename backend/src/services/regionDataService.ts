@@ -251,6 +251,22 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
       totalSourcesAttempted: results.sourcesScraped + results.sourcesFailed,
     });
 
+    if (results.regionsSucceeded > 0) {
+      console.log("🧹 [Cache] Scraping succeeded, clearing Redis cache...");
+      try {
+        const { redis } = require("../lib/redis");
+        if (redis && typeof redis.flushdb === "function") {
+          await redis.flushdb();
+          console.log("✅ [Cache] Redis cache flushed successfully.");
+        } else if (redis && typeof redis.del === "function") {
+          // If no-op or custom mock wrapper, log it
+          console.log("ℹ️ [Cache] Redis no-op or custom wrapper detected, skipping database flush.");
+        }
+      } catch (cacheError) {
+        console.error("❌ [Cache] Failed to clear Redis cache:", cacheError);
+      }
+    }
+
     return results;
   } catch (error) {
     console.error("Error in fetchAllRegionsData:", error);

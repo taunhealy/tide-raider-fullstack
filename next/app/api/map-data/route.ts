@@ -78,13 +78,18 @@ export async function GET(request: Request) {
           beachDailyScores: {
             where: {
               date: lite ? targetDate : { gte: today, lt: sevenDaysLater },
-              ...(effectiveSource ? { source: effectiveSource as any } : {}),
+              ...(effectiveSource ? (
+                effectiveSource === "WINDFINDER"
+                  ? { source: { in: ["WINDFINDER", "WINDFINDER_SUPER"] as any } }
+                  : { source: effectiveSource as any }
+              ) : {}),
               ...(timeSlot ? { timeSlot: timeSlot as any } : {}),
               category: "GENERAL"
             },
             select: {
               date: true,
               starRating: true,
+              source: true,
               ...(!lite ? { conditions: true } : {})
             },
             orderBy: {
@@ -168,12 +173,25 @@ export async function GET(request: Request) {
         const reportDates = new Set((beach.intelligenceReports || []).map((r: any) => r.date.toISOString().split('T')[0]));
 
         const dailyScores = Object.entries(scoresByDate).reduce((acc: any, [dateStr, scores]) => {
-          const avgRating = scores.reduce((sum, s) => sum + s.starRating, 0) / scores.length;
+          // If we have multiple sources for the same day (e.g. WINDFINDER and WINDFINDER_SUPER),
+          // prioritize WINDFINDER_SUPER.
+          let selectedScores = scores;
+          if (scores.length > 1) {
+            const superScores = scores.filter(s => s.source === "WINDFINDER_SUPER");
+            if (superScores.length > 0) {
+              selectedScores = superScores;
+            } else {
+              const firstSource = scores[0].source;
+              selectedScores = scores.filter(s => s.source === firstSource);
+            }
+          }
+
+          const avgRating = selectedScores.reduce((sum, s) => sum + s.starRating, 0) / selectedScores.length;
           
           acc[dateStr] = {
             date: dateStr,
             rating: avgRating,
-            conditions: scores[0]?.conditions || null,
+            conditions: selectedScores[0]?.conditions || null,
             hasAIReport: reportDates.has(dateStr)
           };
           return acc;

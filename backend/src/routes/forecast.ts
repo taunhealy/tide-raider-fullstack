@@ -331,6 +331,17 @@ router.get(
                   // Don't fail the request if score calculation fails
                 }
 
+                // Clear Redis cache so frontend displays updated forecast instantly
+                try {
+                  const { redis } = require("../lib/redis");
+                  if (redis && typeof redis.flushdb === "function") {
+                    await redis.flushdb();
+                    console.log("[forecast] 🧹 Cleared Redis cache after successful on-demand scrape.");
+                  }
+                } catch (cacheError) {
+                  console.error("[forecast] ❌ Failed to clear Redis cache:", cacheError);
+                }
+
                 return res.json(forecast);
               } else {
                 console.warn(

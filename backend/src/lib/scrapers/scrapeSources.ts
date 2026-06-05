@@ -33,7 +33,7 @@ export const REGION_CONFIGS: Record<string, RegionSourceConfig> = {
       scraper: scraperB,
     },
     sourceC: {
-      url: "https://www.windy.com/-34.359/18.497/ecmwfWaves/waves?waves,-34.506,18.520,10",
+      url: "https://www.windy.com/-34.250/18.650/ecmwfWaves/waves?waves,-34.250,18.650,10",
       scraper: scraperC,
     },
   },
