@@ -1,5 +1,7 @@
 "use client";
 
+import PageContainer from "@/app/components/ui/PageContainer";
+
 import { useQuery } from "@tanstack/react-query";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
 import { format } from "date-fns";
@@ -55,13 +57,7 @@ interface IntelligenceReport {
   };
 }
 
-const sourceColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  WINDY:             { bg: "bg-indigo-50",    text: "text-indigo-600",   border: "border-indigo-100",   label: "Windy" },
-  WINDGURU:          { bg: "bg-cyan-50",      text: "text-cyan-600",     border: "border-cyan-100",     label: "Guru" },
-  WINDFINDER_SUPER:  { bg: "bg-fuchsia-50",   text: "text-fuchsia-600",  border: "border-fuchsia-100",  label: "Super" },
-  WINDFINDER:        { bg: "bg-sky-50",       text: "text-sky-600",      border: "border-sky-100",      label: "Finder" },
-  TIDE_RAIDER:       { bg: "bg-zinc-950",     text: "text-zinc-100",     border: "border-zinc-800",     label: "Raider" }
-};
+import { SOURCE_COLORS as sourceColors } from "@/app/constants/colors";
 
 function AIReportsContent() {
   const { data: session, status } = useBackendAuth();
@@ -133,15 +129,15 @@ function AIReportsContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+    <PageContainer>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Signal History • Verified</span>
+            <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Surf Reports</span>
           </div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
             Strategic Intelligence
@@ -154,7 +150,9 @@ function AIReportsContent() {
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <Button 
             onClick={() => setIsReportOpen(true)}
-            className="w-full sm:w-auto h-14 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 px-6 shrink-0"
+            variant="action"
+            size="xl"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 shrink-0 shadow-sm"
           >
             <Sparkles className="w-4 h-4 text-white animate-pulse" />
             Generate Report
@@ -167,7 +165,7 @@ function AIReportsContent() {
               placeholder="FILTER BY BEACH OR PERSONA..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
+              className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
             />
           </div>
         </div>
@@ -198,11 +196,11 @@ function AIReportsContent() {
                     >
                       <div className="flex items-center gap-4 group/asset">
                         {/* Premium AI Purple Hover Circle for Map Pin */}
-                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover/asset:bg-gradient-to-br group-hover/asset:from-violet-500 group-hover/asset:to-indigo-600 group-hover/asset:text-white transition-all shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-black opacity-40 group-hover/asset:bg-gradient-to-br group-hover/asset:from-blue-600 group-hover/asset:to-blue-400 group-hover/asset:text-white transition-all shadow-sm">
                           <MapPin className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-bold text-[14px] text-black group-hover/asset:text-black transition-colors">{report.beach.name}</p>
+                          <p className="font-bold text-[14px] text-black group-hover/asset:text-blue-600 transition-colors">{report.beach.name}</p>
                           {(() => {
                             const user = report.user || {
                               name: "Ryko",
@@ -229,10 +227,10 @@ function AIReportsContent() {
                                       href={user.link.startsWith('http') ? user.link : `https://${user.link}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="hover:text-indigo-500 transition-colors p-0.5"
+                                      className="hover:text-blue-500 transition-colors p-0.5"
                                       title="Website"
                                     >
-                                      <Link2 className="w-3 h-3 text-slate-400 hover:text-indigo-500" />
+                                      <Link2 className="w-3 h-3 text-slate-400 hover:text-blue-500" />
                                     </a>
                                   )}
                                 </div>
@@ -282,7 +280,7 @@ function AIReportsContent() {
                       <Button 
                         onClick={() => handleLoadReport(report.beach as any, report.id)} 
                         variant="ghost" 
-                        className="h-10 px-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2"
+                        className="h-10 px-4 rounded-xl border border-transparent hover:border-blue-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2 text-blue-600 hover:text-blue-700"
                       >
                         VIEW INTEL <ExternalLink className="w-3 h-3" />
                       </Button>
@@ -362,7 +360,7 @@ function AIReportsContent() {
                       handleLoadReport(report.beach as any, report.id);
                     }} 
                     variant="ghost" 
-                    className="h-8 px-3 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white text-[9px] font-black uppercase tracking-widest gap-1 text-indigo-600"
+                    className="h-8 px-3 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white text-[9px] font-black uppercase tracking-widest gap-1 text-blue-600"
                   >
                     View <ExternalLink className="w-2.5 h-2.5" />
                   </Button>
@@ -419,7 +417,7 @@ function AIReportsContent() {
           date={new Date().toISOString()}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }
 

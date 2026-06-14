@@ -3,6 +3,7 @@ import { client } from "@/app/lib/sanity";
 import BlogGrid from "../sections/BlogGrid";
 import { BookOpen } from "lucide-react";
 import { groq } from "next-sanity";
+import PageContainer from "@/app/components/ui/PageContainer";
 
 export const revalidate = 0;
 
@@ -57,7 +58,7 @@ export default async function BlogPage() {
 
   if (!content) {
     return (
-      <div className="animate-pulse max-w-7xl mx-auto px-4">
+      <PageContainer className="animate-pulse">
         {/* Title Skeleton */}
         <div className="h-8 bg-gray-200 rounded-full w-48 mb-8 mx-auto"></div>
 
@@ -75,7 +76,7 @@ export default async function BlogPage() {
             </div>
           ))}
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -111,14 +112,14 @@ export default async function BlogPage() {
 
   return (
     <main className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
+      <PageContainer>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Community & News</span>
+              <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">Community & News</span>
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Blog
@@ -130,7 +131,7 @@ export default async function BlogPage() {
         </div>
 
         <BlogGrid data={content.blog} />
-      </div>
+      </PageContainer>
     </main>
   );
 }

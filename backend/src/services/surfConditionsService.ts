@@ -324,6 +324,13 @@ export async function getLatestConditions(
     // Correctly handle daysLimit and startDayOffset by filtering unique dates
     let forecastsToStore = scrapedForecasts;
 
+    // Filter out dates before lookupDate so they don't consume the daysLimit window
+    forecastsToStore = forecastsToStore.filter(f => {
+      const fDate = new Date(f.date);
+      fDate.setUTCHours(0, 0, 0, 0);
+      return fDate.getTime() >= lookupDate.getTime();
+    });
+
     // Filter out dates before startDayOffset if provided
     if (startDayOffset > 0) {
       const today = getTodayDate();

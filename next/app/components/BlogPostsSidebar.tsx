@@ -194,7 +194,7 @@ export default function BlogPostsSidebar({
                 ? "/blog"
                 : "/blog?category=travel"
             }
-            className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
+            className="text-[12px] text-brand-gray hover:text-slate-800 transition-colors font-primary ml-2 whitespace-nowrap"
           >
             View All
           </Link>
@@ -233,7 +233,7 @@ export default function BlogPostsSidebar({
             </h3>
             <Link
               href="/blog?category=travel"
-              className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
+              className="text-[12px] text-brand-gray hover:text-slate-800 transition-colors font-primary ml-2 whitespace-nowrap"
             >
               View All
             </Link>
@@ -318,7 +318,7 @@ export default function BlogPostsSidebar({
           </h3>
           <Link
             href="/blog"
-            className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
+            className="text-[12px] text-brand-gray hover:text-slate-800 transition-colors font-primary ml-2 whitespace-nowrap"
           >
             View All
           </Link>
@@ -344,7 +344,7 @@ export default function BlogPostsSidebar({
               ? "/blog"
               : "/blog?category=travel"
           }
-          className="text-[12px] hover:text-[var(--color-text-secondary)] hover:underline transition-colors font-primary ml-2 whitespace-nowrap"
+          className="text-[12px] text-brand-gray hover:text-slate-800 transition-colors font-primary ml-2 whitespace-nowrap"
         >
           View All
         </Link>

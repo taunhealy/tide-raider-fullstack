@@ -171,14 +171,26 @@ export default function GlobalMapPage() {
     if (savedWind !== null) setShowWindHeatmap(savedWind === "true");
     if (savedSwell !== null) setShowSwellHeatmap(savedSwell === "true");
 
-    // Initialize Hidden Gems visibility from URL, localStorage, or default to true
-    const hasUrlParam = new URLSearchParams(window.location.search).has("isHiddenGem");
+    // Initialize Hidden Gems and Public Breaks visibility from URL, localStorage, or default to true
+    const params = new URLSearchParams(window.location.search);
+    const hasUrlHiddenGem = params.has("isHiddenGem");
+    const hasUrlRegular = params.has("isRegular");
     const savedHiddenGem = localStorage.getItem("isHiddenGem");
-    if (!hasUrlParam) {
+    const savedRegular = localStorage.getItem("isRegular");
+
+    if (!hasUrlHiddenGem) {
       if (savedHiddenGem !== null) {
         updateFilter("isHiddenGem", savedHiddenGem === "true" ? "true" : "false");
       } else {
         updateFilter("isHiddenGem", "true");
+      }
+    }
+
+    if (!hasUrlRegular) {
+      if (savedRegular !== null) {
+        updateFilter("isRegular", savedRegular === "true" ? "true" : "false");
+      } else {
+        updateFilter("isRegular", "true");
       }
     }
   }, []);
@@ -188,6 +200,12 @@ export default function GlobalMapPage() {
       localStorage.setItem("isHiddenGem", String(filters.isHiddenGem));
     }
   }, [filters.isHiddenGem, mounted]);
+
+  useEffect(() => {
+    if (mounted && filters.isRegular !== undefined) {
+      localStorage.setItem("isRegular", String(filters.isRegular));
+    }
+  }, [filters.isRegular, mounted]);
 
   useEffect(() => {
     if (mounted && !filters.regionId) {
@@ -587,7 +605,7 @@ export default function GlobalMapPage() {
                       updateFilter("isRegular", "true");
                       updateFilter("isHiddenGem", "false");
                     }}
-                    className="text-[9px] font-black text-gray-400 uppercase tracking-tighter hover:text-gray-900 transition-all underline decoration-gray-200 underline-offset-4"
+                    className="text-[9px] font-semibold text-gray-400 uppercase tracking-tighter hover:text-gray-900 transition-all underline decoration-gray-200 underline-offset-4"
                   >
                     Clear All
                   </button>
@@ -600,9 +618,9 @@ export default function GlobalMapPage() {
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Time Slot</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: TimeSlot.MORNING, name: "Morning", time: "06:00", icon: "🌅" },
-                  { id: TimeSlot.NOON, name: "Midday", time: "12:00", icon: "☀️" },
-                  { id: TimeSlot.EVENING, name: "Evening", time: "18:00", icon: "🌇" },
+                  { id: TimeSlot.MORNING, name: "Morning", time: "06:00" },
+                  { id: TimeSlot.NOON, name: "Midday", time: "12:00" },
+                  { id: TimeSlot.EVENING, name: "Evening", time: "18:00" },
                 ].map((slot) => {
                   const isSelected = ((filters.timeSlot as TimeSlot) || TimeSlot.MORNING) === slot.id;
                   return (
@@ -616,7 +634,6 @@ export default function GlobalMapPage() {
                           : "bg-white border-gray-100 hover:border-gray-200 text-gray-500 hover:text-gray-900"
                       )}
                     >
-                      <span className="text-base mb-1">{slot.icon}</span>
                       <span className="text-[10px] font-black uppercase tracking-wider">{slot.name}</span>
                       <span className="text-[8px] font-bold opacity-60 mt-0.5">{slot.time}</span>
                     </button>
@@ -898,7 +915,7 @@ export default function GlobalMapPage() {
           {viewMode === "map" ? (
             <div className="relative w-full h-full">
               {/* Floating Widgets - Hidden on mobile, moved to bottom drawer or separate toggle */}
-              <div className="absolute top-20 md:top-24 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
+              <div className="absolute top-28 md:top-32 left-4 md:left-6 z-30 flex flex-col gap-4 pointer-events-none md:pointer-events-auto opacity-0 md:opacity-100 invisible md:visible">
                 <WeatherForecastWidget />
               </div>
 
@@ -1121,9 +1138,9 @@ export default function GlobalMapPage() {
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 block">Time Slot</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
-                        { id: TimeSlot.MORNING, name: "Morning", time: "06:00", icon: "🌅" },
-                        { id: TimeSlot.NOON, name: "Midday", time: "12:00", icon: "☀️" },
-                        { id: TimeSlot.EVENING, name: "Evening", time: "18:00", icon: "🌇" },
+                        { id: TimeSlot.MORNING, name: "Morning", time: "06:00" },
+                        { id: TimeSlot.NOON, name: "Midday", time: "12:00" },
+                        { id: TimeSlot.EVENING, name: "Evening", time: "18:00" },
                       ].map((slot) => {
                         const isSelected = ((filters.timeSlot as TimeSlot) || TimeSlot.MORNING) === slot.id;
                         return (
@@ -1137,7 +1154,6 @@ export default function GlobalMapPage() {
                                 : "bg-white border-gray-100 hover:border-gray-200 text-gray-500 hover:text-gray-900"
                             )}
                           >
-                            <span className="text-base mb-1">{slot.icon}</span>
                             <span className="text-[10px] font-black uppercase tracking-wider">{slot.name}</span>
                             <span className="text-[8px] font-bold opacity-60 mt-0.5">{slot.time}</span>
                           </button>

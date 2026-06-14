@@ -104,7 +104,7 @@ const ProximityFilterRow = ({
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider truncate">
-              Location: <span className="text-black font-black">{isGeocoding ? "Locating..." : locationName || "Acquired"}</span>
+              Location: <span className="text-brand-gray font-black">{isGeocoding ? "Locating..." : locationName || "Acquired"}</span>
             </span>
           </div>
           <button
@@ -308,18 +308,18 @@ export default function BeachHeaderControls({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"></div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col items-start gap-5">
+            <div className="flex flex-col items-start gap-4 w-full">
                 {!isMounted ? (
                   <div className="flex flex-col gap-3 w-full">
                     <div className="flex items-center gap-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-label-heading px-1">Dates</label>
                     </div>
                     <div className="h-14 w-full bg-gray-100/50 animate-pulse rounded-2xl" />
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 w-full animate-in fade-in duration-300">
-                    <div className="flex items-center gap-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Dates</label>
+                    <div className="flex items-center justify-between w-full">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-label-heading px-1">Dates</label>
                       <button
                         type="button"
                         onClick={() => setIsFilterOpen(true)}
@@ -344,7 +344,7 @@ export default function BeachHeaderControls({
                
                 <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-5">
                    <div className="flex flex-col gap-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Time</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-label-heading px-1">Time</label>
                     <TimeSlotSelector 
                       selectedSlot={currentTimeSlotValue}
                       onChange={(slot) => updateFilter("timeSlot", slot)}
@@ -352,10 +352,10 @@ export default function BeachHeaderControls({
                       isLoading={isLoading}
                     />
                   </div>
-
+ 
                   {isMounted && selectedSource === "WINDFINDER" && (
                     <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-left-2 duration-500">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] px-1 text-gray-400/80">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-label-heading px-1">
                         Tide
                       </label>
                       <TideSlot tide={forecast?.tide} isLoading={isLoading} />
@@ -363,9 +363,9 @@ export default function BeachHeaderControls({
                   )}
                 </div>
             </div>
-
+ 
             <div className="h-px bg-black/5 w-full" />
-
+ 
             <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3">
               <div className="flex flex-col w-full sm:w-auto flex-1 gap-3 min-w-0">
                 {/* Search Bar */}
@@ -376,7 +376,7 @@ export default function BeachHeaderControls({
                 <div className="flex flex-col gap-4 w-full">
                   {/* Recent Regions Row */}
                   <div className="w-full space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1">Location History</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-label-heading px-1">Location History</label>
                     <RecentRegionSearch regionCounts={regionCountsData} />
                   </div>
                   

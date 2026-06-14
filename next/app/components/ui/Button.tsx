@@ -22,7 +22,7 @@ const buttonVariants = cva(
         dark: "bg-gray-700 dark:bg-gray-600 text-white hover:bg-gray-600 dark:hover:bg-gray-500",
         grey: "bg-gray-600 text-white hover:bg-gray-700 border border-gray-600",
         action:
-          "bg-black hover:bg-gray-800 text-white rounded-xl font-bold uppercase tracking-widest text-[12px] shadow-sm transition-all active:scale-[0.98] border-none",
+          "bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-sm transition-all active:scale-[0.98] border-none",
         tertiary: "bg-[var(--color-tertiary)] text-black hover:bg-[var(--color-tertiary)]/90 font-black",
       },
       size: {

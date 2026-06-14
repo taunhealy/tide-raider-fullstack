@@ -68,7 +68,7 @@ export default function RecentRaidLogs() {
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest font-primary">LATEST LOGS</h3>
         <Link
           href="/raidlogs"
-          className="text-[12px] text-brand-3 hover:underline transition-colors"
+          className="text-[12px] text-slate-500 hover:text-slate-800 transition-colors"
         >
           View All
         </Link>

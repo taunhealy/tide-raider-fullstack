@@ -105,8 +105,6 @@ export default function LocationFilter({ regions }: LocationFilterProps) {
             <div key={group.id} className="space-y-2">
               <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 flex flex-wrap items-center gap-1">
                 <span className="text-[var(--color-primary)] opacity-80">{group.name}</span>
-                <span className="opacity-40">,</span>
-                <span className="opacity-50">{group.continent}</span>
               </h3>
               <div className="flex flex-col gap-1 ml-1 border-l border-gray-100 pl-3">
                 {group.regions.map((region) => {

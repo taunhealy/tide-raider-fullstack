@@ -18,6 +18,7 @@ import { useRaidLogs } from "@/app/hooks/useRaidLogs";
 import { RandomLoader } from "../ui/random-loader";
 import { useSubscriptionStatus } from "@/app/hooks/useSubscriptionStatus";
 import { Lock, ShieldAlert } from "lucide-react";
+import { Button } from "../ui/Button";
 
 // Define the RaidLogsResponse interface
 interface RaidLogsResponse {
@@ -163,31 +164,32 @@ export function RaidLogsComponent({
 
         {/* Lockout Gate for Unauthenticated Users */}
         {!isCurrentlyLoading && (!session?.user || authStatus === "unauthenticated") && (
-          <div className="max-w-md mx-auto my-12 text-center bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 p-8 shadow-xl">
-             <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Lock className="w-6 h-6 text-white" />
+          <div className="max-w-xl mx-auto my-12 text-center bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-10 shadow-sm">
+             <div className="w-14 h-14 bg-gradient-to-br from-blue-700 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20 text-white">
+                <Lock className="w-6 h-6 animate-pulse" />
              </div>
-             <h2 className="text-xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Lockout</h2>
-             <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
+             <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Lockout</h2>
+             <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8 max-w-sm mx-auto">
                You must be authenticated to view strategic intelligence history and community surf logs.
              </p>
-             <button
-               onClick={() => handleSignIn(window.location.pathname)}
-               className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95"
-             >
-               Sign In to Authorize
-             </button>
+              <Button
+                onClick={() => handleSignIn(window.location.pathname)}
+                variant="action"
+                className="w-full md:w-auto px-8 h-12"
+              >
+                Sign In to Authorize
+              </Button>
           </div>
         )}
 
         {/* Lockout Gate for Authenticated but Insufficient Points */}
         {!isCurrentlyLoading && session?.user && authStatus === "authenticated" && (credits ?? 0) < 30 && (
-          <div className="max-w-2xl mx-auto my-8 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-8 md:p-12 shadow-xl">
+          <div className="max-w-2xl mx-auto my-8 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-8 md:p-12 shadow-sm">
              <div className="flex flex-col items-center text-center mb-8">
-               <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                  <ShieldAlert className="w-6 h-6" />
+               <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/20 text-white">
+                  <ShieldAlert className="w-6 h-6 animate-pulse" />
                </div>
-               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Lockout: Insufficient Points</h2>
+               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Lockout: Insufficient Points</h2>
                <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed">
                  Accessing the surf logs archives requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-100">{credits ?? 0} points</span>.
                </p>

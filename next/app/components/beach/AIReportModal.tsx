@@ -505,12 +505,12 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
         {/* Main Dashboard Body */}
         {!isCreditsLoading && isGated ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center bg-white min-h-[350px] overflow-y-auto">
-            <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <div className="w-16 h-16 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
               <Lock className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Lockout</h2>
             <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed mb-8">
-              Accessing strategic AI briefings and timed forecasts requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">{credits ?? 0} points</span>.
+              Accessing strategic AI briefings and timed forecasts requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-100">{credits ?? 0} points</span>.
             </p>
             {!session?.user ? (
               <Button
@@ -522,7 +522,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             ) : (
               <Button
                 onClick={() => router.push("/pricing")}
-                className="w-full max-w-sm h-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95 animate-pulse"
+                className="w-full max-w-sm h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95 animate-pulse"
               >
                 Upgrade or Buy Credits
               </Button>
@@ -568,10 +568,10 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               {/* Intel Specs */}
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-indigo-600" />
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-blue-600" />
                   </div>
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-900/60">Generation Specs</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-900/60">Generation Specs</h3>
                 </div>
 
                 <div className="space-y-4">
@@ -589,7 +589,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                           className={cn(
                             "flex-1 py-3 px-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all flex flex-col items-center gap-1.5",
                             selectedSport === opt.value
-                              ? "bg-black border-black text-white shadow-lg scale-[1.02]"
+                              ? "bg-blue-600 border-blue-600 text-white shadow-lg scale-[1.02]"
                               : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
                           )}
                         >
@@ -617,7 +617,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                             "py-2 px-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
                             src.fullWidth ? "col-span-2 py-2.5" : "",
                             selectedSource === src.value
-                              ? "bg-black border-black text-white shadow-md scale-[1.01]"
+                              ? "bg-blue-600 border-blue-600 text-white shadow-md scale-[1.01]"
                               : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
                           )}
                         >
@@ -641,7 +641,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                           className={cn(
                             "py-2 px-1 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all",
                             selectedPersona === tone.value
-                              ? "bg-black border-black text-white shadow-md scale-[1.01]"
+                              ? "bg-blue-600 border-blue-600 text-white shadow-md scale-[1.01]"
                               : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
                           )}
                         >
@@ -667,7 +667,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                 className={cn(
                                   "flex-1 py-3 px-2 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all relative",
                                   selectedDays === opt.value
-                                    ? "bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-100 scale-[1.05] z-10"
+                                    ? "bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-100 scale-[1.05] z-10"
                                     : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
                                 )}
                               >
@@ -696,7 +696,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <Button
                   onClick={handleGenerate}
                   disabled={isGenerating || isCreditsLoading || (credits < creditCost)}
-                  className="w-full h-14 bg-black hover:bg-gray-800 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[12px] shadow-xl shadow-gray-200 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
+                  className="w-full h-14 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[12px] shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
                 >
                   {isGenerating ? (
                     <>
@@ -773,7 +773,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                         className={cn(
                           "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0",
                           selectedSource === src.id
-                            ? "bg-black text-white shadow-sm scale-[1.02]"
+                            ? "bg-blue-600 text-white shadow-sm scale-[1.02]"
                             : "text-gray-400 hover:text-black"
                         )}
                       >
@@ -787,11 +787,11 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               {isLoadingArchive ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
                   <div className="relative">
-                    <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-                    <Sparkles className="w-6 h-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                    <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+                    <Sparkles className="w-6 h-6 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                   </div>
                   <div className="text-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-indigo-900/40">Accessing Signal Archives</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-900/40">Accessing Signal Archives</p>
                     <p className="text-[13px] font-medium text-gray-400 mt-1 italic">Decrypted tactical data incoming...</p>
                   </div>
                 </div>
@@ -808,7 +808,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                   <Button
                     onClick={handleGenerate}
                     disabled={isGenerating || isCreditsLoading || (credits < creditCost)}
-                    className="mb-8 px-6 h-12 bg-black hover:bg-gray-800 text-white rounded-xl text-[11px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-gray-200 transition-all active:scale-[0.98] disabled:opacity-30"
+                    className="mb-8 px-6 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-30"
                   >
                     {isGenerating ? (
                       <>
@@ -835,8 +835,8 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                   <div className="px-8 py-4 bg-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-10 shadow-sm">
                     <div className="flex items-center gap-6">
                       <div className="flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-indigo-600 fill-current" />
-                        <span className="text-[11px] font-black uppercase tracking-widest text-indigo-900">Briefing Active</span>
+                        <Zap className="w-3.5 h-3.5 text-blue-600 fill-current" />
+                        <span className="text-[11px] font-black uppercase tracking-widest text-blue-900">Briefing Active</span>
                       </div>
                       {existingReportDate && (
                         <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-100">
@@ -897,7 +897,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                         variant="outline"
                         className="h-10 px-4 rounded-xl border-gray-200 text-[10px] font-black uppercase tracking-widest gap-2 bg-white shadow-sm hover:border-black transition-colors"
                       >
-                        {isCopied ? <Check className="w-3.5 h-3.5 text-brand-3" /> : <Copy className="w-3.5 h-3.5" />}
+                        {isCopied ? <Check className="w-3.5 h-3.5 text-blue-500" /> : <Copy className="w-3.5 h-3.5" />}
                         {isCopied ? "Secured" : "Copy Signal"}
                       </Button>
                     </div>
@@ -932,7 +932,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
                       {/* The Report Content */}
                       <div className="relative group/report">
-                        <div className="text-[16px] leading-[1.7] font-medium text-black/80 whitespace-pre-wrap bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/50 selection:bg-indigo-100 selection:text-indigo-900">
+                        <div className="text-[16px] leading-[1.7] font-medium text-black/80 whitespace-pre-wrap bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/50 selection:bg-blue-100 selection:text-blue-900">
                           {/* Report Metadata Headings */}
                           <div className="mb-8 pb-8 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="space-y-1">
@@ -961,7 +961,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                 {pioneer?.id ? (
                                   <Link
                                     href={`/profile/${pioneer.id}`}
-                                    className="hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+                                    className="hover:text-blue-600 transition-colors flex items-center gap-1.5"
                                   >
                                     {pioneer.name}
                                     <ArrowUpRight className="w-3 h-3 opacity-30" />
@@ -993,14 +993,14 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                     <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
                                       <Users className="w-3 h-3 text-white" />
                                     </div>
-                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 underline decoration-indigo-500/30 underline-offset-4">AI Report provided by</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30 underline decoration-blue-500/30 underline-offset-4">AI Report provided by</span>
                                   </div>
                                   <div className="space-y-2">
                                     <h4 className="text-[20px] font-black text-black tracking-tighter">
                                       {activePioneer.id ? (
                                         <Link
                                           href={`/profile/${activePioneer.id}`}
-                                          className="hover:text-indigo-600 transition-colors"
+                                          className="hover:text-blue-600 transition-colors"
                                         >
                                           {activePioneer.name}
                                         </Link>
@@ -1011,7 +1011,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                         <Link
                                           href={`https://instagram.com/${activePioneer.instagram.replace('@', '')}`}
                                           target="_blank"
-                                          className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
+                                          className="text-[11px] font-bold text-black/60 hover:text-blue-600 flex items-center gap-2 transition-colors group"
                                         >
                                           <Instagram className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                                           {activePioneer.instagram.startsWith('@') ? activePioneer.instagram : `@${activePioneer.instagram}`}
@@ -1021,7 +1021,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                         <Link
                                           href={activePioneer.link.startsWith('http') ? activePioneer.link : `https://${activePioneer.link}`}
                                           target="_blank"
-                                          className="text-[11px] font-bold text-black/60 hover:text-indigo-600 flex items-center gap-2 transition-colors group"
+                                          className="text-[11px] font-bold text-black/60 hover:text-blue-600 flex items-center gap-2 transition-colors group"
                                         >
                                           <Link2 className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                                           {activePioneer.link.replace(/^https?:\/\//, '')}
@@ -1069,10 +1069,10 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                          <div className="p-6 rounded-3xl border border-gray-100 bg-white shadow-xl shadow-gray-100/50 space-y-4 hover:border-indigo-100 transition-colors group">
+                          <div className="p-6 rounded-3xl border border-gray-100 bg-white shadow-xl shadow-gray-100/50 space-y-4 hover:border-blue-100 transition-colors group">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                                <Mail className="w-4 h-4 text-gray-400 group-hover:text-indigo-400" />
+                              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                                <Mail className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
                               </div>
                               <span className="text-[10px] font-black text-black opacity-30 uppercase tracking-widest">Email Briefing</span>
                             </div>
@@ -1087,7 +1087,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                                 onClick={shareViaEmail}
                                 disabled={isSharingEmail}
                                 size="icon"
-                                className="h-12 w-12 shrink-0 bg-black hover:bg-indigo-600 rounded-xl shadow-xl shadow-black/10 transition-all text-white"
+                                className="h-12 w-12 shrink-0 bg-black hover:bg-blue-600 rounded-xl shadow-xl shadow-black/10 transition-all text-white"
                               >
                                 {isSharingEmail ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 text-white" />}
                               </Button>

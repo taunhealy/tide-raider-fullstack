@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Mail, Send, MessageSquare, Shield, Zap, Waves } from "lucide-react";
 import { Button } from "../components/ui/Button";
+import PageContainer from "../components/ui/PageContainer";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -34,15 +35,15 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="container mx-auto px-4 max-w-6xl py-10 md:py-16">
+      <PageContainer>
         {/* Header Section - Matching Alerts Page */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Mail className="w-4 h-4 text-white" />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Support Channel</span>
+              <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">Support Channel</span>
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Get in Touch
@@ -59,8 +60,8 @@ export default function ContactPage() {
             {/* Contact Info Cards */}
             <div className="lg:col-span-1 space-y-6">
               <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/80 shadow-sm transition-all hover:shadow-md">
-                <div className="w-10 h-10 bg-brand-3/10 rounded-xl flex items-center justify-center mb-6">
-                  <Mail className="text-brand-3" size={20} />
+                <div className="w-10 h-10 bg-brand-blue-light/10 border border-brand-blue-light/20 rounded-xl flex items-center justify-center mb-6">
+                  <Mail className="text-brand-blue-primary" size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Email Us</h3>
                 <p className="text-gray-500 mb-4 text-sm leading-relaxed">
@@ -68,15 +69,15 @@ export default function ContactPage() {
                 </p>
                 <a 
                   href="mailto:admin@tideraider.com" 
-                  className="text-base font-black text-gray-900 hover:text-brand-3 transition-colors break-all"
+                  className="text-base font-black text-gray-900 hover:text-brand-blue-primary transition-colors break-all"
                 >
                   admin@tideraider.com
                 </a>
               </div>
 
               <div className="bg-white/60 backdrop-blur-md p-8 rounded-3xl border border-white/80 shadow-sm transition-all hover:shadow-md">
-                <div className="w-10 h-10 bg-brand-3/10 rounded-xl flex items-center justify-center mb-6">
-                  <MessageSquare className="text-brand-3" size={20} />
+                <div className="w-10 h-10 bg-brand-blue-light/10 border border-brand-blue-light/20 rounded-xl flex items-center justify-center mb-6">
+                  <MessageSquare className="text-brand-blue-primary" size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Community</h3>
                 <p className="text-gray-500 mb-4 text-sm leading-relaxed">
@@ -162,10 +163,11 @@ export default function ContactPage() {
                   </div>
 
                   <div className="pt-4">
-                    <button 
+                    <Button 
                       type="submit" 
                       disabled={status === "sending"}
-                      className="w-full md:w-auto min-w-[180px] h-12 bg-gray-900 text-white rounded-xl flex items-center justify-center gap-2 group font-bold text-sm transition-all hover:bg-gray-800 active:scale-[0.98] disabled:opacity-70"
+                      variant="action"
+                      className="w-full md:w-auto min-w-[180px] h-12 flex items-center justify-center gap-2 group text-sm"
                     >
                       {status === "sending" ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -177,7 +179,7 @@ export default function ContactPage() {
                           <Send size={16} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                   
                   {status === "success" && (
@@ -195,7 +197,7 @@ export default function ContactPage() {
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-200/60 pt-16">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
-              <Shield className="text-gray-400" size={18} />
+              <Shield className="text-brand-blue-primary" size={18} />
             </div>
             <div>
               <h4 className="font-bold text-gray-900 text-sm mb-1">Secure Communication</h4>
@@ -204,7 +206,7 @@ export default function ContactPage() {
           </div>
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
-              <Waves className="text-gray-400" size={18} />
+              <Waves className="text-brand-blue-primary" size={18} />
             </div>
             <div>
               <h4 className="font-bold text-gray-900 text-sm mb-1">Request A Wave</h4>
@@ -213,7 +215,7 @@ export default function ContactPage() {
           </div>
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-gray-100">
-              <MessageSquare className="text-gray-400" size={18} />
+              <MessageSquare className="text-brand-blue-primary" size={18} />
             </div>
             <div>
               <h4 className="font-bold text-gray-900 text-sm mb-1">Global Coverage</h4>
@@ -221,7 +223,7 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

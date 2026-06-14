@@ -530,7 +530,7 @@ export default function BeachContainer({ initialData }: BeachContainerProps) {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">All Breaks in Region</h3>
+                       <h3 className="text-[10px] font-black text-brand-label-heading uppercase tracking-[0.2em] px-1">All Breaks in Region</h3>
                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{sortedBeaches.length} Breaks</span>
                     </div>
                     

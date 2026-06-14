@@ -32,13 +32,7 @@ interface IntelligenceReport {
   };
 }
 
-const sourceColors: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  WINDY:             { bg: "bg-indigo-50",    text: "text-indigo-600",   border: "border-indigo-100",   label: "Windy" },
-  WINDGURU:          { bg: "bg-cyan-50",      text: "text-cyan-600",     border: "border-cyan-100",     label: "Guru" },
-  WINDFINDER_SUPER:  { bg: "bg-fuchsia-50",   text: "text-fuchsia-600",  border: "border-fuchsia-100",  label: "Super" },
-  WINDFINDER:        { bg: "bg-sky-50",       text: "text-sky-600",      border: "border-sky-100",      label: "Finder" },
-  TIDE_RAIDER:       { bg: "bg-zinc-950",     text: "text-zinc-100",     border: "border-zinc-800",     label: "Raider" }
-};
+import { SOURCE_COLORS as sourceColors } from "@/app/constants/colors";
 
 export default function AIReportsView() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,7 +78,7 @@ export default function AIReportsView() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-3" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         <p className="text-gray-500 font-black text-[10px] uppercase tracking-widest">Scanning Intelligence Archive...</p>
       </div>
     );
@@ -114,7 +108,7 @@ export default function AIReportsView() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           suppressHydrationWarning
-          className="w-full bg-white/80 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-3/20 transition-all font-medium"
+          className="w-full bg-white/80 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
         />
       </div>
 
@@ -133,7 +127,7 @@ export default function AIReportsView() {
                 <td className="px-6 py-5">
                   <div className="flex flex-col">
                     <span className="text-[11px] font-bold text-black flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-brand-3" />
+                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
                       {(() => {
                         try {
                           const start = new Date(report.date);
@@ -177,10 +171,10 @@ export default function AIReportsView() {
                                 href={user.link.startsWith('http') ? user.link : `https://${user.link}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hover:text-indigo-500 transition-colors p-0.5"
+                                className="hover:text-blue-500 transition-colors p-0.5"
                                 title="Website"
                               >
-                                <Link2 className="w-3 h-3 text-slate-400 hover:text-indigo-500" />
+                                <Link2 className="w-3 h-3 text-slate-400 hover:text-blue-500" />
                               </a>
                             )}
                           </div>
@@ -209,15 +203,15 @@ export default function AIReportsView() {
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 group-hover:bg-white group-hover:border-brand-3/30 transition-all">
-                      <MapPin className="w-4 h-4 text-brand-3" />
+                    <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center border border-gray-100 group-hover:bg-white group-hover:border-blue-300 transition-all">
+                      <MapPin className="w-4 h-4 text-blue-500" />
                     </div>
                     <span className="text-sm font-black text-black tracking-tight">{report.beach?.name || "Unknown Asset"}</span>
                     <span className={cn(
                       "text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border",
-                      report.category === "FOILING" ? "bg-amber-50 text-amber-600 border-amber-100" :
-                      report.category === "KITESURFING" ? "bg-blue-50 text-blue-600 border-blue-100" :
-                      "bg-brand-3/10 text-brand-3 border-brand-3/20"
+                      report.category === "FOILING" ? "bg-brand-blue-medium/10 text-brand-blue-medium border-brand-blue-medium/20" :
+                      report.category === "KITESURFING" ? "bg-brand-blue-primary/10 text-brand-blue-primary border-brand-blue-primary/20" :
+                      "bg-brand-blue-dark/10 text-brand-blue-dark border-brand-blue-dark/20"
                     )}>
                       {report.category === "KITESURFING" ? "KITE" : 
                        report.category === "FOILING" ? "FOIL" : "SURF"}
@@ -239,7 +233,7 @@ export default function AIReportsView() {
                   <button 
                     onClick={() => handleLoadSignal(report)}
                     suppressHydrationWarning
-                    className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-3 hover:text-brand-3 focus:outline-none transition-all pr-2"
+                    className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 focus:outline-none transition-all pr-2"
                   >
                     Load Signal
                     <ArrowRight className="w-4 h-4 translate-x-0 group-hover:translate-x-1 transition-transform" />
