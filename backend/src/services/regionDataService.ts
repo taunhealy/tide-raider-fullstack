@@ -215,9 +215,11 @@ export async function fetchAllRegionsData(daysLimit?: number, regionIds?: string
               ensembleDate.setUTCHours(0, 0, 0, 0);
 
               for (const slot of timeSlots) {
-                EnsembleService.updateEnsembleForecast(region.id, ensembleDate, slot).catch(err => {
+                try {
+                  await EnsembleService.updateEnsembleForecast(region.id, ensembleDate, slot);
+                } catch (err) {
                   console.error(`❌ [Ensemble] Error for ${region.id} on ${ensembleDate.toISOString()} (${slot}):`, err);
-                });
+                }
               }
             }
             

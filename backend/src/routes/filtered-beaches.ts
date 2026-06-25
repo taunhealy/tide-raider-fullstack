@@ -454,10 +454,13 @@ router.get(
       }
 
       // Check FRESH Cache first (Served in under 15ms)
-      const cachedFreshResponse = await getCachedApiResponse(`filtered-beaches:fresh:${cacheKey}`);
-      if (cachedFreshResponse) {
-        console.log("[filtered-beaches] 🚀 Serving from FRESH cache!");
-        return res.json(typeof cachedFreshResponse === 'string' ? JSON.parse(cachedFreshResponse) : cachedFreshResponse);
+      const forceRefresh = req.query.forceRefresh === "true";
+      if (!forceRefresh) {
+        const cachedFreshResponse = await getCachedApiResponse(`filtered-beaches:fresh:${cacheKey}`);
+        if (cachedFreshResponse) {
+          console.log("[filtered-beaches] 🚀 Serving from FRESH cache!");
+          return res.json(typeof cachedFreshResponse === 'string' ? JSON.parse(cachedFreshResponse) : cachedFreshResponse);
+        }
       }
 
       // Pre-process filters
@@ -589,9 +592,10 @@ router.get(
       }
 
       // Check STALE Cache (Served immediately while revalidating in background)
-      const cachedStaleResponse = await getCachedApiResponse(`filtered-beaches:stale:${cacheKey}`);
-      if (cachedStaleResponse) {
-        console.log("[filtered-beaches] 🕒 Serving from STALE cache, running background revalidation!");
+      if (!forceRefresh) {
+        const cachedStaleResponse = await getCachedApiResponse(`filtered-beaches:stale:${cacheKey}`);
+        if (cachedStaleResponse) {
+          console.log("[filtered-beaches] 🕒 Serving from STALE cache, running background revalidation!");
         
         // Serve stale response immediately (under 15ms)
         res.json(typeof cachedStaleResponse === 'string' ? JSON.parse(cachedStaleResponse) : cachedStaleResponse);
@@ -617,6 +621,7 @@ router.get(
         });
 
         return;
+      }
       }
 
       // Cold start - fetch data synchronously

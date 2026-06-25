@@ -7,6 +7,71 @@ import { ScoreService } from "../services/scoreService";
 
 const router = Router();
 
+// GET /api/forecast/available?regionId=xxx&forecastDate=xxx&timeSlot=xxx
+router.get(
+  "/available",
+  dataRateLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const regionId = req.query.regionId as string;
+      const forecastDateParam = req.query.forecastDate as string | undefined;
+      const timeSlotParam = (req.query.timeSlot as string) || "MORNING";
+
+      if (!regionId) {
+        return res.status(400).json({ error: "Region ID is required" });
+      }
+
+      // Resolve regionId
+      const regionIdParam = regionId.toLowerCase();
+      const nameFromSlug = regionIdParam
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+
+      const region = await prisma.region.findFirst({
+        where: {
+          OR: [
+            { id: regionIdParam },
+            { name: { equals: regionIdParam, mode: "insensitive" } },
+            { name: { equals: nameFromSlug, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (!region) {
+        return res.status(404).json({ error: "Region not found" });
+      }
+
+      let targetDate = new Date();
+      targetDate.setUTCHours(0, 0, 0, 0);
+      if (forecastDateParam) {
+        const [year, month, day] = forecastDateParam.split("-").map(Number);
+        targetDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+      }
+
+      // Find all distinct sources that have forecasts for this region/date/timeslot
+      const forecasts = await prisma.forecast.findMany({
+        where: {
+          regionId: region.id,
+          date: targetDate,
+          timeSlot: timeSlotParam as any,
+        },
+        select: {
+          source: true,
+        },
+        distinct: ["source"],
+      });
+
+      const availableSources = forecasts.map((f) => f.source);
+      return res.json({ availableSources });
+    } catch (error: any) {
+      console.error("[forecast/available] Error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // GET /api/forecast?regionId=xxx&forceRefresh=true
 // Use dataRateLimiter for this frequently called endpoint
 router.get(

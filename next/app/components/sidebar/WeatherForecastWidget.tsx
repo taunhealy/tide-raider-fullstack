@@ -127,6 +127,30 @@ export default function WeatherForecastWidget() {
   const queryEnabled = mounted && !!regionId && !isMacroRegion && !!normalizedDate;
 
   const {
+    data: availabilityData,
+  } = useQuery({
+    queryKey: ["forecast-availability", regionId, normalizedDate, normalizedTimeSlot],
+    queryFn: async () => {
+      console.log("[WeatherForecastWidget] Fetching forecast availability:", { regionId, normalizedDate, normalizedTimeSlot });
+      try {
+        return await api.getForecastAvailability(regionId!, normalizedDate, normalizedTimeSlot);
+      } catch (err) {
+        console.error("[WeatherForecastWidget] Error fetching availability:", err);
+        return { availableSources: [] };
+      }
+    },
+    enabled: queryEnabled,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  const isSourceAvailable = (source: ForecastSource) => {
+    if (!availabilityData) return true;
+    return availabilityData.availableSources.includes(source);
+  };
+
+  const {
     data: forecastData,
     isLoading,
     error,
@@ -157,22 +181,6 @@ export default function WeatherForecastWidget() {
         );
         return result;
       } catch (err: any) {
-        // Auto-fallback: if WINDFINDER has no data (404/empty), try WINDGURU silently
-        // This mirrors the filtered-beaches backend source fallback logic
-        if (selectedSource === "WINDFINDER") {
-          console.log("[WeatherForecastWidget] ⚠️ WINDFINDER no data — falling back to WINDGURU");
-          try {
-            const fallback = await api.getForecast(
-              regionId!,
-              normalizedDate,
-              "WINDGURU",
-              normalizedTimeSlot
-            );
-            if (fallback) return fallback;
-          } catch {
-            // WINDGURU also unavailable — fall through to show error
-          }
-        }
         console.error(
           "[WeatherForecastWidget] ❌ Error fetching forecast:",
           err
@@ -323,9 +331,12 @@ export default function WeatherForecastWidget() {
           <div className="grid grid-cols-2 gap-1.5 w-full">
             <button
               onClick={() => setSelectedSource("WINDFINDER_SUPER")}
+              disabled={!isSourceAvailable("WINDFINDER_SUPER")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "WINDFINDER_SUPER"
+                !isSourceAvailable("WINDFINDER_SUPER")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "WINDFINDER_SUPER"
                   ? "bg-brand-3 text-white shadow-lg shadow-brand-3/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-brand-3/50"
               }`}
@@ -334,9 +345,12 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDFINDER")}
+              disabled={!isSourceAvailable("WINDFINDER")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "WINDFINDER"
+                !isSourceAvailable("WINDFINDER")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "WINDFINDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-700/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
@@ -345,9 +359,12 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDGURU")}
+              disabled={!isSourceAvailable("WINDGURU")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "WINDGURU"
+                !isSourceAvailable("WINDGURU")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "WINDGURU"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
@@ -356,9 +373,12 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("WINDY")}
+              disabled={!isSourceAvailable("WINDY")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "WINDY"
+                !isSourceAvailable("WINDY")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "WINDY"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
@@ -367,9 +387,12 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("TIDE_RAIDER")}
+              disabled={!isSourceAvailable("TIDE_RAIDER")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "TIDE_RAIDER"
+                !isSourceAvailable("TIDE_RAIDER")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "TIDE_RAIDER"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
@@ -378,9 +401,12 @@ export default function WeatherForecastWidget() {
             </button>
             <button
               onClick={() => setSelectedSource("OPENMETEO_ARCHIVE")}
+              disabled={!isSourceAvailable("OPENMETEO_ARCHIVE")}
               suppressHydrationWarning
               className={`py-2 rounded-md text-[10px] font-primary transition-all duration-200 flex items-center justify-center ${
-                selectedSource === "OPENMETEO_ARCHIVE"
+                !isSourceAvailable("OPENMETEO_ARCHIVE")
+                  ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                  : selectedSource === "OPENMETEO_ARCHIVE"
                   ? "bg-[var(--color-tertiary)] text-white shadow-lg shadow-[var(--color-tertiary)]/30"
                   : "bg-gray-800/80 text-gray-300 border border-gray-700 hover:border-[var(--color-tertiary)]/50"
               }`}
@@ -500,10 +526,13 @@ export default function WeatherForecastWidget() {
             <div className="grid grid-cols-2 gap-1.5 w-full">
               <button
                 onClick={() => setSelectedSource("WINDFINDER_SUPER")}
+                disabled={!isSourceAvailable("WINDFINDER_SUPER")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDFINDER_SUPER"
+                  !isSourceAvailable("WINDFINDER_SUPER")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "WINDFINDER_SUPER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
@@ -512,10 +541,13 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("WINDFINDER")}
+                disabled={!isSourceAvailable("WINDFINDER")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDFINDER"
+                  !isSourceAvailable("WINDFINDER")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "WINDFINDER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
@@ -524,10 +556,13 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("WINDGURU")}
+                disabled={!isSourceAvailable("WINDGURU")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDGURU"
+                  !isSourceAvailable("WINDGURU")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "WINDGURU"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
@@ -536,10 +571,13 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("WINDY")}
+                disabled={!isSourceAvailable("WINDY")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "WINDY"
+                  !isSourceAvailable("WINDY")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "WINDY"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
@@ -548,10 +586,13 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("TIDE_RAIDER")}
+                disabled={!isSourceAvailable("TIDE_RAIDER")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "TIDE_RAIDER"
+                  !isSourceAvailable("TIDE_RAIDER")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "TIDE_RAIDER"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}
@@ -560,10 +601,13 @@ export default function WeatherForecastWidget() {
               </button>
               <button
                 onClick={() => setSelectedSource("OPENMETEO_ARCHIVE")}
+                disabled={!isSourceAvailable("OPENMETEO_ARCHIVE")}
                 suppressHydrationWarning
                 className={cn(
                   "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center",
-                  selectedSource === "OPENMETEO_ARCHIVE"
+                  !isSourceAvailable("OPENMETEO_ARCHIVE")
+                    ? "bg-gray-800/40 text-gray-500 border border-gray-800 cursor-not-allowed opacity-50"
+                    : selectedSource === "OPENMETEO_ARCHIVE"
                     ? "bg-brand-3 text-white shadow-lg shadow-blue-600/20"
                     : "bg-white/5 text-white/40 hover:bg-white/10"
                 )}

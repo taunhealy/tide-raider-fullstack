@@ -191,6 +191,25 @@ export const api = {
     }
   },
 
+  getForecastAvailability: async (
+    regionId: string,
+    forecastDate?: string,
+    timeSlot?: string
+  ) => {
+    const params = new URLSearchParams({ regionId });
+    if (forecastDate) params.append("forecastDate", forecastDate);
+    if (timeSlot) params.append("timeSlot", timeSlot);
+
+    try {
+      return await apiRequest<{ availableSources: string[] }>(`/api/forecast/available?${params.toString()}`);
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return { availableSources: [] };
+      }
+      throw error;
+    }
+  },
+
   // Filtered Beaches
   getFilteredBeaches: async (params?: any) => {
     const queryParams = new URLSearchParams();

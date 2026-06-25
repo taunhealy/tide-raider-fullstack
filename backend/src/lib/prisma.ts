@@ -30,8 +30,10 @@ function getPrisma() {
       if (!url.searchParams.has("connection_limit")) {
         // Cloud Run can run multiple instances — keep per-instance limit low
         // to avoid exhausting Supabase free tier (max 60 connections)
-        // 3 connections × up to 10 instances = 30 max, leaving headroom
-        url.searchParams.set("connection_limit", "3");
+        // 3 connections × up to 10 instances = 30 max, leaving headroom.
+        // Locally or during scripts we use 15 connections to prevent starvation.
+        const limit = process.env.K_SERVICE ? "3" : "15";
+        url.searchParams.set("connection_limit", limit);
         url.searchParams.set("pool_timeout", "30");
         url.searchParams.set("connect_timeout", "30");
       }
