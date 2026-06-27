@@ -120,7 +120,7 @@ export default function AlertsPage() {
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
                 <Bell className="w-4 h-4 text-white" />
               </div>
               <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Alerts</span>
@@ -134,10 +134,10 @@ export default function AlertsPage() {
           </div>
 
           <Button 
-            variant="action"
+            variant="tertiary"
             size="sm"
             onClick={handleCreateNewAlert}
-            className="whitespace-nowrap px-8 h-10 shadow-md active:scale-95 w-full md:w-auto font-black uppercase tracking-widest text-[10px]"
+            className="whitespace-nowrap px-8 h-10 shadow-md active:scale-95 w-full md:w-auto font-black uppercase tracking-widest text-[10px] rounded-xl"
           >
             Create New Alert
           </Button>

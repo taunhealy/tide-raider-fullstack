@@ -134,7 +134,7 @@ function AIReportsContent() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Surf Reports</span>
@@ -280,7 +280,7 @@ function AIReportsContent() {
                       <Button 
                         onClick={() => handleLoadReport(report.beach as any, report.id)} 
                         variant="ghost" 
-                        className="h-10 px-4 rounded-xl border border-transparent hover:border-blue-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2 text-blue-600 hover:text-blue-700"
+                        className="h-10 px-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-white text-[10px] font-bold uppercase tracking-widest gap-2 text-slate-600 hover:text-slate-800"
                       >
                         VIEW INTEL <ExternalLink className="w-3 h-3" />
                       </Button>
@@ -360,7 +360,7 @@ function AIReportsContent() {
                       handleLoadReport(report.beach as any, report.id);
                     }} 
                     variant="ghost" 
-                    className="h-8 px-3 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white text-[9px] font-black uppercase tracking-widest gap-1 text-blue-600"
+                    className="h-8 px-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-white text-[9px] font-black uppercase tracking-widest gap-1 text-slate-600 hover:text-slate-800"
                   >
                     View <ExternalLink className="w-2.5 h-2.5" />
                   </Button>

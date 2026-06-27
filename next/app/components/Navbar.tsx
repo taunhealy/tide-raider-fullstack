@@ -164,69 +164,53 @@ export default function Navbar() {
         )}
       >
         <div className="flex items-center gap-4">
-          {isLoading ? (
-            <div className="h-6 w-28 bg-gray-200 rounded animate-pulse" />
-          ) : (
-            <Link
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/");
-                router.refresh();
-                setIsMenuOpen(false); // Close mobile menu if open
-              }}
-              className="flex items-center transition-all duration-300"
-            >
-              <span className="text-[16px] sm:text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase truncate">
-                TIDE RAIDER
-              </span>
-              <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest hidden sm:inline-block">
-                BETA
-              </span>
-            </Link>
-          )}
-
-
+          <Link
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push("/");
+              router.refresh();
+              setIsMenuOpen(false); // Close mobile menu if open
+            }}
+            className="flex items-center transition-all duration-300"
+          >
+            <span className="text-[16px] sm:text-[20px] leading-[28px] font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase truncate">
+              TIDE RAIDER
+            </span>
+            <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest hidden sm:inline-block">
+              BETA
+            </span>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-5 lg:gap-8">
-          {isLoading ? (
-            <>
-              <nav>
-                <ul className="flex gap-2 items-center">
-                  {NAVIGATION_ITEMS.map((link) => (
-                    <li key={link.href} className="px-2 py-2">
-                      <div className="h-5 w-14 bg-gray-200 rounded animate-pulse" />
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-              <div className="flex gap-4 items-center">
+          <nav>
+            <ul className="flex gap-2 items-center">
+              {NAVIGATION_ITEMS.map((link) => (
+                <li key={link.href} className="px-2 py-2">
+                  <Link
+                    href={link.href}
+                    className={cn(
+                      "link-nav",
+                      pathname === link.href && "link-nav-active"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          
+          <div className="flex gap-4 items-center">
+            {isLoading ? (
+              <>
                 <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
                 <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse" />
-              </div>
-            </>
-          ) : (
-            <>
-              <nav>
-                <ul className="flex gap-2 items-center">
-                  {NAVIGATION_ITEMS.map((link) => (
-                    <li key={link.href} className="px-2 py-2">
-                      <Link
-                        href={link.href}
-                        className={cn(
-                          "link-nav",
-                          pathname === link.href && "link-nav-active"
-                        )}
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-              <div className="flex gap-4 items-center">
+              </>
+            ) : (
+              <>
                 <div className="relative">
                   {session && (
                     <button
@@ -273,9 +257,9 @@ export default function Navbar() {
                   )}
                 </div>
                 <AuthButton />
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -283,8 +267,6 @@ export default function Navbar() {
           {isLoading ? (
             <>
               <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse border-2 border-gray-300" />
-              <div className="h-9 w-20 bg-gray-200 rounded-md animate-pulse" />
-              <div className="w-6 h-6 bg-gray-200 rounded animate-pulse" />
             </>
           ) : (
             <>
@@ -293,14 +275,14 @@ export default function Navbar() {
                   <ProfileImage />
                 </div>
               )}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 hover:bg-gray-50 rounded-md transition-colors"
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
             </>
           )}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-2 hover:bg-gray-50 rounded-md transition-colors"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 

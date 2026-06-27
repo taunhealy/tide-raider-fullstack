@@ -165,7 +165,7 @@ export function RaidLogsComponent({
         {/* Lockout Gate for Unauthenticated Users */}
         {!isCurrentlyLoading && (!session?.user || authStatus === "unauthenticated") && (
           <div className="max-w-xl mx-auto my-12 text-center bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-10 shadow-sm">
-             <div className="w-14 h-14 bg-gradient-to-br from-blue-700 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20 text-white">
+             <div className="w-14 h-14 rounded-2xl brand-icon-wrapper mx-auto mb-6">
                 <Lock className="w-6 h-6 animate-pulse" />
              </div>
              <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Lockout</h2>

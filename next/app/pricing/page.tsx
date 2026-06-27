@@ -271,7 +271,7 @@ export default function PricingPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 md:mb-20">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
                 <Bell className="w-4 h-4 text-white" />
               </div>
               <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">Condition Monitor</span>
@@ -343,7 +343,7 @@ export default function PricingPage() {
             <div className="group relative bg-gradient-to-b from-blue-50/50 to-white/70 backdrop-blur-md rounded-3xl border-2 border-brand-blue-primary/30 p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 shadow-md scale-100 lg:scale-[1.02] z-10">
               <div>
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-blue-dark to-brand-blue-primary flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  <div className="w-12 h-12 rounded-xl brand-icon-wrapper">
                     <Waves className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -403,7 +403,7 @@ export default function PricingPage() {
             <div className="group relative bg-white/60 backdrop-blur-md rounded-3xl border border-white/80 p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 shadow-sm">
               <div>
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-blue-primary to-brand-blue-medium flex items-center justify-center text-white shadow-lg shadow-blue-400/20">
+                  <div className="w-12 h-12 rounded-xl brand-icon-wrapper">
                     <Sparkles className="w-6 h-6" />
                   </div>
                   <div className="bg-brand-blue-light/10 border border-brand-blue-light/30 px-3 py-1 rounded-md text-[10px] leading-[15px] font-black uppercase tracking-widest text-slate-600">

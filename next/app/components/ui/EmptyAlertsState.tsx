@@ -10,7 +10,7 @@ export function EmptyAlertsState() {
   
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 min-h-[450px] bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 text-center max-w-2xl mx-auto mt-8 shadow-sm">
-      <div className="w-14 h-14 bg-gradient-to-br from-blue-700 to-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 text-white">
+      <div className="w-14 h-14 rounded-2xl brand-icon-wrapper mb-6">
         <Bell className="w-6 h-6 animate-bounce" />
       </div>
       

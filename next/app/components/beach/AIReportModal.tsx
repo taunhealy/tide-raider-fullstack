@@ -502,10 +502,9 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
           </div>
         </div>
 
-        {/* Main Dashboard Body */}
         {!isCreditsLoading && isGated ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center bg-white min-h-[350px] overflow-y-auto">
-            <div className="w-16 h-16 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <div className="w-16 h-16 bg-gradient-to-br from-brand-dark-blue to-brand-3 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-[#60a5fa]/20 text-white animate-pulse">
               <Lock className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-black text-slate-900 uppercase tracking-wider mb-2">Tactical Lockout</h2>
@@ -522,7 +521,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
             ) : (
               <Button
                 onClick={() => router.push("/pricing")}
-                className="w-full max-w-sm h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95 animate-pulse"
+                className="w-full max-w-sm h-12 bg-gradient-to-r from-brand-dark-blue to-brand-3 hover:opacity-90 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md shadow-[#60a5fa]/20 transition-all active:scale-95 animate-pulse"
               >
                 Upgrade or Buy Credits
               </Button>
@@ -696,7 +695,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <Button
                   onClick={handleGenerate}
                   disabled={isGenerating || isCreditsLoading || (credits < creditCost)}
-                  className="w-full h-14 bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[12px] shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
+                  className="w-full h-14 bg-gradient-to-r from-brand-dark-blue to-brand-3 hover:opacity-90 text-white rounded-2xl font-black uppercase tracking-[0.15em] text-[12px] shadow-xl shadow-[#60a5fa]/20 transition-all active:scale-[0.98] disabled:opacity-30 flex items-center justify-center gap-3"
                 >
                   {isGenerating ? (
                     <>

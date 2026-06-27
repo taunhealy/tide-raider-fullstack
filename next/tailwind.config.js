@@ -14,6 +14,7 @@ module.exports = {
         "brand-1": "var(--color-primary)",
         "brand-2": "var(--color-secondary)",
         "brand-3": "var(--color-tertiary)",
+        "brand-dark-blue": "var(--color-brand-dark-blue)",
         "brand-blue-dark": "var(--color-brand-blue-dark)",
         "brand-blue-primary": "var(--color-brand-blue-primary)",
         "brand-blue-medium": "var(--color-brand-blue-medium)",

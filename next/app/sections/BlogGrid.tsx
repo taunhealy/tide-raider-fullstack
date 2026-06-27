@@ -35,7 +35,13 @@ export default function BlogGrid({ data }: BlogProps) {
   // Hooks must be called before any early returns
   const [activeCategory, setActiveCategory] = useState("All");
   const allCategories = data?.allCategories || [];
-  const layout = "vertical";
+  const getCategoryCount = (category: string) => {
+    if (!data) return 0;
+    if (category === "All") return data.posts.length;
+    return data.posts.filter((post) =>
+      post.categories?.some((cat) => cat?.title === category)
+    ).length;
+  };
 
   const filteredPosts = useMemo(() => {
     if (!data) return [];
@@ -53,28 +59,31 @@ export default function BlogGrid({ data }: BlogProps) {
 
   return (
     <section className="blog-section pt-[32px] pb-[81px] md:pt-[32px] md:pb-[121.51px] px-4 md:px-[121.51px] bg-[var(--color-bg-primary)]">
-      <div className="blog-nav-container flex flex-col md:flex-row justify-between gap-[32px] mb-4">
+      <div className="blog-nav-container flex flex-col md:flex-row justify-between gap-[32px] mb-8">
         <div className="flex justify-between items-end w-full">
-          <div className="blog-nav-titles flex flex-row gap-[16px] items-end overflow-x-auto overflow-y-hidden min-h-[32px] max-w-full">
+          <div className="blog-nav-titles flex flex-row gap-[12px] items-center overflow-x-auto overflow-y-hidden py-2 min-h-[44px] max-w-full scrollbar-none">
             {["All", ...allCategories.map((cat) => cat.title)].map(
               (category) => (
-                <h6
+                <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`font-primary cursor-pointer whitespace-nowrap transition-all ease-in-out duration-300 ${
+                  className={`inline-flex items-center gap-2.5 px-4 h-9 rounded-full border transition-all text-[11px] font-bold font-primary tracking-wider uppercase whitespace-nowrap active:scale-95 shadow-sm ${
                     activeCategory === category
-                      ? "text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
+                      ? "bg-[#171c30] border-[#60a5fa] text-[#60a5fa] shadow-md shadow-[#60a5fa]/10"
+                      : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
                   }`}
                 >
+                  <span>{category}</span>
                   <span
-                    className={`relative after:content-[""] after:absolute after:left-0 after:bottom-[-3px] after:h-[2px] after:bg-gray-900 after:transition-all after:duration-300 after:ease-out ${
-                      activeCategory === category ? "after:w-full" : "after:w-0"
+                    className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-black ${
+                      activeCategory === category
+                        ? "bg-[#60a5fa] text-[#171c30]"
+                        : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {category}
+                    {getCategoryCount(category)}
                   </span>
-                </h6>
+                </button>
               )
             )}
           </div>

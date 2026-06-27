@@ -94,7 +94,7 @@ export default function RecentAILogsSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-brand-blue-dark to-brand-blue-primary flex items-center justify-center shadow-sm">
+            <div className="w-6 h-6 rounded-lg brand-icon-wrapper">
               <Sparkles className="w-3 h-3 text-white" />
             </div>
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.18em] font-primary">

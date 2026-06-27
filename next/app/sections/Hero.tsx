@@ -75,11 +75,11 @@ export default function HeroSection({ data }: HeroProps) {
   const featureCardRef = useRef<HTMLDivElement>(null);
   const dotsContainerRef = useRef<HTMLDivElement>(null);
 
-  const [fetchedRegions, setFetchedRegions] = useState<Set<string>>(new Set(["western-cape"]));
+  const [fetchedRegions, setFetchedRegions] = useState<Set<string>>(new Set(["all"]));
   const [beaches, setBeaches] = useState<any[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
 
-  const fetchBeaches = async (regionId: string = "western-cape") => {
+  const fetchBeaches = async (regionId: string = "all") => {
     try {
       setLoadingBeaches(true);
       const res = await fetch(`/api/map-data?regionId=${regionId}`);
@@ -102,7 +102,7 @@ export default function HeroSection({ data }: HeroProps) {
   };
 
   useEffect(() => {
-    fetchBeaches("western-cape");
+    fetchBeaches("all");
   }, []);
 
   const handleRegionSelect = (regionId: string) => {
@@ -736,8 +736,8 @@ export default function HeroSection({ data }: HeroProps) {
                 onBeachSelect={() => { }}
                 onRegionSelect={handleRegionSelect}
                 onAIReportClick={() => { }}
-                center={[18.4233, -33.9249]}
-                zoom={10}
+                center={[24.0, -29.0]}
+                zoom={4.3}
                 variant="hero"
               />
               <div className="absolute inset-0 pointer-events-none border border-brand-3/20 rounded-2xl md:rounded-3xl"></div>

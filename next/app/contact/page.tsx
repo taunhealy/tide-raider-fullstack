@@ -40,7 +40,7 @@ export default function ContactPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
                 <Mail className="w-4 h-4 text-white" />
               </div>
               <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">Support Channel</span>
@@ -167,7 +167,7 @@ export default function ContactPage() {
                       type="submit" 
                       disabled={status === "sending"}
                       variant="action"
-                      className="w-full md:w-auto min-w-[180px] h-12 flex items-center justify-center gap-2 group text-sm"
+                      className="w-full md:w-auto px-8 h-12 flex items-center justify-center gap-2 group"
                     >
                       {status === "sending" ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

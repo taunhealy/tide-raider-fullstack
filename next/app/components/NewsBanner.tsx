@@ -20,10 +20,10 @@ export default function NewsBanner({
   const scrollingPosts = posts && Array.isArray(posts) ? [...posts.filter(Boolean), ...posts.filter(Boolean)] : [];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg-tertiary)] z-50 flex h-10">
+    <div className="fixed bottom-0 left-0 right-0 bg-[#171c30] border-t border-[#60a5fa] z-50 flex h-10">
       {/* Left - Credit section - Hidden on mobile */}
-      <div className="hidden md:flex flex-shrink-0 bg-[var(--brand-tertiary)] px-3 sm:px-6 items-center border-r border-[var(--color-bg-tertiary)] rounded-md w-full md:w-auto justify-center md:justify-start">
-        <span className="font-primary text-white text-sm">Latest Updates</span>
+      <div className="hidden md:flex flex-shrink-0 bg-[#171c30] px-3 sm:px-6 items-center border-r border-[#60a5fa] w-full md:w-auto justify-center md:justify-start">
+        <span className="font-primary text-[#60a5fa] text-sm font-bold tracking-wide">Latest Updates</span>
       </div>
 
       {/* Middle - Scrolling news section */}
@@ -37,7 +37,7 @@ export default function NewsBanner({
               <a
                 key={`${slug}-${index}`}
                 href={`/blog/${slug}`}
-                className="inline-block mx-4 sm:mx-8 text-sm sm:text-base text-white hover:text-gray-800 transition-colors pointer-events-auto font-primary"
+                className="inline-block mx-4 sm:mx-8 text-sm sm:text-base text-[#60a5fa] hover:text-white transition-colors pointer-events-auto font-primary font-medium"
               >
                 {post.title}
                 <span className="mx-2 sm:mx-4"></span>

@@ -118,6 +118,7 @@ export default function TideMap({
   const onAIReportClickRef = useRef(onAIReportClick);
   const selectedRegionIdRef = useRef(selectedRegionId);
   const onMoveEndRef = useRef(onMoveEnd);
+  const selectedBeachIdRef = useRef(selectedBeachId);
 
   // Sync refs with current props to avoid closure issues in listeners
   useEffect(() => {
@@ -139,6 +140,13 @@ export default function TideMap({
   useEffect(() => {
     onMoveEndRef.current = onMoveEnd;
   }, [onMoveEnd]);
+
+  useEffect(() => {
+    selectedBeachIdRef.current = selectedBeachId;
+    if (vectorSourceRef.current) {
+      vectorSourceRef.current.changed();
+    }
+  }, [selectedBeachId]);
 
   // Particle System State
   const windParticles = useRef<any[]>([]);
@@ -592,19 +600,37 @@ export default function TideMap({
                 ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length 
                 : null;
 
+              const formatLabel = (str: string) => {
+                if (!str) return "";
+                return str
+                  .toLowerCase()
+                  .split(' ')
+                  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ');
+              };
+              const labelText = formatLabel(manualLabel || "Unknown");
+              const countText = String(manualCount || 0);
+              const textLength = labelText.length;
+              
+              // Dynamic width based on label length
+              const pillWidth = Math.max(70, textLength * 6.5 + 32);
+              const pillHeight = 24;
+              const bgColor = "#171c30";
+              const textColor = "#60a5fa";
+
               return new Style({
-                image: new CircleStyle({
-                  radius: type === "continent" ? 28 : 22,
-                  stroke: new Stroke({ color: "#fff", width: 2 }),
-                  fill: new Fill({ color: "#1e40af" }), // Beautiful, readable brand darker blue
-                }),
-                text: new Text({
-                  text: `${manualLabel}\n${manualCount}`,
-                  fill: new Fill({ color: "#fff" }),
-                  font: `600 ${type === "continent" ? '11px' : '9px'} Inter, sans-serif`, // More legible 600 weight
-                  textAlign: "center",
-                  offsetY: 2,
-                }),
+                image: new Icon({
+                  anchor: [0.5, 0.5],
+                  src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+                    <svg width="${pillWidth}" height="${pillHeight}" viewBox="0 0 ${pillWidth} ${pillHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="1" y="1" width="${pillWidth - 2}" height="${pillHeight - 2}" rx="12" fill="${bgColor}" stroke="${textColor}" stroke-width="1"/>
+                      <text x="10" y="12" font-family="Inter, sans-serif" font-size="9.5" font-weight="500" fill="${textColor}" dominant-baseline="central">${labelText}</text>
+                      <circle cx="${pillWidth - 12}" cy="12" r="9" fill="${textColor}"/>
+                      <text x="${pillWidth - 12}" y="12" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle" fill="${bgColor}" dominant-baseline="central">${countText}</text>
+                    </svg>
+                  `)}`,
+                  scale: 1,
+                })
               });
             }
 
@@ -650,13 +676,13 @@ export default function TideMap({
                 `)}`,
                 scale: 0.75,
               }),
-              text: new Text({
+              text: ((mapRef.current?.getView()?.getZoom() || 10) >= 11 || selectedBeachIdRef.current === beach?.id) ? new Text({
                 text: beach?.name,
                 offsetY: -32,
                 font: "600 10px Inter, sans-serif", // Clean, readable 600 weight
                 fill: new Fill({ color: "#fff" }),
                 stroke: new Stroke({ color: "rgba(0,0,0,0.5)", width: 2 }),
-              }),
+              }) : undefined,
             });
           },
         }),
@@ -955,12 +981,12 @@ export default function TideMap({
         const feature = new Feature({
           geometry: new Point(fromLonLat([avgLng, avgLat])),
         });
-        feature.set("label", items[0].country);
+        feature.set("label", items[0].country || "Unknown Country");
         feature.set("count", items.length);
         feature.set("beach", items[0]);
         feature.set("allBeaches", items);
         feature.set("type", "country");
-        feature.set("countryId", items[0].countryId);
+        feature.set("countryId", items[0].countryId || "unknown");
         return feature;
       }).filter(Boolean) as Feature[];
     } else {

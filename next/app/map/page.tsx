@@ -213,6 +213,18 @@ export default function GlobalMapPage() {
     }
   }, [mounted, filters.regionId, updateFilter]);
 
+  // Sync map view with the active regionId only on initial mount
+  useEffect(() => {
+    if (mounted && filters.regionId) {
+      const regKey = filters.regionId.toLowerCase();
+      if (REGION_COORDINATES[regKey]) {
+        const { center, zoom } = REGION_COORDINATES[regKey];
+        setMapCenter(center);
+        setMapZoom(zoom);
+      }
+    }
+  }, [mounted]);
+
 
   useEffect(() => {
     if (mounted) {
@@ -412,7 +424,7 @@ export default function GlobalMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-72px)] md:h-[calc(100vh-80px)] bg-white md:bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-72px)] md:h-[calc(100vh-80px)] bg-white md:bg-gray-50 overflow-hidden" suppressHydrationWarning>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
@@ -831,7 +843,7 @@ export default function GlobalMapPage() {
         {/* Main View Area */}
         <main className="flex-1 relative bg-gray-100">
           {/* Weekday & Time Slot Floating Control Bar */}
-          <div className="absolute top-4 md:top-6 left-0 right-0 md:left-1/2 md:-translate-x-1/2 z-30 flex justify-center px-4 pointer-events-none w-full max-w-full">
+          <div className="absolute top-6 md:top-8 left-0 right-0 md:left-1/2 md:-translate-x-1/2 z-30 flex justify-center px-4 pointer-events-none w-full max-w-full">
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 pointer-events-auto w-full max-w-full px-2 md:px-0 justify-center">
               {/* Desktop Tide Floating Container */}
               {mounted && selectedBeach && selectedBeachTide && (
@@ -927,7 +939,7 @@ export default function GlobalMapPage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -20, scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="absolute top-[84px] md:top-6 right-4 md:right-6 z-30 flex items-center bg-gray-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 shadow-2xl gap-3 max-w-[calc(100vw-32px)] md:max-w-[450px]"
+                    className="absolute top-[84px] md:top-8 right-4 md:right-6 z-30 flex items-center bg-gray-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-2 shadow-2xl gap-3 max-w-[calc(100vw-32px)] md:max-w-[450px]"
                   >
                     {/* Scrollable Container of Images */}
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-[280px] md:max-w-[340px]">
