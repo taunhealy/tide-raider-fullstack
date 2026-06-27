@@ -133,7 +133,7 @@ export function RaidLogsComponent({
   );
 
   const isCurrentlyLoading = isBeachesLoading || isLogsLoading || isSubscriptionLoading;
-  const isGated = (!session?.user || authStatus === "unauthenticated") || ((credits ?? 0) < 30);
+  const isGated = false;
 
   return (
     <div id="raid-logs-container" className="min-h-0 py-4 font-primary relative pb-20">
@@ -162,96 +162,9 @@ export function RaidLogsComponent({
           </div>
         )}
 
-        {/* Lockout Gate for Unauthenticated Users */}
-        {!isCurrentlyLoading && (!session?.user || authStatus === "unauthenticated") && (
-          <div className="max-w-xl mx-auto my-12 text-center bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-10 shadow-sm">
-             <div className="w-14 h-14 rounded-2xl brand-icon-wrapper mx-auto mb-6">
-                <Lock className="w-6 h-6 animate-pulse" />
-             </div>
-             <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Lockout</h2>
-             <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8 max-w-sm mx-auto">
-               You must be authenticated to view strategic intelligence history and community surf logs.
-             </p>
-              <Button
-                onClick={() => handleSignIn(window.location.pathname)}
-                variant="action"
-                className="w-full md:w-auto px-8 h-12"
-              >
-                Sign In to Authorize
-              </Button>
-          </div>
-        )}
+        {/* Lockout Gate for Unauthenticated Users - Disabled */}
 
-        {/* Lockout Gate for Authenticated but Insufficient Points */}
-        {!isCurrentlyLoading && session?.user && authStatus === "authenticated" && (credits ?? 0) < 30 && (
-          <div className="max-w-2xl mx-auto my-8 bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 p-8 md:p-12 shadow-sm">
-             <div className="flex flex-col items-center text-center mb-8">
-               <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/20 text-white">
-                  <ShieldAlert className="w-6 h-6 animate-pulse" />
-               </div>
-               <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Tactical Lockout: Insufficient Points</h2>
-               <p className="text-sm text-slate-500 font-medium max-w-md leading-relaxed">
-                 Accessing the surf logs archives requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-100">{credits ?? 0} points</span>.
-               </p>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-200/50">
-                {/* Free Community Path */}
-                <div className="bg-white/80 rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
-                   <div>
-                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">1. Community (Free)</h3>
-                     <ul className="space-y-3 mb-6">
-                        <li className="flex items-start gap-2.5 text-xs text-slate-600">
-                           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                           <span>Log a Surf Break (+30 Points)</span>
-                        </li>
-                        <li className="flex items-start gap-2.5 text-xs text-slate-600">
-                           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                           <span>Recruit Friend to Squad (+30 Points)</span>
-                        </li>
-                     </ul>
-                   </div>
-                   <div className="flex flex-col gap-2">
-                     <button
-                       onClick={() => router.push("/raidlogs/new")}
-                       className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-bold uppercase tracking-widest text-[9px] transition-all active:scale-[0.98]"
-                     >
-                       Log Surf Session
-                     </button>
-                     <button
-                       onClick={() => router.push("/pricing#affiliate")}
-                       className="w-full h-10 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-bold uppercase tracking-widest text-[9px] transition-all active:scale-[0.98]"
-                     >
-                       Get Recruit Link
-                     </button>
-                   </div>
-                </div>
-
-                {/* Paid Instantly Path */}
-                <div className="bg-white/80 rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
-                   <div>
-                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">2. Strategic Access (Paid)</h3>
-                     <ul className="space-y-3 mb-6">
-                        <li className="flex items-start gap-2.5 text-xs text-slate-600">
-                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                           <span>Refill points instantly (R100 for 100 Credits)</span>
-                        </li>
-                        <li className="flex items-start gap-2.5 text-xs text-slate-600">
-                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                           <span>Subscribe for unlimited forecasting tools</span>
-                        </li>
-                     </ul>
-                   </div>
-                   <button
-                     onClick={() => router.push("/pricing")}
-                     className="w-full h-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold uppercase tracking-widest text-[9px] transition-all active:scale-[0.98]"
-                   >
-                     Upgrade or Buy Credits
-                   </button>
-                </div>
-             </div>
-          </div>
-        )}
+        {/* Lockout Gate for Authenticated but Insufficient Points - Disabled */}
 
         {!isCurrentlyLoading && !error && raidLogsData && !isGated && (
           <>

@@ -121,11 +121,11 @@ export default function HeroSection({ data }: HeroProps) {
     },
     {
       id: 2,
-      title: "Alerts",
+      title: "View Map",
       description:
-        "Set alerts for when it's good, or to your custom preferences.",
-      icon: "alerts-icon",
-      link: "/dashboard/alerts",
+        "Explore breaks and monitor real-time surf conditions.",
+      icon: "map-icon",
+      link: "/map",
     },
     {
       id: 3,
@@ -149,8 +149,8 @@ export default function HeroSection({ data }: HeroProps) {
     switch (title.toLowerCase()) {
       case "raid":
         return "🏄‍♂️";
-      case "alerts":
-        return "🔔";
+      case "view map":
+        return "🗺️";
       case "logbook":
         return "📓";
       case "log gallery":

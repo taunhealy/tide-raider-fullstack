@@ -63,7 +63,14 @@ router.get(
         distinct: ["source"],
       });
 
-      const availableSources = forecasts.map((f) => f.source);
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const isTodayOrFuture = targetDate >= today;
+
+      let availableSources = forecasts.map((f) => f.source);
+      if (isTodayOrFuture) {
+        availableSources = ["WINDFINDER", "WINDFINDER_SUPER", "WINDGURU", "WINDY", "TIDE_RAIDER", "OPENMETEO_ARCHIVE"];
+      }
       return res.json({ availableSources });
     } catch (error: any) {
       console.error("[forecast/available] Error:", error);
