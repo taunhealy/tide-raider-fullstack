@@ -42,20 +42,26 @@ export async function fetchArchiveFromOpenMeteo(regionId: string, date: Date): P
 
     // Check if wind data is missing (common in Marine API for certain regions/dates)
     if (!wind_speed_10m || wind_speed_10m.every(v => v === null)) {
-      console.log(`[openmeteo] Wind data missing in Marine API. Fetching from Archive API...`);
+      console.log(`[openmeteo] Wind data missing in Marine API. Fetching from fallback API...`);
       try {
-        const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kn`;
-        const archiveRes = await fetch(archiveUrl);
-        if (archiveRes.ok) {
-          const archiveData = await archiveRes.json();
-          if (archiveData.hourly) {
-            wind_speed_10m = archiveData.hourly.wind_speed_10m;
-            wind_direction_10m = archiveData.hourly.wind_direction_10m;
-            console.log(`[openmeteo] Wind data successfully fetched from Archive API`);
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0);
+        const isTodayOrFuture = new Date(dateStr) >= today;
+        const apiDomain = isTodayOrFuture 
+          ? "api.open-meteo.com/v1/forecast" 
+          : "archive-api.open-meteo.com/v1/archive";
+        const fallbackUrl = `https://${apiDomain}?latitude=${coords.lat}&longitude=${coords.lng}&start_date=${dateStr}&end_date=${dateStr}&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kn`;
+        const fallbackRes = await fetch(fallbackUrl);
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          if (fallbackData.hourly) {
+            wind_speed_10m = fallbackData.hourly.wind_speed_10m;
+            wind_direction_10m = fallbackData.hourly.wind_direction_10m;
+            console.log(`[openmeteo] Wind data successfully fetched from fallback API (${isTodayOrFuture ? 'Forecast' : 'Archive'})`);
           }
         }
       } catch (e) {
-        console.error(`[openmeteo] Archive API fallback failed:`, e);
+        console.error(`[openmeteo] Fallback API failed:`, e);
       }
     }
     

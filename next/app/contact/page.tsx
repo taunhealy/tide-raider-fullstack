@@ -48,7 +48,7 @@ export default function ContactPage() {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
               Get in Touch
             </h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">
+            <p className="text-sm text-gray-500 font-medium mt-1 max-w-md">
               Have questions about Tide Raider? Our team is here to help you navigate the best swells.
             </p>
           </div>

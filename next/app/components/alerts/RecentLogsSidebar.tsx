@@ -28,7 +28,7 @@ export function RecentLogsSidebar() {
   const isSubscribed = subscriptionDetails?.isSubscribed || subscriptionDetails?.hasActiveTrial;
 
   return (
-    <aside className="hidden lg:block w-80 shrink-0 sticky top-24 self-start space-y-6">
+    <aside className="hidden lg:block w-72 shrink-0 sticky top-24 self-start space-y-6">
       <div className="bg-slate-900 rounded-[32px] p-6 border border-slate-800 shadow-xl">
         <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
           <h3 className="font-black text-xs uppercase tracking-[0.2em] text-white">

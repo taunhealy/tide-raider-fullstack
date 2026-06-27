@@ -117,34 +117,35 @@ export default function AlertsPage() {
   return (
     <div className="min-h-screen bg-gray-50/50 text-slate-900 font-primary overflow-x-hidden pb-20">
       <PageContainer>
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
-                <Bell className="w-4 h-4 text-white" />
+        <div className="flex flex-col xl:flex-row gap-8 xl:gap-16 pt-8">
+          <div className="flex-1 space-y-8 min-w-0 p-4 sm:p-6 md:p-8 border border-gray-200 rounded-[32px] md:rounded-[48px] bg-white/30">
+            {/* Header Section inside the container */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 px-2">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
+                    <Bell className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Alerts</span>
+                </div>
+                <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+                  Tactical Alerts
+                </h1>
+                <p className="text-sm text-gray-500 font-medium mt-1">
+                  Automated triggers for your preferred surf conditions.
+                </p>
               </div>
-              <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Alerts</span>
+
+              <Button 
+                variant="action"
+                size="xl"
+                onClick={handleCreateNewAlert}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 shrink-0 shadow-sm font-black uppercase tracking-widest text-[10px] rounded-xl active:scale-95 whitespace-nowrap"
+              >
+                Create New Alert
+              </Button>
             </div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Tactical Alerts
-            </h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">
-              Automated triggers for your preferred surf conditions.
-            </p>
-          </div>
 
-          <Button 
-            variant="tertiary"
-            size="sm"
-            onClick={handleCreateNewAlert}
-            className="whitespace-nowrap px-8 h-10 shadow-md active:scale-95 w-full md:w-auto font-black uppercase tracking-widest text-[10px] rounded-xl"
-          >
-            Create New Alert
-          </Button>
-        </header>
-
-        <div className="flex flex-col xl:flex-row gap-8 lg:gap-12">
-          <div className="flex-1 space-y-10 min-w-0 p-4 sm:p-6 md:p-8 border border-gray-200 rounded-[32px] md:rounded-[48px] bg-white/30">
             <div className="bg-white/40 backdrop-blur-md rounded-[24px] md:rounded-[40px] p-1.5 md:p-6 border border-white/60 shadow-sm">
               <div className="bg-white rounded-[20px] md:rounded-[32px] p-4 sm:p-6 md:p-10 border border-slate-100 min-h-[400px]">
                  <AlertsList />

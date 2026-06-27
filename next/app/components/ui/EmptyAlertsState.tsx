@@ -9,7 +9,7 @@ export function EmptyAlertsState() {
   const { isPremium } = useSubscriptionStatus();
   
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6 min-h-[450px] bg-white/40 backdrop-blur-md rounded-[2.5rem] border border-white/60 text-center max-w-2xl mx-auto mt-8 shadow-sm">
+    <div className="flex flex-col items-center justify-center py-8 px-4 text-center w-full max-w-2xl mx-auto">
       <div className="w-14 h-14 rounded-2xl brand-icon-wrapper mb-6">
         <Bell className="w-6 h-6 animate-bounce" />
       </div>
