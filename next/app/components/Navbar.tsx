@@ -174,7 +174,7 @@ export default function Navbar() {
             }}
             className="flex items-center transition-all duration-300"
           >
-            <span className="text-[16px] sm:text-[20px] leading-normal py-1 font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase truncate">
+            <span className="text-[16px] sm:text-[20px] leading-normal py-1 font-black tracking-tighter text-[var(--color-text-primary)] font-primary uppercase whitespace-nowrap">
               TIDE RAIDER
             </span>
             <span className="ml-2 px-1.5 py-0.5 bg-blue-400 text-[8px] font-black text-white rounded uppercase tracking-widest hidden sm:inline-block">

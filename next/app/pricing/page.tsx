@@ -436,7 +436,10 @@ export default function PricingPage() {
                 </ul>
               </div>
 
-              <div>
+              <div className="space-y-4">
+                <p className="text-center text-[10px] leading-[15px] font-normal text-gray-400 uppercase tracking-widest">
+                  No Subscription Required
+                </p>
                 <Button
                   onClick={handleTopUp}
                   disabled={isToppingUp}
@@ -447,9 +450,6 @@ export default function PricingPage() {
                   {isToppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                   BUY 100 CREDITS
                 </Button>
-                <p className="mt-4 text-center text-[10px] leading-[15px] font-normal text-gray-400 uppercase tracking-widest">
-                  No Subscription Required
-                </p>
               </div>
             </div>
           </div>
@@ -481,7 +481,7 @@ export default function PricingPage() {
                   </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4 transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg bg-brand-blue-medium/10 flex items-center justify-center shrink-0 text-brand-blue-dark border border-brand-blue-medium/20">
+                  <div className="w-8 h-8 rounded-lg brand-icon-wrapper shrink-0">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   <div>
@@ -528,8 +528,9 @@ export default function PricingPage() {
                           navigator.clipboard.writeText(link);
                           toast.success("LINK COPIED", { description: "Your custom invite link is ready to share." });
                         }}
-                        variant="action"
-                        className="w-full md:w-auto h-12 px-8 text-[10px]"
+                        variant="outline"
+                        size="sm"
+                        className="w-full md:w-auto px-5 font-black uppercase tracking-widest text-[9px] rounded-lg active:scale-95 border-slate-200 text-slate-600 hover:bg-slate-50"
                       >
                         Copy Link
                       </Button>
@@ -541,7 +542,7 @@ export default function PricingPage() {
                         <p className="text-[10px] leading-[15px] font-black text-black opacity-20 uppercase tracking-[0.25em]">QUICK INVITE VIA EMAIL</p>
                         <button
                           onClick={addEmailField}
-                          className="text-[10px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 uppercase tracking-widest"
+                          className="text-[10px] font-bold text-slate-600 hover:text-black flex items-center gap-1 uppercase tracking-widest"
                         >
                           <Plus className="w-3 h-3" /> Add Another
                         </button>
