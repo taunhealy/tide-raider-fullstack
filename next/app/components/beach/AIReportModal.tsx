@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
+  DialogClose
 } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/Button";
 import {
@@ -279,7 +280,7 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
 
   const handleClose = () => {
     if (typeof window !== "undefined") {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
       params.delete("report");
       params.delete("beachId");
       params.delete("beachName");
@@ -496,9 +497,11 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
                 <span className="text-[13px] font-black text-black tracking-tight">{credits ?? 0} <span className="opacity-30 font-bold uppercase text-[9px] tracking-widest ml-1">Credits</span></span>
               )}
             </div>
-            <Button variant="ghost" size="icon" onClick={handleClose} className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
-              <X className="w-5 h-5" />
-            </Button>
+            <DialogClose asChild>
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 text-gray-400 hover:text-black transition-colors" title="Close Intelligence Briefing">
+                <X className="w-5 h-5" />
+              </Button>
+            </DialogClose>
           </div>
         </div>
 
@@ -512,19 +515,39 @@ export default function AIReportModal({ beach, isOpen, onClose, date, reportId }
               Accessing strategic AI briefings and timed forecasts requires a minimum of <span className="font-bold text-slate-900">30 intelligence points</span>. You currently have <span className="font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-100">{credits ?? 0} points</span>.
             </p>
             {!session?.user ? (
-              <Button
-                onClick={() => handleSignIn(window.location.pathname)}
-                className="w-full max-w-sm h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95"
-              >
-                Sign In to Unlock
-              </Button>
+              <div className="flex flex-col gap-3 w-full max-w-sm">
+                <Button
+                  onClick={() => handleSignIn(window.location.pathname)}
+                  className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md transition-all active:scale-95"
+                >
+                  Sign In to Unlock
+                </Button>
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 border-gray-200 hover:bg-gray-50 text-slate-700 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95"
+                  >
+                    Close
+                  </Button>
+                </DialogClose>
+              </div>
             ) : (
-              <Button
-                onClick={() => router.push("/pricing")}
-                className="w-full max-w-sm h-12 bg-gradient-to-r from-brand-dark-blue to-brand-3 hover:opacity-90 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md shadow-[#60a5fa]/20 transition-all active:scale-95 animate-pulse"
-              >
-                Upgrade or Buy Credits
-              </Button>
+              <div className="flex flex-col gap-3 w-full max-w-sm">
+                <Button
+                  onClick={() => router.push("/pricing")}
+                  className="w-full h-12 bg-gradient-to-r from-brand-dark-blue to-brand-3 hover:opacity-90 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md shadow-[#60a5fa]/20 transition-all active:scale-95 animate-pulse"
+                >
+                  Upgrade or Buy Credits
+                </Button>
+                <DialogClose asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 border-gray-200 hover:bg-gray-50 text-slate-700 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95"
+                  >
+                    Close
+                  </Button>
+                </DialogClose>
+              </div>
             )}
           </div>
         ) : !currentBeach ? (
