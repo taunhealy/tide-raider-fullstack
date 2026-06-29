@@ -2,6 +2,7 @@
 
 import { urlForImage } from "@/app/lib/urlForImage";
 import Image from "next/image";
+import heroBg from "@/public/images/unsplash-1.webp";
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -672,10 +673,11 @@ export default function HeroSection({ data }: HeroProps) {
       {/* Background image - full screen cover, cropped from top to show surfer */}
       <div className="absolute inset-0 w-full h-full z-0">
         <Image
-          src="/images/unsplash-1.webp"
+          src={heroBg}
           alt="Woman surfer hero cover"
           fill
           priority
+          placeholder="blur"
           sizes="100vw"
           className="object-cover object-[center_bottom]"
         />
