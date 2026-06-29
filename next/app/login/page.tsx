@@ -1,4 +1,6 @@
 import LoginButton from "@/app/login/LoginButton";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 type LoginPageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -13,6 +15,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     : awaitedSearchParams.callbackUrl;
   const callbackUrl =
     (typeof callbackUrlParam === "string" ? callbackUrlParam : null) || "/raid";
+
+  // If user already has auth-token cookie, redirect them immediately to the callback URL
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+  if (token) {
+    redirect(callbackUrl);
+  }
 
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[var(--color-bg-secondary)] flex flex-col items-center justify-center p-4">

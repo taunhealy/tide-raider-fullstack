@@ -1,6 +1,7 @@
 "use client";
 
 import PageContainer from "@/app/components/ui/PageContainer";
+import PageHeader from "@/app/components/ui/PageHeader";
 
 import { useQuery } from "@tanstack/react-query";
 import { useBackendAuth } from "@/app/hooks/useBackendAuth";
@@ -130,46 +131,36 @@ function AIReportsContent() {
 
   return (
     <PageContainer>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
-              <Sparkles className="w-4 h-4 text-white" />
+      <PageHeader
+        title="Strategic Intelligence"
+        description="Archived ocean intelligence and weekly strategic forecasts."
+        badge="AI Surf Reports"
+        icon={<Sparkles className="w-4 h-4 text-white" />}
+        rightElement={
+          <>
+            <Button 
+              onClick={() => setIsReportOpen(true)}
+              variant="action"
+              size="xl"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 shrink-0 shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-white animate-pulse" />
+              Generate Report
+            </Button>
+
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black opacity-20" />
+              <input 
+                type="text"
+                placeholder="FILTER BY BEACH OR PERSONA..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
             </div>
-            <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">AI Surf Reports</span>
-          </div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            Strategic Intelligence
-          </h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
-            Archived ocean intelligence and weekly strategic forecasts.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          <Button 
-            onClick={() => setIsReportOpen(true)}
-            variant="action"
-            size="xl"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 shrink-0 shadow-sm"
-          >
-            <Sparkles className="w-4 h-4 text-white animate-pulse" />
-            Generate Report
-          </Button>
-
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-black opacity-20" />
-            <input 
-              type="text"
-              placeholder="FILTER BY BEACH OR PERSONA..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-6 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-            />
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Reports Table / Card Container */}
       <div className="bg-transparent md:bg-white rounded-[24px] md:rounded-[32px] border-none md:border md:border-gray-100 shadow-none md:shadow-sm overflow-hidden mb-20">

@@ -15,6 +15,7 @@ import { SubscriptionStatus } from "@/app/types/subscription";
 import Link from "next/link";
 import { Input } from "../components/ui/input";
 import { MEMBERSHIP_PERKS, FREE_PERKS } from "../constants/perks";
+import PageHeader from "../components/ui/PageHeader";
 import PageContainer from "../components/ui/PageContainer";
 import BrandSectionBadge from "../components/ui/BrandSectionBadge";
 
@@ -267,23 +268,12 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gray-50/50 pb-32">
       <PageContainer>
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 md:mb-20">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-xl brand-icon-wrapper">
-                <Bell className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-[10px] font-black text-brand-gray uppercase tracking-[0.2em]">Condition Monitor</span>
-            </div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Membership Plans
-            </h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">
-              Unlock automated notifications and premium surf intelligence. Start with a 20-day free trial.
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title="Membership Plans"
+          description="Unlock automated notifications and premium surf intelligence. Start with a 20-day free trial."
+          badge="Condition Monitor"
+          icon={<Bell className="w-4 h-4 text-white" />}
+        />
 
         <div className="bg-white/40 backdrop-blur-sm rounded-[2.5rem] p-4 md:p-10 border border-white/60 shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">

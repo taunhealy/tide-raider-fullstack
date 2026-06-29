@@ -24,9 +24,24 @@ export default function LoginButton({ callbackUrl }: LoginButtonProps) {
       const frontendUrl =
         typeof window !== "undefined" ? window.location.origin : "";
       
-      let fullCallbackUrl = callbackUrl.startsWith("http")
-        ? callbackUrl
-        : `${frontendUrl}${callbackUrl}`;
+      // If the callbackUrl is a gated/protected route, redirect back to /login first to set the token,
+      // otherwise Next.js middleware will block the callback redirect because the cookie isn't set yet.
+      const isProtected = callbackUrl.startsWith("/raidlogs") || 
+        (callbackUrl.startsWith("/raid") && (() => {
+          const queryStr = callbackUrl.includes("?") ? callbackUrl.split("?")[1] : "";
+          const params = new URLSearchParams(queryStr);
+          const page = parseInt(params.get("page") || "1", 10);
+          return page >= 2;
+        })());
+
+      let redirectPath = callbackUrl;
+      if (isProtected) {
+        redirectPath = `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      }
+
+      let fullCallbackUrl = redirectPath.startsWith("http")
+        ? redirectPath
+        : `${frontendUrl}${redirectPath}`;
 
       // Append referral code to state if exists
       const urlParams = new URLSearchParams(window.location.search);
