@@ -406,7 +406,7 @@ export default function PricingPage() {
                   <div className="w-12 h-12 rounded-xl brand-icon-wrapper">
                     <Sparkles className="w-6 h-6" />
                   </div>
-                  <div className="bg-brand-blue-light/10 border border-brand-blue-light/30 px-3 py-1 rounded-md text-[10px] leading-[15px] font-black uppercase tracking-widest text-slate-600">
+                  <div className="bg-gray-100/50 bord er border-gray-200 px-3 py-1 rounded-md text-[10px] leading-[15px] font-black uppercase tracking-widest text-slate-600">
                     Intelligence Top-Up
                   </div>
                 </div>
@@ -481,7 +481,7 @@ export default function PricingPage() {
                   </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex gap-4 transition-all hover:shadow-md">
-                  <div className="w-8 h-8 rounded-lg brand-icon-wrapper shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-brand-blue-medium/10 flex items-center justify-center shrink-0 text-brand-blue-dark border border-brand-blue-medium/20">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   <div>

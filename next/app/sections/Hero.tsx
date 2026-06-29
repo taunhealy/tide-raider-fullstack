@@ -685,6 +685,7 @@ export default function HeroSection({ data }: HeroProps) {
 
       <div className="relative w-full h-full z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16">
         {/* Neon Hearts */}
+        {/*
         <div className="absolute top-4 sm:top-6 md:top-8 right-4 sm:right-6 md:right-8 flex space-x-2 sm:space-x-3 md:space-x-4 z-20">
           {[1, 2, 3].map((i) => (
             <Heart
@@ -697,6 +698,7 @@ export default function HeroSection({ data }: HeroProps) {
             />
           ))}
         </div>
+        */}
 
         <div className="relative flex flex-col lg:flex-row items-center justify-center h-full w-full gap-8 lg:gap-12 py-4">
           {/* Main Content Side */}
